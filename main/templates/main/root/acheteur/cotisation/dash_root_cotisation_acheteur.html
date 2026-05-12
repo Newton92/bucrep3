@@ -1,0 +1,1885 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-purple: #6f42c1;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --secondary-gradient: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, var(--color-accent) 100%);
+    
+    --shadow-sm: 0 2px 8px rgba(10, 149, 202, 0.08);
+    --shadow-md: 0 4px 20px rgba(10, 149, 202, 0.12);
+    --shadow-lg: 0 10px 30px rgba(10, 149, 202, 0.15);
+    --shadow-hover: 0 12px 35px rgba(10, 149, 202, 0.2);
+}
+
+/* Reset et styles de base */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Header Premium avec effet shimmer */
+.page-header {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        transparent 100%);
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte d'acheteur améliorée */
+.acheteur-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(13, 128, 190, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.acheteur-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 16px 0 0 16px;
+}
+
+.acheteur-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.acheteur-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(10, 149, 202, 0.3);
+    margin-right: 1.5rem;
+}
+
+.acheteur-info {
+    flex: 1;
+}
+
+.acheteur-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.acheteur-sigle {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.acheteur-code-badge {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Cartes de statistiques premium */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(37, 173, 214, 0.25);
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.stat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.75rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-total .stat-icon-wrapper { 
+    background: var(--primary-gradient);
+}
+.stat-faillite .stat-icon-wrapper { 
+    background: var(--danger-gradient);
+}
+.stat-jugement .stat-icon-wrapper { 
+    background: var(--success-gradient);
+}
+.stat-redressement .stat-icon-wrapper { 
+    background: var(--secondary-gradient);
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-faillite .stat-value { 
+    background: var(--danger-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.stat-jugement .stat-value { 
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.stat-redressement .stat-value { 
+    background: var(--secondary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Carte de cotisation premium */
+.cotisation-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    border: 1px solid rgba(13, 128, 190, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    animation: fadeInUp 0.6s ease-out;
+    margin-bottom: 1.5rem;
+}
+
+.cotisation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 16px 0 0 16px;
+}
+
+.cotisation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.cotisation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.cotisation-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+    margin-right: 1.25rem;
+}
+
+.cotisation-info {
+    flex: 1;
+}
+
+.cotisation-number-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.cotisation-label {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.date-badge i {
+    font-size: 0.8rem;
+}
+
+.cotisation-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-edit {
+    background: var(--warning-gradient);
+}
+
+.btn-delete {
+    background: var(--danger-gradient);
+}
+
+.cotisation-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 2px dashed rgba(13, 128, 190, 0.15);
+    font-size: 0.85rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+}
+
+.meta-item i {
+    font-size: 1rem;
+    color: var(--color-primary);
+}
+
+/* Grille des cotisations */
+.cotisations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .cotisations-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .cotisations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 5rem 2rem;
+    text-align: center;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    border: 2px dashed rgba(13, 128, 190, 0.2);
+    margin: 3rem 0;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 25px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    font-size: 3rem;
+    color: white;
+    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.25);
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.75rem;
+}
+
+.empty-state p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Contrôles de recherche premium */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: 0.2s;
+    animation-fill-mode: both;
+}
+
+.search-input {
+    flex: 1;
+}
+
+.search-input .input-group {
+    box-shadow: var(--shadow-sm);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.search-input .input-group-text {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.25rem;
+    font-size: 1.1rem;
+}
+
+.search-input .form-control {
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    border-left: none;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.search-input .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Boutons premium */
+.btn-action {
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.95rem;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+    color: white;
+}
+
+.btn-success {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-warning {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+/* Formulaires premium */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15), var(--shadow-sm);
+    background-color: var(--color-background);
+}
+
+.enhanced-form .form-text {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.enhanced-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 2s infinite;
+}
+
+.card-title {
+    font-weight: 700;
+    margin-bottom: 0;
+    font-size: 1.4rem;
+}
+
+/* Badges premium */
+.badge-premium {
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    box-shadow: var(--shadow-sm);
+    color: white;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background: var(--primary-gradient);
+}
+
+.badge-success {
+    background: var(--success-gradient);
+}
+
+.badge-danger {
+    background: var(--danger-gradient);
+}
+
+.badge-warning {
+    background: var(--warning-gradient);
+}
+
+.badge-purple {
+    background: var(--purple-gradient);
+}
+
+/* Modales premium */
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    background-color: var(--color-background);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    border: none;
+}
+
+.modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title {
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(13, 128, 190, 0.1);
+    padding: 1.5rem 2rem;
+    background: rgba(10, 149, 202, 0.02);
+}
+
+/* Preview de couleur */
+.color-preview {
+    width: 100%;
+    height: 42px;
+    border-radius: 12px;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.color-preview:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-md);
+}
+
+/* Indicateurs visuels */
+.indicator-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.indicator-dot.primary { background: var(--color-primary); }
+.indicator-dot.success { background: var(--color-success); }
+.indicator-dot.danger { background: var(--color-danger); }
+.indicator-dot.warning { background: var(--color-warning); }
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Séquences d'animation */
+.animated-item {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+/* Pagination premium */
+.pagination-premium .page-item .page-link {
+    border: none;
+    border-radius: 12px;
+    margin: 0 0.25rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: var(--color-background);
+    box-shadow: var(--shadow-sm);
+}
+
+.pagination-premium .page-item.active .page-link {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.pagination-premium .page-item .page-link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--color-background);
+    color: var(--color-primary);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+    .page-header {
+        padding: 2rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .cotisations-grid {
+        gap: 1rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .acheteur-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .acheteur-avatar {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .cotisation-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .cotisation-avatar {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cotisations-grid {
+        gap: 1rem;
+    }
+    
+    .cotisation-card {
+        padding: 1.25rem;
+    }
+    
+    .empty-state h4 {
+        font-size: 1.5rem;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+}
+
+/* Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+}
+
+/* Tooltips personnalisés */
+.tooltip-premium {
+    --bs-tooltip-bg: var(--color-primary);
+    --bs-tooltip-color: white;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Flatpickr personnalisé */
+.flatpickr-calendar {
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(13, 128, 190, 0.15);
+}
+
+.flatpickr-day.selected {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+}
+
+.flatpickr-day:hover {
+    background: rgba(10, 149, 202, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-shield-alt me-3"></i>{% trans "Cotisations Sociales" %}
+                </h1>
+                <p class="page-subtitle">
+                    Gestion des cotisations sociales (sécurité sociale) de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card animated-item" style="animation-delay: 0.1s;">
+        <div class="acheteur-header">
+            <div class="d-flex align-items-center">
+                <div class="acheteur-avatar">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="acheteur-info">
+                    <h2 class="acheteur-name">{{ acheteur.nom }}</h2>
+                    <div class="acheteur-sigle">{{ acheteur.sigle|default:"" }}</div>
+                    <div class="acheteur-code-badge">
+                        <i class="fas fa-hashtag"></i>{{ acheteur.code }}
+                        <span class="badge bg-white text-primary ms-2">{% trans "ACREMAC" %}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-3">
+                <div class="text-end">
+                    <div class="fw-medium text-primary-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    <small class="text-muted">{% trans "Activité principale" %}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 mt-3">
+            <div class="col-md-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon-wrapper me-3" style="width: 48px; height: 48px;">
+                        <i class="fas fa-globe-americas text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="fw-medium text-dark">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                        <small class="text-muted">{% trans "Pays" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon-wrapper me-3" style="width: 48px; height: 48px;">
+                        <i class="fas fa-calendar-alt text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="fw-medium text-dark">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</div>
+                        <small class="text-muted">{% trans "Date création" %}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon-wrapper me-3" style="width: 48px; height: 48px;">
+                        <i class="fas fa-check-circle text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="badge-premium badge-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        <small class="text-muted">{% trans "Statut" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Premium -->
+    <div class="stats-grid">
+        <div class="stat-card stat-total animated-item">
+            <div class="stat-icon-wrapper">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="stat-value">{{ cotisations_count }}</div>
+            <div class="stat-label">{% trans "Cotisations Sociales" %}</div>
+        </div>
+    </div>
+
+    <!-- Section Cotisations Sociales -->
+    <div class="row animated-item" style="animation-delay: 0.2s;">
+        <div class="col-12">
+            <div class="card enhanced-card">
+                <div class="card-header card-header-gradient">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0 text-white">
+                            <i class="fas fa-shield-alt me-2"></i>{% trans "Cotisations Sociales Associées" %}
+                            <span class="badge bg-white text-primary ms-2">{{ cotisations_count }}</span>
+                        </h5>
+                        <div>
+                            <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addCotisationModal">
+                                <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter une cotisation" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche premium -->
+                    <div class="search-controls">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchCotisationInput" 
+                                       placeholder="Rechercher par numéro ou date d'affiliation...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-action" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>{% trans "Effacer" %}
+                        </button>
+                    </div>
+
+                    {% if cotisations %}
+                        <!-- Grille des cotisations -->
+                        <div class="cotisations-grid" id="cotisationsContainer">
+                            {% for cotisation in cotisations %}
+                                <div class="cotisation-card" data-id="{{ cotisation.id }}">
+                                    <div class="cotisation-header">
+                                        <div class="d-flex align-items-start w-100">
+                                            <div class="cotisation-avatar">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                            <div class="cotisation-info">
+                                                <div class="cotisation-number-display">
+                                                    {{ cotisation.numero|default:"N/A" }}
+                                                </div>
+                                                <div class="cotisation-label">
+                                                    Numéro de sécurité sociale
+                                                </div>
+                                                {% if cotisation.date_affiliation %}
+                                                <div class="date-badge mt-2">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    Affiliation: {{ cotisation.date_affiliation|date:"d/m/Y" }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="cotisation-actions">
+                                            <button class="action-btn btn-edit edit-cotisation-btn" 
+                                                    data-id="{{ cotisation.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-btn btn-delete delete-cotisation-btn" 
+                                                    data-id="{{ cotisation.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Métadonnées -->
+                                    <div class="cotisation-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Ajouté le: {{ cotisation.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-sync-alt"></i>
+                                            <span>Màj: {{ cotisation.updated_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide premium -->
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h4 class="fw-bold mb-2">{% trans "Aucune cotisation sociale" %}</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de cotisation sociale associée.<br>
+                                La cotisation sociale est le numéro d'affiliation à la sécurité sociale de l'entreprise.
+                            </p>
+                            <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCotisationModal">
+                                <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter la première cotisation" %}
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Cotisation Premium -->
+<div class="modal fade" id="addCotisationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Cotisation Sociale" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCotisationForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="numeroCotisation" class="form-label">
+                            <i class="fas fa-id-card"></i>{% trans "Numéro de sécurité sociale" %}
+                            <span class="badge-premium badge-primary ms-2">{% trans "Obligatoire" %}</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="numeroCotisation" 
+                               name="numero"
+                               placeholder="Ex: 1 85 08 75 115 035 29"
+                               required
+                               maxlength="255">
+                        <div class="form-text">
+                            Saisissez le numéro de sécurité sociale de l'entreprise
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dateAffiliation" class="form-label">
+                            <i class="fas fa-calendar-alt"></i>{% trans "Date d'affiliation" %}
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="dateAffiliation" 
+                               name="date_affiliation"
+                               placeholder="Sélectionner une date"
+                               data-date-format="Y-m-d">
+                        <div class="form-text">
+                            Date d'affiliation à la sécurité sociale (optionnel)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="couleurCommentaireCotisation" class="form-label">
+                            <i class="fas fa-palette"></i>{% trans "Couleur commentaire" %}
+                        </label>
+                        <select class="form-select" id="couleurCommentaireCotisation" name="couleur_commentaire">
+                            <option value="">{% trans "Aucune" %}</option>
+                            {% for c in coloration_list %}
+                            <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="commentaireCotisation" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire interne" %}
+                        </label>
+                        <textarea class="form-control" id="commentaireCotisation" name="commentaire" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-action" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>{% trans "Ajouter" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Cotisation Premium -->
+<div class="modal fade" id="editCotisationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier la Cotisation Sociale" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCotisationForm" class="enhanced-form">
+                <input type="hidden" id="editCotisationId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNumeroCotisation" class="form-label">
+                            <i class="fas fa-id-card"></i>{% trans "Numéro de sécurité sociale" %}
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="editNumeroCotisation" 
+                               name="numero"
+                               placeholder="Ex: 1 85 08 75 115 035 29"
+                               required
+                               maxlength="255">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDateAffiliation" class="form-label">
+                            <i class="fas fa-calendar-alt"></i>{% trans "Date d'affiliation" %}
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="editDateAffiliation" 
+                               name="date_affiliation"
+                               placeholder="Sélectionner une date"
+                               data-date-format="Y-m-d">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaireCotisation" class="form-label">
+                            <i class="fas fa-palette"></i>{% trans "Couleur commentaire" %}
+                        </label>
+                        <select class="form-select" id="editCouleurCommentaireCotisation" name="couleur_commentaire">
+                            <option value="">{% trans "Aucune" %}</option>
+                            {% for c in coloration_list %}
+                            <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCommentaireCotisation" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire interne" %}
+                        </label>
+                        <textarea class="form-control" id="editCommentaireCotisation" name="commentaire" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="cotisation-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>{% trans "Créé le:" %} <span id="editCreatedAtInfo"></span></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>{% trans "Dernière Màj:" %} <span id="editUpdatedAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--danger-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="empty-state-icon mb-3" style="width: 80px; height: 80px; font-size: 2rem; background: var(--danger-gradient); margin: 0 auto;">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h6 class="fw-bold" style="color: var(--color-danger);">{% trans "Supprimer la cotisation sociale" %}</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette cotisation sociale ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="mt-3 p-3" style="background: rgba(220, 53, 69, 0.05); border-radius: 12px;">
+                    <div class="fw-medium text-dark" id="deleteNumeroInfo"></div>
+                    <div class="small text-muted mt-1" id="deleteDateInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/cotisations-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentCotisationId = null;
+
+    // Initialiser les tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialiser Flatpickr pour les dates
+    flatpickr('.flatpickr-input', {
+        dateFormat: 'Y-m-d',
+        locale: 'fr',
+        allowInput: true,
+        disableMobile: true,
+        altInput: true,
+        altFormat: 'd/m/Y',
+        static: true,
+        theme: 'light',
+        onChange: function(selectedDates, dateStr, instance) {
+            instance.altInput.classList.add('input-valid');
+        }
+    });
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'Non spécifiée';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    // Fonction pour formater la date et heure
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-FR');
+    }
+
+    // Charger les cotisations sociales
+    function loadCotisations(search = '') {
+        if (search) {
+            let url = API_BASE_URL;
+            url += `?search=${encodeURIComponent(search)}`;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    const container = $('#cotisationsContainer');
+                    const emptyState = $('.empty-state');
+                    const statsCards = $('.stats-cards');
+                    
+                    if (response.results && response.results.length > 0) {
+                        // Cacher l'état vide
+                        if (emptyState.length) {
+                            emptyState.hide();
+                        }
+                        
+                        // Afficher les cotisations
+                        let html = '';
+                        
+                        response.results.forEach(function(cotisation) {
+                            const numero = cotisation.numero || 'N/A';
+                            const dateAffiliation = cotisation.date_affiliation ? formatDate(cotisation.date_affiliation) : null;
+                            const commentaire = cotisation.commentaire || '';
+                            const createdAt = formatDateTime(cotisation.created_at);
+                            const updatedAt = formatDateTime(cotisation.updated_at);
+                            
+                            html += `
+                            <div class="cotisation-card animated-item" data-id="${cotisation.id}" style="animation-delay: ${Math.random() * 0.3}s;">
+                                <div class="cotisation-header">
+                                    <div class="d-flex align-items-start w-100">
+                                        <div class="cotisation-avatar">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="cotisation-info">
+                                            <div class="cotisation-number-display">
+                                                ${numero}
+                                            </div>
+                                            <div class="cotisation-label">
+                                                Numéro de sécurité sociale
+                                            </div>
+                                            ${dateAffiliation ? `
+                                            <div class="date-badge mt-2">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Affiliation: ${dateAffiliation}
+                                            </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="cotisation-actions">
+                                        <button class="action-btn btn-edit edit-cotisation-btn" 
+                                                data-id="${cotisation.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn btn-delete delete-cotisation-btn" 
+                                                data-id="${cotisation.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="cotisation-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>Ajouté le: ${createdAt}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <span>Màj: ${updatedAt}</span>
+                                    </div>
+                                </div>
+
+                                ${commentaire ? `
+                                <div class="mt-2 small text-muted">
+                                    <i class="fas fa-comment-dots me-1"></i>${commentaire}
+                                </div>` : ''}
+                            </div>`;
+                        });
+                        
+                        container.html(html);
+                        
+                        // Réinitialiser les tooltips
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                        
+                        // Mettre à jour les statistiques
+                        if (statsCards.length) {
+                            statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                        }
+                        
+                    } else {
+                        // Afficher l'état vide
+                        if (!emptyState.length) {
+                            container.html(`
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <h4 class="fw-bold mb-2">Aucune cotisation trouvée</h4>
+                                    <p class="text-muted mb-4">
+                                        Aucune cotisation sociale ne correspond à votre recherche.
+                                    </p>
+                                </div>
+                            `);
+                        } else {
+                            emptyState.show();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement:', xhr);
+                    showError('Erreur', 'Impossible de charger les cotisations sociales.');
+                }
+            });
+        }
+    }
+
+    // Recherche de cotisations
+    $('#searchCotisationInput').on('input', function() {
+        const search = $(this).val();
+        loadCotisations(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchCotisationInput').val('');
+        loadCotisations();
+    });
+    
+    // Formulaire d'ajout
+    $('#addCotisationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            numero: $('#numeroCotisation').val().trim(),
+            date_affiliation: $('#dateAffiliation').val() || null,
+            couleur_commentaire: $('#couleurCommentaireCotisation').val() || null,
+            commentaire: $('#commentaireCotisation').val().trim() || null,
+            acheteur: ACHETEUR_ID
+        };
+        
+        if (!formData.numero) {
+            showError('Champ requis', 'Le numéro de sécurité sociale est obligatoire.');
+            return;
+        }
+        
+        submitForm('POST', formData, '#submitAddBtn', '#addCotisationModal');
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-cotisation-btn', function() {
+        const cotisationId = $(this).data('id');
+        currentCotisationId = cotisationId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${cotisationId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editCotisationId').val(response.id);
+                $('#editNumeroCotisation').val(response.numero);
+                
+                // Définir la date d'affiliation
+                if (response.date_affiliation) {
+                    $('#editDateAffiliation').flatpickr().setDate(response.date_affiliation, false);
+                } else {
+                    $('#editDateAffiliation').flatpickr().clear();
+                }
+                $('#editCouleurCommentaireCotisation').val(response.couleur_commentaire || '');
+                $('#editCommentaireCotisation').val(response.commentaire || '');
+                
+                // Pré-remplir les dates
+                $('#editCreatedAtInfo').text(formatDateTime(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
+                
+                $('#editCotisationModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(this).click();
+                    });
+                } else {
+                    showError('Erreur', 'Impossible de charger les détails de la cotisation sociale.');
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editCotisationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentCotisationId) return;
+        
+        const formData = {
+            numero: $('#editNumeroCotisation').val().trim(),
+            date_affiliation: $('#editDateAffiliation').val() || null,
+            couleur_commentaire: $('#editCouleurCommentaireCotisation').val() || null,
+            commentaire: $('#editCommentaireCotisation').val().trim() || null
+        };
+        
+        if (!formData.numero) {
+            showError('Champ requis', 'Le numéro de sécurité sociale est obligatoire.');
+            return;
+        }
+        
+        submitForm('PUT', formData, '#submitEditBtn', '#editCotisationModal', currentCotisationId);
+    });
+    
+    // Fonction générique de soumission
+    function submitForm(method, data, submitBtn, modalId, cotisationId = null) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const url = cotisationId ? 
+            `${API_BASE_URL}${cotisationId}/` : 
+            API_BASE_URL;
+
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $(modalId).modal('hide');
+                $(`${modalId} form`)[0].reset();
+                
+                showSuccess('Succès', response.message, () => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'opération';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.numero) {
+                        errorMessage = Array.isArray(xhr.responseJSON.numero) ? 
+                            xhr.responseJSON.numero.join('\n') : xhr.responseJSON.numero;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitForm(method, data, submitBtn, modalId, cotisationId);
+                    });
+                } else {
+                    showError('Erreur', errorMessage);
+                }
+            }
+        });
+    }
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-cotisation-btn', function() {
+        const cotisationId = $(this).data('id');
+        const card = $(this).closest('.cotisation-card');
+        const numero = card.find('.cotisation-number-display').text();
+        const dateBadge = card.find('.date-badge');
+        const date = dateBadge.length ? dateBadge.text().replace('Affiliation: ', '') : 'Date non spécifiée';
+        
+        currentCotisationId = cotisationId;
+        $('#deleteNumeroInfo').text(numero);
+        $('#deleteDateInfo').text(date);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentCotisationId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCotisationId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                showSuccess('Succès', response.message, () => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    showError('Erreur', xhr.responseJSON?.detail || 'Impossible de supprimer la cotisation sociale');
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                showSessionExpired();
+            }
+        });
+    }
+    
+    // Fonctions d'affichage de messages
+    function showSuccess(title, message, callback = null) {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            timer: 2000,
+            showConfirmButton: false,
+            background: 'var(--color-background)',
+            color: 'var(--color-text)'
+        }).then(() => {
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+    
+    function showError(title, message) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            html: message.replace(/\n/g, '<br>'),
+            background: 'var(--color-background)',
+            color: 'var(--color-text)',
+            confirmButtonColor: 'var(--color-primary)'
+        });
+    }
+    
+    function showSessionExpired() {
+        Swal.fire({
+            icon: 'error',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Veuillez vous reconnecter.',
+            showCancelButton: true,
+            confirmButtonText: 'Se reconnecter',
+            cancelButtonText: 'Annuler',
+            background: 'var(--color-background)',
+            color: 'var(--color-text)',
+            confirmButtonColor: 'var(--color-primary)',
+            cancelButtonColor: 'var(--color-text-muted)'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Animation d'apparition initiale
+    $('.animated-item').each(function(index) {
+        $(this).css('animation-delay', (index * 0.1) + 's');
+    });
+});
+</script>
+{% endblock %}

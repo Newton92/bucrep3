@@ -1,0 +1,1011 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+}
+
+/* Carte de statistiques améliorée */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.stat-card.capital::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
+.stat-card.ca::before { background: linear-gradient(to bottom, #28a745, #20c997); }
+.stat-card.resultat::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.stat-card.employes::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-card.capital .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-card.ca .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-card.resultat .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-card.employes .stat-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-devise {
+    font-size: 0.75rem;
+    color: #0A95CA;
+    font-weight: 600;
+    background: rgba(10, 149, 202, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Boutons améliorés */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Formulaire amélioré */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3rem;
+}
+
+/* Commentaire coloré */
+.colored-comment {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid;
+    position: relative;
+}
+
+.colored-comment::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Badge de couleur */
+.color-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.color-badge::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-contract text-primary me-2"></i>Résumé Financier
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion du résumé financier pour l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if resume %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editResumeModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter un résumé
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2 text-warning">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Résumé Financier -->
+    {% if resume %}
+    <div class="card enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Statistiques -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card capital">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.capital_social|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Capital Social</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card ca">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.chiffre_affaire|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Chiffre d'Affaires</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card resultat">
+                        <div class="stat-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-value {% if resume.resultat_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ resume.resultat_net|intcomma|default:"-" }}
+                        </div>
+                        <div class="stat-label">Résultat Net</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card employes">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.nombre_employe|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Employés</div>
+                        <span class="stat-devise">personnes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations supplémentaires -->
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-calendar me-2 text-primary"></i>Informations temporelles
+                            </h6>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Date de création de l'entreprise</small>
+                                <span class="fw-medium">{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Dernière mise à jour</small>
+                                <span class="fw-medium">{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    {% if resume.commentaire %}
+                    <div class="colored-comment" style="border-left-color: {{ resume.couleur_commentaire.code|default:'#6c757d' }};">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-comment-dots me-2"></i>Commentaire
+                        </h6>
+                        <p class="mb-0">{{ resume.commentaire }}</p>
+                        {% if resume.couleur_commentaire %}
+                        <div class="mt-3">
+                            <span class="color-badge" style="color: {{ resume.couleur_commentaire.code }}; background: {{ resume.couleur_commentaire.code }}20;">
+                                {{ resume.couleur_commentaire.couleur }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 border rounded bg-light">
+                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Aucun commentaire</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-file-contract empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucun résumé financier</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de résumé financier.<br>
+                    Créez-en un pour commencer à suivre ses performances.
+                </p>
+                <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                    <i class="fas fa-plus-circle me-2"></i>Créer le premier résumé
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Résumé -->
+<div class="modal fade" id="addResumeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Résumé Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addResumeForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="capital_social" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-money-bill-wave"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="capital_social" name="capital_social" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Montant du capital social de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="chiffre_affaire" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-chart-line"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="chiffre_affaire" name="chiffre_affaire" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Chiffre d'affaires annuel</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="resultat_net" class="form-label">
+                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calculator"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="resultat_net" name="resultat_net" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Résultat net après impôts</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="capitaux_propre" class="form-label">
+                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hand-holding-usd"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="capitaux_propre" name="capitaux_propre" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Total des capitaux propres</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="nombre_employe" class="form-label">
+                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-users"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="nombre_employe" name="nombre_employe" 
+                                           min="0" placeholder="0" required>
+                                </div>
+                                <small class="form-text text-muted">Effectif total de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_creation" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_creation" name="date_creation" required>
+                                </div>
+                                <small class="form-text text-muted">Date de création de l'entreprise</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="devise" class="form-label">
+                                    <i class="fas fa-globe text-info"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="devise" name="devise" required>
+                                    <option value="">Sélectionnez une devise</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-code="{{ devise.code }}">
+                                        {{ devise.nom }} ({{ devise.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Devise utilisée pour les montants</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-color" id="couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
+                                        <span style="color: {{ coloration.code }}">●</span> {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Couleur associée au commentaire</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="4" placeholder="Ajoutez un commentaire décrivant la situation financière..."></textarea>
+                        <small class="form-text text-muted">Commentaire libre sur la situation financière</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Créer le résumé
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification de Résumé -->
+<div class="modal fade" id="editResumeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Résumé Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editResumeForm" class="enhanced-form">
+                <input type="hidden" id="edit_resume_id" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_capital_social" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-money-bill-wave"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_capital_social" name="capital_social" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_chiffre_affaire" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-chart-line"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_chiffre_affaire" name="chiffre_affaire" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_resultat_net" class="form-label">
+                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calculator"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_resultat_net" name="resultat_net" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_capitaux_propre" class="form-label">
+                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hand-holding-usd"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_capitaux_propre" name="capitaux_propre" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_nombre_employe" class="form-label">
+                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-users"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_nombre_employe" name="nombre_employe" 
+                                           min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_date_creation" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="edit_date_creation" name="date_creation" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_devise" class="form-label">
+                                    <i class="fas fa-globe text-info"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="edit_devise" name="devise" required>
+                                    <option value="">Sélectionnez une devise</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-code="{{ devise.code }}">
+                                        {{ devise.nom }} ({{ devise.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-color" id="edit_couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
+                                        <span style="color: {{ coloration.code }}">●</span> {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_commentaire" class="form-label">
+                            <i class="fas fa-comment text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="edit_commentaire" name="commentaire" 
+                                  rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le résumé financier</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer ce résumé ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/resume/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    let currentResume = null;
+
+    // Fonction pour formater les options (devise, couleur, etc.)
+    function formatOption(option) {
+        if (!option.id) return option.text;
+        const $option = $(`
+            <span>
+                ${option.element.dataset.color ? `<span style="color: ${option.element.dataset.color}; margin-right: 8px;">●</span>` : ''}
+                ${option.element.dataset.code ? `<span class="float-end text-muted">${option.element.dataset.code}</span>` : ''}
+                ${option.text}
+            </span>
+        `);
+        return $option;
+    }
+
+    // Fonction pour formater la sélection
+    function formatOptionSelection(option) {
+        if (!option.id) return option.text;
+        return option.text.replace(/<[^>]*>/g, '');
+    }
+
+    // Initialisation de Select2
+    function initSelect2() {
+        $('.select2-with-search, .select2-with-color').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10, // Active la recherche dès 10 résultats
+            dropdownParent: $('body'), // Pour les modales
+            templateResult: formatOption,
+            templateSelection: formatOptionSelection,
+            escapeMarkup: function(m) { return m; }
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addResumeModal, #editResumeModal').on('shown.bs.modal', function() {
+        initSelect2();
+    });
+
+    // Charger les données du résumé
+    function loadResumeData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response && !response.message) {
+                    currentResume = response;
+                    populateEditForm(response);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status !== 404) {
+                    showError('Erreur', 'Impossible de charger les données du résumé');
+                }
+            }
+        });
+    }
+
+    // Remplir le formulaire d'édition
+    function populateEditForm(resume) {
+        if (!resume) return;
+
+        $('#edit_resume_id').val(resume.id);
+        $('#edit_capital_social').val(resume.capital_social || '');
+        $('#edit_chiffre_affaire').val(resume.chiffre_affaire || '');
+        $('#edit_resultat_net').val(resume.resultat_net || '');
+        $('#edit_capitaux_propre').val(resume.capitaux_propre || '');
+        $('#edit_nombre_employe').val(resume.nombre_employe || '');
+        $('#edit_date_creation').val(resume.date_creation || '');
+
+        // Sélectionner la devise et la couleur dans les Select2
+        if (resume.devise) {
+            $('#edit_devise').val(resume.devise.id).trigger('change');
+        }
+        if (resume.couleur_commentaire) {
+            $('#edit_couleur_commentaire').val(resume.couleur_commentaire.id).trigger('change');
+        }
+
+        $('#edit_commentaire').val(resume.commentaire || '');
+    }
+
+    // Formulaire d'ajout
+    $('#addResumeForm').on('submit', function(e) {
+        e.preventDefault();
+        submitResumeForm('POST', $(this).serialize(), '#submitAddBtn', 'addResumeModal');
+    });
+
+    // Formulaire de modification
+    $('#editResumeForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        submitResumeForm('POST', formData, '#submitEditBtn', 'editResumeModal');
+    });
+
+    // Soumission du formulaire
+    function submitResumeForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                $('#' + modalId).modal('hide');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: method === 'POST' ? 'Résumé créé avec succès' : 'Résumé modifié avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    errorMessage = Object.values(xhr.responseJSON).join('\n');
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    }
+
+    // Suppression du résumé
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Résumé supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de supprimer le résumé'
+                });
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Charger les données au démarrage
+    loadResumeData();
+});
+
+</script>
+{% endblock %}

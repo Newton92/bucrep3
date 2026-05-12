@@ -1,0 +1,629 @@
+{% load i18n %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access_token }}';
+    const refreshToken = '{{ refresh_token }}';
+    let selectedActifId = null;
+    let actifChart = null;
+
+    // Formater les nombres
+    function formatNumber(num, decimals = 0) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+
+    function formatCurrency(num) {
+        return formatNumber(num) + ' FCFA';
+    }
+
+    // Rafraîchir le token d'accès
+    function refreshAccessToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: refreshToken }),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.access) {
+                    accessToken = response.access;
+                    console.log('Token rafraîchi avec succès');
+                }
+            },
+            error: function() {
+                console.error("Échec du rafraîchissement automatique du jeton.");
+            }
+        });
+    }
+
+    // Rafraîchir automatiquement le token toutes les 4 minutes
+    setInterval(refreshAccessToken, 240000);
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializeActifCCalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            
+            // Calcul de l'Actif Immobilisé
+            const totalIncorporel = p($(`input[name="frais_recherche_developpement_${suffix}"]`).val()) + 
+                                  p($(`input[name="brevet_licence_logiciels_${suffix}"]`).val()) + 
+                                  p($(`input[name="fonds_commercial_${suffix}"]`).val()) + 
+                                  p($(`input[name="autres_immobilisations_incorporelles_${suffix}"]`).val());
+            
+            const totalCorporel = p($(`input[name="terrains_${suffix}"]`).val()) + 
+                                 p($(`input[name="constructions_${suffix}"]`).val()) + 
+                                 p($(`input[name="materiels_et_outils_${suffix}"]`).val()) + 
+                                 p($(`input[name="materiel_de_transport_${suffix}"]`).val()) + 
+                                 p($(`input[name="autres_immos_corp_${suffix}"]`).val()) + 
+                                 p($(`input[name="immos_en_cours_${suffix}"]`).val()) + 
+                                 p($(`input[name="avances_et_acptes_${suffix}"]`).val());
+            
+            const totalFinancier = p($(`input[name="participations_${suffix}"]`).val()) + 
+                                  p($(`input[name="prets_${suffix}"]`).val()) + 
+                                  p($(`input[name="autres_${suffix}"]`).val());
+            
+            const totalI = totalIncorporel + totalCorporel + totalFinancier;
+            
+            // Calcul de l'Actif Circulant
+            const totalStocks = p($(`input[name="stocks_mp_${suffix}"]`).val()) + 
+                               p($(`input[name="stocks_encours_mp_${suffix}"]`).val()) + 
+                               p($(`input[name="stocks_pf_${suffix}"]`).val()) + 
+                               p($(`input[name="stocks_encours_pf_${suffix}"]`).val()) + 
+                               p($(`input[name="stocks_encours_services_${suffix}"]`).val()) + 
+                               p($(`input[name="stocks_mses_${suffix}"]`).val());
+            
+            const totalCreances = p($(`input[name="avances_acptes_verses_${suffix}"]`).val()) + 
+                                 p($(`input[name="clients_et_cptes_rattaches_${suffix}"]`).val()) + 
+                                 p($(`input[name="autres_creances_${suffix}"]`).val());
+            
+            const totalDispos = p($(`input[name="valeurs_a_encaisser_${suffix}"]`).val()) + 
+                               p($(`input[name="banques_cheques_postaux_caisse_${suffix}"]`).val());
+            
+            const totalII = totalStocks + totalCreances + totalDispos;
+
+            // Calcul des Comptes de Régularisation
+            const totalRegul = p($(`input[name="cca_${suffix}"]`).val()) + 
+                             p($(`input[name="charges_a_repartir_et_frais_etablissement_${suffix}"]`).val()) + 
+                             p($(`input[name="primes_de_rbt_${suffix}"]`).val());
+            
+            const totalIII = totalRegul;
+
+            const generalTotal = totalI + totalII + totalIII;
+            
+            // Mettre à jour les totaux
+            $(`#total_I_${suffix}`).val(formatCurrency(totalI));
+            $(`#total_II_${suffix}`).val(formatCurrency(totalII));
+            $(`#total_III_${suffix}`).val(formatCurrency(totalIII));
+            $(`#general_total_${suffix}`).val(formatCurrency(generalTotal));
+            
+            // Mettre à jour le badge de l'accordéon
+            $(`#actifYearTotal${suffix}`).text(formatCurrency(generalTotal));
+            
+            return generalTotal;
+        }
+
+        // Écouter les changements dans les inputs
+        $(`#collapseActifC${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        
+        // Calculer les totaux initiaux
+        calculateTotalsForYear();
+    }
+
+    // Initialiser pour chaque suffixe
+    ['n', 'n1', 'n2'].forEach(suffix => initializeActifCCalculations(suffix));
+
+    // --- SOUMISSION DU FORMULAIRE MULTI-ANNÉES ---
+    $('#form-actifs-c-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const btn = $('#btn-submit-form-actifc');
+        const originalText = btn.html();
+        
+        btn.prop('disabled', true);
+        btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/{{ acheteur.id }}/bilan-classique/ajouter-actif-multi-annee/`,
+            type: 'POST',
+            data: form.serialize(),
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                btn.prop('disabled', false);
+                btn.html(originalText);
+                
+                // Réinitialiser le formulaire
+                form[0].reset();
+                $('select[name$="_annee"]').val(null).trigger('change');
+                
+                // Fermer tous les accordéons
+                $('.accordion-collapse.show').removeClass('show');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès !',
+                    text: 'Actifs enregistrés avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Recharger la page pour voir les nouveaux enregistrements
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false);
+                btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'enregistrement';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    });
+
+    // --- RÉINITIALISATION DU FORMULAIRE ---
+    $('#btn-reset-form-actifc').on('click', function() {
+        Swal.fire({
+            title: 'Réinitialiser le formulaire ?',
+            text: 'Toutes les données saisies seront perdues.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#form-actifs-c-multi-annee')[0].reset();
+                $('select[name$="_annee"]').val(null).trigger('change');
+                
+                // Réinitialiser les totaux
+                ['n', 'n1', 'n2'].forEach(suffix => {
+                    $(`#total_I_${suffix}`).val(formatCurrency(0));
+                    $(`#total_II_${suffix}`).val(formatCurrency(0));
+                    $(`#total_III_${suffix}`).val(formatCurrency(0));
+                    $(`#general_total_${suffix}`).val(formatCurrency(0));
+                    $(`#actifYearTotal${suffix}`).text(formatCurrency(0));
+                });
+            }
+        });
+    });
+
+    // --- MODAL DE VUE DÉTAILLÉE ---
+    $(document).on('click', '.view-actif-btn, .btn-view-actifc', function() {
+        selectedActifId = $(this).data('id');
+        
+        const loader = $('#modal-actifc-loader');
+        const content = $('#actifc-details-content');
+        
+        loader.show();
+        content.hide();
+        
+        $.ajax({
+            url: `/api/acheteur/{{ acheteur.id }}/bilan-classique/get-actif/${selectedActifId}/`,
+            headers: { 
+                'Authorization': 'Bearer ' + accessToken 
+            },
+            success: function(data) {
+                // Mettre à jour l'en-tête
+                $('#modal-actifc-acheteur').text(data.acheteur.nom);
+                $('#modal-actifc-annee').text(data.annee.annee);
+                $('#actifc-date-updated').text('Mis à jour le: ' + new Date().toLocaleDateString('fr-FR'));
+                
+                // Calculer les totaux et pourcentages
+                const totalGeneral = parseFloat(data.general_total) || 0;
+                
+                // Fonction pour calculer le pourcentage
+                const calcPercent = (value) => {
+                    if (totalGeneral === 0) return '0.00';
+                    return ((parseFloat(value || 0) / totalGeneral) * 100).toFixed(2);
+                };
+                
+                // Remplir les données avec pourcentages
+                const fields = [
+                    'frais_recherche_developpement', 'brevet_licence_logiciels', 'fonds_commercial',
+                    'autres_immobilisations_incorporelles', 'terrains', 'constructions',
+                    'materiels_et_outils', 'materiel_de_transport', 'autres_immos_corp',
+                    'immos_en_cours', 'avances_et_acptes', 'participations', 'prets', 'autres',
+                    'stocks_mp', 'stocks_encours_mp', 'stocks_pf', 'stocks_encours_pf',
+                    'stocks_encours_services', 'stocks_mses', 'avances_acptes_verses',
+                    'clients_et_cptes_rattaches', 'autres_creances', 'valeurs_a_encaisser',
+                    'banques_cheques_postaux_caisse', 'cca', 'charges_a_repartir_et_frais_etablissement',
+                    'primes_de_rbt'
+                ];
+                
+                fields.forEach(field => {
+                    $(`#modal-actifc-${field}`).text(formatCurrency(data[field]));
+                    $(`#modal-actifc-${field}_percent`).text(calcPercent(data[field]) + '%');
+                });
+                
+                // Calculer et afficher les sous-totaux
+                const elementsIncorporels = parseFloat(data.frais_recherche_developpement || 0) + 
+                                           parseFloat(data.brevet_licence_logiciels || 0) + 
+                                           parseFloat(data.fonds_commercial || 0) + 
+                                           parseFloat(data.autres_immobilisations_incorporelles || 0);
+                
+                const elementsCorporels = parseFloat(data.terrains || 0) + 
+                                         parseFloat(data.constructions || 0) + 
+                                         parseFloat(data.materiels_et_outils || 0) + 
+                                         parseFloat(data.materiel_de_transport || 0) + 
+                                         parseFloat(data.autres_immos_corp || 0) + 
+                                         parseFloat(data.immos_en_cours || 0) + 
+                                         parseFloat(data.avances_et_acptes || 0);
+                
+                const elementsFinanciers = parseFloat(data.participations || 0) + 
+                                          parseFloat(data.prets || 0) + 
+                                          parseFloat(data.autres || 0);
+                
+                const stocks = parseFloat(data.stocks_mp || 0) + 
+                              parseFloat(data.stocks_encours_mp || 0) + 
+                              parseFloat(data.stocks_pf || 0) + 
+                              parseFloat(data.stocks_encours_pf || 0) + 
+                              parseFloat(data.stocks_encours_services || 0) + 
+                              parseFloat(data.stocks_mses || 0);
+                
+                const creances = parseFloat(data.avances_acptes_verses || 0) + 
+                                parseFloat(data.clients_et_cptes_rattaches || 0) + 
+                                parseFloat(data.autres_creances || 0);
+                
+                const disponibilites = parseFloat(data.valeurs_a_encaisser || 0) + 
+                                      parseFloat(data.banques_cheques_postaux_caisse || 0);
+                
+                // Mettre à jour les sous-totaux
+                $('#modal-actifc-elements_incorporels').text(formatCurrency(elementsIncorporels));
+                $('#modal-actifc-elements_corporels').text(formatCurrency(elementsCorporels));
+                $('#modal-actifc-elements_financiers').text(formatCurrency(elementsFinanciers));
+                $('#modal-actifc-stocks').text(formatCurrency(stocks));
+                $('#modal-actifc-creances').text(formatCurrency(creances));
+                $('#modal-actifc-disponibilites_vmp').text(formatCurrency(disponibilites));
+                
+                // Mettre à jour les pourcentages des sous-totaux
+                $('#modal-actifc-elements_incorporels_percent').text(calcPercent(elementsIncorporels) + '%');
+                $('#modal-actifc-elements_corporels_percent').text(calcPercent(elementsCorporels) + '%');
+                $('#modal-actifc-elements_financiers_percent').text(calcPercent(elementsFinanciers) + '%');
+                $('#modal-actifc-stocks_percent').text(calcPercent(stocks) + '%');
+                $('#modal-actifc-creances_percent').text(calcPercent(creances) + '%');
+                $('#modal-actifc-disponibilites_vmp_percent').text(calcPercent(disponibilites) + '%');
+                
+                // Mettre à jour les totaux généraux
+                $('#total-actifc-I').text(formatCurrency(data.total_I));
+                $('#total-actifc-II').text(formatCurrency(data.total_II));
+                $('#total-actifc-III').text(formatCurrency(data.total_III));
+                $('#total-general-actifc').text(formatCurrency(data.general_total));
+                $('#total-general-actifc-detail').text(formatCurrency(data.general_total));
+                
+                $('#total-actifc-I_percent').text(calcPercent(data.total_I) + '%');
+                $('#total-actifc-II_percent').text(calcPercent(data.total_II) + '%');
+                $('#total-actifc-III_percent').text(calcPercent(data.total_III) + '%');
+                
+                // Mettre à jour le graphique
+                updateActifChart(data.total_I, data.total_II, data.total_III);
+                
+                loader.hide();
+                content.show();
+                
+                // Afficher le modal
+                $('#modal-view-actifc').modal('show');
+            },
+            error: function(xhr) {
+                loader.hide();
+                content.html(`
+                    <div class="alert alert-danger text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5 class="text-danger">Erreur de chargement</h5>
+                        <p class="text-muted">Impossible de charger les détails de l'actif.</p>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="$('#modal-view-actifc').modal('hide')">
+                            Fermer
+                        </button>
+                    </div>
+                `).show();
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                }
+            }
+        });
+    });
+
+    // --- GRAPHIQUE DE RÉPARTITION ---
+    function updateActifChart(actifImmobilise, actifCirculant, comptesRegul) {
+        const ctx = document.getElementById('actifChart').getContext('2d');
+        
+        // Détruire le graphique existant s'il y en a un
+        if (actifChart) {
+            actifChart.destroy();
+        }
+        
+        const data = {
+            labels: ['Actif Immobilisé', 'Actif Circulant', 'Comptes de Régularisation'],
+            datasets: [{
+                data: [actifImmobilise, actifCirculant, comptesRegul],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(23, 162, 184, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(40, 167, 69)',
+                    'rgb(255, 193, 7)',
+                    'rgb(23, 162, 184)'
+                ],
+                borderWidth: 2
+            }]
+        };
+        
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        };
+        
+        actifChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: options
+        });
+        
+        // Mettre à jour la légende
+        const legend = $('#actifLegend');
+        legend.empty();
+        
+        const labels = data.labels;
+        const colors = data.datasets[0].backgroundColor;
+        
+        labels.forEach((label, index) => {
+            const value = data.datasets[0].data[index];
+            if (value > 0) {
+                legend.append(`
+                    <div class="legend-item-small mb-2">
+                        <span class="legend-dot" style="background-color: ${colors[index]}"></span>
+                        <span class="fw-medium">${label}</span>
+                        <small class="text-muted ms-auto">${formatCurrency(value)}</small>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // --- MODIFICATION D'ACTIF ---
+    $(document).on('click', '.edit-actif-btn, .btn-edit-actifc, #editActifDetailBtn', function() {
+        if (!selectedActifId && $(this).data('id')) {
+            selectedActifId = $(this).data('id');
+        }
+        
+        if (!selectedActifId) return;
+        
+        loadActifForEdit(selectedActifId);
+    });
+
+    function loadActifForEdit(actifId) {
+        $('#modal-edit-actifc').modal('show');
+        
+        $.ajax({
+            url: `/api/acheteur/{{ acheteur.id }}/bilan-classique/get-actif/${actifId}/`,
+            headers: { 
+                'Authorization': 'Bearer ' + accessToken 
+            },
+            success: function(data) {
+                // Construire le formulaire d'édition
+                const formHtml = buildEditActifForm(data);
+                $('#form-edit-actifc .modal-body').html(formHtml);
+                
+                // Initialiser Select2
+                $('.select2-with-search').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Sélectionnez une option',
+                    language: 'fr',
+                    allowClear: true
+                });
+                
+                // Calculer les totaux initiaux
+                updateEditActifTotals();
+                
+                // Configurer les écouteurs
+                $('#form-edit-actifc').on('input', 'input[type="number"]', updateEditActifTotals);
+                
+            },
+            error: function(xhr) {
+                $('#form-edit-actifc .modal-body').html(`
+                    <div class="alert alert-danger text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h5 class="text-danger">Erreur de chargement</h5>
+                        <p class="text-muted">Impossible de charger les données pour modification.</p>
+                    </div>
+                `);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                }
+            }
+        });
+    }
+
+    function buildEditActifForm(data) {
+        return `
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                Modifiez les valeurs ci-dessous, les totaux sont calculés automatiquement.
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="edit_annee" class="form-label">
+                        <i class="fas fa-calendar-alt"></i>Année
+                    </label>
+                    <select name="annee" id="edit_annee" class="form-select select2-with-search" required>
+                        <option value="">Sélectionner une année...</option>
+                        {% for annee in annee_list %}
+                            <option value="{{ annee.id }}" ${data.annee.id == '{{ annee.id }}' ? 'selected' : ''}>
+                                {{ annee.annee }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="badge bg-success p-3 w-100">
+                        <i class="fas fa-wallet me-2"></i>
+                        Total actuel: <span id="currentActifTotal">${formatCurrency(data.general_total)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Le reste du formulaire serait similaire au formulaire de création mais avec des valeurs pré-remplies -->
+            <div class="text-center">
+                <p class="text-muted">Le formulaire d'édition complet serait chargé ici...</p>
+                <button type="button" class="btn btn-primary" onclick="loadFullEditForm()">
+                    <i class="fas fa-sync me-2"></i>Charger le formulaire complet
+                </button>
+            </div>
+        `;
+    }
+
+    function updateEditActifTotals() {
+        // Logique similaire à initializeActifCCalculations mais pour le formulaire d'édition
+        // ...
+    }
+
+    // --- SUPPRESSION D'ACTIF ---
+    $('#deleteActifBtn').on('click', function() {
+        if (!selectedActifId) return;
+        
+        // Récupérer les infos de l'actif pour confirmation
+        $.ajax({
+            url: `/api/acheteur/{{ acheteur.id }}/bilan-classique/get-actif/${selectedActifId}/`,
+            headers: { 
+                'Authorization': 'Bearer ' + accessToken 
+            },
+            success: function(data) {
+                $('#deleteActifAnnee').text(data.annee.annee);
+                $('#deleteActifTotal').text(formatCurrency(data.general_total));
+                $('#confirmDeleteActifModal').modal('show');
+            },
+            error: function() {
+                // Afficher le modal quand même avec les infos disponibles
+                $('#deleteActifAnnee').text('Année inconnue');
+                $('#deleteActifTotal').text('Montant inconnu');
+                $('#confirmDeleteActifModal').modal('show');
+            }
+        });
+    });
+
+    $('#confirmDeleteActifBtn').on('click', function() {
+        if (!selectedActifId) return;
+        
+        $.ajax({
+            url: `/api/acheteur/{{ acheteur.id }}/bilan-classique/delete-actif/`,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: [selectedActifId] }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteActifModal').modal('hide');
+                $('#modal-view-actifc').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Supprimé !',
+                    text: 'L\'actif a été supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                let errorMessage = 'Une erreur est survenue lors de la suppression';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialisation
+    function init() {
+        // Initialiser Select2 pour les formulaires
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true
+        });
+        
+        console.log('Script ActifC initialisé avec succès');
+    }
+
+    init();
+});
+</script>

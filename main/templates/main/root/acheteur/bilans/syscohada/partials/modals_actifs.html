@@ -1,0 +1,84 @@
+{% load i18n %}
+<div class="modal fade" id="modal-view-actifs" tabindex="-1" aria-labelledby="modalViewActifsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalViewActifsLabel">{% trans "Bilan d'Actif SYSCOHADA Détaillé" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-actifs-loader" class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">{% trans "Chargement..." %}</span></div>
+                </div>
+                <div id="actifs-details-content" style="display: none;">
+                    <div class="p-3 mb-3 bg-light rounded"><h6 class="mb-0 text-center">{% trans "Bilan Actif pour" %} <strong id="modal-actifs-acheteur"></strong> (<strong id="modal-actifs-annee"></strong>)</h6></div>
+                    <table class="table table-sm actifs-details-table">
+                        <tr class="table-group-divider"><td class="fw-bold fs-6 text-uppercase">{% trans "ACTIF IMMOBILISÉ" %}</td><td class="text-end fw-bold fs-6" id="total-actifs-immobilise"></td></tr>
+                        <tr><td class="fw-bold ps-3">{% trans "Immobilisations incorporelles" %}</td><td class="text-end" id="modal-actifs-immos_incorporelles_total"></td></tr>
+                        <tr><td class="ps-5">{% trans "Frais de développement et prospection" %}</td><td class="text-end" id="modal-actifs-frais_developpement_prospection"></td></tr>
+                        <tr><td class="ps-5">{% trans "Brevets, licences et logiciels" %}</td><td class="text-end" id="modal-actifs-brevets_licences_logiciels"></td></tr>
+                        <tr><td class="ps-5">{% trans "Droits de propriété commerciale et baux" %}</td><td class="text-end" id="modal-actifs-droits_propriete_commerciale_baux"></td></tr>
+                        <tr><td class="ps-5">{% trans "Autres immobilisations incorporelles" %}</td><td class="text-end" id="modal-actifs-autres_immo_incorporelles"></td></tr>
+                        <tr><td class="fw-bold ps-3">{% trans "Immobilisations corporelles" %}</td><td class="text-end" id="modal-actifs-immos_corporelles_total"></td></tr>
+                        <tr><td class="ps-5">{% trans "Terrains" %}</td><td class="text-end" id="modal-actifs-terrains"></td></tr>
+                        <tr><td class="ps-5">{% trans "Dons et investissements nets" %}</td><td class="text-end" id="modal-actifs-dons_investissements_net"></td></tr>
+                        <tr><td class="ps-5">{% trans "Bâtiments" %}</td><td class="text-end" id="modal-actifs-batiments"></td></tr>
+                        <tr><td class="ps-5">{% trans "Agencements, aménagements et installations" %}</td><td class="text-end" id="modal-actifs-agencements_amenagements_installations"></td></tr>
+                        <tr><td class="ps-5">{% trans "Matériel, mobilier et actifs biologiques" %}</td><td class="text-end" id="modal-actifs-materiel_mobilier_actif_biologiques"></td></tr>
+                        <tr><td class="ps-5">{% trans "Matériel de transport" %}</td><td class="text-end" id="modal-actifs-materiel_transport"></td></tr>
+                        <tr><td class="ps-5">{% trans "Avances et acomptes sur immobilisations" %}</td><td class="text-end" id="modal-actifs-avances_acompte_immobilisations"></td></tr>
+                        <tr><td class="fw-bold ps-3">{% trans "Immobilisations financières" %}</td><td class="text-end" id="modal-actifs-immos_financieres_total"></td></tr>
+                        <tr><td class="ps-5">{% trans "Titres de participation" %}</td><td class="text-end" id="modal-actifs-titres_participation"></td></tr>
+                        <tr><td class="ps-5">{% trans "Autres immobilisations financières" %}</td><td class="text-end" id="modal-actifs-autres_immobilisations_financieres"></td></tr>
+                        
+                        <tr class="table-group-divider"><td class="fw-bold fs-6 text-uppercase">{% trans "ACTIF CIRCULANT (HORS TRÉSORERIE)" %}</td><td class="text-end fw-bold fs-6" id="total-actifs-circulant"></td></tr>
+                        <tr><td class="ps-3">{% trans "Stock et en-cours" %}</td><td class="text-end" id="modal-actifs-stock_encours"></td></tr>
+                        <tr><td class="ps-3">{% trans "Créances et emplois similaires" %}</td><td class="text-end" id="modal-actifs-creances_emplois_similaires_total"></td></tr>
+                        <tr><td class="ps-4">{% trans "Fournisseurs, avances versées" %}</td><td class="text-end" id="modal-actifs-fournisseurs_avances_versee"></td></tr>
+                        <tr><td class="ps-4">{% trans "Clients" %}</td><td class="text-end" id="modal-actifs-clients"></td></tr>
+                        <tr><td class="ps-4">{% trans "Autres créances" %}</td><td class="text-end" id="modal-actifs-autres_creances"></td></tr>
+                        <tr><td class="ps-3">{% trans "Actif circulant HAO" %}</td><td class="text-end" id="modal-actifs-actif_circulant_hao"></td></tr>
+
+                        <tr class="table-group-divider"><td class="fw-bold fs-6 text-uppercase">{% trans "TRÉSORERIE ET ÉQUIVALENTS" %}</td><td class="text-end fw-bold fs-6" id="total-actifs-tresorerie"></td></tr>
+                        <tr><td class="ps-3">{% trans "Valeurs mobilières de placement" %}</td><td class="text-end" id="modal-actifs-valeurs_mobilieres_placement"></td></tr>
+                        <tr><td class="ps-3">{% trans "Disponibilités" %}</td><td class="text-end" id="modal-actifs-disponibilites"></td></tr>
+                        <tr><td class="ps-3">{% trans "Banque, chèque postal, caisse et assimilés" %}</td><td class="text-end" id="modal-actifs-banque_cheque_postal_caisse_assimiles"></td></tr>
+
+                        <tr class="table-group-divider"><td class="fw-bold fs-6 text-uppercase">{% trans "ÉCART DE CONVERSION ACTIF" %}</td><td class="text-end fw-bold fs-6" id="modal-actifs-ecart_conversion_actif"></td></tr>
+
+                        <tr class="table-group-divider table-light"><td class="fw-bold fs-5 text-uppercase">{% trans "TOTAL GÉNÉRAL ACTIF" %}</td><td class="text-end fw-bold fs-5" id="total-general-actifs"></td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Fermer" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-edit-actifs" tabindex="-1" aria-labelledby="modalEditActifsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditActifsLabel">{% trans "Modifier l'Actif SYSCOHADA" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-actifs">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit-actifs-id" name="actif_id">
+                    <div id="edit-actifs-form-content">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">{% trans "Chargement..." %}</span></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer mt-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-actifs-changes"><i class="bi bi-save me-2"></i>{% trans "Enregistrer les modifications" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

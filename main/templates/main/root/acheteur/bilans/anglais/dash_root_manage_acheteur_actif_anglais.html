@@ -1,606 +1,1757 @@
 {% extends 'main/root/base.html' %}
 
-{% load static %}
+{% load i18n static %}
 
-{% block css %}{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de résumé */
+.summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.summary-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tableau moderne */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.03);
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.95rem;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 1.5rem;
+    background: var(--color-background);
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+/* Section de légende */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    min-width: 45px;
+}
+
+/* Pagination améliorée */
+.pagination-enhanced .page-link {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-enhanced .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.delay-1 {
+    animation-delay: 0.1s;
+}
+
+.delay-2 {
+    animation-delay: 0.2s;
+}
+
+/* Alertes personnalisées */
+.custom-alert {
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.custom-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+/* Fix pour Select2 dans les modals */
+.select2-container--bootstrap-5 {
+    z-index: 9999 !important;
+}
+
+.select2-container--open {
+    z-index: 10000 !important;
+}
+
+.select2-dropdown {
+    z-index: 10001 !important;
+}
+
+/* Assurez-vous que les modals ont un z-index inférieur */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+/* Style pour les selects améliorés */
+.select2-enhanced {
+    width: 100%;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+    color: var(--color-text);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background-color: white;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 0.75rem 1rem;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+}
+
+/* Assurez-vous que le dropdown s'affiche au-dessus du modal */
+.select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 1060 !important;
+}
+
+.modal.show .select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 1060 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .modern-table {
+        font-size: 0.875rem;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 0.75rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-info-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem 0.75rem;
+    }
+    
+    .acheteur-info-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Anglais - Actifs de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countActifs">Module de Gestion des Actifs</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un actif notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-chart-bar me-3"></i>{% trans "Bilan Anglais - Gestion des Actifs" %}
+                </h1>
+                <p class="dashboard-subtitle">
+                    Module de gestion complète des actifs de l'acheteur
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}?token={{ user.reset_token }}" 
+                   class="btn-enhanced btn-warning-enhanced">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                        <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-success" id="editNom">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-muted" id="editSigle">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span id="editCode" class="text-warning">{{ acheteur.code }}</span>
+                    </span>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Biens, Installations et Équipements : </strong><span id="">BIE</span><br>
-                        <strong>Inventaire : </strong><span id="">INV</span><br>
-                        <strong>Créances Commerciales et Autres : </strong><span id="">CCA</span><br>
-                        <strong>Actif d'Impôts Courant : </strong><span id="">AIC</span><br>
-                        <strong>Caisse et Banque : </strong><span id="">CB</span><br>
-                        <strong>Année : </strong><span id="">AN</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- ACTIFS START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Actifs</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-4">
-                        <!-- Short by filter -->
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addActifModal">
-                                Ajouter un Actif
+                            <small class="text-muted">{% trans "Date de création" %}</small>
+                            <div class="fw-bold" id="editDateCreation">
+                                {% if acheteur.date_creation %}
+                                    {{ acheteur.date_creation|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifié
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Activité principale" %}</small>
+                            <div class="fw-bold" id="editActivitePrincipale">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Statut" %}</small>
+                            <div class="fw-bold text-success" id="editStatutEntreprise">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h5 class="fw-bold">BIE</h5>
+                <div class="summary-value" id="totalBIE">0</div>
+                <p class="text-muted mb-0">{% trans "Biens, Installations et Équipements" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5 class="fw-bold">INV</h5>
+                <div class="summary-value" id="totalINV">0</div>
+                <p class="text-muted mb-0">{% trans "Inventaire" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h5 class="fw-bold">CCA</h5>
+                <div class="summary-value" id="totalCCA">0</div>
+                <p class="text-muted mb-0">{% trans "Créances Commerciales et Autres" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h5 class="fw-bold">CB</h5>
+                <div class="summary-value" id="totalCB">0</div>
+                <p class="text-muted mb-0">{% trans "Caisse et Banque" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Information & Statistiques -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-key text-primary me-2"></i>{% trans "Légende des Abréviations" %}</h6>
+                        <div class="legend-grid">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #0A95CA;"></div>
+                                <span class="legend-code">BIE</span>
+                                <span class="legend-name">{% trans "Biens, Installations et Équipements" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #25add6;"></div>
+                                <span class="legend-code">INV</span>
+                                <span class="legend-name">{% trans "Inventaire" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #28a745;"></div>
+                                <span class="legend-code">CCA</span>
+                                <span class="legend-name">{% trans "Créances Commerciales et Autres" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #17a2b8;"></div>
+                                <span class="legend-code">AIC</span>
+                                <span class="legend-name">{% trans "Actif d'Impôts Courant" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">CB</span>
+                                <span class="legend-name">{% trans "Caisse et Banque" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6c757d;"></div>
+                                <span class="legend-code">AN</span>
+                                <span class="legend-name">{% trans "Année" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="custom-alert custom-alert-info">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle fa-lg mt-1 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-2">{% trans "Note d'information" %}</h6>
+                                <p class="mb-0">
+                                    Pour consulter la page de gestion de l'acheteur, cliquez sur le nom de l'acheteur ci-dessus.
+                                    Utilisez le bouton "Ajouter un Actif" pour créer de nouveaux enregistrements.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiques rapides -->
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-line text-primary me-2"></i>{% trans "Statistiques des Actifs" %}</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-primary fs-4" id="countActifs">0</div>
+                                    <small class="text-muted">{% trans "Actifs total" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-success fs-4" id="countAnnees">0</div>
+                                    <small class="text-muted">{% trans "Années couvertes" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Actifs -->
+    <div class="card border-0 shadow-sm mb-4 animate-in delay-2">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fas fa-list me-2"></i>{% trans "Liste des Actifs" %}
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="search" class="form-control border-start-0" id="searchInput" 
+                                       placeholder="Rechercher par année...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
+                                    data-bs-toggle="modal" data-bs-target="#addActifModal">
+                                <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter" %}
                             </button>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Actif list START -->
-                <div class="table-responsive border-0" id="actifList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">AN</th>
-                                <th scope="col" class="border-0">BIE</th>
-                                <th scope="col" class="border-0">INV</th>
-                                <th scope="col" class="border-0">CCA</th>
-                                <th scope="col" class="border-0">AIC</th>
-                                <th scope="col" class="border-0">CB</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="actifTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
-                </div>
-                <!-- Actif list END -->
             </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{% trans "Année" %}</th>
+                            <th class="text-end">{% trans "Actifs Non-Courants" %}</th>
+                            <th class="text-end">{% trans "Inventaire" %}</th>
+                            <th class="text-end">{% trans "Créances Commerciales" %}</th>
+                            <th class="text-end">{% trans "Actif Impôts" %}</th>
+                            <th class="text-end">{% trans "Caisse & Banques" %}</th>
+                            <th class="text-end">{% trans "Total" %}</th>
+                            <th class="text-center">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actifTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                    <tfoot id="actifTableFooter" style="display: none;">
+                        <tr class="bg-light">
+                            <td colspan="2" class="fw-bold">{% trans "TOTAL" %}</td>
+                            <td class="text-end fw-bold" id="footerBIE">0</td>
+                            <td class="text-end fw-bold" id="footerINV">0</td>
+                            <td class="text-end fw-bold" id="footerCCA">0</td>
+                            <td class="text-end fw-bold" id="footerAIC">0</td>
+                            <td class="text-end fw-bold" id="footerCB">0</td>
+                            <td class="text-end fw-bold text-primary" id="footerTotal">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Aucun résultat -->
+            <div id="noResults" class="text-center py-5" style="display: none;">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">{% trans "Aucun actif trouvé" %}</h5>
+                <p class="text-muted mb-0">Cliquez sur "Ajouter un Actif" pour commencer</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted small" id="paginationInfo">
+                        Chargement des données...
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex justify-content-md-end">
+                        <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
                     </nav>
                 </div>
             </div>
-            <!-- Card footer END -->
         </div>
     </div>
 </div>
-<!-- ACTIFS END -->
 
-<!-- Add Actif Modal START -->
-<div class="modal fade" id="addActifModal" tabindex="-1" aria-labelledby="addActifModalLabel" aria-hidden="true">
+<!-- Modal Ajout Actif -->
+<div class="modal fade enhanced-modal" id="addActifModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addActifModalLabel">Ajouter un Actif</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouvel Actif" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addActifForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="biens_installations_equipements" class="form-label">Biens, Installations et Équipements</label>
-                        <input type="number" class="form-control" id="biens_installations_equipements" name="biens_installations_equipements" required>
+            <form id="addActifForm" class="enhanced-form">
+                <input type="hidden" value="{{ acheteur.id }}" name="acheteur" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez les champs ci-dessous pour ajouter un nouvel actif. Les champs marqués d'un astérisque (*) sont obligatoires.
                     </div>
-                    <div class="mb-3">
-                        <label for="inventaire" class="form-label">Inventaire</label>
-                        <input type="number" class="form-control" id="inventaire" name="inventaire" required>
+                    
+                    <div class="row">
+                        <!-- Année -->
+                        <div class="col-md-12 mb-3">
+                            <label for="annee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
+                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- BIE -->
+                        <div class="col-md-6 mb-3">
+                            <label for="biens_installations_equipements" class="form-label">
+                                <i class="fas fa-building"></i>BIE (Biens, Installations et Équipements) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="biens_installations_equipements" 
+                                       name="biens_installations_equipements" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- INV -->
+                        <div class="col-md-6 mb-3">
+                            <label for="inventaire" class="form-label">
+                                <i class="fas fa-boxes"></i>INV (Inventaire) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="inventaire" 
+                                       name="inventaire" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- CCA -->
+                        <div class="col-md-6 mb-3">
+                            <label for="creances_commerciales_autres_creances" class="form-label">
+                                <i class="fas fa-file-invoice-dollar"></i>CCA (Créances Commerciales et Autres) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="creances_commerciales_autres_creances" 
+                                       name="creances_commerciales_autres_creances" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- AIC -->
+                        <div class="col-md-6 mb-3">
+                            <label for="actif_impots_courant" class="form-label">
+                                <i class="fas fa-balance-scale"></i>AIC (Actif d'Impôts Courant) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="actif_impots_courant" 
+                                       name="actif_impots_courant" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- CB -->
+                        <div class="col-md-12 mb-3">
+                            <label for="caisses_banques" class="form-label">
+                                <i class="fas fa-university"></i>CB (Caisse et Banque) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="caisses_banques" 
+                                       name="caisses_banques" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total BIE:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryBIE">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total INV:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryINV">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total CCA:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryCCA">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total AIC:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryAIC">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total CB:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryCB">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2 pt-2 border-top">
+                                                <span class="text-primary fw-bold">{% trans "Total général:" %}</span>
+                                                <span class="fw-bold text-primary float-end" id="summaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="creances_commerciales_autres_creances" class="form-label">Créances Commerciales et Autres</label>
-                        <input type="number" class="form-control" id="creances_commerciales_autres_creances" name="creances_commerciales_autres_creances" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
+                                    style="background: #ffc107; color: #000;">
+                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="actif_impots_courant" class="form-label">Actif d'Impôts Courant</label>
-                        <input type="number" class="form-control" id="actif_impots_courant" name="actif_impots_courant" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="caisses_banques" class="form-label">Caisse et Banque</label>
-                        <input type="number" class="form-control" id="caisses_banques" name="caisses_banques" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="annee" class="form-label">Année</label>
-                        <select class="form-select" id="annee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Actif Modal END -->
 
-<!-- Edit Actif Modal START -->
-<div class="modal fade" id="editActifModal" tabindex="-1" aria-labelledby="editActifModalLabel" aria-hidden="true">
+<!-- Modal Modification Actif -->
+<div class="modal fade enhanced-modal" id="editActifModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editActifModalLabel">Editer un Actif</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Actif" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editActifForm">
-                    <input type="hidden" id="editActifId" name="id">
-                    <div class="mb-3">
-                        <label for="editBiensInstallationsEquipements" class="form-label">Biens, Installations et Équipements</label>
-                        <input type="number" class="form-control" id="editBiensInstallationsEquipements" name="biens_installations_equipements" required>
+            <form id="editActifForm" class="enhanced-form">
+                <input type="hidden" id="editActifId" name="id">
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Modifiez les champs ci-dessous pour mettre à jour l'actif.
                     </div>
-                    <div class="mb-3">
-                        <label for="editInventaire" class="form-label">Inventaire</label>
-                        <input type="number" class="form-control" id="editInventaire" name="inventaire" required>
+                    
+                    <div class="row">
+                        <!-- Année -->
+                        <div class="col-md-12 mb-3">
+                            <label for="editAnnee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- BIE -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editBiensInstallationsEquipements" class="form-label">
+                                <i class="fas fa-building"></i>BIE (Biens, Installations et Équipements) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editBiensInstallationsEquipements" 
+                                       name="biens_installations_equipements" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- INV -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editInventaire" class="form-label">
+                                <i class="fas fa-boxes"></i>INV (Inventaire) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editInventaire" 
+                                       name="inventaire" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- CCA -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editCreancesCommercialesAutresCreances" class="form-label">
+                                <i class="fas fa-file-invoice-dollar"></i>CCA (Créances Commerciales et Autres) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCreancesCommercialesAutresCreances" 
+                                       name="creances_commerciales_autres_creances" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- AIC -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editActifImpotsCourant" class="form-label">
+                                <i class="fas fa-balance-scale"></i>AIC (Actif d'Impôts Courant) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editActifImpotsCourant" 
+                                       name="actif_impots_courant" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- CB -->
+                        <div class="col-md-12 mb-3">
+                            <label for="editCaissesBanques" class="form-label">
+                                <i class="fas fa-university"></i>CB (Caisse et Banque) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCaissesBanques" 
+                                       name="caisses_banques" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total BIE:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryBIE">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total INV:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryINV">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total CCA:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryCCA">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total AIC:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryAIC">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Total CB:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryCB">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2 pt-2 border-top">
+                                                <span class="text-primary fw-bold">{% trans "Total général:" %}</span>
+                                                <span class="fw-bold text-primary float-end" id="editSummaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCreancesCommercialesAutresCreances" class="form-label">Créances Commerciales et Autres</label>
-                        <input type="number" class="form-control" id="editCreancesCommercialesAutresCreances" name="creances_commerciales_autres_creances" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editActifImpotsCourant" class="form-label">Actif d'Impôts Courant</label>
-                        <input type="number" class="form-control" id="editActifImpotsCourant" name="actif_impots_courant" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCaissesBanques" class="form-label">Caisse et Banque</label>
-                        <input type="number" class="form-control" id="editCaissesBanques" name="caisses_banques" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAnnee" class="form-label">Année</label>
-                        <select class="form-select" id="editAnnee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Edit Actif Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#description, #editDescription, #editCommentaire, #commentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let selectedActifId = null;
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
         });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
+    }
+    
+    // Formater en devise
+    function formatCurrency(num) {
+        return formatNumber(num) + ' FCFA';
+    }
+    
+    // Initialiser Select2
+    function initSelect2() {
+        // Configuration pour les selects dans les modals
+        const select2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addActifModal')  // Important: dire à Select2 où ouvrir le dropdown
+        };
+        
+        const editSelect2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#editActifModal')  // Important: dire à Select2 où ouvrir le dropdown
+        };
+        
+        // Appliquer la configuration
+        $('#annee').select2(select2Config);
+        $('#editAnnee').select2(editSelect2Config);
+    }
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateAddFormSummaries() {
+        const bie = parseFloat($('#biens_installations_equipements').val()) || 0;
+        const inv = parseFloat($('#inventaire').val()) || 0;
+        const cca = parseFloat($('#creances_commerciales_autres_creances').val()) || 0;
+        const aic = parseFloat($('#actif_impots_courant').val()) || 0;
+        const cb = parseFloat($('#caisses_banques').val()) || 0;
+        const total = bie + inv + cca + aic + cb;
+        
+        $('#summaryBIE').text(formatCurrency(bie));
+        $('#summaryINV').text(formatCurrency(inv));
+        $('#summaryCCA').text(formatCurrency(cca));
+        $('#summaryAIC').text(formatCurrency(aic));
+        $('#summaryCB').text(formatCurrency(cb));
+        $('#summaryTotal').text(formatCurrency(total));
+    }
+    
+    // Mettre à jour les résumés dans le formulaire d'édition
+    function updateEditFormSummaries() {
+        const bie = parseFloat($('#editBiensInstallationsEquipements').val()) || 0;
+        const inv = parseFloat($('#editInventaire').val()) || 0;
+        const cca = parseFloat($('#editCreancesCommercialesAutresCreances').val()) || 0;
+        const aic = parseFloat($('#editActifImpotsCourant').val()) || 0;
+        const cb = parseFloat($('#editCaissesBanques').val()) || 0;
+        const total = bie + inv + cca + aic + cb;
+        
+        $('#editSummaryBIE').text(formatCurrency(bie));
+        $('#editSummaryINV').text(formatCurrency(inv));
+        $('#editSummaryCCA').text(formatCurrency(cca));
+        $('#editSummaryAIC').text(formatCurrency(aic));
+        $('#editSummaryCB').text(formatCurrency(cb));
+        $('#editSummaryTotal').text(formatCurrency(total));
+    }
+    
+    // Charger les actifs
+    function loadActifs() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/liste-des-actifs/?page=${currentPage}&search=${currentSearch}`;
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: url,
             type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#actifTableBody').html(`
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Chargement des données...</p>
+                        </td>
+                    </tr>
+                `);
             },
             success: function(response) {
-                console.log(response);
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                updateTable(response.results);
+                updatePagination(response);
+                updateStats(response.results);
+            },
+            error: function(xhr) {
+                $('#actifTableBody').html(`
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données. Veuillez réessayer.</p>
+                        </td>
+                    </tr>
+                `);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadActifs);
                 }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+            }
+        });
+    }
+    
+    // Mettre à jour le tableau
+    function updateTable(actifs) {
+        const tbody = $('#actifTableBody');
+        tbody.empty();
+        
+        if (actifs.length === 0) {
+            $('#noResults').show();
+            $('#actifTableFooter').hide();
+            return;
+        }
+        
+        $('#noResults').hide();
+        
+        let totaux = {
+            bie: 0,
+            inv: 0,
+            cca: 0,
+            aic: 0,
+            cb: 0,
+            total: 0
+        };
+        
+        actifs.forEach((actif, index) => {
+            const startIndex = (currentPage - 1) * actifs.length;
+            const rowNumber = startIndex + index + 1;
+            const annee = actif.annee?.annee || 'N/A';
+            
+            const bie = parseFloat(actif.biens_installations_equipements) || 0;
+            const inv = parseFloat(actif.inventaire) || 0;
+            const cca = parseFloat(actif.creances_commerciales_autres_creances) || 0;
+            const aic = parseFloat(actif.actif_impots_courant) || 0;
+            const cb = parseFloat(actif.caisses_banques) || 0;
+            const total = bie + inv + cca + aic + cb;
+            
+            totaux.bie += bie;
+            totaux.inv += inv;
+            totaux.cca += cca;
+            totaux.aic += aic;
+            totaux.cb += cb;
+            totaux.total += total;
+            
+            const row = `
+                <tr data-id="${actif.id}" class="actif-row">
+                    <td>${rowNumber}</td>
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-white fw-bold">
+                            ${annee}
+                        </span>
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(bie)}
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(inv)}
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(cca)}
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(aic)}
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(cb)}
+                    </td>
+                    <td class="value-cell fw-bold text-primary">
+                        ${formatNumber(total)}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${actif.id}" 
+                                    data-bs-toggle="tooltip" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${actif.id}" 
+                                    data-bs-toggle="tooltip" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer
+        $('#footerBIE').text(formatNumber(totaux.bie));
+        $('#footerINV').text(formatNumber(totaux.inv));
+        $('#footerCCA').text(formatNumber(totaux.cca));
+        $('#footerAIC').text(formatNumber(totaux.aic));
+        $('#footerCB').text(formatNumber(totaux.cb));
+        $('#footerTotal').text(formatNumber(totaux.total));
+        $('#actifTableFooter').show();
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStats(actifs) {
+        let totalBIE = 0;
+        let totalINV = 0;
+        let totalCCA = 0;
+        let totalAIC = 0;
+        let totalCB = 0;
+        const anneesSet = new Set();
+        
+        actifs.forEach(actif => {
+            totalBIE += parseFloat(actif.biens_installations_equipements) || 0;
+            totalINV += parseFloat(actif.inventaire) || 0;
+            totalCCA += parseFloat(actif.creances_commerciales_autres_creances) || 0;
+            totalAIC += parseFloat(actif.actif_impots_courant) || 0;
+            totalCB += parseFloat(actif.caisses_banques) || 0;
+            
+            if (actif.annee?.annee) {
+                anneesSet.add(actif.annee.annee);
+            }
+        });
+        
+        $('#totalBIE').text(formatNumber(totalBIE));
+        $('#totalINV').text(formatNumber(totalINV));
+        $('#totalCCA').text(formatNumber(totalCCA));
+        $('#totalAIC').text(formatNumber(totalAIC));
+        $('#totalCB').text(formatNumber(totalCB));
+        
+        $('#countActifs').text(actifs.length);
+        $('#countAnnees').text(anneesSet.size);
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} actifs`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+    
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadActifs();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadActifs();
+            $('html, body').animate({
+                scrollTop: $('#actifTableBody').offset().top - 100
+            }, 500);
+        }
+    });
+    
+    // Écouter les changements dans les champs de formulaire
+    $('#addActifForm input[type="number"]').on('input', updateAddFormSummaries);
+    $('#editActifForm input[type="number"]').on('input', updateEditFormSummaries);
+    
+    // Effacer le formulaire d'ajout
+    $('#clearAddFormBtn').on('click', function() {
+        if (confirm('Êtes-vous sûr de vouloir effacer tous les champs ?')) {
+            $('#addActifForm')[0].reset();
+            $('#annee').val(null).trigger('change');
+            updateAddFormSummaries();
+        }
+    });
+    
+    // Éditer un actif
+    $(document).on('click', '.edit-btn', function() {
+        const actifId = $(this).data('id');
+        selectedActifId = actifId;
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-actif/${actifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editActifId').val(response.id);
+                $('#editBiensInstallationsEquipements').val(response.biens_installations_equipements);
+                $('#editInventaire').val(response.inventaire);
+                $('#editCreancesCommercialesAutresCreances').val(response.creances_commerciales_autres_creances);
+                $('#editActifImpotsCourant').val(response.actif_impots_courant);
+                $('#editCaissesBanques').val(response.caisses_banques);
+                $('#editAnnee').val(response.annee).trigger('change');
+                
+                updateEditFormSummaries();
+                $('#editActifModal').modal('show');
             },
             error: function(xhr) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données de l\'actif.'
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(`.edit-btn[data-id="${actifId}"]`).click();
+                    });
+                }
             }
         });
     });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load actifs data
-        function loadActifs(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/liste-des-actifs/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+    
+    // Supprimer un actif
+    $(document).on('click', '.delete-btn', function() {
+        const actifId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            text: 'Êtes-vous sûr de vouloir supprimer cet actif ? Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/supprimer-des-actifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [actifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé',
+                            text: 'Actif supprimé avec succès',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadActifs();
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer l\'actif.'
+                        });
+                        
+                        if (xhr.status === 401) {
+                            refreshAccessToken(() => {
+                                $(`.delete-btn[data-id="${actifId}"]`).click();
+                            });
                         }
                     }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                });
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'ajout
+    $('#addActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#addActifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/ajouter-un-actif/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#addActifModal').modal('hide');
+                $('#addActifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                updateAddFormSummaries();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadActifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
                     }
-
-                    // Update actifs table body
-                    $('#actifTableBody').html('');
-                    response.results.forEach(function(actif, index) {
-                        $('#actifTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td class="text-success">' + actif.annee.annee + '</td>' +
-                            '<td class="text-success">' + actif.biens_installations_equipements + '</td>' +
-                            '<td class="text-success">' + actif.inventaire + '</td>' +
-                            '<td class="text-success">' + actif.creances_commerciales_autres_creances + '</td>' +
-                            '<td class="text-success">' + actif.actif_impots_courant + '</td>' +
-                            '<td class="text-success">' + actif.caisses_banques + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + actif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + actif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
                 }
-            });
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'édition
+    $('#editActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#editActifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-actif/${selectedActifId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#editActifModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadActifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-
-        // Initial load
+        return cookieValue;
+    }
+    
+    // Initialisation
+    function init() {
+        // Initialiser les tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        
+        // Initialiser Select2
+        initSelect2();
+        
+        // Charger les données initiales
         loadActifs();
+        updateAddFormSummaries();
+        updateEditFormSummaries();
+    }
+    
+    init();
 
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadActifs(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadActifs(page, search);
-        });
-
-        // Add Actif form submission
-        $('#addActifForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            console.log(formData);
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/ajouter-un-actif/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Actif ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addActifModal').modal('hide');
-                        loadActifs();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de l\'actif.',
-                    });
-                }
-            });
-        });
-
-        // Edit Actif button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/editer-un-actif/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editActifId').val(response.id);
-                    $('#editBiensInstallationsEquipements').val(response.biens_installations_equipements);
-                    $('#editInventaire').val(response.inventaire);
-                    $('#editCreancesCommercialesAutresCreances').val(response.creances_commerciales_autres_creances);
-                    $('#editActifImpotsCourant').val(response.actif_impots_courant);
-                    $('#editCaissesBanques').val(response.caisses_banques);
-                    $('#editAnnee').val(response.annee);
-                    $('#editActifModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'actif.',
-                    });
-                }
-            });
-        });
-
-        // Edit Actif form submission
-        $('#editActifForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editActifId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/editer-un-actif/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Actif mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editActifModal').modal('hide');
-                        loadActifs();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de l\'actif.',
-                    });
-                }
-            });
-        });
-
-        // Delete Actif button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/supprimer-des-actifs/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'L\'actif a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadActifs();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de l\'actif.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
-    });
+});
 </script>
 
+<!-- Script nicEdit original (conservé) -->
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    new nicEditor({
+        buttonList: [
+            'bold','italic','underline','left','center','right','justify',
+            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
+        ]
+    }).panelInstance('message');
+});
+</script>
 {% endblock %}

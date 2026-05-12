@@ -1,0 +1,211 @@
+{% load i18n %}
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+
+    function refreshAccessToken() {
+        $.ajax({ url: "{% url 'token_refresh' %}", type: 'POST', data: { 'refresh': refreshToken }, headers: {'X-CSRFToken': '{{ csrf_token }}'}, success: function(response) { accessToken = response.access; }, error: function() { console.error("Échec du rafraîchissement automatique du jeton."); } });
+    }
+    setInterval(refreshAccessToken, 240000);
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializeResultatSCalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            const ventes = p($(`input[name="ventes_marchandises_a_${suffix}"]`).val()) + p($(`input[name="ventes_produits_manufactures_${suffix}"]`).val()) + p($(`input[name="travaux_services_vendus_c_${suffix}"]`).val()) + p($(`input[name="produits_accessoires_d_${suffix}"]`).val());
+            const margeCommerciale = ventes - p($(`input[name="achats_marchandises_${suffix}"]`).val()) + p($(`input[name="variation_stock_marchandises_${suffix}"]`).val());
+            const production = ventes + p($(`input[name="production_stockee_${suffix}"]`).val()) + p($(`input[name="production_immobilisee_${suffix}"]`).val()) + p($(`input[name="subvention_exploitation_${suffix}"]`).val()) + p($(`input[name="autres_produits_${suffix}"]`).val()) + p($(`input[name="transfert_charges_exploitation_${suffix}"]`).val());
+            const consommations = p($(`input[name="achats_marchandises_${suffix}"]`).val()) + p($(`input[name="variation_stock_marchandises_${suffix}"]`).val()) + p($(`input[name="achats_matieres_premieres_fournitures_connexes_${suffix}"]`).val()) + p($(`input[name="variation_stock_matieres_premieres_fournitures_connexes_${suffix}"]`).val()) + p($(`input[name="autres_achats_${suffix}"]`).val()) + p($(`input[name="variation_stock_autres_fournitures_${suffix}"]`).val()) + p($(`input[name="transport_${suffix}"]`).val()) + p($(`input[name="services_exterieurs_${suffix}"]`).val());
+            const valeurAjoutee = production - consommations;
+            const ebe = valeurAjoutee + p($(`input[name="subvention_exploitation_${suffix}"]`).val()) + p($(`input[name="autres_produits_${suffix}"]`).val()) + p($(`input[name="transfert_charges_exploitation_${suffix}"]`).val()) - p($(`input[name="frais_personnel_${suffix}"]`).val()) - p($(`input[name="impots_taxes_${suffix}"]`).val()) - p($(`input[name="autres_depenses_${suffix}"]`).val());
+            const resultatExploitation = ebe + p($(`input[name="reprise_depreciations_amortissements_provision_pertes_valeurs_p_${suffix}"]`).val()) - p($(`input[name="reprise_depreciations_amortissements_provision_pertes_valeurs_m_${suffix}"]`).val());
+            const resultatFinancier = (p($(`input[name="produits_financiers_assimiles_${suffix}"]`).val()) + p($(`input[name="reprise_provision_perte_valeur_${suffix}"]`).val()) + p($(`input[name="transfert_charges_financieres_${suffix}"]`).val())) - (p($(`input[name="charges_financieres_assimilees_${suffix}"]`).val()) + p($(`input[name="dotations_provisions_depreciations_financieres_${suffix}"]`).val()));
+            const resultatHAO = (p($(`input[name="produits_cession_immobilisations_${suffix}"]`).val()) + p($(`input[name="autres_produits_hao_${suffix}"]`).val())) - (p($(`input[name="valeur_comptable_cessions_actifs_immobilises_${suffix}"]`).val()) + p($(`input[name="autres_charges_hao_${suffix}"]`).val()));
+            const resultatNet = resultatExploitation + resultatFinancier + resultatHAO - p($(`input[name="participation_travailleurs_${suffix}"]`).val()) - p($(`input[name="charge_impot_revenu_${suffix}"]`).val());
+            
+            $(`#chiffre_affaires_${suffix}`).val(formatCurrency(ventes));
+            $(`#marge_commerciale_${suffix}`).val(formatCurrency(margeCommerciale));
+            $(`#valeur_ajoutee_${suffix}`).val(formatCurrency(valeurAjoutee));
+            $(`#excedent_brute_exploitation_${suffix}`).val(formatCurrency(ebe));
+            $(`#resultat_exploitation_${suffix}`).val(formatCurrency(resultatExploitation));
+            $(`#resultat_financier_${suffix}`).val(formatCurrency(resultatFinancier));
+            $(`#resultat_activites_ordinaires_${suffix}`).val(formatCurrency(resultatExploitation + resultatFinancier));
+            $(`#resultat_net_exercice_${suffix}`).val(formatCurrency(resultatNet));
+        }
+        $(`#collapseResultatS{{ suffix }}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializeResultatSCalculations(suffix));
+
+    // --- LOGIQUE POUR LA SOUMISSION ET LES MODALS ---
+    $('#form-resultats-s-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-resultats'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-resultat-s' %}",
+            type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer {{ access }}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Comptes de résultat enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+
+    // LOGIQUE DU MODAL DE VUE (inchangée)
+    $('#listing-resultats-s-pane').on('click', '.btn-view-resultats', function() {
+        const resultatId = $(this).data('resultat-id');
+        const loader = $('#modal-resultats-loader'), content = $('#resultats-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-resultat-s' 0 %}`.replace('0', resultatId),
+            headers: { 'Authorization': `Bearer {{ access }}` },
+            success: function(data) {
+                $('#modal-resultats-acheteur').text(data.acheteur.nom);
+                $('#modal-resultats-annee').text(data.annee.annee);
+                $('#modal-resultats-chiffre_affaires').text(formatCurrency(data.chiffre_affaires));
+                $('#modal-resultats-ventes_marchandises_a').text(formatCurrency(data.ventes_marchandises_a));
+                $('#modal-resultats-ventes_produits_manufactures').text(formatCurrency(data.ventes_produits_manufactures));
+                $('#modal-resultats-travaux_services_vendus_c').text(formatCurrency(data.travaux_services_vendus_c));
+                $('#modal-resultats-produits_accessoires_d').text(formatCurrency(data.produits_accessoires_d));
+                $('#modal-resultats-marge_commerciale').text(formatCurrency(data.marge_commerciale));
+                $('#modal-resultats-achats_marchandises').text(formatCurrency(data.achats_marchandises));
+                $('#modal-resultats-variation_stock_marchandises').text(formatCurrency(data.variation_stock_marchandises));
+                $('#modal-resultats-valeur_ajoutee').text(formatCurrency(data.valeur_ajoutee));
+                $('#modal-resultats-production_stockee').text(formatCurrency(data.production_stockee));
+                $('#modal-resultats-production_immobilisee').text(formatCurrency(data.production_immobilisee));
+                $('#modal-resultats-subvention_exploitation').text(formatCurrency(data.subvention_exploitation));
+                $('#modal-resultats-autres_produits').text(formatCurrency(data.autres_produits));
+                $('#modal-resultats-transfert_charges_exploitation').text(formatCurrency(data.transfert_charges_exploitation));
+                $('#modal-resultats-achats_matieres_premieres_fournitures_connexes').text(formatCurrency(data.achats_matieres_premieres_fournitures_connexes));
+                $('#modal-resultats-variation_stock_matieres_premieres_fournitures_connexes').text(formatCurrency(data.variation_stock_matieres_premieres_fournitures_connexes));
+                $('#modal-resultats-autres_achats').text(formatCurrency(data.autres_achats));
+                $('#modal-resultats-variation_stock_autres_fournitures').text(formatCurrency(data.variation_stock_autres_fournitures));
+                $('#modal-resultats-transport').text(formatCurrency(data.transport));
+                $('#modal-resultats-services_exterieurs').text(formatCurrency(data.services_exterieurs));
+                $('#modal-resultats-impots_taxes').text(formatCurrency(data.impots_taxes));
+                $('#modal-resultats-autres_depenses').text(formatCurrency(data.autres_depenses));
+                $('#modal-resultats-excedent_brute_exploitation').text(formatCurrency(data.excedent_brute_exploitation));
+                $('#modal-resultats-frais_personnel').text(formatCurrency(data.frais_personnel));
+                $('#modal-resultats-resultat_exploitation').text(formatCurrency(data.resultat_exploitation));
+                $('#modal-resultats-reprise_depreciations_amortissements_provision_pertes_valeurs_p').text(formatCurrency(data.reprise_depreciations_amortissements_provision_pertes_valeurs_p));
+                $('#modal-resultats-reprise_depreciations_amortissements_provision_pertes_valeurs_m').text(formatCurrency(data.reprise_depreciations_amortissements_provision_pertes_valeurs_m));
+                $('#modal-resultats-resultat_financier').text(formatCurrency(data.resultat_financier));
+                $('#modal-resultats-produits_financiers_assimiles').text(formatCurrency(data.produits_financiers_assimiles));
+                $('#modal-resultats-reprise_provision_perte_valeur').text(formatCurrency(data.reprise_provision_perte_valeur));
+                $('#modal-resultats-transfert_charges_financieres').text(formatCurrency(data.transfert_charges_financieres));
+                $('#modal-resultats-charges_financieres_assimilees').text(formatCurrency(data.charges_financieres_assimilees));
+                $('#modal-resultats-dotations_provisions_depreciations_financieres').text(formatCurrency(data.dotations_provisions_depreciations_financieres));
+                $('#modal-resultats-resultat_activites_ordinaires_tn').text(formatCurrency(data.resultat_activites_ordinaires_tn));
+                $('#modal-resultats-produits_cession_immobilisations').text(formatCurrency(data.produits_cession_immobilisations));
+                $('#modal-resultats-autres_produits_hao').text(formatCurrency(data.autres_produits_hao));
+                $('#modal-resultats-valeur_comptable_cessions_actifs_immobilises').text(formatCurrency(data.valeur_comptable_cessions_actifs_immobilises));
+                $('#modal-resultats-autres_charges_hao').text(formatCurrency(data.autres_charges_hao));
+                $('#modal-resultats-resultat_net').text(formatCurrency(data.resultat_net));
+                $('#modal-resultats-participation_travailleurs').text(formatCurrency(data.participation_travailleurs));
+                $('#modal-resultats-charge_impot_revenu').text(formatCurrency(data.charge_impot_revenu));
+                $('#modal-resultats-resultat_net_exercice').text(formatCurrency(data.resultat_net_exercice));
+                loader.hide(); content.show();
+            },
+            error: () => { loader.hide(); content.html('<div class="alert alert-danger">Impossible de charger les détails.</div>').show(); }
+        });
+    });
+    
+    // LOGIQUE DU MODAL DE MODIFICATION
+    $('#listing-resultats-s-pane').on('click', '.btn-edit-resultats', function() {
+        const resultatId = $(this).data('resultat-id');
+        const formContent = $('#edit-resultats-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditResultatSTotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const ventes = p($('input[name="ventes_marchandises_a"]').val()) + p($('input[name="ventes_produits_manufactures"]').val()) + p($('input[name="travaux_services_vendus_c"]').val()) + p($('input[name="produits_accessoires_d"]').val());
+            const margeCommerciale = ventes - p($('input[name="achats_marchandises"]').val()) + p($('input[name="variation_stock_marchandises"]').val());
+            const production = ventes + p($('input[name="production_stockee"]').val()) + p($('input[name="production_immobilisee"]').val()) + p($('input[name="subvention_exploitation"]').val()) + p($('input[name="autres_produits"]').val()) + p($('input[name="transfert_charges_exploitation"]').val());
+            const consommations = p($('input[name="achats_marchandises"]').val()) + p($('input[name="variation_stock_marchandises"]').val()) + p($('input[name="achats_matieres_premieres_fournitures_connexes"]').val()) + p($('input[name="variation_stock_matieres_premieres_fournitures_connexes"]').val()) + p($('input[name="autres_achats"]').val()) + p($('input[name="variation_stock_autres_fournitures"]').val()) + p($('input[name="transport"]').val()) + p($('input[name="services_exterieurs"]').val());
+            const valeurAjoutee = production - consommations;
+            const ebe = valeurAjoutee + p($('input[name="subvention_exploitation"]').val()) + p($('input[name="autres_produits"]').val()) + p($('input[name="transfert_charges_exploitation"]').val()) - p($('input[name="frais_personnel"]').val()) - p($('input[name="impots_taxes"]').val()) - p($('input[name="autres_depenses"]').val());
+            const resultatExploitation = ebe + p($('input[name="reprise_depreciations_amortissements_provision_pertes_valeurs_p"]').val()) - p($('input[name="reprise_depreciations_amortissements_provision_pertes_valeurs_m"]').val());
+            const resultatFinancier = (p($('input[name="produits_financiers_assimiles"]').val()) + p($('input[name="reprise_provision_perte_valeur"]').val()) + p($('input[name="transfert_charges_financieres"]').val())) - (p($('input[name="charges_financieres_assimilees"]').val()) + p($('input[name="dotations_provisions_depreciations_financieres"]').val()));
+            const resultatHAO = (p($('input[name="produits_cession_immobilisations"]').val()) + p($('input[name="autres_produits_hao"]').val())) - (p($('input[name="valeur_comptable_cessions_actifs_immobilises"]').val()) + p($('input[name="autres_charges_hao"]').val()));
+            const resultatNet = resultatExploitation + resultatFinancier + resultatHAO - p($('input[name="participation_travailleurs"]').val()) - p($('input[name="charge_impot_revenu"]').val());
+
+            $('#edit_chiffre_affaires').val(formatCurrency(ventes));
+            $('#edit_marge_commerciale').val(formatCurrency(margeCommerciale));
+            $('#edit_valeur_ajoutee').val(formatCurrency(valeurAjoutee));
+            $('#edit_excedent_brute_exploitation').val(formatCurrency(ebe));
+            $('#edit_resultat_exploitation').val(formatCurrency(resultatExploitation));
+            $('#edit_resultat_financier').val(formatCurrency(resultatFinancier));
+            $('#edit_resultat_activites_ordinaires').val(formatCurrency(resultatExploitation + resultatFinancier + resultatHAO)); // J'ai ajouté le résultat HAO
+            $('#edit_resultat_net').val(formatCurrency(resultatNet));
+        }
+
+        $.ajax({
+            url: `{% url 'get-resultat-s' 0 %}`.replace('0', resultatId),
+            headers: { 'Authorization': `Bearer {{ access }}` },
+            success: function(data) {
+                $('#edit-resultats-id').val(data.id);
+                
+                let formHtml = `
+                    <div class="row g-3 mb-4"><div class="col-md-6"><label for="edit_annee" class="form-label">Année</label><select name="annee" id="edit_annee" class="form-select">{% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}</select></div></div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5><hr>
+                    <h4 class="text-primary mt-4">PRODUITS DES ACTIVITÉS ORDINAIRES (I)</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Ventes de marchandises A (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="ventes_marchandises_a" id="edit_ventes_marchandises_a" value="${data.ventes_marchandises_a || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Ventes de produits manufacturés B (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="ventes_produits_manufactures" id="edit_ventes_produits_manufactures" value="${data.ventes_produits_manufactures || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Travaux, services vendus C (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="travaux_services_vendus_c" id="edit_travaux_services_vendus_c" value="${data.travaux_services_vendus_c || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Produits accessoires D (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="produits_accessoires_d" id="edit_produits_accessoires_d" value="${data.produits_accessoires_d || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">CHIFFRE D'AFFAIRES</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_chiffre_affaires" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Production stockée (-/+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="production_stockee" id="edit_production_stockee" value="${data.production_stockee || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Production Immobilisée (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="production_immobilisee" id="edit_production_immobilisee" value="${data.production_immobilisee || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Subvention d'exploitation (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="subvention_exploitation" id="edit_subvention_exploitation" value="${data.subvention_exploitation || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres produits (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="autres_produits" id="edit_autres_produits" value="${data.autres_produits || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Transfert de charges d'exploitation (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="transfert_charges_exploitation" id="edit_transfert_charges_exploitation" value="${data.transfert_charges_exploitation || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Achats de matières premières et fournitures connexes (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="achats_matieres_premieres_fournitures_connexes" id="edit_achats_matieres_premieres_fournitures_connexes" value="${data.achats_matieres_premieres_fournitures_connexes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Variation des stocks de matières premières (-/+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="variation_stock_matieres_premieres_fournitures_connexes" id="edit_variation_stock_matieres_premieres_fournitures_connexes" value="${data.variation_stock_matieres_premieres_fournitures_connexes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres achats (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="autres_achats" id="edit_autres_achats" value="${data.autres_achats || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Variation des stocks d'autres fournitures (-/+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="variation_stock_autres_fournitures" id="edit_variation_stock_autres_fournitures" value="${data.variation_stock_autres_fournitures || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Transport (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="transport" id="edit_transport" value="${data.transport || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Services extérieurs (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="services_exterieurs" id="edit_services_exterieurs" value="${data.services_exterieurs || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Impôts et taxes (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="impots_taxes" id="edit_impots_taxes" value="${data.impots_taxes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres dépenses (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="autres_depenses" id="edit_autres_depenses" value="${data.autres_depenses || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Frais de personnel (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="frais_personnel" id="edit_frais_personnel" value="${data.frais_personnel || 0}"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="reprise_depreciations_amortissements_provision_pertes_valeurs_p" id="edit_reprise_depreciations_amortissements_provision_pertes_valeurs_p" value="${data.reprise_depreciations_amortissements_provision_pertes_valeurs_p || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="reprise_depreciations_amortissements_provision_pertes_valeurs_m" id="edit_reprise_depreciations_amortissements_provision_pertes_valeurs_m" value="${data.reprise_depreciations_amortissements_provision_pertes_valeurs_m || 0}"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Produits financiers et assimilés (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="produits_financiers_assimiles" id="edit_produits_financiers_assimiles" value="${data.produits_financiers_assimiles || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Reprises sur provisions et pertes de valeur (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="reprise_provision_perte_valeur" id="edit_reprise_provision_perte_valeur" value="${data.reprise_provision_perte_valeur || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Transfert de charges financières (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="transfert_charges_financieres" id="edit_transfert_charges_financieres" value="${data.transfert_charges_financieres || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Charges financières et assimilées (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="charges_financieres_assimilees" id="edit_charges_financieres_assimilees" value="${data.charges_financieres_assimilees || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Dotations aux provisions et dépréciations financières (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="dotations_provisions_depreciations_financieres" id="edit_dotations_provisions_depreciations_financieres" value="${data.dotations_provisions_depreciations_financieres || 0}"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Produits des cessions d'immobilisations (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="produits_cession_immobilisations" id="edit_produits_cession_immobilisations" value="${data.produits_cession_immobilisations || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres produits HAO (+)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="autres_produits_hao" id="edit_autres_produits_hao" value="${data.autres_produits_hao || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Valeur comptable des cessions d'actifs immobilisés (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="valeur_comptable_cessions_actifs_immobilises" id="edit_valeur_comptable_cessions_actifs_immobilises" value="${data.valeur_comptable_cessions_actifs_immobilises || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres charges HAO (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="autres_charges_hao" id="edit_autres_charges_hao" value="${data.autres_charges_hao || 0}"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Participation des travailleurs (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="participation_travailleurs" id="edit_participation_travailleurs" value="${data.participation_travailleurs || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Charge d'impôt sur le revenu (-)</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="charge_impot_revenu" id="edit_charge_impot_revenu" value="${data.charge_impot_revenu || 0}"></div></div>
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-success text-white p-3 rounded"><div class="col-md-6"><h5 class="mb-0">RÉSULTAT NET DE L'EXERCICE</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_resultat_net_exercice" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                $('#form-edit-resultats').on('input', 'input[type="number"]', updateEditResultatSTotals);
+                updateEditResultatSTotals(); // Appel initial
+            },
+            error: function(xhr) { formContent.html('<div class="alert alert-danger">Impossible de charger le formulaire de modification du compte de résultat.</div>'); }
+        });
+    });
+
+    $('#form-edit-resultats').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), resultatId = $('#edit-resultats-id').val(), btn = $('#btn-save-resultats-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-resultat-s' 0 %}`.replace('0', resultatId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer {{ access }}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-resultats').modal('hide'); Swal.fire('Modifié !', 'Le compte de résultat a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

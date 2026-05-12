@@ -1,0 +1,1312 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte unique */
+.compte-financier-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.compte-financier-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.compte-financier-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0A95CA, #20c997);
+}
+
+/* En-tête de la carte */
+.compte-financier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.compte-financier-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.compte-financier-title i {
+    color: #0A95CA;
+    font-size: 1.75rem;
+}
+
+.compte-financier-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Grille des informations */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.info-card.informations {
+    border-left: 4px solid #0A95CA;
+}
+
+.info-card.periodes {
+    border-left: 4px solid #28a745;
+}
+
+.info-card.comptabilite {
+    border-left: 4px solid #ffc107;
+}
+
+/* Sections de contenu */
+.content-section {
+    margin-bottom: 1.5rem;
+}
+
+.content-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.content-label i {
+    color: #0A95CA;
+    font-size: 1.25rem;
+}
+
+.info-item {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 180px;
+}
+
+.info-value {
+    color: #6c757d;
+    flex: 1;
+}
+
+/* Badge de couleur */
+.color-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e3e6f0;
+}
+
+.color-preview {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Commentaire */
+.commentaire-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f8f9fa;
+}
+
+.commentaire-content {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border-left: 4px solid #6f42c1;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+/* Informations temporelles */
+.info-temporelle {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f8f9fa;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.info-item-temp {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form textarea {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form textarea:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+.enhanced-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Date picker amélioré */
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-input-group .form-control {
+    flex: 1;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .compte-financier-card {
+        padding: 1rem;
+    }
+    
+    .compte-financier-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .info-label {
+        min-width: auto;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-temporelle {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .compte-financier-title {
+        font-size: 1.25rem;
+    }
+    
+    .content-label {
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>Compte Financier
+            </h1>
+            <p class="text-muted mb-0">
+                Informations financières et comptables de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Compte Financier -->
+    <div class="row">
+        <div class="col-12">
+            {% if compte_financier %}
+            <!-- Affichage du compte financier existant -->
+            <div class="compte-financier-card">
+                <div class="compte-financier-header">
+                    <div class="compte-financier-title">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Compte Financier
+                    </div>
+                    <div class="compte-financier-actions">
+                        <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editCompteModal">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </button>
+                        <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grille des informations -->
+                <div class="info-grid">
+                    <!-- Informations générales -->
+                    <div class="info-card informations">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-info-circle"></i>
+                                Informations Générales
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Cabinet:</span>
+                                <span class="info-value">{{ compte_financier.cabinet|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Requis pour déposer:</span>
+                                <span class="info-value">{{ compte_financier.requis_pour_deposer|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Crédibilité cabinet:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.credibilite_cabinet == 'OUI' %}
+                                    <span class="badge bg-success">Oui</span>
+                                    {% elif compte_financier.credibilite_cabinet == 'NON' %}
+                                    <span class="badge bg-danger">Non</span>
+                                    {% else %}
+                                    Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Source:</span>
+                                <span class="info-value">{{ compte_financier.source|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Présentation:</span>
+                                <span class="info-value">{{ compte_financier.presentation|default:"Non spécifié" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Périodes comptables -->
+                    <div class="info-card periodes">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-calendar-alt"></i>
+                                Périodes Comptables
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte and compte_financier.date_fin %}
+                                        {{ compte_financier.date_compte|date:"d/m/Y" }} - {{ compte_financier.date_fin|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N-1:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte_n_moins_un and compte_financier.date_fin_n_moins_un %}
+                                        {{ compte_financier.date_compte_n_moins_un|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_un|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N-2:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte_n_moins_deux and compte_financier.date_fin_n_moins_deux %}
+                                        {{ compte_financier.date_compte_n_moins_deux|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_deux|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations comptables -->
+                    <div class="info-card comptabilite">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-calculator"></i>
+                                Informations Comptables
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Type de compte:</span>
+                                <span class="info-value">{{ compte_financier.type_compte|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Devise:</span>
+                                <span class="info-value">
+                                    <span class="badge bg-info">{{ compte_financier.devise|default:"XAF" }}</span>
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Type de bilan:</span>
+                                <span class="info-value">{{ compte_financier.type_bilan|default:"Non spécifié" }}</span>
+                            </div>
+                            {% if compte_financier.couleur_commentaire %}
+                            <div class="info-item">
+                                <span class="info-label">Étiquette:</span>
+                                <span class="info-value">
+                                    <span class="color-badge">
+                                        <div class="color-preview" style="background-color: {{ compte_financier.couleur_commentaire.code|default:'#6c757d' }}"></div>
+                                        {{ compte_financier.couleur_commentaire.couleur }}
+                                    </span>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commentaire -->
+                {% if compte_financier.commentaire %}
+                <div class="commentaire-section">
+                    <div class="content-label">
+                        <i class="fas fa-comment-dots"></i>
+                        Commentaire
+                    </div>
+                    <div class="commentaire-content">
+                        {{ compte_financier.commentaire|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Informations temporelles -->
+                <div class="info-temporelle">
+                    <div class="info-item-temp">
+                        <i class="fas fa-calendar-plus"></i>
+                        Créé le {{ compte_financier.created_at|date:"d/m/Y H:i" }}
+                    </div>
+                    <div class="info-item-temp">
+                        <i class="fas fa-sync-alt"></i>
+                        Dernière mise à jour : {{ compte_financier.updated_at|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- État vide - Aucun compte financier défini -->
+            <div class="empty-state">
+                <i class="fas fa-file-invoice-dollar empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucun compte financier défini</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de compte financier enregistré.<br>
+                    Ajoutez les informations financières et comptables de l'acheteur.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCompteModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter le compte financier
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Compte Financier -->
+<div class="modal fade" id="addCompteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter le Compte Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCompteForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cabinet" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Cabinet
+                                </label>
+                                <input type="text" class="form-control" id="cabinet" name="cabinet" 
+                                       placeholder="Nom du cabinet d'audit">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="requis_pour_deposer" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Requis pour déposer
+                                </label>
+                                <input type="text" class="form-control" id="requis_pour_deposer" name="requis_pour_deposer" 
+                                       placeholder="Documents requis">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="credibilite_cabinet" class="form-label">
+                                    <i class="fas fa-star text-warning"></i>Crédibilité du cabinet
+                                </label>
+                                <select class="form-select" id="credibilite_cabinet" name="credibilite_cabinet">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="OUI">Oui</option>
+                                    <option value="NON">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="source" class="form-label">
+                                    <i class="fas fa-database text-primary"></i>Source
+                                </label>
+                                <input type="text" class="form-control" id="source" name="source" 
+                                       placeholder="Source des informations">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="presentation" class="form-label">
+                                    <i class="fas fa-eye text-primary"></i>Présentation
+                                </label>
+                                <input type="text" class="form-control" id="presentation" name="presentation" 
+                                       placeholder="Qualité de présentation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type_compte" class="form-label">
+                                    <i class="fas fa-file-invoice text-primary"></i>Type de compte
+                                </label>
+                                <input type="text" class="form-control" id="type_compte" name="type_compte" 
+                                       placeholder="Type de compte">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Périodes comptables -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calendar-alt me-2"></i>Périodes Comptables</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte" class="form-label">Début période N</label>
+                                <input type="date" class="form-control" id="date_compte" name="date_compte">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin" class="form-label">Fin période N</label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte_n_moins_un" class="form-label">Début période N-1</label>
+                                <input type="date" class="form-control" id="date_compte_n_moins_un" name="date_compte_n_moins_un">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin_n_moins_un" class="form-label">Fin période N-1</label>
+                                <input type="date" class="form-control" id="date_fin_n_moins_un" name="date_fin_n_moins_un">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte_n_moins_deux" class="form-label">Début période N-2</label>
+                                <input type="date" class="form-control" id="date_compte_n_moins_deux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin_n_moins_deux" class="form-label">Fin période N-2</label>
+                                <input type="date" class="form-control" id="date_fin_n_moins_deux" name="date_fin_n_moins_deux">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations financières -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calculator me-2"></i>Informations Financières</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="devise" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="devise" name="devise">
+                                    {% for code, label in devise_choices %}
+                                        <option value="{{ code }}" {% if code == 'XAF' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type_bilan" class="form-label">
+                                    <i class="fas fa-balance-scale text-primary"></i>Type de bilan
+                                </label>
+                                <select class="form-select select2-with-search" id="type_bilan" name="type_bilan">
+                                    {% for value, label in type_bilan_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Étiquette de couleur
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                            {{ coloration.couleur }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="commentaire" class="form-label">
+                                    <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                                </label>
+                                <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                          placeholder="Commentaire et analyse des comptes financiers..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Compte Financier -->
+<div class="modal fade" id="editCompteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Compte Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCompteForm" class="enhanced-form">
+                <input type="hidden" id="editCompteId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCabinet" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Cabinet
+                                </label>
+                                <input type="text" class="form-control" id="editCabinet" name="cabinet">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRequisPourDeposer" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Requis pour déposer
+                                </label>
+                                <input type="text" class="form-control" id="editRequisPourDeposer" name="requis_pour_deposer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCredibiliteCabinet" class="form-label">
+                                    <i class="fas fa-star text-warning"></i>Crédibilité du cabinet
+                                </label>
+                                <select class="form-select" id="editCredibiliteCabinet" name="credibilite_cabinet">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="OUI">Oui</option>
+                                    <option value="NON">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editSource" class="form-label">
+                                    <i class="fas fa-database text-primary"></i>Source
+                                </label>
+                                <input type="text" class="form-control" id="editSource" name="source">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPresentation" class="form-label">
+                                    <i class="fas fa-eye text-primary"></i>Présentation
+                                </label>
+                                <input type="text" class="form-control" id="editPresentation" name="presentation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeCompte" class="form-label">
+                                    <i class="fas fa-file-invoice text-primary"></i>Type de compte
+                                </label>
+                                <input type="text" class="form-control" id="editTypeCompte" name="type_compte">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Périodes comptables -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calendar-alt me-2"></i>Périodes Comptables</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompte" class="form-label">Début période N</label>
+                                <input type="date" class="form-control" id="editDateCompte" name="date_compte">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFin" class="form-label">Fin période N</label>
+                                <input type="date" class="form-control" id="editDateFin" name="date_fin">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompteNMoinsUn" class="form-label">Début période N-1</label>
+                                <input type="date" class="form-control" id="editDateCompteNMoinsUn" name="date_compte_n_moins_un">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFinNMoinsUn" class="form-label">Fin période N-1</label>
+                                <input type="date" class="form-control" id="editDateFinNMoinsUn" name="date_fin_n_moins_un">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompteNMoinsDeux" class="form-label">Début période N-2</label>
+                                <input type="date" class="form-control" id="editDateCompteNMoinsDeux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFinNMoinsDeux" class="form-label">Fin période N-2</label>
+                                <input type="date" class="form-control" id="editDateFinNMoinsDeux" name="date_fin_n_moins_deux">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations financières -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calculator me-2"></i>Informations Financières</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDevise" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="editDevise" name="devise">
+                                    {% for code, label in devise_choices %}
+                                        <option value="{{ code }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeBilan" class="form-label">
+                                    <i class="fas fa-balance-scale text-primary"></i>Type de bilan
+                                </label>
+                                <select class="form-select select2-with-search" id="editTypeBilan" name="type_bilan">
+                                    {% for value, label in type_bilan_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Étiquette de couleur
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                            {{ coloration.couleur }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editCommentaire" class="form-label">
+                                    <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                                </label>
+                                <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le compte financier</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer ce compte financier ? 
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/compte-financier/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+    }
+    
+    // Initialiser les datepickers
+    function initDatePickers() {
+        flatpickr.localize(flatpickr.l10ns.fr);
+        
+        $('input[type="date"]').each(function() {
+            flatpickr(this, {
+                dateFormat: "Y-m-d",
+                locale: "fr",
+                allowInput: true
+            });
+        });
+    }
+
+    // Initialisation
+    initSelect2();
+    initDatePickers();
+    
+    // Si un compte existe, pré-remplir le formulaire d'édition
+    {% if compte_financier %}
+    function populateEditForm() {
+        const compteData = JSON.parse('{{ compte_financier_json|escapejs }}');
+        
+        $('#editCompteId').val(compteData.id);
+        $('#editCabinet').val(compteData.cabinet || '');
+        $('#editRequisPourDeposer').val(compteData.requis_pour_deposer || '');
+        $('#editCredibiliteCabinet').val(compteData.credibilite_cabinet || '');
+        $('#editSource').val(compteData.source || '');
+        $('#editPresentation').val(compteData.presentation || '');
+        $('#editTypeCompte').val(compteData.type_compte || '');
+        
+        // Dates
+        $('#editDateCompte').val(compteData.date_compte || '');
+        $('#editDateFin').val(compteData.date_fin || '');
+        $('#editDateCompteNMoinsUn').val(compteData.date_compte_n_moins_un || '');
+        $('#editDateFinNMoinsUn').val(compteData.date_fin_n_moins_un || '');
+        $('#editDateCompteNMoinsDeux').val(compteData.date_compte_n_moins_deux || '');
+        $('#editDateFinNMoinsDeux').val(compteData.date_fin_n_moins_deux || '');
+        
+        // Sélecteurs
+        $('#editDevise').val(compteData.devise || 'XAF').trigger('change');
+        $('#editTypeBilan').val(compteData.type_bilan || '').trigger('change');
+        $('#editCouleurCommentaire').val(compteData.couleur_commentaire?.id || '').trigger('change');
+        
+        // Commentaire
+        $('#editCommentaire').val(compteData.commentaire || '');
+    }
+    
+    $('#editCompteModal').on('shown.bs.modal', function() {
+        populateEditForm();
+    });
+    {% endif %}
+    
+    // Formulaire d'ajout
+    $('#addCompteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitCompteForm(data, '#submitAddBtn', 'addCompteModal');
+    });
+    
+    // Formulaire de modification
+    $('#editCompteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Inclure l'ID dans les données
+        const compteId = $('#editCompteId').val();
+        data['id'] = compteId;
+        
+        submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
+    });
+    
+    // Soumission du formulaire - POST pour création et modification
+    function submitCompteForm(data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitCompteForm(data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression du compte
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Compte financier supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.message || 'Impossible de supprimer le compte financier'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

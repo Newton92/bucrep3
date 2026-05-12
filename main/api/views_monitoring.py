@@ -1,64 +1,72 @@
-from django.shortcuts import render
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.response import Response
-from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from django.utils.translation import gettext_lazy as _
-from main.models import CustomUser
-from main.serializers import *
-import random
-import string
-from django.core.mail import send_mail
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
-from django.contrib.auth.decorators import login_required
-from main.utils import send_email_with_secret_code
-from django.template.loader import render_to_string
-from rest_framework import status
-from django.contrib.auth import logout
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
-from django.urls import reverse
-from django.contrib.auth import login
-from rest_framework.viewsets import ModelViewSet
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.db.models.functions import TruncMonth
+from django.db.models import Count
 
+from main.serializers import *
 
 # === Vues Monitoring === #
 
+class AlerteLogsParMois(APIView):
+    def get(self, request):
+        # Annoter les AlerteLogs par mois et compter le nombre total par mois
+        alertelogs_par_mois = AlerteLog.objects.annotate(
+            mois=TruncMonth('date_creation')
+        ).values('mois').annotate(
+            total=Count('id')
+        ).order_by('mois')
+
+        # Dictionnaire pour mapper les noms des mois en français
+        mois_en_francais = {
+            'January': 'Janvier',
+            'February': 'Février',
+            'March': 'Mars',
+            'April': 'Avril',
+            'May': 'Mai',
+            'June': 'Juin',
+            'July': 'Juillet',
+            'August': 'Août',
+            'September': 'Septembre',
+            'October': 'Octobre',
+            'November': 'Novembre',
+            'December': 'Décembre'
+        }
+
+        # Préparer les données pour le graphique
+        data = {
+            'labels': [mois_en_francais[entry['mois'].strftime('%B')] for entry in alertelogs_par_mois],
+            'data': [entry['total'] for entry in alertelogs_par_mois]
+        }
+        return Response(data)
 
 
 class ListClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        page_number = request.query_params.get('page', 1)
-        search_term = request.query_params.get('search', '')
+        page_number = request.query_params.get("page", 1)
+        search_term = request.query_params.get("search", "")
 
-        client_list = Client.objects.filter(
-            nom__icontains=search_term
-        ).order_by('nom')
+        client_list = Client.objects.filter(nom__icontains=search_term).order_by("nom")
 
         paginator = Paginator(client_list, 10)
         client_page = paginator.get_page(page_number)
         serializer = ClientSerializer(client_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': client_page.has_next(),
-            'previous': client_page.has_previous()
-        })
-
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": client_page.has_next(),
+                "previous": client_page.has_previous(),
+            }
+        )
 
 
 class AddClientView(APIView):
@@ -72,14 +80,15 @@ class AddClientView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class EditClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         client = Client.objects.filter(id=id).first()
         if not client:
-            return Response({'detail': 'Client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Client non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = GetClientSerializer(client)
         return Response(serializer.data)
@@ -87,7 +96,9 @@ class EditClientView(APIView):
     def put(self, request, id, *args, **kwargs):
         client = Client.objects.filter(id=id).first()
         if not client:
-            return Response({'detail': 'Client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Client non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = EditClientSerializer(client, data=request.data, partial=True)
         if serializer.is_valid():
@@ -96,67 +107,69 @@ class EditClientView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class GetClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         client = Client.objects.filter(id=id).first()
         if not client:
-            return Response({'detail': 'Client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Client non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CheckClientSerializer(client)
         return Response(serializer.data)
-
-
 
 
 class DeleteClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         clients = Client.objects.filter(id__in=ids)
         if not clients.exists():
-            return Response({'error': 'Aucun client trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun client trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = clients.delete()
-        return Response({'message': f'{count} clients supprimés avec succès.'}, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
+        return Response(
+            {"message": f"{count} clients supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListPortefeuilleView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        page_number = request.query_params.get('page', 1)
-        search_term = request.query_params.get('search', '')
+        page_number = request.query_params.get("page", 1)
+        search_term = request.query_params.get("search", "")
 
         portefeuille_list = Portefeuille.objects.filter(
             nom__icontains=search_term
-        ).order_by('nom')
+        ).order_by("nom")
 
         paginator = Paginator(portefeuille_list, 10)
         portefeuille_page = paginator.get_page(page_number)
         serializer = PortefeuilleSerializer(portefeuille_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': portefeuille_page.has_next(),
-            'previous': portefeuille_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": portefeuille_page.has_next(),
+                "previous": portefeuille_page.has_previous(),
+            }
+        )
 
 
 class AddPortefeuilleView(APIView):
@@ -168,35 +181,41 @@ class AddPortefeuilleView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
-    
+
+
 class AddPortefeuilleWithClientsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         with transaction.atomic():
-            portefeuille_data = request.data.get('portefeuille')
+            portefeuille_data = request.data.get("portefeuille")
             portefeuille_serializer = AddPortefeuilleSerializer(data=portefeuille_data)
 
             if portefeuille_serializer.is_valid():
                 portefeuille = portefeuille_serializer.save()
 
-                clients_data = request.data.get('clients', [])
+                clients_data = request.data.get("clients", [])
                 for client_data in clients_data:
-                    client_data['portefeuille'] = portefeuille.id
-                    client_serializer = AddPortefeuilleClientSerializer(data=client_data)
+                    client_data["portefeuille"] = portefeuille.id
+                    client_serializer = AddPortefeuilleClientSerializer(
+                        data=client_data
+                    )
                     if not client_serializer.is_valid():
                         transaction.set_rollback(True)
-                        return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(
+                            client_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                        )
                     client_serializer.save()
 
-                return Response(portefeuille_serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    portefeuille_serializer.data, status=status.HTTP_201_CREATED
+                )
 
-            return Response(portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-              
-        
+            return Response(
+                portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class AddPortefeuilleWithAcheteursView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -204,58 +223,74 @@ class AddPortefeuilleWithAcheteursView(APIView):
         with transaction.atomic():
             # Extraire les données de la requête
             portefeuille_data = {
-                'client': request.data.get('client'),
-                'nom': request.data.get('nom'),
-                'acheteurs': request.data.get('acheteurs', [])
+                "client": request.data.get("client"),
+                "nom": request.data.get("nom"),
+                "frequence_alertes": request.data.get("frequence_alertes"),
+                "elements_surveillance_actifs": request.data.get(
+                    "elements_surveillance_actifs", []
+                ),
+                "acheteurs": request.data.get("acheteurs", []),
             }
 
             # Valider et enregistrer les données
-            portefeuille_serializer = AddPortefeuilleWithAcheteursSerializer(data=portefeuille_data)
+            portefeuille_serializer = AddPortefeuilleWithAcheteursSerializer(
+                data=portefeuille_data
+            )
             if portefeuille_serializer.is_valid():
-                portefeuille = portefeuille_serializer.save()
-                return Response(portefeuille_serializer.data, status=status.HTTP_201_CREATED)
+                portefeuille_serializer.save()
+                return Response(
+                    portefeuille_serializer.data, status=status.HTTP_201_CREATED
+                )
             else:
-                return Response(portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response(
+                    portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                )
 
 
 class EditPortefeuilleView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, id, *args, **kwargs):
-        # Récupérer le portefeuille
-        portefeuille = Portefeuille.objects.filter(id=id).first()
-        if not portefeuille:
-            return Response({'detail': 'Portefeuille non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Sérialiser les données du portefeuille
-        serializer = GetPortefeuilleSerializer(portefeuille)
-        return Response(serializer.data)
-
     def put(self, request, id, *args, **kwargs):
-        # Récupérer le portefeuille
-        portefeuille = Portefeuille.objects.filter(id=id).first()
-        if not portefeuille:
-            return Response({'detail': 'Portefeuille non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+        with transaction.atomic():
+            portefeuille = Portefeuille.objects.filter(id=id).first()
+            if not portefeuille:
+                return Response(
+                    {"detail": "Portefeuille non trouvé."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
-        # Mettre à jour les données du portefeuille
-        serializer = EditPortefeuilleSerializer(portefeuille, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
+            portefeuille_data = {
+                "client": request.data.get("client"),
+                "nom": request.data.get("nom"),
+                "frequence_alertes": request.data.get("frequence_alertes"),
+                "elements_surveillance_actifs": request.data.get(
+                    "elements_surveillance_actifs", []
+                ),
+                "acheteurs": request.data.get("acheteurs", []),
+            }
 
-            # Mettre à jour les acheteurs associés
-            acheteurs_ids = request.data.get('acheteurs', [])
-            if acheteurs_ids:
-                # Supprimer les anciennes associations
+            portefeuille_serializer = EditPortefeuilleSerializer(
+                portefeuille, data=portefeuille_data, partial=True
+            )
+            if portefeuille_serializer.is_valid():
+                portefeuille = portefeuille_serializer.save()
+
+                # Supprimer les anciennes liaisons
                 PortefeuilleClient.objects.filter(portefeuille=portefeuille).delete()
-                # Ajouter les nouvelles associations
+
+                # Ajouter les nouvelles liaisons
+                acheteurs_ids = request.data.get("acheteurs", [])
                 for acheteur_id in acheteurs_ids:
-                    PortefeuilleClient.objects.create(portefeuille=portefeuille, acheteur_id=acheteur_id)
+                    PortefeuilleClient.objects.create(
+                        portefeuille=portefeuille, acheteur_id=acheteur_id
+                    )
 
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(portefeuille_serializer.data)
 
-    
+            return Response(
+                portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class EditPortefeuilleWithClientsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -264,10 +299,15 @@ class EditPortefeuilleWithClientsView(APIView):
         with transaction.atomic():
             portefeuille = Portefeuille.objects.filter(id=id).first()
             if not portefeuille:
-                return Response({'detail': 'Portefeuille non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "Portefeuille non trouvé."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
-            portefeuille_data = request.data.get('portefeuille')
-            portefeuille_serializer = EditPortefeuilleSerializer(portefeuille, data=portefeuille_data, partial=True)
+            portefeuille_data = request.data.get("portefeuille")
+            portefeuille_serializer = EditPortefeuilleSerializer(
+                portefeuille, data=portefeuille_data, partial=True
+            )
 
             if portefeuille_serializer.is_valid():
                 portefeuille = portefeuille_serializer.save()
@@ -276,19 +316,25 @@ class EditPortefeuilleWithClientsView(APIView):
                 PortefeuilleClient.objects.filter(portefeuille=portefeuille).delete()
 
                 # Ajouter les nouvelles liaisons
-                clients_data = request.data.get('clients', [])
+                clients_data = request.data.get("clients", [])
                 for client_data in clients_data:
-                    client_data['portefeuille'] = portefeuille.id
-                    client_serializer = AddPortefeuilleClientSerializer(data=client_data)
+                    client_data["portefeuille"] = portefeuille.id
+                    client_serializer = AddPortefeuilleClientSerializer(
+                        data=client_data
+                    )
                     if not client_serializer.is_valid():
                         transaction.set_rollback(True)
-                        return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(
+                            client_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                        )
                     client_serializer.save()
 
                 return Response(portefeuille_serializer.data)
 
-            return Response(portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                portefeuille_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class GetPortefeuilleView(APIView):
     permission_classes = [IsAuthenticated]
@@ -296,12 +342,13 @@ class GetPortefeuilleView(APIView):
     def get(self, request, id, *args, **kwargs):
         portefeuille = Portefeuille.objects.filter(id=id).first()
         if not portefeuille:
-            return Response({'detail': 'Portefeuille non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Portefeuille non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CheckPortefeuilleSerializer(portefeuille)
         return Response(serializer.data)
-    
-      
+
 
 class GetPortefeuilleWithClientsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -309,18 +356,24 @@ class GetPortefeuilleWithClientsView(APIView):
     def get(self, request, id, *args, **kwargs):
         portefeuille = Portefeuille.objects.filter(id=id).first()
         if not portefeuille:
-            return Response({'detail': 'Portefeuille non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Portefeuille non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         # Récupérer les liaisons associées au portefeuille
-        portefeuille_clients = PortefeuilleClient.objects.filter(portefeuille=portefeuille)
+        portefeuille_clients = PortefeuilleClient.objects.filter(
+            portefeuille=portefeuille
+        )
 
         # Sérialiser les données du portefeuille et des liaisons
         portefeuille_serializer = CheckPortefeuilleSerializer(portefeuille)
-        portefeuille_clients_serializer = PortefeuilleClientSerializer(portefeuille_clients, many=True)
+        portefeuille_clients_serializer = PortefeuilleClientSerializer(
+            portefeuille_clients, many=True
+        )
 
         # Combiner les données dans une seule réponse
         response_data = portefeuille_serializer.data
-        response_data['portefeuille_clients'] = portefeuille_clients_serializer.data
+        response_data["portefeuille_clients"] = portefeuille_clients_serializer.data
 
         return Response(response_data)
 
@@ -329,49 +382,51 @@ class DeletePortefeuilleView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         portefeuilles = Portefeuille.objects.filter(id__in=ids)
         if not portefeuilles.exists():
-            return Response({'error': 'Aucun portefeuille trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun portefeuille trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = portefeuilles.delete()
-        return Response({'message': f'{count} portefeuilles supprimés avec succès.'}, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
+        return Response(
+            {"message": f"{count} portefeuilles supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListPortefeuilleClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        page_number = request.query_params.get('page', 1)
-        search_term = request.query_params.get('search', '')
+        page_number = request.query_params.get("page", 1)
+        search_term = request.query_params.get("search", "")
 
         portefeuille_client_list = PortefeuilleClient.objects.filter(
             acheteur__nom__icontains=search_term
-        ).order_by('acheteur__nom')
+        ).order_by("acheteur__nom")
 
         paginator = Paginator(portefeuille_client_list, 10)
         portefeuille_client_page = paginator.get_page(page_number)
         serializer = PortefeuilleClientSerializer(portefeuille_client_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': portefeuille_client_page.has_next(),
-            'previous': portefeuille_client_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": portefeuille_client_page.has_next(),
+                "previous": portefeuille_client_page.has_previous(),
+            }
+        )
 
 
 class AddPortefeuilleClientView(APIView):
@@ -391,7 +446,10 @@ class EditPortefeuilleClientView(APIView):
     def get(self, request, id, *args, **kwargs):
         portefeuille_client = PortefeuilleClient.objects.filter(id=id).first()
         if not portefeuille_client:
-            return Response({'detail': 'Portefeuille client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Portefeuille client non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = GetPortefeuilleClientSerializer(portefeuille_client)
         return Response(serializer.data)
@@ -399,9 +457,14 @@ class EditPortefeuilleClientView(APIView):
     def put(self, request, id, *args, **kwargs):
         portefeuille_client = PortefeuilleClient.objects.filter(id=id).first()
         if not portefeuille_client:
-            return Response({'detail': 'Portefeuille client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Portefeuille client non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = AddPortefeuilleClientSerializer(portefeuille_client, data=request.data, partial=True)
+        serializer = AddPortefeuilleClientSerializer(
+            portefeuille_client, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -414,7 +477,10 @@ class GetPortefeuilleClientView(APIView):
     def get(self, request, id, *args, **kwargs):
         portefeuille_client = PortefeuilleClient.objects.filter(id=id).first()
         if not portefeuille_client:
-            return Response({'detail': 'Portefeuille client non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Portefeuille client non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = CheckPortefeuilleClientSerializer(portefeuille_client)
         return Response(serializer.data)
@@ -424,15 +490,125 @@ class DeletePortefeuilleClientView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         portefeuille_clients = PortefeuilleClient.objects.filter(id__in=ids)
         if not portefeuille_clients.exists():
-            return Response({'error': 'Aucun portefeuille client trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun portefeuille client trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = portefeuille_clients.delete()
-        return Response({'message': f'{count} portefeuilles clients supprimés avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} portefeuilles clients supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
+class ListContactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get("page", 1)
+        search_term = request.query_params.get("search", "")
+
+        contact_list = Contact.objects.filter(nom__icontains=search_term).order_by(
+            "nom"
+        )
+
+        paginator = Paginator(contact_list, 10)
+        contact_page = paginator.get_page(page_number)
+        serializer = ContactSerializer(contact_page, many=True)
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": contact_page.has_next(),
+                "previous": contact_page.has_previous(),
+            }
+        )
+
+
+class AddContactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddContactSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditContactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        contact = Contact.objects.filter(id=id).first()
+        if not contact:
+            return Response(
+                {"detail": "Contact non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = GetContactSerializer(contact)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        contact = Contact.objects.filter(id=id).first()
+        if not contact:
+            return Response(
+                {"detail": "Contact non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = EditContactSerializer(contact, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetContactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        contact = Contact.objects.filter(id=id).first()
+        if not contact:
+            return Response(
+                {"detail": "Contact non trouvé."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = CheckContactSerializer(contact)
+        return Response(serializer.data)
+
+
+class DeleteContactView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        contacts = Contact.objects.filter(id__in=ids)
+        if not contacts.exists():
+            return Response(
+                {"error": "Aucun contact trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        count, _ = contacts.delete()
+        return Response(
+            {"message": f"{count} contacts supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )

@@ -1,0 +1,903 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Animate.css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<style>
+:root {
+    --primary: #0d80be;
+    --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #106cb2);
+    --secondary: #25add6;
+    --success: #28a745;
+    --success-gradient: linear-gradient(135deg, #28a745, #20c997);
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --info: #17a2b8;
+    --dark: #2c3e50;
+    --gray: #6c757d;
+    --border-radius: 16px;
+    --border-radius-sm: 12px;
+    --box-shadow: 0 8px 25px rgba(13, 110, 178, 0.08);
+    --box-shadow-hover: 0 15px 35px rgba(13, 110, 178, 0.15);
+    --box-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background: linear-gradient(135deg, #f5f7fa, #e9ecef);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.warning-hero {
+    background: var(--primary-gradient);
+    border-radius: var(--border-radius) !important;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(13, 110, 178, 0.2) !important;
+}
+
+.warning-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.warning-hero h4 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.warning-hero p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.btn-add-warning {
+    background: white;
+    color: var(--primary);
+    border: none;
+    padding: 0.55rem 1.4rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    transition: var(--transition);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    letter-spacing: 0.2px;
+    text-decoration: none;
+}
+
+.btn-add-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    background: white;
+    color: var(--primary-dark);
+}
+
+.btn-add-warning i { font-size: 0.85rem; }
+
+.main-card {
+    border: none !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--box-shadow-card) !important;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.main-card:hover {
+    box-shadow: var(--box-shadow-hover) !important;
+}
+
+.search-wrapper {
+    background: white;
+    border: 1.5px solid rgba(13, 110, 178, 0.12);
+    border-radius: 50px;
+    padding: 0.2rem 0.2rem 0.2rem 0.85rem;
+    transition: var(--transition);
+    height: 42px;
+}
+
+.search-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 178, 0.1);
+}
+
+.search-wrapper .input-group-text {
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    padding: 0;
+    margin-right: 0.3rem;
+}
+
+.search-wrapper .input-group-text i { font-size: 0.8rem; }
+
+.search-wrapper .form-control {
+    border: none;
+    padding: 0.3rem 0.3rem;
+    font-size: 0.875rem;
+    height: 100%;
+}
+
+.search-wrapper .form-control:focus { box-shadow: none; }
+
+.search-wrapper .btn-search {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 50px !important;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.search-wrapper .btn-search i { font-size: 0.75rem; }
+
+.search-wrapper .btn-search:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(13, 110, 178, 0.35);
+}
+
+.btn-refresh {
+    background: white;
+    border: 1.5px solid rgba(13, 110, 178, 0.15);
+    color: var(--primary);
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.btn-refresh:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(13, 110, 178, 0.25);
+}
+
+.btn-refresh i {
+    font-size: 0.8rem;
+    transition: transform 0.45s ease;
+}
+
+.btn-refresh:hover i { transform: rotate(180deg); }
+
+.warning-table {
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.warning-table thead th {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 2px solid var(--primary);
+    color: var(--dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+}
+
+.warning-table tbody tr { transition: var(--transition); }
+
+.warning-table tbody tr:hover {
+    background: rgba(13, 110, 178, 0.02);
+    transform: scale(1.01);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.warning-table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.badge-warning-custom {
+    background: rgba(13, 110, 178, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(13, 110, 178, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.badge-count {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border-width: 1.5px;
+    border-style: solid;
+    transition: var(--transition);
+    background: white;
+}
+
+.action-btn i { font-size: 0.75rem; }
+
+.action-btn.btn-outline-info { border-color: rgba(23, 162, 184, 0.3); color: #17a2b8; }
+.action-btn.btn-outline-info:hover {
+    background: #17a2b8; border-color: #17a2b8; color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 10px rgba(23, 162, 184, 0.3);
+}
+
+.action-btn.btn-outline-warning { border-color: rgba(255, 193, 7, 0.3); color: #d9a000; }
+.action-btn.btn-outline-warning:hover {
+    background: #ffc107; border-color: #ffc107; color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+}
+
+.action-btn.btn-outline-danger { border-color: rgba(220, 53, 69, 0.3); color: #dc3545; }
+.action-btn.btn-outline-danger:hover {
+    background: #dc3545; border-color: #dc3545; color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+}
+
+.action-btn.btn-outline-success { border-color: rgba(40, 167, 69, 0.3); color: #28a745; }
+.action-btn.btn-outline-success:hover {
+    background: #28a745; border-color: #28a745; color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+.pagination { gap: 0.3rem; }
+
+.page-item .page-link {
+    border: none;
+    border-radius: 10px !important;
+    color: var(--dark);
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    transition: var(--transition);
+    background: white;
+}
+
+.page-item.active .page-link {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(13, 110, 178, 0.3);
+}
+
+.page-item:not(.active) .page-link:hover {
+    background: rgba(13, 110, 178, 0.1);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.page-item.disabled .page-link { background: #f8f9fa; color: var(--gray); }
+
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(13, 110, 178, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 16px;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--gray);
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h5 { font-weight: 700; color: var(--dark); margin-bottom: 0.5rem; }
+.empty-state p { color: var(--gray); margin-bottom: 2rem; }
+
+.swal2-popup { border-radius: 16px !important; padding: 2rem !important; }
+.swal2-title { color: var(--dark) !important; font-weight: 700 !important; }
+.swal2-confirm {
+    background: var(--primary-gradient) !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+}
+.swal2-cancel { border-radius: 10px !important; padding: 0.75rem 2rem !important; font-weight: 600 !important; }
+
+[data-tooltip] { position: relative; cursor: pointer; }
+[data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    background: var(--dark);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+[data-tooltip]:hover:before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+@media (max-width: 768px) {
+    .warning-hero h4 { font-size: 1.3rem; }
+    .btn-add-warning { padding: 0.5rem 1.1rem; font-size: 0.82rem; }
+}
+
+@media (max-width: 576px) {
+    .action-btn { width: 28px; height: 28px; }
+    .action-btn i { font-size: 0.7rem; }
+    .badge-warning-custom { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+}
+
+.warning-tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 2px solid rgba(13, 110, 178, 0.1);
+    margin-bottom: 1.25rem;
+}
+
+.warning-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    border-radius: 8px 8px 0 0;
+}
+
+.warning-tab-btn:hover { color: var(--primary); background: rgba(13, 110, 178, 0.04); }
+.warning-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(13, 110, 178, 0.06); }
+
+.warning-tab-btn .tab-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 50px;
+    line-height: 1.2;
+}
+
+.badge-sent {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 50px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-draft {
+    background: rgba(108, 117, 125, 0.12);
+    color: var(--gray);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 50px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-2 px-md-3">
+    <!-- Header -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="warning-hero px-4 py-3 d-flex flex-wrap align-items-center justify-content-between gap-3 animate__animated animate__fadeInDown">
+                <div>
+                    <h4 class="mb-1 text-white">
+                        <i class="fas fa-shield-alt me-2"></i>{% trans "Gestion des alertes" %}
+                    </h4>
+                    <p class="mb-0 text-white-50 small">
+                        {% trans "Suivi, consultation et diffusion des alertes avec pièces jointes" %}
+                    </p>
+                </div>
+                <a href="{% url 'dash_root_create_warning' %}" class="btn btn-add-warning">
+                    <i class="fas fa-plus-circle"></i>
+                    {% trans "Nouvelle alerte" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte principale -->
+    <div class="row g-3 mt-1">
+        <div class="col-12">
+            <div class="main-card">
+                <div class="card-body p-3 p-md-4">
+
+                    <!-- Onglets + Barre de recherche -->
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                        <div class="warning-tabs mb-0">
+                            <button class="warning-tab-btn active" id="tabAll" data-tab="all">
+                                <i class="fas fa-list-ul"></i>
+                                {% trans "Toutes" %}
+                                <span class="tab-badge" id="tabAllCount">—</span>
+                            </button>
+                            <button class="warning-tab-btn" id="tabSent" data-tab="sent">
+                                <i class="fas fa-paper-plane"></i>
+                                {% trans "Envoyées" %}
+                                <span class="tab-badge" id="tabSentCount">—</span>
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="search-wrapper d-flex align-items-center" style="min-width:260px;">
+                                <span class="input-group-text bg-transparent border-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input id="searchInput" type="search" class="form-control border-0 bg-transparent"
+                                       placeholder="{% trans 'Rechercher par titre, auteur, acheteur...' %}">
+                                <button id="searchBtn" class="btn btn-search">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                            <button id="refreshBtn" class="btn btn-refresh" type="button"
+                                    data-bs-toggle="tooltip" data-bs-placement="left"
+                                    title="{% trans 'Rafraîchir la liste' %}">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des alertes -->
+                    <div class="warning-table mt-3">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>{% trans "Titre" %}</th>
+                                    <th class="text-center d-none d-md-table-cell">{% trans "Acheteurs" %}</th>
+                                    <th class="text-center d-none d-md-table-cell">{% trans "Pièces jointes" %}</th>
+                                    <th class="d-none d-lg-table-cell">{% trans "Auteur" %}</th>
+                                    <th class="d-none d-lg-table-cell">{% trans "Créée le" %}</th>
+                                    <th class="text-center">{% trans "Statut" %}</th>
+                                    <th class="text-center">{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="warningsTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-5">
+                                        <div class="empty-state">
+                                            <i class="fas fa-bell"></i>
+                                            <h5>{% trans "Chargement des alertes..." %}</h5>
+                                            <p>{% trans "Veuillez patienter pendant le chargement" %}</p>
+                                            <div class="loading-spinner mx-auto"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer avec pagination -->
+                <div class="card-footer bg-white border-top px-4 py-3">
+                    <div class="d-sm-flex justify-content-between align-items-center">
+                        <p class="mb-2 mb-sm-0 small text-muted" id="paginationInfo">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% trans "Chargement..." %}
+                        </p>
+                        <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="access_token" value="{{ access }}">
+{% endblock %}
+
+{% block scripts %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+(function() {
+    const ACCESS_TOKEN = "{{ access }}";
+
+    const TXT = {
+        loading:          "{% trans 'Chargement...' %}",
+        notFound:         "{% trans 'Aucune alerte trouvée' %}",
+        loadingError:     "{% trans 'Erreur de chargement' %}",
+        genericError:     "{% trans 'Une erreur est survenue' %}",
+        display:          "{% trans 'Affichage' %}",
+        to:               "{% trans 'à' %}",
+        on:               "{% trans 'sur' %}",
+        alertsSuffix:     "{% trans 'alerte(s)' %}",
+        confirmDelete:    "{% trans 'Confirmer la suppression de cette alerte ?' %}",
+        view:             "{% trans 'Consulter' %}",
+        edit:             "{% trans 'Modifier' %}",
+        del:              "{% trans 'Supprimer' %}",
+        send:             "{% trans 'Envoyer' %}",
+        deleteSuccess:    "{% trans 'Alerte supprimée avec succès' %}",
+        sendSuccess:      "{% trans 'Alerte envoyée avec succès' %}",
+        emailRequired:    "{% trans 'Veuillez saisir au moins un destinataire (champ À).' %}",
+        sent:             "{% trans 'Envoyée' %}",
+        draft:            "{% trans 'Brouillon' %}",
+    };
+
+    const tableBody         = document.getElementById("warningsTableBody");
+    const paginationInfo    = document.getElementById("paginationInfo");
+    const paginationControls = document.getElementById("paginationControls");
+    const searchInput       = document.getElementById("searchInput");
+    const searchBtn         = document.getElementById("searchBtn");
+
+    let currentPage     = 1;
+    let currentSearch   = "";
+    let currentPageSize = 10;
+    let currentTab      = "all";
+
+    // ── Utilities ──────────────────────────────────────────────────────────
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return "0 Bytes";
+        const k = 1024, sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+
+    function getFileIcon(filename) {
+        const ext = (filename || "").split('.').pop().toLowerCase();
+        const icons = {
+            pdf: 'fa-file-pdf', doc: 'fa-file-word', docx: 'fa-file-word',
+            xls: 'fa-file-excel', xlsx: 'fa-file-excel',
+            jpg: 'fa-file-image', jpeg: 'fa-file-image', png: 'fa-file-image'
+        };
+        return icons[ext] || 'fa-file';
+    }
+
+    function showError(message) {
+        Swal.fire({ icon: "error", title: "{% trans 'Erreur' %}", text: message || TXT.genericError, confirmButtonColor: "#0d80be" });
+    }
+
+    function showSuccess(message) {
+        Swal.fire({ icon: "success", title: "{% trans 'Succès' %}", text: message, timer: 2000, showConfirmButton: false, toast: true, position: "top-end" });
+    }
+
+    async function confirmAction(message) {
+        const result = await Swal.fire({
+            icon: "warning", title: "{% trans 'Confirmation' %}", text: message,
+            showCancelButton: true, confirmButtonColor: "#0d80be", cancelButtonColor: "#dc3545",
+            confirmButtonText: "{% trans 'Oui' %}", cancelButtonText: "{% trans 'Annuler' %}"
+        });
+        return result.isConfirmed;
+    }
+
+    // ── API ────────────────────────────────────────────────────────────────
+    async function apiFetch(url, options = {}) {
+        const headers = options.headers || {};
+        headers.Authorization = "Bearer " + ACCESS_TOKEN;
+        if (!(options.body instanceof FormData)) {
+            headers["Content-Type"] = headers["Content-Type"] || "application/json";
+        }
+        const response = await fetch(url, { ...options, headers });
+        let payload = {};
+        try { payload = await response.json(); } catch (e) {}
+        if (!response.ok) {
+            throw new Error(payload.detail || payload.error || payload.message || TXT.genericError);
+        }
+        return payload;
+    }
+
+    // ── Pagination ─────────────────────────────────────────────────────────
+    function renderPagination(page, totalPages) {
+        paginationControls.innerHTML = "";
+        if (totalPages <= 1) return;
+
+        const addItem = (label, targetPage, disabled = false, active = false) => {
+            const li = document.createElement("li");
+            li.className = `page-item ${disabled ? "disabled" : ""} ${active ? "active" : ""}`;
+            const btn = document.createElement("button");
+            btn.className = "page-link";
+            btn.type = "button";
+            btn.innerHTML = label;
+            btn.disabled = disabled;
+            btn.addEventListener("click", () => loadWarnings(targetPage, currentSearch));
+            li.appendChild(btn);
+            paginationControls.appendChild(li);
+        };
+
+        addItem('<i class="fas fa-chevron-left"></i>', page - 1, page <= 1);
+        let start = Math.max(1, page - 2);
+        let end   = Math.min(totalPages, page + 2);
+
+        if (start > 1) {
+            addItem("1", 1);
+            if (start > 2) {
+                const li = document.createElement("li");
+                li.className = "page-item disabled";
+                li.innerHTML = '<span class="page-link">...</span>';
+                paginationControls.appendChild(li);
+            }
+        }
+
+        for (let i = start; i <= end; i++) addItem(String(i), i, false, i === page);
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) {
+                const li = document.createElement("li");
+                li.className = "page-item disabled";
+                li.innerHTML = '<span class="page-link">...</span>';
+                paginationControls.appendChild(li);
+            }
+            addItem(String(totalPages), totalPages);
+        }
+
+        addItem('<i class="fas fa-chevron-right"></i>', page + 1, page >= totalPages);
+    }
+
+    // ── Table rendering ────────────────────────────────────────────────────
+    function setLoadingState() {
+        tableBody.innerHTML = `
+            <tr><td colspan="8" class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-bell"></i>
+                    <h5>${TXT.loading}</h5>
+                    <p>{% trans 'Veuillez patienter pendant le chargement' %}</p>
+                    <div class="loading-spinner mx-auto"></div>
+                </div>
+            </td></tr>`;
+    }
+
+    function setEmptyState() {
+        tableBody.innerHTML = `
+            <tr><td colspan="8" class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <h5>${TXT.notFound}</h5>
+                    <p>{% trans 'Aucune alerte ne correspond à votre recherche' %}</p>
+                    <a href="{% url 'dash_root_create_warning' %}" class="btn btn-add-warning mt-3">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans 'Créer une alerte' %}
+                    </a>
+                </div>
+            </td></tr>`;
+    }
+
+    function renderRows(results, page, pageSize) {
+        if (!results.length) { setEmptyState(); return; }
+        tableBody.innerHTML = "";
+
+        results.forEach((warning, index) => {
+            const tr = document.createElement("tr");
+            tr.className = "animate__animated animate__fadeIn";
+            tr.style.animationDelay = `${index * 0.05}s`;
+
+            const date = new Date(warning.created_at).toLocaleString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const statusBadge = warning.email_sent
+                ? `<span class="badge-sent"><i class="fas fa-check me-1"></i>${TXT.sent}</span>`
+                : `<span class="badge-draft"><i class="fas fa-file-alt me-1"></i>${TXT.draft}</span>`;
+
+            const emailToPreview = warning.email_to
+                ? `<small class="text-muted d-block text-truncate" style="max-width:180px;" title="${escapeHtml(warning.email_to)}">
+                       <i class="fas fa-at me-1 text-primary opacity-75"></i>${escapeHtml(warning.email_to)}
+                   </small>`
+                : "";
+
+            tr.innerHTML = `
+                <td class="fw-bold text-primary">${(page - 1) * pageSize + index + 1}</td>
+                <td>
+                    <span class="fw-semibold">${escapeHtml(warning.titre)}</span>
+                    ${emailToPreview}
+                </td>
+                <td class="text-center d-none d-md-table-cell">
+                    <span class="badge-count">${warning.acheteurs_count}</span>
+                </td>
+                <td class="text-center d-none d-md-table-cell">
+                    <span class="badge-count">${warning.attachments_count}</span>
+                </td>
+                <td class="d-none d-lg-table-cell">
+                    <i class="fas fa-user-circle text-primary me-1"></i>
+                    ${escapeHtml(warning.created_by_username || "-")}
+                </td>
+                <td class="d-none d-lg-table-cell">
+                    <i class="fas fa-calendar-alt text-primary me-1"></i>
+                    ${date}
+                </td>
+                <td class="text-center">${statusBadge}</td>
+                <td class="text-center">
+                    <div class="d-inline-flex align-items-center gap-1">
+                        <a href="/root-dashboard/gestion-des-warnings/detail/${warning.id}/"
+                           class="action-btn btn-outline-info text-decoration-none"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title="${TXT.view}">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="/root-dashboard/gestion-des-warnings/modifier/${warning.id}/"
+                           class="action-btn btn-outline-warning text-decoration-none"
+                           data-bs-toggle="tooltip" data-bs-placement="top" title="${TXT.edit}">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                        ${!warning.email_sent ? `
+                        <button class="action-btn btn-outline-success" data-action="send" data-id="${warning.id}"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="${TXT.send}">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>` : ""}
+                        <button class="action-btn btn-outline-danger" data-action="delete" data-id="${warning.id}"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="${TXT.del}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        tableBody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            bootstrap.Tooltip.getOrCreateInstance(el, { trigger: 'hover' });
+        });
+    }
+
+    async function loadWarnings(page = 1, search = "") {
+        currentPage   = page;
+        currentSearch = search;
+        setLoadingState();
+
+        const sentOnly = currentTab === "sent" ? "&sent_only=1" : "";
+        try {
+            const data = await apiFetch(`/api/warnings/?page=${page}&search=${encodeURIComponent(search)}${sentOnly}`);
+            const results = data.results || [];
+            currentPageSize = data.page_size || 10;
+
+            renderRows(results, data.page || page, currentPageSize);
+
+            const total = data.count || 0;
+            const first = total ? (data.page - 1) * currentPageSize + 1 : 0;
+            const last  = total ? Math.min(data.page * currentPageSize, total) : 0;
+            paginationInfo.innerHTML = `
+                <i class="fas fa-info-circle me-1"></i>
+                ${TXT.display} ${first} ${TXT.to} ${last} ${TXT.on} ${total} ${TXT.alertsSuffix}
+            `;
+            renderPagination(data.page || page, data.total_pages || 1);
+        } catch (error) {
+            console.error("Erreur chargement:", error);
+            setEmptyState();
+            paginationInfo.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-1"></i>${TXT.loadingError}`;
+        }
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────
+    async function deleteWarning(id) {
+        const confirmed = await confirmAction(TXT.confirmDelete);
+        if (!confirmed) return;
+        try {
+            await apiFetch("/api/warnings/delete/", { method: "DELETE", body: JSON.stringify({ ids: [id] }) });
+            showSuccess(TXT.deleteSuccess);
+            loadWarnings(currentPage, currentSearch);
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    async function sendWarningDirectly(id) {
+        const warning = await apiFetch(`/api/warnings/${id}/`);
+        if (!warning.email_to) {
+            showError(TXT.emailRequired);
+            // Rediriger vers la page de modification pour configurer l'email
+            window.location.href = `/root-dashboard/gestion-des-warnings/modifier/${id}/`;
+            return;
+        }
+        const confirmed = await confirmAction(`${TXT.send} : ${escapeHtml(warning.titre)} ?`);
+        if (!confirmed) return;
+        try {
+            await apiFetch(`/api/warnings/${id}/send/`, { method: "POST", body: JSON.stringify({}) });
+            showSuccess(TXT.sendSuccess);
+            loadWarnings(currentPage, currentSearch);
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    // ── Onglets ────────────────────────────────────────────────────────────
+    document.querySelectorAll(".warning-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".warning-tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentTab = btn.dataset.tab;
+            loadWarnings(1, currentSearch);
+        });
+    });
+
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
+    if (urlTab === "sent") document.getElementById("tabSent")?.click();
+
+    // ── Événements ─────────────────────────────────────────────────────────
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+        loadWarnings(currentPage, currentSearch);
+    });
+
+    if (searchBtn) {
+        searchBtn.addEventListener("click", () => loadWarnings(1, searchInput.value.trim()));
+    }
+
+    let searchTimer = null;
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => loadWarnings(1, searchInput.value.trim()), 350);
+    });
+
+    tableBody.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id     = btn.dataset.id;
+        if (action === "delete") deleteWarning(id);
+        else if (action === "send") sendWarningDirectly(id);
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el, { trigger: 'hover' });
+    });
+
+    loadWarnings();
+})();
+</script>
+{% endblock %}

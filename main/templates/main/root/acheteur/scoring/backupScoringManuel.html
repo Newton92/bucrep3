@@ -1,0 +1,1817 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-color: #0d80be;
+    --secondary-color: #25add6;
+    --accent-color: #0a95ca;
+    --light-color: #fcfefe;
+    --dark-color: #106cb2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --card-shadow: 0 4px 12px rgba(12, 128, 190, 0.08);
+    --card-shadow-hover: 0 10px 30px rgba(12, 128, 190, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background-color: var(--light-color);
+    color: #333;
+}
+
+/* Header premium */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+/* Onglets premium */
+.nav-tabs-premium {
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    margin-bottom: 2rem;
+}
+
+.nav-tabs-premium .nav-link {
+    color: #6c757d;
+    font-weight: 600;
+    border: none;
+    padding: 1rem 1.5rem;
+    margin-right: 0.5rem;
+    border-radius: 10px 10px 0 0;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-tabs-premium .nav-link:hover {
+    color: var(--primary-color);
+    background: rgba(13, 128, 190, 0.05);
+}
+
+.nav-tabs-premium .nav-link.active {
+    color: var(--primary-color);
+    background: white;
+    border: none;
+    box-shadow: 0 -2px 10px rgba(13, 128, 190, 0.1);
+}
+
+.nav-tabs-premium .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border-radius: 3px 3px 0 0;
+}
+
+.nav-tabs-premium .nav-link i {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+/* Cartes premium */
+.enhanced-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+    background: white;
+}
+
+.enhanced-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+    color: white;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+/* Styles pour les informations acheteur */
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: rgba(13, 128, 190, 0.03);
+    transition: var(--transition);
+}
+
+.acheteur-info-item:hover {
+    background: rgba(13, 128, 190, 0.08);
+    transform: translateY(-2px);
+}
+
+.acheteur-info-item i {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    width: 24px;
+}
+
+.badge-premium {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+/* Jauge de score premium */
+.score-slider-container {
+    margin: 2rem 0;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.9));
+    border-radius: 16px;
+    border: 1px solid rgba(37, 173, 214, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.score-slider-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%230d80be' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+    opacity: 0.3;
+    z-index: 1;
+}
+
+.score-image-container {
+    text-align: center;
+    margin: 2rem 0;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+.score-image {
+    max-width: 300px;
+    max-height: 200px;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 10px 20px rgba(13, 128, 190, 0.2));
+}
+
+.score-image:hover {
+    transform: scale(1.05);
+}
+
+.score-value-display {
+    font-size: 3rem;
+    font-weight: 800;
+    text-align: center;
+    margin: 1rem 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 2;
+}
+
+.score-category {
+    font-size: 1.3rem;
+    text-align: center;
+    color: var(--dark-color);
+    margin-bottom: 2rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+}
+
+/* Slider premium */
+.score-slider {
+    position: relative;
+    z-index: 2;
+}
+
+.score-slider input[type="range"] {
+    width: 100%;
+    height: 12px;
+    -webkit-appearance: none;
+    background: linear-gradient(90deg, 
+        #dc3545 0%, 
+        #dc3545 20%, 
+        #fd7e14 20%, 
+        #fd7e14 40%, 
+        #ffc107 40%, 
+        #ffc107 60%, 
+        #20c997 60%, 
+        #20c997 80%, 
+        #198754 80%, 
+        #198754 100%
+    );
+    border-radius: 10px;
+    outline: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.score-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--accent-color);
+    box-shadow: 0 4px 10px rgba(13, 128, 190, 0.3);
+    transition: var(--transition);
+}
+
+.score-slider input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(13, 128, 190, 0.4);
+}
+
+.score-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.score-labels small {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* Table premium */
+.table-scoring {
+    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-scoring thead th {
+    background: linear-gradient(135deg, rgba(13, 128, 190, 0.05), rgba(37, 173, 214, 0.05));
+    color: var(--dark-color);
+    font-weight: 700;
+    border: none;
+    padding: 1rem;
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.table-scoring tbody tr {
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+}
+
+.table-scoring tbody tr:hover {
+    background: rgba(13, 128, 190, 0.03);
+    transform: translateX(5px);
+    border-left-color: var(--accent-color);
+}
+
+.table-scoring td {
+    padding: 1rem;
+    border-top: 1px solid rgba(13, 128, 190, 0.05);
+    vertical-align: middle;
+}
+
+.score-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.score-excellent { 
+    background: linear-gradient(135deg, #198754, #27ae60);
+    color: white; 
+}
+.score-bon { 
+    background: linear-gradient(135deg, #20c997, #2ecc71);
+    color: white; 
+}
+.score-moyen { 
+    background: linear-gradient(135deg, #ffc107, #f39c12);
+    color: white; 
+}
+.score-faible { 
+    background: linear-gradient(135deg, #fd7e14, #e67e22);
+    color: white; 
+}
+.score-tres-faible { 
+    background: linear-gradient(135deg, #dc3545, #c0392b);
+    color: white; 
+}
+
+/* Boutons premium */
+.btn-action {
+    border-radius: 10px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    border-color: transparent;
+    color: white;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color), #e67e22);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #c0392b);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #2ecc71);
+    color: white;
+}
+
+/* Formulaire premium */
+.enhanced-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid rgba(37, 173, 214, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(37, 173, 214, 0.25);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-color);
+    font-size: 1.1rem;
+    z-index: 10;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3.5rem;
+}
+
+/* Commentaire preview */
+.comment-preview {
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.comment-preview:hover {
+    background: rgba(13, 128, 190, 0.05);
+    transform: translateX(5px);
+}
+
+.comment-preview::after {
+    content: '👁️';
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.comment-preview:hover::after {
+    opacity: 1;
+}
+
+/* Pagination premium */
+.pagination-premium .page-item .page-link {
+    border: none;
+    color: var(--dark-color);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.pagination-premium .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2);
+}
+
+.pagination-premium .page-item:not(.active) .page-link:hover {
+    background: rgba(13, 128, 190, 0.1);
+    transform: translateY(-2px);
+}
+
+/* État vide premium */
+.empty-state {
+    padding: 5rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(252, 254, 254, 0.8), rgba(240, 248, 255, 0.8));
+    border-radius: 20px;
+    border: 2px dashed rgba(37, 173, 214, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(37, 173, 214, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(30px, 30px) rotate(360deg); }
+}
+
+.empty-state-icon {
+    font-size: 5rem;
+    color: var(--secondary-color);
+    margin-bottom: 2rem;
+    opacity: 0.8;
+    position: relative;
+    z-index: 2;
+}
+
+.empty-state h4 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+    position: relative;
+    z-index: 2;
+    line-height: 1.6;
+}
+
+/* Modal premium */
+.modal-premium .modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-premium .modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+    color: white;
+    border-bottom: none;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-premium .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+.modal-premium .modal-title {
+    font-weight: 700;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: var(--transition);
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .nav-tabs-premium .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .score-value-display {
+        font-size: 2.5rem;
+    }
+    
+    .score-image {
+        max-width: 250px;
+    }
+    
+    .table-scoring {
+        font-size: 0.8rem;
+    }
+    
+    .table-scoring td,
+    .table-scoring th {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        padding: 1.25rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .nav-tabs-premium {
+        flex-direction: column;
+    }
+    
+    .nav-tabs-premium .nav-link {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+        border-radius: 10px;
+    }
+    
+    .nav-tabs-premium .nav-link.active::after {
+        display: none;
+    }
+}
+
+/* Styles additionnels pour le JavaScript */
+.loading-spinner-premium {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 99999;
+}
+
+.loading-spinner-premium .spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(13, 128, 190, 0.1);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-spinner-premium .text {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Toast personnalisé */
+.custom-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+/* Pagination */
+#paginationContainer .pagination {
+    margin-bottom: 0;
+}
+
+#paginationContainer .page-link {
+    color: var(--primary-color);
+}
+
+#paginationContainer .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-chart-line me-3"></i>Scoring Manuel
+                </h1>
+                <p class="page-subtitle">
+                    Évaluation et gestion des scores manuels de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-action" onclick="resetForm()">
+                    <i class="fas fa-plus-circle me-2"></i>Nouveau Scoring
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encart Acheteur Premium -->
+    <div class="card enhanced-card mb-4 fade-in-up" style="--order: 1;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h5>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge-premium">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code|default:"N/A" }}
+                    </span>
+                    <p class="mb-0 mt-2 small opacity-75">Code Acheteur</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">Date création</small>
+                            <span class="fw-bold">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="fw-bold text-warning">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">Localisation</small>
+                            <span class="fw-bold">{{ acheteur.ville.nom|default:"Non spécifié" }}, {{ acheteur.pays.nom|default:"" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets Premium -->
+    <ul class="nav nav-tabs-premium mb-4" id="scoringTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="listing-tab" data-bs-toggle="tab" data-bs-target="#listing" type="button" role="tab">
+                <i class="fas fa-list-ol me-2"></i>Listing des Scorings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="form-tab" data-bs-toggle="tab" data-bs-target="#form" type="button" role="tab">
+                <i class="fas fa-edit me-2"></i>Formulaire de Traitement
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Contenu des onglets -->
+    <div class="tab-content" id="scoringTabsContent">
+        <!-- Onglet 1: Listing Premium -->
+        <div class="tab-pane fade show active" id="listing" role="tabpanel">
+            <div class="card enhanced-card fade-in-up" style="--order: 1;">
+                <div class="card-header card-header-gradient">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-list-check me-2"></i>Liste des Scorings Manuels
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filtres Premium -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-calendar me-2"></i>Année
+                            </label>
+                            <select id="anneeFilter" class="form-select">
+                                <option value="">Toutes</option>
+                                {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-chart-bar me-2"></i>Score min
+                            </label>
+                            <input type="number" id="scoreMin" class="form-control" min="0" max="10" step="0.1" placeholder="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-chart-bar me-2"></i>Score max
+                            </label>
+                            <input type="number" id="scoreMax" class="form-control" min="0" max="10" step="0.1" placeholder="10">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <div>
+                            <button class="btn btn-primary btn-action me-2" onclick="loadScorings()">
+                                <i class="fas fa-filter me-2"></i>Appliquer les filtres
+                            </button>
+                            <button class="btn btn-secondary btn-action" onclick="resetFilters()">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                        </div>
+                        <div class="text-muted" id="scoringCount">
+                            Chargement...
+                        </div>
+                    </div>
+                    
+                    <!-- Table Premium -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-scoring">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Année</th>
+                                    <th>Score</th>
+                                    <th>Catégorie</th>
+                                    <th>Commentaire</th>
+                                    <th>Créé le</th>
+                                    <th>Créé par</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoringTableBody">
+                                <!-- Données chargées via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination Premium -->
+                    <nav id="paginationContainer" class="mt-4 d-flex justify-content-center">
+                        <!-- Pagination chargée via AJAX -->
+                    </nav>
+                    
+                    <!-- Message vide Premium -->
+                    <div id="emptyMessage" class="empty-state" style="display: none;">
+                        <i class="fas fa-inbox empty-state-icon"></i>
+                        <h4 class="fw-bold mb-3">Aucun scoring manuel trouvé</h4>
+                        <p class="text-muted mb-4">
+                            Commencez par créer votre premier scoring manuel<br>
+                            pour évaluer les performances des acheteurs.
+                        </p>
+                        <button class="btn btn-primary btn-lg btn-action" onclick="switchToFormTab()">
+                            <i class="fas fa-plus-circle me-2"></i>Créer un scoring
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Onglet 2: Formulaire Premium -->
+        <div class="tab-pane fade" id="form" role="tabpanel">
+            <div class="card enhanced-card fade-in-up" style="--order: 1;">
+                <div class="card-header card-header-gradient">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-edit me-2"></i>Formulaire de Scoring Manuel
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="scoringForm" class="enhanced-form">
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-alt me-2"></i>Année *
+                                </label>
+                                <select id="anneeSelect" class="form-select" required>
+                                    <option value="">Sélectionner une année</option>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une année</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Jauge de score Premium -->
+                        <div class="score-slider-container">
+                            <h6 class="fw-bold mb-4 text-primary">
+                                <i class="fas fa-chart-pie me-2"></i>Score (0-10)
+                            </h6>
+                            
+                            <div class="score-image-container">
+                                <img id="scoreImage" src="{% static 'scoring/5.png' %}" alt="Score" class="score-image">
+                            </div>
+                            
+                            <div class="score-value-display">
+                                <span id="scoreValue">5.0</span>
+                            </div>
+                            
+                            <div class="score-category">
+                                <span id="scoreCategory">Moyen</span>
+                            </div>
+                            
+                            <div class="score-slider">
+                                <input type="range" 
+                                       id="scoreSlider" 
+                                       min="0" 
+                                       max="10" 
+                                       step="0.5" 
+                                       value="5" 
+                                       class="form-range">
+                            </div>
+                            
+                            <div class="score-labels">
+                                <small class="text-danger">0 - Très faible</small>
+                                <small class="text-warning">5 - Moyen</small>
+                                <small class="text-success">10 - Excellent</small>
+                            </div>
+                            
+                            <!-- Champ score numérique caché -->
+                            <input type="hidden" id="scoreInput" name="score" value="5">
+                            
+                            <div class="mt-4">
+                                <label class="form-label">
+                                    <i class="fas fa-keyboard me-2"></i>Saisie directe
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" 
+                                           id="scoreDirectInput" 
+                                           class="form-control with-icon" 
+                                           placeholder="Ex: 7.5"
+                                           maxlength="4">
+                                </div>
+                                <small class="text-muted">Format : nombre de 0 à 10 (ex: 7.5)</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Commentaire Premium -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-comment-dots me-2"></i>Commentaire analytique
+                            </label>
+                            <textarea id="commentaireInput" 
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="Commentaire détaillé sur le scoring..."
+                                      maxlength="1000"></textarea>
+                            <small class="text-muted">Analyse détaillée justifiant le score attribué</small>
+                        </div>
+                        
+                        <!-- Boutons Premium -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary btn-action" onclick="resetForm()">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary btn-action me-2" onclick="saveAsDraft()">
+                                    <i class="fas fa-save me-2"></i>Enregistrer brouillon
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-action">
+                                    <i class="fas fa-check me-2"></i>Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce scoring ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de visualisation commentaire -->
+<div class="modal fade modal-premium" id="viewCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-comment me-2"></i>Commentaire détaillé
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commentContent" class="p-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    const API_BASE = '/api';
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const ACHEETEUR_ID = '{{ id_acheteur }}';
+    let currentPage = 1;
+    let editingScoringId = null;
+    let deleteScoringId = null;
+
+    // Configuration AJAX
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        }
+    });
+
+    // Catégories de score
+    const SCORE_CATEGORIES = {
+        'excellent': { 
+            min: 8, 
+            label: 'Excellent', 
+            class: 'score-excellent',
+            icon: 'fas fa-trophy'
+        },
+        'bon': { 
+            min: 6, 
+            label: 'Bon', 
+            class: 'score-bon',
+            icon: 'fas fa-thumbs-up'
+        },
+        'moyen': { 
+            min: 4, 
+            label: 'Moyen', 
+            class: 'score-moyen',
+            icon: 'fas fa-chart-line'
+        },
+        'faible': { 
+            min: 2, 
+            label: 'Faible', 
+            class: 'score-faible',
+            icon: 'fas fa-exclamation-triangle'
+        },
+        'tres_faible': { 
+            min: 0, 
+            label: 'Très faible', 
+            class: 'score-tres-faible',
+            icon: 'fas fa-times-circle'
+        }
+    };
+
+    // Initialisation au chargement
+    $(document).ready(function() {
+        loadScorings();
+        setupScoreSlider();
+        setupEventListeners();
+        
+        // Si on arrive sur la page avec un ID de scoring dans l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const scoringId = urlParams.get('scoring_id');
+        if (scoringId) {
+            editScoring(scoringId);
+        }
+    });
+
+    // Configuration du slider de score
+    function setupScoreSlider() {
+        const $scoreSlider = $('#scoreSlider');
+        const $scoreValue = $('#scoreValue');
+        const $scoreInput = $('#scoreInput');
+        const $scoreImage = $('#scoreImage');
+        const $scoreCategory = $('#scoreCategory');
+        const $scoreDirectInput = $('#scoreDirectInput');
+        
+        let isProgrammaticUpdate = false;
+        
+        $scoreSlider.on('input', function() {
+            if (!isProgrammaticUpdate) {
+                const value = parseFloat($(this).val());
+                updateScoreDisplay(value);
+            }
+        });
+        
+        $scoreDirectInput.on('input', function() {
+            const value = $(this).val().trim();
+            if (value && !isNaN(value)) {
+                const numValue = parseFloat(value);
+                if (numValue >= 0 && numValue <= 10) {
+                    isProgrammaticUpdate = true;
+                    $scoreSlider.val(numValue);
+                    updateScoreDisplay(numValue);
+                    isProgrammaticUpdate = false;
+                }
+            }
+        });
+        
+        function updateScoreDisplay(value) {
+            const roundedValue = Math.round(value * 2) / 2;
+            $scoreValue.text(roundedValue.toFixed(1));
+            $scoreInput.val(roundedValue.toFixed(1));
+            
+            const imageNum = Math.round(value);
+            $scoreImage.attr('src', `/static/scoring/${imageNum}.png`);
+            
+            let category = 'tres_faible';
+            for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+                if (value >= cat.min) {
+                    category = key;
+                }
+            }
+            
+            const categoryData = SCORE_CATEGORIES[category];
+            $scoreCategory.html(`
+                <i class="${categoryData.icon} me-2"></i>${categoryData.label}
+            `);
+            
+            $scoreDirectInput.val(roundedValue.toFixed(1));
+        }
+        
+        window.updateScoreDisplay = updateScoreDisplay;
+    }
+
+    // Configuration des écouteurs d'événements - VERSION CORRIGÉE
+    function setupEventListeners() {
+        // Soumission du formulaire
+        $('#scoringForm').on('submit', async function(e) {
+            e.preventDefault();
+            await saveScoring();
+        });
+        
+        // Confirmation suppression
+        $('#confirmDelete').on('click', function() {
+            if (deleteScoringId) {
+                deleteScoring(deleteScoringId);
+            }
+        });
+        
+        // Navigation par onglets - CORRECTION ICI
+        $('#scoringTabs button').on('shown.bs.tab', function(e) {
+            const targetTabId = $(e.target).attr('id');
+            
+            if (targetTabId === 'form-tab') {
+                if (editingScoringId) {
+                    console.log('✏️  Mode édition actif - conservation des données');
+                    // Ne rien faire, garder les données
+                } else {
+                    console.log('⚠️  Nouveau formulaire - réinitialisation');
+                    resetForm();
+                }
+            }
+        });
+        
+        // Filtres
+        $('#anneeFilter, #scoreMin, #scoreMax').on('change', function() {
+            loadScorings(1);
+        });
+    }
+
+    // Charger les scorings
+    async function loadScorings(page = 1) {
+        try {
+            currentPage = page;
+            showLoading(true);
+            
+            let params = new URLSearchParams();
+            params.append('page', page);
+            params.append('acheteur_id', ACHEETEUR_ID);
+            
+            const anneeFilter = $('#anneeFilter').val();
+            const scoreMin = $('#scoreMin').val();
+            const scoreMax = $('#scoreMax').val();
+            
+            if (anneeFilter) params.append('annee_id', anneeFilter);
+            if (scoreMin) params.append('score_min', scoreMin);
+            if (scoreMax) params.append('score_max', scoreMax);
+            
+            const url = `${API_BASE}/scoring/?${params}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                renderScoringTable(data.results);
+                renderPagination(data.count, page);
+                updateScoringCount(data.count);
+                
+                if (data.count === 0) {
+                    $('#emptyMessage').show();
+                } else {
+                    $('#emptyMessage').hide();
+                }
+            } else {
+                throw new Error('Erreur lors du chargement des données');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de charger les scorings', 'error');
+            $('#scoringTableBody').html(`
+                <tr>
+                    <td colspan="8" class="text-center text-danger py-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des données
+                    </td>
+                </tr>
+            `);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Afficher les scorings dans le tableau
+    function renderScoringTable(scorings) {
+        const tbody = $('#scoringTableBody');
+        tbody.empty();
+        
+        if (!scorings || scorings.length === 0) {
+            $('#emptyMessage').show();
+            return;
+        }
+        
+        scorings.forEach(scoring => {
+            const createdDate = new Date(scoring.created_at).toLocaleDateString('fr-FR');
+            const commentPreview = scoring.commentaire ? 
+                (scoring.commentaire.length > 50 ? 
+                    scoring.commentaire.substring(0, 50) + '...' : 
+                    scoring.commentaire) : 
+                '-';
+            
+            const scoreNum = parseFloat(scoring.score);
+            let badgeClass = 'score-badge ';
+            let category = 'Non évalué';
+            
+            if (!isNaN(scoreNum)) {
+                if (scoreNum >= 8) {
+                    badgeClass += 'score-excellent';
+                    category = 'Excellent';
+                } else if (scoreNum >= 6) {
+                    badgeClass += 'score-bon';
+                    category = 'Bon';
+                } else if (scoreNum >= 4) {
+                    badgeClass += 'score-moyen';
+                    category = 'Moyen';
+                } else if (scoreNum >= 2) {
+                    badgeClass += 'score-faible';
+                    category = 'Faible';
+                } else {
+                    badgeClass += 'score-tres-faible';
+                    category = 'Très faible';
+                }
+            }
+            
+            const row = `
+                <tr>
+                    <td>${scoring.id || '-'}</td>
+                    <td>${scoring.annee_details?.annee || 'N/A'}</td>
+                    <td>
+                        <span class="${badgeClass}">
+                            ${scoring.score || '-'}
+                        </span>
+                    </td>
+                    <td>${category}</td>
+                    <td>
+                        ${scoring.commentaire ? 
+                            `<span class="comment-preview" onclick="viewComment(${scoring.id})">
+                                ${commentPreview}
+                            </span>` : 
+                            '-'
+                        }
+                    </td>
+                    <td>${createdDate}</td>
+                    <td>${scoring.created_by_details?.username || 'System'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editScoring(${scoring.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${scoring.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    // Afficher la pagination
+    function renderPagination(total, currentPage) {
+        const container = $('#paginationContainer');
+        container.empty();
+        
+        if (!total || total <= 10) return;
+        
+        const totalPages = Math.ceil(total / 10);
+        let paginationHTML = `
+            <ul class="pagination">
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+        `;
+        
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${i})">${i}</a>
+                </li>
+            `;
+        }
+        
+        paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        `;
+        
+        container.html(paginationHTML);
+    }
+
+    // Mettre à jour le compteur
+    function updateScoringCount(count) {
+        $('#scoringCount').text(`${count} scoring(s) trouvé(s)`);
+    }
+
+    // Sauvegarder un scoring - VERSION CORRIGÉE
+    async function saveScoring() {
+        const anneeId = $('#anneeSelect').val();
+        const score = $('#scoreInput').val();
+        const commentaire = $('#commentaireInput').val();
+        
+        console.log('📝 saveScoring appelé');
+        console.log('   editingScoringId:', editingScoringId);
+        
+        if (!anneeId) {
+            showToast('Erreur', 'Veuillez sélectionner une année', 'error');
+            $('#anneeSelect').addClass('is-invalid');
+            return;
+        }
+        
+        if (!score || isNaN(score) || parseFloat(score) < 0 || parseFloat(score) > 10) {
+            showToast('Erreur', 'Le score doit être un nombre entre 0 et 10', 'error');
+            return;
+        }
+        
+        try {
+            showLoading(true);
+            
+            const scoringData = {
+                annee: parseInt(anneeId),
+                acheteur: parseInt(ACHEETEUR_ID),
+                score: score,
+                commentaire: commentaire || ''
+            };
+            
+            console.log('📤 Envoi:', scoringData);
+            
+            let url = `${API_BASE}/scoring/create-or-update/`;
+            let method = 'POST';
+            
+            if (editingScoringId) {
+                console.log(`✏️  Mode MISE À JOUR pour ID: ${editingScoringId}`);
+                url = `${API_BASE}/scoring/${editingScoringId}/`;
+                method = 'PUT';
+            } else {
+                console.log('🆕 Mode CRÉATION');
+            }
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(scoringData)
+            });
+            
+            const contentType = response.headers.get('content-type');
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Réponse non-JSON:', text.substring(0, 500));
+                throw new Error(`Erreur serveur (${response.status})`);
+            }
+            
+            const responseData = await response.json();
+            console.log('📥 Réponse:', responseData);
+            
+            if (response.ok) {
+                const message = editingScoringId ? 
+                    'Scoring mis à jour avec succès' : 
+                    'Scoring créé avec succès';
+                
+                showToast('Succès', message, 'success');
+                
+                await loadScorings(currentPage);
+                
+                editingScoringId = null;
+                resetForm();
+                $('#listing-tab').tab('show');
+                
+            } else {
+                console.error('❌ Erreur API:', responseData);
+                
+                let errorMessage = 'Erreur lors de la sauvegarde';
+                
+                if (responseData.detail) {
+                    errorMessage = responseData.detail;
+                } else if (typeof responseData === 'object') {
+                    const errors = [];
+                    for (const [field, fieldErrors] of Object.entries(responseData)) {
+                        if (Array.isArray(fieldErrors)) {
+                            errors.push(`${field}: ${fieldErrors.join(', ')}`);
+                        }
+                    }
+                    if (errors.length > 0) {
+                        errorMessage = errors.join('\n');
+                    }
+                }
+                
+                showToast('Erreur', errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            showToast('Erreur', error.message || 'Erreur lors de la sauvegarde', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Éditer un scoring - VERSION FINALE
+    async function editScoring(scoringId) {
+        try {
+            showLoading(true);
+            console.log(`🔄 Chargement du scoring ID: ${scoringId}`);
+            
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const scoring = await response.json();
+            console.log('✅ Données reçues:', scoring);
+            
+            // IMPORTANT: Stocker l'ID D'ABORD
+            editingScoringId = scoring.id;
+            console.log(`📝 Mode édition activé pour ID: ${editingScoringId}`);
+            
+            let anneeId = scoring.annee || (scoring.annee_details && scoring.annee_details.id);
+            let scoreValue = scoring.score || '5';
+            
+            console.log(`📅 Année ID: ${anneeId}`);
+            console.log(`🎯 Score: ${scoreValue}`);
+            
+            // Remplir le formulaire
+            if (anneeId) {
+                $('#anneeSelect').val(anneeId.toString());
+                console.log(`✅ Année sélectionnée: ${$('#anneeSelect option:selected').text()}`);
+            }
+            
+            const scoreFloat = parseFloat(scoreValue) || 5;
+            $('#scoreInput').val(scoreValue);
+            $('#scoreSlider').val(scoreFloat);
+            $('#scoreDirectInput').val(scoreValue);
+            $('#commentaireInput').val(scoring.commentaire || '');
+            
+            // Mettre à jour l'affichage
+            const roundedValue = Math.round(scoreFloat * 2) / 2;
+            $('#scoreValue').text(roundedValue.toFixed(1));
+            
+            const imageNum = Math.round(scoreFloat);
+            $('#scoreImage').attr('src', `/static/scoring/${imageNum}.png`);
+            
+            let category = 'tres_faible';
+            for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+                if (scoreFloat >= cat.min) {
+                    category = key;
+                }
+            }
+            
+            const categoryData = SCORE_CATEGORIES[category];
+            $('#scoreCategory').html(`
+                <i class="${categoryData.icon} me-2"></i>${categoryData.label}
+            `);
+            
+            // Basculer vers l'onglet formulaire
+            $('#form-tab').tab('show');
+            
+            showToast('Info', 'Formulaire prêt pour la modification', 'info');
+            
+            console.log('✅ Formulaire rempli - Mode édition actif');
+            
+        } catch (error) {
+            console.error('❌ Erreur editScoring:', error);
+            showToast('Erreur', `Impossible de charger le scoring: ${error.message}`, 'error');
+            editingScoringId = null;
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Confirmer la suppression
+    function confirmDelete(scoringId) {
+        deleteScoringId = scoringId;
+        $('#deleteModal').modal('show');
+    }
+
+    // Supprimer un scoring
+    async function deleteScoring(scoringId) {
+        try {
+            showLoading(true);
+            
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                showToast('Succès', 'Scoring supprimé avec succès', 'success');
+                
+                if (editingScoringId === scoringId) {
+                    editingScoringId = null;
+                    resetForm();
+                    $('#listing-tab').tab('show');
+                }
+                
+                loadScorings(currentPage);
+            } else {
+                throw new Error('Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de supprimer le scoring', 'error');
+        } finally {
+            showLoading(false);
+            $('#deleteModal').modal('hide');
+            deleteScoringId = null;
+        }
+    }
+
+    // Réinitialiser le formulaire
+    function resetForm() {
+        console.log('🚀 resetForm() appelé');
+        
+        editingScoringId = null;
+        
+        $('#anneeSelect').val('').removeClass('is-invalid');
+        $('#scoreInput').val('5');
+        $('#scoreSlider').val(5);
+        $('#scoreDirectInput').val('5');
+        $('#commentaireInput').val('');
+        
+        $('#scoreValue').text('5.0');
+        $('#scoreImage').attr('src', '/static/scoring/5.png');
+        $('#scoreCategory').html('<i class="fas fa-chart-line me-2"></i>Moyen');
+        
+        console.log('✅ Formulaire réinitialisé');
+    }
+
+    // Réinitialiser les filtres
+    function resetFilters() {
+        $('#anneeFilter').val('');
+        $('#scoreMin').val('');
+        $('#scoreMax').val('');
+        loadScorings(1);
+    }
+
+    // Enregistrer comme brouillon
+    function saveAsDraft() {
+        $('#scoringForm').submit();
+    }
+
+    // Basculer vers l'onglet formulaire
+    function switchToFormTab() {
+        editingScoringId = null; // Pas en mode édition
+        resetForm();
+        $('#form-tab').tab('show');
+    }
+
+    // Afficher un commentaire
+    async function viewComment(scoringId) {
+        try {
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const scoring = await response.json();
+                $('#commentContent').text(scoring.commentaire || 'Aucun commentaire');
+                $('#viewCommentModal').modal('show');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de charger le commentaire', 'error');
+        }
+    }
+
+    // Afficher un loader
+    function showLoading(show) {
+        if (show) {
+            if ($('#loadingOverlay').length === 0) {
+                $('body').append(`
+                    <div id="loadingOverlay">
+                        <div class="loading-spinner-premium">
+                            <div class="spinner"></div>
+                            <div class="text">Chargement...</div>
+                        </div>
+                    </div>
+                `);
+            }
+            $('#loadingOverlay').show();
+        } else {
+            $('#loadingOverlay').hide();
+        }
+    }
+
+    // Afficher une notification
+    function showToast(title, message, type = 'info') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        
+        Toast.fire({
+            icon: type,
+            title: title,
+            text: message
+        });
+    }
+
+    // Fonction utilitaire pour récupérer le cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Exposer les fonctions au scope global
+    window.loadScorings = loadScorings;
+    window.editScoring = editScoring;
+    window.confirmDelete = confirmDelete;
+    window.resetForm = resetForm;
+    window.resetFilters = resetFilters;
+    window.saveAsDraft = saveAsDraft;
+    window.switchToFormTab = switchToFormTab;
+    window.viewComment = viewComment;
+        
+    
+});
+</script>
+{% endblock %}

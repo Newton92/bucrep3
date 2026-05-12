@@ -1,609 +1,1630 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-border: rgba(13, 128, 190, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
+}
+
+/* Header Premium */
+.page-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte Capital Social Premium */
+.capital-card {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 16px;
+    padding: 2.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.capital-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(10, 149, 202, 0.15);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.capital-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary), var(--color-accent));
+    border-radius: 5px 0 0 5px;
+}
+
+/* En-tête de carte */
+.capital-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    position: relative;
+}
+
+.capital-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: var(--primary-gradient);
+    border-radius: 3px;
+}
+
+.capital-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.capital-title i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    font-size: 1.5rem;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.capital-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Grille des montants inspirée du template tendance */
+.amounts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.amount-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 14px;
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: calc(var(--card-order, 0) * 0.1s);
+}
+
+.amount-card:nth-child(1) { --card-order: 1; }
+.amount-card:nth-child(2) { --card-order: 2; }
+.amount-card:nth-child(3) { --card-order: 3; }
+
+.amount-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 4px 4px 0 0;
+}
+
+.amount-card.emis::before { background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); }
+.amount-card.publie::before { background: var(--success-gradient); }
+.amount-card.libere::before { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
+
+.amount-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    border-color: transparent;
+}
+
+.amount-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.amount-card.emis .amount-icon { 
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.amount-card.publie .amount-icon { 
+    background: var(--success-gradient);
+}
+
+.amount-card.libere .amount-icon { 
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.amount-value {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.amount-label {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Barre de progression premium */
+.progress-section {
+    margin-bottom: 2.5rem;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: var(--color-primary-dark);
+    font-weight: 700;
+}
+
+.progress-percentage {
+    font-weight: 800;
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.25rem;
+}
+
+.progress-container {
+    height: 16px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar-unique {
+    height: 100%;
+    background: var(--success-gradient);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-unique::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+/* Informations complémentaires avec style tendance */
+.capital-info {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: calc(var(--item-order, 0) * 0.1s);
+    animation-fill-mode: both;
+}
+
+.info-item:nth-child(1) { --item-order: 1; }
+.info-item:nth-child(2) { --item-order: 2; }
+.info-item:nth-child(3) { --item-order: 3; }
+.info-item:nth-child(4) { --item-order: 4; }
+
+.info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.info-label i {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.info-value {
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 1.05rem;
+}
+
+/* Badge de couleur premium */
+.color-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.05));
+    border: 2px solid rgba(13, 128, 190, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.color-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary);
+}
+
+.color-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--color-background);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.color-badge:hover .color-preview {
+    transform: scale(1.15);
+}
+
+/* État vide avec style tendance */
+.empty-state {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 2px dashed rgba(13, 128, 190, 0.3);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon {
+    font-size: 5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 2rem;
+}
+
+.empty-state h4 {
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.25rem;
+}
+
+.empty-state p {
+    color: var(--color-text-muted);
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    font-size: 1.2rem;
+    line-height: 1.6;
+}
+
+/* Carte Acheteur améliorée */
+.acheteur-card {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.acheteur-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-badge {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+}
+
+.acheteur-info-grid {
+    padding: 2rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateY(-2px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.25rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    font-size: 1.5rem;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+/* Boutons avec style tendance */
+.btn-action {
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: var(--color-background);
+}
+
+.btn-warning {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-success {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+/* Formulaires améliorés avec style tendance */
+.enhanced-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-label i {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    border-radius: 12px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background: var(--color-background);
+}
+
+/* Select2 personnalisé */
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: 52px !important;
+    padding: 0.5rem 1.25rem !important;
+    border: 2px solid rgba(13, 128, 190, 0.15) !important;
+    border-radius: 12px !important;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)) !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-radius: 12px !important;
+    border: 2px solid var(--color-primary) !important;
+    box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15) !important;
+}
+
+/* Modales avec style tendance */
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title {
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Appliquer les animations */
+.capital-card, .empty-state, .acheteur-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .amounts-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.75rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .capital-card {
+        padding: 1.75rem;
+    }
+    
+    .amounts-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .amount-value {
+        font-size: 1.75rem;
+    }
+    
+    .amount-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .capital-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .capital-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .empty-state {
+        padding: 3rem 1.5rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .capital-title {
+        font-size: 1.5rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .btn-action {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-cash-coin fa-fw me-1"></i>Composition du Capital Social de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countCompositionCapital">Module de Gestion de la Composition du Capital Social</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à la composition du capital social notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-coins me-3"></i>{% trans "Capital Social" %}
+                </h1>
+                <p class="page-subtitle">
+                    Gestion du capital social de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
+                </a>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card">
+        <div class="acheteur-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div class="text-md-end">
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC" %}</p>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Capital Émis : </strong><span style="color: #FF5733;">ÉMIS</span><br>
-                        <strong>Capital Publié : </strong><span style="color: #33FF57;">PUBLIÉ</span><br>
-                        <strong>Capital Libéré : </strong><span style="color: #3357FF;">LIBÉRÉ</span><br>
-                        <strong>Devise : </strong><span style="color: #FF33A6;">DEVISE</span><br>
-                        <strong>Couleur Commentaire : </strong><span style="color: #8A2BE2;">COUL</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Composition du Capital Social START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Compositions du Capital Social</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="acheteur-info-grid">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addCompositionCapitalModal">
-                                Ajouter une Composition du Capital
-                            </button>
+                            <small class="tendance-label">{% trans "Activité principale" %}</small><br>
+                            <span class="fw-bold text-success">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Composition du Capital Social list START -->
-                <div class="table-responsive border-0" id="compositionCapitalList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">ÉMIS</th>
-                                <th scope="col" class="border-0">PUBLIÉ</th>
-                                <th scope="col" class="border-0">LIBÉRÉ</th>
-                                <th scope="col" class="border-0">DEVISE</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="compositionCapitalTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">{% trans "Date de création" %}</small><br>
+                            <span class="fw-bold text-success">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Composition du Capital Social list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">{% trans "Statut" %}</small><br>
+                            <span class="badge" style="background: var(--success-gradient); color: white; border: none; padding: 0.5rem 1rem;">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
+        </div>
+    </div>
+
+    <!-- Section Capital Social -->
+    <div class="row">
+        <div class="col-12">
+            {% if capital %}
+            <!-- Affichage du capital existant -->
+            <div class="capital-card">
+                <div class="capital-header">
+                    <div class="capital-title">
+                        <i class="fas fa-landmark"></i>
+                        Capital Social de l'entreprise
+                    </div>
+                    <div class="capital-actions">
+                        <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editCapitalModal">
+                            <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
+                        </button>
+                        <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grille des montants -->
+                <div class="amounts-grid">
+                    <div class="amount-card emis">
+                        <div class="amount-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="amount-value">
+                            {{ capital.emis|floatformat:2|intcomma }}
+                        </div>
+                        <div class="amount-label">{% trans "Capital Émis" %}</div>
+                        <small class="text-muted">{% trans "Montant total émis" %}</small>
+                    </div>
+                    <div class="amount-card publie">
+                        <div class="amount-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="amount-value">
+                            {{ capital.publie|floatformat:2|intcomma }}
+                        </div>
+                        <div class="amount-label">{% trans "Capital Publié" %}</div>
+                        <small class="text-muted">{% trans "Montant publié" %}</small>
+                    </div>
+                    <div class="amount-card libere">
+                        <div class="amount-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="amount-value">
+                            {{ capital.libere|floatformat:2|intcomma }}
+                        </div>
+                        <div class="amount-label">{% trans "Capital Libéré" %}</div>
+                        <small class="text-muted">{% trans "Montant effectivement libéré" %}</small>
+                    </div>
+                </div>
+
+                <!-- Barre de progression -->
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>{% trans "Taux de libération du capital" %}</span>
+                        <span class="progress-percentage">{{ capital.pourcentage_libere|floatformat:2 }}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar-unique" style="width: {{ capital.pourcentage_libere }}%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span>0%</span>
+                        <span>{{ capital.libere|floatformat:2 }} / {{ capital.emis|floatformat:2 }}</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+
+                <!-- Informations complémentaires -->
+                <div class="capital-info">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-money-check-alt"></i>
+                            Devise
+                        </div>
+                        <div class="info-value">
+                            {% if capital.devise %}
+                                <span class="fw-bold">{{ capital.devise.nom }}</span> 
+                                <small class="text-muted">({{ capital.devise.symbole|default:"" }})</small>
+                            {% else %}
+                                Non spécifiée
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if capital.couleur_commentaire %}
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-palette"></i>
+                            Étiquette de couleur
+                        </div>
+                        <div class="info-value">
+                            <span class="color-badge">
+                                <div class="color-preview" style="background-color: {{ capital.couleur_commentaire.code|default:'#6c757d' }}"></div>
+                                {{ capital.couleur_commentaire.couleur }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if capital.commentaire %}
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-comment-dots"></i>
+                            Commentaire
+                        </div>
+                        <div class="info-value">
+                            {{ capital.commentaire|truncatechars:100 }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fas fa-history"></i>
+                            Dernière mise à jour
+                        </div>
+                        <div class="info-value">
+                            <span class="fw-bold">{{ capital.updated_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Commentaire complet (si tronqué) -->
+                {% if capital.commentaire and capital.commentaire|length > 100 %}
+                <div class="mt-4">
+                    <button class="btn btn-link p-0 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#commentaireComplet" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        <i class="fas fa-chevron-down me-2"></i>{% trans "Voir le commentaire complet" %}
+                    </button>
+                    <div class="collapse mt-3" id="commentaireComplet">
+                        <div class="alert alert-light border-0 rounded-3" style="background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03)); border: 1px solid rgba(13, 128, 190, 0.1);">
+                            {{ capital.commentaire|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- État vide -->
+            <div class="empty-state">
+                <i class="fas fa-coins empty-state-icon"></i>
+                <h4 class="fw-bold mb-3">{% trans "Aucun capital social défini" %}</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de capital social enregistré.<br>
+                    Ajoutez les informations du capital social pour compléter le profil.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCapitalModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le capital social" %}
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-<!-- Composition du Capital Social END -->
 
-<!-- Add Composition du Capital Modal START -->
-<div class="modal fade" id="addCompositionCapitalModal" tabindex="-1" aria-labelledby="addCompositionCapitalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Ajout Capital Premium -->
+<div class="modal fade" id="addCapitalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCompositionCapitalModalLabel">Ajouter une Composition du Capital</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le Capital Social" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addCompositionCapitalForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="emis" class="form-label">Capital Émis</label>
-                        <input type="number" step="0.00001" class="form-control" id="emis" name="emis" required>
+            <form id="addCapitalForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="emis" class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>{% trans "Capital Émis" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="emis" name="emis" required
+                                       placeholder="0.00">
+                                <small class="form-text text-muted">{% trans "Montant total du capital émis" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="publie" class="form-label">
+                                    <i class="fas fa-newspaper"></i>{% trans "Capital Publié" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="publie" name="publie" required
+                                       placeholder="0.00">
+                                <small class="form-text text-muted">{% trans "Montant du capital publié" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="libere" class="form-label">
+                                    <i class="fas fa-hand-holding-usd"></i>{% trans "Capital Libéré" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="libere" name="libere" required
+                                       placeholder="0.00">
+                                <small class="form-text text-muted">{% trans "Montant du capital effectivement libéré" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="publie" class="form-label">Capital Publié</label>
-                        <input type="number" step="0.00001" class="form-control" id="publie" name="publie" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="devise" class="form-label">
+                                    <i class="fas fa-money-check-alt"></i>{% trans "Devise" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="devise" name="devise" required>
+                                    <option value="">{% trans "Sélectionnez une devise" %}</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
+                                        {{ devise.nom }} {% if devise.symbole %}({{ devise.symbole }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette"></i>{% trans "Étiquette de couleur" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Optionnel: pour catégoriser visuellement" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="libere" class="form-label">Capital Libéré</label>
-                        <input type="number" step="0.00001" class="form-control" id="libere" name="libere" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>{% trans "Aperçu de la couleur" %}
+                                </label>
+                                <div class="color-preview" id="colorPreview" style="width: 100%; height: 48px; border-radius: 12px; border: 2px solid rgba(13, 128, 190, 0.15); background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="devise" class="form-label">Devise</label>
-                        <select class="form-select" id="devise" name="devise" required>
-                            {% for devise in devise_list %}
-                                <option value="{{ devise.id }}">{{ devise.nom }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="form-group mt-3">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                  placeholder="Informations complémentaires sur le capital social..."></textarea>
+                        <small class="form-text text-muted">{% trans "Optionnel: détails additionnels, remarques, etc." %}</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Composition du Capital Modal END -->
 
-<!-- Edit Composition du Capital Modal START -->
-<div class="modal fade" id="editCompositionCapitalModal" tabindex="-1" aria-labelledby="editCompositionCapitalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Modification Capital Premium -->
+<div class="modal fade" id="editCapitalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editCompositionCapitalModalLabel">Editer une Composition du Capital</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Capital Social" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editCompositionCapitalForm">
-                    <input type="hidden" id="editCompositionCapitalId" name="id">
-                    <div class="mb-3">
-                        <label for="editEmis" class="form-label">Capital Émis</label>
-                        <input type="number" step="0.00001" class="form-control" id="editEmis" name="emis" required>
+            <form id="editCapitalForm" class="enhanced-form">
+                <input type="hidden" id="editCapitalId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editEmis" class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>{% trans "Capital Émis" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="editEmis" name="emis" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editPublie" class="form-label">
+                                    <i class="fas fa-newspaper"></i>{% trans "Capital Publié" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="editPublie" name="publie" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editLibere" class="form-label">
+                                    <i class="fas fa-hand-holding-usd"></i>{% trans "Capital Libéré" %}
+                                </label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="editLibere" name="libere" required>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editPublie" class="form-label">Capital Publié</label>
-                        <input type="number" step="0.00001" class="form-control" id="editPublie" name="publie" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDevise" class="form-label">
+                                    <i class="fas fa-money-check-alt"></i>{% trans "Devise" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="editDevise" name="devise" required>
+                                    <option value="">{% trans "Sélectionnez une devise" %}</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
+                                        {{ devise.nom }} {% if devise.symbole %}({{ devise.symbole }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette"></i>{% trans "Étiquette de couleur" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editLibere" class="form-label">Capital Libéré</label>
-                        <input type="number" step="0.00001" class="form-control" id="editLibere" name="libere" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>{% trans "Aperçu de la couleur" %}
+                                </label>
+                                <div class="color-preview" id="editColorPreview" style="width: 100%; height: 48px; border-radius: 12px; border: 2px solid rgba(13, 128, 190, 0.15);"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDevise" class="form-label">Devise</label>
-                        <select class="form-select" id="editDevise" name="devise" required>
-                            {% for devise in devise_list %}
-                                <option value="{{ devise.id }}">{{ devise.nom }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="form-group mt-3">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
+            <div class="modal-header" style="background: var(--danger-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Supprimer le capital social
+                </h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer ces informations de capital social ? 
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Composition du Capital Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire, #editCommentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/capital/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Initialiser Select2 avec style personnalisé
+    function initSelect2() {
+        $('.select2-with-search').each(function () {
+            const $select = $(this);
+            const $modal = $select.closest('.modal');
+
+            $select.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Sélectionnez une option',
+                language: 'fr',
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                dropdownParent: $modal.length ? $modal : $(document.body),
+                dropdownCssClass: 'select2-dropdown-custom'
+            });
         });
+        
+        // Gérer l'aperçu des couleurs
+        $('#couleur_commentaire, #editCouleurCommentaire').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const color = selectedOption.data('color');
+            const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
+            if (color) {
+                $(previewId).css({
+                    'background': color,
+                    'border-color': color
+                });
+            } else {
+                $(previewId).css({
+                    'background': 'linear-gradient(145deg, #fcfefe, rgba(10, 149, 202, 0.02))',
+                    'border-color': 'rgba(13, 128, 190, 0.15)'
+                });
+            }
+        });
+    }
 
-        // Votre script JavaScript existant ici
-    });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+    // Initialisation
+    initSelect2();
+    
+    // Si un capital existe, pré-remplir le formulaire d'édition
+    {% if capital %}
+    function populateEditForm() {
+        const capitalData = JSON.parse('{{ capital_json|escapejs }}');
+        
+        $('#editCapitalId').val(capitalData.id);
+        $('#editEmis').val(capitalData.emis);
+        $('#editPublie').val(capitalData.publie);
+        $('#editLibere').val(capitalData.libere);
+        $('#editDevise').val(capitalData.devise?.id || '').trigger('change');
+        $('#editCouleurCommentaire').val(capitalData.couleur_commentaire?.id || '').trigger('change');
+        $('#editCommentaire').val(capitalData.commentaire || '');
+        
+        // Aperçu de la couleur
+        if (capitalData.couleur_commentaire?.code) {
+            $('#editColorPreview').css({
+                'background': capitalData.couleur_commentaire.code,
+                'border-color': capitalData.couleur_commentaire.code
+            });
         }
-
+    }
+    
+    $('#editCapitalModal').on('shown.bs.modal', function() {
+        populateEditForm();
+    });
+    {% endif %}
+    
+    // Formulaire d'ajout
+    $('#addCapitalForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitCapitalForm(data, '#submitAddBtn', 'addCapitalModal');
+    });
+    
+    // Formulaire de modification
+    $('#editCapitalForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        const capitalId = $('#editCapitalId').val();
+        data['id'] = capitalId;
+        
+        submitCapitalForm(data, '#submitEditBtn', 'editCapitalModal');
+    });
+    
+    // Soumission du formulaire
+    function submitCapitalForm(data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                $('#colorPreview, #editColorPreview').css({
+                    'background': 'linear-gradient(145deg, #fcfefe, rgba(10, 149, 202, 0.02))',
+                    'border-color': 'rgba(13, 128, 190, 0.15)'
+                });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitCapitalForm(data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression du capital
+    $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Capital social supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Supprimer');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.message || 'Impossible de supprimer le capital social',
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
+    }
+    
+    // Effet de ripple sur les boutons
+    $(document).on('click', '.btn-action', function(e) {
+        const $btn = $(this);
+        const btnOffset = $btn.offset();
+        const x = e.pageX - btnOffset.left;
+        const y = e.pageY - btnOffset.top;
+        
+        const $ripple = $('<span class="ripple-effect"></span>');
+        $ripple.css({
+            left: x + 'px',
+            top: y + 'px',
+            position: 'absolute',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.7)',
+            transform: 'scale(0)',
+            animation: 'ripple 0.6s linear',
+            pointerEvents: 'none',
+            zIndex: 1
+        });
+        
+        $btn.css('position', 'relative').append($ripple);
+        
+        setTimeout(function() {
+            $ripple.remove();
+        }, 600);
     });
+});
 
+// Ajout de styles pour l'effet ripple
+const style = document.createElement('style');
+style.textContent = `
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+`;
+document.head.appendChild(style);
 </script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load composition capital data
-        function loadCompositionCapital(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-compositions-du-capital/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update composition capital table body
-                    $('#compositionCapitalTableBody').html('');
-                    response.results.forEach(function(compositionCapital, index) {
-                        $('#compositionCapitalTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + compositionCapital.emis + '</td>' +
-                            '<td>' + compositionCapital.publie + '</td>' +
-                            '<td>' + compositionCapital.libere + '</td>' +
-                            '<td>' + compositionCapital.devise.nom + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + compositionCapital.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + compositionCapital.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadCompositionCapital();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadCompositionCapital(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadCompositionCapital(page, search);
-        });
-
-        // Add Composition Capital form submission
-        $('#addCompositionCapitalForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-composition-du-capital/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Composition du capital ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addCompositionCapitalModal').modal('hide');
-                        loadCompositionCapital();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la composition du capital.',
-                    });
-                }
-            });
-        });
-
-        // Edit Composition Capital button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-composition-du-capital/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editCompositionCapitalId').val(response.id);
-                    $('#editEmis').val(response.emis);
-                    $('#editPublie').val(response.publie);
-                    $('#editLibere').val(response.libere);
-                    $('#editDevise').val(response.devise);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editCompositionCapitalModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la composition du capital.',
-                    });
-                }
-            });
-        });
-
-        // Edit Composition Capital form submission
-        $('#editCompositionCapitalForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editCompositionCapitalId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-composition-du-capital/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Composition du capital mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editCompositionCapitalModal').modal('hide');
-                        loadCompositionCapital();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la composition du capital.',
-                    });
-                }
-            });
-        });
-
-        // Delete Composition Capital button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-compositions-du-capital/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La composition du capital a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadCompositionCapital();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la composition du capital.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
-    });
-</script>
-
 {% endblock %}

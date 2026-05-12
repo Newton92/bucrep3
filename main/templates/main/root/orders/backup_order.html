@@ -1,0 +1,622 @@
+{% extends 'main/root/base.html' %}
+
+{% load i18n static %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --order-primary: #0a95ca;
+        --order-primary-dark: #0d80be;
+        --order-primary-light: #25add6;
+        --order-secondary: #106cb2;
+    }
+
+    .order-module-card {
+        border: 1px solid rgba(37, 173, 214, 0.25);
+        border-radius: 0.75rem;
+    }
+
+    .order-module-icon {
+        background: rgba(10, 149, 202, 0.12);
+        color: var(--order-primary);
+        width: 64px;
+        height: 64px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stats-card {
+        border-radius: 0.75rem;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(16, 108, 178, 0.08);
+    }
+
+    .stats-card.total { border-color: rgba(10, 149, 202, 0.2); }
+    .stats-card.progress { border-color: rgba(255, 193, 7, 0.35); }
+    .stats-card.done { border-color: rgba(25, 135, 84, 0.25); }
+    .stats-card.cancelled { border-color: rgba(220, 53, 69, 0.25); }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .stats-icon.total { background: rgba(10, 149, 202, 0.12); color: var(--order-primary-dark); }
+    .stats-icon.progress { background: rgba(255, 193, 7, 0.18); color: #b58100; }
+    .stats-icon.done { background: rgba(25, 135, 84, 0.12); color: #198754; }
+    .stats-icon.cancelled { background: rgba(220, 53, 69, 0.12); color: #dc3545; }
+
+    .order-main-card {
+        border: 1px solid rgba(37, 173, 214, 0.22);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .order-main-header {
+        background: linear-gradient(135deg, rgba(10, 149, 202, 0.06), rgba(16, 108, 178, 0.04));
+        border-bottom: 1px solid rgba(37, 173, 214, 0.22);
+    }
+
+    .toolbar-search .input-group-text {
+        background: rgba(10, 149, 202, 0.08);
+        border-color: rgba(37, 173, 214, 0.24);
+        color: var(--order-primary-dark);
+    }
+
+    .toolbar-search .form-control {
+        border-color: rgba(37, 173, 214, 0.24);
+    }
+
+    .toolbar-search .form-control:focus,
+    .order-toolbar .form-select:focus,
+    .order-toolbar .form-control:focus {
+        border-color: var(--order-primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(10, 149, 202, 0.12);
+    }
+
+    .order-toolbar .form-control,
+    .order-toolbar .form-select {
+        min-height: 40px;
+    }
+
+    .btn-order-primary {
+        background: linear-gradient(135deg, var(--order-primary), var(--order-primary-dark));
+        color: #fff;
+        border: none;
+    }
+
+    .btn-order-primary:hover {
+        color: #fff;
+        background: linear-gradient(135deg, var(--order-primary-dark), var(--order-secondary));
+        transform: translateY(-1px);
+        box-shadow: 0 8px 15px rgba(16, 108, 178, 0.2);
+    }
+
+    .order-table thead th {
+        background: rgba(10, 149, 202, 0.05);
+        color: var(--order-primary-dark);
+        font-weight: 600;
+        border-bottom: 2px solid rgba(37, 173, 214, 0.25);
+        white-space: nowrap;
+    }
+
+    .order-table tbody tr:hover {
+        background: rgba(10, 149, 202, 0.05);
+    }
+
+    .order-badge {
+        font-size: 0.74rem;
+        font-weight: 600;
+        padding: 0.4rem 0.55rem;
+        border-radius: 0.6rem;
+    }
+
+    .action-buttons {
+        display: inline-flex;
+        gap: 0.4rem;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 12px rgba(16, 108, 178, 0.15);
+    }
+
+    .table-empty-state {
+        color: #6c757d;
+        padding: 2.4rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="row g-4 mb-1">
+    <div class="col-12">
+        <div class="card card-body order-module-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="order-module-icon">
+                    <i class="bi bi-cart-check fs-2"></i>
+                </div>
+                <div>
+                    <h4 class="mb-1 text-primary">Module de Gestion des Commandes</h4>
+                    <p class="mb-0 text-muted">Suivi centralise des commandes avec recherche, filtres avances et actions rapides.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1 mb-1">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body stats-card total h-100">
+            <div class="d-flex align-items-center gap-3">
+                <span class="stats-icon total"><i class="bi bi-collection"></i></span>
+                <div>
+                    <small class="text-muted d-block">Total</small>
+                    <h4 class="mb-0" id="statTotal">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body stats-card progress h-100">
+            <div class="d-flex align-items-center gap-3">
+                <span class="stats-icon progress"><i class="bi bi-hourglass-split"></i></span>
+                <div>
+                    <small class="text-muted d-block">En cours</small>
+                    <h4 class="mb-0" id="statInProgress">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body stats-card done h-100">
+            <div class="d-flex align-items-center gap-3">
+                <span class="stats-icon done"><i class="bi bi-check2-circle"></i></span>
+                <div>
+                    <small class="text-muted d-block">Terminees</small>
+                    <h4 class="mb-0" id="statDone">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body stats-card cancelled h-100">
+            <div class="d-flex align-items-center gap-3">
+                <span class="stats-icon cancelled"><i class="bi bi-x-octagon"></i></span>
+                <div>
+                    <small class="text-muted d-block">Annulees</small>
+                    <h4 class="mb-0" id="statCancelled">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card order-main-card shadow-sm">
+            <div class="card-header order-main-header">
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center py-1">
+                    <h5 class="card-header-title mb-0">
+                        <i class="bi bi-list-task me-2"></i>Liste des commandes
+                    </h5>
+                    <button class="btn btn-order-primary btn-sm" id="btnOpenAddModal" type="button">
+                        <i class="bi bi-plus-circle me-1"></i>Ajouter une commande
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3 order-toolbar">
+                    <div class="col-md-3 toolbar-search">
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="search" id="searchInput" class="form-control border-start-0" placeholder="Recherche commande, ref, client...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">Tous statuts</option>
+                            {% for status_value, status_label in status_choices %}
+                                <option value="{{ status_value }}">{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="typeRapportFilter" class="form-select">
+                            <option value="">Tous types</option>
+                            {% for type_value, type_label in type_rapport_choices %}
+                                <option value="{{ type_value }}">{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="clientFilter" class="form-select">
+                            <option value="">Tous clients</option>
+                            {% for c in client_list %}<option value="{{ c.id }}">{{ c.username }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1"><input type="date" id="dateFromFilter" class="form-control" title="Date debut"></div>
+                    <div class="col-md-1"><input type="date" id="dateToFilter" class="form-control" title="Date fin"></div>
+                    <div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" id="btnResetFilters" title="Reinitialiser"><i class="bi bi-arrow-clockwise"></i></button></div>
+                </div>
+
+                <div class="table-responsive border-0">
+                    <table class="table order-table align-middle p-4 mb-0 table-hover">
+                        <thead>
+                            <tr><th>#</th><th>Référence</th><th>Client</th><th>Raison sociale</th><th>Type</th><th>Pays</th><th>Statut</th><th>Créée le</th><th>{% trans "Action" %}</th></tr>
+                        </thead>
+                        <tbody id="ordersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <nav class="mb-sm-0 d-flex justify-content-center"><ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul></nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Détails commande</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="orderDetailsBody"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Ajouter une commande</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><form id="addOrderForm"></form></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Éditer une commande</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><form id="editOrderForm"></form></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(() => {
+    const accessToken = "{{ access|escapejs }}";
+    const apiBase = "/api/orders/module/";
+    let currentPage = 1;
+    const notify = (type, text) => (window.Swal ? Swal.fire({ icon: type, text, timer: 1800, showConfirmButton: false }) : alert(text));
+    const statusClass = (s) => ({ nouvelle:"bg-primary", en_cours:"bg-warning text-dark", rapport_soumis:"bg-info text-dark", rapport_valide:"bg-success", envoye_client:"bg-secondary", terminee:"bg-success", annulee:"bg-danger" }[s] || "bg-light text-dark");
+
+    async function apiFetch(url, options = {}) {
+        const res = await fetch(url, { ...options, headers: { Authorization: `Bearer ${accessToken}`, ...(options.headers || {}) } });
+        if (!res.ok) throw await res.json().catch(() => ({ detail: "Erreur API" }));
+        return res.status === 204 ? null : res.json();
+    }
+
+    function q(params) { const p = new URLSearchParams(); Object.entries(params).forEach(([k, v]) => { if (v !== null && v !== undefined && `${v}`.trim() !== "") p.append(k, v); }); return p.toString(); }
+    function filters() {
+        return {
+            search: document.getElementById("searchInput").value.trim(),
+            status: document.getElementById("statusFilter").value,
+            type_rapport: document.getElementById("typeRapportFilter").value,
+            client_id: document.getElementById("clientFilter").value,
+            date_from: document.getElementById("dateFromFilter").value,
+            date_to: document.getElementById("dateToFilter").value,
+        };
+    }
+
+    function renderPagination(resp) {
+        const total = resp.count || 0;
+        const start = total === 0 ? 0 : ((resp.current_page - 1) * resp.page_size) + 1;
+        const end = Math.min(resp.current_page * resp.page_size, total);
+        document.getElementById("paginationInfo").textContent = `Affichage ${start} à ${end} sur ${total}`;
+        const ul = document.getElementById("paginationControls");
+        ul.innerHTML = "";
+        const add = (label, page, active, disabled) => {
+            const li = document.createElement("li");
+            li.className = `page-item ${active ? "active" : ""} ${disabled ? "disabled" : ""}`;
+            li.innerHTML = `<a class="page-link" href="#">${label}</a>`;
+            li.addEventListener("click", (e) => { e.preventDefault(); if (!disabled) loadOrders(page); });
+            ul.appendChild(li);
+        };
+        add("«", resp.current_page - 1, false, !resp.previous);
+        for (let i = 1; i <= resp.total_pages; i += 1) add(`${i}`, i, i === resp.current_page, false);
+        add("»", resp.current_page + 1, false, !resp.next);
+    }
+
+    function renderRows(results, pageSize, page) {
+        const body = document.getElementById("ordersTableBody");
+        body.innerHTML = "";
+        if (!results.length) { body.innerHTML = `<tr><td colspan="9" class="text-center table-empty-state">Aucune commande trouvee pour les filtres actuels</td></tr>`; return; }
+        results.forEach((o, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${((page - 1) * pageSize) + idx + 1}</td>
+                <td>${o.notre_ref || "-"}</td>
+                <td>${o.client_username || "-"}</td>
+                <td>${o.raison_sociale || "-"}</td>
+                <td>${o.type_rapport || "-"}</td>
+                <td>${o.pays_nom || "-"}</td>
+                <td><span class="badge order-badge ${statusClass(o.status)}">${o.status || "-"}</span></td>
+                <td>${o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-info action-btn" data-action="view" data-id="${o.id}" title="Voir"><i class="bi bi-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary action-btn" data-action="manage" data-id="${o.id}" title="Gerer"><i class="bi bi-gear"></i></button>
+                        <button class="btn btn-sm btn-outline-primary action-btn" data-action="edit" data-id="${o.id}" title="Editer"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" data-action="delete" data-id="${o.id}" title="Supprimer"><i class="bi bi-trash"></i></button>
+                    </div>
+                </td>`;
+            body.appendChild(tr);
+        });
+    }
+
+    async function loadStats() {
+        const data = await apiFetch(`${apiBase}stats/?${q(filters())}`);
+        document.getElementById("statTotal").textContent = data.total ?? 0;
+        document.getElementById("statInProgress").textContent = data.en_cours ?? 0;
+        document.getElementById("statDone").textContent = data.terminees ?? 0;
+        document.getElementById("statCancelled").textContent = data.annulees ?? 0;
+    }
+
+    async function loadOrders(page = 1) {
+        currentPage = page;
+        try {
+            const resp = await apiFetch(`${apiBase}?${q({ ...filters(), page, page_size: 10 })}`);
+            renderRows(resp.results || [], resp.page_size || 10, resp.current_page || page);
+            renderPagination(resp);
+            await loadStats();
+        } catch (err) { notify("error", err.detail || "Erreur chargement commandes."); }
+    }
+
+    const fieldHtml = (p) => `
+        <input type="hidden" id="${p}id" name="id">
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Notre référence</label><input class="form-control" id="${p}notre_ref" name="notre_ref"></div>
+            <div class="col-md-4"><label class="form-label">Référence client</label><input class="form-control" id="${p}reference_client" name="reference_client"></div>
+            <div class="col-md-4"><label class="form-label">Raison sociale *</label><input class="form-control" id="${p}raison_sociale" name="raison_sociale" required></div>
+            <div class="col-md-3"><label class="form-label">Date réception</label><input type="date" class="form-control" id="${p}date_recept_commande" name="date_recept_commande"></div>
+            <div class="col-md-3"><label class="form-label">Date rapport</label><input type="date" class="form-control" id="${p}date_rapport" name="date_rapport"></div>
+            <div class="col-md-3"><label class="form-label">Délais</label><input class="form-control" id="${p}delais" name="delais"></div>
+            <div class="col-md-3"><label class="form-label">Priorité</label><input class="form-control" id="${p}priorite" name="priorite"></div>
+            <div class="col-md-3"><label class="form-label">Type commande</label><input class="form-control" id="${p}type_commande" name="type_commande" placeholder="NORMALE"></div>
+            <div class="col-md-3"><label class="form-label">Type traitement</label><input class="form-control" id="${p}type_traitement" name="type_traitement" placeholder="MANUEL"></div>
+            <div class="col-md-3"><label class="form-label">Nom client (libellé)</label><input class="form-control" id="${p}client_nom" name="client_nom"></div>
+            <div class="col-md-3"><label class="form-label">Type rapport</label><select class="form-select" id="${p}type_rapport" name="type_rapport"><option value="">---------</option>{% for tv, tl in type_rapport_choices %}<option value="{{ tv }}">{{ tl }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Crédit demandé</label><input type="number" step="0.00001" class="form-control" id="${p}credit_demande" name="credit_demande"></div>
+            <div class="col-md-3"><label class="form-label">Devise crédit demandé</label><select class="form-select" id="${p}devise_credit_demande" name="devise_credit_demande"><option value="">---------</option>{% for d in devise_list %}<option value="{{ d.id }}">{{ d.nom }} ({{ d.code }})</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Crédit recommandé</label><input type="number" step="0.00001" class="form-control" id="${p}credit_recommande" name="credit_recommande"></div>
+            <div class="col-md-3"><label class="form-label">Devise crédit recommandé</label><select class="form-select" id="${p}devise_credit_recommande" name="devise_credit_recommande"><option value="">---------</option>{% for d in devise_list %}<option value="{{ d.id }}">{{ d.nom }} ({{ d.code }})</option>{% endfor %}</select></div>
+            <div class="col-md-2"><label class="form-label">N° adresse</label><input class="form-control" id="${p}numero_adresse" name="numero_adresse"></div>
+            <div class="col-md-4"><label class="form-label">Rue</label><input class="form-control" id="${p}rue_adresse" name="rue_adresse"></div>
+            <div class="col-md-2"><label class="form-label">Code postal</label><input class="form-control" id="${p}code_postale_adresse" name="code_postale_adresse"></div>
+            <div class="col-md-2"><label class="form-label">Téléphone</label><input class="form-control" id="${p}telephone" name="telephone"></div>
+            <div class="col-md-2"><label class="form-label">Email</label><input class="form-control" id="${p}email" name="email"></div>
+            <div class="col-md-3"><label class="form-label">Ville</label><select class="form-select" id="${p}ville" name="ville"><option value="">---------</option>{% for v in ville_list %}<option value="{{ v.id }}">{{ v.nom }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Client</label><select class="form-select" id="${p}client" name="client"><option value="">---------</option>{% for c in client_list %}<option value="{{ c.id }}">{{ c.username }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Acheteur</label><select class="form-select" id="${p}acheteur" name="acheteur"><option value="">---------</option>{% for a in acheteur_list %}<option value="{{ a.id }}">{{ a.nom }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Statut</label><select class="form-select" id="${p}status" name="status">{% for sv, sl in status_choices %}<option value="{{ sv }}">{{ sl }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Validateur</label><select class="form-select" id="${p}validateur" name="validateur"><option value="">---------</option>{% for u in validateur_list %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}</select></div>
+            <div class="col-md-3"><label class="form-label">Date envoi client</label><input type="datetime-local" class="form-control" id="${p}date_envoi_client" name="date_envoi_client"></div>
+            <div class="col-md-2"><label class="form-label">Email déjà envoyé</label><div class="form-check form-switch mt-2"><input class="form-check-input" type="checkbox" id="${p}email_envoye" name="email_envoye"></div></div>
+            <div class="col-md-4"><label class="form-label">Imprimer avec états financiers</label><select class="form-select" id="${p}imprimer_avec_etats_fin" name="imprimer_avec_etats_fin"><option value="">---------</option><option value="Oui">Oui</option><option value="Non">Non</option></select></div>
+            <div class="col-md-4"><label class="form-label">Numéro d'identification entreprise</label><input class="form-control" id="${p}company_identification_number" name="company_identification_number"></div>
+            <div class="col-md-4"><label class="form-label">Complément d'adresse</label><input class="form-control" id="${p}address_additional" name="address_additional"></div>
+            <div class="col-md-4"><label class="form-label">État / Région</label><input class="form-control" id="${p}state" name="state"></div>
+            <div class="col-md-4"><label class="form-label">Code postal (international)</label><input class="form-control" id="${p}postcode" name="postcode"></div>
+            <div class="col-md-4"><label class="form-label">Boîte postale</label><input class="form-control" id="${p}post_office" name="post_office"></div>
+            <div class="col-md-6"><label class="form-label">Prestataire</label><input class="form-control" id="${p}provider" name="provider"></div>
+            <div class="col-md-6"><label class="form-label">Commentaires</label><textarea class="form-control" id="${p}comments" name="comments" rows="2"></textarea></div>
+        </div>
+        <div class="mt-4 d-flex justify-content-end gap-2"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>`;
+
+    const getModal = (id) => {
+        const el = document.getElementById(id);
+        if (window.bootstrap && window.bootstrap.Modal) return bootstrap.Modal.getOrCreateInstance(el);
+        return { show: () => {}, hide: () => {} };
+    };
+    const addModal = getModal("addOrderModal");
+    const editModal = getModal("editOrderModal");
+    const detailModal = getModal("orderDetailsModal");
+    const addForm = document.getElementById("addOrderForm");
+    const editForm = document.getElementById("editOrderForm");
+    addForm.innerHTML = fieldHtml("add_");
+    editForm.innerHTML = fieldHtml("edit_");
+
+    function serialize(form, isCreate = false) {
+        const fd = new FormData(form); const obj = {};
+        fd.forEach((v, k) => { obj[k] = `${v}`.trim() === "" ? null : `${v}`.trim(); });
+        form.querySelectorAll('input[type="checkbox"][name]').forEach((el) => { obj[el.name] = !!el.checked; });
+        ["devise_credit_demande","devise_credit_recommande","ville","client","acheteur","validateur","id"].forEach((k) => { if (obj[k] !== null && obj[k] !== undefined) obj[k] = Number(obj[k]); });
+        if (obj.type_rapport === null) {
+            if (isCreate) obj.type_rapport = "--------";
+            else delete obj.type_rapport;
+        }
+        if (obj.status === null) {
+            if (isCreate) obj.status = "nouvelle";
+            else delete obj.status;
+        }
+        if (isCreate) {
+            Object.keys(obj).forEach((k) => {
+                if (obj[k] === null && k !== "raison_sociale") delete obj[k];
+            });
+        }
+        return obj;
+    }
+    function hydrate(form, data, p) {
+        Object.keys(data || {}).forEach((k) => {
+            const el = form.querySelector(`#${p}${k}`); if (!el) return;
+            const v = (data[k] && typeof data[k] === "object" && "id" in data[k]) ? data[k].id : data[k];
+            if (el.type === "checkbox") {
+                el.checked = !!v;
+                return;
+            }
+            if (el.type === "datetime-local" && v) {
+                const parsed = `${v}`.replace("Z", "");
+                el.value = parsed.length >= 16 ? parsed.slice(0, 16) : parsed;
+                return;
+            }
+            el.value = v ?? "";
+        });
+    }
+
+    document.getElementById("btnOpenAddModal").addEventListener("click", () => { addForm.reset(); addModal.show(); });
+    addForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+            await apiFetch(apiBase, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serialize(addForm, true)) });
+            addModal.hide();
+            notify("success", "Commande créée.");
+            loadOrders(1);
+        } catch (err) {
+            const msg = err.detail || Object.values(err).flat().join(" | ") || "Erreur création.";
+            notify("error", msg);
+        }
+    });
+
+    editForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = editForm.querySelector("#edit_id").value;
+        const payload = serialize(editForm, false); delete payload.id;
+        try {
+            await apiFetch(`${apiBase}${id}/`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+            editModal.hide();
+            notify("success", "Commande mise à jour.");
+            loadOrders(currentPage);
+        } catch (err) {
+            const msg = err.detail || Object.values(err).flat().join(" | ") || "Erreur mise à jour.";
+            notify("error", msg);
+        }
+    });
+
+    document.getElementById("ordersTableBody").addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-action]"); if (!btn) return;
+        const id = btn.dataset.id; const action = btn.dataset.action;
+        if (action === "view") {
+            try {
+                const d = await apiFetch(`${apiBase}${id}/`);
+                const yesNo = (v) => v ? "Oui" : "Non";
+                const dateOnly = (v) => v ? new Date(v).toLocaleDateString() : "-";
+                const dateTime = (v) => v ? new Date(v).toLocaleString() : "-";
+                document.getElementById("orderDetailsBody").innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-md-4"><strong>Réf. interne:</strong><br>${d.notre_ref || "-"}</div>
+                        <div class="col-md-4"><strong>Réf. client:</strong><br>${d.reference_client || "-"}</div>
+                        <div class="col-md-4"><strong>Statut:</strong><br><span class="badge ${statusClass(d.status)}">${d.status || "-"}</span></div>
+
+                        <div class="col-md-6"><strong>Raison sociale:</strong><br>${d.raison_sociale || "-"}</div>
+                        <div class="col-md-3"><strong>Type commande:</strong><br>${d.type_commande || "-"}</div>
+                        <div class="col-md-3"><strong>Type traitement:</strong><br>${d.type_traitement || "-"}</div>
+                        <div class="col-md-3"><strong>Type rapport:</strong><br>${d.type_rapport || "-"}</div>
+                        <div class="col-md-3"><strong>Priorité:</strong><br>${d.priorite || "-"}</div>
+
+                        <div class="col-md-4"><strong>Date réception:</strong><br>${dateOnly(d.date_recept_commande)}</div>
+                        <div class="col-md-4"><strong>Date rapport:</strong><br>${dateOnly(d.date_rapport)}</div>
+                        <div class="col-md-4"><strong>Délais:</strong><br>${d.delais || "-"}</div>
+
+                        <div class="col-md-4"><strong>Client (utilisateur):</strong><br>${(d.client && d.client.username) || "-"}</div>
+                        <div class="col-md-4"><strong>Client (nom libre):</strong><br>${d.client_nom || "-"}</div>
+                        <div class="col-md-4"><strong>Acheteur:</strong><br>${(d.acheteur && d.acheteur.nom) || "-"}</div>
+
+                        <div class="col-md-4"><strong>Pays:</strong><br>${(d.pays && d.pays.nom) || "-"}</div>
+                        <div class="col-md-4"><strong>Ville:</strong><br>${(d.ville && d.ville.nom) || "-"}</div>
+                        <div class="col-md-4"><strong>Téléphone:</strong><br>${d.telephone || "-"}</div>
+
+                        <div class="col-md-6"><strong>Email:</strong><br>${d.email || "-"}</div>
+                        <div class="col-md-3"><strong>N° adresse:</strong><br>${d.numero_adresse || "-"}</div>
+                        <div class="col-md-3"><strong>Code postal:</strong><br>${d.code_postale_adresse || "-"}</div>
+                        <div class="col-md-12"><strong>Rue:</strong><br>${d.rue_adresse || "-"}</div>
+
+                        <div class="col-md-4"><strong>Crédit demandé:</strong><br>${d.credit_demande || "-"}</div>
+                        <div class="col-md-4"><strong>Devise demandée:</strong><br>${(d.devise_credit_demande && d.devise_credit_demande.code) || "-"}</div>
+                        <div class="col-md-4"><strong>Crédit recommandé:</strong><br>${d.credit_recommande || "-"}</div>
+                        <div class="col-md-4"><strong>Devise recommandée:</strong><br>${(d.devise_credit_recommande && d.devise_credit_recommande.code) || "-"}</div>
+
+                        <div class="col-md-4"><strong>Validateur:</strong><br>${(d.validateur && d.validateur.username) || "-"}</div>
+                        <div class="col-md-4"><strong>Email envoyé:</strong><br>${yesNo(d.email_envoye)}</div>
+                        <div class="col-md-4"><strong>Date envoi client:</strong><br>${dateTime(d.date_envoi_client)}</div>
+
+                        <div class="col-md-4"><strong>Impression avec états financiers:</strong><br>${d.imprimer_avec_etats_fin || "-"}</div>
+                        <div class="col-md-4"><strong>N° identification entreprise:</strong><br>${d.company_identification_number || "-"}</div>
+                        <div class="col-md-4"><strong>Complément adresse:</strong><br>${d.address_additional || "-"}</div>
+                        <div class="col-md-4"><strong>État / Région:</strong><br>${d.state || "-"}</div>
+                        <div class="col-md-4"><strong>Postcode:</strong><br>${d.postcode || "-"}</div>
+                        <div class="col-md-4"><strong>Boîte postale:</strong><br>${d.post_office || "-"}</div>
+                        <div class="col-md-6"><strong>Prestataire:</strong><br>${d.provider || "-"}</div>
+                        <div class="col-md-6"><strong>Commentaires:</strong><br>${d.comments || "-"}</div>
+
+                        <div class="col-md-6"><strong>Créée le:</strong><br>${dateTime(d.created_at)}</div>
+                        <div class="col-md-6"><strong>Mise à jour le:</strong><br>${dateTime(d.updated_at)}</div>
+                    </div>`;
+                detailModal.show();
+            } catch (err) { notify("error", err.detail || "Erreur consultation."); }
+        }
+        if (action === "manage") {
+            window.location.href = `/root-dashboard/commandes/manager-une-commande/${id}/`;
+        }
+        if (action === "edit") {
+            try { const d = await apiFetch(`${apiBase}${id}/`); editForm.reset(); hydrate(editForm, d, "edit_"); editForm.querySelector("#edit_id").value = d.id; editModal.show(); }
+            catch (err) { notify("error", err.detail || "Erreur chargement édition."); }
+        }
+        if (action === "delete") {
+            const ok = window.Swal ? await Swal.fire({ icon: "warning", title: "Supprimer cette commande ?", showCancelButton: true, confirmButtonText: "Supprimer", cancelButtonText: "Annuler" }).then((r) => r.isConfirmed) : confirm("Supprimer cette commande ?");
+            if (!ok) return;
+            try { await apiFetch(`${apiBase}${id}/`, { method: "DELETE" }); notify("success", "Commande supprimée."); loadOrders(currentPage); }
+            catch (err) { notify("error", err.detail || "Erreur suppression."); }
+        }
+    });
+
+    const refresh = () => loadOrders(1);
+    ["statusFilter","typeRapportFilter","clientFilter","dateFromFilter","dateToFilter"].forEach((id) => document.getElementById(id).addEventListener("change", refresh));
+    document.getElementById("searchInput").addEventListener("keyup", (e) => { if (e.key === "Enter") refresh(); });
+    document.getElementById("btnResetFilters").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("statusFilter").value = "";
+        document.getElementById("typeRapportFilter").value = "";
+        document.getElementById("clientFilter").value = "";
+        document.getElementById("dateFromFilter").value = "";
+        document.getElementById("dateToFilter").value = "";
+        refresh();
+    });
+
+    loadOrders(1);
+})();
+</script>
+{% endblock %}

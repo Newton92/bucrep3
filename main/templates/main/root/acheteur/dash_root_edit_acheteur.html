@@ -1,574 +1,1402 @@
 {% extends 'main/root/base.html' %}
 
-{% load static %}
+{% load static i18n %}
 
-{% block css %}
+{% block styles %}
 <!-- Leaflet CSS -->
 <!-- MapLibre GL JS -->
 <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-.map-container {
-    border-radius: 15px;  /* Bordures arrondies */
-    overflow: hidden; /* Empêche la carte de dépasser */
-    height: 400px; /* Hauteur fixe */
-    border: 2px solid #ddd; /* Bordure grise légère */
-}
+    /* ========== THÈME DE COULEURS ========== */
+    :root {
+        --color-light: #fcfefe;      /* Fond clair, texte sur fond foncé */
+        --color-primary: #0a95ca;    /* Primaire principal */
+        --color-primary-dark: #0d80be; /* Primaire foncé (hover, états actifs) */
+        --color-primary-light: #25add6; /* Primaire clair (bordures, accents) */
+        --color-secondary: #106cb2;   /* Secondaire (boutons secondaires, fonds) */
+        --color-warning: #ffc107;    /* Pour le mode édition */
+        --color-warning-dark: #e0a800; /* Warning foncé */
+    }
 
-#map {
-    height: 100%;
-    width: 100%;
-    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
-}
+    /* ========== STYLES GÉNÉRAUX ========== */
+    body {
+        background-color: #f8f9fa;
+    }
 
+    /* ========== SECTIONS DU FORMULAIRE ========== */
+    .form-section {
+        background: rgba(10, 149, 202, 0.03);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid var(--color-warning);
+        border: 1px solid rgba(37, 173, 214, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        box-shadow: 0 5px 20px rgba(10, 149, 202, 0.1);
+        border-color: rgba(37, 173, 214, 0.3);
+    }
+    
+    .section-title {
+        color: var(--color-warning-dark);
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .section-title i {
+        font-size: 1.2rem;
+        background: rgba(255, 193, 7, 0.1);
+        padding: 8px;
+        border-radius: 8px;
+        color: var(--color-warning);
+    }
+    
+    /* ========== CHAMPS DE FORMULAIRE ========== */
+    .form-label {
+        font-weight: 500;
+        color: var(--color-primary-dark);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+        background-color: white;
+    }
+    
+    /* ========== CARTE DE LOCALISATION ========== */
+    .map-container {
+        border-radius: 12px;
+        overflow: hidden;
+        height: 300px;
+        border: 2px solid rgba(37, 173, 214, 0.3);
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.1);
+        position: relative;
+    }
+
+    #editMap {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    
+    /* ========== BOUTONS ========== */
+    .btn-edit {
+        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
+        border: none;
+        padding: 12px 35px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: #212529;
+    }
+    
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+        background: linear-gradient(135deg, var(--color-warning-dark) 0%, #d39e00 100%);
+        color: #212529;
+    }
+    
+    .btn-edit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .btn-outline-warning {
+        color: var(--color-warning);
+        border-color: var(--color-warning);
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: var(--color-warning);
+        border-color: var(--color-warning);
+        color: #212529;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+    }
+    
+    /* ========== BADGE DE MODIFICATION ========== */
+    .edit-badge {
+        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
+        color: #212529;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+    }
+    
+    /* ========== VALIDATION ========== */
+    .is-valid {
+        border-color: #28a745 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .invalid-feedback:before {
+        content: "⚠";
+    }
+    
+    /* ========== LOADING ANIMATION ========== */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(10, 149, 202, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+        backdrop-filter: blur(3px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loading-content {
+        text-align: center;
+        background: white;
+        padding: 40px 50px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(10, 149, 202, 0.15);
+        border: 2px solid rgba(37, 173, 214, 0.2);
+        animation: fadeInUp 0.4s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(10, 149, 202, 0.1);
+        border-top: 4px solid var(--color-warning);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        color: var(--color-warning);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-top: 15px;
+    }
+    
+    /* ========== INFORMATIONS DE L'ACHETEUR ========== */
+    .acheteur-info {
+        background: rgba(255, 193, 7, 0.08);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid var(--color-warning);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .acheteur-info-item {
+        display: flex;
+        margin-bottom: 12px;
+        align-items: center;
+    }
+    
+    .acheteur-info-label {
+        font-weight: 600;
+        min-width: 150px;
+        color: var(--color-warning-dark);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .acheteur-info-label:before {
+        content: "•";
+        color: var(--color-warning);
+        font-size: 1.5rem;
+    }
+    
+    .acheteur-info-value {
+        color: var(--color-primary-dark);
+        font-weight: 500;
+    }
+    
+    /* ========== INPUT GROUPS ========== */
+    .input-group-text {
+        background-color: rgba(10, 149, 202, 0.1);
+        border-color: rgba(37, 173, 214, 0.3);
+        color: var(--color-primary-dark);
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .input-group .form-control:last-child {
+        border-radius: 0 8px 8px 0;
+    }
+    
+    /* ========== SELECT2 PERSONNALISÉ ========== */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        border-radius: 8px;
+        min-height: 46px;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 44px;
+        padding-left: 15px;
+        color: var(--color-primary-dark);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(10, 149, 202, 0.1);
+    }
+    
+    /* ========== PRÉVISUALISATION COULEUR ========== */
+    .color-preview {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        background: rgba(10, 149, 202, 0.1);
+        margin-top: 10px;
+        border: 1px solid rgba(10, 149, 202, 0.2);
+    }
+    
+    .color-circle {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* ========== CARTES ========== */
+    .card-form {
+        border: 1px solid rgba(37, 173, 214, 0.2);
+        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
+        color: #212529;
+        border: none;
+        padding: 20px 30px;
+    }
+    
+    .card-header-title {
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+        .input-group {
+            flex-direction: column;
+        }
+        
+        .input-group .form-control,
+        .input-group .input-group-text {
+            border-radius: 8px !important;
+            margin-bottom: 10px;
+        }
+        
+        .form-section {
+            padding: 15px;
+        }
+        
+        .btn-edit {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .acheteur-info-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .acheteur-info-label {
+            min-width: auto;
+            margin-bottom: 5px;
+        }
+    }
 </style>
-
 {% endblock %}
 
 {% block body %}
 
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Acheteurs</h3>
+<!-- Overlay de chargement -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">{% trans "Chargement en cours..." %}</div>
     </div>
 </div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countAcheteurs">Module de Gestion des Acheteurs</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un acheteur d'entreprise notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+<!-- Titre avec badge de modification -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fs-4 mb-0"><i class="bi bi-pencil-square me-2" style="color: var(--color-warning);"></i>{% trans "Modification d'un acheteur" %}</h3>
+                <p class="text-muted mb-0">{% trans "Modifiez les informations de l'acheteur ci-dessous" %}</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="edit-badge">{% trans "Mode Édition" %}</span>
+                <div id="acheteurCode" class="badge bg-secondary">{% trans "Chargement..." %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations de l'acheteur -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="acheteur-info" id="acheteurInfoCard">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <span class="acheteur-info-label">{% trans "Code" %} :</span>
+                        <span class="acheteur-info-value" id="infoCode">--</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <span class="acheteur-info-label">{% trans "Statut" %} :</span>
+                        <span class="acheteur-info-value" id="infoStatut">--</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <span class="acheteur-info-label">{% trans "Date création" %} :</span>
+                        <span class="acheteur-info-value" id="infoDateCreation">--</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
+<!-- Formulaire -->
 <div class="row">
     <div class="col-12">
-        <!-- Wishlist START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h4 class="card-header-title">Editer un Acheteur</h4>
+        <div class="card card-form">
+            <div class="card-header">
+                <h4 class="card-header-title mb-0"><i class="bi bi-pencil me-2"></i>{% trans "Éditer les informations" %}</h4>
             </div>
 
-            <!-- Card body START -->
-            <div class="card-body vstack gap-4">
-
-                <form id="editAcheteurForm">
-
+            <div class="card-body">
+                <form id="editAcheteurForm" class="vstack gap-4" novalidate>
                     <input type="hidden" name="id" id="editAcheteurId" />
 
-                    <!-- Généralités item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Généralités sur l'acheteur</h6>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Section 1: Généralités -->
+                    <div class="form-section">
+                        <h5 class="section-title"><i class="bi bi-info-circle"></i> {% trans "Généralités sur l'acheteur" %}</h5>
 
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Name -->
-                            <div class="mb-3">
-                                <label class="form-label">Nom de l'acheteur</label>
-                                <input type="text" class="form-control" id="editNom" name="nom" placeholder="Ex. BATI PLUS" required>
+                        <div class="row g-3">
+                            <!-- Nom -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Nom de l'acheteur" %} *</label>
+                                <input type="text" class="form-control" id="editNom" name="nom"
+                                       placeholder="{% trans 'Ex: BATI PLUS' %}" required
+                                       data-validation="required|min:2">
+                                <div class="invalid-feedback">{% trans "Veuillez saisir un nom valide (minimum 2 caractères)" %}</div>
                             </div>
-
-                            <br>
 
                             <!-- Sigle -->
-                            <div class="mb-3">
-                                <label class="form-label">Sigle</label>
-                                <input type="text" class="form-control" id="editSigle" name="sigle" placeholder="Ex. BATI+">
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Sigle" %}</label>
+                                <input type="text" class="form-control" id="editSigle" name="sigle"
+                                       placeholder="Ex: BATI+">
                             </div>
 
-                            <br>
-
-                            <!-- Date de Création -->
-                            <div>
-                                <label class="form-label">Date de Création</label>
-                                <input type="date" class="form-control flatpickr" id="editDateCreation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
+                            <!-- Date de création -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Date de création" %} *</label>
+                                <input type="date" class="form-control" id="editDateCreation"
+                                       name="date_creation" required
+                                       data-validation="required">
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une date valide" %}</div>
                             </div>
-
-                            <br>
 
                             <!-- Activité principale -->
-                            <div>
-                                <label class="form-label">Activité principale</label>
-                                <input type="text" class="form-control" id="editActivitePrincipale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Activité principale" %} *</label>
+                                <input type="text" class="form-control" id="editActivitePrincipale"
+                                       name="activite_principale"
+                                       placeholder="{% trans 'Ex: Vente de produits de construction' %}" required
+                                       data-validation="required|min:3">
+                                <div class="invalid-feedback">{% trans "Veuillez saisir une activité principale" %}</div>
                             </div>
 
-                            <br>
-
                             <!-- Statut -->
-                            <div class="mb-3">
-                                <label for="statut_entreprise" class="form-label">Statut actuel de l'acheteur</label>
-                                <select class="form-select" id="editStatutEntreprise" name="statut_entreprise" required>
+                            <div class="col-md-4">
+                                <label for="editStatutEntreprise" class="form-label">{% trans "Statut" %} *</label>
+                                <select class="form-select select2" id="editStatutEntreprise"
+                                        name="statut_entreprise" required
+                                        data-validation="required">
+                                    <option value="">{% trans "Sélectionnez..." %}</option>
                                     {% for statut in statut_list %}
                                         <option value="{{ statut.id }}">{{ statut.libelle }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner un statut" %}</div>
                             </div>
 
-                            <br>
-
-                            <!-- Catégorie -->
-                            <div class="mb-3">
-                                <label for="categorie_entreprise" class="form-label">Catégorie de l'acheteur</label>
-                                <select class="form-select" id="editCategorieEntreprise" name="categorie_entreprise">
-                                    {% for categorie in categorie_list %}
-                                        <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
 
                             <!-- Forme juridique -->
-                            <div class="mb-3">
-                                <label for="forme_juridique" class="form-label">Forme juridique de l'acheteur</label>
-                                <select class="form-select" id="editFormeJuridique" name="forme_juridique" required>
+                            <div class="col-md-4">
+                                <label for="editFormeJuridique" class="form-label">{% trans "Forme juridique" %} *</label>
+                                <select class="form-select select2" id="editFormeJuridique"
+                                        name="forme_juridique" required
+                                        data-validation="required">
+                                    <option value="">{% trans "Sélectionnez..." %}</option>
                                     {% for juridique in juridique_list %}
                                         <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une forme juridique" %}</div>
                             </div>
 
-                            <br>
+                            <!-- Code NACE -->
+                            <div class="col-md-12 mb-3">
+                                <label for="editCodeNace" class="form-label">{% trans "Code NACE" %}</label>
+                                <select class="form-control select2" id="editCodeNace" name="code_nace">
+                                    <option value="">{% trans "Sélectionnez..." %}</option>
+                                    {% for code_nace in code_nace_list %}
+                                        <!-- IMPORTANT: value="{{ code_nace.id }}" envoie la valeur complète -->
+                                        <option value="{{ code_nace.id }}">
+                                            {{ code_nace.code }} - {{ code_nace.libelle }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text-help">
+                                    {% trans "Code d'activité économique (NACE) - Optionnel" %}
+                                </div>
+                            </div>
 
                             <!-- Description -->
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="editDescription" name="description"></textarea>
+                            <div class="col-12">
+                                <label for="editDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="editDescription" name="description"
+                                          rows="6" placeholder="{% trans "Description détaillée de l'acheteur..." %}"></textarea>
                             </div>
                         </div>
                     </div>
-                    <!-- Généralités item END -->
 
-                    <hr> <!-- Divider -->
+                    <!-- Section 2: Contacts -->
+                    <div class="form-section">
+                        <h5 class="section-title"><i class="bi bi-telephone"></i> {% trans "Contacts de l'acheteur" %}</h5>
 
-                    <!-- Contacts item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Contacts de l'acheteur</h6>
-                                </div>
+                        <div class="row g-3">
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Email principal" %}</label>
+                                <input type="email" class="form-control" id="editEmail" name="email"
+                                       placeholder="contact@entreprise.ga"
+                                       data-validation="email">
+                                <div class="invalid-feedback">{% trans "Veuillez saisir une adresse email valide" %}</div>
                             </div>
-                        </div>
 
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Email principal & Fax -->
-                            <div class="mb-3">
-                                <label class="form-label">Email principal & Fax</label>
+                            <!-- Fax -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Fax" %}</label>
                                 <div class="input-group">
-                                    <input type="email" class="form-control" id="editEmail" name="email" placeholder="Ex. contact@batiplus.ga">
-                                    <input type="text" class="form-control" id="editFax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
+                                    <span class="input-group-text"><i class="bi bi-fax"></i></span>
+                                    <input type="text" class="form-control" id="editFax" name="fax"
+                                           placeholder="(+241) 22 22 22 22">
                                 </div>
                             </div>
 
-                            <br>
-
-                            <!-- Boite postale & Code postal -->
-                            <div class="mb-3">
-                                <label class="form-label">Boite postale & Code postal</label>
+                            <!-- Boîte postale -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Boîte postale" %}</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="editBoitePostale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
-                                    <input type="text" class="form-control" id="editCodePostal" name="code_postal" placeholder="Ex. 241">
+                                    <span class="input-group-text">BP</span>
+                                    <input type="text" class="form-control" id="editBoitePostale"
+                                           name="boite_postale" placeholder="2022 Libreville, Gabon">
                                 </div>
                             </div>
 
-                            <br>
+                            <!-- Code postal -->
+                            <div class="col-md-6">
+                                <label class="form-label">{% trans "Code postal" %}</label>
+                                <input type="text" class="form-control" id="editCodePostal"
+                                       name="code_postal" placeholder="241">
+                            </div>
 
                             <!-- Site internet -->
-                            <div class="mb-3">
-                                <label class="form-label">Site internet</label>
-                                <input type="text" class="form-control" id="editSiteInternet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
-                                <small><strong>Note : </strong>Ne pas oublier de mentionner le prefixe suivant pour tout lien : https://</small>
+                            <div class="col-12">
+                                <label class="form-label">{% trans "Site internet" %}</label>
+                                <input type="text" class="form-control" id="editSiteInternet"
+                                    name="site_internet" placeholder="exemple.com">
+                                <div class="form-text-help">{% trans "Entrez uniquement le nom de domaine (ex: exemple.com)" %}</div>
                             </div>
                         </div>
                     </div>
-                    <!-- Contacts item END -->
 
-                    <hr> <!-- Divider -->
+                    <!-- Section 3: Localisation -->
+                    <div class="form-section">
+                        <h5 class="section-title"><i class="bi bi-geo-alt"></i> {% trans "Localisation de l'acheteur" %}</h5>
 
-                    <!-- Localisation item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Localisation de l'acheteur</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Numero & Rue (adresse) -->
-                            <div class="mb-3">
-                                <label class="form-label">Numero & Rue (adresse)</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse" placeholder="Ex. 17345">
-                                    <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
-                                </div>
+                        <div class="row g-3">
+                            <!-- Adresse -->
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Numéro" %}</label>
+                                <input type="text" class="form-control" id="editNumeroAdresse"
+                                       name="numero_adresse" placeholder="17345">
                             </div>
 
-                            <br>
+                            <div class="col-md-9">
+                                <label class="form-label">{% trans "Rue" %}</label>
+                                <input type="text" class="form-control" id="editRueAdresse"
+                                       name="rue_adresse" placeholder="Rue Camp de Gaulle">
+                            </div>
 
                             <!-- Pays -->
-                            <div class="mb-3">
-                                <label for="pays" class="form-label">Pays</label>
-                                <select class="form-select" id="editPays" name="pays" required>
-                                    <option value="">Sélectionnez un pays</option>
+                            <div class="col-md-6">
+                                <label for="editPays" class="form-label">{% trans "Pays" %} *</label>
+                                <select class="form-select select2" id="editPays" name="pays" required
+                                        data-validation="required">
+                                    <option value="">{% trans "Sélectionnez..." %}</option>
                                     {% for pays in pays_list %}
                                         <option value="{{ pays.id }}">{{ pays.nom }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner un pays" %}</div>
                             </div>
-
-                            <br>
-
-                            <!-- Province -->
-                            <div class="mb-3">
-                                <label for="province" class="form-label">Province</label>
-                                <select class="form-select" id="editProvince" name="province" required>
-                                    <option value="">Sélectionnez une province</option>
-                                    {% for province in province_list %}
-                                        <option value="{{ province.id }}">{{ province.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
 
                             <!-- Ville -->
-                            <div class="mb-3">
-                                <label for="ville" class="form-label">Ville</label>
-                                <select class="form-select" id="editVille" name="ville" required>
-                                    <option value="">Sélectionnez une ville</option>
-                                    {% for ville in ville_list %}
-                                        <option value="{{ ville.id }}">{{ ville.nom }}</option>
-                                    {% endfor %}
-                                </select>
+                            <div class="col-md-6">
+                                <label for="editVille" class="form-label">{% trans "Ville" %} *</label>
+                                <div class="position-relative">
+                                    <select class="form-select select2" id="editVille" name="ville"
+                                            disabled required data-validation="required">
+                                        <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
+                                    </select>
+                                    <div id="villeSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une ville" %}</div>
                             </div>
-                            
+
+                            <!-- Carte (optionnelle) -->
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">{% trans "Localisation sur la carte (optionnel)" %}</label>
+                                    <button type="button" class="btn btn-outline-warning"
+                                            id="btn-edit-locate">
+                                        <i class="bi bi-geo-alt me-1"></i>{% trans "Localiser" %}
+                                    </button>
+                                </div>
+                                <div class="map-container">
+                                    <div id="editMap"></div>
+                                </div>
+                                <input type="hidden" id="editLatitude" name="latitude">
+                                <input type="hidden" id="editLongitude" name="longitude">
+                            </div>
                         </div>
                     </div>
-                    <!-- Localisation item END -->
 
-                    <hr> <!-- Divider -->
+                    <!-- Section 4: Opinion -->
+                    <div class="form-section">
+                        <h5 class="section-title"><i class="bi bi-chat-left-text"></i> {% trans "Opinion ACREMAC" %}</h5>
 
-                    <!-- Opinion ACREMAC item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Que pensez-vous de cet acheteur ?</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-
+                        <div class="row g-3">
                             <!-- Coloration -->
-                            <div class="mb-3">
-                                <label for="couleur_commentaire" class="form-label">Quelle coloration voulez-vous pour votre commentaire ?</label>
-                                <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                                    <option value="">Sélectionnez une couleur</option>
+                            <div class="col-md-6">
+                                <label for="editCouleurCommentaire" class="form-label">{% trans "Coloration" %} *</label>
+                                <select class="form-select select2" id="editCouleurCommentaire"
+                                        name="couleur_commentaire" required
+                                        data-validation="required">
+                                    <option value="">{% trans "Sélectionnez une couleur..." %}</option>
                                     {% for coloration in coloration_list %}
-                                        <option value="{{ coloration.id }}">{{ coloration.couleur }} - [{{ coloration.code }}]</option>
+                                        <option value="{{ coloration.id }}"
+                                                data-color="{{ coloration.code }}">
+                                            {{ coloration.couleur }} - [{{ coloration.code }}]
+                                        </option>
                                     {% endfor %}
                                 </select>
+                                <div class="color-preview mt-2" id="editColorPreview" style="display: none;">
+                                    <div class="color-circle" style="background-color: #000;"></div>
+                                    <span id="editColorName">{% trans "Aucune couleur sélectionnée" %}</span>
+                                </div>
+                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une coloration" %}</div>
                             </div>
-
-                            <br>
 
                             <!-- Commentaire -->
-                            <div class="mb-3">
-                                <label for="commentaire" class="form-label">Votre Commentaire</label>
-                                <textarea class="form-control" id="editCommentaire" name="commentaire"></textarea>
+                            <div class="col-12">
+                                <label for="editCommentaire" class="form-label">{% trans "Commentaire" %} *</label>
+                                <textarea class="form-control" id="editCommentaire" name="commentaire"
+                                          rows="6" placeholder="{% trans "Votre commentaire sur cet acheteur..." %}"
+                                          required data-validation="required|min:10"></textarea>
+                                <div class="invalid-feedback">{% trans "Veuillez saisir un commentaire (minimum 10 caractères)" %}</div>
                             </div>
                         </div>
                     </div>
-                    <!-- Opinion ACREMAC item END -->
 
-                    <br> <!-- Divider -->
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top" style="border-color: rgba(37, 173, 214, 0.2) !important;">
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-cancel">
+                                <i class="bi bi-x-circle me-1"></i>{% trans "Annuler" %}
+                            </button>
+                        </div>
 
-                    <!-- Button -->
-                    <div class="text-end">
-                        <button class="btn btn-primary mb-0" type="submit">
-                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
-                        </button>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-warning me-2" id="btn-reset-edit">
+                                <i class="bi bi-arrow-clockwise me-1"></i>{% trans "Réinitialiser" %}
+                            </button>
+                            <button type="submit" class="btn btn-edit" id="btn-submit-edit">
+                                <i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer les modifications" %}
+                            </button>
+                        </div>
                     </div>
 
                 </form>
-
             </div>
-            <!-- Card body END -->
         </div>
-        <!-- Wishlist END -->
     </div>
 </div>
-<!-- Acheteurs d'Entreprise END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        tinymce.init({
-            selector: '#description, #editDescription, #commentaire, #editCommentaire',
-            setup: function (editor) {
-                editor.on('init', function () {
-                    editor.getContainer().querySelector('iframe').setAttribute('title', 'Éditeur de texte');
-                });
-            },
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
-    });
-</script>
-
-
+<!-- Librairies nécessaires -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
 
 <script>
+/* ── i18n strings ── */
+{% trans "Chargement..." as t_loading %}
+{% trans "Chargement des données..." as t_loadingData %}
+{% trans "Mise à jour en cours..." as t_updating %}
+{% trans "Erreur" as t_err %}
+{% trans "Succès" as t_success %}
+{% trans "Acheteur mis à jour avec succès" as t_updated %}
+{% trans "Erreur lors du chargement des données" as t_loadErr %}
+{% trans "Erreur lors de la mise à jour" as t_updateErr %}
+{% trans "Acheteur non trouvé" as t_notFound %}
+{% trans "ID de l'acheteur non trouvé" as t_noId %}
+{% trans "Erreurs de validation" as t_validErr %}
+{% trans "Erreur de validation" as t_validErrTitle %}
+{% trans "Session expirée. Veuillez vous reconnecter." as t_sessionExp %}
+{% trans "Une erreur est survenue lors de la mise à jour. Vérifiez la console pour plus de détails." as t_genericErr %}
+{% trans "Sélectionnez..." as t_select %}
+{% trans "Chargement..." as t_loadOpt %}
+{% trans "Erreur de chargement" as t_loadOptErr %}
+{% trans "Réinitialiser les modifications ?" as t_resetTitle %}
+{% trans "Toutes les modifications non sauvegardées seront perdues." as t_resetText %}
+{% trans "Oui, réinitialiser" as t_yesReset %}
+{% trans "Annuler" as t_cancel %}
+{% trans "Formulaire réinitialisé" as t_resetDone %}
+{% trans "Quitter sans sauvegarder ?" as t_leaveTitle %}
+{% trans "Les modifications non sauvegardées seront perdues." as t_leaveText %}
+{% trans "Oui, quitter" as t_yesLeave %}
+{% trans "Rester" as t_stay %}
+{% trans "Ce champ est obligatoire" as t_required %}
+{% trans "Email invalide" as t_emailInvalid %}
+{% trans "Le nom doit contenir au moins 2 caractères" as t_nomMin %}
+{% trans "L'activité principale doit contenir au moins 3 caractères" as t_activiteMin %}
+{% trans "Le commentaire doit contenir au moins 10 caractères" as t_commentMin %}
+{% trans "Veuillez corriger les erreurs dans le formulaire" as t_fixErrors %}
+{% trans "Champs invalides" as t_invalidFields %}
+{% trans "Session expirée" as t_sessionTitle %}
+{% trans "Votre session a expiré. Voulez-vous rafraîchir votre token ?" as t_sessionText %}
+{% trans "Rafraîchir" as t_refresh %}
+{% trans "Recharger la page" as t_reload %}
+{% trans "Succès !" as t_successBang %}
+{% trans "Token rafraîchi avec succès." as t_tokenOk %}
+{% trans "Impossible de rafraîchir le token." as t_tokenErr %}
+{% trans "Sélectionnez d'abord un pays" as t_selectCountryFirst %}
+
+var S = {
+    loading:      '{{ t_loading|escapejs }}',
+    loadingData:  '{{ t_loadingData|escapejs }}',
+    updating:     '{{ t_updating|escapejs }}',
+    err:          '{{ t_err|escapejs }}',
+    success:      '{{ t_success|escapejs }}',
+    updated:      '{{ t_updated|escapejs }}',
+    loadErr:      '{{ t_loadErr|escapejs }}',
+    updateErr:    '{{ t_updateErr|escapejs }}',
+    notFound:     '{{ t_notFound|escapejs }}',
+    noId:         '{{ t_noId|escapejs }}',
+    validErr:     '{{ t_validErr|escapejs }}',
+    validErrTitle:'{{ t_validErrTitle|escapejs }}',
+    sessionExp:   '{{ t_sessionExp|escapejs }}',
+    genericErr:   '{{ t_genericErr|escapejs }}',
+    select:       '{{ t_select|escapejs }}',
+    loadOpt:      '{{ t_loadOpt|escapejs }}',
+    loadOptErr:   '{{ t_loadOptErr|escapejs }}',
+    resetTitle:   '{{ t_resetTitle|escapejs }}',
+    resetText:    '{{ t_resetText|escapejs }}',
+    yesReset:     '{{ t_yesReset|escapejs }}',
+    cancel:       '{{ t_cancel|escapejs }}',
+    resetDone:    '{{ t_resetDone|escapejs }}',
+    leaveTitle:   '{{ t_leaveTitle|escapejs }}',
+    leaveText:    '{{ t_leaveText|escapejs }}',
+    yesLeave:     '{{ t_yesLeave|escapejs }}',
+    stay:         '{{ t_stay|escapejs }}',
+    required:     '{{ t_required|escapejs }}',
+    emailInvalid: '{{ t_emailInvalid|escapejs }}',
+    nomMin:       '{{ t_nomMin|escapejs }}',
+    activiteMin:  '{{ t_activiteMin|escapejs }}',
+    commentMin:   '{{ t_commentMin|escapejs }}',
+    fixErrors:    '{{ t_fixErrors|escapejs }}',
+    invalidFields:'{{ t_invalidFields|escapejs }}',
+    sessionTitle: '{{ t_sessionTitle|escapejs }}',
+    sessionText:  '{{ t_sessionText|escapejs }}',
+    refresh:      '{{ t_refresh|escapejs }}',
+    reload:       '{{ t_reload|escapejs }}',
+    successBang:  '{{ t_successBang|escapejs }}',
+    tokenOk:           '{{ t_tokenOk|escapejs }}',
+    tokenErr:          '{{ t_tokenErr|escapejs }}',
+    selectCountryFirst:'{{ t_selectCountryFirst|escapejs }}',
+};
+
 $(document).ready(function() {
 
-    // Charger les provinces en fonction du pays sélectionné
-    $('#editPays').on('change', function() {
-        const paysId = $(this).val();
-        const provinceSelect = $('#editProvince');
+    // Stockage des tokens
+    let accessToken = '{{ access }}';
+    let refreshToken = '{{ refresh }}';
 
-        if (paysId) {
-            provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+    // Variables globales
+    let acheteurId = '{{ id_acheteur }}';
+    let originalData = {};
+    let editMap = null;
+    let editMarker = null;
 
-            $.ajax({
-                url: `/api/provinces/${paysId}/`,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    provinceSelect.prop('disabled', false).html('<option value="">Sélectionnez une province</option>');
-
-                    if (response.results.length > 0) {
-                        response.results.forEach(function(province) {
-                            provinceSelect.append(new Option(province.nom, province.id));
-                        });
-
-                        // Sélectionner automatiquement la province de l'acheteur si disponible
-                        const selectedProvince = '{{ acheteur.province }}'; 
-                        if (selectedProvince) {
-                            provinceSelect.val(selectedProvince).trigger('change');
-                        }
-                    } else {
-                        provinceSelect.html('<option value="">Aucune province disponible</option>');
-                    }
-                },
-                error: function() {
-                    provinceSelect.html('<option value="">Erreur lors du chargement</option>');
-                }
-            });
-        } else {
-            provinceSelect.prop('disabled', true).html('<option value="">Sélectionnez un pays d\'abord</option>');
-        }
+    // Initialisation Select2
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: S.select,
+        allowClear: true
     });
 
-    // Charger les villes en fonction de la province sélectionnée
-    $('#editProvince').on('change', function() {
-        const provinceId = $(this).val();
-        const villeSelect = $('#editVille');
+    // Fonctions utilitaires
+    function showLoading(message) {
+        $('#loadingText').text(message || S.loading);
+        $('#loadingOverlay').addClass('active');
+        $('body').css('overflow', 'hidden');
+    }
 
-        if (provinceId) {
-            villeSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+    function hideLoading() {
+        $('#loadingOverlay').removeClass('active');
+        $('body').css('overflow', '');
+    }
 
-            $.ajax({
-                url: `/api/villes/${provinceId}/`,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    villeSelect.prop('disabled', false).html('<option value="">Sélectionnez une ville</option>');
-
-                    if (response.results.length > 0) {
-                        response.results.forEach(function(ville) {
-                            villeSelect.append(new Option(ville.nom, ville.id));
-                        });
-
-                        // Sélectionner automatiquement la ville de l'acheteur si disponible
-                        const selectedVille = '{{ acheteur.ville }}'; 
-                        if (selectedVille) {
-                            villeSelect.val(selectedVille);
-                        }
-                    } else {
-                        villeSelect.html('<option value="">Aucune ville disponible</option>');
-                    }
-                },
-                error: function() {
-                    villeSelect.html('<option value="">Erreur lors du chargement</option>');
-                }
-            });
-        } else {
-            villeSelect.prop('disabled', true).html('<option value="">Sélectionnez une province d\'abord</option>');
-        }
-    });
-
-
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
-        $.ajax({
-            url: `/api/editer-un-acheteur/${id}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editNom').val(response.nom);
-                $('#editSigle').val(response.sigle);
-                $('#editDateCreation').val(response.date_creation);
-                $('#editActivitePrincipale').val(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise);
-                $('#editFormeJuridique').val(response.forme_juridique);
-                $('#editDescription').val(response.description);
-                $('#editEmail').val(response.email);
-                $('#editFax').val(response.fax);
-                $('#editBoitePostale').val(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse);
-                $('#editPays').val(response.pays);
-                $('#editProvince').val(response.province);
-                $('#editVille').val(response.ville);
-                $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                $('#editCommentaire').val(response.commentaire);
-                    
-                // Re-initialize TinyMCE for the editDescription textarea
-                tinymce.get('editDescription').setContent(response.description);
-                tinymce.get('editCommentaire').setContent(response.commentaire);
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
-                });
-                console.error("Erreur AJAX :", xhr.responseText);
-            }
-        });
-    });
-
-
-    // Edit Acheteur form submission
-    $('#editAcheteurForm').on('submit', function(event) {
-        event.preventDefault();
-        const id = $('#editAcheteurId').val();
-        const formData = $(this).serialize();
-        $.ajax({
-            url: '/api/editer-un-acheteur/' + id + '/',
-            type: 'PUT',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function() {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Acheteur mis à jour avec succès.',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    location.reload(); // Rafraîchir la page après validation
-                });
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la mise à jour de l\'acheteur.',
-                });
-            }
-        });
-    });
-
-    // Gestion de l'expiration du token
-    $.ajaxSetup({
-        statusCode: {
-            401: function() {
-                refreshToken();
-            }
-        }
-    });
-
-    // Rafraîchir le token si expiré
-    function refreshToken() {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
-            contentType: 'application/json',
-            success: function(response) {
-                localStorage.setItem('access_token', response.access);
-                $.ajax(this); // Réessayer la requête
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '/login/';
-                });
-            }
+    function showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: S.err,
+            text: message,
+            confirmButtonColor: '#0A95CA'
         });
     }
 
+    function showSuccess(message) {
+        Swal.fire({
+            icon: 'success',
+            title: S.success,
+            text: message,
+            confirmButtonColor: '#0A95CA',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+    
+    // Charger les données de l'acheteur
+    function loadAcheteurData() {
+        if (!acheteurId) {
+            showError(S.noId);
+            return;
+        }
+
+        showLoading(S.loadingData);
+        
+        $.ajax({
+            url: `/api/editer-un-acheteur/${acheteurId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer {{ access }}`,
+                'X-CSRFToken': getCsrfToken()
+            },
+            success: function(response) {
+                if (response.success && response.acheteur) {
+                    const acheteur = response.acheteur;
+                    
+                    // Sauvegarder les données originales
+                    originalData = { ...acheteur };
+                    
+                    // Remplir le formulaire
+                    fillForm(acheteur);
+                    
+                    // Mettre à jour les informations affichées
+                    updateAcheteurInfo(acheteur);
+                    
+                    // Initialiser la carte
+                    initEditMap(acheteur);
+                    
+                    hideLoading();
+                } else {
+                    hideLoading();
+                    showError(response.detail || S.loadErr);
+                }
+            },
+            error: function(xhr) {
+                hideLoading();
+                if (xhr.status === 404) {
+                    showError(S.notFound);
+                    setTimeout(() => {
+                        window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
+                    }, 2000);
+                } else {
+                    showError(S.loadErr);
+                }
+            }
+        });
+    }
+    
+    // Remplir le formulaire avec les données
+    function fillForm(acheteur) {
+        // Généralités
+        $('#editAcheteurId').val(acheteur.id);
+        $('#editNom').val(acheteur.nom || '');
+        $('#editSigle').val(acheteur.sigle || '');
+        $('#editDateCreation').val(acheteur.date_creation || '');
+        $('#editActivitePrincipale').val(acheteur.activite_principale || '');
+        
+        // Selects
+        if (acheteur.statut_entreprise && acheteur.statut_entreprise.id) {
+            $('#editStatutEntreprise').val(acheteur.statut_entreprise.id).trigger('change');
+        }
+        
+        
+        if (acheteur.forme_juridique && acheteur.forme_juridique.id) {
+            $('#editFormeJuridique').val(acheteur.forme_juridique.id).trigger('change');
+        }
+        
+        if (acheteur.code_nace) {
+            $('#editCodeNace').val(acheteur.code_nace).trigger('change');
+        }
+        
+        $('#editDescription').val(acheteur.description || '');
+        
+        // Contacts
+        $('#editEmail').val(acheteur.email || '');
+        $('#editFax').val(acheteur.fax || '');
+        $('#editBoitePostale').val(acheteur.boite_postale || '');
+        $('#editCodePostal').val(acheteur.code_postal || '');
+        $('#editSiteInternet').val(acheteur.site_internet || '');
+        
+        // Localisation
+        $('#editNumeroAdresse').val(acheteur.numero_adresse || '');
+        $('#editRueAdresse').val(acheteur.rue_adresse || '');
+        
+        if (acheteur.pays && acheteur.pays.id) {
+            $('#editPays').val(acheteur.pays.id).trigger('change.select2');
+            loadVilles(acheteur.pays.id, acheteur);
+        }
+        
+        // Opinion
+        if (acheteur.couleur_commentaire && acheteur.couleur_commentaire.id) {
+            $('#editCouleurCommentaire').val(acheteur.couleur_commentaire.id).trigger('change');
+            updateColorPreview(acheteur.couleur_commentaire);
+        }
+        
+        $('#editCommentaire').val(acheteur.commentaire || '');
+    }
+    
+    // Mettre à jour les informations affichées
+    function updateAcheteurInfo(acheteur) {
+        $('#acheteurCode').text(acheteur.code || '--');
+        $('#infoCode').text(acheteur.code || '--');
+        $('#infoStatut').text(acheteur.statut_entreprise ? acheteur.statut_entreprise.libelle : '--');
+        $('#infoDateCreation').text(acheteur.date_creation || '--');
+    }
+    
+    // Mettre à jour la prévisualisation des couleurs
+    function updateColorPreview(couleur) {
+        if (couleur && couleur.code) {
+            $('#editColorPreview').show();
+            $('#editColorPreview .color-circle').css('background-color', couleur.code);
+            $('#editColorName').text(couleur.couleur || '');
+        } else {
+            $('#editColorPreview').hide();
+        }
+    }
+    
+    // Charger les villes directement par pays
+    function loadVilles(paysId, acheteur = null) {
+        if (!paysId) {
+            $('#editVille').prop('disabled', true).empty()
+                .append('<option value="">' + S.selectCountryFirst + '</option>').trigger('change.select2');
+            return;
+        }
+
+        $('#villeSpinner').show();
+        $('#editVille').prop('disabled', true).empty()
+            .append('<option value="">' + S.loadOpt + '</option>').trigger('change.select2');
+
+        $.ajax({
+            url: `/api/villes-par-pays/${paysId}/`,
+            type: 'GET',
+            headers: { 'Authorization': `Bearer {{ access }}` },
+            success: function(response) {
+                $('#editVille').empty().append('<option value="">' + S.select + '</option>');
+                if (response.results && response.results.length > 0) {
+                    response.results.forEach(function(ville) {
+                        $('#editVille').append(new Option(ville.nom, ville.id));
+                    });
+                    $('#editVille').prop('disabled', false);
+                    if (acheteur && acheteur.ville && acheteur.ville.id) {
+                        $('#editVille').val(acheteur.ville.id).trigger('change.select2');
+                    }
+                }
+            },
+            error: function() {
+                $('#editVille').empty().append('<option value="">' + S.loadOptErr + '</option>');
+            },
+            complete: function() {
+                $('#villeSpinner').hide();
+                $('#editVille').trigger('change.select2');
+            }
+        });
+    }
+    
+    // Initialiser la carte pour l'édition
+    function initEditMap(acheteur) {
+        if (typeof maplibregl === 'undefined') {
+            console.warn('MapLibre GL non chargé');
+            return;
+        }
+        
+        // Attendre que le DOM soit complètement chargé
+        setTimeout(() => {
+            try {
+                // Vérifier que le conteneur existe
+                const mapContainer = document.getElementById('editMap');
+                if (!mapContainer) {
+                    console.error('Conteneur #editMap non trouvé');
+                    return;
+                }
+                
+                // S'assurer que le conteneur a une taille
+                mapContainer.style.height = '300px';
+                mapContainer.style.width = '100%';
+                
+                editMap = new maplibregl.Map({
+                    container: 'editMap',
+                    style: 'https://demotiles.maplibre.org/style.json',
+                    center: [9.454, 0.395],
+                    zoom: 12
+                });
+                
+                editMap.addControl(new maplibregl.NavigationControl());
+                
+                console.log('Carte initialisée avec succès');
+                
+            } catch (error) {
+                console.error('Erreur initialisation carte:', error);
+            }
+        }, 500); // Délai pour s'assurer que le DOM est prêt
+    }
+    
+    // Gestion des événements
+    $('#editPays').on('change', function() {
+        loadVilles($(this).val());
+    });
+    
+    $('#editCouleurCommentaire').on('change', function() {
+        const selected = $(this).find('option:selected');
+        const colorCode = selected.data('color');
+        const colorName = selected.text().split(' - ')[0];
+        
+        if (colorCode) {
+            $('#editColorPreview').show();
+            $('#editColorPreview .color-circle').css('background-color', colorCode);
+            $('#editColorName').text(colorName);
+        } else {
+            $('#editColorPreview').hide();
+        }
+    });
+    
+    // Réinitialiser le formulaire
+    $('#btn-reset-edit').on('click', function() {
+        Swal.fire({
+            title: S.resetTitle,
+            text: S.resetText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0A95CA',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: S.yesReset,
+            cancelButtonText: S.cancel
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fillForm(originalData);
+                showSuccess(S.resetDone);
+            }
+        });
+    });
+
+    // Annuler et retourner
+    $('#btn-cancel').on('click', function() {
+        Swal.fire({
+            title: S.leaveTitle,
+            text: S.leaveText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0A95CA',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: S.yesLeave,
+            cancelButtonText: S.stay
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
+            }
+        });
+    });
+
+    // Fonction de nettoyage des URLs
+    function cleanSiteInternet(url) {
+        if (!url || url.trim() === '') return '';
+        
+        let cleanUrl = url.trim();
+        
+        // Supprimer les protocoles
+        cleanUrl = cleanUrl.replace(/^https?:\/\//i, '');
+        
+        // Supprimer www.
+        cleanUrl = cleanUrl.replace(/^www\./i, '');
+        
+        // Supprimer slash final
+        cleanUrl = cleanUrl.replace(/\/$/, '');
+        
+        // Supprimer les espaces
+        cleanUrl = cleanUrl.trim();
+        
+        return cleanUrl.toLowerCase();
+    }
+        
+    // Soumission du formulaire
+    $('#editAcheteurForm').on('submit', function(event) {
+        event.preventDefault();
+        
+        // Récupérer et nettoyer les données
+        const formData = {};
+        $(this).serializeArray().forEach(item => {
+            formData[item.name] = item.value;
+        });
+        
+        // Nettoyer spécifiquement site_internet
+        if (formData.site_internet) {
+            formData.site_internet = cleanSiteInternet(formData.site_internet);
+            
+            // Si non vide, ajouter https:// pour la validation Django
+            if (formData.site_internet) {
+                formData.site_internet = 'https://' + formData.site_internet;
+            }
+        }
+        
+        // Convertir les IDs en entiers pour les ForeignKey
+        const foreignKeys = [
+            'forme_juridique',
+            'statut_entreprise',
+            'couleur_commentaire',
+            'pays',
+            'ville'
+        ];
+        
+        foreignKeys.forEach(key => {
+            if (formData[key] && formData[key] !== '') {
+                // Pour le sérialiseur, gardez juste l'ID
+                formData[key] = parseInt(formData[key]);
+            } else if (formData[key] === '') {
+                formData[key] = null;
+            }
+        });
+        
+        console.log('Données envoyées:', formData);
+        
+        showLoading(S.updating);
+        
+        $.ajax({
+            url: `/api/editer-un-acheteur/${acheteurId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': `Bearer {{ access }}`,
+                'X-CSRFToken': getCsrfToken()
+            },
+            success: function(response) {
+                hideLoading();
+                
+                if (response.success) {
+                    showSuccess(S.updated);
+                    
+                    // Mettre à jour les données originales
+                    if (response.acheteur) {
+                        originalData = { ...response.acheteur };
+                        updateAcheteurInfo(response.acheteur);
+                    }
+                    
+                    // Redirection optionnelle après succès
+                    setTimeout(() => {
+                        window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
+                    }, 2000);
+                } else {
+                    showError(response.message || S.updateErr);
+                }
+            },
+            error: function(xhr) {
+                hideLoading();
+                
+                if (xhr.status === 400) {
+                    const errors = xhr.responseJSON;
+                    console.error('Erreurs de validation:', errors);
+                    
+                    let errorMessage = S.validErr + ':<br><ul class="text-start">';
+                    
+                    if (errors.errors) {
+                        Object.keys(errors.errors).forEach(key => {
+                            errorMessage += `<li><strong>${key}:</strong> ${errors.errors[key].join(', ')}</li>`;
+                        });
+                    } else if (errors.message) {
+                        errorMessage = errors.message;
+                    } else if (errors.detail) {
+                        errorMessage = errors.detail;
+                    }
+                    
+                    errorMessage += '</ul>';
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: S.validErrTitle,
+                        html: errorMessage,
+                        confirmButtonColor: '#0A95CA'
+                    });
+                } else if (xhr.status === 401) {
+                    showError(S.sessionExp);
+                    setTimeout(() => {
+                        window.location.href = '/login/';
+                    }, 2000);
+                } else {
+                    console.error('Erreur AJAX:', xhr);
+                    showError(S.genericErr);
+                }
+            }
+        });
+    });
+
+    // Validation du formulaire
+    function validateForm() {
+        let isValid = true;
+        
+        // Réinitialiser les erreurs
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').remove();
+        
+        // Validation des champs requis
+        $('#editAcheteurForm').find('[required]').each(function() {
+            const $input = $(this);
+            const value = $input.val();
+            
+            if (!value || value.trim() === '') {
+                markInvalid($input, S.required);
+                isValid = false;
+            }
+        });
+
+        // Validation email
+        const email = $('#editEmail').val();
+        if (email && !validator.isEmail(email)) {
+            markInvalid($('#editEmail'), S.emailInvalid);
+            isValid = false;
+        }
+
+        // Validation longueur minimale
+        const nom = $('#editNom').val();
+        if (nom && nom.length < 2) {
+            markInvalid($('#editNom'), S.nomMin);
+            isValid = false;
+        }
+
+        const activite = $('#editActivitePrincipale').val();
+        if (activite && activite.length < 3) {
+            markInvalid($('#editActivitePrincipale'), S.activiteMin);
+            isValid = false;
+        }
+
+        const commentaire = $('#editCommentaire').val();
+        if (commentaire && commentaire.length < 10) {
+            markInvalid($('#editCommentaire'), S.commentMin);
+            isValid = false;
+        }
+
+        if (!isValid) {
+            Swal.fire({
+                icon: 'error',
+                title: S.invalidFields,
+                text: S.fixErrors,
+                confirmButtonColor: '#0A95CA'
+            });
+        }
+        
+        return isValid;
+    }
+    
+    function markInvalid($input, message) {
+        $input.addClass('is-invalid');
+        const $feedback = $(`<div class="invalid-feedback">${message}</div>`);
+        $input.after($feedback);
+    }
+    
+    // Fonction pour récupérer le token CSRF
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: S.sessionTitle,
+            text: S.sessionText,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: S.refresh,
+            cancelButtonText: S.reload,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire(S.successBang, S.tokenOk, 'success');
+            } else {
+                Swal.fire(S.err, S.tokenErr, 'error');
+            }
+        });
+    }
+    
+    // Démarrer le chargement des données
+    loadAcheteurData();
 });
-
 </script>
-
 {% endblock %}

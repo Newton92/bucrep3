@@ -1,0 +1,1375 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --operation-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    --operation-light: rgba(32, 201, 151, 0.1);
+}
+
+/* Carte opération unique */
+.operation-single-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    border: 3px solid #e3e6f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.operation-single-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(to right, #20c997, #17a2b8);
+}
+
+.operation-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--operation-light);
+    color: #20c997;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 2px solid rgba(32, 201, 151, 0.3);
+}
+
+/* En-tête de la carte */
+.operation-single-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.operation-single-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.operation-single-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.operation-single-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Sections de contenu */
+.operation-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.operation-section-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #20c997;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.operation-section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.15);
+}
+
+.operation-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px dashed #e2e8f0;
+}
+
+.operation-section-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--operation-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #20c997;
+    font-size: 1.25rem;
+}
+
+.operation-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.operation-section-content {
+    color: #4a5568;
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.operation-section-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Tags importations */
+.importation-tags-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed #e2e8f0;
+}
+
+.importation-tags-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.importation-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.importation-tag {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(25, 118, 210, 0.2);
+    transition: all 0.2s ease;
+}
+
+.importation-tag:hover {
+    background: #1976d2;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Métadonnées */
+.operation-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+}
+
+.meta-card {
+    text-align: center;
+    padding: 1rem;
+}
+
+.meta-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--operation-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #20c997;
+    margin: 0 auto 0.75rem;
+    font-size: 1rem;
+}
+
+.meta-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* État vide (pas d'opération) */
+.operation-empty-state {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 20px;
+    border: 3px dashed #cbd5e0;
+    margin: 3rem 0;
+}
+
+.operation-empty-icon {
+    font-size: 5rem;
+    color: #a0aec0;
+    margin-bottom: 2rem;
+    opacity: 0.7;
+}
+
+.operation-empty-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.operation-empty-subtitle {
+    font-size: 1.1rem;
+    color: #718096;
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+}
+
+/* Formulaires */
+.operation-form-modal .modal-dialog {
+    max-width: 800px;
+}
+
+.operation-form-modal .modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+}
+
+.operation-form-modal .modal-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.operation-form-modal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.operation-form-modal .modal-body {
+    padding: 2rem;
+}
+
+.operation-form-modal .form-group {
+    margin-bottom: 1.75rem;
+}
+
+.operation-form-modal .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.operation-form-modal .form-control,
+.operation-form-modal .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.operation-form-modal .form-control:focus,
+.operation-form-modal .form-select:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.2);
+}
+
+.operation-form-modal textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Select2 personnalisé */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    min-height: 50px;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.2);
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background: #e3f2fd;
+    border-color: #20c997;
+    color: #2c3e50;
+    border-radius: 20px;
+    padding: 0.375rem 1rem;
+    font-size: 0.9rem;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #20c997;
+    margin-right: 0.5rem;
+}
+
+/* Boutons */
+.btn-operation {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-operation:hover {
+    background: linear-gradient(135deg, #1ab68d 0%, #148a9c 100%);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+.btn-operation-outline {
+    background: transparent;
+    color: #20c997;
+    border: 2px solid #20c997;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-operation-outline:hover {
+    background: #20c997;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+.btn-action {
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .operation-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .operation-single-header {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .operation-single-card {
+        padding: 1.5rem;
+    }
+    
+    .operation-single-title {
+        font-size: 1.5rem;
+    }
+    
+    .operation-meta-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .operation-form-modal .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .operation-empty-state {
+        padding: 3rem 1.5rem;
+    }
+    
+    .operation-empty-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .operation-single-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-operation, .btn-operation-outline {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .operation-section-card {
+        padding: 1.25rem;
+    }
+}
+
+/* Animation de chargement */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.operation-content-loaded {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Indicateur d'édition en temps réel */
+.editing-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #20c997;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.editing-indicator.show {
+    display: flex;
+    animation: fadeInUp 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-line text-operation me-2"></i>Opérations & Historique
+            </h1>
+            <p class="text-muted mb-0">
+                Fiche unique des opérations commerciales et historique de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Opération Unique -->
+    <div class="row">
+        <div class="col-12">
+            {% if operations %}
+                {% for operation in operations %}
+                <!-- Carte Opération Existante -->
+                <div class="operation-single-card operation-content-loaded" id="operationCard" data-id="{{ operation.id }}">
+                    <div class="operation-status">
+                        <i class="fas fa-check-circle me-2"></i>Opération enregistrée
+                    </div>
+                    <br><br>
+                    
+                    <div class="operation-single-header">
+                        <div>
+                            <h2 class="operation-single-title">{{ operation.description_complete_activite|default:"Opération commerciale" }}</h2>
+                            <p class="operation-single-subtitle">
+                                Fiche opérationnelle de {{ acheteur.nom }}
+                            </p>
+                        </div>
+                        <div class="operation-single-actions">
+                            <button class="btn btn-operation-outline edit-operation-btn" data-id="{{ operation.id }}">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </button>
+                            <button class="btn btn-danger delete-operation-btn" data-id="{{ operation.id }}">
+                                <i class="fas fa-trash me-2"></i>Supprimer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sections de contenu -->
+                    <div class="operation-sections">
+                        <!-- Section Description -->
+                        <div class="operation-section-card">
+                            <div class="operation-section-header">
+                                <div class="operation-section-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h3 class="operation-section-title">Description de l'activité</h3>
+                            </div>
+                            <div class="operation-section-content" id="descriptionContent">
+                                {% if operation.description_complete_activite %}
+                                    <pre>{{ operation.description_complete_activite }}</pre>
+                                {% else %}
+                                    <p class="text-muted fst-italic">Aucune description fournie</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Section Commentaire Ratios -->
+                        <div class="operation-section-card">
+                            <div class="operation-section-header">
+                                <div class="operation-section-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h3 class="operation-section-title">Commentaire Ratios</h3>
+                            </div>
+                            <div class="operation-section-content" id="commentaireContent">
+                                {% if operation.commentaire_ratios %}
+                                    <pre>{{ operation.commentaire_ratios }}</pre>
+                                {% else %}
+                                    <p class="text-muted fst-italic">Aucun commentaire sur les ratios</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Section Historique -->
+                        <div class="operation-section-card">
+                            <div class="operation-section-header">
+                                <div class="operation-section-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <h3 class="operation-section-title">Historique</h3>
+                            </div>
+                            <div class="operation-section-content" id="historiqueContent">
+                                {% if operation.historique %}
+                                    <pre>{{ operation.historique }}</pre>
+                                {% else %}
+                                    <p class="text-muted fst-italic">Aucun historique enregistré</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tags Importations -->
+                    <div class="importation-tags-container">
+                        <h4 class="importation-tags-title">
+                            <i class="fas fa-tags"></i> Importations associées
+                        </h4>
+                        <div class="importation-tags" id="importationTags">
+                            {% for imp in operation.importation.all %}
+                                <span class="importation-tag">
+                                    <i class="fas fa-tag"></i> {{ imp.libelle }}
+                                </span>
+                            {% empty %}
+                                <span class="text-muted fst-italic">Aucune importation associée</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Métadonnées -->
+                    <div class="operation-meta-grid mt-4">
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="meta-label">Créé le</div>
+                            <div class="meta-value" id="createdAtValue">{{ operation.created_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="meta-label">Modifié le</div>
+                            <div class="meta-value" id="updatedAtValue">{{ operation.updated_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <div class="meta-label">Importations</div>
+                            <div class="meta-value">{{ operation.importation.count }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- État vide - Aucune opération -->
+                <div class="operation-empty-state">
+                    <div class="operation-empty-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h2 class="operation-empty-title">Aucune opération enregistrée</h2>
+                    <p class="operation-empty-subtitle">
+                        Cet acheteur ne possède pas encore d'opération ou historique enregistré.<br>
+                        Créez une fiche opérationnelle pour suivre les activités commerciales.
+                    </p>
+                    <button class="btn btn-operation btn-lg" data-bs-toggle="modal" data-bs-target="#addOperationModal">
+                        <i class="fas fa-plus-circle me-2"></i>Créer l'opération
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Indicateur d'édition en temps réel -->
+<div class="editing-indicator" id="editingIndicator">
+    <div class="spinner-border spinner-border-sm" role="status"></div>
+    <span>Mise à jour en cours...</span>
+</div>
+
+<!-- Modal Création/Modification Opération -->
+<div class="modal fade operation-form-modal" id="operationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelle Opération
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="operationForm" class="enhanced-form">
+                <input type="hidden" id="operationId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="description_complete_activite" class="form-label">
+                                    <i class="fas fa-file-alt text-operation"></i>Description complète de l'activité
+                                </label>
+                                <textarea class="form-control" id="description_complete_activite" 
+                                          name="description_complete_activite" 
+                                          rows="4"
+                                          placeholder="Décrivez en détail l'opération commerciale..."
+                                          required></textarea>
+                                <div class="form-text">
+                                    Décrivez l'activité principale de cet acheteur
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="importation" class="form-label">
+                                    <i class="fas fa-tags text-operation"></i>Importations associées
+                                </label>
+                                <select class="form-select" id="importation" name="importation" multiple="multiple">
+                                    {% for imp in importations %}
+                                    <option value="{{ imp.id }}">{{ imp.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Sélectionnez les importations liées à cette opération
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="commentaire_ratios" class="form-label">
+                                    <i class="fas fa-chart-bar text-operation"></i>Commentaire sur les ratios
+                                </label>
+                                <textarea class="form-control" id="commentaire_ratios" 
+                                          name="commentaire_ratios" 
+                                          rows="5"
+                                          placeholder="Ajoutez des commentaires sur les ratios financiers..."></textarea>
+                                <div class="form-text">
+                                    Analysez les ratios financiers pertinents
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="historique" class="form-label">
+                                    <i class="fas fa-history text-operation"></i>Historique
+                                </label>
+                                <textarea class="form-control" id="historique" 
+                                          name="historique" 
+                                          rows="5"
+                                          placeholder="Racontez l'historique de cette opération..."></textarea>
+                                <div class="form-text">
+                                    Détaillez l'historique des opérations avec cet acheteur
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-operation" id="submitBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'opération</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette opération ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="fw-bold mt-3" id="deleteOperationTitle"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/operations/`;
+    const IMPORTATIONS_API_URL = '/api/liste-importations/';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentOperationId = null;
+    let importationsData = [];
+    
+    // Initialiser Select2 pour les importations
+    function initSelect2() {
+        $('#importation').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez les importations',
+            allowClear: true,
+            width: '100%',
+            closeOnSelect: false
+        });
+    }
+    
+    // Charger les importations disponibles
+    function loadImportations() {
+        $.ajax({
+            url: IMPORTATIONS_API_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                importationsData = response;
+                updateSelect2Options();
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement des importations:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les importations disponibles.'
+                });
+            }
+        });
+    }
+    
+    // Mettre à jour les options Select2
+    function updateSelect2Options() {
+        $('#importation').empty();
+        
+        importationsData.forEach(function(imp) {
+            const libelle = imp.libelle || imp.nom || '';
+            const option = new Option(libelle, imp.id, false, false);
+            $('#importation').append(option);
+        });
+        
+        $('#importation').trigger('change');
+    }
+    
+    // Mettre à jour l'affichage après modification
+    function updateOperationDisplay(operationData) {
+        // Mettre à jour le titre
+        const title = operationData.description_complete_activite || 'Opération commerciale';
+        $('.operation-single-title').text(title);
+        
+        // Mettre à jour la description
+        const descriptionContent = operationData.description_complete_activite ? 
+            `<pre>${operationData.description_complete_activite}</pre>` : 
+            '<p class="text-muted fst-italic">Aucune description fournie</p>';
+        $('#descriptionContent').html(descriptionContent);
+        
+        // Mettre à jour le commentaire ratios
+        const commentaireContent = operationData.commentaire_ratios ? 
+            `<pre>${operationData.commentaire_ratios}</pre>` : 
+            '<p class="text-muted fst-italic">Aucun commentaire sur les ratios</p>';
+        $('#commentaireContent').html(commentaireContent);
+        
+        // Mettre à jour l'historique
+        const historiqueContent = operationData.historique ? 
+            `<pre>${operationData.historique}</pre>` : 
+            '<p class="text-muted fst-italic">Aucun historique enregistré</p>';
+        $('#historiqueContent').html(historiqueContent);
+        
+        // Mettre à jour les tags d'importation
+        const importationTags = operationData.importation_list || [];
+        let tagsHtml = '';
+        if (importationTags.length > 0) {
+            importationTags.forEach(function(imp) {
+                const libelle = imp.libelle || imp.nom || '';
+                tagsHtml += `<span class="importation-tag"><i class="fas fa-tag"></i> ${libelle}</span>`;
+            });
+        } else {
+            tagsHtml = '<span class="text-muted fst-italic">Aucune importation associée</span>';
+        }
+        $('#importationTags').html(tagsHtml);
+        
+        // Mettre à jour les dates
+        if (operationData.created_at_formatted) {
+            $('#createdAtValue').text(operationData.created_at_formatted);
+        }
+        if (operationData.updated_at_formatted) {
+            $('#updatedAtValue').text(operationData.updated_at_formatted);
+        }
+        
+        // Animation de mise à jour
+        $('#operationCard').addClass('operation-content-loaded');
+    }
+    
+    // Afficher l'indicateur d'édition
+    function showEditingIndicator() {
+        $('#editingIndicator').addClass('show');
+    }
+    
+    // Cacher l'indicateur d'édition
+    function hideEditingIndicator() {
+        setTimeout(() => {
+            $('#editingIndicator').removeClass('show');
+        }, 500);
+    }
+    
+    // Bouton pour créer une nouvelle opération
+    $('.btn-operation').on('click', function() {
+        if ($(this).data('bs-target') === '#addOperationModal') {
+            $('#modalTitle').html('<i class="fas fa-plus-circle me-2"></i>Nouvelle Opération');
+            $('#operationForm')[0].reset();
+            $('#operationId').val('');
+            $('#importation').val(null).trigger('change');
+            $('#operationModal').modal('show');
+        }
+    });
+    
+    // Bouton pour modifier l'opération
+    $(document).on('click', '.edit-operation-btn', function() {
+        currentOperationId = $(this).data('id');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentOperationId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#modalTitle').html('<i class="fas fa-edit me-2"></i>Modifier l\'Opération');
+                $('#operationId').val(response.id);
+                $('#description_complete_activite').val(response.description_complete_activite);
+                $('#commentaire_ratios').val(response.commentaire_ratios);
+                $('#historique').val(response.historique);
+                
+                // Sélectionner les importations
+                const importationIds = response.importation_list.map(imp => imp.id);
+                $('#importation').val(importationIds).trigger('change');
+                
+                $('#operationModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de l\'opération.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de création/modification
+    $('#operationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const description = $('#description_complete_activite').val();
+        if (!description || description.trim().length < 10) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Description requise',
+                text: 'Veuillez saisir une description complète de l\'activité (minimum 10 caractères).'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Préparer les données
+        const formData = {
+            description_complete_activite: description,
+            commentaire_ratios: $('#commentaire_ratios').val(),
+            historique: $('#historique').val(),
+            importation: $('#importation').val() || []
+        };
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        // Déterminer si c'est une création ou une modification
+        const operationId = $('#operationId').val();
+        const method = operationId ? 'PUT' : 'POST';
+        const url = operationId ? `${API_BASE_URL}${operationId}/` : API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#operationModal').modal('hide');
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Mettre à jour l'affichage
+                updateOperationDisplay(response.data);
+                
+                // Mettre à jour l'état de la page
+                if (!operationId) {
+                    // Si création, remplacer l'état vide par la carte
+                    $('.operation-empty-state').remove();
+                    const operationCardHtml = `
+                        <div class="operation-single-card operation-content-loaded" id="operationCard" data-id="${response.data.id}">
+                            <div class="operation-status">
+                                <i class="fas fa-check-circle me-2"></i>Opération enregistrée
+                            </div>
+                            <br><br>
+                            
+                            <div class="operation-single-header">
+                                <div>
+                                    <h2 class="operation-single-title">${response.data.description_complete_activite || 'Opération commerciale'}</h2>
+                                    <p class="operation-single-subtitle">
+                                        Fiche opérationnelle de {{ acheteur.nom }}
+                                    </p>
+                                </div>
+                                <div class="operation-single-actions">
+                                    <button class="btn btn-operation-outline edit-operation-btn" data-id="${response.data.id}">
+                                        <i class="fas fa-edit me-2"></i>Modifier
+                                    </button>
+                                    <button class="btn btn-danger delete-operation-btn" data-id="${response.data.id}">
+                                        <i class="fas fa-trash me-2"></i>Supprimer
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="operation-sections">
+                                <div class="operation-section-card">
+                                    <div class="operation-section-header">
+                                        <div class="operation-section-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <h3 class="operation-section-title">Description de l'activité</h3>
+                                    </div>
+                                    <div class="operation-section-content" id="descriptionContent">
+                                        ${response.data.description_complete_activite ? 
+                                            `<pre>${response.data.description_complete_activite}</pre>` : 
+                                            '<p class="text-muted fst-italic">Aucune description fournie</p>'}
+                                    </div>
+                                </div>
+
+                                <div class="operation-section-card">
+                                    <div class="operation-section-header">
+                                        <div class="operation-section-icon">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <h3 class="operation-section-title">Commentaire Ratios</h3>
+                                    </div>
+                                    <div class="operation-section-content" id="commentaireContent">
+                                        ${response.data.commentaire_ratios ? 
+                                            `<pre>${response.data.commentaire_ratios}</pre>` : 
+                                            '<p class="text-muted fst-italic">Aucun commentaire sur les ratios</p>'}
+                                    </div>
+                                </div>
+
+                                <div class="operation-section-card">
+                                    <div class="operation-section-header">
+                                        <div class="operation-section-icon">
+                                            <i class="fas fa-history"></i>
+                                        </div>
+                                        <h3 class="operation-section-title">Historique</h3>
+                                    </div>
+                                    <div class="operation-section-content" id="historiqueContent">
+                                        ${response.data.historique ? 
+                                            `<pre>${response.data.historique}</pre>` : 
+                                            '<p class="text-muted fst-italic">Aucun historique enregistré</p>'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="importation-tags-container">
+                                <h4 class="importation-tags-title">
+                                    <i class="fas fa-tags"></i> Importations associées
+                                </h4>
+                                <div class="importation-tags" id="importationTags">
+                                    ${response.data.importation_list && response.data.importation_list.length > 0 ? 
+                                        response.data.importation_list.map(imp => 
+                                            `<span class="importation-tag"><i class="fas fa-tag"></i> ${imp.libelle || imp.nom || ''}</span>`
+                                        ).join('') : 
+                                        '<span class="text-muted fst-italic">Aucune importation associée</span>'}
+                                </div>
+                            </div>
+
+                            <div class="operation-meta-grid mt-4">
+                                <div class="meta-card">
+                                    <div class="meta-icon">
+                                        <i class="fas fa-calendar-plus"></i>
+                                    </div>
+                                    <div class="meta-label">Créé le</div>
+                                    <div class="meta-value" id="createdAtValue">${response.data.created_at_formatted || ''}</div>
+                                </div>
+                                
+                                <div class="meta-card">
+                                    <div class="meta-icon">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </div>
+                                    <div class="meta-label">Modifié le</div>
+                                    <div class="meta-value" id="updatedAtValue">${response.data.updated_at_formatted || ''}</div>
+                                </div>
+                                
+                                <div class="meta-card">
+                                    <div class="meta-icon">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                    <div class="meta-label">Importations</div>
+                                    <div class="meta-value">${response.data.importation_list ? response.data.importation_list.length : 0}</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    $('.col-12').append(operationCardHtml);
+                }
+                
+                // Message de succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'enregistrement de l\'opération';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        errorMessage = JSON.stringify(xhr.responseJSON);
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Bouton de suppression
+    $(document).on('click', '.delete-operation-btn', function() {
+        currentOperationId = $(this).data('id');
+        const operationTitle = $(this).closest('.operation-single-card').find('.operation-single-title').text();
+        
+        $('#deleteOperationTitle').text(operationTitle);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentOperationId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentOperationId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Supprimer la carte et afficher l'état vide
+                $('#operationCard').remove();
+                const emptyStateHtml = `
+                    <div class="operation-empty-state">
+                        <div class="operation-empty-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h2 class="operation-empty-title">Aucune opération enregistrée</h2>
+                        <p class="operation-empty-subtitle">
+                            Cet acheteur ne possède pas encore d'opération ou historique enregistré.<br>
+                            Créez une fiche opérationnelle pour suivre les activités commerciales.
+                        </p>
+                        <button class="btn btn-operation btn-lg" data-bs-toggle="modal" data-bs-target="#addOperationModal">
+                            <i class="fas fa-plus-circle me-2"></i>Créer l'opération
+                        </button>
+                    </div>`;
+                
+                $('.col-12').append(emptyStateHtml);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'opération'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialisation
+    initSelect2();
+    loadImportations();
+});
+</script>
+{% endblock %}

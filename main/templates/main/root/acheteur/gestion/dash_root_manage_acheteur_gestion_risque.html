@@ -1,672 +1,1506 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
+    --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+}
+
+/* Header Premium */
+.page-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte de risque améliorée avec vos couleurs */
+.risk-card {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.risk-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.risk-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.risk-card.professionalisme::before { background: linear-gradient(to bottom, #FF5733, #FF8E53); }
+.risk-card.organisation::before { background: linear-gradient(to bottom, #33FF57, #53FF8E); }
+.risk-card.turn_over::before { background: linear-gradient(to bottom, #3357FF, #538EFF); }
+.risk-card.greve::before { background: linear-gradient(to bottom, #FF33A6, #FF53C6); }
+.risk-card.degradation_qualite::before { background: linear-gradient(to bottom, #FFA500, #FFC153); }
+.risk-card.non_respect_condition::before { background: linear-gradient(to bottom, #8A2BE2, #B453FF); }
+
+.risk-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-background);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.2);
+}
+
+.risk-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--color-primary-dark);
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.risk-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Badges de statut améliorés */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.status-oui { 
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(32, 201, 151, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+.status-non { 
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.05));
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+.status-aucun { 
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.05));
+    color: var(--color-text-muted);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+/* Image de gestion des risques améliorée */
+.risk-image-container {
+    width: 200px;
+    height: 100px;
+    margin: 0 auto 2rem;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.15);
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+}
+
+.risk-image-container:hover {
+    transform: scale(1.05) rotate(1deg);
+    box-shadow: 0 12px 35px rgba(10, 149, 202, 0.25);
+}
+
+.risk-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.risk-image-container:hover .risk-image {
+    transform: scale(1.05);
+}
+
+/* Contenu riche amélioré */
+.rich-content {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--color-primary);
+    position: relative;
+    min-height: 100px;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.rich-content::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(10, 149, 202, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* Légende améliorée */
+.legend-box {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.legend-item:hover {
+    background: rgba(10, 149, 202, 0.05);
+    transform: translateX(5px);
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    margin-right: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.legend-text {
+    font-size: 0.9rem;
+    color: var(--color-primary-dark);
+    font-weight: 500;
+}
+
+.legend-text strong {
+    color: var(--color-text);
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 12px;
+    border: 2px dashed rgba(13, 128, 190, 0.2);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+}
+
+/* Formulaires améliorés avec vos couleurs */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background-color: var(--color-background);
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(10, 149, 202, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    overflow: hidden;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 12px 35px rgba(10, 149, 202, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+/* Boutons améliorés avec vos couleurs */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border: none;
+}
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    border: none;
+}
+
+/* Score badges améliorés */
+.score-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    margin-right: 0.5rem;
+    color: white;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Améliorations Select2 avec vos couleurs */
+.select2-container {
+    width: 100% !important;
+    position: relative;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: 44px !important;
+    padding: 0.375rem 1rem !important;
+    border: 2px solid rgba(13, 128, 190, 0.1) !important;
+    border-radius: 8px !important;
+    background-color: var(--color-background);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15) !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 99999 !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(13, 128, 190, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(10, 149, 202, 0.1) !important;
+    background-color: var(--color-background);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: rgba(10, 149, 202, 0.08) !important;
+    color: var(--color-primary) !important;
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Appliquer l'animation aux éléments */
+.risk-card, .enhanced-card, .legend-box, .rich-content {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Statistiques améliorées */
+.stat-card {
+    padding: 1rem;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(10, 149, 202, 0.3);
+    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .risk-card {
+        padding: 1rem;
+    }
+    
+    .risk-value {
+        font-size: 1.25rem;
+    }
+    
+    .risk-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .risk-image-container {
+        width: 150px;
+        height: 75px;
+    }
+    
+    .rich-content {
+        padding: 1rem;
+    }
+    
+    .enhanced-form textarea.form-control {
+        min-height: 120px;
+    }
+    
+    .legend-box {
+        padding: 1rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Gestion des Risques de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countRiskManagements">Module de Gestion des Risques</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une gestion de risque notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-shield-alt me-3"></i>{% trans "Evaluation des Risques" %}
+                </h1>
+                <p class="page-subtitle">
+                    Évaluation des risques managériaux de l'entreprise
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+                </a>
+                {% if gestion_risque %}
+                <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editRiskManagementModal">
+                    <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+                </button>
+                <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
+                {% else %}
+                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                    <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter l'évaluation" %}
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur avec vos couleurs -->
+    <div class="card enhanced-card mb-4" style="animation-delay: 0.1s;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div class="text-md-end">
+                    <span class="badge bg-white text-dark fs-6 p-2 shadow-sm">
+                        <i class="fas fa-hashtag me-1" style="color: var(--color-primary);"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small text-white-75">{% trans "Code ACREMAC" %}</p>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Professionnalisme : </strong><span style="color: #FF5733;">PROF</span><br>
-                        <strong>Organisation : </strong><span style="color: #33FF57;">ORGA</span><br>
-                        <strong>Non départ des employés : </strong><span style="color: #3357FF;">TURN</span><br>
-                        <strong>Non grève : </strong><span style="color: #FF33A6;">GRV</span><br>
-                        <strong>Non dégradation de la qualité du travail : </strong><span style="color: #FFA500;">DEGR</span><br>
-                        <strong>Respect des Employés : </strong><span style="color: #8A2BE2;">RES</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Gestion des Risques START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Gestions de Risques</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center p-2 stat-card">
+                        <div class="risk-icon me-3">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
-                                Ajouter une Gestion de Risque
-                            </button>
+                            <small class="risk-label">{% trans "Activité principale" %}</small>
+                            <span class="fw-medium text-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Gestion des Risques list START -->
-                <div class="table-responsive border-0" id="riskManagementList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">PROF</th>
-                                <th scope="col" class="border-0">ORGA</th>
-                                <th scope="col" class="border-0">TURN</th>
-                                <th scope="col" class="border-0">GRV</th>
-                                <th scope="col" class="border-0">DEGR</th>
-                                <th scope="col" class="border-0">RES</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="riskManagementTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center p-2 stat-card">
+                        <div class="risk-icon me-3">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="risk-label">{% trans "Date de création" %}</small>
+                            <span class="fw-medium text-dark">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Gestion des Risques list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center p-2 stat-card">
+                        <div class="risk-icon me-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="risk-label">{% trans "Statut" %}</small>
+                            <span class="status-badge status-oui">
+                                <i class="fas fa-check me-1"></i>
+                                {{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
         </div>
     </div>
-</div>
-<!-- Gestion des Risques END -->
 
-<!-- Add Gestion de Risque Modal START -->
-<div class="modal fade" id="addRiskManagementModal" tabindex="-1" aria-labelledby="addRiskManagementModalLabel" aria-hidden="true">
+    <!-- Légende Premium -->
+    <div class="row mb-4" style="animation-delay: 0.2s;">
+        <div class="col-12">
+            <div class="legend-box">
+                <h5 class="fw-bold mb-3" style="color: var(--color-primary);">
+                    <i class="fas fa-key me-2"></i>{% trans "Légende des indicateurs de risque" %}
+                </h5>
+                <div class="row">
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #FF5733, #FF8E53);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "PROF:" %}</strong> {% trans "Professionnalisme" %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #33FF57, #53FF8E);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "ORGA:" %}</strong> {% trans "Organisation" %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #3357FF, #538EFF);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "TURN:" %}</strong> {% trans "Non départ employés" %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #FF33A6, #FF53C6);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "GRV:" %}</strong> {% trans "Non grève" %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #FFA500, #FFC153);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "DEGR:" %}</strong> {% trans "Non dégradation qualité" %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-lg-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to bottom, #8A2BE2, #B453FF);"></div>
+                            <span class="legend-text">
+                                <strong>{% trans "RES:" %}</strong> {% trans "Respect employés" %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestion des Risques -->
+    {% if gestion_risque %}
+    <div class="card enhanced-card mb-4" style="animation-delay: 0.3s;">
+        <div class="card-body">
+            <!-- Image de synthèse -->
+            <div class="text-center mb-4">
+                <div class="risk-image-container" onclick="showManagementImage()">
+                    <img src="{{ gestion_risque.get_management_image_path }}" 
+                         alt="Statut de gestion des risques" 
+                         class="risk-image">
+                </div>
+                <small class="text-muted d-block mt-2">{% trans "Cliquez sur l'image pour l'agrandir" %}</small>
+            </div>
+
+            <!-- Indicateurs de risque -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card professionalisme">
+                        <div class="risk-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Professionnalisme" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.professionalisme|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.professionalisme }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card organisation">
+                        <div class="risk-icon">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Organisation" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.organisation|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.organisation }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card turn_over">
+                        <div class="risk-icon">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Non départ employés" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.turn_over|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.turn_over }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card greve">
+                        <div class="risk-icon">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Non grève" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.greve|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.greve }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card degradation_qualite">
+                        <div class="risk-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Non dégradation qualité" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.degradation_qualite|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.degradation_qualite }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card non_respect_condition">
+                        <div class="risk-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="risk-label">{% trans "Respect employés" %}</div>
+                        <span class="status-badge status-{{ gestion_risque.non_respect_condition|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.non_respect_condition }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commentaire -->
+            {% if gestion_risque.commentaire %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3" style="color: var(--color-primary);">
+                    <i class="fas fa-comment-dots me-2"></i>{% trans "Commentaire d'évaluation" %}
+                </h5>
+                <div class="rich-content">
+                    {{ gestion_risque.commentaire|safe|linebreaks }}
+                </div>
+                {% if gestion_risque.couleur_commentaire %}
+                <div class="mt-2 text-end">
+                    <span class="status-badge badge-info">
+                        <i class="fas fa-palette me-1"></i>
+                        Couleur: {{ gestion_risque.couleur_commentaire.couleur }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div class="stat-card">
+                            <i class="fas fa-calendar me-1" style="color: var(--color-primary);"></i>
+                            <span class="fw-medium">Évaluation créée le {{ gestion_risque.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-sync-alt me-1" style="color: var(--color-primary);"></i>
+                            <span class="fw-medium">Dernière mise à jour : {{ gestion_risque.updated_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card" style="animation-delay: 0.3s;">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-shield-alt empty-state-icon"></i>
+                <h4 class="fw-bold mb-2" style="color: var(--color-primary);">{% trans "Aucune évaluation des risques" %}</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore d'évaluation des risques managériaux.<br>
+                    Ajoutez une évaluation complète des risques de l'entreprise.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter l'évaluation" %}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Gestion des Risques -->
+<div class="modal fade" id="addRiskManagementModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRiskManagementModalLabel">Ajouter une Gestion de Risque</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Évaluation des Risques" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addRiskManagementForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="professionalisme" class="form-label">Professionnalisme</label>
-                        <select class="form-select" id="professionalisme" name="professionalisme" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+            <form id="addRiskManagementForm" class="enhanced-form">
+                <div class="modal-body">
+                    <!-- Image dynamique -->
+                    <div class="text-center mb-4">
+                        <div class="risk-image-container">
+                            <img id="addRiskManagementImage" src="{% static 'management/mauvais.png' %}" 
+                                 alt="Statut de gestion des risques" 
+                                 class="risk-image">
+                        </div>
+                        <small class="text-muted d-block mt-2">{% trans "L'image se met à jour automatiquement selon vos sélections" %}</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="organisation" class="form-label">Organisation</label>
-                        <select class="form-select" id="organisation" name="organisation" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row g-4">
+                        {% for field in fields %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ field.id }}" class="form-label">
+                                    <i class="fas {{ field.icon }}" style="color: var(--color-primary);"></i>{{ field.label }}
+                                </label>
+                                <select class="form-select select2" id="{{ field.id }}" name="{{ field.name }}" required>
+                                    <option value="Aucun">{% trans "Aucun" %}</option>
+                                    <option value="Oui">{% trans "Oui" %}</option>
+                                    <option value="Non">{% trans "Non" %}</option>
+                                </select>
+                                <small class="form-text text-muted">{{ field.description }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="mb-3">
-                        <label for="turn_over" class="form-label">Non départ des employés</label>
-                        <select class="form-select" id="turn_over" name="turn_over" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
+                                </label>
+                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="greve" class="form-label">Non grève</label>
-                        <select class="form-select" id="greve" name="greve" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaire d'évaluation" %}
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="5" placeholder="Ajoutez des observations et recommandations..."></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="degradation_qualite" class="form-label">Non dégradation de la qualité du travail</label>
-                        <select class="form-select" id="degradation_qualite" name="degradation_qualite" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="non_respect_condition" class="form-label">Respect des Employés</label>
-                        <select class="form-select" id="non_respect_condition" name="non_respect_condition" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Gestion de Risque Modal END -->
 
-<!-- Edit Gestion de Risque Modal START -->
-<div class="modal fade" id="editRiskManagementModal" tabindex="-1" aria-labelledby="editRiskManagementModalLabel" aria-hidden="true">
+<!-- Modal Modification de Gestion des Risques -->
+<div class="modal fade" id="editRiskManagementModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editRiskManagementModalLabel">Editer une Gestion de Risque</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Évaluation des Risques" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editRiskManagementForm">
-                    <input type="hidden" id="editRiskManagementId" name="id">
-                    <div class="mb-3">
-                        <label for="editProfessionalisme" class="form-label">Professionnalisme</label>
-                        <select class="form-select" id="editProfessionalisme" name="professionalisme" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+            <form id="editRiskManagementForm" class="enhanced-form">
+                <input type="hidden" id="editRiskManagementId" name="id">
+                <div class="modal-body">
+                    <!-- Image dynamique -->
+                    <div class="text-center mb-4">
+                        <div class="risk-image-container">
+                            <img id="editRiskManagementImage" src="{% static 'management/mauvais.png' %}" 
+                                 alt="Statut de gestion des risques" 
+                                 class="risk-image">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editOrganisation" class="form-label">Organisation</label>
-                        <select class="form-select" id="editOrganisation" name="organisation" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row g-4">
+                        {% for field in fields %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit{{ field.name|capfirst }}" class="form-label">
+                                    <i class="fas {{ field.icon }}" style="color: var(--color-primary);"></i>{{ field.label }}
+                                </label>
+                                <select class="form-select select2" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
+                                    <option value="Aucun">{% trans "Aucun" %}</option>
+                                    <option value="Oui">{% trans "Oui" %}</option>
+                                    <option value="Non">{% trans "Non" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="mb-3">
-                        <label for="editTurnOver" class="form-label">Non départ des employés</label>
-                        <select class="form-select" id="editTurnOver" name="turn_over" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
+                                </label>
+                                <select class="form-select select2" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editGreve" class="form-label">Non grève</label>
-                        <select class="form-select" id="editGreve" name="greve" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaire d'évaluation" %}
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="5"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDegradationQualite" class="form-label">Non dégradation de la qualité du travail</label>
-                        <select class="form-select" id="editDegradationQualite" name="degradation_qualite" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editNonRespectCondition" class="form-label">Respect des Employés</label>
-                        <select class="form-select" id="editNonRespectCondition" name="non_respect_condition" required>
-                            <option value="Aucun">Aucun</option>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="risk-image-container mx-auto mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-trash-alt fa-2x text-danger"></i>
+                </div>
+                <h6 class="fw-bold">{% trans "Supprimer l'évaluation des risques" %}</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Gestion de Risque Modal END -->
 
+<!-- Modal pour visualiser l'image en grand -->
+<div class="modal fade" id="viewImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title text-white">{% trans "Statut de Gestion des Risques" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="risk-image-container mx-auto mb-3" style="width: 250px; height: 125px;">
+                    <img id="fullRiskManagementImage" src="" alt="Statut complet" class="risk-image">
+                </div>
+                <div class="mt-3">
+                    <p id="riskManagementScore" class="status-badge badge-info"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire, #editCommentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+// Configuration des champs
+const fieldsConfig = [
+    { id: 'professionalisme', name: 'professionalisme', label: 'Professionnalisme', icon: 'fa-user-tie', description: 'Évaluation du professionnalisme de l\'entreprise' },
+    { id: 'organisation', name: 'organisation', label: 'Organisation', icon: 'fa-sitemap', description: 'Évaluation de l\'organisation interne' },
+    { id: 'turn_over', name: 'turn_over', label: 'Non départ des employés', icon: 'fa-user-friends', description: 'Stabilité du personnel' },
+    {id: 'greve', name: 'greve', label: 'Non grève', icon: 'fa-hand-paper', description: 'Absence de mouvements sociaux' },
+    { id: 'degradation_qualite', name: 'degradation_qualite', label: 'Non dégradation de la qualité', icon: 'fa-chart-line', description: 'Maintien de la qualité du travail' },
+    { id: 'non_respect_condition', name: 'non_respect_condition', label: 'Respect des Employés', icon: 'fa-handshake', description: 'Respect des conditions de travail' }
+];
+
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/gestion-risque/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 5,
+            dropdownParent: $('body')
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addRiskManagementModal, #editRiskManagementModal').on('shown.bs.modal', function() {
+        $(this).find('.select2').each(function() {
+            if ($(this).data('select2')) {
+                $(this).select2('destroy');
+            }
         });
 
-        // Votre script JavaScript existant ici
+        $(this).find('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 5,
+            dropdownParent: $(this)
+        });
     });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+    
+    // Charger les données de l'acheteur
+    const acheteurData = JSON.parse('{{ acheteur_json|escapejs }}');
+    
+    // Charger les données de la gestion des risques si elles existent
+    let gestionRisqueData = null;
+    try {
+        gestionRisqueData = JSON.parse('{{ gestion_risque_json|escapejs }}');
+    } catch(e) {
+        console.log('Aucune donnée de gestion des risques trouvée');
+        gestionRisqueData = null;
+    }
+    
+    // Fonction pour déterminer l'image basée sur les statuts
+    function getManagementImagePath(data) {
+        const fields = [
+            data.professionalisme,
+            data.organisation,
+            data.turn_over,
+            data.greve,
+            data.degradation_qualite,
+            data.non_respect_condition
+        ];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        // Logique de décision pour l'image
+        if (ouiCount >= 4) {
+            return `{% static 'management/bien.png' %}`;
+        } else if (nonCount >= 4) {
+            return `{% static 'management/mauvais.png' %}`;
+        } else {
+            return `{% static 'management/passable.png' %}`;
         }
-
+    }
+    
+    // Fonction pour calculer le score
+    function calculateManagementScore(data) {
+        const fields = [
+            data.professionalisme,
+            data.organisation,
+            data.turn_over,
+            data.greve,
+            data.degradation_qualite,
+            data.non_respect_condition
+        ];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        return { ouiCount, nonCount, total: fields.length };
+    }
+    
+    // Mettre à jour l'image dynamique
+    function updateManagementImage(formId, imageId) {
+        const data = {};
+        fieldsConfig.forEach(field => {
+            const value = $(`${formId} [name="${field.name}"]`).val();
+            if (value) data[field.name] = value;
+        });
+        
+        const imagePath = getManagementImagePath(data);
+        $(imageId).attr('src', imagePath);
+        
+        return calculateManagementScore(data);
+    }
+    
+    // Afficher l'image en grand
+    window.showManagementImage = function() {
+        if (!gestionRisqueData) return;
+        
+        const imagePath = getManagementImagePath(gestionRisqueData);
+        const score = calculateManagementScore(gestionRisqueData);
+        
+        $('#fullRiskManagementImage').attr('src', imagePath);
+        $('#riskManagementScore').text(`${score.ouiCount} Oui, ${score.nonCount} Non sur ${score.total} critères`);
+        $('#viewImageModal').modal('show');
+    };
+    
+    // Écouteurs pour les changements dans le formulaire d'ajout
+    fieldsConfig.forEach(field => {
+        $(`#${field.id}`).on('change', function() {
+            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+        });
+    });
+    
+    // Écouteurs pour les changements dans le formulaire d'édition
+    fieldsConfig.forEach(field => {
+        const fieldId = `edit${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`;
+        $(`#${fieldId}`).on('change', function() {
+            updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+        });
+    });
+    
+    // Initialisation de l'image dans le modal d'ajout
+    $('#addRiskManagementModal').on('show.bs.modal', function() {
+        setTimeout(() => {
+            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+        }, 100);
+    });
+    
+    // Remplir le formulaire d'édition quand le modal s'ouvre
+    $('#editRiskManagementModal').on('shown.bs.modal', function() {
+        if (!{{ gestion_risque|yesno:"true,false" }}) return;
+        
+        // Récupérer les données via AJAX
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: API_BASE_URL,
             type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                populateEditForm(response);
             },
             error: function(xhr) {
+                console.error('Erreur lors du chargement des données:', xhr);
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                }
+            }
+        });
+    });
+    
+    // Remplir le formulaire d'édition
+    function populateEditForm(riskData) {
+        if (!riskData) return;
+        
+        $('#editRiskManagementId').val(riskData.id);
+        $('#editCommentaire').val(riskData.commentaire || '');
+        
+        // Sélectionner les valeurs dans les select2
+        fieldsConfig.forEach(field => {
+            const fieldId = `edit${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`;
+            if (riskData[field.name]) {
+                $(`#${fieldId}`).val(riskData[field.name]).trigger('change');
+            }
+        });
+        
+        if (riskData.couleur_commentaire) {
+            $('#editCouleurCommentaire').val(riskData.couleur_commentaire).trigger('change');
+        }
+        
+        // Mettre à jour l'image
+        const imagePath = getManagementImagePath(riskData);
+        $('#editRiskManagementImage').attr('src', imagePath);
+    }
+
+    // Réinitialiser quand les modaux se ferment
+    $('#addRiskManagementModal').on('hidden.bs.modal', function() {
+        $('#addRiskManagementForm')[0].reset();
+        $('.select2').val(null).trigger('change');
+        $('#addRiskManagementImage').attr('src', `{% static 'management/mauvais.png' %}`);
+    });
+    
+    // Formulaire d'ajout
+    $('#addRiskManagementForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        submitRiskManagementForm('POST', formData, '#submitAddBtn', 'addRiskManagementModal');
+    });
+    
+    // Formulaire de modification
+    $('#editRiskManagementForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        submitRiskManagementForm('POST', formData, '#submitEditBtn', 'editRiskManagementModal');
+    });
+    
+    // Soumission du formulaire
+    function submitRiskManagementForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Évaluation enregistrée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = '';
+                        for (const field in xhr.responseJSON) {
+                            errorMessage += `${field}: ${xhr.responseJSON[field].join(', ')}\n`;
+                        }
+                    } else {
+                        errorMessage = xhr.responseJSON.detail || JSON.stringify(xhr.responseJSON);
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitRiskManagementForm(method, formData, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Erreur', 
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        background: '#fcfefe'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression de la gestion des risques
+    $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Évaluation supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-1"></i>Supprimer');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Erreur', 
+                        text: 'Impossible de supprimer l\'évaluation',
+                        background: '#fcfefe'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie) {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    window.ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    background: '#fcfefe'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
+    }
+    
+    // Ajouter des effets visuels sur les cartes au chargement
+    $('.risk-card').each(function(i) {
+        $(this).css({
+            'animation-delay': `${i * 0.1}s`,
+            'opacity': '0',
+            'transform': 'translateY(20px)'
+        });
+        
+        setTimeout(() => {
+            $(this).animate({
+                opacity: 1,
+                transform: 'translateY(0)'
+            }, 600);
+        }, i * 100);
     });
-
+});
 </script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load risk managements data
-        function loadRiskManagements(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-gestions-de-risque/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update risk managements table body
-                    $('#riskManagementTableBody').html('');
-                    response.results.forEach(function(riskManagement, index) {
-                        $('#riskManagementTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + riskManagement.professionalisme + '</td>' +
-                            '<td>' + riskManagement.organisation + '</td>' +
-                            '<td>' + riskManagement.turn_over + '</td>' +
-                            '<td>' + riskManagement.greve + '</td>' +
-                            '<td>' + riskManagement.degradation_qualite + '</td>' +
-                            '<td>' + riskManagement.non_respect_condition + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadRiskManagements();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadRiskManagements(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadRiskManagements(page, search);
-        });
-
-        // Add Risk Management form submission
-        $('#addRiskManagementForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-gestion-de-risque/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Gestion de risque ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addRiskManagementModal').modal('hide');
-                        loadRiskManagements();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la gestion de risque.',
-                    });
-                }
-            });
-        });
-
-        // Edit Risk Management button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-gestion-de-risque/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editRiskManagementId').val(response.id);
-                    $('#editProfessionalisme').val(response.professionalisme);
-                    $('#editOrganisation').val(response.organisation);
-                    $('#editTurnOver').val(response.turn_over);
-                    $('#editGreve').val(response.greve);
-                    $('#editDegradationQualite').val(response.degradation_qualite);
-                    $('#editNonRespectCondition').val(response.non_respect_condition);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editRiskManagementModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la gestion de risque.',
-                    });
-                }
-            });
-        });
-
-        // Edit Risk Management form submission
-        $('#editRiskManagementForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editRiskManagementId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-gestion-de-risque/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Gestion de risque mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editRiskManagementModal').modal('hide');
-                        loadRiskManagements();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la gestion de risque.',
-                    });
-                }
-            });
-        });
-
-        // Delete Risk Management button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-gestions-de-risque/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La gestion de risque a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadRiskManagements();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la gestion de risque.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
-    });
-</script>
-
 {% endblock %}

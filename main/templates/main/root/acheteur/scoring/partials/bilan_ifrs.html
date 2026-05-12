@@ -1,0 +1,136 @@
+{% load i18n %}
+<div class="bilan-ifrs-content" style="padding: 10px;">
+
+    <!-- bilan_ifrs.html -->
+    <div class="row">
+        <div class="col-12">
+            <h5 class="text-primary mb-3">
+                <i class="fas fa-chart-line me-2"></i>{% trans "Bilan IFRS COBAC" %}
+            </h5>
+            
+            <form id="ifrsForm">
+                {% csrf_token %}
+                <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
+                
+                <!-- Informations IFRS COBAC -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Normes Internationales d'Information Financière (IFRS) - Adaptées COBAC
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sélection des années avec plage fixe -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="select-annee-ifrs-n" class="form-label">
+                            Année N (Courante) <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="select-annee-ifrs-n" required>
+                            <option value="">{% trans "Sélectionner..." %}</option>
+                            <!-- Les années seront générées par JavaScript -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="select-annee-ifrs-n1" class="form-label">
+                            Année N-1 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="select-annee-ifrs-n1" required>
+                            <option value="">{% trans "Sélectionner..." %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="select-annee-ifrs-n2" class="form-label">
+                            Année N-2 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="select-annee-ifrs-n2" required>
+                            <option value="">{% trans "Sélectionner..." %}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" id="btn-calcul-score-ifrs">
+                            <i class="fas fa-calculator me-1"></i>{% trans "Calculer le Score ACREMAC" %}
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="autoFillYearsIFRS()">
+                            <i class="fas fa-magic me-1"></i>{% trans "Remplissage Auto" %}
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="resetIFRSForm()">
+                            <i class="fas fa-eraser me-1"></i>{% trans "Réinitialiser" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Indicateur de chargement -->
+            <div id="loading-ifrs" class="text-center" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{% trans "Chargement..." %}</span>
+                </div>
+                <p class="mt-2 text-muted">{% trans "Calcul du score IFRS en cours..." %}</p>
+            </div>
+
+            <!-- Alertes et messages -->
+            <div id="alert-container-ifrs" class="mt-3">
+                <!-- Les alertes seront injectées ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations sur les ratios IFRS -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-1"></i>{% trans "Ratios IFRS COBAC Calculés" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong class="text-primary">R1 - Frais financiers / EBE</strong>
+                                    <br><small>{% trans "Part des frais financiers dans l'excédent brut d'exploitation" %}</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R2 - Liquidité</strong>
+                                    <br><small>(Créances + disponibilités) / Dettes à court terme</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R3 - Structure financière</strong>
+                                    <br><small>{% trans "Capitaux permanents / Passif total" %}</small>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong class="text-primary">R4 - Performance économique</strong>
+                                    <br><small>{% trans "Valeur ajoutée / Chiffre d'affaires" %}</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R5 - Autonomie financière</strong>
+                                    <br><small>{% trans "Trésorerie / Ventes (en jours)" %}</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R6 - Couverture BFR</strong>
+                                    <br><small>{% trans "Fonds de roulement / CA (en jours)" %}</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,1293 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte Membre */
+.membre-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+}
+
+.membre-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: #0A95CA;
+}
+
+.membre-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #0A95CA, #1c6ea4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.membre-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.membre-fonction {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.membre-adresse {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Statistiques */
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.25rem;
+}
+
+.stat-total .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-adresse .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-commentaires .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table des membres */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e3e6f0;
+}
+
+.table th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e3e6f0;
+    font-weight: 600;
+    color: #495057;
+    padding: 0.75rem 1rem;
+}
+
+.table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form .select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    min-height: 42px;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Boutons d'action */
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action i {
+    font-size: 0.9rem;
+}
+
+/* Options de poste groupées */
+.optgroup-label {
+    font-weight: 600;
+    color: #0A95CA;
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    margin: 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Aperçu de couleur */
+.color-preview {
+    width: 100%;
+    height: 38px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .membre-card {
+        padding: 1rem;
+    }
+    
+    .membre-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-users text-primary me-2"></i>Conseil d'Administration
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des membres du conseil d'administration
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addConseilModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter un membre
+            </button>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Membres</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-adresse">
+                <div class="stat-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_adresse }}</div>
+                <div class="stat-label">Avec adresse</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-commentaires">
+                <div class="stat-icon">
+                    <i class="fas fa-comment"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_commentaire }}</div>
+                <div class="stat-label">Avec commentaire</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membres Récents -->
+    {% if membres_recent %}
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="fas fa-history me-2"></i>Membres récemment ajoutés/modifiés
+        </h5>
+        <div class="row g-3">
+            {% for membre in membres_recent %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="membre-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="membre-icon">
+                            {{ membre.nom|first|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="membre-name">
+                                        {{ membre.nom }}
+                                    </div>
+                                    <div class="membre-fonction">
+                                        <i class="fas fa-briefcase"></i>
+                                        {{ membre.fonction_dans_le_conseil|truncatechars:30 }}
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item edit-membre-btn" href="#" data-id="{{ membre.id }}">
+                                                <i class="fas fa-edit me-2"></i>Modifier
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item delete-membre-btn" href="#" data-id="{{ membre.id }}">
+                                                <i class="fas fa-trash me-2"></i>Supprimer
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if membre.numero_adresse or membre.rue_adresse %}
+                            <div class="membre-adresse">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {% if membre.numero_adresse %}{{ membre.numero_adresse }}{% endif %}
+                                {% if membre.rue_adresse %}{{ membre.rue_adresse }}{% endif %}
+                                {% if membre.code_postale_adresse %}<br>{{ membre.code_postale_adresse }}{% endif %}
+                            </div>
+                            {% endif %}
+                            {% if membre.couleur_commentaire %}
+                            <div class="mt-2">
+                                <span class="badge" style="background-color: {{ membre.couleur_commentaire.code_couleur|default:'#6c757d' }}">
+                                    {{ membre.couleur_commentaire.couleur }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtres et Recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-10">
+                    <div class="form-group mb-0">
+                        <label class="form-label">
+                            <i class="fas fa-search"></i>Recherche
+                        </label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Nom, fonction, commentaire...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" id="applyFilters" style="margin-top: 24px;">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table des Membres -->
+    <div class="card border">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Liste des Membres du Conseil
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small" for="selectAll">
+                            Sélectionner tout
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" id="deleteSelected" disabled>
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="conseilTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggleAll">
+                                </div>
+                            </th>
+                            <th>Nom</th>
+                            <th>Fonction</th>
+                            <th>Couleur</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conseilTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
+                <div class="text-muted small" id="paginationInfo"></div>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Membre -->
+<div class="modal fade" id="addConseilModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Membre du Conseil
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addConseilForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nom" class="form-label">
+                            <i class="fas fa-user text-primary"></i>Nom complet
+                        </label>
+                        <input type="text" class="form-control" id="nom" name="nom" required
+                               placeholder="Ex: Jean Dupont">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="fonction_dans_le_conseil" class="form-label">
+                                    <i class="fas fa-briefcase text-primary"></i>Fonction dans le Conseil
+                                </label>
+                                <select class="form-select select2-with-search" id="fonction_dans_le_conseil" name="fonction_dans_le_conseil">
+                                    <option value="">Sélectionnez une option</option>
+                                    {% for poste in poste_list %}
+                                    <option value="{{ poste.libelle }}">{{ poste.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="numero_adresse" class="form-label">
+                                    <i class="fas fa-hashtag text-primary"></i>Numéro
+                                </label>
+                                <input type="text" class="form-control" id="numero_adresse" name="numero_adresse"
+                                       placeholder="Ex: 123">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="rue_adresse" class="form-label">
+                                    <i class="fas fa-road text-primary"></i>Rue
+                                </label>
+                                <input type="text" class="form-control" id="rue_adresse" name="rue_adresse"
+                                       placeholder="Ex: Avenue des Champs-Élysées">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="code_postale_adresse" class="form-label">
+                                    <i class="fas fa-mail-bulk text-primary"></i>Code Postal
+                                </label>
+                                <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse"
+                                       placeholder="Ex: 75008">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-primary"></i>Couleur Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu couleur
+                                </label>
+                                <div class="color-preview" id="colorPreview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                  placeholder="Commentaires additionnels..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Membre -->
+<div class="modal fade" id="editConseilModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Membre du Conseil
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editConseilForm" class="enhanced-form">
+                <input type="hidden" id="editConseilId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNom" class="form-label">
+                            <i class="fas fa-user text-primary"></i>Nom complet
+                        </label>
+                        <input type="text" class="form-control" id="editNom" name="nom" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="editFonctionDansLeConseil" class="form-label">
+                                    <i class="fas fa-briefcase text-primary"></i>Fonction dans le Conseil
+                                </label>
+                                <select class="form-select select2-with-search" id="editFonctionDansLeConseil" name="fonction_dans_le_conseil">
+                                    <option value="">Sélectionnez une option</option>
+                                    {% for poste in poste_list %}
+                                    <option value="{{ poste.libelle }}">{{ poste.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editNumeroAdresse" class="form-label">
+                                    <i class="fas fa-hashtag text-primary"></i>Numéro
+                                </label>
+                                <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="editRueAdresse" class="form-label">
+                                    <i class="fas fa-road text-primary"></i>Rue
+                                </label>
+                                <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCodePostaleAdresse" class="form-label">
+                                    <i class="fas fa-mail-bulk text-primary"></i>Code Postal
+                                </label>
+                                <input type="text" class="form-control" id="editCodePostaleAdresse" name="code_postale_adresse">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette text-primary"></i>Couleur Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu couleur
+                                </label>
+                                <div class="color-preview" id="editColorPreview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le(s) membre(s) du conseil</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = {{ acheteur.id }};
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/conseil/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Variables d'état
+    let currentPage = 1;
+    let currentFilters = {};
+    let selectedMembres = new Set();
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+        
+        // Gérer l'aperçu des couleurs
+        $('#couleur_commentaire, #editCouleurCommentaire').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const color = selectedOption.data('color');
+            const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
+            if (color) {
+                $(previewId).css({
+                    'background': color,
+                    'border-color': color
+                });
+            } else {
+                $(previewId).css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+            }
+        });
+    }
+
+    // Initialisation
+    initSelect2();
+    loadMembres();
+    
+    // Charger les membres
+    function loadMembres(page = 1, filters = {}) {
+        currentPage = page;
+        currentFilters = filters;
+        
+        const params = new URLSearchParams({
+            page: page,
+            ...filters
+        });
+        
+        $.ajax({
+            url: `${API_BASE_URL}?${params}`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadMembres(page, filters));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les membres du conseil'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour la table
+    function updateTable(membres) {
+        const tbody = $('#conseilTableBody');
+        tbody.empty();
+        
+        if (membres.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun membre du conseil trouvé</h5>
+                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouveau membre</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        membres.forEach((membre, index) => {
+            const isSelected = selectedMembres.has(membre.id.toString());
+            const adresse = membre.adresse_complete || 'Non spécifiée';
+            const couleur = membre.couleur_commentaire?.code_couleur || '#6c757d';
+            
+            const row = `
+                <tr data-id="${membre.id}">
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input row-checkbox" type="checkbox" 
+                                   data-id="${membre.id}" ${isSelected ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3 bg-primary rounded-circle d-flex align-items-center justify-content-center text-white">
+                                ${membre.nom.charAt(0)}
+                            </div>
+                            <div>
+                                <strong>${membre.nom}</strong>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${membre.fonction_dans_le_conseil || 'Non spécifié'}</td>
+                    
+                    <td>
+                        ${membre.couleur_commentaire ? `
+                            <span class="badge" style="background-color: ${couleur}">
+                                ${membre.couleur_commentaire.couleur}
+                            </span>
+                        ` : 'Non spécifié'}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${membre.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${membre.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const paginationControls = $('#paginationControls');
+        paginationControls.empty();
+        
+        if (response.count === 0) {
+            $('#paginationContainer').hide();
+            return;
+        }
+        
+        $('#paginationContainer').show();
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} membres`
+        );
+        
+        // Bouton précédent
+        if (response.previous) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        }
+        
+        // Pages
+        for (let i = 1; i <= response.total_pages; i++) {
+            paginationControls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Bouton suivant
+        if (response.next) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        }
+    }
+    
+    // Appliquer les filtres
+    $('#applyFilters').on('click', function() {
+        const filters = {
+            search: $('#searchInput').val()
+        };
+        loadMembres(1, filters);
+    });
+    
+    // Recherche en temps réel
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $('#applyFilters').click();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            loadMembres(page, currentFilters);
+        }
+    });
+    
+    // Formulaire d'ajout
+    $('#addConseilForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitConseilForm('POST', data, '#submitAddBtn', 'addConseilModal');
+    });
+    
+    // Formulaire de modification
+    $('#editConseilForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        const membreId = $('#editConseilId').val();
+        submitConseilForm('PUT', data, '#submitEditBtn', 'editConseilModal', membreId);
+    });
+    
+    // Soumission du formulaire
+    function submitConseilForm(method, data, submitBtn, modalId, membreId = null) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const url = membreId ? 
+            `${API_BASE_URL}${membreId}/` : 
+            API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                $('#colorPreview, #editColorPreview').css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadMembres(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitConseilForm(method, data, submitBtn, modalId, membreId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+
+    // Édition d'un membre
+    $(document).on('click', '.edit-btn', function() {
+        const membreId = $(this).data('id');
+        
+        // Récupérer les détails du membre
+        $.ajax({
+            url: `${API_BASE_URL}${membreId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir le formulaire
+                $('#editConseilId').val(response.id);
+                $('#editNom').val(response.nom);
+                $('#editFonctionDansLeConseil').val(response.fonction_dans_le_conseil).trigger('change');
+                $('#editNumeroAdresse').val(response.numero_adresse || '');
+                $('#editRueAdresse').val(response.rue_adresse || '');
+                $('#editCodePostaleAdresse').val(response.code_postale_adresse || '');
+                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
+                $('#editCommentaire').val(response.commentaire || '');
+                
+                // Aperçu de la couleur
+                if (response.couleur_commentaire?.code) {
+                    $('#editColorPreview').css({
+                        'background': response.couleur_commentaire.code,
+                        'border-color': response.couleur_commentaire.code
+                    });
+                }
+                
+                $('#editConseilModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(this).click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les données du membre'
+                    });
+                }
+            }
+        });
+    });
+
+    // Suppression d'un membre
+    $(document).on('click', '.delete-btn', function() {
+        const membreId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Supprimer le membre du conseil ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteMembres([membreId]);
+            }
+        });
+    });
+    
+    // Suppression multiple
+    $('#deleteSelected').on('click', function() {
+        if (selectedMembres.size === 0) return;
+        
+        Swal.fire({
+            title: `Supprimer ${selectedMembres.size} membre(s) du conseil ?`,
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteMembres(Array.from(selectedMembres));
+            }
+        });
+    });
+    
+    // Fonction de suppression
+    function deleteMembres(ids) {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: ids }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Réinitialiser la sélection
+                    selectedMembres.clear();
+                    $('#deleteSelected').prop('disabled', true);
+                    $('#selectAll').prop('checked', false);
+                    
+                    // Recharger la liste
+                    loadMembres(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => deleteMembres(ids));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer le(s) membre(s)'
+                    });
+                }
+            }
+        });
+    }
+
+    // Sélection multiple
+    $(document).on('change', '.row-checkbox', function() {
+        const id = $(this).data('id').toString();
+        
+        if ($(this).prop('checked')) {
+            selectedMembres.add(id);
+        } else {
+            selectedMembres.delete(id);
+            $('#selectAll').prop('checked', false);
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#toggleAll').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        
+        if (isChecked) {
+            $('.row-checkbox').each(function() {
+                selectedMembres.add($(this).data('id').toString());
+            });
+        } else {
+            selectedMembres.clear();
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#selectAll').on('change', function() {
+        $('#toggleAll').prop('checked', $(this).prop('checked'));
+        $('#toggleAll').change();
+    });
+    
+    function updateDeleteButtonState() {
+        const hasSelection = selectedMembres.size > 0;
+        $('#deleteSelected').prop('disabled', !hasSelection);
+        $('#selectAll').prop('checked', hasSelection && 
+            selectedMembres.size === $('.row-checkbox').length);
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

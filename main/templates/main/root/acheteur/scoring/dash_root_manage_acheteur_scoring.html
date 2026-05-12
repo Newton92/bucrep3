@@ -1,0 +1,1739 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-color: #0d80be;
+    --secondary-color: #25add6;
+    --accent-color: #0a95ca;
+    --light-color: #fcfefe;
+    --dark-color: #106cb2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #3498db;
+    --card-shadow: 0 4px 12px rgba(12, 128, 190, 0.08);
+    --card-shadow-hover: 0 10px 30px rgba(12, 128, 190, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background-color: #f8fafc;
+}
+
+/* Header premium */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+/* Cartes premium */
+.enhanced-card {
+    background: white;
+    border-radius: 16px;
+    border: none;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+    height: 100%;
+}
+
+.enhanced-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+    color: white;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+.card-header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Styles pour les informations acheteur */
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: rgba(13, 128, 190, 0.03);
+    transition: var(--transition);
+}
+
+.acheteur-info-item:hover {
+    background: rgba(13, 128, 190, 0.08);
+    transform: translateY(-2px);
+}
+
+.acheteur-info-item i {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    width: 24px;
+}
+
+.badge-premium {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+/* Score Display Premium */
+.score-display {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    border-radius: 16px;
+    border: 3px solid transparent;
+    transition: all var(--transition) ease;
+    position: relative;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.score-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--danger-color), var(--warning-color), var(--success-color));
+}
+
+.score-display.low-risk {
+    border-color: var(--danger-color);
+    background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+}
+
+.score-display.medium-risk {
+    border-color: var(--warning-color);
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5e6 100%);
+}
+
+.score-display.high-risk {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f0fff4 0%, #e6fff0 100%);
+}
+
+.score-number {
+    font-size: 5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    position: relative;
+}
+
+.score-number::after {
+    content: '/10';
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    opacity: 0.5;
+    position: absolute;
+    top: 0;
+    right: -60px;
+}
+
+.score-interpretation {
+    font-size: 1.25rem;
+    color: var(--dark-color);
+    font-weight: 600;
+    margin-bottom: 2rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 25px;
+    display: inline-block;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.score-image-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(13, 128, 190, 0.1);
+}
+
+#score-image {
+    max-height: 200px;
+    border-radius: 10px;
+    transition: transform var(--transition) ease;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+#score-image:hover {
+    transform: scale(1.08);
+}
+
+.score-range {
+    font-size: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    background: rgba(13, 128, 190, 0.1);
+    border-radius: 25px;
+    display: inline-block;
+    margin-top: 1rem;
+    border: 1px solid rgba(13, 128, 190, 0.2);
+}
+
+.score-details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    display: block;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Badge de score premium */
+.score-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(13, 128, 190, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Timeline premium */
+.update-timeline {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+    transition: var(--transition);
+}
+
+.timeline-item:hover {
+    background: rgba(13, 128, 190, 0.03);
+    border-radius: 10px;
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+}
+
+.timeline-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 15px rgba(10, 149, 202, 0.3);
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-time {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Formulaire premium avec Select2 */
+.enhanced-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.enhanced-form .form-label i {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid rgba(37, 173, 214, 0.2);
+    border-radius: 12px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    min-height: 48px;
+}
+
+.enhanced-form .form-control:focus,
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(37, 173, 214, 0.25);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+    padding: 1.25rem;
+}
+
+/* Select2 personnalisé */
+.select2-container--bootstrap-5 {
+    width: 100% !important;
+}
+
+.select2-dropdown {
+    border: 2px solid rgba(37, 173, 214, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.select2-results__option {
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.select2-results__option--highlighted {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)) !important;
+    color: white !important;
+}
+
+.select2-results__option[aria-selected="true"] {
+    background: rgba(13, 128, 190, 0.1) !important;
+    color: var(--primary-color) !important;
+    font-weight: 600;
+}
+
+.select2-search--dropdown {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(37, 173, 214, 0.1);
+}
+
+.select2-search__field {
+    border: 2px solid rgba(37, 173, 214, 0.2) !important;
+    border-radius: 8px !important;
+    padding: 0.625rem 1rem !important;
+    width: 100% !important;
+}
+
+.select2-search__field:focus {
+    border-color: var(--secondary-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 0.25rem rgba(37, 173, 214, 0.25) !important;
+}
+
+/* Badge multiple pour Select2 */
+.select2-selection__choice {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 20px !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.85rem !important;
+    margin-right: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.select2-selection__choice__remove {
+    color: white !important;
+    margin-right: 0.25rem !important;
+    opacity: 0.8;
+}
+
+.select2-selection__choice__remove:hover {
+    opacity: 1;
+    color: white !important;
+}
+
+/* Boutons premium */
+.btn-enhanced {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-enhanced:hover::before {
+    left: 100%;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(13, 128, 190, 0.3);
+    color: white;
+}
+
+.btn-enhanced:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    border-color: var(--accent-color);
+    color: white;
+    transform: translateY(-3px);
+}
+
+/* Section d'aide premium */
+.help-section {
+    background: linear-gradient(135deg, rgba(13, 128, 190, 0.05), rgba(10, 149, 202, 0.03));
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.help-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+}
+
+.help-section h6 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.help-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #495057;
+}
+
+.help-section li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+    position: relative;
+}
+
+.help-section li::before {
+    content: '✓';
+    position: absolute;
+    left: -1.5rem;
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+/* Indicateurs de statut premium */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-success {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(46, 204, 113, 0.1));
+    color: var(--success-color);
+}
+
+.status-warning {
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(230, 126, 34, 0.1));
+    color: var(--warning-color);
+}
+
+.status-danger {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+    color: var(--danger-color);
+}
+
+/* Alertes premium */
+.alert-custom {
+    border-radius: 16px;
+    border: 2px solid;
+    background: white;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.alert-info-custom {
+    border-color: rgba(52, 152, 219, 0.2);
+    border-left-color: var(--info-color);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.05), rgba(52, 152, 219, 0.02));
+}
+
+/* Animation de chargement */
+.spinner-border {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-width: 0.15em;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .score-number {
+        font-size: 4rem;
+    }
+    
+    .score-number::after {
+        font-size: 1.5rem;
+        right: -50px;
+    }
+    
+    .score-details {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
+    .score-number {
+        font-size: 3.5rem;
+    }
+    
+    .score-number::after {
+        position: relative;
+        top: 0;
+        right: 0;
+        display: block;
+        font-size: 1.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .score-image-container {
+        padding: 1rem;
+    }
+    
+    #score-image {
+        max-height: 160px;
+    }
+    
+    .btn-enhanced,
+    .btn-outline-primary {
+        padding: 0.75rem 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        padding: 1.25rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .score-number {
+        font-size: 3rem;
+    }
+    
+    .score-interpretation {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .help-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Tooltip personnalisé */
+.custom-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.custom-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    min-width: 200px;
+    text-align: center;
+}
+
+.custom-tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--primary-color);
+    margin-bottom: -6px;
+}
+
+/* Animations d'entrée */
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.stat-card, .enhanced-card {
+    animation: fadeInUp 0.6s ease forwards;
+    animation-delay: calc(var(--order, 0) * 0.1s);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+    <!-- Header Premium -->
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-chart-line me-3"></i>{% trans "Scoring de défaillance" %}
+                </h1>
+                <p class="page-subtitle">
+                    Évaluation du risque financier et opérationnel de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-action" onclick="window.resetFormWithAlert()">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouveau Scoring" %}
+                </button>
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-warning btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encart Acheteur Premium -->
+    <div class="card enhanced-card mb-4 fade-in-up" style="--order: 1;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h5>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge-premium">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code|default:"N/A" }}
+                    </span>
+                    <p class="mb-0 mt-2 small opacity-75">{% trans "Code Acheteur" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Activité principale" %}</small>
+                            <span class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Date création" %}</small>
+                            <span class="fw-bold">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Statut" %}</small>
+                            <span class="fw-bold text-warning">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Localisation" %}</small>
+                            <span class="fw-bold">{{ acheteur.ville.nom|default:"Non spécifié" }}, {{ acheteur.pays.nom|default:"" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section d'aide Premium -->
+    <div class="help-section fade-in-up" style="--order: 2;">
+        <h6><i class="fas fa-info-circle"></i>{% trans "Comment ça marche ?" %}</h6>
+        <ul>
+            <li>Ce module calcule un score de risque basé sur plusieurs critères financiers et opérationnels</li>
+            <li>Le score varie de 0 (risque extrême) à 10 (risque excellent)</li>
+            <li>{% trans "Mettez à jour les critères ci-dessous pour recalculer automatiquement le score" %}</li>
+            <li>{% trans "Conservez régulièrement les modifications pour un suivi optimal" %}</li>
+        </ul>
+    </div>
+
+    <div class="row g-4">
+        <!-- Score actuel -->
+        <div class="col-lg-5">
+            <div class="card border-0 enhanced-card fade-in-up" style="--order: 2;">
+                <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
+                    <h3 class="card-header-title mb-0 text-white">
+                        <i class="fas fa-chart-bar me-2"></i>{% trans "Score Actuel" %}
+                    </h3>
+                    <span class="badge bg-white text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-sync-alt me-1"></i>{% trans "En temps réel" %}
+                    </span>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Score principal -->
+                    <div class="score-display" id="scoreDisplay">
+                        <span class="score-badge">
+                            <i class="fas fa-shield-alt"></i> {% trans "Score" %}
+                        </span>
+                        
+                        <div class="score-number" id="current-score">--</div>
+                        
+                        <div class="score-interpretation" id="current-interpretation">
+                            <i class="fas fa-comment-dots me-2"></i>{% trans "Chargement..." %}
+                        </div>
+                        
+                        <!-- Image du score -->
+                        <div class="score-image-container">
+                            <img id="score-image" src="" alt="Niveau de risque" class="img-fluid d-block mx-auto">
+                            <div id="score-range" class="score-range mt-2">
+                                <i class="fas fa-chart-pie me-1"></i>{% trans "Plage: --" %}
+                            </div>
+                        </div>
+                        
+                        <!-- Détails du score -->
+                        <div class="score-details">
+                            <div class="detail-item">
+                                <span class="detail-value" id="last-update-time">--:--</span>
+                                <span class="detail-label">{% trans "Dernière MAJ" %}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value" id="risk-level">--</span>
+                                <span class="detail-label">{% trans "Niveau de risque" %}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value" id="score-trend">--</span>
+                                <span class="detail-label">{% trans "Tendance" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline des mises à jour -->
+                    <div class="update-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">{% trans "Dernière mise à jour" %}</div>
+                                <div class="timeline-time" id="update-time">
+                                    <i class="far fa-clock me-1"></i>{% trans "Chargement..." %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">{% trans "Modifié par" %}</div>
+                                <div class="timeline-time" id="modified-by">
+                                    <i class="far fa-user me-1"></i>{% trans "Système" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de scoring Premium -->
+        <div class="col-lg-7">
+            <div class="card border-0 enhanced-card fade-in-up" style="--order: 3;">
+                <div class="card-header card-header-gradient">
+                    <h3 class="card-header-title mb-0 text-white">
+                        <i class="fas fa-sliders-h me-2"></i>{% trans "Paramètres du Scoring" %}
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form id="scoring-form" class="enhanced-form">
+                        {% csrf_token %}
+                        
+                        <!-- Alert d'information premium -->
+                        <div class="alert alert-info-custom mb-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-lightbulb fa-lg"></i>
+                                <div>
+                                    <strong class="d-block mb-1">{% trans "À noter :" %}</strong>
+                                    <p class="mb-0">{% trans "Toutes les modifications déclenchent un recalcul automatique du score" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grille de champs -->
+                        <div class="row g-3">
+                            <!-- Comportement de paiement -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="comportement_de_paiement_ref" class="form-label">
+                                        <i class="fas fa-money-check-alt"></i>{% trans "Comportement de paiement" %}
+                                    </label>
+                                    <select class="form-control select2-basic" id="comportement_de_paiement_ref" name="comportement_de_paiement_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Historique des paiements" %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Âge de la société -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="age_company_ref" class="form-label">
+                                        <i class="fas fa-building"></i>{% trans "Âge de la société" %}
+                                    </label>
+                                    <select class="form-control select2-basic" id="age_company_ref" name="age_company_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Ancienneté de l'entreprise" %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Forme juridique -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="forme_juridique" class="form-label">
+                                        <i class="fas fa-balance-scale"></i>{% trans "Forme juridique" %}
+                                    </label>
+                                    <select class="form-control select2-basic" id="forme_juridique" name="forme_juridique">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Structure légale" %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Avis commercial -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="avis_commercial_ref" class="form-label">
+                                        <i class="fas fa-comment-dollar"></i>{% trans "Avis commercial" %}
+                                    </label>
+                                    <select class="form-control select2-basic" id="avis_commercial_ref" name="avis_commercial_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Réputation commerciale" %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Locaux -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="locaux_ref" class="form-label">
+                                        <i class="fas fa-home"></i>{% trans "Locaux" %}
+                                    </label>
+                                    <select class="form-control select2-basic" id="locaux_ref" name="locaux_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Situation immobilière" %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Catégories NACE avec Select2 multiple -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="categories_nace_ref" class="form-label">
+                                        <i class="fas fa-industry"></i>{% trans "Activités NACE" %}
+                                    </label>
+                                    <select class="form-control select2-multiple" id="categories_nace_ref" name="categories_nace_ref" 
+                                            multiple="multiple">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>{% trans "Secteurs d'activité (sélection multiple)" %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Commentaire -->
+                        <div class="form-group mt-4">
+                            <label for="commentaire" class="form-label">
+                                <i class="fas fa-sticky-note"></i>{% trans "Commentaires & Observations" %}
+                            </label>
+                            <textarea class="form-control" id="commentaire" name="commentaire" rows="4" 
+                                      placeholder="Ajoutez des observations pertinentes pour ce scoring..."></textarea>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>{% trans "Ces commentaires seront enregistrés avec le score" %}
+                                </small>
+                                <small class="text-muted" id="char-count">0/500</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex gap-2 mt-4 pt-4 border-top">
+                            <button type="submit" class="btn btn-enhanced flex-grow-1" id="submit-btn">
+                                <i class="fas fa-save me-2"></i>
+                                <span class="btn-text">{% trans "Mettre à jour le Scoring" %}</span>
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-primary" id="reset-btn">
+                                <i class="fas fa-redo me-2"></i>{% trans "Réinitialiser" %}
+                            </button>
+                        </div>
+                        
+                        <!-- Indicateur de statut -->
+                        <div class="mt-3 text-center">
+                            <div class="status-indicator status-success d-none" id="success-indicator">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{% trans "Score mis à jour avec succès" %}</span>
+                            </div>
+                            <div class="status-indicator status-danger d-none" id="error-indicator">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{% trans "Erreur lors de la mise à jour" %}</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+
+<script>
+$(document).ready(function() {
+    const acheteurId = '{{ id_acheteur }}';
+    let accessToken = "{{ access }}";
+    const refreshToken = localStorage.getItem('refresh_token');
+    let currentScore = 0;
+    
+    console.log("🎯 Initialisation du module de scoring premium...");
+    console.log("📌 Acheteur ID:", acheteurId);
+    console.log("🔑 Token:", accessToken ? "PRÉSENT" : "MANQUANT");
+
+    // ========================================
+    // INITIALISATION SELECT2
+    // ========================================
+    
+    function initSelect2() {
+        // Sélecteurs simples
+        $('.select2-basic').each(function() {
+            $(this).select2({
+                theme: 'bootstrap-5',
+                placeholder: '-- Sélectionnez --',
+                allowClear: true,
+                width: '100%',
+                language: 'fr',
+                dropdownParent: $(this).closest('.modal-content').length ? $(this).closest('.modal-content') : document.body,
+                templateResult: function(state) {
+                    if (!state.id) return state.text;
+                    return $('<span>' + state.text + '</span>');
+                }
+            });
+        });
+
+        // Sélecteur multiple pour NACE
+        $('#categories_nace_ref').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Sélectionnez une ou plusieurs catégories --',
+            allowClear: true,
+            width: '100%',
+            language: 'fr',
+            dropdownParent: $('#categories_nace_ref').closest('.modal-content').length ? $('#categories_nace_ref').closest('.modal-content') : document.body,
+            closeOnSelect: false,
+            tags: false,
+            templateResult: function(state) {
+                if (!state.id) return state.text;
+                return $('<span>' + state.text + '</span>');
+            }
+        });
+
+        console.log("✅ Select2 initialisé avec succès");
+    }
+
+    // ========================================
+    // FONCTIONS D'AFFICHAGE ET D'INTERFACE
+    // ========================================
+    
+    // Mettre à jour l'heure de dernière mise à jour
+    function updateLastUpdateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const dateString = now.toLocaleDateString('fr-FR', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short' 
+        });
+        $('#update-time').html(`<i class="far fa-clock me-1"></i>${dateString} à ${timeString}`);
+        $('#last-update-time').text(timeString);
+    }
+
+    // Déterminer l'image du score
+    function getScoreImage(score) {
+        const roundedScore = Math.round(score);
+        const finalScore = Math.max(0, Math.min(10, roundedScore));
+        return `/static/scoring/${finalScore}.png`;
+    }
+
+    // Déterminer la description de la plage
+    function getScoreRangeDescription(score) {
+        const roundedScore = Math.round(score);
+        const ranges = {
+            0: "Procédure d'insolvabilité ⚠️",
+            1: "Risque extrêmement élevé 🔴",
+            2: "Risque très élevé 🔴", 
+            3: "Risque élevé 🟠",
+            4: "Risque important 🟠",
+            5: "Risque moyennement élevé 🟡",
+            6: "Risque acceptable 🟡",
+            7: "Risque modéré 🟢",
+            8: "Risque faible 🟢",
+            9: "Risque très faible 💚",
+            10: "Risque excellent ✅"
+        };
+        return ranges[roundedScore] || "Non défini";
+    }
+
+    // Déterminer le niveau de risque
+    function getRiskLevel(score) {
+        if (score >= 7.5) return "Faible";
+        if (score >= 5.0) return "Modéré";
+        return "Élevé";
+    }
+
+    // Déterminer la tendance (simulée pour l'exemple)
+    function getScoreTrend(score) {
+        if (score > currentScore) return "↗️ Hausse";
+        if (score < currentScore) return "↘️ Baisse";
+        return "→ Stable";
+    }
+
+    // Mettre à jour l'image du score
+    function updateScoreImage(score) {
+        const imageElement = $('#score-image');
+        const rangeElement = $('#score-range');
+        
+        if (score !== undefined && score !== null) {
+            const imagePath = getScoreImage(score);
+            const rangeDescription = getScoreRangeDescription(score);
+            
+            // Précharger l'image
+            const img = new Image();
+            img.onload = function() {
+                imageElement.attr('src', imagePath);
+                imageElement.attr('alt', `Niveau de risque: ${rangeDescription}`);
+                imageElement.show();
+                rangeElement.html(`<i class="fas fa-chart-pie me-1"></i>${rangeDescription}`);
+            };
+            img.onerror = function() {
+                // Image de fallback si non trouvée
+                imageElement.attr('src', '/static/scoring/default.png');
+                rangeElement.html(`<i class="fas fa-chart-pie me-1"></i>${rangeDescription}`);
+            };
+            img.src = imagePath;
+        }
+    }
+
+    // Mettre à jour l'affichage du score
+    function updateScoreDisplay(data) {
+        const score = data.scoring_value !== undefined ? data.scoring_value : 0.0;
+        const interpretation = data.interpretation || 'Aucune interprétation disponible';
+        
+        // Mettre à jour le score
+        currentScore = score;
+        $("#current-score").text(score.toFixed(2));
+        $("#current-interpretation").html(`<i class="fas fa-comment-dots me-2"></i>${interpretation}`);
+        
+        // Mettre à jour l'image et la plage
+        updateScoreImage(score);
+        
+        // Mettre à jour les indicateurs
+        $("#risk-level").text(getRiskLevel(score));
+        $("#score-trend").text(getScoreTrend(score));
+        
+        // Mettre à jour le style en fonction du score
+        updateScoreStyle(score);
+        
+        // Mettre à jour l'heure
+        updateLastUpdateTime();
+        
+        // Mettre à jour l'utilisateur modificateur
+        if (data.updated_by) {
+            $("#modified-by").html(`<i class="far fa-user me-1"></i>${data.updated_by.username}`);
+        }
+    }
+
+    // Mettre à jour le style en fonction du score
+    function updateScoreStyle(score) {
+        const scoreDisplay = $('#scoreDisplay');
+        scoreDisplay.removeClass('low-risk medium-risk high-risk');
+        
+        if (score >= 7.5) {
+            scoreDisplay.addClass('high-risk');
+        } else if (score >= 5.0) {
+            scoreDisplay.addClass('medium-risk');
+        } else {
+            scoreDisplay.addClass('low-risk');
+        }
+    }
+
+    // Gestion du compteur de caractères
+    function initCharCounter() {
+        const textarea = $('#commentaire');
+        const counter = $('#char-count');
+        
+        textarea.on('input', function() {
+            const length = $(this).val().length;
+            counter.text(`${length}/500`);
+            
+            if (length > 500) {
+                counter.addClass('text-danger');
+            } else {
+                counter.removeClass('text-danger');
+            }
+        });
+    }
+
+    // ========================================
+    // FONCTIONS DE GESTION DES DONNÉES
+    // ========================================
+    
+    // Charger les options d'un select
+    function loadOptions(url, selectId, isMultiple = false) {
+        return $.ajax({
+            url: url,
+            headers: {"Authorization": "Bearer " + accessToken},
+            success: function(response) {
+                const data = response.results || response;
+                const select = $(`#${selectId}`);
+                
+                if (isMultiple) {
+                    // Pour le select multiple Select2
+                    data.forEach(item => {
+                        select.append(new Option(item.libelle, item.id));
+                    });
+                    select.trigger('change');
+                } else {
+                    // Pour les selects simples
+                    select.empty().append(new Option("-- Sélectionnez --", ""));
+                    data.forEach(item => {
+                        select.append(new Option(item.libelle, item.id));
+                    });
+                }
+                
+                console.log(`✅ ${selectId} chargé: ${data.length} options`);
+            },
+            error: function(xhr) {
+                console.error(`❌ Erreur ${selectId}:`, xhr);
+            }
+        });
+    }
+
+    // Charger les données du scoring
+    function loadScoring() {
+        console.log(`📊 Chargement du scoring pour l'acheteur ${acheteurId}...`);
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/scoring/`,
+            headers: {"Authorization": "Bearer " + accessToken},
+            success: function(data) {
+                console.log("✅ Données du scoring chargées:", data);
+                
+                // Mettre à jour l'affichage
+                updateScoreDisplay(data);
+                
+                // Mettre à jour les champs du formulaire
+                updateFormFields(data);
+                
+                // Afficher l'indicateur de succès
+                showStatusIndicator('success', 'Données chargées avec succès', 2000);
+            },
+            error: function(xhr) {
+                console.error("❌ Erreur chargement scoring:", xhr);
+                showStatusIndicator('error', 'Erreur de chargement des données');
+            }
+        });
+    }
+
+    // Mettre à jour les champs du formulaire
+    function updateFormFields(data) {
+        // Mettre à jour le commentaire
+        $("#commentaire").val(data.commentaire || '');
+        $('#char-count').text(`${data.commentaire?.length || 0}/500`);
+        
+        // Appliquer les valeurs aux selects
+        applyScoringValues(data);
+    }
+
+    // Appliquer les valeurs aux selects
+    function applyScoringValues(data) {
+        // Désactiver les événements temporairement pour éviter les recalculs multiples
+        const selects = [
+            { selector: "#comportement_de_paiement_ref", value: data.comportement_de_paiement_ref?.id },
+            { selector: "#age_company_ref", value: data.age_company_ref?.id },
+            { selector: "#forme_juridique", value: data.forme_juridique?.id },
+            { selector: "#avis_commercial_ref", value: data.avis_commercial_ref?.id },
+            { selector: "#locaux_ref", value: data.locaux_ref?.id }
+        ];
+
+        selects.forEach(mapping => {
+            if (mapping.value) {
+                $(mapping.selector).val(mapping.value.toString()).trigger('change');
+            }
+        });
+
+        // Gestion des catégories NACE (multiple)
+        if (data.categories_nace_ref && data.categories_nace_ref.length > 0) {
+            const naceIds = data.categories_nace_ref.map(cat => cat.id.toString());
+            $("#categories_nace_ref").val(naceIds).trigger('change');
+        }
+    }
+
+    // Afficher l'indicateur de statut
+    function showStatusIndicator(type, message, duration = 3000) {
+        const successIndicator = $('#success-indicator');
+        const errorIndicator = $('#error-indicator');
+        
+        // Cacher tous les indicateurs
+        successIndicator.addClass('d-none');
+        errorIndicator.addClass('d-none');
+        
+        // Afficher le bon indicateur
+        if (type === 'success') {
+            successIndicator.find('span').text(message);
+            successIndicator.removeClass('d-none');
+        } else {
+            errorIndicator.find('span').text(message);
+            errorIndicator.removeClass('d-none');
+        }
+        
+        // Cacher après la durée spécifiée
+        if (duration) {
+            setTimeout(() => {
+                successIndicator.addClass('d-none');
+                errorIndicator.addClass('d-none');
+            }, duration);
+        }
+    }
+
+    // ========================================
+    // GESTION DES ÉVÉNEMENTS
+    // ========================================
+    
+    // Gestion de la soumission du formulaire
+    $("#scoring-form").on("submit", function(e) {
+        e.preventDefault();
+        
+        // Préparer les données
+        const formData = {
+            comportement_de_paiement_ref_id: $("#comportement_de_paiement_ref").val() || null,
+            age_company_ref_id: $("#age_company_ref").val() || null,
+            forme_juridique_id: $("#forme_juridique").val() || null,
+            avis_commercial_ref_id: $("#avis_commercial_ref").val() || null,
+            locaux_ref_id: $("#locaux_ref").val() || null,
+            categories_nace_ref_ids: $("#categories_nace_ref").val() || [],
+            commentaire: $("#commentaire").val() || ''
+        };
+
+        // Désactiver le bouton et afficher le spinner
+        const submitBtn = $('#submit-btn');
+        const btnText = submitBtn.find('.btn-text');
+        const spinner = submitBtn.find('.spinner-border');
+        
+        submitBtn.prop('disabled', true);
+        btnText.text('Mise à jour en cours...');
+        spinner.removeClass('d-none');
+
+        // Envoyer les données
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/scoring/`,
+            method: "PATCH",
+            headers: {
+                "Authorization": "Bearer " + accessToken,
+                "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(formData),
+            success: function(data) {
+                console.log("✅ Scoring mis à jour:", data);
+                
+                // Réactiver le bouton
+                submitBtn.prop('disabled', false);
+                btnText.text('Mettre à jour le Scoring');
+                spinner.addClass('d-none');
+                
+                // Afficher le succès
+                showStatusIndicator('success', 'Score mis à jour avec succès');
+                
+                // Mettre à jour l'affichage
+                updateScoreDisplay(data);
+                
+                // Notification SweetAlert premium
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Score mis à jour !',
+                    html: `
+                        <div class="text-center py-3">
+                            <div class="display-3 fw-bold" style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${data.scoring_value.toFixed(2)}</div>
+                            <p class="mb-2 fs-5">${data.interpretation}</p>
+                            <p class="small text-muted">Le score a été recalculé et enregistré</p>
+                        </div>
+                    `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Excellent !',
+                    confirmButtonColor: '#0d80be',
+                    background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+                    timer: 4000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+            },
+            error: function(xhr) {
+                console.error("❌ Erreur mise à jour:", xhr);
+                
+                // Réactiver le bouton
+                submitBtn.prop('disabled', false);
+                btnText.text('Mettre à jour le Scoring');
+                spinner.addClass('d-none');
+                
+                // Afficher l'erreur
+                showStatusIndicator('error', 'Erreur lors de la mise à jour');
+                
+                // Notification d'erreur
+                let errorMessage = "Une erreur s'est produite lors de la mise à jour.";
+                if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        errorMessage = errorData.detail || errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = "Erreur serveur. Veuillez réessayer.";
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    confirmButtonText: 'Compris',
+                    confirmButtonColor: '#e74c3c',
+                    background: 'linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%)'
+                });
+            }
+        });
+    });
+
+    // Réinitialiser le formulaire
+    $("#reset-btn").on("click", function() {
+        Swal.fire({
+            title: 'Réinitialiser le formulaire ?',
+            text: "Toutes les modifications non sauvegardées seront perdues.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0d80be',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler',
+            background: 'linear-gradient(135deg, #fff9e6 0%, #fff5e6 100%)'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Réinitialiser tous les champs
+                $("#scoring-form")[0].reset();
+                $("#categories_nace_ref").val(null).trigger('change');
+                $('.select2-basic').val(null).trigger('change');
+                $('#char-count').text('0/500');
+                showStatusIndicator('success', 'Formulaire réinitialisé');
+            }
+        });
+    });
+
+    // ========================================
+    // INITIALISATION
+    // ========================================
+    
+    // Initialiser au chargement
+    initSelect2();
+    initCharCounter();
+    
+    // Précharger les images
+    function preloadScoreImages() {
+        const images = [];
+        for (let i = 0; i <= 10; i++) {
+            const img = new Image();
+            img.src = `/static/scoring/${i}.png`;
+            images.push(img);
+        }
+        console.log("🖼️ Images de scoring préchargées");
+    }
+
+    // Charger toutes les données
+    console.log("🚀 Démarrage du chargement des données...");
+    
+    // Charger les options séquentiellement
+    const optionsUrls = [
+        { url: "/api/comportement-paiement/", id: "comportement_de_paiement_ref", multiple: false },
+        { url: "/api/age-societe/", id: "age_company_ref", multiple: false },
+        { url: "/api/forme-juridique/", id: "forme_juridique", multiple: false },
+        { url: "/api/avis-commercial/", id: "avis_commercial_ref", multiple: false },
+        { url: "/api/bail/", id: "locaux_ref", multiple: false },
+        { url: "/api/categorie-nace/", id: "categories_nace_ref", multiple: true }
+    ];
+
+    // Fonction pour charger séquentiellement
+    async function loadAllOptions() {
+        for (const option of optionsUrls) {
+            try {
+                await loadOptions(option.url, option.id, option.multiple);
+            } catch (error) {
+                console.error(`❌ Erreur chargement ${option.id}:`, error);
+            }
+        }
+        
+        // Une fois toutes les options chargées, charger le scoring
+        setTimeout(loadScoring, 500);
+    }
+
+    // Démarrer le chargement
+    loadAllOptions();
+    
+    // Précharger les images
+    preloadScoreImages();
+    
+    // Mettre à jour l'heure initiale
+    updateLastUpdateTime();
+
+    console.log("✅ Module de scoring premium initialisé avec succès");
+
+    // Animation des cartes au scroll
+    function animateCardsOnScroll() {
+        $('.stat-card, .enhanced-card').each(function() {
+            const elementTop = $(this).offset().top;
+            const elementBottom = elementTop + $(this).outerHeight();
+            const viewportTop = $(window).scrollTop();
+            const viewportBottom = viewportTop + $(window).height();
+            
+            if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                $(this).addClass('animate');
+            }
+        });
+    }
+
+    $(window).on('scroll', animateCardsOnScroll);
+    animateCardsOnScroll();
+    
+    // Fonction pour récupérer le token CSRF
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        if (!refreshToken) {
+            window.location.reload();
+            return;
+        }
+
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        
+                        // Recharger les données
+                        loadScoring();
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+    
+});
+</script>
+{% endblock %}

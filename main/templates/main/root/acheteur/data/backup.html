@@ -1,0 +1,1261 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Améliorations pour Select2 */
+.select2-container {
+    width: 100% !important;
+    position: relative;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: 44px !important;
+    padding: 0.375rem 1rem !important;
+    border: 2px solid #e3e6f0 !important;
+    border-radius: 8px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus {
+    border-color: #0A95CA !important;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25) !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 99999 !important; /* Augmenté pour être sûr qu'il est au-dessus de tout */
+    border-radius: 8px !important;
+    border: 1px solid #e3e6f0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.select2-container--bootstrap-5 .select2-search--dropdown {
+    padding: 0.5rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 0.5rem 1rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #f0f6ff !important;
+    color: #0A95CA !important;
+}
+
+/* Pour les couleurs dans les options */
+.select2-color-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.select2-color-option::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--option-color);
+}
+
+/* Correction pour les modales Bootstrap */
+.modal {
+    overflow: visible !important;
+}
+
+.modal-dialog {
+    overflow: visible !important;
+}
+
+.modal-content {
+    overflow: visible !important;
+}
+
+.modal-body {
+    overflow: visible !important;
+}
+
+/* Assure que les formulaires dans les modales n'ont pas de overflow hidden */
+.enhanced-form {
+    overflow: visible !important;
+}
+
+
+
+
+/* Carte de statistiques améliorée */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.stat-card.date-creation::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
+.stat-card.date-enregistrement::before { background: linear-gradient(to bottom, #28a745, #20c997); }
+.stat-card.forme-juridique::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.stat-card.numero-registre::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+.stat-card.numero-fiscal::before { background: linear-gradient(to bottom, #17a2b8, #20c997); }
+.stat-card.statut-registre::before { background: linear-gradient(to bottom, #20c997, #0dcaf0); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-card.date-creation .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-card.date-enregistrement .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-card.forme-juridique .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-card.numero-registre .stat-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+.stat-card.numero-fiscal .stat-icon { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+.stat-card.statut-registre .stat-icon { background: rgba(32, 201, 151, 0.1); color: #20c997; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.badge-actif {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.badge-inactif {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Boutons améliorés */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Informations de registre */
+.registre-info-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #0A95CA;
+    background: rgba(10, 149, 202, 0.05);
+    transition: all 0.3s ease;
+}
+
+.registre-info-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Formulaire amélioré */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3rem;
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Badge de statut */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Commentaire coloré */
+.colored-comment {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid;
+    position: relative;
+}
+
+.colored-comment::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* Timeline des dates */
+.date-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.date-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e3e6f0;
+}
+
+.date-timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.date-timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.date-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #0A95CA;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.2);
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-contract text-primary me-2"></i>Données d'Enregistrement
+            </h1>
+            <p class="text-muted mb-0">
+                Informations légales et administratives de l'entreprise
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if data_save %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editDataSaveModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter les données
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Données d'Enregistrement -->
+    {% if data_save %}
+    <div class="card enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Dates importantes -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="registre-info-card">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-calendar-check text-primary me-2"></i>Dates importantes
+                        </h5>
+                        <div class="date-timeline">
+                            <div class="date-timeline-item">
+                                <div class="stat-label">Date de création</div>
+                                <div class="stat-value">{{ data_save.date_creation|date:"d/m/Y"|default:"-" }}</div>
+                                <small class="text-muted">Date légale de création de l'entreprise</small>
+                            </div>
+                            <div class="date-timeline-item">
+                                <div class="stat-label">Date d'enregistrement</div>
+                                <div class="stat-value">{{ data_save.date_registre|date:"d/m/Y"|default:"-" }}</div>
+                                <small class="text-muted">Date d'inscription au registre</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="registre-info-card">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-balance-scale text-primary me-2"></i>Statut légal
+                        </h5>
+                        <div class="mb-3">
+                            <div class="stat-label">Forme juridique</div>
+                            <div class="stat-value">{{ data_save.forme_juridique|default:"-" }}</div>
+                            {% if data_save.forme_juridique_ref %}
+                            <small class="text-muted">Référence: {{ data_save.forme_juridique_ref.libelle }}</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="stat-label">Statut au registre</div>
+                            <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
+                                {{ data_save.statut_registre|default:"Non spécifié" }}
+                            </span>
+                            {% if data_save.statut_registre_ref %}
+                            <small class="text-muted d-block mt-1">Référence: {{ data_save.statut_registre_ref.libelle }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Numéros d'identification -->
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-id-card text-primary me-2"></i>Identifiants légaux
+            </h5>
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card numero-registre">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-label">Registre du Commerce</div>
+                        <div class="stat-value">{{ data_save.numero_registre_commerce|default:"-" }}</div>
+                        <small class="text-muted">N° d'immatriculation</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card numero-fiscal">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="stat-label">Numéro Fiscal</div>
+                        <div class="stat-value">{{ data_save.numero_fiscale|default:"-" }}</div>
+                        <small class="text-muted">Identifiant fiscal</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card statut-registre">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="stat-label">Statut légal</div>
+                        <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
+                            {{ data_save.statut_registre|default:"-" }}
+                        </span>
+                        <small class="text-muted">Situation administrative</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commentaire -->
+            {% if data_save.commentaire %}
+            <div class="colored-comment mb-4" style="border-left-color: {{ data_save.couleur_commentaire.code|default:'#6c757d' }};">
+                <h6 class="fw-bold mb-2">
+                    <i class="fas fa-comment-dots me-2"></i>Commentaire
+                </h6>
+                <p class="mb-0">{{ data_save.commentaire }}</p>
+                {% if data_save.couleur_commentaire %}
+                <div class="mt-3">
+                    <span class="badge" style="color: {{ data_save.couleur_commentaire.code }}; background: {{ data_save.couleur_commentaire.code }}20;">
+                        <i class="fas fa-palette me-1"></i>{{ data_save.couleur_commentaire.couleur }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            Créé le {{ data_save.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Dernière mise à jour : {{ data_save.updated_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-file-contract empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucune donnée d'enregistrement</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de données d'enregistrement.<br>
+                    Ajoutez les informations légales et administratives de l'entreprise.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter les données
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Données d'Enregistrement -->
+<div class="modal fade" id="addDataSaveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter des Données d'Enregistrement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addDataSaveForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_creation" class="form-label">
+                                    <i class="fas fa-calendar-plus text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_creation" name="date_creation" required>
+                                </div>
+                                <small class="form-text text-muted">Date légale de création de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_registre" class="form-label">
+                                    <i class="fas fa-calendar-check text-success"></i>Date d'Enregistrement
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-check"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_registre" name="date_registre" required>
+                                </div>
+                                <small class="form-text text-muted">Date d'inscription au registre</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="forme_juridique" class="form-label">
+                                    <i class="fas fa-balance-scale text-warning"></i>Forme Juridique
+                                </label>
+                                <select class="form-select select2" id="forme_juridique" name="forme_juridique" required>
+                                    <option value="">Sélectionnez une forme juridique</option>
+                                    {% for forme in juridique_list %}
+                                    <option value="{{ forme.libelle }}">{{ forme.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Structure juridique de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="forme_juridique_ref" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Forme Juridique
+                                </label>
+                                <select class="form-select select2" id="forme_juridique_ref" name="forme_juridique_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for forme in juridique_list_two %}
+                                    <option value="{{ forme.id }}">{{ forme.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Lien avec la base des formes juridiques</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="numero_registre_commerce" class="form-label">
+                                    <i class="fas fa-book text-primary"></i>N° Registre du Commerce
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="numero_registre_commerce" name="numero_registre_commerce" 
+                                           placeholder="Ex: RC123456" required>
+                                </div>
+                                <small class="form-text text-muted">Numéro d'immatriculation au RCCM</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="numero_fiscale" class="form-label">
+                                    <i class="fas fa-file-invoice-dollar text-success"></i>Numéro Fiscal
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="numero_fiscale" name="numero_fiscale" 
+                                           placeholder="Ex: NIF123456" required>
+                                </div>
+                                <small class="form-text text-muted">Numéro d'identification fiscale</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="statut_registre" class="form-label">
+                                    <i class="fas fa-clipboard-check text-warning"></i>Statut au Registre
+                                </label>
+                                <select class="form-select select2" id="statut_registre" name="statut_registre">
+                                    <option value="">Sélectionnez un statut</option>
+                                    {% for statut in statut_list %}
+                                    <option value="{{ statut.libelle }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Situation administrative de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="statut_registre_ref" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Statut
+                                </label>
+                                <select class="form-select select2" id="statut_registre_ref" name="statut_registre_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for statut in statut_list_two %}
+                                    <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Lien avec la base des statuts</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="3" placeholder="Ajoutez des notes ou observations sur ces informations légales..."></textarea>
+                        <small class="form-text text-muted">Observations et notes complémentaires</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification de Données d'Enregistrement -->
+<div class="modal fade" id="editDataSaveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier les Données d'Enregistrement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editDataSaveForm" class="enhanced-form">
+                <input type="hidden" id="editDataSaveId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCreation" class="form-label">
+                                    <i class="fas fa-calendar-plus text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="editDateCreation" name="date_creation" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateRegistre" class="form-label">
+                                    <i class="fas fa-calendar-check text-success"></i>Date d'Enregistrement
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-check"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="editDateRegistre" name="date_registre" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editFormeJuridique" class="form-label">
+                                    <i class="fas fa-balance-scale text-warning"></i>Forme Juridique
+                                </label>
+                                <select class="form-select select2" id="editFormeJuridique" name="forme_juridique">
+                                    <option value="">Sélectionnez une forme juridique</option>
+                                    {% for forme in juridique_list_tree %}
+                                    <option value="{{ forme.libelle }}">{{ forme.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editFormeJuridiqueRef" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Forme Juridique
+                                </label>
+                                <select class="form-select select2" id="editFormeJuridiqueRef" name="forme_juridique_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for forme in juridique_list_tree %}
+                                    <option value="{{ forme.id }}">{{ forme.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNumeroRegistreCommerce" class="form-label">
+                                    <i class="fas fa-book text-primary"></i>N° Registre du Commerce
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="editNumeroRegistreCommerce" name="numero_registre_commerce" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNumeroFiscal" class="form-label">
+                                    <i class="fas fa-file-invoice-dollar text-success"></i>Numéro Fiscal
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="editNumeroFiscal" name="numero_fiscale" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editStatutRegistre" class="form-label">
+                                    <i class="fas fa-clipboard-check text-warning"></i>Statut au Registre
+                                </label>
+                                <select class="form-select select2" id="editStatutRegistre" name="statut_registre">
+                                    <option value="">Sélectionnez un statut</option>
+                                    {% for statut in statut_list %}
+                                    <option value="{{ statut.libelle }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editStatutRegistreRef" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Statut
+                                </label>
+                                <select class="form-select select2" id="editStatutRegistreRef" name="statut_registre_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for statut in statut_list %}
+                                    <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer les données d'enregistrement</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer ces informations légales ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/donnees-enregistrement/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentDataSave = null;
+
+    // Fonction pour formater les options avec couleur
+    function formatColorOption(option) {
+        if (!option.id) return option.text;
+        const color = $(option.element).data('color');
+        if (!color) return option.text;
+
+        return $(
+            `<span class="select2-color-option" style="--option-color: ${color}">
+                ${option.text}
+            </span>`
+        );
+    }
+
+    // Fonction pour formater les options avec code (devise, etc.)
+    function formatCodeOption(option) {
+        if (!option.id) return option.text;
+        const code = $(option.element).data('code');
+        if (!code) return option.text;
+
+        return $(
+            `<span>
+                ${option.text}
+                <span class="float-end text-muted">${code}</span>
+            </span>`
+        );
+    }
+
+    // Initialisation de Select2 (version optimisée)
+    // Initialisation de Select2 (version optimisée pour les modales)
+    function initSelect2() {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            dropdownParent: $('body'), // Important pour les modales
+            matcher: function(params, data) {
+                // Optimisation de la recherche pour les grandes listes
+                if ($.trim(params.term) === '') return data;
+
+                if (typeof data.text === 'string') {
+                    return data.text.toUpperCase().indexOf(params.term.toUpperCase()) >= 0;
+                }
+
+                return false;
+            },
+            templateResult: function(option) {
+                if ($(option.element).data('color')) {
+                    return formatColorOption(option);
+                } else if ($(option.element).data('code')) {
+                    return formatCodeOption(option);
+                }
+                return option.text;
+            },
+            templateSelection: function(option) {
+                return option.text;
+            },
+            escapeMarkup: function(m) { return m; }
+        });
+    }
+
+    // Initialisation au chargement
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addDataSaveModal, #editDataSaveModal').on('shown.bs.modal', function() {
+        // Détruire les instances existantes
+        $(this).find('.select2').each(function() {
+            if ($(this).data('select2')) {
+                $(this).select2('destroy');
+            }
+        });
+
+        // Réinitialiser avec la bonne configuration
+        $(this).find('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            dropdownParent: $(this), // Important pour les modales
+            templateResult: function(option) {
+                if ($(option.element).data('color')) {
+                    return formatColorOption(option);
+                } else if ($(option.element).data('code')) {
+                    return formatCodeOption(option);
+                }
+                return option.text;
+            },
+            templateSelection: function(option) {
+                return option.text;
+            },
+            escapeMarkup: function(m) { return m; }
+        });
+    });
+
+
+
+    // Charger les données de l'acheteur
+    function loadAcheteurData() {
+        const id = '{{ acheteur.id }}';
+        if (!id) return;
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(response) {
+                $('#editCode').text(response.code || 'N/A');
+                $('#editNom').text(response.nom || 'Non spécifié');
+                $('#editSigle').text(response.sigle || '');
+            },
+            error: function(xhr) {
+                console.error("Erreur lors de la récupération des données de l'acheteur:", xhr);
+            }
+        });
+    }
+
+    // Charger les données d'enregistrement
+    function loadDataSaveData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(response) {
+                if (response && !response.message) {
+                    currentDataSave = response;
+                    populateEditForm(response);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status !== 404) console.error('Erreur:', xhr);
+            }
+        });
+    }
+
+    // Remplir le formulaire d'édition
+    function populateEditForm(dataSave) {
+        if (!dataSave) return;
+
+        $('#editDataSaveId').val(dataSave.id);
+        $('#editDateCreation').val(dataSave.date_creation || '');
+        $('#editDateRegistre').val(dataSave.date_registre || '');
+        $('#editNumeroRegistreCommerce').val(dataSave.numero_registre_commerce || '');
+        $('#editNumeroFiscal').val(dataSave.numero_fiscale || '');
+        $('#editCommentaire').val(dataSave.commentaire || '');
+
+        // Gestion des références (objets ou IDs)
+        const setSelectValue = (selectId, value) => {
+            const $select = $(`#${selectId}`);
+            if (value && typeof value === 'object' && value.id) {
+                $select.val(value.id).trigger('change');
+            } else if (value) {
+                $select.val(value).trigger('change');
+            }
+        };
+
+        setSelectValue('editFormeJuridique', dataSave.forme_juridique);
+        setSelectValue('editFormeJuridiqueRef', dataSave.forme_juridique_ref);
+        setSelectValue('editStatutRegistre', dataSave.statut_registre);
+        setSelectValue('editStatutRegistreRef', dataSave.statut_registre_ref);
+    }
+
+    // Soumission des formulaires
+    function submitDataSaveForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                $('#' + modalId).modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: currentDataSave ? 'Données mises à jour' : 'Données créées',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    errorMessage = Object.values(xhr.responseJSON).join('\n');
+                }
+
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => submitDataSaveForm(method, formData, submitBtn, modalId));
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: errorMessage });
+                }
+            }
+        });
+    }
+
+    // Suppression des données
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Données supprimées',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#confirmDeleteBtn').click());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de supprimer' });
+                }
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie) {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Rafraîchir le token
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    window.ACCESS_TOKEN = response.access; // Mettre à jour le token
+                    if (callback) callback();
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                }).then((result) => {
+                    if (result.isConfirmed) window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+    // Soumission des formulaires
+    $('#addDataSaveForm').on('submit', function(e) {
+        e.preventDefault();
+        submitDataSaveForm('POST', $(this).serialize(), '#submitAddBtn', 'addDataSaveModal');
+    });
+
+    $('#editDataSaveForm').on('submit', function(e) {
+        e.preventDefault();
+        submitDataSaveForm('POST', $(this).serialize(), '#submitEditBtn', 'editDataSaveModal');
+    });
+
+    // Charger les données au démarrage
+    loadAcheteurData();
+    loadDataSaveData();
+});
+
+</script>
+{% endblock %}

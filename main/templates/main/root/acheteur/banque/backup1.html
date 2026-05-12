@@ -1,0 +1,1568 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --banking-gradient: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
+}
+
+/* Cartes Bancaires */
+.banking-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+}
+
+.banking-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: #27ae60;
+}
+
+.banking-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.banking-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.banking-account {
+    font-size: 0.9rem;
+    color: #27ae60;
+    background: rgba(39, 174, 96, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+/* Statistiques */
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.25rem;
+}
+
+.stat-total .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-banks .stat-icon { background: rgba(39, 174, 96, 0.1); color: #27ae60; }
+.stat-accounts .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-address .stat-icon { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table responsive */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e3e6f0;
+}
+
+.table th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e3e6f0;
+    font-weight: 600;
+    color: #495057;
+    padding: 0.75rem 1rem;
+}
+
+.table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badge relation */
+.badge-relation {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* Formulaires */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form .select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    min-height: 42px;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 0.25rem rgba(39, 174, 96, 0.15);
+}
+
+/* Adresse compacte */
+.adresse-compact {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Boutons */
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action i {
+    font-size: 0.9rem;
+}
+
+/* Card header gradient */
+.card-header-gradient {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .banking-card {
+        padding: 1rem;
+    }
+    
+    .banking-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Avatar */
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Commentaire preview */
+.commentaire-preview {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Tooltip */
+[data-bs-toggle="tooltip"] {
+    cursor: pointer;
+}
+
+/* Type de relation */
+.relation-type {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.relation-principal {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.relation-secondaire {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.relation-ancien {
+    background: rgba(149, 165, 166, 0.1);
+    color: #95a5a6;
+    border: 1px solid rgba(149, 165, 166, 0.2);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-university text-success me-2"></i>Gestion des Données Bancaires
+            </h1>
+            <p class="text-muted mb-0">
+                Gérez les informations bancaires de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addBankingModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter une donnée bancaire
+            </button>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur avec statistiques -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-university me-1"></i>
+                        <span id="totalBanking">{{ stats.total }}</span> données
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Total des comptes</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-hashtag text-success me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Code ACREMAC</small>
+                            <span class="fw-medium">{{ acheteur.code }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-success me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-university text-success me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Comptes bancaires</small>
+                            <span class="fw-medium">{{ stats.total }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Total Données</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-banks">
+                <div class="stat-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="stat-value">{{ stats.banques_uniques }}</div>
+                <div class="stat-label">Banques Uniques</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-accounts">
+                <div class="stat-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_compte }}</div>
+                <div class="stat-label">Avec Compte</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-address">
+                <div class="stat-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_adresse }}</div>
+                <div class="stat-label">Avec Adresse</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Données Bancaires Récents -->
+    {% if banking_recent %}
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="fas fa-history me-2"></i>Données bancaires récemment modifiées
+        </h5>
+        <div class="row g-3">
+            {% for banking in banking_recent %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="banking-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="banking-icon">
+                            {{ banking.nom_banque|first|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="banking-name">
+                                        {{ banking.nom_banque|truncatechars:20 }}
+                                    </div>
+                                    {% if banking.numero_compte %}
+                                    <div class="banking-account">
+                                        {{ banking.numero_compte|truncatechars:15 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item edit-banking-btn" href="#" data-id="{{ banking.id }}">
+                                                <i class="fas fa-edit me-2"></i>Modifier
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item delete-banking-btn" href="#" data-id="{{ banking.id }}">
+                                                <i class="fas fa-trash me-2"></i>Supprimer
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if banking.type_relation %}
+                            <div class="mt-2">
+                                <span class="badge-relation">{{ banking.type_relation }}</span>
+                            </div>
+                            {% endif %}
+                            {% if banking.numero or banking.rue %}
+                            <div class="adresse-compact mt-2">
+                                <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                {{ banking.numero|default:"" }} {{ banking.rue|default:"" }}
+                            </div>
+                            {% endif %}
+                            {% if banking.couleur_commentaire %}
+                            <div class="mt-2">
+                                <span class="badge" style="background-color: {{ banking.couleur_commentaire.code_couleur|default:'#6c757d' }}">
+                                    {{ banking.couleur_commentaire.couleur }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtres et Recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-10">
+                    <div class="form-group mb-0">
+                        <label class="form-label">
+                            <i class="fas fa-search"></i>Recherche
+                        </label>
+                        <input type="text" class="form-control" id="searchInput" 
+                               placeholder="Nom de banque, numéro de compte, type de relation, ville...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" id="applyFilters" style="margin-top: 24px;">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table des Données Bancaires -->
+    <div class="card border">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Liste des Données Bancaires
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small" for="selectAll">
+                            Sélectionner tout
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" id="deleteSelected" disabled>
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="bankingTable">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggleAll">
+                                </div>
+                            </th>
+                            <th>Banque</th>
+                            <th>Compte</th>
+                            <th>Relation</th>
+                            <th>Adresse</th>
+                            <th>Ville</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bankingTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
+                <div class="text-muted small" id="paginationInfo"></div>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Donnée Bancaire -->
+<div class="modal fade" id="addBankingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Donnée Bancaire
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addBankingForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nom_banque" class="form-label">
+                            <i class="fas fa-university text-success"></i>Nom de la Banque
+                        </label>
+                        <input type="text" class="form-control" id="nom_banque" name="nom_banque" required
+                               placeholder="Ex: Société Générale">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="numero_compte" class="form-label">
+                                    <i class="fas fa-credit-card text-success"></i>Numéro de Compte
+                                </label>
+                                <input type="text" class="form-control" id="numero_compte" name="numero_compte"
+                                       placeholder="Ex: FR76 3000 6000 0112 3456 7890 189">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type_relation" class="form-label">
+                                    <i class="fas fa-handshake text-success"></i>Type de Relation
+                                </label>
+                                <select class="form-select select2-with-search" id="type_relation" name="type_relation">
+                                    <option value="">Sélectionnez un type</option>
+                                    <option value="Principal">Principal</option>
+                                    <option value="Secondaire">Secondaire</option>
+                                    <option value="Ancien">Ancien</option>
+                                    <option value="Courant">Courant</option>
+                                    <option value="Épargne">Épargne</option>
+                                    <option value="Crédit">Crédit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="numero" class="form-label">
+                                    <i class="fas fa-hashtag text-success"></i>Numéro
+                                </label>
+                                <input type="text" class="form-control" id="numero" name="numero"
+                                       placeholder="Ex: 123">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="rue" class="form-label">
+                                    <i class="fas fa-road text-success"></i>Rue
+                                </label>
+                                <input type="text" class="form-control" id="rue" name="rue"
+                                       placeholder="Ex: Avenue des Champs-Élysées">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ville" class="form-label">
+                                    <i class="fas fa-city text-success"></i>Ville
+                                </label>
+                                <select class="form-select select2-with-search" id="ville" name="ville" required>
+                                    <option value="">Sélectionnez une ville</option>
+                                    {% for ville in ville_list %}
+                                    <option value="{{ ville.id }}" 
+                                            data-code="{{ ville.code|default:'' }}">
+                                        {{ ville.nom }} ({{ ville.code|default:'' }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="code_postal" class="form-label">
+                                    <i class="fas fa-mail-bulk text-success"></i>Code Postal
+                                </label>
+                                <input type="text" class="form-control" id="code_postal" name="code_postal"
+                                       placeholder="Ex: 75008">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="couleur_commentaire" class="form-label">
+                            <i class="fas fa-palette text-success"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                {{ coloration.couleur }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                  placeholder="Commentaires sur le compte bancaire..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Donnée Bancaire -->
+<div class="modal fade" id="editBankingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier la Donnée Bancaire
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editBankingForm" class="enhanced-form">
+                <input type="hidden" id="editBankingId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNomBanque" class="form-label">
+                            <i class="fas fa-university text-success"></i>Nom de la Banque
+                        </label>
+                        <input type="text" class="form-control" id="editNomBanque" name="nom_banque" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNumeroCompte" class="form-label">
+                                    <i class="fas fa-credit-card text-success"></i>Numéro de Compte
+                                </label>
+                                <input type="text" class="form-control" id="editNumeroCompte" name="numero_compte">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeRelation" class="form-label">
+                                    <i class="fas fa-handshake text-success"></i>Type de Relation
+                                </label>
+                                <select class="form-select select2-with-search" id="editTypeRelation" name="type_relation">
+                                    <option value="">Sélectionnez un type</option>
+                                    <option value="Principal">Principal</option>
+                                    <option value="Secondaire">Secondaire</option>
+                                    <option value="Ancien">Ancien</option>
+                                    <option value="Courant">Courant</option>
+                                    <option value="Épargne">Épargne</option>
+                                    <option value="Crédit">Crédit</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editNumero" class="form-label">
+                                    <i class="fas fa-hashtag text-success"></i>Numéro
+                                </label>
+                                <input type="text" class="form-control" id="editNumero" name="numero">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="editRue" class="form-label">
+                                    <i class="fas fa-road text-success"></i>Rue
+                                </label>
+                                <input type="text" class="form-control" id="editRue" name="rue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editVille" class="form-label">
+                                    <i class="fas fa-city text-success"></i>Ville
+                                </label>
+                                <select class="form-select select2-with-search" id="editVille" name="ville" required>
+                                    <option value="">Sélectionnez une ville</option>
+                                    {% for ville in ville_list %}
+                                    <option value="{{ ville.id }}" 
+                                            data-code="{{ ville.code|default:'' }}">
+                                        {{ ville.nom }} ({{ ville.code|default:'' }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCodePostal" class="form-label">
+                                    <i class="fas fa-mail-bulk text-success"></i>Code Postal
+                                </label>
+                                <input type="text" class="form-control" id="editCodePostal" name="code_postal">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaire" class="form-label">
+                            <i class="fas fa-palette text-success"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                {{ coloration.couleur }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le(s) donnée(s) bancaire(s)</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Êtes-vous sûr de vouloir supprimer cette donnée bancaire ? Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    // CHANGER CETTE URL pour correspondre aux URLs API créées
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/banquiers/`;
+    // URL pour les statistiques
+    const STATS_URL = `/api/acheteur/${ACHETEUR_ID}/banquiers/stats/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Variables d'état
+    let currentPage = 1;
+    let currentFilters = {};
+    let selectedBankings = new Set();
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+    }
+
+    // Initialisation
+    initSelect2();
+    loadBanking();
+    
+    // Charger les données bancaires
+    // Charger les données bancaires avec les champs corrects
+    function loadBanking(page = 1, filters = {}) {
+        currentPage = page;
+        currentFilters = filters;
+        
+        const params = new URLSearchParams({
+            page: page,
+            ...filters
+        });
+        
+        $.ajax({
+            url: `${API_BASE_URL}?${params}`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Le format de réponse correspond à BanquierListSerializer
+                updateTable(response.results || response);
+                updatePagination(response);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadBanking(page, filters));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de charger les données bancaires'
+                    });
+                }
+            }
+        });
+    }
+
+    
+    // Mettre à jour la table
+    function updateTable(bankings) {
+        const tbody = $('#bankingTableBody');
+        tbody.empty();
+        
+        if (!bankings || bankings.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-university fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune donnée bancaire trouvée</h5>
+                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez une nouvelle donnée bancaire</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        bankings.forEach((banking) => {
+            const isSelected = selectedBankings.has(banking.id.toString());
+            const adresse = `${banking.numero || ''} ${banking.rue || ''}`.trim();
+            const commentairePreview = banking.commentaire ? 
+                (banking.commentaire.length > 50 ? banking.commentaire.substring(0, 50) + '...' : banking.commentaire) : 
+                '';
+            
+            const villeNom = banking.ville?.nom || 'Non spécifiée';
+            const couleurCommentaire = banking.couleur_commentaire?.couleur || '';
+            
+            const row = `
+                <tr data-id="${banking.id}">
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input row-checkbox" type="checkbox" 
+                                data-id="${banking.id}" ${isSelected ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3 bg-success rounded-circle d-flex align-items-center justify-content-center text-white">
+                                ${banking.nom_banque ? banking.nom_banque.charAt(0).toUpperCase() : '?'}
+                            </div>
+                            <div>
+                                <strong>${banking.nom_banque || 'Non spécifié'}</strong>
+                                <div class="text-muted small">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Ajoutée le ${banking.created_at_formatted || ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <code class="bg-light p-1 rounded">${banking.numero_compte || 'Non spécifié'}</code>
+                    </td>
+                    <td>
+                        ${banking.type_relation ? `
+                            <span class="badge-relation">${banking.type_relation}</span>
+                        ` : 'Non spécifié'}
+                    </td>
+                    <td>
+                        ${adresse || 'Non spécifiée'}<br>
+                        <small class="text-muted">${banking.code_postal || ''}</small>
+                    </td>
+                    <td>
+                        ${villeNom}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${banking.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${banking.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const paginationControls = $('#paginationControls');
+        paginationControls.empty();
+        
+        if (response.count === 0) {
+            $('#paginationContainer').hide();
+            return;
+        }
+        
+        $('#paginationContainer').show();
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} données bancaires`
+        );
+        
+        // Bouton précédent
+        if (response.previous) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        }
+        
+        // Pages
+        for (let i = 1; i <= response.total_pages; i++) {
+            paginationControls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Bouton suivant
+        if (response.next) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        }
+    }
+    
+    // Appliquer les filtres
+    // Appliquer les filtres améliorés
+    $('#applyFilters').on('click', function() {
+        const filters = {
+            search: $('#searchInput').val(),
+            type_relation: $('#filterTypeRelation').val() || '',
+            ville: $('#filterVille').val() || '',
+            avec_compte: $('#filterAvecCompte').is(':checked') ? 'true' : ''
+        };
+        
+        // Supprimer les filtres vides
+        Object.keys(filters).forEach(key => {
+            if (!filters[key]) delete filters[key];
+        });
+        
+        loadBanking(1, filters);
+    });
+    
+    // Recherche en temps réel
+    // Recherche en temps réel avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $('#applyFilters').click();
+        }, 800);
+    });
+
+    // Gérer le changement de ville pour mettre à jour le code postal
+    $('#ville').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const code = selectedOption.data('code');  // CORRECTION : data('code')
+        if (code) {
+            $('#code_postal').val(code).attr('readonly', true);
+        } else {
+            $('#code_postal').val('').attr('readonly', false);
+        }
+    });
+
+    // Même chose pour l'édition
+    $('#editVille').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const code = selectedOption.data('code');  // CORRECTION : data('code')
+        if (code) {
+            $('#editCodePostal').val(code).attr('readonly', true);
+        } else {
+            $('#editCodePostal').val('').attr('readonly', false);
+        }
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            loadBanking(page, currentFilters);
+        }
+    });
+
+    // Fonction pour gérer les erreurs d'API
+    function handleApiError(xhr, defaultMessage) {
+        if (xhr.status === 401) {
+            return 'refresh';
+        } else if (xhr.status === 400) {
+            const errors = xhr.responseJSON;
+            if (typeof errors === 'object') {
+                let errorMessages = [];
+                Object.keys(errors).forEach(key => {
+                    if (Array.isArray(errors[key])) {
+                        errorMessages.push(`${key}: ${errors[key].join(', ')}`);
+                    } else {
+                        errorMessages.push(`${key}: ${errors[key]}`);
+                    }
+                });
+                return errorMessages.join('\n');
+            }
+            return errors?.detail || defaultMessage;
+        } else if (xhr.status === 404) {
+            return 'Ressource non trouvée';
+        } else if (xhr.status === 500) {
+            return 'Erreur serveur. Veuillez réessayer plus tard';
+        }
+        return defaultMessage;
+    }
+    
+    // Formulaire d'ajout
+    // Formulaire d'ajout - MAJ
+    $('#addBankingForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            nom_banque: $('#nom_banque').val().trim(),
+            numero_compte: $('#numero_compte').val().trim() || '',
+            type_relation: $('#type_relation').val() || '',
+            numero: $('#numero').val().trim() || '',
+            rue: $('#rue').val().trim() || '',
+            ville: $('#ville').val(), // ID de la ville
+            code_postal: $('#code_postal').val().trim() || '',
+            couleur_commentaire: $('#couleur_commentaire').val() || null,
+            commentaire: $('#commentaire').val().trim() || ''
+        };
+        
+        // Validation
+        if (!formData.nom_banque || formData.nom_banque.length < 2) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le nom de la banque doit contenir au moins 2 caractères'
+            });
+            $('#nom_banque').focus();
+            return;
+        }
+        
+        if (!formData.ville) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'La ville est obligatoire'
+            });
+            $('#ville').focus();
+            return;
+        }
+        
+        // Validation de la cohérence code postal/ville
+        const selectedVille = $('#ville option:selected');
+        const villeCodePostal = selectedVille.data('code-postal');
+        if (villeCodePostal && formData.code_postal && formData.code_postal !== villeCodePostal) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incohérence code postal',
+                text: `Le code postal ne correspond pas à celui de la ville (${villeCodePostal}). Souhaitez-vous continuer ?`,
+                showCancelButton: true,
+                confirmButtonText: 'Continuer',
+                cancelButtonText: 'Corriger'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitBankingForm('POST', formData, '#submitAddBtn', 'addBankingModal');
+                }
+            });
+            return;
+        }
+        
+        submitBankingForm('POST', formData, '#submitAddBtn', 'addBankingModal');
+    });
+
+
+    // Édition d'une donnée bancaire
+    // Édition d'une donnée bancaire
+    $(document).on('click', '.edit-btn', function() {
+        const bankingId = $(this).data('id');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${bankingId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Format de réponse correspond à GetBanquierSerializer
+                $('#editBankingId').val(response.id);
+                $('#editNomBanque').val(response.nom_banque || '');
+                $('#editNumeroCompte').val(response.numero_compte || '');
+                $('#editTypeRelation').val(response.type_relation || '').trigger('change');
+                $('#editNumero').val(response.numero || '');
+                $('#editRue').val(response.rue || '');
+                $('#editVille').val(response.ville?.id || '').trigger('change');
+                $('#editCodePostal').val(response.code_postal || '');
+                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
+                $('#editCommentaire').val(response.commentaire || '');
+                
+                // Mettre à jour le code postal de la ville sélectionnée
+                if (response.ville && response.ville.code_postal) {
+                    $('#editCodePostal').attr('placeholder', response.ville.code_postal);
+                }
+                
+                $('#editBankingModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('.edit-btn[data-id="' + bankingId + '"]').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de charger les données bancaires'
+                    });
+                }
+            }
+        });
+    });
+
+
+    // Formulaire de modification
+    $('#editBankingForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            nom_banque: $('#editNomBanque').val().trim(),
+            numero_compte: $('#editNumeroCompte').val().trim() || '',
+            type_relation: $('#editTypeRelation').val() || '',
+            numero: $('#editNumero').val().trim() || '',
+            rue: $('#editRue').val().trim() || '',
+            ville: $('#editVille').val(),
+            code_postal: $('#editCodePostal').val().trim() || '',
+            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
+            commentaire: $('#editCommentaire').val().trim() || ''
+        };
+        
+        const bankingId = $('#editBankingId').val();
+        
+        submitBankingForm('PUT', formData, '#submitEditBtn', 'editBankingModal', bankingId);
+    });
+    
+    // Fonction générique pour soumettre le formulaire
+    function submitBankingForm(method, formData, submitBtn, modalId, bankingId = null) {
+        const $btn = $(submitBtn);
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').hide();
+        
+        const url = bankingId ? `${API_BASE_URL}${bankingId}/` : API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                const modal = bootstrap.Modal.getInstance($('#' + modalId)[0]);
+                modal.hide();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Opération réussie',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadBanking(currentPage, currentFilters);
+                    updateStats();
+                });
+            },
+            error: function(xhr) {
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitBankingForm(method, formData, submitBtn, modalId, bankingId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: errorMessage
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression d'une donnée bancaire
+    $(document).on('click', '.delete-btn', function() {
+        const bankingId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Supprimer la donnée bancaire ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteBankings([bankingId]);
+            }
+        });
+    });
+    
+    // Suppression multiple
+    $('#deleteSelected').on('click', function() {
+        if (selectedBankings.size === 0) return;
+        
+        Swal.fire({
+            title: `Supprimer ${selectedBankings.size} donnée(s) bancaire(s) ?`,
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteBankings(Array.from(selectedBankings));
+            }
+        });
+    });
+    
+    // Fonction de suppression
+    // Fonction de suppression
+    function deleteBankings(ids) {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: ids }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || `${ids.length} donnée(s) bancaire(s) supprimée(s)`,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Réinitialiser la sélection
+                    selectedBankings.clear();
+                    $('#deleteSelected').prop('disabled', true);
+                    $('#selectAll').prop('checked', false);
+                    $('#toggleAll').prop('checked', false);
+                    
+                    // Recharger la liste et les stats
+                    loadBanking(currentPage, currentFilters);
+                    updateStats();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => deleteBankings(ids));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer le(s) donnée(s) bancaire(s)'
+                    });
+                }
+            }
+        });
+    }
+
+
+    // Sélection multiple
+    $(document).on('change', '.row-checkbox', function() {
+        const id = $(this).data('id').toString();
+        
+        if ($(this).prop('checked')) {
+            selectedBankings.add(id);
+        } else {
+            selectedBankings.delete(id);
+            $('#selectAll').prop('checked', false);
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#toggleAll').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        
+        if (isChecked) {
+            $('.row-checkbox').each(function() {
+                selectedBankings.add($(this).data('id').toString());
+            });
+        } else {
+            selectedBankings.clear();
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#selectAll').on('change', function() {
+        $('#toggleAll').prop('checked', $(this).prop('checked'));
+        $('#toggleAll').change();
+    });
+    
+    function updateDeleteButtonState() {
+        const hasSelection = selectedBankings.size > 0;
+        $('#deleteSelected').prop('disabled', !hasSelection);
+        $('#selectAll').prop('checked', hasSelection && 
+            selectedBankings.size === $('.row-checkbox').length);
+    }
+    
+    // Mettre à jour les statistiques
+    // Mettre à jour les statistiques
+    function updateStats() {
+        $.ajax({
+            url: STATS_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Format de réponse correspond à BanquierStatsView
+                $('#totalBanking').text(response.total || 0);
+                
+                // Mettre à jour d'autres statistiques dans le DOM si nécessaire
+                $('.stat-card.stat-total .stat-value').text(response.total || 0);
+                $('.stat-card.stat-banks .stat-value').text(response.banques_uniques || 0);
+                $('.stat-card.stat-accounts .stat-value').text(response.avec_compte || 0);
+                $('.stat-card.stat-address .stat-value').text(response.avec_adresse || 0);
+                
+                // Mettre à jour les pourcentages
+                const avecCommentaire = response.avec_commentaire || 0;
+                const total = response.total || 1;
+                const pourcentageCommentaire = Math.round((avecCommentaire / total) * 100);
+                
+                // Mettre à jour la carte de l'acheteur
+                $('#totalBanking').text(response.total || 0);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(updateStats);
+                } else {
+                    console.error('Erreur lors du chargement des statistiques:', xhr);
+                }
+            }
+        });
+    }
+
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialiser les tooltips Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Gérer l'ouverture du modal d'ajout
+    $('#addBankingModal').on('shown.bs.modal', function() {
+        $('#nom_banque').focus();
+    });
+    
+    // Gérer l'ouverture du modal d'édition
+    $('#editBankingModal').on('shown.bs.modal', function() {
+        $('#editNomBanque').focus();
+    });
+});
+</script>
+{% endblock %}

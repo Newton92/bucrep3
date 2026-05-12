@@ -1,36 +1,12 @@
-from django.shortcuts import render
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.response import Response
-from django.http import JsonResponse
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from django.utils.translation import gettext_lazy as _
-from main.models import CustomUser
-from main.serializers import *
-import random
-import string
-from django.core.mail import send_mail
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
-from django.contrib.auth.decorators import login_required
-from main.utils import send_email_with_secret_code
-from django.template.loader import render_to_string
-from rest_framework import status
-from django.contrib.auth import logout
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
-from django.urls import reverse
-from django.contrib.auth import login
-from rest_framework.viewsets import ModelViewSet
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from main.serializers import *
 
 # === Vues Standard === #
 
@@ -39,48 +15,55 @@ class ListDeviseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         devise_list = Devise.objects.filter(
             Q(nom__icontains=search_query) | Q(code__icontains=search_query)
-        ).order_by('nom')
+        ).order_by("nom")
 
         paginator = Paginator(devise_list, 10)  # 10 éléments par page
         devise_page = paginator.get_page(page_number)
         serializer = DeviseSerializer(devise_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': devise_page.has_next(),
-            'previous': devise_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": devise_page.has_next(),
+                "previous": devise_page.has_previous(),
+            }
+        )
 
 
 class SearchDeviseView(APIView):
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search')
+        search_term = request.query_params.get("search")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         devise_list = Devise.objects.filter(
             Q(nom__icontains=search_term) | Q(code__icontains=search_term)
-        ).order_by('nom')
+        ).order_by("nom")
 
         paginator = Paginator(devise_list, 10)  # Nombre d'éléments par page
-        page_number = request.query_params.get('page')
+        page_number = request.query_params.get("page")
         devise_page = paginator.get_page(page_number)
         serializer = DeviseSerializer(devise_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': devise_page.has_next(),
-            'previous': devise_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": devise_page.has_next(),
+                "previous": devise_page.has_previous(),
+            }
+        )
 
 
 class AddDeviseView(APIView):
@@ -101,7 +84,9 @@ class EditDeviseView(APIView):
         try:
             devise = Devise.objects.get(id=id)
         except Devise.DoesNotExist:
-            return Response({'detail': 'Devise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Devise non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = DeviseSerializer(devise)
         return Response(serializer.data)
@@ -110,7 +95,9 @@ class EditDeviseView(APIView):
         try:
             devise = Devise.objects.get(id=id)
         except Devise.DoesNotExist:
-            return Response({'detail': 'Devise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Devise non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = DeviseSerializer(devise, data=request.data)
         if serializer.is_valid():
@@ -123,66 +110,104 @@ class DeleteDeviseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids')
+        ids = request.data.get("ids")
         if not ids:
-            return Response({'detail': 'Aucun ID de devise fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Aucun ID de devise fourni."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         devises = Devise.objects.filter(id__in=ids)
         if not devises.exists():
-            return Response({'detail': 'Aucune devise trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Aucune devise trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         devises.delete()
-        return Response({'detail': 'Les devises ont été supprimées avec succès.'}, status=status.HTTP_204_NO_CONTENT)
-
-
+        return Response(
+            {"detail": "Les devises ont été supprimées avec succès."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 class ListAnneeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
-        annee_list = Annee.objects.filter(
-            Q(annee__icontains=search_query)
-        ).order_by('annee')
+        annee_list = Annee.objects.filter(Q(annee__icontains=search_query)).order_by(
+            "annee"
+        )
 
         paginator = Paginator(annee_list, 10)  # 10 éléments par page
         annee_page = paginator.get_page(page_number)
         serializer = AnneeSerializer(annee_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': annee_page.has_next(),
-            'previous': annee_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": annee_page.has_next(),
+                "previous": annee_page.has_previous(),
+            }
+        )
+
+
+class ListAnneeViewWithoutPagination(APIView):
+    """
+    Vue pour renvoyer la LISTE COMPLÈTE des années civiles.
+    La pagination est retirée car cette vue est utilisée pour peupler des listes déroulantes.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Le filtre par recherche peut être conservé si utile, sinon il peut être retiré.
+        search_query = request.query_params.get("search", "")
+
+        # On récupère TOUS les objets, pas seulement une page
+        annee_list = Annee.objects.filter(Q(annee__icontains=search_query)).order_by(
+            "annee"
+        )
+
+        # On sérialise directement le queryset complet
+        serializer = AnneeSerializer(annee_list, many=True)
+
+        # On renvoie directement la liste des données
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SearchAnneeView(APIView):
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search')
+        search_term = request.query_params.get("search")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        annee_list = Annee.objects.filter(
-            Q(annee__icontains=search_term)
-        ).order_by('annee')
+        annee_list = Annee.objects.filter(Q(annee__icontains=search_term)).order_by(
+            "annee"
+        )
 
         paginator = Paginator(annee_list, 10)  # Nombre d'éléments par page
-        page_number = request.query_params.get('page')
+        page_number = request.query_params.get("page")
         annee_page = paginator.get_page(page_number)
         serializer = AnneeSerializer(annee_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': annee_page.has_next(),
-            'previous': annee_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": annee_page.has_next(),
+                "previous": annee_page.has_previous(),
+            }
+        )
 
 
 class AddAnneeView(APIView):
@@ -203,7 +228,9 @@ class EditAnneeView(APIView):
         try:
             annee = Annee.objects.get(id=id)
         except Annee.DoesNotExist:
-            return Response({'detail': 'Année non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Année non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = AnneeSerializer(annee)
         return Response(serializer.data)
@@ -212,7 +239,9 @@ class EditAnneeView(APIView):
         try:
             annee = Annee.objects.get(id=id)
         except Annee.DoesNotExist:
-            return Response({'detail': 'Année non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Année non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = AnneeSerializer(annee, data=request.data)
         if serializer.is_valid():
@@ -225,67 +254,82 @@ class DeleteAnneeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids')
+        ids = request.data.get("ids")
         if not ids:
-            return Response({'detail': 'Aucun ID d\'année fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Aucun ID d'année fourni."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         annees = Annee.objects.filter(id__in=ids)
         if not annees.exists():
-            return Response({'detail': 'Aucune année trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Aucune année trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         annees.delete()
-        return Response({'detail': 'Les années ont été supprimées avec succès.'}, status=status.HTTP_204_NO_CONTENT)
-
+        return Response(
+            {"detail": "Les années ont été supprimées avec succès."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 class ListColorationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         coloration_list = CouleurCommentaire.objects.filter(
             Q(couleur__icontains=search_query) | Q(code__icontains=search_query)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(coloration_list, 10)  # 10 éléments par page
         coloration_page = paginator.get_page(page_number)
         serializer = CouleurCommentaireSerializer(coloration_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': coloration_page.has_next(),
-            'previous': coloration_page.has_previous()
-        })
-        
-        
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": coloration_page.has_next(),
+                "previous": coloration_page.has_previous(),
+            }
+        )
+
+
 class SearchColorationView(APIView):
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search')
+        search_term = request.query_params.get("search")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         coloration_list = CouleurCommentaire.objects.filter(
             Q(couleur__icontains=search_term) | Q(code__icontains=search_term)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(coloration_list, 10)  # Nombre d'éléments par page
-        page_number = request.query_params.get('page')
+        page_number = request.query_params.get("page")
         coloration_page = paginator.get_page(page_number)
         serializer = CouleurCommentaireSerializer(coloration_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': coloration_page.has_next(),
-            'previous': coloration_page.has_previous()
-        })
-        
-        
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": coloration_page.has_next(),
+                "previous": coloration_page.has_previous(),
+            }
+        )
+
+
 class AddColorationView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -295,7 +339,6 @@ class AddColorationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
 class EditColorationView(APIView):
@@ -305,7 +348,9 @@ class EditColorationView(APIView):
         try:
             coloration = CouleurCommentaire.objects.get(id=id)
         except CouleurCommentaire.DoesNotExist:
-            return Response({'detail': 'Coloration non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Coloration non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CouleurCommentaireSerializer(coloration)
         return Response(serializer.data)
@@ -314,80 +359,97 @@ class EditColorationView(APIView):
         try:
             coloration = CouleurCommentaire.objects.get(id=id)
         except CouleurCommentaire.DoesNotExist:
-            return Response({'detail': 'Coloration non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Coloration non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CouleurCommentaireSerializer(coloration, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class DeleteColorationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids')
+        ids = request.data.get("ids")
         if not ids:
-            return Response({'detail': 'Aucun ID de coloration fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Aucun ID de coloration fourni."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         colorations = CouleurCommentaire.objects.filter(id__in=ids)
         if not colorations.exists():
-            return Response({'detail': 'Aucune coloration trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Aucune coloration trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         colorations.delete()
-        return Response({'detail': 'Les colorations ont été supprimées avec succès.'}, status=status.HTTP_204_NO_CONTENT)
-    
-    
-    
+        return Response(
+            {"detail": "Les colorations ont été supprimées avec succès."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
 class ListCategoryNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         category_list = CategoryNaceCode.objects.filter(
             Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(category_list, 10)  # 10 éléments par page
         category_page = paginator.get_page(page_number)
         serializer = AddCategoryNaceCodeSerializer(category_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': category_page.has_next(),
-            'previous': category_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": category_page.has_next(),
+                "previous": category_page.has_previous(),
+            }
+        )
 
 
 class SearchCategoryNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search')
+        search_term = request.query_params.get("search")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         category_list = CategoryNaceCode.objects.filter(
             Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(category_list, 10)
-        page_number = request.query_params.get('page')
+        page_number = request.query_params.get("page")
         category_page = paginator.get_page(page_number)
         serializer = AddCategoryNaceCodeSerializer(category_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': category_page.has_next(),
-            'previous': category_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": category_page.has_next(),
+                "previous": category_page.has_previous(),
+            }
+        )
 
 
 class AddCategoryNaceView(APIView):
@@ -408,16 +470,20 @@ class EditCategoryNaceView(APIView):
         try:
             category = CategoryNaceCode.objects.get(id=id)
         except CategoryNaceCode.DoesNotExist:
-            return Response({'detail': 'Catégorie non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-        serializer = AddCategoryNaceCodeSerializer(category)
+        serializer = EditCategoryNaceCodeSerializer(category)
         return Response(serializer.data)
 
     def put(self, request, id, *args, **kwargs):
         try:
             category = CategoryNaceCode.objects.get(id=id)
         except CategoryNaceCode.DoesNotExist:
-            return Response({'detail': 'Catégorie non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie non trouvée."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = AddCategoryNaceCodeSerializer(category, data=request.data)
         if serializer.is_valid():
@@ -430,67 +496,80 @@ class DeleteCategoryNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'detail': 'Liste des IDs manquante ou invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Liste des IDs manquante ou invalide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         categories = CategoryNaceCode.objects.filter(id__in=ids)
         deleted_count = categories.count()
         categories.delete()
 
-        return Response({'detail': f'{deleted_count} catégorie(s) supprimée(s).'}, status=status.HTTP_200_OK)
-    
-    
+        return Response(
+            {"detail": f"{deleted_count} catégorie(s) supprimée(s)."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class ListCategoryNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         category_list = CategoryNafCode.objects.filter(
             Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(category_list, 10)  # 10 éléments par page
         category_page = paginator.get_page(page_number)
         serializer = AddCategoryNafCodeSerializer(category_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': category_page.has_next(),
-            'previous': category_page.has_previous()
-        })
-        
-        
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": category_page.has_next(),
+                "previous": category_page.has_previous(),
+            }
+        )
+
+
 class SearchCategoryNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         category_list = CategoryNafCode.objects.filter(
             Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
-        ).order_by('code')
+        ).order_by("code")
 
         paginator = Paginator(category_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         category_page = paginator.get_page(page_number)
         serializer = AddCategoryNafCodeSerializer(category_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': category_page.has_next(),
-            'previous': category_page.has_previous()
-        })
-        
-        
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": category_page.has_next(),
+                "previous": category_page.has_previous(),
+            }
+        )
+
+
 class AddCategoryNafView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -500,15 +579,18 @@ class AddCategoryNafView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class EditCategoryNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         category = CategoryNafCode.objects.filter(id=id).first()
         if not category:
-            return Response({'detail': 'Catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = AddCategoryNafCodeSerializer(category)
         return Response(serializer.data)
@@ -516,85 +598,106 @@ class EditCategoryNafView(APIView):
     def put(self, request, id, *args, **kwargs):
         category = CategoryNafCode.objects.filter(id=id).first()
         if not category:
-            return Response({'detail': 'Catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = AddCategoryNafCodeSerializer(category, data=request.data, partial=True)
+        serializer = AddCategoryNafCodeSerializer(
+            category, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class DeleteCategoryNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         categories = CategoryNafCode.objects.filter(id__in=ids)
         if not categories.exists():
-            return Response({'error': 'Aucune catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune catégorie trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = categories.delete()
-        return Response({'message': f'{count} catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} catégories supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListCodeNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
-        
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
+
         subcategory_list = SubCategoryNaceCode.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(category__code__icontains=search_query) |
-            Q(category__libelle__icontains=search_query)
-        ).order_by('code')
-        
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(category__code__icontains=search_query)
+            | Q(category__libelle__icontains=search_query)
+        ).order_by("code")
+
         paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
         subcategory_page = paginator.get_page(page_number)
         serializer = SubCategoryNaceCodeSerializer(subcategory_page, many=True)
-        
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': subcategory_page.has_next(),
-            'previous': subcategory_page.has_previous()
-        })
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": subcategory_page.has_next(),
+                "previous": subcategory_page.has_previous(),
+            }
+        )
 
 
 class SearchCodeNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         subcategory_list = SubCategoryNaceCode.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(category__code__icontains=search_term) |
-            Q(category__libelle__icontains=search_term)
-        ).order_by('code')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(category__code__icontains=search_term)
+            | Q(category__libelle__icontains=search_term)
+        ).order_by("code")
 
         paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         subcategory_page = paginator.get_page(page_number)
         serializer = SubCategoryNaceCodeSerializer(subcategory_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': subcategory_page.has_next(),
-            'previous': subcategory_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": subcategory_page.has_next(),
+                "previous": subcategory_page.has_previous(),
+            }
+        )
 
 
 class AddCodeNaceView(APIView):
@@ -614,7 +717,10 @@ class EditCodeNaceView(APIView):
     def get(self, request, id, *args, **kwargs):
         subcategory = SubCategoryNaceCode.objects.filter(id=id).first()
         if not subcategory:
-            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Sous-catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = EditSubCategoryNaceCodeSerializer(subcategory)
         return Response(serializer.data)
@@ -622,9 +728,14 @@ class EditCodeNaceView(APIView):
     def put(self, request, id, *args, **kwargs):
         subcategory = SubCategoryNaceCode.objects.filter(id=id).first()
         if not subcategory:
-            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Sous-catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = EditSubCategoryNaceCodeSerializer(subcategory, data=request.data, partial=True)
+        serializer = EditSubCategoryNaceCodeSerializer(
+            subcategory, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -635,73 +746,88 @@ class DeleteCodeNaceView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         subcategories = SubCategoryNaceCode.objects.filter(id__in=ids)
         if not subcategories.exists():
-            return Response({'error': 'Aucune sous-catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune sous-catégorie trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = subcategories.delete()
-        return Response({'message': f'{count} sous-catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
-
+        return Response(
+            {"message": f"{count} sous-catégories supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListCodeNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
-        
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
+
         subcategory_list = SubCategoryNafCode.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(category__code__icontains=search_query) |
-            Q(category__libelle__icontains=search_query)
-        ).order_by('code')
-        
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(category__code__icontains=search_query)
+            | Q(category__libelle__icontains=search_query)
+        ).order_by("code")
+
         paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
         subcategory_page = paginator.get_page(page_number)
         serializer = SubCategoryNafCodeSerializer(subcategory_page, many=True)
-        
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': subcategory_page.has_next(),
-            'previous': subcategory_page.has_previous()
-        })
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": subcategory_page.has_next(),
+                "previous": subcategory_page.has_previous(),
+            }
+        )
 
 
 class SearchCodeNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         subcategory_list = SubCategoryNafCode.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(category__code__icontains=search_term) |
-            Q(category__libelle__icontains=search_term)
-        ).order_by('code')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(category__code__icontains=search_term)
+            | Q(category__libelle__icontains=search_term)
+        ).order_by("code")
 
         paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         subcategory_page = paginator.get_page(page_number)
         serializer = SubCategoryNafCodeSerializer(subcategory_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': subcategory_page.has_next(),
-            'previous': subcategory_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": subcategory_page.has_next(),
+                "previous": subcategory_page.has_previous(),
+            }
+        )
 
 
 class AddCodeNafView(APIView):
@@ -721,7 +847,10 @@ class EditCodeNafView(APIView):
     def get(self, request, id, *args, **kwargs):
         subcategory = SubCategoryNafCode.objects.filter(id=id).first()
         if not subcategory:
-            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Sous-catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = EditSubCategoryNafCodeSerializer(subcategory)
         return Response(serializer.data)
@@ -729,9 +858,14 @@ class EditCodeNafView(APIView):
     def put(self, request, id, *args, **kwargs):
         subcategory = SubCategoryNafCode.objects.filter(id=id).first()
         if not subcategory:
-            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Sous-catégorie NAF non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = EditSubCategoryNafCodeSerializer(subcategory, data=request.data, partial=True)
+        serializer = EditSubCategoryNafCodeSerializer(
+            subcategory, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -742,70 +876,86 @@ class DeleteCodeNafView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         subcategories = SubCategoryNafCode.objects.filter(id__in=ids)
         if not subcategories.exists():
-            return Response({'error': 'Aucune sous-catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune sous-catégorie trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = subcategories.delete()
-        return Response({'message': f'{count} sous-catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} sous-catégories supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListFormeJuridiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         forme_juridique_list = FormeJuridique.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('code')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).order_by("code")
 
         paginator = Paginator(forme_juridique_list, 10)  # 10 éléments par page
         forme_juridique_page = paginator.get_page(page_number)
         serializer = FormeJuridiqueSerializer(forme_juridique_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': forme_juridique_page.has_next(),
-            'previous': forme_juridique_page.has_previous()
-        })
-        
-        
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": forme_juridique_page.has_next(),
+                "previous": forme_juridique_page.has_previous(),
+            }
+        )
+
+
 class SearchFormeJuridiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         forme_juridique_list = FormeJuridique.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term)
-        ).order_by('code')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+        ).order_by("code")
 
         paginator = Paginator(forme_juridique_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         forme_juridique_page = paginator.get_page(page_number)
         serializer = FormeJuridiqueSerializer(forme_juridique_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': forme_juridique_page.has_next(),
-            'previous': forme_juridique_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": forme_juridique_page.has_next(),
+                "previous": forme_juridique_page.has_previous(),
+            }
+        )
 
 
 class AddFormeJuridiqueView(APIView):
@@ -825,7 +975,10 @@ class EditFormeJuridiqueView(APIView):
     def get(self, request, id, *args, **kwargs):
         forme_juridique = FormeJuridique.objects.filter(id=id).first()
         if not forme_juridique:
-            return Response({'detail': 'Forme juridique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Forme juridique non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = FormeJuridiqueSerializer(forme_juridique)
         return Response(serializer.data)
@@ -833,9 +986,14 @@ class EditFormeJuridiqueView(APIView):
     def put(self, request, id, *args, **kwargs):
         forme_juridique = FormeJuridique.objects.filter(id=id).first()
         if not forme_juridique:
-            return Response({'detail': 'Forme juridique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Forme juridique non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = FormeJuridiqueSerializer(forme_juridique, data=request.data, partial=True)
+        serializer = FormeJuridiqueSerializer(
+            forme_juridique, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -846,69 +1004,87 @@ class DeleteFormeJuridiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         formes_juridiques = FormeJuridique.objects.filter(id__in=ids)
         if not formes_juridiques.exists():
-            return Response({'error': 'Aucune forme juridique trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune forme juridique trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = formes_juridiques.delete()
-        return Response({'message': f'{count} formes juridiques supprimées avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} formes juridiques supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListDomaineView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         domaine_list = DomaineEntreprise.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('libelle')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).order_by("libelle")
 
         paginator = Paginator(domaine_list, 10)  # 10 éléments par page
         domaine_page = paginator.get_page(page_number)
         serializer = DomaineEntrepriseSerializer(domaine_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': domaine_page.has_next(),
-            'previous': domaine_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": domaine_page.has_next(),
+                "previous": domaine_page.has_previous(),
+            }
+        )
+
 
 class SearchDomaineView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         domaine_list = DomaineEntreprise.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term)
-        ).order_by('libelle')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+        ).order_by("libelle")
 
         paginator = Paginator(domaine_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         domaine_page = paginator.get_page(page_number)
         serializer = DomaineEntrepriseSerializer(domaine_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': domaine_page.has_next(),
-            'previous': domaine_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": domaine_page.has_next(),
+                "previous": domaine_page.has_previous(),
+            }
+        )
+
 
 class AddDomaineView(APIView):
     permission_classes = [IsAuthenticated]
@@ -920,13 +1096,17 @@ class AddDomaineView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditDomaineView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         domaine = DomaineEntreprise.objects.filter(id=id).first()
         if not domaine:
-            return Response({'detail': 'Domaine entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Domaine entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = DomaineEntrepriseSerializer(domaine)
         return Response(serializer.data)
@@ -934,85 +1114,109 @@ class EditDomaineView(APIView):
     def put(self, request, id, *args, **kwargs):
         domaine = DomaineEntreprise.objects.filter(id=id).first()
         if not domaine:
-            return Response({'detail': 'Domaine entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Domaine entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = DomaineEntrepriseSerializer(domaine, data=request.data, partial=True)
+        serializer = DomaineEntrepriseSerializer(
+            domaine, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeleteDomaineView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         domaines = DomaineEntreprise.objects.filter(id__in=ids)
         if not domaines.exists():
-            return Response({'error': 'Aucun domaine entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun domaine entreprise trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = domaines.delete()
-        return Response({'message': f'{count} domaines entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} domaines entreprise supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListPosteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         poste_list = PosteEntreprise.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(domaine__code__icontains=search_query) |
-            Q(domaine__libelle__icontains=search_query)
-        ).order_by('libelle')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(domaine__code__icontains=search_query)
+            | Q(domaine__libelle__icontains=search_query)
+        ).order_by("libelle")
 
         paginator = Paginator(poste_list, 10)  # 10 éléments par page
         poste_page = paginator.get_page(page_number)
         serializer = PosteEntrepriseSerializer(poste_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': poste_page.has_next(),
-            'previous': poste_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": poste_page.has_next(),
+                "previous": poste_page.has_previous(),
+            }
+        )
+
 
 class SearchPosteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         poste_list = PosteEntreprise.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term) |
-            Q(domaine__code__icontains=search_term) |
-            Q(domaine__libelle__icontains=search_term)
-        ).order_by('libelle')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+            | Q(domaine__code__icontains=search_term)
+            | Q(domaine__libelle__icontains=search_term)
+        ).order_by("libelle")
 
         paginator = Paginator(poste_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         poste_page = paginator.get_page(page_number)
         serializer = PosteEntrepriseSerializer(poste_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': poste_page.has_next(),
-            'previous': poste_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": poste_page.has_next(),
+                "previous": poste_page.has_previous(),
+            }
+        )
+
 
 class AddPosteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1024,13 +1228,17 @@ class AddPosteView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditPosteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         poste = PosteEntreprise.objects.filter(id=id).first()
         if not poste:
-            return Response({'detail': 'Poste entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Poste entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = EditPosteEntrepriseSerializer(poste)
         return Response(serializer.data)
@@ -1038,81 +1246,105 @@ class EditPosteView(APIView):
     def put(self, request, id, *args, **kwargs):
         poste = PosteEntreprise.objects.filter(id=id).first()
         if not poste:
-            return Response({'detail': 'Poste entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Poste entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = EditPosteEntrepriseSerializer(poste, data=request.data, partial=True)
+        serializer = EditPosteEntrepriseSerializer(
+            poste, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeletePosteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         postes = PosteEntreprise.objects.filter(id__in=ids)
         if not postes.exists():
-            return Response({'error': 'Aucun poste entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun poste entreprise trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = postes.delete()
-        return Response({'message': f'{count} postes entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} postes entreprise supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListCategorieEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         categorie_list = CategorieEntreprise.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('libelle')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).order_by("libelle")
 
         paginator = Paginator(categorie_list, 10)  # 10 éléments par page
         categorie_page = paginator.get_page(page_number)
         serializer = CategorieEntrepriseSerializer(categorie_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': categorie_page.has_next(),
-            'previous': categorie_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": categorie_page.has_next(),
+                "previous": categorie_page.has_previous(),
+            }
+        )
+
 
 class SearchCategorieEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         categorie_list = CategorieEntreprise.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term)
-        ).order_by('libelle')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+        ).order_by("libelle")
 
         paginator = Paginator(categorie_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         categorie_page = paginator.get_page(page_number)
         serializer = CategorieEntrepriseSerializer(categorie_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': categorie_page.has_next(),
-            'previous': categorie_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": categorie_page.has_next(),
+                "previous": categorie_page.has_previous(),
+            }
+        )
+
 
 class AddCategorieEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1124,13 +1356,17 @@ class AddCategorieEntrepriseView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditCategorieEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         categorie = CategorieEntreprise.objects.filter(id=id).first()
         if not categorie:
-            return Response({'detail': 'Catégorie entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie entreprise non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = CategorieEntrepriseSerializer(categorie)
         return Response(serializer.data)
@@ -1138,82 +1374,105 @@ class EditCategorieEntrepriseView(APIView):
     def put(self, request, id, *args, **kwargs):
         categorie = CategorieEntreprise.objects.filter(id=id).first()
         if not categorie:
-            return Response({'detail': 'Catégorie entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Catégorie entreprise non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = CategorieEntrepriseSerializer(categorie, data=request.data, partial=True)
+        serializer = CategorieEntrepriseSerializer(
+            categorie, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeleteCategorieEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         categories = CategorieEntreprise.objects.filter(id__in=ids)
         if not categories.exists():
-            return Response({'error': 'Aucune catégorie entreprise trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune catégorie entreprise trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = categories.delete()
-        return Response({'message': f'{count} catégories entreprise supprimées avec succès.'}, status=status.HTTP_200_OK)
-
+        return Response(
+            {"message": f"{count} catégories entreprise supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ListStructureEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         structure_list = StructureEntreprise.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('libelle')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).order_by("libelle")
 
         paginator = Paginator(structure_list, 10)  # 10 éléments par page
         structure_page = paginator.get_page(page_number)
         serializer = StructureEntrepriseSerializer(structure_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': structure_page.has_next(),
-            'previous': structure_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": structure_page.has_next(),
+                "previous": structure_page.has_previous(),
+            }
+        )
+
 
 class SearchStructureEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         structure_list = StructureEntreprise.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term)
-        ).order_by('libelle')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+        ).order_by("libelle")
 
         paginator = Paginator(structure_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         structure_page = paginator.get_page(page_number)
         serializer = StructureEntrepriseSerializer(structure_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': structure_page.has_next(),
-            'previous': structure_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": structure_page.has_next(),
+                "previous": structure_page.has_previous(),
+            }
+        )
+
 
 class AddStructureEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1225,13 +1484,17 @@ class AddStructureEntrepriseView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditStructureEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         structure = StructureEntreprise.objects.filter(id=id).first()
         if not structure:
-            return Response({'detail': 'Structure entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Structure entreprise non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = StructureEntrepriseSerializer(structure)
         return Response(serializer.data)
@@ -1239,82 +1502,105 @@ class EditStructureEntrepriseView(APIView):
     def put(self, request, id, *args, **kwargs):
         structure = StructureEntreprise.objects.filter(id=id).first()
         if not structure:
-            return Response({'detail': 'Structure entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Structure entreprise non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = StructureEntrepriseSerializer(structure, data=request.data, partial=True)
+        serializer = StructureEntrepriseSerializer(
+            structure, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeleteStructureEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         structures = StructureEntreprise.objects.filter(id__in=ids)
         if not structures.exists():
-            return Response({'error': 'Aucune structure entreprise trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucune structure entreprise trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = structures.delete()
-        return Response({'message': f'{count} structures entreprise supprimées avec succès.'}, status=status.HTTP_200_OK)
-    
-    
-    
+        return Response(
+            {"message": f"{count} structures entreprise supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class ListStatutEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_query = request.query_params.get('search', '')
-        page_number = request.query_params.get('page', 1)
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
 
         statut_list = StatutEntreprise.objects.filter(
-            Q(code__icontains=search_query) |
-            Q(libelle__icontains=search_query) |
-            Q(description__icontains=search_query)
-        ).order_by('libelle')
+            Q(code__icontains=search_query)
+            | Q(libelle__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).order_by("libelle")
 
         paginator = Paginator(statut_list, 10)  # 10 éléments par page
         statut_page = paginator.get_page(page_number)
         serializer = StatutEntrepriseSerializer(statut_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': statut_page.has_next(),
-            'previous': statut_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": statut_page.has_next(),
+                "previous": statut_page.has_previous(),
+            }
+        )
+
 
 class SearchStatutEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        search_term = request.query_params.get('search', '')
+        search_term = request.query_params.get("search", "")
         if not search_term:
-            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         statut_list = StatutEntreprise.objects.filter(
-            Q(code__icontains=search_term) |
-            Q(libelle__icontains=search_term) |
-            Q(description__icontains=search_term)
-        ).order_by('libelle')
+            Q(code__icontains=search_term)
+            | Q(libelle__icontains=search_term)
+            | Q(description__icontains=search_term)
+        ).order_by("libelle")
 
         paginator = Paginator(statut_list, 10)  # 10 éléments par page
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         statut_page = paginator.get_page(page_number)
         serializer = StatutEntrepriseSerializer(statut_page, many=True)
 
-        return Response({
-            'results': serializer.data,
-            'count': paginator.count,
-            'total_pages': paginator.num_pages,
-            'next': statut_page.has_next(),
-            'previous': statut_page.has_previous()
-        })
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": statut_page.has_next(),
+                "previous": statut_page.has_previous(),
+            }
+        )
+
 
 class AddStatutEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1326,13 +1612,17 @@ class AddStatutEntrepriseView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class EditStatutEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
         statut = StatutEntreprise.objects.filter(id=id).first()
         if not statut:
-            return Response({'detail': 'Statut entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Statut entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = StatutEntrepriseSerializer(statut)
         return Response(serializer.data)
@@ -1340,7 +1630,10 @@ class EditStatutEntrepriseView(APIView):
     def put(self, request, id, *args, **kwargs):
         statut = StatutEntreprise.objects.filter(id=id).first()
         if not statut:
-            return Response({'detail': 'Statut entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Statut entreprise non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = StatutEntrepriseSerializer(statut, data=request.data, partial=True)
         if serializer.is_valid():
@@ -1348,17 +1641,159 @@ class EditStatutEntrepriseView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeleteStatutEntrepriseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        ids = request.data.get('ids', [])
+        ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
-            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         statuts = StatutEntreprise.objects.filter(id__in=ids)
         if not statuts.exists():
-            return Response({'error': 'Aucun statut entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Aucun statut entreprise trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         count, _ = statuts.delete()
-        return Response({'message': f'{count} statuts entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": f"{count} statuts entreprise supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ListElementSurveillanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
+
+        element_list = ElementSurveillance.objects.filter(
+            Q(nom__icontains=search_query)
+            | Q(code_interne__icontains=search_query)
+            | Q(categorie__icontains=search_query)
+            | Q(sous_categorie__icontains=search_query)
+        ).order_by("nom")
+
+        paginator = Paginator(element_list, 10)  # 10 éléments par page
+        element_page = paginator.get_page(page_number)
+        serializer = ListElementSurveillanceSerializer(element_page, many=True)
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": element_page.has_next(),
+                "previous": element_page.has_previous(),
+            }
+        )
+
+
+class SearchElementSurveillanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get("search")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        element_list = ElementSurveillance.objects.filter(
+            Q(nom__icontains=search_term)
+            | Q(code_interne__icontains=search_term)
+            | Q(categorie__icontains=search_term)
+            | Q(sous_categorie__icontains=search_term)
+        ).order_by("nom")
+
+        paginator = Paginator(element_list, 10)  # Nombre d'éléments par page
+        page_number = request.query_params.get("page")
+        element_page = paginator.get_page(page_number)
+        serializer = ListElementSurveillanceSerializer(element_page, many=True)
+
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": element_page.has_next(),
+                "previous": element_page.has_previous(),
+            }
+        )
+
+
+class AddElementSurveillanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddElementSurveillanceSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditElementSurveillanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        try:
+            element = ElementSurveillance.objects.get(id=id)
+        except ElementSurveillance.DoesNotExist:
+            return Response(
+                {"detail": "Élément de surveillance non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = EditElementSurveillanceSerializer(element)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        try:
+            element = ElementSurveillance.objects.get(id=id)
+        except ElementSurveillance.DoesNotExist:
+            return Response(
+                {"detail": "Élément de surveillance non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = EditElementSurveillanceSerializer(element, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteElementSurveillanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get("ids")
+        if not ids:
+            return Response(
+                {"detail": "Aucun ID d'élément de surveillance fourni."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        elements = ElementSurveillance.objects.filter(id__in=ids)
+        if not elements.exists():
+            return Response(
+                {
+                    "detail": "Aucun élément de surveillance trouvé pour les IDs fournis."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        elements.delete()
+        return Response(
+            {"detail": "Les éléments de surveillance ont été supprimés avec succès."},
+            status=status.HTTP_204_NO_CONTENT,
+        )

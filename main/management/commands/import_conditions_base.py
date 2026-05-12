@@ -1,0 +1,288 @@
+# management/commands/import_conditions_base.py
+from django.core.management.base import BaseCommand
+from django.db import connection
+from django.utils.translation import gettext_lazy as _
+from main.models import ListeConditionAchat, ListeConditionVente
+
+
+class Command(BaseCommand):
+    help = 'Import des données de base pour les conditions d\'achat et vente'
+    
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--type',
+            type=str,
+            choices=['achat', 'vente', 'all'],
+            default='all',
+            help='Type de données à importer (achat, vente, all)',
+        )
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help='Supprimer les données existantes avant import',
+        )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Simuler sans enregistrer en base',
+        )
+
+    def handle(self, *args, **options):
+        import_type = options.get('type', 'all')
+        clear_data = options.get('clear', False)
+        dry_run = options.get('dry_run', False)
+        
+        self.stdout.write("="*60)
+        self.stdout.write("IMPORT DES CONDITIONS D'ACHAT ET VENTE")
+        self.stdout.write("="*60)
+        
+        if dry_run:
+            self.stdout.write(self.style.WARNING("MODE SIMULATION - Pas de sauvegarde en base"))
+        
+        try:
+            if import_type in ['achat', 'all']:
+                self.import_conditions_achat(clear_data, dry_run)
+            
+            if import_type in ['vente', 'all']:
+                self.import_conditions_vente(clear_data, dry_run)
+            
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'Erreur: {str(e)}'))
+            import traceback
+            traceback.print_exc()
+    
+    def import_conditions_achat(self, clear_data, dry_run):
+        """Importe les conditions d'achat"""
+        self.stdout.write("\n" + "="*50)
+        self.stdout.write("CONDITIONS D'ACHAT")
+        self.stdout.write("="*50)
+        
+        # Données à importer
+        CONDITIONS_ACHAT = [
+            "Paiement comptant",
+            "Paiement à réception",
+            "Paiement par virement",
+            "Paiement contre documents",
+            "Crédit documentaire",
+            "Lettre de crédit à terme",
+            "Lettre de crédit à vue",
+            "Délai de paiement de 30 à 60 jours date BL",
+            "Délai de paiement de 60 à 90 jours date LB",
+            "Délai de paiement de 90 à 120 Jours date BL",
+            "Délais de paiement de 30 à 60 jours avec pénalités de retard",
+            "Délais de paiement de 60 à 90 jours avec pénalités de retard",
+            "Délais de paiement de 90 à 120 jours avec pénalités de retard",
+            "Délais de paiement de 120 à 180 jours avec pénalités de retard",
+        ]
+        
+        if dry_run:
+            self.stdout.write(f"\n{len(CONDITIONS_ACHAT)} conditions d'achat à importer:")
+            for i, condition in enumerate(CONDITIONS_ACHAT, 1):
+                self.stdout.write(f"  {i:2}. {condition}")
+            return
+        
+        # Vérifier le modèle
+        try:
+            # Vérifier les champs du modèle
+            model_fields = [f.name for f in ListeConditionAchat._meta.fields]
+            self.stdout.write(f"Champs du modèle: {model_fields}")
+        except:
+            self.stdout.write(self.style.WARNING("Le modèle ListeConditionAchat n'existe pas ou a un problème"))
+            return
+        
+        # Nettoyer si demandé
+        if clear_data:
+            self.stdout.write("Suppression des données existantes...")
+            try:
+                deleted = ListeConditionAchat.objects.all().delete()
+                if isinstance(deleted, tuple):
+                    deleted = deleted[0]
+                self.stdout.write(self.style.SUCCESS(f"✓ {deleted} conditions d'achat supprimées"))
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f"⚠ Impossible de supprimer: {str(e)[:100]}"))
+        
+        # Importer les données
+        created = 0
+        errors = 0
+        skipped = 0
+        
+        for condition in CONDITIONS_ACHAT:
+            try:
+                # Vérifier si existe déjà
+                if not ListeConditionAchat.objects.filter(nom=condition).exists():
+                    ListeConditionAchat.objects.create(nom=condition)
+                    created += 1
+                    self.stdout.write(self.style.SUCCESS(f"✓ {condition}"))
+                else:
+                    skipped += 1
+                    self.stdout.write(self.style.WARNING(f"↺ {condition} (existe déjà)"))
+                    
+            except Exception as e:
+                errors += 1
+                self.stdout.write(self.style.ERROR(f"✗ {condition}: {str(e)[:50]}"))
+        
+        # Résumé
+        self.stdout.write("\n" + "-"*40)
+        self.stdout.write(f"Créés: {created}")
+        self.stdout.write(f"Déjà existants: {skipped}")
+        self.stdout.write(f"Erreurs: {errors}")
+        self.stdout.write(f"Total en base: {ListeConditionAchat.objects.count()}")
+    
+    def import_conditions_vente(self, clear_data, dry_run):
+        """Importe les conditions de vente"""
+        self.stdout.write("\n" + "="*50)
+        self.stdout.write("CONDITIONS DE VENTE")
+        self.stdout.write("="*50)
+        
+        # Données à importer
+        CONDITIONS_VENTE = [
+            "Espèces",
+            "Chèque",
+            "Virement bancaire",
+            "Effets de commerce papier",
+            "Lettre de Change",
+            "Billet à ordre",
+            "Carte de credit/debit",
+            "Délais de paiement de 15 à 30 jours avec pénalités de retard",
+            "Délais de paiement de 30 à 60 jours avec pénalités de retard",
+            "Délais de paiement de 60 à 90 jours avec pénalités de retard",
+        ]
+        
+        if dry_run:
+            self.stdout.write(f"\n{len(CONDITIONS_VENTE)} conditions de vente à importer:")
+            for i, condition in enumerate(CONDITIONS_VENTE, 1):
+                self.stdout.write(f"  {i:2}. {condition}")
+            return
+        
+        # Vérifier le modèle
+        try:
+            # Vérifier les champs du modèle
+            model_fields = [f.name for f in ListeConditionVente._meta.fields]
+            self.stdout.write(f"Champs du modèle: {model_fields}")
+        except:
+            self.stdout.write(self.style.WARNING("Le modèle ListeConditionVente n'existe pas ou a un problème"))
+            return
+        
+        # Nettoyer si demandé
+        if clear_data:
+            self.stdout.write("Suppression des données existantes...")
+            try:
+                deleted = ListeConditionVente.objects.all().delete()
+                if isinstance(deleted, tuple):
+                    deleted = deleted[0]
+                self.stdout.write(self.style.SUCCESS(f"✓ {deleted} conditions de vente supprimées"))
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f"⚠ Impossible de supprimer: {str(e)[:100]}"))
+        
+        # Importer les données
+        created = 0
+        errors = 0
+        skipped = 0
+        
+        for condition in CONDITIONS_VENTE:
+            try:
+                # Vérifier si existe déjà
+                if not ListeConditionVente.objects.filter(nom=condition).exists():
+                    ListeConditionVente.objects.create(nom=condition)
+                    created += 1
+                    self.stdout.write(self.style.SUCCESS(f"✓ {condition}"))
+                else:
+                    skipped += 1
+                    self.stdout.write(self.style.WARNING(f"↺ {condition} (existe déjà)"))
+                    
+            except Exception as e:
+                errors += 1
+                self.stdout.write(self.style.ERROR(f"✗ {condition}: {str(e)[:50]}"))
+        
+        # Résumé
+        self.stdout.write("\n" + "-"*40)
+        self.stdout.write(f"Créés: {created}")
+        self.stdout.write(f"Déjà existants: {skipped}")
+        self.stdout.write(f"Erreurs: {errors}")
+        self.stdout.write(f"Total en base: {ListeConditionVente.objects.count()}")
+
+
+# Version simplifiée avec SQL brut
+class CommandSQL(BaseCommand):
+    """Version utilisant SQL brut pour contourner les problèmes"""
+    help = 'Import SQL des conditions d\'achat et vente'
+    
+    def handle(self, *args, **options):
+        self.stdout.write("Import via SQL brut...")
+        
+        CONDITIONS_ACHAT_SQL = [
+            ("1", "Paiement comptant"),
+            ("2", "Paiement à réception"),
+            ("3", "Paiement par virement"),
+            ("4", "Paiement contre documents"),
+            ("5", "Crédit documentaire"),
+            ("6", "Lettre de crédit à terme"),
+            ("7", "Lettre de crédit à vue"),
+            ("8", "Délai de paiement de 30 à 60 jours date BL"),
+            ("9", "Délai de paiement de 60 à 90 jours date LB"),
+            ("10", "Délai de paiement de 90 à 120 Jours date BL"),
+            ("11", "Délais de paiement de 30 à 60 jours avec pénalités de retard"),
+            ("12", "Délais de paiement de 60 à 90 jours avec pénalités de retard"),
+            ("13", "Délais de paiement de 90 à 120 jours avec pénalités de retard"),
+            ("14", "Délais de paiement de 120 à 180 jours avec pénalités de retard"),
+        ]
+        
+        CONDITIONS_VENTE_SQL = [
+            ("1", "Espèces"),
+            ("2", "Chèque"),
+            ("3", "Virement bancaire"),
+            ("4", "Effets de commerce papier"),
+            ("5", "Lettre de Change"),
+            ("6", "Billet à ordre"),
+            ("7", "Carte de credit/debit"),
+            ("8", "Délais de paiement de 15 à 30 jours avec pénalités de retard"),
+            ("9", "Délais de paiement de 30 à 60 jours avec pénalités de retard"),
+            ("10", "Délais de paiement de 60 à 90 jours avec pénalités de retard"),
+        ]
+        
+        with connection.cursor() as cursor:
+            # 1. Conditions d'achat
+            self.stdout.write("\nImport conditions d'achat...")
+            for code, nom in CONDITIONS_ACHAT_SQL:
+                try:
+                    cursor.execute("""
+                        INSERT INTO main_listeconditionachat (code, nom)
+                        VALUES (%s, %s)
+                        ON CONFLICT (code) DO NOTHING;
+                    """, [code, nom])
+                    self.stdout.write(self.style.SUCCESS(f"  ✓ {nom}"))
+                except Exception as e:
+                    # Si la table n'a pas de code, essayer sans
+                    try:
+                        cursor.execute("""
+                            INSERT INTO main_listeconditionachat (nom)
+                            VALUES (%s);
+                        """, [nom])
+                        self.stdout.write(self.style.SUCCESS(f"  ✓ {nom}"))
+                    except:
+                        self.stdout.write(self.style.ERROR(f"  ✗ {nom}"))
+            
+            # 2. Conditions de vente
+            self.stdout.write("\nImport conditions de vente...")
+            for code, nom in CONDITIONS_VENTE_SQL:
+                try:
+                    cursor.execute("""
+                        INSERT INTO main_listeconditionvente (code, nom)
+                        VALUES (%s, %s)
+                        ON CONFLICT (code) DO NOTHING;
+                    """, [code, nom])
+                    self.stdout.write(self.style.SUCCESS(f"  ✓ {nom}"))
+                except Exception as e:
+                    # Si la table n'a pas de code, essayer sans
+                    try:
+                        cursor.execute("""
+                            INSERT INTO main_listeconditionvente (nom)
+                            VALUES (%s);
+                        """, [nom])
+                        self.stdout.write(self.style.SUCCESS(f"  ✓ {nom}"))
+                    except:
+                        self.stdout.write(self.style.ERROR(f"  ✗ {nom}"))
+        
+        self.stdout.write("\n" + "="*50)
+        self.stdout.write("IMPORT TERMINÉ")
+        self.stdout.write("="*50)

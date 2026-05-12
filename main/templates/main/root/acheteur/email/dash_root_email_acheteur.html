@@ -1,0 +1,1891 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-color: #0d80be;
+    --secondary-color: #25add6;
+    --accent-color: #0a95ca;
+    --light-color: #fcfefe;
+    --dark-color: #106cb2;
+    --email-color: #6f42c1;
+    --email-gradient: linear-gradient(135deg, #6f42c1, #9b5de5);
+    --email-light: #9b5de5;
+    --success-color: #28a745;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --card-shadow: 0 8px 25px rgba(111, 66, 193, 0.08);
+    --card-shadow-hover: 0 15px 35px rgba(111, 66, 193, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background-color: var(--light-color);
+    color: #333;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Header Premium */
+.page-header {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte email premium */
+.email-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(155, 93, 229, 0.2);
+    transition: var(--transition);
+    position: relative;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.email-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--email-light);
+    background: linear-gradient(135deg, white, rgba(252, 254, 254, 0.95));
+}
+
+.email-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background: var(--email-gradient);
+}
+
+/* Effet de brillance sur les cartes */
+.email-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    animation: cardShine 6s infinite;
+}
+
+@keyframes cardShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+/* En-tête de la carte premium */
+.email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.email-address {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--email-color);
+    font-family: 'SF Mono', 'Roboto Mono', monospace;
+    word-break: break-all;
+    background: var(--email-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(111, 66, 193, 0.1);
+}
+
+.email-domain {
+    color: var(--email-light);
+    font-weight: 700;
+}
+
+.email-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Actions rapides premium */
+.email-actions-quick {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-email {
+    background: var(--email-gradient);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.2);
+}
+
+.btn-email::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-email:hover::before {
+    left: 100%;
+}
+
+.btn-email:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(111, 66, 193, 0.3);
+    color: white;
+}
+
+/* Informations métadonnées premium */
+.email-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid rgba(155, 93, 229, 0.15);
+    font-size: 0.95rem;
+    color: #6c757d;
+    position: relative;
+    z-index: 2;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(155, 93, 229, 0.1);
+    transition: var(--transition);
+}
+
+.meta-item:hover {
+    transform: translateY(-2px);
+    background: white;
+    border-color: var(--email-light);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.1);
+}
+
+.meta-item i {
+    font-size: 1.2rem;
+    color: var(--email-color);
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, rgba(155, 93, 229, 0.1), rgba(111, 66, 193, 0.1));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Badge de statut premium */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.badge-email {
+    background: var(--email-gradient);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* État vide premium */
+.empty-state {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(252, 254, 254, 0.9), rgba(240, 248, 255, 0.9));
+    border-radius: 25px;
+    border: 3px dashed rgba(155, 93, 229, 0.4);
+    margin: 3rem 0;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(155, 93, 229, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(40px, 40px) rotate(360deg); }
+}
+
+.empty-state-icon {
+    font-size: 6rem;
+    color: var(--email-color);
+    margin-bottom: 2.5rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 4px 6px rgba(111, 66, 193, 0.2));
+}
+
+.empty-state h4 {
+    color: var(--email-color);
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    font-size: 2rem;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 3rem;
+    position: relative;
+    z-index: 2;
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+/* Formulaires premium */
+.enhanced-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 700;
+    color: var(--email-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.enhanced-form .form-label i {
+    width: 40px;
+    height: 40px;
+    background: var(--email-gradient);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.enhanced-form .form-control {
+    border: 2px solid rgba(155, 93, 229, 0.3);
+    border-radius: 15px;
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    transition: var(--transition);
+    font-family: 'SF Mono', 'Roboto Mono', monospace;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+}
+
+.enhanced-form .form-control:focus {
+    border-color: var(--email-color);
+    box-shadow: 0 0 0 0.35rem rgba(111, 66, 193, 0.25);
+    background: white;
+    transform: translateY(-2px);
+}
+
+/* Cartes premium */
+.enhanced-card {
+    border-radius: 20px;
+    border: 1px solid rgba(155, 93, 229, 0.2);
+    transition: var(--transition);
+    background: white;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.enhanced-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-5px);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: white;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+/* Boutons premium */
+.btn-action {
+    padding: 0.75rem 2rem;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: var(--transition);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-info {
+    background: var(--email-gradient);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.btn-outline-info {
+    background: transparent;
+    border: 2px solid var(--email-color);
+    color: var(--email-color);
+}
+
+.btn-outline-info:hover {
+    background: var(--email-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+/* Grille des emails premium */
+.emails-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+/* Contrôles de recherche premium */
+.search-controls {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(252, 254, 254, 0.9));
+    padding: 1.5rem;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(155, 93, 229, 0.2);
+    box-shadow: 0 8px 20px rgba(111, 66, 193, 0.1);
+}
+
+.search-input {
+    flex: 1;
+}
+
+.search-input .input-group {
+    height: 60px;
+}
+
+.search-input .input-group-text {
+    background: var(--email-gradient);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0 1.5rem;
+    border-radius: 15px 0 0 15px !important;
+}
+
+.search-input .form-control {
+    height: 100%;
+    border: 2px solid rgba(155, 93, 229, 0.2);
+    border-left: none;
+    border-radius: 0 15px 15px 0 !important;
+    font-size: 1.1rem;
+    padding: 0 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(5px);
+}
+
+.search-input .form-control:focus {
+    box-shadow: none;
+    border-color: var(--email-color);
+    background: white;
+}
+
+/* Statistiques premium */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(155, 93, 229, 0.2);
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
+    box-shadow: 0 8px 20px rgba(111, 66, 193, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(111, 66, 193, 0.2);
+    border-color: var(--email-light);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--email-gradient);
+}
+
+.stat-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--email-color);
+    margin-bottom: 0.5rem;
+    font-family: 'SF Mono', 'Roboto Mono', monospace;
+    background: var(--email-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+/* Indicateur email premium */
+.email-indicator {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: var(--email-gradient);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    z-index: 3;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+/* Pagination premium */
+.pagination .page-item .page-link {
+    border: none;
+    margin: 0 5px;
+    border-radius: 12px;
+    color: var(--primary-color);
+    font-weight: 600;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(155, 93, 229, 0.2);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--email-gradient);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+.pagination .page-item .page-link:hover {
+    background: var(--email-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
+}
+
+/* Modales premium */
+.modal-content {
+    border-radius: 25px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    background: var(--email-gradient);
+    color: white;
+    border-bottom: none;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+.modal-title {
+    font-weight: 800;
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: var(--transition);
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+.modal-danger .modal-header {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .emails-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 2rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .emails-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .email-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .email-address {
+        font-size: 1.5rem;
+    }
+    
+    .email-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 3rem 1.5rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .email-address {
+        font-size: 1.3rem;
+    }
+    
+    .email-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Ajustements pour la carte acheteur */
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(155, 93, 229, 0.1);
+    transition: var(--transition);
+}
+
+.acheteur-info-item:hover {
+    transform: translateX(10px);
+    background: white;
+    border-color: var(--email-light);
+    box-shadow: 0 8px 20px rgba(111, 66, 193, 0.1);
+}
+
+.acheteur-info-item i {
+    width: 45px;
+    height: 45px;
+    background: var(--email-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.3rem;
+}
+
+/* Badge premium */
+.badge-premium {
+    background: var(--email-gradient);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
+}
+
+/* Bouton copie email premium */
+.copy-email-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(252, 254, 254, 0.9));
+    border: 2px solid rgba(155, 93, 229, 0.2);
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: var(--email-color);
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(5px);
+    font-weight: 600;
+}
+
+.copy-email-btn:hover {
+    background: var(--email-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.2);
+}
+
+.copy-email-btn.copied {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-color: transparent;
+}
+
+/* Style pour email tronqué */
+.email-truncated {
+    cursor: help;
+    position: relative;
+}
+
+.email-truncated:hover::after {
+    content: attr(data-full-email);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: linear-gradient(135deg, var(--email-color), var(--email-light));
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+    <!-- Header Premium -->
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-envelope me-3"></i>{% trans "Adresses Email" %}
+                </h1>
+                <p class="page-subtitle">
+                    Gestion professionnelle des adresses email de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 1;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold text-white display-9">{{ acheteur.nom }}</h5>
+                    <p class="mb-0 opacity-90 fs-5">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge-premium fs-6">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small opacity-75">{% trans "Code ACREMAC" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Activité principale" %}</small>
+                            <span class="fw-bold fs-6">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Pays" %}</small>
+                            <span class="fw-bold fs-6">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <small class="text-muted d-block">{% trans "Statut" %}</small>
+                            <span class="fw-bold fs-6 text-purple">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Premium -->
+    <div class="stats-cards fade-in-up" style="--order: 2;">
+        <div class="stat-card">
+            <div class="stat-number">{{ emails_count }}</div>
+            <div class="stat-label">{% trans "Emails Enregistrés" %}</div>
+        </div>
+    </div>
+
+    <!-- Section Emails Premium -->
+    <div class="row fade-in-up" style="--order: 3;">
+        <div class="col-12">
+            <div class="card enhanced-card">
+                <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white fw-bold fs-4">
+                        <i class="fas fa-envelope me-2"></i>{% trans "Inventaire des Adresses Email" %}
+                    </h5>
+                    <div>
+                        <button class="btn btn-info btn-action" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                            <i class="fas fa-plus-circle me-2"></i>{% trans "Nouvel Email" %}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche premium -->
+                    <div class="search-controls mb-5">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchEmailInput" 
+                                       placeholder="Rechercher une adresse email...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-info btn-action" id="clearSearchBtn">
+                            <i class="fas fa-times me-2"></i>{% trans "Réinitialiser" %}
+                        </button>
+                    </div>
+
+                    {% if emails %}
+                    <!-- Grille des emails premium -->
+                    <div class="emails-grid" id="emailsContainer">
+                        {% for email in emails %}
+                        <div class="email-card" data-id="{{ email.id }}">
+                            <!-- Indicateur email -->
+                            <span class="email-indicator">
+                                <i class="fas fa-envelope me-2"></i>{% trans "Email" %}
+                            </span>
+                            <br><br>
+                            
+                            <div class="email-header">
+                                <div>
+                                    <span class="email-address email-truncated" 
+                                        data-full-email="{{ email.email }}">
+                                        {% if email.email|length > 30 %}
+                                            {% with email_local=email.email|slice:":27" %}
+                                                {{ email_local }}...
+                                            {% endwith %}
+                                        {% else %}
+                                            {{ email.email }}
+                                        {% endif %}
+                                    </span>
+                                    <div class="mt-2">
+                                        <button class="copy-email-btn" 
+                                                data-email="{{ email.email }}"
+                                                title="Copier l'adresse email">
+                                            <i class="fas fa-copy"></i> {% trans "Copier l'email" %}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="email-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-email-btn" 
+                                            data-id="{{ email.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier cet email">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-email-btn" 
+                                            data-id="{{ email.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer cet email">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Actions rapides premium -->
+                            <div class="email-actions-quick">
+                                <a href="mailto:{{ email.email }}" 
+                                   class="btn-email"
+                                   target="_blank">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Envoyer un email
+                                </a>
+                            </div>
+
+                            <!-- Métadonnées premium -->
+                            <div class="email-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>
+                                        <small class="text-muted d-block">{% trans "Créé par" %}</small>
+                                        <strong>{{ email.created_by.get_full_name|default:"Inconnu" }}</strong>
+                                    </span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>
+                                        <small class="text-muted d-block">{% trans "Date d'ajout" %}</small>
+                                        {{ email.created_at|date:"d/m/Y H:i" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination premium -->
+                    {% if emails_count > 10 %}
+                    <div class="d-flex justify-content-center mt-5">
+                        <nav>
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-chevron-left me-2"></i>{% trans "Précédent" %}
+                                    </span>
+                                </li>
+                                <li class="page-item active">
+                                    <span class="page-link">1</span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        Suivant<i class="fas fa-chevron-right ms-2"></i>
+                                    </span>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- État vide premium -->
+                    <div class="empty-state">
+                        <i class="fas fa-envelope empty-state-icon"></i>
+                        <h4 class="fw-bold mb-2">{% trans "Aucune adresse email enregistrée" %}</h4>
+                        <p class="text-muted mb-4">
+                            Cet acheteur ne possède pas encore d'adresse email enregistrée.<br>
+                            Ajoutez des emails pour faciliter la communication professionnelle.
+                        </p>
+                        <button class="btn btn-info btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                            <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le premier email" %}
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Email Premium -->
+<div class="modal fade" id="addEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Adresse Email" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addEmailForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i>{% trans "Adresse email" %}
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                            placeholder="Ex: contact@entreprise.com, info@societe.org" 
+                            required
+                            autocomplete="off">
+                        <div class="form-text mt-2 p-3 bg-light rounded">
+                            <h6 class="fw-bold text-purple mb-2">
+                                <i class="fas fa-info-circle me-2"></i>{% trans "Formats acceptés :" %}
+                            </h6>
+                            <ul class="mb-0">
+                                <li><strong>{% trans "Standard :" %}</strong> nom@domaine.ext</li>
+                                <li><strong>Maximum 254 caractères</strong></li>
+                                <li><strong>{% trans "Domaine valide :" %}</strong> .com, .org, .net, .fr, etc.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-info btn-action" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>{% trans "Ajouter l'email" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Email Premium -->
+<div class="modal fade" id="editEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier une Adresse Email" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editEmailForm" class="enhanced-form">
+                <input type="hidden" id="editEmailId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editEmail" class="form-label">
+                            <i class="fas fa-envelope"></i>{% trans "Adresse email" %}
+                        </label>
+                        <input type="email" class="form-control" id="editEmail" name="email" required>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="meta-item w-100 h-100">
+                                <i class="fas fa-user-plus"></i>
+                                <span>
+                                    <small class="text-muted d-block">{% trans "Créé par" %}</small>
+                                    <strong id="createdByInfo"></strong>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="meta-item w-100 h-100">
+                                <i class="fas fa-clock"></i>
+                                <span>
+                                    <small class="text-muted d-block">{% trans "Date de création" %}</small>
+                                    <span id="createdAtInfo"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-info btn-action" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression Premium -->
+<div class="modal fade modal-danger" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation de suppression" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-4x text-danger opacity-75"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-3">{% trans "Supprimer l'adresse email" %}</h6>
+                <p class="text-dark opacity-90 mb-4">
+                    Êtes-vous sûr de vouloir supprimer cette adresse email ?<br>
+                    Cette action est irréversible et supprimera définitivement ce contact.
+                </p>
+                <div class="fw-bold fs-5 text-purple mb-4" id="deleteEmailAddress"></div>
+            </div>
+            <div class="modal-footer justify-content-center border-top-0 pt-0">
+                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-light btn-action text-danger fw-bold" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/emails/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentEmailId = null;
+    
+    // Fonction de validation d'email améliorée
+    function validateEmail(email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email.toLowerCase())) {
+            return false;
+        }
+        
+        // Vérifier la longueur
+        if (email.length > 254) {
+            return false;
+        }
+        
+        // Séparer le nom de domaine
+        const parts = email.split('@');
+        if (parts.length !== 2) {
+            return false;
+        }
+        
+        const [localPart, domain] = parts;
+        
+        // Vérifier la longueur de la partie locale
+        if (localPart.length > 64) {
+            return false;
+        }
+        
+        // Vérifier le domaine
+        const domainParts = domain.split('.');
+        if (domainParts.length < 2) {
+            return false;
+        }
+        
+        // Vérifier chaque partie du domaine
+        for (let part of domainParts) {
+            if (part.length > 63) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    // Fonction pour formater l'email pour l'affichage
+    function formatEmailForDisplay(email) {
+        if (!email) return '';
+        
+        // Si l'email est trop long, le tronquer élégamment
+        if (email.length > 30) {
+            const [localPart, domain] = email.split('@');
+            if (localPart.length > 15) {
+                return localPart.substring(0, 12) + '...@' + domain;
+            }
+            return email;
+        }
+        return email;
+    }
+    
+    // Initialiser les validateurs d'email
+    function initEmailValidators() {
+        // Validation pour l'ajout
+        $('#email').on('input', function() {
+            const email = $(this).val().trim().toLowerCase();
+            const $input = $(this);
+            
+            if (validateEmail(email)) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+        
+        // Validation pour l'édition
+        $('#editEmail').on('input', function() {
+            const email = $(this).val().trim().toLowerCase();
+            const $input = $(this);
+            
+            if (validateEmail(email)) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+    }
+
+    // Initialisation
+    initEmailValidators();
+    
+    // Fonction pour copier l'email dans le presse-papier avec feedback visuel
+    function copyToClipboard(text, button) {
+        const $btn = $(button);
+        const originalText = $btn.html();
+        
+        // Animation de chargement
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Copie...');
+        $btn.addClass('copied');
+        $btn.prop('disabled', true);
+        
+        navigator.clipboard.writeText(text).then(() => {
+            // Success state
+            $btn.html('<i class="fas fa-check me-1"></i>Copié !');
+            
+            // Réinitialiser après 2 secondes
+            setTimeout(() => {
+                $btn.html(originalText);
+                $btn.removeClass('copied');
+                $btn.prop('disabled', false);
+            }, 2000);
+            
+            // Notification discrète
+            const toast = $('<div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">Adresse email copiée !</div>');
+            $('body').append(toast);
+            setTimeout(() => toast.remove(), 2000);
+            
+        }).catch(err => {
+            console.error('Erreur lors de la copie:', err);
+            // Fallback pour les anciens navigateurs
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            $btn.html('<i class="fas fa-check me-1"></i>Copié !');
+            setTimeout(() => {
+                $btn.html(originalText);
+                $btn.removeClass('copied');
+                $btn.prop('disabled', false);
+            }, 2000);
+        });
+    }
+    
+    // Gestionnaire pour le bouton de copie
+    $(document).on('click', '.copy-email-btn', function(e) {
+        e.preventDefault();
+        const email = $(this).data('email');
+        copyToClipboard(email, this);
+    });
+    
+    // Charger les emails
+    function loadEmails(search = '') {
+        let url = API_BASE_URL;
+        if (search) {
+            url += `?search=${encodeURIComponent(search)}`;
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const emailsContainer = $('#emailsContainer');
+                const emptyState = $('.empty-state');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les emails
+                    let html = '';
+                    response.results.forEach(function(email) {
+                        const displayEmail = formatEmailForDisplay(email.email);
+                        const createdBy = email.created_by?.full_name || email.created_by?.username || 'Inconnu';
+                        const createdAt = new Date(email.created_at).toLocaleString('fr-FR');
+                        
+                        html += `
+                        <div class="email-card" data-id="${email.id}">
+                            <span class="email-indicator">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </span>
+                            <br><br>
+                            
+                            <div class="email-header">
+                                <div>
+                                    <span class="email-address email-truncated" 
+                                          data-full-email="${email.email}">
+                                        ${displayEmail}
+                                    </span>
+                                    <div class="mt-2">
+                                        <button class="copy-email-btn" 
+                                                data-email="${email.email}"
+                                                title="Copier l'adresse email">
+                                            <i class="fas fa-copy"></i> Copier l'email
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="email-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-email-btn" 
+                                            data-id="${email.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier cet email">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-email-btn" 
+                                            data-id="${email.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer cet email">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="email-actions-quick">
+                                <a href="mailto:${email.email}" 
+                                   class="btn-email"
+                                   target="_blank">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Envoyer un email
+                                </a>
+                            </div>
+
+                            <div class="email-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>
+                                        <small class="text-muted d-block">Créé par</small>
+                                        <strong>${createdBy}</strong>
+                                    </span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>
+                                        <small class="text-muted d-block">Date d'ajout</small>
+                                        ${createdAt}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    emailsContainer.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                } else {
+                    // Afficher l'état vide
+                    if (!emptyState.length) {
+                        emailsContainer.html(`
+                            <div class="empty-state">
+                                <i class="fas fa-envelope empty-state-icon"></i>
+                                <h4 class="fw-bold mb-2">Aucune adresse email trouvée</h4>
+                                <p class="text-muted mb-4">
+                                    Aucune adresse email ne correspond à votre recherche.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
+                }
+                
+                // Mettre à jour le compteur
+                $('#emailsCount').text(response.count || response.results?.length || 0);
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de chargement',
+                    text: 'Impossible de charger les adresses email.',
+                    background: 'linear-gradient(135deg, #6f42c1, #9b5de5)',
+                    color: 'white',
+                    iconColor: 'white'
+                });
+            }
+        });
+    }
+    
+    // Recherche d'emails
+    $('#searchEmailInput').on('input', function() {
+        const search = $(this).val();
+        loadEmails(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchEmailInput').val('');
+        loadEmails();
+    });
+    
+    // Formulaire d'ajout
+    $('#addEmailForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const emailAddress = $('#email').val().trim().toLowerCase();
+        if (!emailAddress || !validateEmail(emailAddress)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir une adresse email valide.',
+                confirmButtonColor: '#6f42c1'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify({ email: emailAddress }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addEmailModal').modal('hide');
+                $('#addEmailForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Email ajouté !',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: 'linear-gradient(135deg, #6f42c1, #9b5de5)',
+                    color: 'white',
+                    iconColor: 'white'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout de l\'email';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.email) {
+                        errorMessage = xhr.responseJSON.email.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur d\'ajout',
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        confirmButtonColor: '#6f42c1'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-email-btn', function() {
+        const emailId = $(this).data('id');
+        currentEmailId = emailId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${emailId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editEmailId').val(response.id);
+                $('#editEmail').val(response.email);
+                $('#createdByInfo').text(response.created_by?.full_name || response.created_by?.username || 'Inconnu');
+                $('#createdAtInfo').text(new Date(response.created_at).toLocaleString('fr-FR'));
+                $('#editEmailModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de l\'email.',
+                        confirmButtonColor: '#6f42c1'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editEmailForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentEmailId) return;
+        
+        const emailAddress = $('#editEmail').val().trim().toLowerCase();
+        if (!emailAddress || !validateEmail(emailAddress)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir une adresse email valide.',
+                confirmButtonColor: '#6f42c1'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentEmailId}/`,
+            type: 'PUT',
+            data: JSON.stringify({ email: emailAddress }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editEmailModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Modification réussie !',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: 'linear-gradient(135deg, #6f42c1, #9b5de5)',
+                    color: 'white',
+                    iconColor: 'white'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de l\'email';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.email) {
+                        errorMessage = xhr.responseJSON.email.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de modification',
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        confirmButtonColor: '#6f42c1'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-email-btn', function() {
+        const emailId = $(this).data('id');
+        const emailAddress = $(this).closest('.email-card').find('.email-address').attr('data-full-email');
+        
+        currentEmailId = emailId;
+        $('#deleteEmailAddress').text(emailAddress);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentEmailId) return;
+        
+        const $btn = $(this);
+        const originalText = $btn.html();
+        
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
+        $btn.prop('disabled', true);
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentEmailId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $btn.html(originalText);
+                $btn.prop('disabled', false);
+                
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Suppression réussie !',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: 'linear-gradient(135deg, #6f42c1, #9b5de5)',
+                    color: 'white',
+                    iconColor: 'white'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.html(originalText);
+                $btn.prop('disabled', false);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de suppression',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'email',
+                        confirmButtonColor: '#6f42c1'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#6f42c1'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Animation des cartes
+    function animateCardsOnScroll() {
+        $('.email-card, .stat-card, .enhanced-card').each(function() {
+            const elementTop = $(this).offset().top;
+            const elementBottom = elementTop + $(this).outerHeight();
+            const viewportTop = $(window).scrollTop();
+            const viewportBottom = viewportTop + $(window).height();
+            
+            if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                $(this).addClass('animate');
+            }
+        });
+    }
+
+    $(window).on('scroll', animateCardsOnScroll);
+    setTimeout(animateCardsOnScroll, 100);
+    
+    // Charger les emails au démarrage
+    loadEmails();
+});
+</script>
+{% endblock %}

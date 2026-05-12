@@ -1,727 +1,1499 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Optimisation des performances */
+* {
+    box-sizing: border-box;
+}
+
+/* Header Premium */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Améliorations pour Select2 avec vos couleurs */
+.select2-container {
+    width: 100% !important;
+    position: relative;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single {
+    height: 44px !important;
+    padding: 0.375rem 1rem !important;
+    border: 2px solid rgba(13, 128, 190, 0.1) !important;
+    border-radius: 8px !important;
+    background-color: var(--color-background);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single:focus {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15) !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 99999 !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(13, 128, 190, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(10, 149, 202, 0.1) !important;
+    background-color: var(--color-background);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: rgba(10, 149, 202, 0.08) !important;
+    color: var(--color-primary) !important;
+}
+
+/* Pour les couleurs dans les options */
+.select2-color-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.select2-color-option::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--option-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Correction pour les modales Bootstrap */
+.modal {
+    overflow: visible !important;
+}
+
+.modal-dialog {
+    overflow: visible !important;
+}
+
+.modal-content {
+    overflow: visible !important;
+    border: none;
+    border-radius: 12px;
+    background-color: var(--color-background);
+}
+
+.modal-body {
+    overflow: visible !important;
+}
+
+/* Carte de statistiques améliorée avec vos couleurs */
+.stat-card {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+/* Variantes de cartes avec vos couleurs */
+.stat-card.date-creation::before { background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary)); }
+.stat-card.date-enregistrement::before { background: linear-gradient(to bottom, #25add6, #106cb2); }
+.stat-card.forme-juridique::before { background: linear-gradient(to bottom, var(--color-accent), var(--color-primary-dark)); }
+.stat-card.numero-registre::before { background: linear-gradient(to bottom, var(--color-primary-dark), var(--color-primary)); }
+.stat-card.numero-fiscal::before { background: linear-gradient(to bottom, var(--color-secondary), var(--color-accent)); }
+.stat-card.statut-registre::before { background: linear-gradient(to bottom, #0d80be, #25add6); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: var(--color-background);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.2);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--color-primary-dark);
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Badges avec vos couleurs */
+.badge-actif {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
+    color: var(--color-primary);
+    border: 1px solid rgba(10, 149, 202, 0.2);
+    font-weight: 600;
+}
+
+.badge-inactif {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(253, 126, 20, 0.1));
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    font-weight: 600;
+}
+
+/* Boutons améliorés avec vos couleurs */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border: none;
+}
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    border: none;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    border: none;
+}
+
+/* Cartes améliorées avec vos couleurs */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(10, 149, 202, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    overflow: hidden;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 12px 35px rgba(10, 149, 202, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+/* Informations de registre */
+.registre-info-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.03));
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--color-primary);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.registre-info-card:hover {
+    transform: translateX(5px) translateY(-2px);
+    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.12);
+    border-left: 4px solid var(--color-secondary);
+}
+
+/* Formulaire amélioré avec vos couleurs */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background-color: var(--color-background);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-primary);
+    font-size: 1rem;
+    z-index: 2;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3rem;
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 12px;
+    border: 2px dashed rgba(13, 128, 190, 0.2);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+}
+
+/* Badge de statut */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+/* Commentaire coloré */
+.colored-comment {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.colored-comment::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(10, 149, 202, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* Timeline des dates */
+.date-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.date-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.date-timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.date-timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.date-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    border: 3px solid var(--color-background);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.3);
+    animation: pulse 2s infinite;
+}
+
+/* Animation de pulse */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(10, 149, 202, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(10, 149, 202, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(10, 149, 202, 0);
+    }
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Animation de shimmer */
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Appliquer l'animation aux éléments */
+.stat-card, .enhanced-card, .registre-info-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .card-header-gradient {
+        padding: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}
 
 {% block body %}
+<div class="container-fluid">
 
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Données d'Enregistrement de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countDataSave">Module de Gestion des Données d'Enregistrement</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une donnée d'enregistrement notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+    <!-- Header Premium -->
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-phone me-3"></i>{% trans "Données d'Enregistrement" %}
+                </h1>
+                <p class="page-subtitle">
+                    Informations légales et administratives de l'entreprise
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+                </a>
+            {% if data_save %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editDataSaveModal">
+                <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
+                <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter les données" %}
+            </button>
+            {% endif %}
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                        <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur avec vos couleurs -->
+    <div class="card enhanced-card mb-4" style="animation-delay: 0.2s;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div class="text-md-end">
+                    <span class="badge bg-white text-dark fs-6 p-2 shadow-sm">
+                        <i class="fas fa-hashtag me-1" style="color: #0a95ca;"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small text-white-75">{% trans "Code ACREMAC" %}</p>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Date de Création : </strong><span id="dateCreation">DDC</span><br>
-                        <strong>Date d'Enregistrement : </strong><span id="dateEnregistrement">DDE</span><br>
-                        <strong>Forme Juridique : </strong><span id="formeJuridique">FOJ</span><br>
-                        <strong>Numéro de Registre du Commerce : </strong><span id="numeroRegistreCommerce">NRC</span><br>
-                        <strong>Numéro Fiscal : </strong><span id="numeroFiscal">NFI</span><br>
-                        <strong>Statut au Registre : </strong><span id="statutRegistre">SAR</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="noteInfo">Cher agent, si toutefois vous souhaitez retourner consulter la page de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- DATA SAVE START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Données d'Enregistrement</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
-                                Ajouter une Donnée
-                            </button>
+                            <small class="stat-label">{% trans "Activité principale" %}</small>
+                            <span class="fw-medium text-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Data Save list START -->
-                <div class="table-responsive border-0" id="dataSaveList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">DDC</th>
-                                <th scope="col" class="border-0">DDE</th>
-                                <th scope="col" class="border-0">FOJ</th>
-                                <th scope="col" class="border-0">NDR</th>
-                                <th scope="col" class="border-0">NFI</th>
-                                <th scope="col" class="border-0">SAR</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="dataSaveTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="stat-label">{% trans "Date de création" %}</small>
+                            <span class="fw-medium text-dark">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Data Save list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="stat-label">{% trans "Statut" %}</small>
+                            <span class="badge badge-actif">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <!-- Card footer END -->
-        </div>
-    </div>
-</div>
-<!-- DATA SAVE END -->
-
-<!-- Add Data Save Modal START -->
-<div class="modal fade" id="addDataSaveModal" tabindex="-1" aria-labelledby="addDataSaveModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addDataSaveModalLabel">Ajouter une Donnée d'Enregistrement</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addDataSaveForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="date_creation" class="form-label">Date de Création</label>
-                        <input type="date" class="form-control" id="date_creation" name="date_creation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_registre" class="form-label">Date d'Enregistrement</label>
-                        <input type="date" class="form-control" id="date_registre" name="date_registre" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="forme_juridique" class="form-label">Forme Juridique</label>
-                        <select class="form-select" id="forme_juridique" name="forme_juridique" required>
-                            <option value="">Sélectionnez une forme juridique</option>
-                            <option value="Entreprise Individuelle (EI)">Entreprise Individuelle (EI)</option>
-                            <option value="Société à Responsabilité Limitée (SARL)">Société à Responsabilité Limitée (SARL)</option>
-                            <option value="Société à Responsabilité Limitée Unipersonnelle (SARL U)">Société à Responsabilité Limitée Unipersonnelle (SARL U)</option>
-                            <option value="Société en Commandite Simple (SCS)">Société en Commandite Simple (SCS)</option>
-                            <option value="Société par Actions Simplifiée (SAS)">Société par Actions Simplifiée (SAS)</option>
-                            <option value="Société en Nom Collectif (SNC)">Société en Nom Collectif (SNC)</option>
-                            <option value="Société en Participation (SP)">Société en Participation (SP)</option>
-                            <option value="Groupement d'Intérêt Economique (GIE)">Groupement d'Intérêt Economique (GIE)</option>
-                            <option value="Association">Association</option>
-                            <option value="Coopérative de Groupement">Coopérative de Groupement</option>
-                            <option value="Société Anonyme (SA)">Société Anonyme (SA)</option>
-                            <option value="Etablissement Public à Caractère Industriel et Commercial (EPIC)">Etablissement Public à Caractère Industriel et Commercial (EPIC)</option>
-                            <option value="Etablissement Public à Caractère Commercial (EPCC)">Etablissement Public à Caractère Commercial (EPCC)</option>
-                            <option value="Succursale">Succursale</option>
-                            <option value="Filiale">Filiale</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="forme_juridique_ref" class="form-label">Référence Forme Juridique</label>
-                        <select class="form-select" id="forme_juridique_ref" name="forme_juridique_ref" required>
-                            {% for forme in juridique_list %}
-                                <option value="{{ forme.id }}">{{ forme.libelle }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="numero_registre_commerce" class="form-label">Numéro de Registre du Commerce</label>
-                        <input type="text" class="form-control" id="numero_registre_commerce" name="numero_registre_commerce" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="numero_fiscale" class="form-label">Numéro Fiscal</label>
-                        <input type="text" class="form-control" id="numero_fiscale" name="numero_fiscale" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="statut_registre" class="form-label">Statut au Registre</label>
-                        <select class="form-select" id="statut_registre" name="statut_registre" required>
-                            <option value="">Sélectionnez un statut au registre</option>
-                            <option value="Entreprise active">Entreprise active</option>
-                            <option value="Entreprise inactive">Entreprise inactive</option>
-                            <option value="Entreprise en fusion">Entreprise en fusion</option>
-                            <option value="Entreprise fusionnée">Entreprise fusionnée</option>
-                            <option value="L'entreprise n'existe pas">L'entreprise n'existe pas</option>
-                            <option value="L'entreprise n'a pas pu etre identifiée">L'entreprise n'a pas pu etre identifiée</option>
-                            <option value="Entreprise est en sommeil">Entreprise est en sommeil</option>
-                            <option value="Impossible de localiser l'entreprise">Impossible de localiser l'entreprise</option>
-                            <option value="L'activité a cessé">L'activité a cessé</option>
-                            <option value="L'entreprise n'est pas immatriculée">L'entreprise n'est pas immatriculée</option>
-                            <option value="L'entreprise n'est pas immatriculée localement">L'entreprise n'est pas immatriculée localement</option>
-                            <option value="Activité commerciale limitée">Activité commerciale limitée</option>
-                            <option value="Aucune activité commerciale visible localement">Aucune activité commerciale visible localement</option>
-                            <option value="Dissolution volontaire">Dissolution volontaire</option>
-                            <option value="Dissolution volontaire du creancier">Dissolution volontaire du creancier</option>
-                            <option value="Dissolution forcée">Dissolution forcée</option>
-                            <option value="Radiation">Radiation</option>
-                            <option value="Entreprise en cours de désimmatriculation">Entreprise en cours de désimmatriculation</option>
-                            <option value="Dissoute">Dissoute</option>
-                            <option value="Va suivre">Va suivre</option>
-                            <option value="Entreprise Introuvable">Entreprise Introuvable</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="statut_registre_ref" class="form-label">Référence Statut au Registre</label>
-                        <select class="form-select" id="statut_registre_ref" name="statut_registre_ref" required>
-                            {% for statut in statut_list %}
-                                <option value="{{ statut.id }}">{{ statut.libelle }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
             </div>
         </div>
     </div>
-</div>
-<!-- Add Data Save Modal END -->
 
-<!-- Edit Data Save Modal START -->
-<div class="modal fade" id="editDataSaveModal" tabindex="-1" aria-labelledby="editDataSaveModalLabel" aria-hidden="true">
+    <!-- Données d'Enregistrement -->
+    {% if data_save %}
+    <div class="card enhanced-card mb-4" style="animation-delay: 0.3s;">
+        <div class="card-body">
+            <!-- Dates importantes -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="registre-info-card">
+                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
+                            <i class="fas fa-calendar-check me-2"></i>{% trans "Dates importantes" %}
+                        </h5>
+                        <div class="date-timeline">
+                            <div class="date-timeline-item">
+                                <div class="stat-label">{% trans "Date de création" %}</div>
+                                <div class="stat-value">{{ data_save.date_creation|date:"d/m/Y"|default:"-" }}</div>
+                                <small class="text-muted">{% trans "Date légale de création de l'entreprise" %}</small>
+                            </div>
+                            <div class="date-timeline-item">
+                                <div class="stat-label">{% trans "Date registre" %}</div>
+                                <div class="stat-value">{{ data_save.date_registre|date:"d/m/Y"|default:"-" }}</div>
+                                <small class="text-muted">{% trans "Date d'inscription au registre" %}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="registre-info-card">
+                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
+                            <i class="fas fa-balance-scale me-2"></i>{% trans "Statut légal" %}
+                        </h5>
+                        <div class="mb-3">
+                            <div class="stat-label">{% trans "Forme juridique" %}</div>
+                            <div class="stat-value">
+                                {% for key, value in forme_juridique_choices %}
+                                    {% if key == data_save.forme_juridique %}{{ value }}{% endif %}
+                                {% endfor %}
+                                {% if not data_save.forme_juridique %}-{% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="stat-label">{% trans "Statut au registre" %}</div>
+                            <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
+                                {% for key, value in statut_registre_choices %}
+                                    {% if key == data_save.statut_registre %}{{ value }}{% endif %}
+                                {% endfor %}
+                                {% if not data_save.statut_registre %}Non spécifié{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Numéros d'identification -->
+            <h5 class="fw-bold mb-3" style="color: #0a95ca;">
+                <i class="fas fa-id-card me-2"></i>{% trans "Identifiants légaux" %}
+            </h5>
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card numero-registre">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-label">{% trans "Registre du Commerce" %}</div>
+                        <div class="stat-value">{{ data_save.numero_registre_commerce|default:"-" }}</div>
+                        <small class="text-muted">N° d'immatriculation</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card numero-fiscal">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="stat-label">{% trans "Numéro Fiscal" %}</div>
+                        <div class="stat-value">{{ data_save.numero_fiscale|default:"-" }}</div>
+                        <small class="text-muted">{% trans "Identifiant fiscal" %}</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card statut-registre">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="stat-label">{% trans "Statut légal" %}</div>
+                        <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
+                            {% for key, value in statut_registre_choices %}
+                                {% if key == data_save.statut_registre %}{{ value }}{% endif %}
+                            {% endfor %}
+                            {% if not data_save.statut_registre %}-{% endif %}
+                        </span>
+                        <small class="text-muted">{% trans "Situation administrative" %}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nom antérieur -->
+            {% if data_save.nom_anterieur %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="registre-info-card">
+                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
+                            <i class="fas fa-history me-2"></i>{% trans "Nom antérieur" %}
+                        </h5>
+                        <div class="stat-value">{{ data_save.nom_anterieur }}</div>
+                        <small class="text-muted">{% trans "Ancien nom ou dénomination sociale" %}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Commentaire -->
+            {% if data_save.commentaire %}
+            <div class="colored-comment mb-4" style="border-left-color: {{ data_save.couleur_commentaire.code|default:'#0a95ca' }};">
+                <h6 class="fw-bold mb-2" style="color: #0a95ca;">
+                    <i class="fas fa-comment-dots me-2"></i>{% trans "Commentaire" %}
+                </h6>
+                <p class="mb-0">{{ data_save.commentaire }}</p>
+                {% if data_save.couleur_commentaire %}
+                <div class="mt-3">
+                    <span class="badge badge-actif">
+                        <i class="fas fa-palette me-1"></i>{{ data_save.couleur_commentaire.couleur }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1" style="color: #0a95ca;"></i>
+                            Créé le {{ data_save.created_at|date:"d/m/Y H:i" }}
+                            {% if data_save.created_by %}
+                                par {{ data_save.created_by.username }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1" style="color: #0a95ca;"></i>
+                            Dernière mise à jour : {{ data_save.updated_at|date:"d/m/Y H:i" }}
+                            {% if data_save.updated_by %}
+                                par {{ data_save.updated_by.username }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card" style="animation-delay: 0.3s;">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-file-contract empty-state-icon"></i>
+                <h4 class="fw-bold mb-2" style="color: #0a95ca;">{% trans "Aucune donnée d'enregistrement" %}</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de données d'enregistrement.<br>
+                    Ajoutez les informations légales et administratives de l'entreprise.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter les données" %}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Données d'Enregistrement -->
+<div class="modal fade" id="addDataSaveModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editDataSaveModalLabel">Editer une Donnée d'Enregistrement</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter des Données d'Enregistrement" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editDataSaveForm">
-                    <input type="hidden" id="editDataSaveId" name="id">
-                    <div class="mb-3">
-                        <label for="editDateCreation" class="form-label">Date de Création</label>
-                        <input type="date" class="form-control" id="editDateCreation" name="date_creation" required>
+            <form id="addDataSaveForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_creation" class="form-label">
+                                    <i class="fas fa-calendar-plus" style="color: #0a95ca;"></i>{% trans "Date de Création" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_creation" name="date_creation">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Date légale de création de l'entreprise" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_registre" class="form-label">
+                                    <i class="fas fa-calendar-check" style="color: #25add6;"></i>{% trans "Date registre" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-check"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_registre" name="date_registre">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Date d'inscription au registre" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateRegistre" class="form-label">Date d'Enregistrement</label>
-                        <input type="date" class="form-control" id="editDateRegistre" name="date_registre" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="nom_anterieur" class="form-label">
+                                    <i class="fas fa-history" style="color: #0d80be;"></i>{% trans "Nom Antérieur" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-signature"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="nom_anterieur" name="nom_anterieur" 
+                                           placeholder="Ancien nom ou dénomination">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Ancienne dénomination sociale" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="forme_juridique" class="form-label">
+                                    <i class="fas fa-balance-scale" style="color: #106cb2;"></i>{% trans "Forme Juridique" %}
+                                </label>
+                                <select class="form-select select2" id="forme_juridique" name="forme_juridique">
+                                    <option value="">{% trans "Sélectionnez une forme juridique" %}</option>
+                                    {% for key, value in forme_juridique_choices %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Structure juridique de l'entreprise" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editFormeJuridique2" class="form-label">Forme Juridique</label>
-                        <select class="form-select" id="editFormeJuridique2" name="forme_juridique" required>
-                            <option value="">Sélectionnez une forme juridique</option>
-                            <option value="Entreprise Individuelle (EI)">Entreprise Individuelle (EI)</option>
-                            <option value="Société à Responsabilité Limitée (SARL)">Société à Responsabilité Limitée (SARL)</option>
-                            <option value="Société à Responsabilité Limitée Unipersonnelle (SARL U)">Société à Responsabilité Limitée Unipersonnelle (SARL U)</option>
-                            <option value="Société en Commandite Simple (SCS)">Société en Commandite Simple (SCS)</option>
-                            <option value="Société par Actions Simplifiée (SAS)">Société par Actions Simplifiée (SAS)</option>
-                            <option value="Société en Nom Collectif (SNC)">Société en Nom Collectif (SNC)</option>
-                            <option value="Société en Participation (SP)">Société en Participation (SP)</option>
-                            <option value="Groupement d'Intérêt Economique (GIE)">Groupement d'Intérêt Economique (GIE)</option>
-                            <option value="Association">Association</option>
-                            <option value="Coopérative de Groupement">Coopérative de Groupement</option>
-                            <option value="Société Anonyme (SA)">Société Anonyme (SA)</option>
-                            <option value="Etablissement Public à Caractère Industriel et Commercial (EPIC)">Etablissement Public à Caractère Industriel et Commercial (EPIC)</option>
-                            <option value="Etablissement Public à Caractère Commercial (EPCC)">Etablissement Public à Caractère Commercial (EPCC)</option>
-                            <option value="Succursale">Succursale</option>
-                            <option value="Filiale">Filiale</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="numero_registre_commerce" class="form-label">
+                                    <i class="fas fa-book" style="color: #0a95ca;"></i>N° Registre du Commerce
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="numero_registre_commerce" name="numero_registre_commerce" 
+                                           placeholder="Ex: RC123456">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Numéro d'immatriculation au RCCM" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="numero_fiscale" class="form-label">
+                                    <i class="fas fa-file-invoice-dollar" style="color: #25add6;"></i>{% trans "Numéro Fiscal" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="numero_fiscale" name="numero_fiscale" 
+                                           placeholder="Ex: NIF123456">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Numéro d'identification fiscale" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editRefFormeJuridique" class="form-label">Référence Forme Juridique</label>
-                        <select class="form-select" id="editRefFormeJuridique" name="forme_juridique_ref">
-                            <option value="">Sélectionnez une référence</option>
-                            {% for forme in juridique_list %}
-                                <option value="{{ forme.id }}">{{ forme.libelle }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="statut_registre" class="form-label">
+                                    <i class="fas fa-clipboard-check" style="color: #0d80be;"></i>{% trans "Statut au Registre" %}
+                                </label>
+                                <select class="form-select select2" id="statut_registre" name="statut_registre">
+                                    <option value="">{% trans "Sélectionnez un statut" %}</option>
+                                    {% for key, value in statut_registre_choices %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Situation administrative de l'entreprise" %}</small>
+                            </div>
+                        </div>
+                        <!-- Dans la modal d'ajout (#addDataSaveModal) -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette" style="color: #106cb2;"></i>{% trans "Couleur Commentaire" %}
+                                </label>
+                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for couleur in coloration_list %}
+                                    <!-- CORRECTION ICI : Utiliser le bon champ pour la couleur -->
+                                    <option value="{{ couleur.id }}" data-color="{{ couleur.code|default:couleur.couleur }}">
+                                        {{ couleur.libelle }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Couleur pour le commentaire" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editNumeroRegistreCommerce" class="form-label">Numéro de Registre du Commerce</label>
-                        <input type="text" class="form-control" id="editNumeroRegistreCommerce" name="numero_registre_commerce" required>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots" style="color: #25add6;"></i>{% trans "Commentaire" %}
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="3" placeholder="Ajoutez des notes ou observations sur ces informations légales..."></textarea>
+                        <small class="form-text text-muted">{% trans "Observations et notes complémentaires" %}</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="editNumeroFiscal" class="form-label">Numéro Fiscal</label>
-                        <input type="text" class="form-control" id="editNumeroFiscal" name="numero_fiscale" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification de Données d'Enregistrement -->
+<div class="modal fade" id="editDataSaveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier les Données d'Enregistrement" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editDataSaveForm" class="enhanced-form">
+                <input type="hidden" id="editDataSaveId" name="id">
+                <div class="modal-body">
+                    <!-- Le contenu du formulaire d'édition reste le même -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCreation" class="form-label">
+                                    <i class="fas fa-calendar-plus text-primary"></i>{% trans "Date de Création" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="editDateCreation" name="date_creation" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateRegistre" class="form-label">
+                                    <i class="fas fa-calendar-check text-success"></i>{% trans "Date d'Enregistrement" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-check"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="editDateRegistre" name="date_registre" required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editStatutRegistre" class="form-label">Statut au Registre</label>
-                        <select class="form-select" id="editStatutRegistre" name="statut_registre" required>
-                            <option value="">Sélectionnez un statut au registre</option>
-                            <option value="Entreprise active">Entreprise active</option>
-                            <option value="Entreprise inactive">Entreprise inactive</option>
-                            <option value="Entreprise en fusion">Entreprise en fusion</option>
-                            <option value="Entreprise fusionnée">Entreprise fusionnée</option>
-                            <option value="L'entreprise n'existe pas">L'entreprise n'existe pas</option>
-                            <option value="L'entreprise n'a pas pu etre identifiée">L'entreprise n'a pas pu etre identifiée</option>
-                            <option value="Entreprise est en sommeil">Entreprise est en sommeil</option>
-                            <option value="Impossible de localiser l'entreprise">Impossible de localiser l'entreprise</option>
-                            <option value="L'activité a cessé">L'activité a cessé</option>
-                            <option value="L'entreprise n'est pas immatriculée">L'entreprise n'est pas immatriculée</option>
-                            <option value="L'entreprise n'est pas immatriculée localement">L'entreprise n'est pas immatriculée localement</option>
-                            <option value="Activité commerciale limitée">Activité commerciale limitée</option>
-                            <option value="Aucune activité commerciale visible localement">Aucune activité commerciale visible localement</option>
-                            <option value="Dissolution volontaire">Dissolution volontaire</option>
-                            <option value="Dissolution volontaire du creancier">Dissolution volontaire du creancier</option>
-                            <option value="Dissolution forcée">Dissolution forcée</option>
-                            <option value="Radiation">Radiation</option>
-                            <option value="Entreprise en cours de désimmatriculation">Entreprise en cours de désimmatriculation</option>
-                            <option value="Dissoute">Dissoute</option>
-                            <option value="Va suivre">Va suivre</option>
-                            <option value="Entreprise Introuvable">Entreprise Introuvable</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNomAnterieur" class="form-label">
+                                    <i class="fas fa-history" style="color: #0d80be;"></i>{% trans "Nom Antérieur" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-signature"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="editNomAnterieur" name="nom_anterieur" 
+                                           placeholder="Ancien nom ou dénomination">
+                                </div>
+                                <small class="form-text text-muted">{% trans "Ancienne dénomination sociale" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editFormeJuridique" class="form-label">
+                                    <i class="fas fa-balance-scale" style="color: #106cb2;"></i>{% trans "Forme Juridique" %}
+                                </label>
+                                <select class="form-select select2" id="editFormeJuridique" name="forme_juridique">
+                                    <option value="">{% trans "Sélectionnez une forme juridique" %}</option>
+                                    {% for key, value in forme_juridique_choices %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Structure juridique de l'entreprise" %}</small>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="editRefStatutRegistre" class="form-label">Référence Statut au Registre</label>
-                        <select class="form-select" id="editRefStatutRegistre" name="statut_registre_ref">
-                            <option value="">Sélectionnez une référence</option>
-                            {% for statut in statut_list %}
-                                <option value="{{ statut.id }}">{{ statut.libelle }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNumeroRegistreCommerce" class="form-label">
+                                    <i class="fas fa-book text-primary"></i>N° Registre du Commerce
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="editNumeroRegistreCommerce" name="numero_registre_commerce" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNumeroFiscal" class="form-label">
+                                    <i class="fas fa-file-invoice-dollar text-success"></i>{% trans "Numéro Fiscal" %}
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hashtag"></i>
+                                    <input type="text" class="form-control with-icon" 
+                                           id="editNumeroFiscal" name="numero_fiscale" required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editStatutRegistre" class="form-label">
+                                    <i class="fas fa-clipboard-check" style="color: #0d80be;"></i>{% trans "Statut au Registre" %}
+                                </label>
+                                <select class="form-select select2" id="editStatutRegistre" name="statut_registre">
+                                    <option value="">{% trans "Sélectionnez un statut" %}</option>
+                                    {% for key, value in statut_registre_choices %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Situation administrative de l'entreprise" %}</small>
+                            </div>
+                        </div>
+                        <!-- Dans la modal d'édition (#editDataSaveModal) -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette" style="color: #106cb2;"></i>{% trans "Couleur Commentaire" %}
+                                </label>
+                                <select class="form-select select2" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                    {% for couleur in coloration_list %}
+                                    <!-- CORRECTION ICI : Utiliser le bon champ pour la couleur -->
+                                    <option value="{{ couleur.id }}" data-color="{{ couleur.code|default:couleur.couleur }}">
+                                        {{ couleur.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Couleur pour le commentaire" %}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>{% trans "Commentaire" %}
+                        </label>
                         <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">{% trans "Supprimer les données d'enregistrement" %}</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer ces informations légales ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Data Save Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#description, #editDescription, #editCommentaire, #commentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/donnees-enregistrement/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentDataSave = null;
+
+    // Fonction pour formater les options avec couleur
+    function formatColorOption(option) {
+        if (!option.id) return option.text;
+        const color = $(option.element).data('color');
+        if (!color) return option.text;
+
+        return $(
+            `<span class="select2-color-option" style="--option-color: ${color}">
+                ${option.text}
+            </span>`
+        );
+    }
+
+    // Initialisation de Select2
+    function initSelect2() {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 5,
+            dropdownParent: $('body'),
+            templateResult: function(option) {
+                if ($(option.element).data('color')) {
+                    return formatColorOption(option);
+                }
+                return option.text;
+            },
+            templateSelection: function(option) {
+                return option.text;
+            },
+            escapeMarkup: function(m) { return m; }
+        });
+    }
+
+    // Initialisation au chargement
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addDataSaveModal, #editDataSaveModal').on('shown.bs.modal', function() {
+        $(this).find('.select2').each(function() {
+            if ($(this).data('select2')) {
+                $(this).select2('destroy');
+            }
         });
 
-        // Votre script JavaScript existant ici
-    });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
-        $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+        $(this).find('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 5,
+            dropdownParent: $(this),
+            templateResult: function(option) {
+                if ($(option.element).data('color')) {
+                    return formatColorOption(option);
                 }
-                
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-                    
+                return option.text;
+            },
+            templateSelection: function(option) {
+                return option.text;
+            },
+            escapeMarkup: function(m) { return m; }
+        });
+    });
+
+    // Charger les données d'enregistrement
+    function loadDataSaveData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(response) {
+                if (response && !response.message) {
+                    currentDataSave = response;
+                    populateEditForm(response);
+                }
             },
             error: function(xhr) {
+                if (xhr.status !== 404) {
+                    console.error('Erreur:', xhr);
+                }
+            }
+        });
+    }
+
+    // Remplir le formulaire d'édition
+    function populateEditForm(dataSave) {
+        if (!dataSave) return;
+
+        // Dans la fonction populateEditForm, ajoutez :
+        console.log('Données reçues pour édition:', dataSave);
+        console.log('Couleur commentaire:', dataSave.couleur_commentaire);
+        if (dataSave.couleur_commentaire) {
+            console.log('ID couleur:', dataSave.couleur_commentaire.id);
+            console.log('Code couleur:', dataSave.couleur_commentaire.code);
+            console.log('Nom couleur:', dataSave.couleur_commentaire.libelle);
+        }
+
+        $('#editDataSaveId').val(dataSave.id);
+        $('#editDateCreation').val(dataSave.date_creation || '');
+        $('#editDateRegistre').val(dataSave.date_registre || '');
+        $('#editNomAnterieur').val(dataSave.nom_anterieur || '');
+        $('#editNumeroRegistreCommerce').val(dataSave.numero_registre_commerce || '');
+        $('#editNumeroFiscal').val(dataSave.numero_fiscale || '');
+        $('#editCommentaire').val(dataSave.commentaire || '');
+        
+        // Sélectionner les valeurs dans les select2
+        if (dataSave.forme_juridique) {
+            $('#editFormeJuridique').val(dataSave.forme_juridique).trigger('change');
+        }
+        
+        if (dataSave.statut_registre) {
+            $('#editStatutRegistre').val(dataSave.statut_registre).trigger('change');
+        }
+        
+        if (dataSave.couleur_commentaire) {
+            const couleurId = dataSave.couleur_commentaire.id || 
+                            dataSave.couleur_commentaire.pk || 
+                            dataSave.couleur_commentaire;
+            $('#editCouleurCommentaire').val(couleurId).trigger('change');
+        }
+
+        
+    }
+
+    // Soumission des formulaires
+    function submitDataSaveForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                $('#' + modalId).modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: currentDataSave ? 'Données mises à jour' : 'Données créées',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe'
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    // Formater les erreurs de validation
+                    if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = '';
+                        for (const field in xhr.responseJSON) {
+                            errorMessage += `${field}: ${xhr.responseJSON[field].join(', ')}\n`;
+                        }
+                    } else {
+                        errorMessage = xhr.responseJSON.detail || JSON.stringify(xhr.responseJSON);
+                    }
+                }
+
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => submitDataSaveForm(method, formData, submitBtn, modalId));
+                } else {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Erreur', 
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        background: '#fcfefe'
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression des données
+    $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Données supprimées avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe'
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-1"></i>Supprimer');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#confirmDeleteBtn').click());
+                } else {
+                    Swal.fire({ 
+                        icon: 'error', 
+                        title: 'Erreur', 
+                        text: 'Impossible de supprimer les données',
+                        background: '#fcfefe'
+                    });
+                }
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie) {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Rafraîchir le token
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    window.ACCESS_TOKEN = response.access;
+                    if (callback) callback();
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    background: '#fcfefe'
+                }).then((result) => {
+                    if (result.isConfirmed) window.location.href = '/login/';
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
+    }
+
+    // Soumission des formulaires
+    $('#addDataSaveForm').on('submit', function(e) {
+        e.preventDefault();
+        submitDataSaveForm('POST', $(this).serialize(), '#submitAddBtn', 'addDataSaveModal');
     });
-    
-</script>
 
-<script>
-    $(document).ready(function() {
-        // Function to load data save entries
-        function loadDataSave(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-donnees-enregistrees/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update data save table body
-                    $('#dataSaveTableBody').html('');
-                    response.results.forEach(function(dataSave, index) {
-                        $('#dataSaveTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + dataSave.date_creation + '</td>' +
-                            '<td>' + dataSave.date_registre + '</td>' +
-                            '<td>' + dataSave.forme_juridique + '</td>' +
-                            '<td>' + dataSave.numero_registre_commerce + '</td>' +
-                            '<td>' + dataSave.numero_fiscale + '</td>' +
-                            '<td>' + dataSave.statut_registre + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadDataSave();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadDataSave(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadDataSave(page, search);
-        });
-
-        // Add Data Save form submission
-        $('#addDataSaveForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-donnee-enregistree/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Donnée d\'enregistrement ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addDataSaveModal').modal('hide');
-                        loadDataSave();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la donnée d\'enregistrement.',
-                    });
-                }
-            });
-        });
-
-        // Edit Data Save button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-donnee-enregistree/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    console.log(response.forme_juridique);
-                    $('#editDataSaveId').val(response.id);
-                    $('#editDateCreation').val(response.date_creation);
-                    $('#editDateRegistre').val(response.date_registre);
-                    $('#editFormeJuridique2').val(response.forme_juridique);
-                    $('#editRefFormeJuridique').val(response.forme_juridique_ref);
-                    $('#editNumeroRegistreCommerce').val(response.numero_registre_commerce);
-                    $('#editNumeroFiscal').val(response.numero_fiscale);
-                    $('#editStatutRegistre').val(response.statut_registre);
-                    $('#editRefStatutRegistre').val(response.statut_registre_ref);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editDataSaveModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    console.error("Erreur lors de la récupération des données de la donnée d'enregistrement :", response);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la donnée d\'enregistrement.',
-                    });
-                }
-            });
-        });
-
-
-        // Edit Data Save form submission
-        $('#editDataSaveForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editDataSaveId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-donnee-enregistree/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Donnée d\'enregistrement mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editDataSaveModal').modal('hide');
-                        loadDataSave();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la donnée d\'enregistrement.',
-                    });
-                }
-            });
-        });
-
-        // Delete Data Save button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-donnees-enregistrees/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La donnée d\'enregistrement a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadDataSave();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la donnée d\'enregistrement.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
+    $('#editDataSaveForm').on('submit', function(e) {
+        e.preventDefault();
+        submitDataSaveForm('POST', $(this).serialize(), '#submitEditBtn', 'editDataSaveModal');
     });
-</script>
 
+    // Charger les données au démarrage si on est en mode édition
+    if ({{ data_save|yesno:"true,false" }}) {
+        loadDataSaveData();
+    }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,1426 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --faillite-color: #FF5733;
+    --jugement-color: #33FF57;
+    --redressement-color: #3357FF;
+    --autre-color: #FF33A6;
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+}
+
+/* Carte Antécédent */
+.antecedent-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    border-left: 4px solid #0A95CA;
+}
+
+.antecedent-card.faillite { border-left-color: var(--faillite-color); }
+.antecedent-card.jugement { border-left-color: var(--jugement-color); }
+.antecedent-card.redressement { border-left-color: var(--redressement-color); }
+.antecedent-card.autre { border-left-color: var(--autre-color); }
+
+.antecedent-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.antecedent-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.antecedent-card.faillite .antecedent-icon { background: rgba(255, 87, 51, 0.1); color: var(--faillite-color); }
+.antecedent-card.jugement .antecedent-icon { background: rgba(51, 255, 87, 0.1); color: var(--jugement-color); }
+.antecedent-card.redressement .antecedent-icon { background: rgba(51, 87, 255, 0.1); color: var(--redressement-color); }
+.antecedent-card.autre .antecedent-icon { background: rgba(255, 51, 166, 0.1); color: var(--autre-color); }
+
+.antecedent-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.antecedent-content {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.antecedent-date {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    margin-top: 0.75rem;
+}
+
+/* Badges d'antécédent */
+.antecedent-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.badge-faillite { background: rgba(255, 87, 51, 0.1); color: var(--faillite-color); border: 1px solid rgba(255, 87, 51, 0.2); }
+.badge-jugement { background: rgba(51, 255, 87, 0.1); color: var(--jugement-color); border: 1px solid rgba(51, 255, 87, 0.2); }
+.badge-redressement { background: rgba(51, 87, 255, 0.1); color: var(--redressement-color); border: 1px solid rgba(51, 87, 255, 0.2); }
+.badge-autre { background: rgba(255, 51, 166, 0.1); color: var(--autre-color); border: 1px solid rgba(255, 51, 166, 0.2); }
+
+/* Statistiques */
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.25rem;
+}
+
+.stat-total .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-faillite .stat-icon { background: rgba(255, 87, 51, 0.1); color: var(--faillite-color); }
+.stat-jugement .stat-icon { background: rgba(51, 255, 87, 0.1); color: var(--jugement-color); }
+.stat-redressement .stat-icon { background: rgba(51, 87, 255, 0.1); color: var(--redressement-color); }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateurs visuels */
+.indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.indicator-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.indicator-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.indicator-dot.faillite { background: var(--faillite-color); }
+.indicator-dot.jugement { background: var(--jugement-color); }
+.indicator-dot.redressement { background: var(--redressement-color); }
+.indicator-dot.autre { background: var(--autre-color); }
+
+.indicator-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+/* Table améliorée */
+.antecedent-table td {
+    vertical-align: middle;
+}
+
+.antecedent-badges-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* Légende */
+.legend-container {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e3e6f0;
+}
+
+.legend-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.legend-color.faillite { background: var(--faillite-color); }
+.legend-color.jugement { background: var(--jugement-color); }
+.legend-color.redressement { background: var(--redressement-color); }
+.legend-color.autre { background: var(--autre-color); }
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Boutons d'action */
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .antecedent-card {
+        padding: 1rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .indicator-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-gavel text-primary me-2"></i>Antécédents Juridiques
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des antécédents juridiques de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter un antécédent
+            </button>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Légende -->
+    <div class="legend-container mb-4">
+        <div class="legend-title">
+            <i class="fas fa-key"></i>Légende des types d'antécédents
+        </div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="legend-color faillite"></div>
+                <span>DFLT - Dossier de Faillite</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color jugement"></div>
+                <span>JGMT - Jugement de Cour</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color redressement"></div>
+                <span>ANTR - Antécédent de Redressement</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color autre"></div>
+                <span>AUTR - Autre</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Antécédents</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-faillite">
+                <div class="stat-icon">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_faillite }}</div>
+                <div class="stat-label">Dossiers Faillite</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-jugement">
+                <div class="stat-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_jugement }}</div>
+                <div class="stat-label">Jugements</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-redressement">
+                <div class="stat-icon">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_redressement }}</div>
+                <div class="stat-label">Redressements</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Antécédents Récents -->
+    {% if antecedents_recent %}
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="fas fa-history me-2"></i>Antécédents récemment ajoutés/modifiés
+        </h5>
+        <div class="row g-3">
+            {% for antecedent in antecedents_recent %}
+            {% with type=antecedent.get_antecedent_type %}
+            <div class="col-xl-4 col-lg-6">
+                <div class="antecedent-card {{ type }}">
+                    <div class="antecedent-icon">
+                        {% if type == 'faillite' %}
+                        <i class="fas fa-ban"></i>
+                        {% elif type == 'jugement' %}
+                        <i class="fas fa-balance-scale"></i>
+                        {% elif type == 'redressement' %}
+                        <i class="fas fa-redo"></i>
+                        {% else %}
+                        <i class="fas fa-file-alt"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="antecedent-title">
+                        {% if antecedent.dossier_faillite %}
+                        <span class="badge-faillite">DFLT</span>
+                        {% endif %}
+                        {% if antecedent.jugement_cour %}
+                        <span class="badge-jugement">JGMT</span>
+                        {% endif %}
+                        {% if antecedent.antecedant_redressement %}
+                        <span class="badge-redressement">ANTR</span>
+                        {% endif %}
+                        {% if antecedent.autre %}
+                        <span class="badge-autre">AUTR</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="antecedent-content">
+                        {% if antecedent.dossier_faillite %}
+                        <strong>Dossier Faillite:</strong> {{ antecedent.dossier_faillite|truncatechars:100 }}<br>
+                        {% endif %}
+                        {% if antecedent.jugement_cour %}
+                        <strong>Jugement Cour:</strong> {{ antecedent.jugement_cour|truncatechars:100 }}<br>
+                        {% endif %}
+                        {% if antecedent.antecedant_redressement %}
+                        <strong>Redressement:</strong> {{ antecedent.antecedant_redressement|truncatechars:100 }}<br>
+                        {% endif %}
+                        {% if antecedent.autre %}
+                        <strong>Autre:</strong> {{ antecedent.autre|truncatechars:100 }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="antecedent-date">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            {{ antecedent.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="{{ antecedent.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="{{ antecedent.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtres et Recherche -->
+    <div class="card mb-4">
+        <div class="card-body filters-card">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="form-group mb-0">
+                        <label class="form-label">
+                            <i class="fas fa-search"></i>Recherche
+                        </label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher dans les antécédents...">
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="form-group mb-0">
+                        <label class="form-label">
+                            <i class="fas fa-filter"></i>Filtrer par type
+                        </label>
+                        <select class="form-select" id="filterType">
+                            <option value="">Tous les types</option>
+                            <option value="faillite">Dossiers de Faillite</option>
+                            <option value="jugement">Jugements de Cour</option>
+                            <option value="redressement">Redressements</option>
+                            <option value="autre">Autres</option>
+                            <option value="avec_commentaire">Avec commentaire</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" id="applyFilters" style="margin-top: 24px;">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table des Antécédents -->
+    <div class="card border">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Liste des Antécédents Juridiques
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small" for="selectAll">
+                            Sélectionner tout
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" id="deleteSelected" disabled>
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="antecedentTable">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggleAll">
+                                </div>
+                            </th>
+                            <th>Type</th>
+                            <th>Dossier Faillite</th>
+                            <th>Jugement Cour</th>
+                            <th>Redressement</th>
+                            <th>Autre</th>
+                            <th>Couleur</th>
+                            <th>Date</th>
+                            <th width="120">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="antecedentTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
+                <div class="text-muted small" id="paginationInfo"></div>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Antécédent -->
+<div class="modal fade" id="addAntecedentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Antécédent Juridique
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addAntecedentForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez au moins un des champs suivants
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="dossier_faillite" class="form-label">
+                                    <i class="fas fa-ban text-danger"></i>Dossier de Faillite
+                                </label>
+                                <input type="text" class="form-control" id="dossier_faillite" name="dossier_faillite" 
+                                       placeholder="Référence du dossier de faillite">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="jugement_cour" class="form-label">
+                                    <i class="fas fa-balance-scale text-success"></i>Jugement de Cour
+                                </label>
+                                <input type="text" class="form-control" id="jugement_cour" name="jugement_cour" 
+                                       placeholder="Référence du jugement">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="antecedant_redressement" class="form-label">
+                                    <i class="fas fa-redo text-primary"></i>Antécédent de Redressement
+                                </label>
+                                <input type="text" class="form-control" id="antecedant_redressement" name="antecedant_redressement" 
+                                       placeholder="Détails du redressement">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="autre" class="form-label">
+                                    <i class="fas fa-file-alt text-purple"></i>Autre
+                                </label>
+                                <input type="text" class="form-control" id="autre" name="autre" 
+                                       placeholder="Autres informations">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette"></i>Couleur Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu
+                                </label>
+                                <div class="color-preview" id="colorPreview" style="
+                                    width: 100%;
+                                    height: 38px;
+                                    border-radius: 6px;
+                                    background: #f8f9fa;
+                                    border: 2px solid #e3e6f0;
+                                "></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4" 
+                                  placeholder="Commentaires supplémentaires..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Antécédent -->
+<div class="modal fade" id="editAntecedentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Antécédent Juridique
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAntecedentForm" class="enhanced-form">
+                <input type="hidden" id="editAntecedentId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDossierFaillite" class="form-label">
+                                    <i class="fas fa-ban text-danger"></i>Dossier de Faillite
+                                </label>
+                                <input type="text" class="form-control" id="editDossierFaillite" name="dossier_faillite">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editJugementCour" class="form-label">
+                                    <i class="fas fa-balance-scale text-success"></i>Jugement de Cour
+                                </label>
+                                <input type="text" class="form-control" id="editJugementCour" name="jugement_cour">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editAntecedantRedressement" class="form-label">
+                                    <i class="fas fa-redo text-primary"></i>Antécédent de Redressement
+                                </label>
+                                <input type="text" class="form-control" id="editAntecedantRedressement" name="antecedant_redressement">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editAutre" class="form-label">
+                                    <i class="fas fa-file-alt text-purple"></i>Autre
+                                </label>
+                                <input type="text" class="form-control" id="editAutre" name="autre">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette"></i>Couleur Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu
+                                </label>
+                                <div class="color-preview" id="editColorPreview" style="
+                                    width: 100%;
+                                    height: 38px;
+                                    border-radius: 6px;
+                                    background: #f8f9fa;
+                                    border: 2px solid #e3e6f0;
+                                "></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le(s) antécédent(s)</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Êtes-vous sûr de vouloir supprimer cet antécédent ? Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = {{ acheteur.id }};
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/antecedents/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Variables d'état
+    let currentPage = 1;
+    let currentFilters = {};
+    let selectedAntecedents = new Set();
+    
+    // Constantes de couleur
+    const COLORS = {
+        faillite: '#FF5733',
+        jugement: '#33FF57',
+        redressement: '#3357FF',
+        autre: '#FF33A6'
+    };
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+        
+        // Gérer l'aperçu des couleurs
+        $('#couleur_commentaire, #editCouleurCommentaire').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const color = selectedOption.data('color');
+            const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
+            if (color) {
+                $(previewId).css({
+                    'background': color,
+                    'border-color': color
+                });
+            } else {
+                $(previewId).css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+            }
+        });
+    }
+
+    // Initialisation
+    initSelect2();
+    loadAntecedents();
+    
+    // Fonction pour déterminer le type principal d'un antécédent
+    function getAntecedentType(antecedent) {
+        if (antecedent.dossier_faillite && antecedent.dossier_faillite.trim()) return 'faillite';
+        if (antecedent.jugement_cour && antecedent.jugement_cour.trim()) return 'jugement';
+        if (antecedent.antecedant_redressement && antecedent.antecedant_redressement.trim()) return 'redressement';
+        if (antecedent.autre && antecedent.autre.trim()) return 'autre';
+        return 'autre';
+    }
+    
+    // Charger les antécédents
+    function loadAntecedents(page = 1, filters = {}) {
+        currentPage = page;
+        currentFilters = filters;
+        
+        const params = new URLSearchParams({
+            page: page,
+            ...filters
+        });
+        
+        $.ajax({
+            url: `${API_BASE_URL}?${params}`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadAntecedents(page, filters));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les antécédents'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour la table
+    function updateTable(antecedents) {
+        const tbody = $('#antecedentTableBody');
+        tbody.empty();
+        
+        if (antecedents.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun antécédent trouvé</h5>
+                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouvel antécédent</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        antecedents.forEach((antecedent, index) => {
+            const isSelected = selectedAntecedents.has(antecedent.id.toString());
+            const antecedentType = getAntecedentType(antecedent);
+            const badges = [];
+            
+            if (antecedent.dossier_faillite && antecedent.dossier_faillite.trim()) {
+                badges.push(`<span class="badge-faillite">DFLT</span>`);
+            }
+            if (antecedent.jugement_cour && antecedent.jugement_cour.trim()) {
+                badges.push(`<span class="badge-jugement">JGMT</span>`);
+            }
+            if (antecedent.antecedant_redressement && antecedent.antecedant_redressement.trim()) {
+                badges.push(`<span class="badge-redressement">ANTR</span>`);
+            }
+            if (antecedent.autre && antecedent.autre.trim()) {
+                badges.push(`<span class="badge-autre">AUTR</span>`);
+            }
+            
+            const row = `
+                <tr data-id="${antecedent.id}" class="antecedent-${antecedentType}">
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input row-checkbox" type="checkbox" 
+                                   data-id="${antecedent.id}" ${isSelected ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="antecedent-badges-cell">
+                            ${badges.join('')}
+                        </div>
+                    </td>
+                    <td>${antecedent.dossier_faillite || '-'}</td>
+                    <td>${antecedent.jugement_cour || '-'}</td>
+                    <td>${antecedent.antecedant_redressement || '-'}</td>
+                    <td>${antecedent.autre || '-'}</td>
+                    <td>
+                        ${antecedent.couleur_commentaire ? `
+                        <span class="badge" style="background-color: ${antecedent.couleur_commentaire_code || '#6c757d'}">
+                            ${antecedent.couleur_commentaire}
+                        </span>` : '-'}
+                    </td>
+                    <td>
+                        <small class="text-muted">${antecedent.created_at_formatted || ''}</small>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${antecedent.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${antecedent.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const paginationControls = $('#paginationControls');
+        paginationControls.empty();
+        
+        if (response.count === 0) {
+            $('#paginationContainer').hide();
+            return;
+        }
+        
+        $('#paginationContainer').show();
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} antécédents`
+        );
+        
+        // Bouton précédent
+        if (response.previous) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        }
+        
+        // Pages
+        for (let i = 1; i <= response.total_pages; i++) {
+            paginationControls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Bouton suivant
+        if (response.next) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        }
+    }
+    
+    // Appliquer les filtres
+    $('#applyFilters').on('click', function() {
+        const filters = {
+            search: $('#searchInput').val(),
+            type: $('#filterType').val()
+        };
+        loadAntecedents(1, filters);
+    });
+    
+    // Recherche en temps réel
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $('#applyFilters').click();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            loadAntecedents(page, currentFilters);
+        }
+    });
+    
+    // Formulaire d'ajout
+    $('#addAntecedentForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitAntecedentForm('POST', data, '#submitAddBtn', 'addAntecedentModal');
+    });
+    
+    // Formulaire de modification
+    $('#editAntecedentForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        const antecedentId = $('#editAntecedentId').val();
+        submitAntecedentForm('PUT', data, '#submitEditBtn', 'editAntecedentModal', antecedentId);
+    });
+    
+    // Soumission du formulaire
+    function submitAntecedentForm(method, data, submitBtn, modalId, antecedentId = null) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const url = antecedentId ? 
+            `/api/acheteur/${ACHETEUR_ID}/antecedents/${antecedentId}/` : 
+            `/api/acheteur/${ACHETEUR_ID}/antecedents/`;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                $('#colorPreview, #editColorPreview').css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadAntecedents(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitAntecedentForm(method, data, submitBtn, modalId, antecedentId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+
+    // Édition d'un antécédent
+    $(document).on('click', '.edit-btn', function() {
+        const antecedentId = $(this).data('id');
+        
+        // Récupérer les détails de l'antécédent
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/antecedents/${antecedentId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir le formulaire
+                $('#editAntecedentId').val(response.id);
+                $('#editDossierFaillite').val(response.dossier_faillite || '');
+                $('#editJugementCour').val(response.jugement_cour || '');
+                $('#editAntecedantRedressement').val(response.antecedant_redressement || '');
+                $('#editAutre').val(response.autre || '');
+                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
+                $('#editCommentaire').val(response.commentaire || '');
+                
+                // Aperçu de la couleur
+                if (response.couleur_commentaire?.code_couleur) {
+                    $('#editColorPreview').css({
+                        'background': response.couleur_commentaire.code_couleur,
+                        'border-color': response.couleur_commentaire.code_couleur
+                    });
+                }
+                
+                $('#editAntecedentModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(this).click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les données de l\'antécédent'
+                    });
+                }
+            }
+        });
+    });
+
+    // Suppression d'un antécédent
+    $(document).on('click', '.delete-btn', function() {
+        const antecedentId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Supprimer l\'antécédent ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteAntecedents([antecedentId]);
+            }
+        });
+    });
+    
+    // Suppression multiple
+    $('#deleteSelected').on('click', function() {
+        if (selectedAntecedents.size === 0) return;
+        
+        Swal.fire({
+            title: `Supprimer ${selectedAntecedents.size} antécédent(s) ?`,
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteAntecedents(Array.from(selectedAntecedents));
+            }
+        });
+    });
+    
+    // Fonction de suppression
+    function deleteAntecedents(ids) {
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/antecedents/`,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: ids }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Réinitialiser la sélection
+                    selectedAntecedents.clear();
+                    $('#deleteSelected').prop('disabled', true);
+                    $('#selectAll').prop('checked', false);
+                    
+                    // Recharger la liste
+                    loadAntecedents(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => deleteAntecedents(ids));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer le(s) antécédent(s)'
+                    });
+                }
+            }
+        });
+    }
+
+    // Sélection multiple
+    $(document).on('change', '.row-checkbox', function() {
+        const id = $(this).data('id').toString();
+        
+        if ($(this).prop('checked')) {
+            selectedAntecedents.add(id);
+        } else {
+            selectedAntecedents.delete(id);
+            $('#selectAll').prop('checked', false);
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#toggleAll').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        
+        if (isChecked) {
+            $('.row-checkbox').each(function() {
+                selectedAntecedents.add($(this).data('id').toString());
+            });
+        } else {
+            selectedAntecedents.clear();
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#selectAll').on('change', function() {
+        $('#toggleAll').prop('checked', $(this).prop('checked'));
+        $('#toggleAll').change();
+    });
+    
+    function updateDeleteButtonState() {
+        const hasSelection = selectedAntecedents.size > 0;
+        $('#deleteSelected').prop('disabled', !hasSelection);
+        $('#selectAll').prop('checked', hasSelection && 
+            selectedAntecedents.size === $('.row-checkbox').length);
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

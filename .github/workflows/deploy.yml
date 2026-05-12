@@ -4,13 +4,12 @@ on:
   push:
     branches:
       # Branche sur laquelle on veut executer le deploiement
-      - '**' 
+      - main 
   pull_request:
-    branches:  
-      - '**' 
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deploy:
     # Precise et confirme l'utilisation de ubuntu derniere version (latest)
     runs-on: ubuntu-latest
   
@@ -19,13 +18,13 @@ jobs:
     # Consulter documentation de l'action : checkout@v3
       uses: actions/checkout@v3
 
-    - name: Run SonarQube Scan
-      uses: SonarSource/sonarqube-scan-action@master
-      with:
-        projectBaseDir: .
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    # - name: Run SonarQube Scan
+    #   uses: SonarSource/sonarqube-scan-action@master
+    #   with:
+    #     projectBaseDir: .
+    #   env:
+    #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     - name: Set up Docker Buildx
     # Consulter documentation de l'action docker : setup-buildx-action@v3
@@ -64,17 +63,3 @@ jobs:
     #    key: ${{ secrets.VPS_SSH_KEY }}
     #    script: |
     #      bash /home/${{ secrets.VPS_USER }}/deploy_latest.sh
-
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    # Precise et confirme l'utilisation de ubuntu derniere version (latest)
-    runs-on: ubuntu-latest
-  
-    steps:
-    - name: Scan Docker Image with Docker Scout
-      uses: docker/scout-action@v1
-      with:
-        image: ${{ secrets.DOCKER_USERNAME }}/todo-api:latest
-        dockerhub-user: ${{ secrets.DOCKER_USERNAME }}
-        dockerhub-password: ${{ secrets.DOCKER_PASSWORD }}
-        command: cves

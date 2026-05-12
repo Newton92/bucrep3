@@ -1,0 +1,298 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Vérification Rapport — ACREMAC</title>
+   <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+         font-family: 'Segoe UI', Arial, sans-serif;
+         background: linear-gradient(135deg, #001f4d 0%, #003380 50%, #00509e 100%);
+         min-height: 100vh;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         padding: 20px;
+      }
+
+      .card {
+         background: #ffffff;
+         border-radius: 20px;
+         max-width: 560px;
+         width: 100%;
+         overflow: hidden;
+         box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+      }
+
+      /* ---- Bandeau top ---- */
+      .card-header {
+         background: linear-gradient(135deg, #003366, #00509e);
+         padding: 36px 30px 28px;
+         text-align: center;
+         position: relative;
+      }
+      .card-header::after {
+         content: '';
+         display: block;
+         height: 4px;
+         background: linear-gradient(90deg, #F5C400, #ffdb4d, #F5C400);
+         position: absolute;
+         bottom: 0; left: 0; right: 0;
+      }
+
+      .shield-icon {
+         width: 64px;
+         height: 64px;
+         background: rgba(245,196,0,0.15);
+         border: 2px solid #F5C400;
+         border-radius: 50%;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         margin: 0 auto 16px;
+         font-size: 30px;
+      }
+
+      .card-header h1 {
+         color: #F5C400;
+         font-size: 13px;
+         letter-spacing: 4px;
+         text-transform: uppercase;
+         font-weight: 600;
+         margin-bottom: 6px;
+      }
+      .card-header h2 {
+         color: #ffffff;
+         font-size: 22px;
+         font-weight: 700;
+         letter-spacing: 0.5px;
+      }
+
+      /* ---- Corps ---- */
+      .card-body {
+         padding: 32px 30px 28px;
+      }
+
+      {% if acheteur %}
+      /* Authentic badge */
+      .authentic-badge {
+         display: flex;
+         align-items: center;
+         gap: 14px;
+         background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+         border: 1.5px solid #4caf50;
+         border-radius: 12px;
+         padding: 16px 20px;
+         margin-bottom: 28px;
+      }
+      .authentic-badge .check {
+         width: 42px;
+         height: 42px;
+         background: #4caf50;
+         border-radius: 50%;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-size: 20px;
+         color: white;
+         flex-shrink: 0;
+      }
+      .authentic-badge .badge-text h3 {
+         color: #2e7d32;
+         font-size: 15px;
+         font-weight: 700;
+      }
+      .authentic-badge .badge-text p {
+         color: #388e3c;
+         font-size: 12px;
+         margin-top: 2px;
+      }
+      {% endif %}
+
+      /* Info rows */
+      .info-grid {
+         display: grid;
+         gap: 14px;
+         margin-bottom: 28px;
+      }
+      .info-row {
+         display: flex;
+         align-items: flex-start;
+         gap: 14px;
+         padding: 14px 16px;
+         background: #f8faff;
+         border-radius: 10px;
+         border-left: 3px solid #003366;
+      }
+      .info-row .icon {
+         font-size: 20px;
+         flex-shrink: 0;
+         margin-top: 1px;
+      }
+      .info-row .label {
+         font-size: 11px;
+         color: #888;
+         text-transform: uppercase;
+         letter-spacing: 0.8px;
+         font-weight: 600;
+         margin-bottom: 3px;
+      }
+      .info-row .value {
+         font-size: 15px;
+         color: #1a1a2e;
+         font-weight: 600;
+      }
+
+      /* Not found */
+      .not-found {
+         text-align: center;
+         padding: 20px 0;
+      }
+      .not-found .nf-icon {
+         font-size: 48px;
+         margin-bottom: 12px;
+      }
+      .not-found h3 {
+         color: #c62828;
+         font-size: 18px;
+         font-weight: 700;
+         margin-bottom: 8px;
+      }
+      .not-found p {
+         color: #777;
+         font-size: 13px;
+      }
+
+      /* Footer disclaimer */
+      .card-footer {
+         background: #f4f6fb;
+         border-top: 1px solid #e8ecf5;
+         padding: 16px 30px;
+         text-align: center;
+      }
+      .card-footer p {
+         font-size: 11px;
+         color: #888;
+         line-height: 1.6;
+      }
+      .card-footer strong {
+         color: #003366;
+      }
+
+      /* Watermark stripe */
+      .stripe {
+         height: 6px;
+         background: repeating-linear-gradient(
+            90deg,
+            #003366 0px, #003366 20px,
+            #F5C400 20px, #F5C400 40px
+         );
+      }
+   </style>
+</head>
+<body>
+   <div class="card">
+      <div class="stripe"></div>
+
+      <div class="card-header">
+         <div class="shield-icon">🛡️</div>
+         <h1>{% trans "ACREMAC / BUCREP" %}</h1>
+         <h2>{% trans "Vérification d'Authenticité" %}</h2>
+      </div>
+
+      <div class="card-body">
+         {% if acheteur %}
+
+         <div class="authentic-badge">
+            <div class="check">✓</div>
+            <div class="badge-text">
+               <h3>{% trans "Rapport Authentique ACREMAC" %}</h3>
+               <p>{% trans "Ce rapport a été émis et certifié par ACREMAC" %}</p>
+            </div>
+         </div>
+
+         <div class="info-grid">
+            <div class="info-row">
+               <div class="icon">🏢</div>
+               <div>
+                  <div class="label">{% trans "Entreprise analysée" %}</div>
+                  <div class="value">{{ acheteur.nom }}</div>
+               </div>
+            </div>
+
+            {% if acheteur.sigle %}
+            <div class="info-row">
+               <div class="icon">🏷️</div>
+               <div>
+                  <div class="label">{% trans "Sigle" %}</div>
+                  <div class="value">{{ acheteur.sigle }}</div>
+               </div>
+            </div>
+            {% endif %}
+
+            {% if acheteur.ville %}
+            <div class="info-row">
+               <div class="icon">📍</div>
+               <div>
+                  <div class="label">{% trans "Ville" %}</div>
+                  <div class="value">{{ acheteur.ville.nom }}{% if acheteur.pays %}, {{ acheteur.pays.nom }}{% endif %}</div>
+               </div>
+            </div>
+            {% endif %}
+
+            {% if acheteur.categorie_entreprise %}
+            <div class="info-row">
+               <div class="icon">📂</div>
+               <div>
+                  <div class="label">{% trans "Secteur d'activité" %}</div>
+                  <div class="value">{{ acheteur.categorie_entreprise.libelle }}</div>
+               </div>
+            </div>
+            {% endif %}
+
+            {% if acheteur.statut_entreprise %}
+            <div class="info-row">
+               <div class="icon">⚖️</div>
+               <div>
+                  <div class="label">{% trans "Forme juridique" %}</div>
+                  <div class="value">{{ acheteur.statut_entreprise.libelle }}</div>
+               </div>
+            </div>
+            {% endif %}
+
+            <div class="info-row">
+               <div class="icon">🔒</div>
+               <div>
+                  <div class="label">{% trans "Statut du rapport" %}</div>
+                  <div class="value" style="color:#2e7d32;">✅ Certifié et confidentiel</div>
+               </div>
+            </div>
+         </div>
+
+         {% else %}
+
+         <div class="not-found">
+            <div class="nf-icon">⚠️</div>
+            <h3>{% trans "Rapport introuvable" %}</h3>
+            <p>{% trans "Aucun rapport ne correspond à ce QR Code." %}<br>
+               Ce document pourrait être invalide ou avoir été révoqué.</p>
+         </div>
+
+         {% endif %}
+      </div>
+
+      <div class="card-footer">
+         <p>
+            <strong>{% trans "ACREMAC" %}</strong> — Agence de Crédit-Management et de Conseil · Gabon<br>
+            Les informations de ce rapport sont <strong>strictement confidentielles</strong>.<br>
+            Toute divulgation non autorisée est passible de sanctions.
+         </p>
+      </div>
+
+      <div class="stripe"></div>
+   </div>
+</body>
+</html>

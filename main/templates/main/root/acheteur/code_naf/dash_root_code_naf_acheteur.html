@@ -1,0 +1,1958 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --color-background: #f8fafc;
+    --color-surface: #ffffff;
+    --color-primary: #0a95ca;
+    --color-primary-light: #25add6;
+    --color-primary-dark: #106cb2;
+    --color-secondary: #1c6ea4;
+    --color-text: #2d3748;
+    --color-text-muted: #718096;
+    --color-success: #28a745;
+    --color-warning: #ffc107;
+    --color-danger: #dc3545;
+    --color-info: #17a2b8;
+    --color-purple: #6f42c1;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    --secondary-gradient: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-secondary) 100%);
+    --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, #9b5de5 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 15px 25px rgba(10, 149, 202, 0.15);
+    --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Header Premium */
+.page-header-premium {
+    background: var(--primary-gradient);
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title-premium {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card-premium {
+    background: var(--color-surface);
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    margin-bottom: 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.acheteur-card-premium:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.acheteur-header-premium {
+    background: var(--secondary-gradient);
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.acheteur-sigle-premium {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+/* Grille d'informations acheteur */
+.acheteur-info-grid {
+    padding: 2rem;
+    background: var(--color-background);
+}
+
+.info-item-premium {
+    background: var(--color-surface);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-item-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-light);
+}
+
+.info-item-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--secondary-gradient);
+}
+
+.info-icon-premium {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: var(--secondary-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.25);
+}
+
+.info-label-premium {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.info-value-premium {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.3;
+}
+
+/* Statistiques Premium */
+.stats-container-premium {
+    margin-bottom: 2rem;
+}
+
+.stat-card-premium {
+    background: var(--color-surface);
+    border-radius: 16px;
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-light);
+}
+
+.stat-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.stat-number-premium {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label-premium {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Section Codes NAF */
+.section-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border);
+    position: relative;
+}
+
+.section-header-premium::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: var(--primary-gradient);
+}
+
+.section-title-premium {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.count-badge-premium {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* Carte Code NAF Premium */
+.code-naf-card-premium {
+    background: var(--color-surface);
+    border-radius: 16px;
+    padding: 1.75rem;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.code-naf-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--color-primary-light);
+}
+
+.code-naf-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--primary-gradient);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.naf-indicator-premium {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    box-shadow: var(--shadow-sm);
+    z-index: 1;
+}
+
+.code-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.code-main-premium {
+    flex: 1;
+}
+
+.code-title-premium {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.code-subtitle-premium {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+}
+
+.code-category-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(10, 149, 202, 0.2);
+}
+
+.weight-badge-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--purple-gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.15);
+}
+
+.code-actions-premium {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action-small {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-action-small:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-edit-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-delete-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+/* Métadonnées */
+.code-meta-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.meta-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.meta-item-premium:hover {
+    background: rgba(10, 149, 202, 0.05);
+}
+
+.meta-item-premium i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.meta-text-premium {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* État vide premium */
+.empty-state-premium {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--color-background);
+    border-radius: 16px;
+    border: 2px dashed var(--color-border);
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-icon-premium {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.7;
+}
+
+.empty-title-premium {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--color-primary-dark);
+    font-size: 1.5rem;
+}
+
+.empty-text-premium {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Contrôles de recherche */
+.search-controls-premium {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-input-premium {
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-input-premium .input-group {
+    box-shadow: var(--shadow-sm);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.search-input-premium .input-group:focus-within {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.search-input-premium .input-group-text {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+}
+
+.search-input-premium .form-control {
+    border: none;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--color-surface);
+}
+
+.search-input-premium .form-control:focus {
+    box-shadow: none;
+    background: var(--color-surface);
+}
+
+/* Boutons Premium */
+.btn-premium {
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-primary-premium {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-primary-success {
+    background: var(--color-success);
+    color: white;
+}
+
+.btn-outline-premium {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-premium:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+.btn-back-premium {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+/* Grille des codes */
+.codes-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Formulaires Premium */
+.enhanced-form-premium .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.enhanced-form-premium .form-control,
+.enhanced-form-premium .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: 10px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.enhanced-form-premium .form-control:focus,
+.enhanced-form-premium .select2-selection:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Info bulle */
+.info-tooltip-premium {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: var(--color-primary);
+    margin-left: 0.25rem;
+}
+
+.info-tooltip-premium:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-primary-dark);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Prévisualisation */
+.preview-container-premium {
+    background: var(--color-background);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    margin-top: 1rem;
+}
+
+.preview-header-premium {
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.preview-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--color-surface);
+    border-radius: 8px;
+    border-left: 3px solid var(--color-primary);
+    margin-bottom: 0.75rem;
+}
+
+.preview-code-premium {
+    font-weight: 700;
+    color: var(--color-primary);
+    min-width: 70px;
+    font-family: monospace;
+}
+
+.preview-label-premium {
+    flex: 1;
+    color: var(--color-text);
+}
+
+/* Modales Premium */
+.modal-header-premium {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.75rem !important;
+    border-bottom: none !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2rem !important;
+    background: var(--color-surface);
+}
+
+.modal-footer-premium {
+    padding: 1.75rem !important;
+    background: var(--color-background);
+    border-top: 1px solid var(--color-border) !important;
+    border-radius: 0 0 16px 16px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 70px rgba(10, 149, 202, 0.2) !important;
+    overflow: hidden;
+}
+
+/* Modal danger */
+.modal-danger-header-premium {
+    background: var(--danger-gradient);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .codes-grid-premium {
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .codes-grid-premium {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .section-header-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .code-header-premium {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .code-meta-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 2rem 1.5rem;
+    }
+    
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .search-controls-premium {
+        flex-direction: column;
+    }
+    
+    .search-input-premium {
+        min-width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .section-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .code-title-premium {
+        font-size: 1.1rem;
+    }
+    
+    .btn-premium {
+        padding: 0.625rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .modal-body-premium {
+        padding: 1.5rem !important;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Animation pour les cartes */
+.code-naf-card-premium:nth-child(1) { animation-delay: 0.1s; }
+.code-naf-card-premium:nth-child(2) { animation-delay: 0.2s; }
+.code-naf-card-premium:nth-child(3) { animation-delay: 0.3s; }
+.code-naf-card-premium:nth-child(4) { animation-delay: 0.4s; }
+.code-naf-card-premium:nth-child(5) { animation-delay: 0.5s; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-4 py-3">
+    <!-- Header Premium -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-chart-pie"></i>{% trans "Codes NAF" %}
+                </h1>
+                <p class="page-subtitle-premium">
+                    Gestion des codes NAF (Nomenclature d'Activités Française) de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-back-premium btn-premium">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    {% if acheteur.sigle %}
+                        <p class="acheteur-sigle-premium mb-0">{{ acheteur.sigle }}</p>
+                    {% endif %}
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC Unique" %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations -->
+        <div class="acheteur-info-grid">
+            <div class="row g-3">
+                <!-- Activité Principale -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="info-item-premium">
+                        <div class="info-icon-premium">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="info-label-premium">{% trans "Activité Principale" %}</span>
+                        <div class="info-value-premium">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Pays -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="info-item-premium">
+                        <div class="info-icon-premium">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                        <span class="info-label-premium">{% trans "Pays" %}</span>
+                        <div class="info-value-premium">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="info-item-premium">
+                        <div class="info-icon-premium">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="info-label-premium">{% trans "Statut" %}</span>
+                        <div class="info-value-premium">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Premium -->
+    <div class="stats-container-premium">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="stat-card-premium">
+                    <div class="stat-number-premium">{{ codes_naf_count }}</div>
+                    <div class="stat-label-premium">{% trans "Codes NAF Associés" %}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card-premium">
+                    <div class="stat-number-premium">{{ poids_total|floatformat:1 }}</div>
+                    <div class="stat-label-premium">{% trans "Poids Total" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Codes NAF -->
+    <div class="section-header-premium">
+        <h5 class="section-title-premium mb-0">
+            <i class="fas fa-list-check text-primary"></i>
+            Codes NAF Associés
+        </h5>
+        <div class="d-flex align-items-center gap-3">
+            <span class="count-badge-premium">
+                <i class="fas fa-tags"></i>
+                {{ codes_naf_count }} code{{ codes_naf_count|pluralize }}
+            </span>
+            <button class="btn btn-primary-success btn-premium" data-bs-toggle="modal" data-bs-target="#addCodeNafModal">
+                <i class="fas fa-plus-circle me-2"></i>{% trans "Associer un code" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Contrôles de recherche -->
+    <div class="search-controls-premium">
+        <div class="search-input-premium">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchCodeNafInput" 
+                       placeholder="Rechercher par code, libellé ou catégorie...">
+            </div>
+        </div>
+        <button class="btn btn-outline-premium btn-premium" id="clearSearchBtn">
+            <i class="fas fa-times me-1"></i>{% trans "Effacer" %}
+        </button>
+    </div>
+
+    <!-- Grille des codes -->
+    <div class="codes-grid-premium" id="codesNafContainer">
+        {% if codes_naf %}
+            {% for code_naf in codes_naf %}
+                {% if code_naf.code %}
+                <div class="code-naf-card-premium" data-id="{{ code_naf.id }}">
+                    <span class="naf-indicator-premium">
+                        <i class="fas fa-tag"></i> NAF
+                    </span><br><br>
+                    
+                    <div class="code-header-premium">
+                        <div class="code-main-premium">
+                            <div class="code-title-premium">
+                                <i class="fas fa-barcode text-primary"></i>
+                                {{ code_naf.code.code|default:"N/A" }}
+                                <span class="weight-badge-premium ms-2">
+                                    <i class="fas fa-weight-hanging"></i>
+                                    {{ code_naf.code.poids|default:0.0 }}
+                                </span>
+                            </div>
+                            <div class="code-subtitle-premium">
+                                {{ code_naf.code.libelle|default:"Pas de libellé" }}
+                            </div>
+                            <div class="code-category-premium">
+                                <i class="fas fa-folder"></i>
+                                {% if code_naf.code.category %}
+                                    {{ code_naf.code.category.code|default:"N/A" }} - {{ code_naf.code.category.libelle|default:"Non catégorisé" }}
+                                {% else %}
+                                    Non catégorisé
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="code-actions-premium">
+                            <button class="btn-action-small btn-edit-premium edit-code-naf-btn" 
+                                    data-id="{{ code_naf.id }}"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action-small btn-delete-premium delete-code-naf-btn" 
+                                    data-id="{{ code_naf.id }}"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-title="Dissocier">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statut -->
+                    <div class="mt-2">
+                        {% if code_naf.code.active %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                <i class="fas fa-check-circle me-1"></i>{% trans "Actif" %}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                                <i class="fas fa-times-circle me-1"></i>{% trans "Inactif" %}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Métadonnées -->
+                    <div class="code-meta-premium">
+                        <div class="meta-item-premium">
+                            <i class="fas fa-calendar-plus"></i>
+                            <div>
+                                <div class="fw-medium meta-text-premium">{% trans "Ajouté" %}</div>
+                                <small class="text-muted">{{ code_naf.created_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                        </div>
+                        <div class="meta-item-premium">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <div class="fw-medium meta-text-premium">{% trans "Dernière Màj" %}</div>
+                                <small class="text-muted">{{ code_naf.updated_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Message d'erreur -->
+                <div class="code-naf-card-premium" style="border-color: #dc3545;">
+                    <span class="naf-indicator-premium" style="background: #dc3545;">
+                        <i class="fas fa-exclamation-triangle"></i> {% trans "ERREUR" %}
+                    </span>
+                    
+                    <div class="code-header-premium">
+                        <div class="code-main-premium">
+                            <div class="code-title-premium" style="color: #dc3545;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Code NAF manquant
+                            </div>
+                            <div class="code-subtitle-premium">
+                                L'association #{{ code_naf.id }} ne référence aucun code NAF valide
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <!-- État vide -->
+            <div class="col-12">
+                <div class="empty-state-premium">
+                    <i class="fas fa-chart-pie empty-icon-premium"></i>
+                    <h4 class="empty-title-premium">{% trans "Aucun code NAF associé" %}</h4>
+                    <p class="empty-text-premium">
+                        Cet acheteur ne possède pas encore de codes NAF associés.<br>
+                        Les codes NAF permettent de classifier les activités économiques selon la nomenclature française.
+                    </p>
+                    <button class="btn btn-primary-premium btn-premium" data-bs-toggle="modal" data-bs-target="#addCodeNafModal">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Associer le premier code NAF" %}
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Ajout Code NAF -->
+<div class="modal fade" id="addCodeNafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Associer un Code NAF" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCodeNafForm" class="enhanced-form-premium">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section Sélection -->
+                    <div class="form-group">
+                        <label for="codeNafSelect" class="form-label">
+                            <i class="fas fa-search"></i>
+                            Rechercher un code NAF
+                            <span class="info-tooltip-premium" data-tooltip="Nomenclature d'Activités Française">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                        </label>
+                        <select id="codeNafSelect" 
+                                name="code" 
+                                style="width: 100%;"
+                                required>
+                            <option value=""></option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Recherchez par code, libellé ou catégorie
+                        </small>
+                    </div>
+                    
+                    <!-- Prévisualisation -->
+                    <div id="codeNafPreview" class="preview-container-premium d-none">
+                        <div class="preview-header-premium">
+                            <i class="fas fa-eye"></i>
+                            Prévisualisation
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="preview-item-premium">
+                                    <div class="preview-code-premium" id="previewCode"></div>
+                                    <div class="preview-label-premium" id="previewLibelle"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="preview-item-premium">
+                                    <div class="preview-code-premium" id="previewCategoryCode"></div>
+                                    <div class="preview-label-premium" id="previewCategoryLibelle"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <span class="weight-badge-premium">
+                                <i class="fas fa-weight-hanging"></i>
+                                Poids: <span id="previewPoids">0.0</span>
+                            </span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" id="previewStatus">
+                                <i class="fas fa-check-circle"></i> {% trans "Actif" %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-premium btn-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary-premium btn-premium" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-link me-2"></i>{% trans "Associer" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Code NAF -->
+<div class="modal fade" id="editCodeNafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Association" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCodeNafForm" class="enhanced-form-premium">
+                <input type="hidden" id="editCodeNafId" name="id">
+                <div class="modal-body modal-body-premium">
+                    <div class="form-group">
+                        <label for="editCodeNafSelect" class="form-label">
+                            <i class="fas fa-exchange-alt"></i>
+                            Nouveau code NAF
+                        </label>
+                        <select id="editCodeNafSelect" 
+                                name="code" 
+                                style="width: 100%;"
+                                required>
+                        </select>
+                    </div>
+                    
+                    <!-- Métadonnées -->
+                    <div class="code-meta-premium mt-4">
+                        <div class="meta-item-premium">
+                            <i class="fas fa-calendar-plus"></i>
+                            <div>
+                                <div class="fw-medium meta-text-premium">{% trans "Créé le" %}</div>
+                                <small class="text-muted" id="editCreatedAtInfo"></small>
+                            </div>
+                        </div>
+                        <div class="meta-item-premium">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <div class="fw-medium meta-text-premium">{% trans "Dernière Màj" %}</div>
+                                <small class="text-muted" id="editUpdatedAtInfo"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-premium btn-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary-premium btn-premium" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-unlink fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold mb-3">{% trans "Dissocier le code NAF" %}</h6>
+                <p class="text-dark mb-0">
+                    Cette action dissociera ce code NAF de l'acheteur.<br>
+                    Cette opération est réversible.
+                </p>
+                <div class="mt-4">
+                    <div class="alert alert-light border">
+                        <i class="fas fa-barcode me-2 text-primary"></i>
+                        <span id="deleteCodeInfo">{% trans "Code NAF" %}</span>
+                    </div>
+                    <div class="small text-muted mt-2" id="deleteCategoryInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-outline-premium btn-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-premium" style="background: var(--danger-gradient); color: white;" id="confirmDeleteBtn">
+                    <i class="fas fa-unlink me-2"></i>{% trans "Dissocier" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-naf-oneview/`;
+    const API_SUBCATEGORIES_URL = '/api/subcategories-naf-oneview/';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentCodeNafId = null;
+
+    // Initialiser Select2
+    function initSelect2() {
+        // Pour le modal d'ajout
+        $('#codeNafSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Rechercher un code NAF...",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addCodeNafModal'),
+            language: {
+                searching: function() {
+                    return "Recherche en cours...";
+                },
+                noResults: function() {
+                    return "Aucun résultat trouvé";
+                }
+            },
+            ajax: {
+                url: API_SUBCATEGORIES_URL,
+                dataType: 'json',
+                delay: 500,
+                data: function (params) {
+                    return {
+                        search: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    if (!data || !Array.isArray(data)) {
+                        return { results: [] };
+                    }
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: `${item.code || ''} - ${item.libelle || ''}`,
+                                data: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1
+        }).on('select2:select', function(e) {
+            if (e.params.data && e.params.data.data) {
+                showPreview(e.params.data.data);
+            }
+        }).on('select2:clear', function() {
+            hidePreview();
+        });
+        
+        // Pour le modal d'édition
+        $('#editCodeNafSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Rechercher un code NAF...",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#editCodeNafModal'),
+            ajax: {
+                url: API_SUBCATEGORIES_URL,
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        search: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    if (!data || !Array.isArray(data)) {
+                        return { results: [] };
+                    }
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: `${item.code} - ${item.libelle}`,
+                                data: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1
+        });
+    }
+
+    // Initialiser
+    initSelect2();
+
+    function showPreview(data) {
+        $('#previewCode').text(data.code);
+        $('#previewLibelle').text(data.libelle);
+        
+        if (data.category_info) {
+            $('#previewCategoryCode').text(data.category_info.code);
+            $('#previewCategoryLibelle').text(data.category_info.libelle);
+        } else {
+            $('#previewCategoryCode').text('N/A');
+            $('#previewCategoryLibelle').text('Non catégorisé');
+        }
+        
+        $('#previewPoids').text(data.poids || 0.0);
+        
+        if (data.active) {
+            $('#previewStatus').html('<i class="fas fa-check-circle"></i> Actif');
+            $('#previewStatus').removeClass('bg-danger').addClass('bg-success');
+        } else {
+            $('#previewStatus').html('<i class="fas fa-times-circle"></i> Inactif');
+            $('#previewStatus').removeClass('bg-success').addClass('bg-danger');
+        }
+        
+        $('#codeNafPreview').removeClass('d-none');
+    }
+
+    function hidePreview() {
+        $('#codeNafPreview').addClass('d-none');
+    }
+
+    // Formatage des dates
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Charger les codes NAF
+    function loadCodesNaf(search = '') {
+        if (search) {
+            let url = API_BASE_URL;
+            url += `?search=${encodeURIComponent(search)}`;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    const container = $('#codesNafContainer');
+                    const emptyState = $('.empty-state-premium');
+                    const statsCards = $('.stats-container-premium');
+                    
+                    if (response.results && response.results.length > 0) {
+                        if (emptyState.length) {
+                            emptyState.hide();
+                        }
+                        
+                        let html = '';
+                        let totalWeight = 0;
+                        
+                        response.results.forEach(function(codeNaf, index) {
+                            const subcategory = codeNaf.subcategory_details;
+                            
+                            const code = subcategory?.code || 'N/A';
+                            const libelle = subcategory?.libelle || 'Pas de libellé';
+                            const categoryCode = subcategory?.category?.code || 'N/A';
+                            const categoryLibelle = subcategory?.category?.libelle || 'Non catégorisé';
+                            const poids = parseFloat(subcategory?.poids) || 0.0;
+                            const active = subcategory?.active || false;
+                            
+                            totalWeight += poids;
+                            
+                            const createdAt = formatDate(codeNaf.created_at);
+                            const updatedAt = formatDate(codeNaf.updated_at);
+                            
+                            html += `
+                            <div class="code-naf-card-premium" data-id="${codeNaf.id}" style="animation-delay: ${index * 0.1}s;">
+                                <span class="naf-indicator-premium">
+                                    <i class="fas fa-tag"></i> NAF
+                                </span><br><br>
+                                
+                                <div class="code-header-premium">
+                                    <div class="code-main-premium">
+                                        <div class="code-title-premium">
+                                            <i class="fas fa-barcode text-primary"></i>
+                                            ${code}
+                                            <span class="weight-badge-premium ms-2">
+                                                <i class="fas fa-weight-hanging"></i>
+                                                ${poids}
+                                            </span>
+                                        </div>
+                                        <div class="code-subtitle-premium">
+                                            ${libelle}
+                                        </div>
+                                        <div class="code-category-premium">
+                                            <i class="fas fa-folder"></i>
+                                            ${categoryCode} - ${categoryLibelle}
+                                        </div>
+                                    </div>
+                                    <div class="code-actions-premium">
+                                        <button class="btn-action-small btn-edit-premium edit-code-naf-btn" 
+                                                data-id="${codeNaf.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-action-small btn-delete-premium delete-code-naf-btn" 
+                                                data-id="${codeNaf.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Dissocier">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    ${active ? 
+                                        '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fas fa-check-circle me-1"></i>Actif</span>' : 
+                                        '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="fas fa-times-circle me-1"></i>Inactif</span>'
+                                    }
+                                </div>
+
+                                <div class="code-meta-premium">
+                                    <div class="meta-item-premium">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <div>
+                                            <div class="fw-medium meta-text-premium">Ajouté</div>
+                                            <small class="text-muted">${createdAt}</small>
+                                        </div>
+                                    </div>
+                                    <div class="meta-item-premium">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <div>
+                                            <div class="fw-medium meta-text-premium">Dernière Màj</div>
+                                            <small class="text-muted">${updatedAt}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                        
+                        container.html(html);
+                        
+                        // Initialiser les tooltips
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                        
+                        // Mettre à jour les statistiques
+                        if (statsCards.length) {
+                            statsCards.find('.stat-number-premium').first().text(response.count || response.results?.length || 0);
+                            statsCards.find('.stat-number-premium').last().text(totalWeight.toFixed(1));
+                        }
+                        
+                        // Mettre à jour le compteur
+                        $('.count-badge-premium').html(`<i class="fas fa-tags"></i> ${response.results.length} code${response.results.length !== 1 ? 's' : ''}`);
+                        
+                    } else {
+                        if (!emptyState.length) {
+                            container.html(`
+                                <div class="col-12">
+                                    <div class="empty-state-premium">
+                                        <i class="fas fa-chart-pie empty-icon-premium"></i>
+                                        <h4 class="empty-title-premium">Aucun code NAF trouvé</h4>
+                                        <p class="empty-text-premium">
+                                            Aucun code NAF ne correspond à votre recherche.
+                                        </p>
+                                    </div>
+                                </div>
+                            `);
+                        } else {
+                            emptyState.show();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les codes NAF.'
+                    });
+                }
+            });
+        }
+    }
+
+    // Recherche
+    $('#searchCodeNafInput').on('input', function() {
+        const search = $(this).val();
+        loadCodesNaf(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchCodeNafInput').val('');
+        loadCodesNaf();
+    });
+
+    // Formulaire d'ajout
+    $('#addCodeNafForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const codeId = $('#codeNafSelect').val();
+        if (!codeId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sélection requise',
+                text: 'Veuillez sélectionner un code NAF.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify({ code: codeId, acheteur: ACHETEUR_ID }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addCodeNafModal').modal('hide');
+                $('#addCodeNafForm')[0].reset();
+                $('#codeNafSelect').val(null).trigger('change');
+                hidePreview();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'association du code NAF';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.code) {
+                        errorMessage = Array.isArray(xhr.responseJSON.code) ? 
+                            xhr.responseJSON.code.join('\n') : xhr.responseJSON.code;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-code-naf-btn', function() {
+        const codeNafId = $(this).data('id');
+        currentCodeNafId = codeNafId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${codeNafId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editCodeNafId').val(response.id);
+                
+                // Précharger le code NAF actuel dans Select2
+                const option = new Option(
+                    `${response.subcategory_details.code} - ${response.subcategory_details.libelle}`,
+                    response.code,
+                    true,
+                    true
+                );
+                $('#editCodeNafSelect').append(option).trigger('change');
+                
+                $('#editCreatedAtInfo').text(formatDate(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDate(response.updated_at));
+                
+                $('#editCodeNafModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails du code NAF.'
+                    });
+                }
+            }
+        });
+    });
+
+    // Formulaire de modification
+    $('#editCodeNafForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentCodeNafId) return;
+        
+        const codeId = $('#editCodeNafSelect').val();
+        if (!codeId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sélection requise',
+                text: 'Veuillez sélectionner un code NAF.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCodeNafId}/`,
+            type: 'PUT',
+            data: JSON.stringify({ code: codeId }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editCodeNafModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification du code NAF';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.code) {
+                        errorMessage = Array.isArray(xhr.responseJSON.code) ? 
+                            xhr.responseJSON.code.join('\n') : xhr.responseJSON.code;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-code-naf-btn', function() {
+        const codeNafId = $(this).data('id');
+        const card = $(this).closest('.code-naf-card-premium');
+        const code = card.find('.code-title-premium').text().split(' ')[0];
+        const libelle = card.find('.code-subtitle-premium').text();
+        const category = card.find('.code-category-premium').text().replace('📁 ', '');
+        
+        currentCodeNafId = codeNafId;
+        $('#deleteCodeInfo').text(`${code} - ${libelle}`);
+        $('#deleteCategoryInfo').text(`Catégorie: ${category}`);
+        $('#confirmDeleteModal').modal('show');
+    });
+
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentCodeNafId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCodeNafId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCodesNaf();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de dissocier le code NAF'
+                    });
+                }
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+
+    // Réinitialiser les modales
+    $('#addCodeNafModal').on('hidden.bs.modal', function () {
+        $('#addCodeNafForm')[0].reset();
+        $('#codeNafSelect').val(null).trigger('change');
+        hidePreview();
+    });
+    
+    $('#editCodeNafModal').on('hidden.bs.modal', function () {
+        $('#editCodeNafForm')[0].reset();
+        $('#editCodeNafSelect').val(null).trigger('change');
+        currentCodeNafId = null;
+    });
+});
+</script>
+{% endblock %}

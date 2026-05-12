@@ -1,0 +1,142 @@
+{% load i18n %}
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+    function refreshAccessToken() {
+        $.ajax({
+            url: "{% url 'token_refresh' %}", type: 'POST', data: { 'refresh': refreshToken }, headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            success: function(response) { accessToken = response.access; },
+            error: function() { console.error("Échec du rafraîchissement automatique du jeton."); }
+        });
+    }
+    setInterval(refreshAccessToken, 240000);
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializePassifACalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalFondsPropres = p($(`input[name="capital_reserves_${suffix}"]`).val()) + p($(`input[name="capital_declare_${suffix}"]`).val()) + p($(`input[name="benefices_non_distribues_${suffix}"]`).val());
+            const totalPassifsNonCourants = p($(`input[name="pret_bancaire_${suffix}"]`).val()) + p($(`input[name="compte_courant_administrateurs_${suffix}"]`).val());
+            const totalPassifsCourants = p($(`input[name="dettes_commerciales_autres_dettes_${suffix}"]`).val()) + p($(`input[name="decouvert_bancaire_${suffix}"]`).val()) + p($(`input[name="impots_${suffix}"]`).val());
+            const totalPassif = totalFondsPropres + totalPassifsNonCourants + totalPassifsCourants;
+            
+            $(`#total_fonds_propres_${suffix}`).val(formatCurrency(totalFondsPropres));
+            $(`#total_passifs_non_courants_${suffix}`).val(formatCurrency(totalPassifsNonCourants));
+            $(`#total_passifs_courants_${suffix}`).val(formatCurrency(totalPassifsCourants));
+            $(`#total_passif_${suffix}`).val(formatCurrency(totalPassif));
+        }
+        $(`#collapsePassifA${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializePassifACalculations(suffix));
+
+    $('#form-passifs-a-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-passifs'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-passif-a' %}", type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Passifs enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE VUE ---
+    $('#listing-passifs-a-pane').on('click', '.btn-view-passifs', function() {
+        const passifId = $(this).data('passif-id');
+        const loader = $('#modal-passifs-loader'), content = $('#passifs-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-passif-a' 0 %}`.replace('0', passifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#modal-passifs-acheteur').text(data.acheteur.nom);
+                $('#modal-passifs-annee').text(data.annee.annee);
+                $('#total-passifs-fonds-propres').text(formatCurrency(data.total_fonds_propres));
+                $('#modal-passifs-capital_reserves').text(formatCurrency(data.capital_reserves));
+                $('#modal-passifs-capital_declare').text(formatCurrency(data.capital_declare));
+                $('#modal-passifs-benefices_non_distribues').text(formatCurrency(data.benefices_non_distribues));
+                $('#total-passifs-non-courants').text(formatCurrency(data.total_passifs_non_courants));
+                $('#modal-passifs-pret_bancaire').text(formatCurrency(data.pret_bancaire));
+                $('#modal-passifs-compte_courant_administrateurs').text(formatCurrency(data.compte_courant_administrateurs));
+                $('#total-passifs-courants').text(formatCurrency(data.total_passifs_courants));
+                $('#modal-passifs-dettes_commerciales_autres_dettes').text(formatCurrency(data.dettes_commerciales_autres_dettes));
+                $('#modal-passifs-decouvert_bancaire').text(formatCurrency(data.decouvert_bancaire));
+                $('#modal-passifs-impots').text(formatCurrency(data.impots));
+                $('#total-general-passifs').text(formatCurrency(data.total_passif));
+                loader.hide(); content.show();
+            },
+            error: () => { loader.hide(); content.html('<div class="alert alert-danger">Impossible de charger les détails du passif.</div>').show(); }
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE MODIFICATION ---
+    $('#listing-passifs-a-pane').on('click', '.btn-edit-passifs', function() {
+        const passifId = $(this).data('passif-id');
+        const formContent = $('#edit-passifs-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditPassifATotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalFondsPropres = p($('#edit_capital_reserves').val()) + p($('#edit_capital_declare').val()) + p($('#edit_benefices_non_distribues').val());
+            const totalPassifsNonCourants = p($('#edit_pret_bancaire').val()) + p($('#edit_compte_courant_administrateurs').val());
+            const totalPassifsCourants = p($('#edit_dettes_commerciales_autres_dettes').val()) + p($('#edit_decouvert_bancaire').val()) + p($('#edit_impots').val());
+            const totalPassif = totalFondsPropres + totalPassifsNonCourants + totalPassifsCourants;
+
+            $('#edit_total_fonds_propres').val(formatCurrency(totalFondsPropres));
+            $('#edit_total_passifs_non_courants').val(formatCurrency(totalPassifsNonCourants));
+            $('#edit_total_passifs_courants').val(formatCurrency(totalPassifsCourants));
+            $('#edit_total_passif').val(formatCurrency(totalPassif));
+        }
+
+        $.ajax({
+            url: `{% url 'get-passif-a' 0 %}`.replace('0', passifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#edit-passifs-id').val(data.id);
+                let formHtml = `
+                    <div class="row g-3 mb-4"><div class="col-md-6"><label for="edit_annee" class="form-label">Année</label><select name="annee" id="edit_annee" class="form-select">{% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}</select></div></div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5><hr>
+                    <h4 class="text-primary mt-4">FONDS PROPRES</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_capital_reserves" class="form-label mb-0">Capital et Réserves</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="capital_reserves" id="edit_capital_reserves" value="${data.capital_reserves || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_capital_declare" class="form-label mb-0">Capital déclaré</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="capital_declare" id="edit_capital_declare" value="${data.capital_declare || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_benefices_non_distribues" class="form-label mb-0">Bénéfices non distribués</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="benefices_non_distribues" id="edit_benefices_non_distribues" value="${data.benefices_non_distribues || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_fonds_propres" class="form-label fw-bold mb-0">TOTAL FONDS PROPRES</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_fonds_propres" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">PASSIFS NON-COURANTS (LONG TERME)</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_pret_bancaire" class="form-label mb-0">Prêt bancaire</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="pret_bancaire" id="edit_pret_bancaire" value="${data.pret_bancaire || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_compte_courant_administrateurs" class="form-label mb-0">Compte courant des administrateurs</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="compte_courant_administrateurs" id="edit_compte_courant_administrateurs" value="${data.compte_courant_administrateurs || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_passifs_non_courants" class="form-label fw-bold mb-0">TOTAL PASSIFS NON-COURANTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_passifs_non_courants" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">PASSIFS COURANTS</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_dettes_commerciales_autres_dettes" class="form-label mb-0">Dettes commerciales et autres dettes</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="dettes_commerciales_autres_dettes" id="edit_dettes_commerciales_autres_dettes" value="${data.dettes_commerciales_autres_dettes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_decouvert_bancaire" class="form-label mb-0">Découvert bancaire</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="decouvert_bancaire" id="edit_decouvert_bancaire" value="${data.decouvert_bancaire || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_impots" class="form-label mb-0">Impôts</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="impots" id="edit_impots" value="${data.impots || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_passifs_courants" class="form-label fw-bold mb-0">TOTAL PASSIFS COURANTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_passifs_courants" readonly style="background-color: #e9ecef;"></div></div>
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-success text-white p-3 rounded"><div class="col-md-6"><h5 class="mb-0">TOTAL PASSIF</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_total_passif" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                $('#form-edit-passifs').on('input', 'input[type="number"]', updateEditPassifATotals);
+                updateEditPassifATotals();
+            },
+            error: function(xhr) { formContent.html('<div class="alert alert-danger">Impossible de charger le formulaire de modification du passif.</div>'); }
+        });
+    });
+
+    $('#form-edit-passifs').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), passifId = $('#edit-passifs-id').val(), btn = $('#btn-save-passifs-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-passif-a' 0 %}`.replace('0', passifId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-passifs').modal('hide'); Swal.fire('Modifié !', 'Le passif a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

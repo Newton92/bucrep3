@@ -1,0 +1,2047 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #2c3e50;
+    --color-text-muted: #5a6c7d;
+    --color-success: #28a745;
+    --color-warning: #ffc107;
+    --color-danger: #dc3545;
+    --color-info: #17a2b8;
+    --color-border: rgba(10, 149, 202, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --secondary-gradient: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, var(--color-info) 0%, #20c997 100%);
+    --marque-gradient: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+    
+    --shadow-sm: 0 2px 8px rgba(10, 149, 202, 0.08);
+    --shadow-md: 0 4px 20px rgba(10, 149, 202, 0.12);
+    --shadow-lg: 0 10px 30px rgba(10, 149, 202, 0.15);
+    --shadow-hover: 0 12px 35px rgba(10, 149, 202, 0.2);
+}
+
+/* Header Premium */
+.page-header-premium {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.acheteur-card-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.acheteur-header-premium {
+    background: var(--primary-gradient);
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info-grid-premium {
+    padding: 2rem;
+    background: var(--color-background);
+}
+
+.acheteur-info-item-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-info-item-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-info-item-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-gradient);
+}
+
+.acheteur-info-icon-premium {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.acheteur-info-label-premium {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.acheteur-info-value-premium {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    line-height: 1.3;
+}
+
+.acheteur-info-value-premium.badge-value-premium {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Carte Marque Premium */
+.marque-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    padding: 2rem;
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    margin-bottom: 1.75rem;
+    overflow: hidden;
+}
+
+.marque-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(10, 149, 202, 0.3);
+}
+
+.marque-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--marque-gradient);
+    border-radius: 5px 0 0 5px;
+}
+
+/* En-tête de la carte */
+.marque-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.marque-main-premium {
+    flex: 1;
+}
+
+.marque-title-premium {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.marque-number-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, rgba(37, 173, 214, 0.1), rgba(16, 108, 178, 0.05));
+    color: var(--color-accent);
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    transition: all 0.3s ease;
+}
+
+.marque-number-premium:hover {
+    background: linear-gradient(135deg, rgba(37, 173, 214, 0.15), rgba(16, 108, 178, 0.1));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 173, 214, 0.15);
+}
+
+.marque-actions-premium {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Indicateur Premium */
+.marque-indicator-premium {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--marque-gradient);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.15);
+    z-index: 1;
+}
+
+/* Contenu des marques Premium */
+.marque-content-premium {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.03), rgba(16, 108, 178, 0.01));
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid rgba(37, 173, 214, 0.1);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre-line;
+    max-height: 250px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.marque-content-premium:hover {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.05), rgba(16, 108, 178, 0.02));
+    border-color: rgba(37, 173, 214, 0.2);
+}
+
+.marque-content-empty-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.01));
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px dashed rgba(10, 149, 202, 0.2);
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.marque-content-empty-premium:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
+    border-color: rgba(10, 149, 202, 0.3);
+}
+
+/* Badge indicateur premium */
+.type-badge-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, rgba(37, 173, 214, 0.15), rgba(16, 108, 178, 0.08));
+    color: var(--color-accent);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    transition: all 0.3s ease;
+}
+
+.type-badge-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.15);
+}
+
+.type-badge-premium i {
+    font-size: 0.8rem;
+}
+
+/* Informations métadonnées Premium */
+.marque-meta-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--color-border);
+    font-size: 0.9rem;
+}
+
+.meta-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.meta-item-premium:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.meta-item-premium i {
+    font-size: 1.1rem;
+    color: var(--color-primary);
+}
+
+/* Statistiques Premium */
+.stats-cards-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.stat-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--marque-gradient);
+}
+
+.stat-number-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--color-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1;
+    background: var(--marque-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label-premium {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* État vide Premium */
+.empty-state-premium {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 3px dashed rgba(10, 149, 202, 0.3);
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon-premium {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    background: var(--marque-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.empty-state-premium h4 {
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-dark);
+    font-size: 1.75rem;
+}
+
+.empty-state-premium p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Section Marques Header Premium */
+.marques-section-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+    position: relative;
+}
+
+.marques-section-header-premium::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: var(--marque-gradient);
+}
+
+.marques-section-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.marques-section-title-premium i {
+    color: var(--color-secondary);
+    font-size: 2rem;
+}
+
+.marques-count-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--marque-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.25);
+}
+
+/* Grille des marques premium */
+.marques-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
+    gap: 1.75rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Contrôles de recherche Premium */
+.search-controls-premium {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.search-input-premium {
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-input-premium .input-group {
+    box-shadow: var(--shadow-sm);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.search-input-premium .input-group-text {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.875rem 1.25rem;
+}
+
+.search-input-premium .form-control {
+    border: 2px solid var(--color-border);
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+}
+
+.search-input-premium .form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: none;
+    background: var(--color-background);
+}
+
+/* Boutons Premium */
+.btn-action-premium {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-marque-premium {
+    background: var(--marque-gradient);
+    color: white;
+}
+
+.btn-marque-outline-premium {
+    color: var(--color-secondary);
+    border: 2px solid var(--color-secondary);
+    background: transparent;
+}
+
+.btn-marque-outline-premium:hover {
+    background: var(--marque-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+.btn-danger-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-success-premium {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-back-premium {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.btn-edit-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+/* Formulaires Premium */
+.enhanced-form-premium .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 173, 214, 0.1);
+    color: var(--color-secondary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.1);
+}
+
+.enhanced-form-premium .form-control,
+.enhanced-form-premium textarea {
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+    min-height: 56px;
+}
+
+.enhanced-form-premium textarea {
+    min-height: 200px;
+    resize: vertical;
+}
+
+.enhanced-form-premium .form-control:focus,
+.enhanced-form-premium textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background: var(--color-background);
+}
+
+/* Info bulle premium */
+.info-tooltip-premium {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: var(--color-primary);
+    margin-left: 0.5rem;
+}
+
+.info-tooltip-premium:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-primary-dark);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Compteur de caractères premium */
+.char-counter-premium {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-align: right;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.01));
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.char-counter-premium.warning {
+    color: var(--color-warning);
+    background: linear-gradient(145deg, rgba(255, 193, 7, 0.08), rgba(253, 126, 20, 0.04));
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.char-counter-premium.danger {
+    color: var(--color-danger);
+    background: linear-gradient(145deg, rgba(220, 53, 69, 0.08), rgba(253, 126, 20, 0.04));
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+/* Alert premium */
+.alert-premium {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.1), rgba(16, 108, 178, 0.05));
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    border-left: 4px solid var(--color-secondary);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    color: var(--color-accent);
+    font-weight: 500;
+}
+
+.alert-premium i {
+    color: var(--color-secondary);
+    margin-right: 0.75rem;
+}
+
+/* Modales Premium */
+.modal-header-premium {
+    background: var(--marque-gradient);
+    color: white;
+    padding: 2rem !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2.5rem !important;
+    background: var(--color-background);
+}
+
+.modal-footer-premium {
+    padding: 2rem !important;
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.02), rgba(16, 108, 178, 0.01));
+    border-top: 2px solid var(--color-border) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 70px rgba(37, 173, 214, 0.3) !important;
+    overflow: hidden;
+}
+
+/* Modal danger */
+.modal-danger-header-premium {
+    background: var(--danger-gradient);
+}
+
+.modal-danger-content-premium {
+    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Styles pour le titre des sections modales */
+.modal-section-title-premium {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Marquage des marques premium */
+.marque-highlight-premium {
+    background: linear-gradient(120deg, rgba(37, 173, 214, 0.1) 0%, rgba(16, 108, 178, 0.05) 100%);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.3s ease;
+}
+
+.marque-highlight-premium:hover {
+    background: linear-gradient(120deg, rgba(37, 173, 214, 0.15) 0%, rgba(16, 108, 178, 0.08) 100%);
+    border-color: rgba(37, 173, 214, 0.25);
+    transform: translateX(5px);
+}
+
+.marque-list-premium {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.marque-list-premium li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.marque-list-premium li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--color-secondary);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Icône de marque premium */
+.brand-icon-premium {
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+    background: rgba(37, 173, 214, 0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+/* Animation pour les cartes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.marque-content-loaded {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .page-title-premium {
+        font-size: 2rem;
+    }
+    
+    .acheteur-title-premium,
+    .marques-section-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .marques-grid-premium {
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .marques-grid-premium {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .marques-section-header-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .search-controls-premium {
+        flex-direction: column;
+    }
+    
+    .marque-header-premium {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .marque-meta-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .marque-card-premium {
+        padding: 1.5rem;
+    }
+    
+    .modal-body-premium,
+    .modal-footer-premium {
+        padding: 1.5rem !important;
+    }
+    
+    .stats-cards-premium {
+        grid-template-columns: 1fr;
+    }
+    
+    .empty-state-premium {
+        padding: 3rem 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-title-premium,
+    .marques-section-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .marque-title-premium {
+        font-size: 1.1rem;
+    }
+    
+    .marque-actions-premium {
+        flex-direction: column;
+    }
+    
+    .marque-actions-premium .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn-action-premium {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-trademark"></i>{% trans "Marques Commerciales" %}
+                </h1>
+                <p class="page-subtitle-premium">
+                    Gestion des marques déposées et commerciales de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-back-premium btn-action-premium">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    <p class="text-white-75 mb-0">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC Unique" %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations acheteur -->
+        <div class="acheteur-info-grid-premium">
+            <div class="row g-4">
+                <!-- Activité Principale -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">{% trans "Activité Principale" %}</span>
+                        <div class="acheteur-info-value-premium">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Pays -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">{% trans "Pays" %}</span>
+                        <div class="acheteur-info-value-premium">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">{% trans "Statut" %}</span>
+                        <div class="acheteur-info-value-premium badge-value-premium">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Premium -->
+    <div class="stats-cards-premium">
+        <div class="stat-card-premium">
+            <div class="stat-number-premium">{{ marques_count }}</div>
+            <div class="stat-label-premium">{% trans "Marques Enregistrées" %}</div>
+        </div>
+    </div>
+
+    <!-- Section Marques Premium -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="marques-section-header-premium">
+                <h5 class="marques-section-title-premium mb-0">
+                    <i class="fas fa-trademark"></i>
+                    Marques Commerciales Enregistrées
+                </h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="marques-count-badge-premium">
+                        <i class="fas fa-copyright"></i>
+                        {{ marques_count }} enregistrement{{ marques_count|pluralize }}
+                    </span>
+                    <button class="btn btn-marque-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addMarqueModal">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un enregistrement" %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contrôles de recherche Premium -->
+            <div class="search-controls-premium mb-4">
+                <div class="search-input-premium">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchMarqueInput" 
+                               placeholder="Rechercher dans les marques...">
+                    </div>
+                </div>
+                <button class="btn btn-marque-outline-premium btn-action-premium" id="clearSearchBtn">
+                    <i class="fas fa-times me-1"></i> {% trans "Effacer la recherche" %}
+                </button>
+            </div>
+
+            {% if marques %}
+                <!-- Grille des marques Premium -->
+                <div class="marques-grid-premium" id="marquesContainer">
+                    {% for marque in marques %}
+                        <div class="marque-card-premium marque-content-loaded" data-id="{{ marque.id }}" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;">
+                            <!-- Indicateur -->
+                            <span class="marque-indicator-premium">
+                                <i class="fas fa-trademark"></i> {% trans "MARQUE" %}
+                            </span><br><br>
+                            
+                            <div class="marque-header-premium">
+                                <div class="marque-main-premium">
+                                    <div class="marque-title-premium">
+                                        <i class="fas fa-copyright brand-icon-premium"></i>
+                                        Marques Commerciales
+                                    </div>
+                                    <div class="marque-number-premium">
+                                        <i class="fas fa-file-alt"></i>
+                                        Enregistrement #{{ forloop.counter }}
+                                    </div>
+                                    
+                                    <!-- Badge indicateur -->
+                                    <div class="mt-3">
+                                        {% if marque.marques %}
+                                        <span class="type-badge-premium">
+                                            <i class="fas fa-tags"></i> {{ marque.marques|wordcount }} termes
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="marque-actions-premium">
+                                    <button class="btn btn-sm btn-edit-premium edit-marque-btn" 
+                                            data-id="{{ marque.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-marque-btn" 
+                                            data-id="{{ marque.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Contenu des marques -->
+                            <div class="marque-content-premium text-content">
+                                {% if marque.marques %}
+                                    {{ marque.marques|linebreaks }}
+                                {% else %}
+                                    <div class="marque-content-empty-premium">
+                                        <i class="fas fa-trademark me-2"></i>
+                                        Aucune marque renseignée
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Métadonnées -->
+                            <div class="marque-meta-premium">
+                                <div class="meta-item-premium">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <div>
+                                        <div class="fw-medium">Ajouté le {{ marque.created_at|date:"d/m/Y" }}</div>
+                                        <small class="text-muted">à {{ marque.created_at|date:"H:i" }}</small>
+                                    </div>
+                                </div>
+                                <div class="meta-item-premium">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <div>
+                                        <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
+                                        <small class="text-muted">{{ marque.updated_at|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- État vide premium -->
+                <div class="empty-state-premium">
+                    <i class="fas fa-trademark empty-state-icon-premium"></i>
+                    <h4 class="fw-bold mb-3">{% trans "Aucun enregistrement" %}</h4>
+                    <p class="text-muted mb-4">
+                        Cet acheteur ne possède pas encore d'enregistrement de marques.<br>
+                        Enregistrez ici les marques commerciales, déposées ou les noms de marques de l'entreprise.
+                    </p>
+                    <button class="btn btn-marque-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addMarqueModal">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le premier enregistrement" %}
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Marque Premium -->
+<div class="modal fade" id="addMarqueModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter des Marques Commerciales" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addMarqueForm" class="enhanced-form-premium">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section Marques -->
+                    <h5 class="modal-section-title-premium">
+                        <i class="fas fa-trademark me-2 text-primary"></i>{% trans "Marques Commerciales" %}
+                    </h5>
+                    
+                    <div class="form-group">
+                        <label for="marquesInput" class="form-label">
+                            <i class="fas fa-trademark"></i>
+                            Liste des marques
+                            <span class="info-tooltip-premium" data-tooltip="Liste des marques commerciales, déposées ou des noms de marques de l'entreprise">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="marquesInput" 
+                            name="marques"
+                            placeholder="Liste des marques de l'entreprise...
+• Marque 1
+• Marque 2
+• Marque 3
+
+Ou décrivez les marques commerciales de l'entreprise..."
+                            rows="8"
+                            maxlength="2000"
+                            required></textarea>
+                        <div class="char-counter-premium" id="marquesCounter">
+                            <span id="marquesCount">0</span>/2000 caractères
+                        </div>
+                        <small class="form-text text-muted">
+                            Liste des marques commerciales, déposées ou des noms de marques (utilisez des puces • pour la clarté)
+                        </small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="addCouleurCommentaireMarque" class="form-label">
+                                <i class="fas fa-palette"></i>{% trans "Couleur commentaire" %}
+                            </label>
+                            <select id="addCouleurCommentaireMarque" name="couleur_commentaire" class="form-select">
+                                <option value="">{% trans "Aucune" %}</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="addCommentaireMarque" class="form-label">
+                                <i class="fas fa-comment-dots"></i>{% trans "Commentaire interne" %}
+                            </label>
+                            <textarea id="addCommentaireMarque" name="commentaire" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Conseils -->
+                    <div class="alert-premium mt-4">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>{% trans "Conseil :" %}</strong> 
+                        <ul class="mb-0 mt-1 marque-list-premium">
+                            <li>Utilisez des puces (•) ou des tirets (-) pour chaque marque</li>
+                            <li>{% trans "Séparez les différentes catégories de marques par des lignes vides" %}</li>
+                            <li>{% trans "Indiquez le statut des marques (déposée, commerciale, en cours d'enregistrement)" %}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-marque-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success-premium btn-action-premium" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-2"></i>{% trans "Ajouter" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Marque Premium -->
+<div class="modal fade" id="editMarqueModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier les Marques Commerciales" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editMarqueForm" class="enhanced-form-premium">
+                <input type="hidden" id="editMarqueId" name="id">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section Marques -->
+                    <h5 class="modal-section-title-premium">
+                        <i class="fas fa-trademark me-2 text-primary"></i>{% trans "Marques Commerciales" %}
+                    </h5>
+                    
+                    <div class="form-group">
+                        <label for="editMarquesInput" class="form-label">
+                            <i class="fas fa-trademark"></i>
+                            Liste des marques
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="editMarquesInput" 
+                            name="marques"
+                            placeholder="Liste des marques de l'entreprise..."
+                            rows="8"
+                            maxlength="2000"
+                            required></textarea>
+                        <div class="char-counter-premium" id="editMarquesCounter">
+                            <span id="editMarquesCount">0</span>/2000 caractères
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editCouleurCommentaireMarque" class="form-label">
+                                <i class="fas fa-palette"></i>{% trans "Couleur commentaire" %}
+                            </label>
+                            <select id="editCouleurCommentaireMarque" name="couleur_commentaire" class="form-select">
+                                <option value="">{% trans "Aucune" %}</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCommentaireMarque" class="form-label">
+                                <i class="fas fa-comment-dots"></i>{% trans "Commentaire interne" %}
+                            </label>
+                            <textarea id="editCommentaireMarque" name="commentaire" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Conseils -->
+                    <div class="alert-premium mt-4">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>{% trans "Conseil :" %}</strong> 
+                        <ul class="mb-0 mt-1 marque-list-premium">
+                            <li>Utilisez des puces (•) ou des tirets (-) pour chaque marque</li>
+                            <li>{% trans "Séparez les différentes catégories de marques par des lignes vides" %}</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Métadonnées -->
+                    <div class="marque-meta-premium mt-4">
+                        <div class="meta-item-premium">
+                            <i class="fas fa-calendar-plus"></i>
+                            <div>
+                                <div class="fw-medium">{% trans "Créé le" %} <span id="editCreatedAtInfo"></span></div>
+                                <small class="text-muted">{% trans "Date de création" %}</small>
+                            </div>
+                        </div>
+                        <div class="meta-item-premium">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <div class="fw-medium">{% trans "Dernière Màj:" %} <span id="editUpdatedAtInfo"></span></div>
+                                <small class="text-muted">{% trans "Date de modification" %}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-marque-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-edit-premium btn-action-premium" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <i class="fas fa-trademark fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold mb-3">{% trans "Supprimer l'enregistrement" %}</h6>
+                <p class="text-dark mb-0" id="deleteConfirmationText">
+                    Cette action supprimera définitivement cet enregistrement.<br>
+                    Cette opération est irréversible.
+                </p>
+                <div class="mt-4">
+                    <div class="marque-highlight-premium">
+                        <i class="fas fa-copyright me-2"></i>
+                        <span id="deleteMarqueInfo">{% trans "Marques commerciales" %}</span>
+                    </div>
+                    <div class="small text-muted mt-2" id="deletePreviewInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-marque-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/marques-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentMarqueId = null;
+
+    // Fonction pour formater la date et heure
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-FR');
+    }
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    // Fonction pour compter les caractères
+    function updateCharCounter(textareaId, counterId, countId) {
+        const textarea = $(textareaId);
+        const counter = $(counterId);
+        const countSpan = $(countId);
+        
+        function update() {
+            const length = textarea.val().length;
+            countSpan.text(length);
+            
+            // Changer la couleur selon la longueur
+            counter.removeClass('warning danger');
+            if (length > 1800) {
+                counter.addClass('danger');
+            } else if (length > 1500) {
+                counter.addClass('warning');
+            }
+        }
+        
+        textarea.on('input', update);
+        update(); // Initialiser
+    }
+
+    // Initialiser les compteurs de caractères
+    updateCharCounter('#marquesInput', '#marquesCounter', '#marquesCount');
+    updateCharCounter('#editMarquesInput', '#editMarquesCounter', '#editMarquesCount');
+
+    // Charger les marques
+    function loadMarques(search = '') {
+        let url = API_BASE_URL;
+        if (search) {
+            url += `?search=${encodeURIComponent(search)}`;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const container = $('#marquesContainer');
+                const emptyState = $('.empty-state-premium');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les enregistrements
+                    let html = '';
+                    
+                    response.results.forEach(function(marque, index) {
+                        const marques = marque.marques || '';
+                        const hasMarques = marques.trim().length > 0;
+                        const commentaire = marque.commentaire || '';
+                        const createdAt = formatDateTime(marque.created_at);
+                        const updatedAt = formatDateTime(marque.updated_at);
+                        
+                        // Limiter l'affichage pour l'aperçu
+                        const marquesPreview = marques.length > 150 ? marques.substring(0, 150) + '...' : marques;
+                        const wordCount = marques.trim().split(/\s+/).filter(word => word.length > 0).length;
+                        
+                        html += `
+                        <div class="marque-card-premium marque-content-loaded" data-id="${marque.id}" style="animation-delay: ${index * 0.1}s;">
+                            <span class="marque-indicator-premium">
+                                <i class="fas fa-trademark"></i> MARQUE
+                            </span><br><br>
+                            
+                            <div class="marque-header-premium">
+                                <div class="marque-main-premium">
+                                    <div class="marque-title-premium">
+                                        <i class="fas fa-copyright brand-icon-premium"></i>
+                                        Marques Commerciales
+                                    </div>
+                                    <div class="marque-number-premium">
+                                        <i class="fas fa-file-alt"></i>
+                                        Enregistrement #${index + 1}
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        ${hasMarques ? `
+                                        <span class="type-badge-premium">
+                                            <i class="fas fa-tags"></i> ${wordCount} termes
+                                        </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="marque-actions-premium">
+                                    <button class="btn btn-sm btn-edit-premium edit-marque-btn" 
+                                            data-id="${marque.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-marque-btn" 
+                                            data-id="${marque.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="marque-content-premium text-content">
+                                ${hasMarques ? `
+                                    ${marquesPreview.replace(/\n/g, '<br>')}
+                                ` : `
+                                <div class="marque-content-empty-premium">
+                                    <i class="fas fa-trademark me-2"></i>
+                                    Aucune marque renseignée
+                                </div>
+                                `}
+                            </div>
+
+                            ${commentaire ? `
+                            <div class="small text-muted mt-2">
+                                <i class="fas fa-comment-dots me-1"></i>${commentaire.replace(/\n/g, '<br>')}
+                            </div>` : ''}
+
+                            <div class="marque-meta-premium">
+                                <div class="meta-item-premium">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <div>
+                                        <div class="fw-medium">Ajouté le ${createdAt.split(' ')[0]}</div>
+                                        <small class="text-muted">à ${createdAt.split(' ')[1]}</small>
+                                    </div>
+                                </div>
+                                <div class="meta-item-premium">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <div>
+                                        <div class="fw-medium">Dernière mise à jour</div>
+                                        <small class="text-muted">${updatedAt}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    container.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                    // Mettre à jour le compteur
+                    $('.marques-count-badge-premium').html(`<i class="fas fa-copyright"></i> ${response.results.length} enregistrement${response.results.length !== 1 ? 's' : ''}`);
+                    $('.stat-number-premium').text(response.results.length);
+                    
+                } else {
+                    if (!emptyState.length) {
+                        container.html(`
+                            <div class="empty-state-premium">
+                                <i class="fas fa-trademark empty-state-icon-premium"></i>
+                                <h4 class="fw-bold mb-3">Aucun enregistrement trouvé</h4>
+                                <p class="text-muted mb-4">
+                                    Aucun enregistrement de marques ne correspond à votre recherche.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
+                showError('Erreur', 'Impossible de charger les marques.');
+            }
+        });
+    }
+
+    // Recherche
+    $('#searchMarqueInput').on('input', function() {
+        const search = $(this).val();
+        loadMarques(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchMarqueInput').val('');
+        loadMarques();
+    });
+    
+    // Formulaire d'ajout
+    $('#addMarqueForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            marques: $('#marquesInput').val().trim(),
+            couleur_commentaire: $('#addCouleurCommentaireMarque').val() || null,
+            commentaire: $('#addCommentaireMarque').val().trim() || null,
+            acheteur: ACHETEUR_ID
+        };
+        
+        // Vérifier que le champ est rempli
+        if (!formData.marques) {
+            showError('Validation requise', 'Le champ "Marques" est obligatoire.');
+            return;
+        }
+        
+        // Vérifier la longueur minimale
+        if (formData.marques.length < 3) {
+            showError('Validation requise', 'Veuillez fournir une description des marques (au moins 3 caractères).');
+            return;
+        }
+        
+        submitMarqueForm('POST', formData, '#submitAddBtn', '#addMarqueModal');
+    });
+    
+    // Formulaire de modification
+    $('#editMarqueForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentMarqueId) return;
+        
+        const formData = {
+            marques: $('#editMarquesInput').val().trim(),
+            couleur_commentaire: $('#editCouleurCommentaireMarque').val() || null,
+            commentaire: $('#editCommentaireMarque').val().trim() || null
+        };
+        
+        // Vérifier que le champ est rempli
+        if (!formData.marques) {
+            showError('Validation requise', 'Le champ "Marques" est obligatoire.');
+            return;
+        }
+        
+        // Vérifier la longueur minimale
+        if (formData.marques.length < 3) {
+            showError('Validation requise', 'Veuillez fournir une description des marques (au moins 3 caractères).');
+            return;
+        }
+        
+        submitMarqueForm('PUT', formData, '#submitEditBtn', '#editMarqueModal', currentMarqueId);
+    });
+    
+    // Fonction générique de soumission
+    function submitMarqueForm(method, data, submitBtn, modalId, marqueId = null) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const url = marqueId ? 
+            `${API_BASE_URL}${marqueId}/` : 
+            API_BASE_URL;
+
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $(modalId).modal('hide');
+                $(`${modalId} form`)[0].reset();
+                
+                // Réinitialiser les compteurs
+                if (modalId === '#addMarqueModal') {
+                    $('#marquesCount').text('0');
+                    $('#marquesCounter').removeClass('warning danger');
+                } else {
+                    $('#editMarquesCount').text('0');
+                    $('#editMarquesCounter').removeClass('warning danger');
+                }
+                
+                showSuccess('Succès', response.message, () => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'opération';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = Array.isArray(xhr.responseJSON.non_field_errors) ? 
+                            xhr.responseJSON.non_field_errors.join('\n') : xhr.responseJSON.non_field_errors;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.acheteur) {
+                        errorMessage = Array.isArray(xhr.responseJSON.acheteur) ? 
+                            xhr.responseJSON.acheteur.join('\n') : xhr.responseJSON.acheteur;
+                    } else if (xhr.responseJSON.marques) {
+                        errorMessage = Array.isArray(xhr.responseJSON.marques) ? 
+                            xhr.responseJSON.marques.join('\n') : xhr.responseJSON.marques;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitMarqueForm(method, data, submitBtn, modalId, marqueId);
+                    });
+                } else {
+                    showError('Erreur', errorMessage);
+                }
+            }
+        });
+    }
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-marque-btn', function() {
+        const marqueId = $(this).data('id');
+        currentMarqueId = marqueId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${marqueId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editMarqueId').val(response.id);
+                $('#editMarquesInput').val(response.marques || '');
+                $('#editCouleurCommentaireMarque').val(response.couleur_commentaire || '');
+                $('#editCommentaireMarque').val(response.commentaire || '');
+                
+                // Mettre à jour les compteurs
+                $('#editMarquesCount').text(response.marques ? response.marques.length : 0);
+                
+                // Mettre à jour les couleurs des compteurs
+                const marquesCounter = $('#editMarquesCounter');
+                marquesCounter.removeClass('warning danger');
+                
+                if (response.marques && response.marques.length > 1800) {
+                    marquesCounter.addClass('danger');
+                } else if (response.marques && response.marques.length > 1500) {
+                    marquesCounter.addClass('warning');
+                }
+                
+                // Pré-remplir les dates
+                $('#editCreatedAtInfo').text(formatDate(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
+                
+                $('#editMarqueModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(this).click();
+                    });
+                } else {
+                    showError('Erreur', 'Impossible de charger les détails des marques.');
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-marque-btn', function() {
+        const marqueId = $(this).data('id');
+        const card = $(this).closest('.marque-card-premium');
+        const marques = card.find('.marque-content-premium').text().trim();
+        
+        currentMarqueId = marqueId;
+        
+        // Créer un résumé
+        let preview = marques.length > 100 ? marques.substring(0, 100) + '...' : marques;
+        let wordCount = marques.split(/\s+/).filter(word => word.length > 0).length;
+        
+        $('#deleteMarqueInfo').text(`${wordCount} marques enregistrées`);
+        $('#deletePreviewInfo').text(preview || 'Aucune marque renseignée');
+        
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentMarqueId) return;
+        
+        const $btn = $(this);
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentMarqueId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                $btn.prop('disabled', false).html(originalText);
+                
+                showSuccess('Succès', response.message, () => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalText);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    showError('Erreur', xhr.responseJSON?.detail || 'Impossible de supprimer l\'enregistrement');
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                showSessionExpired();
+            }
+        });
+    }
+    
+    // Fonctions d'affichage de messages
+    function showSuccess(title, message, callback = null) {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: message,
+            timer: 2000,
+            showConfirmButton: false,
+            background: 'var(--color-background)',
+            color: 'var(--color-text)'
+        }).then(() => {
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+    
+    function showError(title, message) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            html: message.replace(/\n/g, '<br>'),
+            background: 'var(--color-background)',
+            color: 'var(--color-text)',
+            confirmButtonColor: 'var(--color-primary)'
+        });
+    }
+    
+    function showSessionExpired() {
+        Swal.fire({
+            icon: 'error',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Veuillez vous reconnecter.',
+            showCancelButton: true,
+            confirmButtonText: 'Se reconnecter',
+            cancelButtonText: 'Annuler',
+            background: 'var(--color-background)',
+            color: 'var(--color-text)',
+            confirmButtonColor: 'var(--color-primary)',
+            cancelButtonColor: 'var(--color-text-muted)'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Charger les marques au démarrage
+    loadMarques();
+    
+    // Réinitialiser le modal quand il est fermé
+    $('#addMarqueModal').on('hidden.bs.modal', function () {
+        $('#addMarqueForm')[0].reset();
+        $('#marquesCount').text('0');
+        $('#marquesCounter').removeClass('warning danger');
+    });
+    
+    $('#editMarqueModal').on('hidden.bs.modal', function () {
+        $('#editMarqueForm')[0].reset();
+        $('#editMarquesCount').text('0');
+        $('#editMarquesCounter').removeClass('warning danger');
+        currentMarqueId = null;
+    });
+});
+</script>
+{% endblock %}

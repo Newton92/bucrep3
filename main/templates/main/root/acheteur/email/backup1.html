@@ -1,0 +1,1297 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --email-gradient: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
+}
+
+/* Carte email */
+.email-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.email-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #6f42c1;
+}
+
+.email-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #6f42c1, #9b5de5);
+}
+
+/* En-tête de la carte */
+.email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.email-address {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    word-break: break-word;
+}
+
+.email-domain {
+    color: #6f42c1;
+    font-weight: 700;
+}
+
+.email-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Actions rapides */
+.email-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-email {
+    background: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-email:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
+    color: white;
+}
+
+/* Informations métadonnées */
+.email-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* Badge de statut */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-primary {
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+    border: 1px solid rgba(10, 149, 202, 0.2);
+}
+
+.badge-email {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+    border: 1px solid rgba(111, 66, 193, 0.2);
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.15);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--email-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des emails */
+.emails-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #6f42c1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .emails-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .email-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .email-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .email-address {
+        font-size: 1.1rem;
+    }
+    
+    .email-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Indicateur email */
+.email-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #6f42c1;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Animation pour validation email */
+.email-valid {
+    position: relative;
+}
+
+.email-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Style pour email tronqué */
+.email-truncated {
+    cursor: pointer;
+    position: relative;
+}
+
+.email-truncated:hover::after {
+    content: attr(data-full-email);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #333;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Copie d'email */
+.copy-email-btn {
+    background: transparent;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-email-btn:hover {
+    background: #6f42c1;
+    color: white;
+    border-color: #6f42c1;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-envelope text-purple me-2"></i>Adresses Email
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des adresses email de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ emails_count }}</div>
+            <div class="stat-label">Emails enregistrés</div>
+        </div>
+    </div>
+
+    <!-- Section Emails -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-envelope me-2"></i>Liste des Adresses Email
+                    </h5>
+                    <div>
+                        <button class="btn btn-info btn-action" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter un email
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchEmailInput" 
+                                       placeholder="Rechercher une adresse email...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>Effacer
+                        </button>
+                    </div>
+
+                    {% if emails %}
+                    <!-- Grille des emails -->
+                    <div class="emails-grid" id="emailsContainer">
+                        {% for email in emails %}
+                        <div class="email-card" data-id="{{ email.id }}">
+                            <!-- Indicateur email -->
+                            <span class="email-indicator">
+                                <i class="fas fa-envelope"></i> Email
+                            </span><br>
+                            
+                            <div class="email-header">
+                                <div>
+                                    <span class="email-address" 
+                                        data-full-email="{{ email.email }}"
+                                        title="{{ email.email }}">
+                                        {% if email.email|length > 30 %}
+                                            {% with email_local=email.email|slice:":27" %}
+                                                {{ email_local }}...
+                                            {% endwith %}
+                                        {% else %}
+                                            {{ email.email }}
+                                        {% endif %}
+                                    </span>
+                                    <div class="mt-1">
+                                        <button class="copy-email-btn" 
+                                                data-email="{{ email.email }}"
+                                                title="Copier l'adresse email">
+                                            <i class="fas fa-copy"></i> Copier
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="email-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-email-btn" 
+                                            data-id="{{ email.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-email-btn" 
+                                            data-id="{{ email.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Actions rapides -->
+                            <div class="email-actions-quick">
+                                <a href="mailto:{{ email.email }}" 
+                                   class="btn-email"
+                                   target="_blank">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Envoyer un email
+                                </a>
+                            </div>
+
+                            <!-- Métadonnées -->
+                            <div class="email-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>
+                                        Créé par: <strong>{{ email.created_by.get_full_name|default:"Inconnu" }}</strong>
+                                    </span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ email.created_at|date:"d/m/Y H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination (si nécessaire) -->
+                    {% if emails_count > 10 %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav>
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <span class="page-link">Précédent</span>
+                                </li>
+                                <li class="page-item active">
+                                    <span class="page-link">1</span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">Suivant</span>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- État vide -->
+                    <div class="empty-state">
+                        <i class="fas fa-envelope empty-state-icon"></i>
+                        <h4 class="fw-bold mb-2">Aucun email enregistré</h4>
+                        <p class="text-muted mb-4">
+                            Cet acheteur ne possède pas encore d'adresse email enregistrée.<br>
+                            Ajoutez des emails pour faciliter la communication par courrier électronique.
+                        </p>
+                        <button class="btn btn-info btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                            <i class="fas fa-plus-circle me-2"></i>Ajouter le premier email
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Email -->
+<div class="modal fade" id="addEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Adresse Email
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addEmailForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope text-purple"></i>Adresse email
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                            placeholder="Ex: contact@entreprise.com, info@societe.org" 
+                            required
+                            autocomplete="off">
+                        <div class="form-text">
+                            Format accepté: 
+                            <ul class="mb-0">
+                                <li>Adresse email valide: nom@domaine.ext</li>
+                                <li>Maximum 254 caractères</li>
+                                <li>Exemples: contact@exemple.com, info@entreprise.org</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-info" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Email -->
+<div class="modal fade" id="editEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier une Adresse Email
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editEmailForm" class="enhanced-form">
+                <input type="hidden" id="editEmailId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editEmail" class="form-label">
+                            <i class="fas fa-envelope text-purple"></i>Adresse email
+                        </label>
+                        <input type="email" class="form-control" id="editEmail" name="email" required>
+                    </div>
+                    <div class="email-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Créé par: <strong id="createdByInfo"></strong></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Le: <span id="createdAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'adresse email</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette adresse email ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="fw-bold mt-3" id="deleteEmailAddress"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/emails/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentEmailId = null;
+    
+    // Fonction de validation d'email
+    function validateEmail(email) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email.toLowerCase());
+    }
+    
+    // Fonction pour formater l'email pour l'affichage
+    function formatEmailForDisplay(email) {
+        if (!email) return '';
+        
+        // Si l'email est trop long, le tronquer
+        if (email.length > 30) {
+            const [localPart, domain] = email.split('@');
+            if (localPart.length > 15) {
+                return localPart.substring(0, 12) + '...@' + domain;
+            }
+        }
+        return email;
+    }
+    
+    // Initialiser les validateurs d'email
+    function initEmailValidators() {
+        // Validation pour l'ajout
+        $('#email').on('input', function() {
+            const email = $(this).val().trim().toLowerCase();
+            const $input = $(this);
+            
+            if (validateEmail(email)) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+        
+        // Validation pour l'édition
+        $('#editEmail').on('input', function() {
+            const email = $(this).val().trim().toLowerCase();
+            const $input = $(this);
+            
+            if (validateEmail(email)) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+    }
+
+    // Initialisation
+    initEmailValidators();
+    
+    // Fonction pour copier l'email dans le presse-papier
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Copié !',
+                text: 'L\'adresse email a été copiée dans le presse-papier.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }).catch(err => {
+            console.error('Erreur lors de la copie:', err);
+            // Fallback pour les anciens navigateurs
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Copié !',
+                text: 'L\'adresse email a été copiée dans le presse-papier.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        });
+    }
+    
+    // Gestionnaire pour le bouton de copie
+    $(document).on('click', '.copy-email-btn', function() {
+        const email = $(this).data('email');
+        copyToClipboard(email);
+    });
+    
+    // Charger les emails
+    function loadEmails(search = '') {
+        let url = API_BASE_URL;
+        if (search) {
+            url += `?search=${encodeURIComponent(search)}`;
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const emailsContainer = $('#emailsContainer');
+                const emptyState = $('.empty-state');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les emails
+                    let html = '';
+                    response.results.forEach(function(email) {
+                        const displayEmail = formatEmailForDisplay(email.email);
+                        const createdBy = email.created_by?.full_name || email.created_by?.username || 'Inconnu';
+                        const createdAt = new Date(email.created_at).toLocaleString('fr-FR');
+                        
+                        html += `
+                        <div class="email-card" data-id="${email.id}">
+                            <span class="email-indicator">
+                                <i class="fas fa-envelope"></i> Email
+                            </span>
+                            <br>
+                            
+                            <div class="email-header">
+                                <div>
+                                    <span class="email-address" 
+                                          data-full-email="${email.email}"
+                                          title="${email.email}">
+                                        ${displayEmail}
+                                    </span>
+                                    <div class="mt-1">
+                                        <button class="copy-email-btn" 
+                                                data-email="${email.email}"
+                                                title="Copier l'adresse email">
+                                            <i class="fas fa-copy"></i> Copier
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="email-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-email-btn" 
+                                            data-id="${email.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-email-btn" 
+                                            data-id="${email.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="email-actions-quick">
+                                <a href="mailto:${email.email}" 
+                                   class="btn-email"
+                                   target="_blank">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Envoyer un email
+                                </a>
+                            </div>
+
+                            <div class="email-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Créé par: <strong>${createdBy}</strong></span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${createdAt}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    emailsContainer.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                } else {
+                    // Afficher l'état vide
+                    if (!emptyState.length) {
+                        emailsContainer.html(`
+                            <div class="empty-state">
+                                <i class="fas fa-envelope empty-state-icon"></i>
+                                <h4 class="fw-bold mb-2">Aucun email trouvé</h4>
+                                <p class="text-muted mb-4">
+                                    Aucune adresse email ne correspond à votre recherche.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
+                }
+                
+                // Mettre à jour le compteur
+                $('#emailsCount').text(response.count || response.results?.length || 0);
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les adresses email.'
+                });
+            }
+        });
+    }
+    
+    // Recherche d'emails
+    $('#searchEmailInput').on('input', function() {
+        const search = $(this).val();
+        loadEmails(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchEmailInput').val('');
+        loadEmails();
+    });
+    
+    // Formulaire d'ajout
+    $('#addEmailForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const emailAddress = $('#email').val().trim().toLowerCase();
+        if (!emailAddress || !validateEmail(emailAddress)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir une adresse email valide.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify({ email: emailAddress }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addEmailModal').modal('hide');
+                $('#addEmailForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadEmails();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout de l\'email';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.email) {
+                        errorMessage = xhr.responseJSON.email.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-email-btn', function() {
+        const emailId = $(this).data('id');
+        currentEmailId = emailId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${emailId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editEmailId').val(response.id);
+                $('#editEmail').val(response.email);
+                $('#createdByInfo').text(response.created_by?.full_name || response.created_by?.username || 'Inconnu');
+                $('#createdAtInfo').text(new Date(response.created_at).toLocaleString('fr-FR'));
+                $('#editEmailModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de l\'email.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editEmailForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentEmailId) return;
+        
+        const emailAddress = $('#editEmail').val().trim().toLowerCase();
+        if (!emailAddress || !validateEmail(emailAddress)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir une adresse email valide.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentEmailId}/`,
+            type: 'PUT',
+            data: JSON.stringify({ email: emailAddress }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editEmailModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadEmails();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de l\'email';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.email) {
+                        errorMessage = xhr.responseJSON.email.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-email-btn', function() {
+        const emailId = $(this).data('id');
+        const emailAddress = $(this).closest('.email-card').find('.email-address').attr('title');
+        
+        currentEmailId = emailId;
+        $('#deleteEmailAddress').text(emailAddress);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentEmailId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentEmailId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadEmails();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'email'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Ajouter le style pour le bouton purple (si pas déjà présent)
+    if (!$('.btn-purple').length) {
+        $('<style>').text(`
+            .btn-purple {
+                background: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
+                color: white;
+                border: none;
+            }
+            .btn-purple:hover {
+                background: linear-gradient(135deg, #5a32a3 0%, #8b4cd9 100%);
+                color: white;
+            }
+            .text-purple {
+                color: #6f42c1;
+            }
+        `).appendTo('head');
+    }
+    
+    // Charger les emails au démarrage
+    loadEmails();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1935 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<!-- MapLibre GL CSS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+/* ========== VARIABLES ========== */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ========== GLOBAL STYLES ========== */
+body {
+    background-color: #f5f7fb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.2rem 1.5rem;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* ========== HEADER SECTION ========== */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), #4a6491);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+/* ========== COMPANY PROFILE SECTION ========== */
+.company-profile {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.company-header {
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    padding: 2rem;
+    color: white;
+    position: relative;
+}
+
+.company-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+.company-logo {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.company-logo i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+}
+
+.company-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.company-sigle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.info-card {
+    background: var(--light-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--secondary-color);
+    transition: var(--transition);
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-card h6 i {
+    color: var(--secondary-color);
+}
+
+.info-content {
+    color: #555;
+    line-height: 1.6;
+}
+
+.info-item {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 140px;
+    display: inline-block;
+}
+
+.info-value {
+    color: #666;
+}
+
+/* ========== BALANCE SECTION ========== */
+.balance-section {
+    margin-top: 2rem;
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Couleurs spécifiques pour chaque type de bilan */
+.balance-english {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.balance-classic {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.balance-syscohada {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.balance-banking {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.balance-ifrs {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.balance-header {
+    position: relative;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.balance-header h6 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.balance-body {
+    padding: 1.5rem;
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.balance-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.balance-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.balance-btn-all {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ========== MODULES SECTION ========== */
+.modules-container {
+    margin-top: 2rem;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
+}
+
+.module-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid #eef2f7;
+    position: relative;
+    overflow: hidden;
+}
+
+.module-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--secondary-color);
+}
+
+.module-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.module-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.module-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.module-btn i {
+    font-size: 0.9rem;
+}
+
+.module-btn:hover {
+    transform: scale(1.02);
+}
+
+/* ========== BUTTON CATEGORIES ========== */
+.btn-success-module { 
+    background: linear-gradient(135deg, #27ae60, #2ecc71); 
+    color: white;
+    border: none;
+}
+.btn-warning-module { 
+    background: linear-gradient(135deg, #f39c12, #f1c40f); 
+    color: white;
+    border: none;
+}
+.btn-info-module { 
+    background: linear-gradient(135deg, #3498db, #2980b9); 
+    color: white;
+    border: none;
+}
+.btn-dark-module { 
+    background: linear-gradient(135deg, #2c3e50, #34495e); 
+    color: white;
+    border: none;
+}
+.btn-secondary-module { 
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6); 
+    color: white;
+    border: none;
+}
+.btn-danger-module { 
+    background: linear-gradient(135deg, #c0392b, #e74c3c); 
+    color: white;
+    border: none;
+}
+.btn-default-module { 
+    background: linear-gradient(135deg, #bdc3c7, #ecf0f1); 
+    color: #2c3e50;
+    border: none;
+}
+
+/* ========== MODAL STYLES ========== */
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+    border: none;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* ========== REPORTS SECTION ========== */
+.reports-section {
+    margin-top: 2rem;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.report-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #3498db;
+}
+
+.report-card h6 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1200px) {
+    .balance-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .balance-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modules-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .company-header {
+        padding: 1.5rem;
+    }
+    
+    .company-name {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-label {
+        min-width: 120px;
+        font-size: 0.9rem;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* ========== CUSTOM SCROLLBAR ========== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* ========== LOADING STATES ========== */
+.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--secondary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========== STATUS BADGES ========== */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-active {
+    background: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-inactive {
+    background: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+/* ========== FORM STYLES ========== */
+.form-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+/* ========== ALERT STYLES ========== */
+.alert {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem;
+}
+
+.alert-warning {
+    background-color: rgba(243, 156, 18, 0.1);
+    color: #d68910;
+}
+
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Header Section -->
+<div class="page-header fade-in">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-building me-2"></i>Gestion des Acheteurs
+            </h1>
+            <p class="page-subtitle">
+                Interface de consultation et de gestion complète des informations de l'acheteur
+            </p>
+        </div>
+        <div class="d-none d-md-block">
+            <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-id-card me-2"></i>Fiche Acheteur
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Company Profile Section -->
+<div class="card company-profile fade-in">
+    <div class="company-header">
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+            <div class="company-logo">
+                <i class="fas fa-shield-alt text-dark"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h1 class="company-name" id="editNom"></h1>
+                <div class="company-sigle" id="editSigle"></div>
+            </div>
+            <div class="company-badge">
+                <span id="editCode"></span>
+                <small class="d-block mt-1">Code ACREMAC</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <!-- Company Description -->
+        <div class="info-card">
+            <h6><i class="fas fa-file-alt"></i> Description</h6>
+            <div class="info-content" id="editDescription"></div>
+        </div>
+
+        <!-- Main Activity -->
+        <div class="info-card">
+            <h6><i class="fas fa-briefcase"></i> Activité Principale</h6>
+            <div class="info-content" id="editActivitePrincipale"></div>
+        </div>
+
+        <!-- Creation Date -->
+        <div class="info-card">
+            <h6><i class="fas fa-calendar-alt"></i> Date de Création</h6>
+            <div class="info-content">
+                <span id="editDateCreation"></span>
+            </div>
+        </div>
+
+        <!-- Contact & Address -->
+        <div class="info-card">
+            <h6><i class="fas fa-address-book"></i> Contact & Adresse</h6>
+            <div class="info-content">
+                <div class="info-item">
+                    <span class="info-label">Fax :</span>
+                    <span class="info-value" id="editFax"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email :</span>
+                    <span class="info-value" id="editEmail"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Site web :</span>
+                    <span class="info-value" id="editSiteInternet"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Boîte postale :</span>
+                    <span class="info-value" id="editBoitePostale"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Adresse :</span>
+                    <span class="info-value">
+                        <span id="editRueAdresse"></span> 
+                        <span id="editNumeroAdresse"></span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Localisation :</span>
+                    <span class="info-value">
+                        <span id="editVille"></span>, 
+                        <span id="editProvince"></span>, 
+                        <span id="editPays"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legal Information -->
+        <div class="info-card">
+            <h6><i class="fas fa-balance-scale"></i> Informations Juridiques</h6>
+            <div class="info-content">
+                <div class="info-item">
+                    <span class="info-label">Forme juridique :</span>
+                    <span class="info-value" id="editFormeJuridique"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Catégorie :</span>
+                    <span class="info-value" id="editCategorieEntreprise"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Statut actuel :</span>
+                    <span class="status-badge status-active" id="editStatutEntreprise"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Balance Types Section -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-balance-scale-right me-2"></i>Types de Bilans</h5>
+    </div>
+    <div class="card-body">
+        <div class="balance-grid">
+            <!-- English Balance -->
+            <div class="balance-card balance-english">
+                <div class="balance-header">
+                    <h6><i class="fas fa-file-invoice-dollar"></i>Bilan Anglais</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- Classic Balance -->
+            <div class="balance-card balance-classic">
+                <div class="balance-header">
+                    <h6><i class="fas fa-chart-line"></i>Bilan Classique</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- SYSCOHADA Balance -->
+            <div class="balance-card balance-syscohada">
+                <div class="balance-header">
+                    <h6><i class="fas fa-calculator"></i>Bilan SYSCOHADA</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- Banking Balance -->
+            <div class="balance-card balance-banking">
+                <div class="balance-header">
+                    <h6><i class="fas fa-university"></i>Bilan Bancaire</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_asset_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_liabilitie_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_expense_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-money-bill-wave me-1"></i>Dépenses
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_actif_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- IFRS COBAC Balance -->
+            <div class="balance-card balance-ifrs">
+                <div class="balance-header">
+                    <h6><i class="fas fa-chart-bar"></i>Bilan IFRS COBAC</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs IFRS
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs IFRS
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_compte_financier_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-file-invoice-dollar me-1"></i>Comptes Financiers
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_irfs_cobac' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules IFRS
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modules Navigation -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-th-large me-2"></i>Modules de Gestion</h5>
+    </div>
+    <div class="card-body">
+        <div class="modules-grid" id="modulesGridContainer">
+            <!-- Les modules seront chargés dynamiquement ici -->
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement des modules...</span>
+                </div>
+                <p class="text-muted mt-2">Chargement des modules de gestion...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Section -->
+<div class="card mt-4 fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Rapports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <p class="text-muted mb-3">
+                    Générez des rapports détaillés sous différents formats pour analyser la solvabilité et les performances de l'acheteur.
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#generateReportModal"
+                        data-acheteur-id="{{ id_acheteur }}">
+                    <i class="fas fa-cogs me-2"></i>Générer un rapport
+                </button>
+            </div>
+        </div>
+        
+        <div class="reports-grid mt-3">
+            <div class="report-card">
+                <h6><i class="fas fa-file-contract text-primary"></i> Rapports de Solvabilité</h6>
+                <p class="text-muted mb-3">Analyses détaillées de la situation financière</p>
+                <a href="{% url 'dash_root_manage_acheteur_report_solvency' id_acheteur %}" target="_blank" 
+                   class="btn btn-dark-module w-100">
+                    <i class="fas fa-external-link-alt me-2"></i>Consulter
+                </a>
+            </div>
+            
+            <div class="report-card">
+                <h6><i class="fas fa-envelope text-info"></i> Mailings</h6>
+                <p class="text-muted mb-3">Communication et envois d'emails</p>
+                <a href="{% url 'dash_root_manage_acheteur_emailling' id_acheteur %}" target="_blank" 
+                   class="btn btn-info-module w-100">
+                    <i class="fas fa-external-link-alt me-2"></i>Gérer
+                </a>
+            </div>
+            
+            <div class="report-card">
+                <h6><i class="fas fa-cogs text-warning"></i> Rapports Personnalisés</h6>
+                <p class="text-muted mb-3">Générez des rapports sur mesure</p>
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-warning-module w-100" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#generateReportModal"
+                        data-acheteur-id="{{ id_acheteur }}">
+                    <i class="fas fa-cogs me-2"></i>Configurer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Generation Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>Paramètres du Rapport
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="commandeId" class="form-label">ID de la commande</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="commandeId" placeholder="Entrez l'ID de la commande">
+                            </div>
+                            <div class="form-text">Laissez vide pour un rapport général</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="language" class="form-label">Langue</label>
+                            <select class="form-select" id="language">
+                                <option value="fr">Français</option>
+                                <option value="en">Anglais</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="commandeInfo" class="card mb-3" style="display: none;">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-info-circle me-2"></i>Informations de la commande
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Référence:</strong> <span id="commandeRef" class="text-primary"></span></p>
+                                    <p class="mb-2"><strong>Client:</strong> <span id="commandeClient"></span></p>
+                                    <p class="mb-2"><strong>Acheteur:</strong> <span id="commandeAcheteur"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Date réception:</strong> <span id="commandeDateReception"></span></p>
+                                    <p class="mb-2"><strong>Pays:</strong> <span id="commandePays"></span></p>
+                                    <p class="mb-2"><strong>Devise:</strong> <span id="commandeDevise" class="badge bg-secondary"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="currency" class="form-label">Devise</label>
+                            <select class="form-select" id="currency">
+                                <option value="USD">Dollar US (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                                <option value="FCFA">FCFA</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="balanceType" class="form-label">Type de Bilan</label>
+                            <select class="form-select" id="balanceType">
+                                <option value="Classique">Classique</option>
+                                <option value="Anglais">Anglais</option>
+                                <option value="Syscohada">SYSCOHADA</option>
+                                <option value="Bancaire">Bancaire</option>
+                                <option value="Ifrs">IFRS COBAC</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="format" class="form-label">Format du rapport</label>
+                        <select class="form-select" id="format">
+                            <option value="pdf">PDF (Recommandé)</option>
+                            <option value="html">HTML</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </button>
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-primary" id="confirmGenerate" data-acheteur-id="{{ id_acheteur }}">
+                    <i class="fas fa-play me-2"></i>Générer le rapport
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Maplibre GL JS -->
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Validator JS -->
+<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
+<!-- Font Awesome -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    console.log("=== INITIALISATION DU TEMPLATE ===");
+    
+    // Initialiser l'effet fade-in
+    $('.fade-in').css('opacity', '0');
+    setTimeout(() => {
+        $('.fade-in').css({
+            'opacity': '1',
+            'transition': 'opacity 0.5s ease'
+        });
+    }, 100);
+    
+    // Charger les données de l'acheteur
+    loadAcheteurData();
+    
+    // Gestion du token d'authentification
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+    
+    // Fonction pour charger les données de l'acheteur
+    function loadAcheteurData() {
+        const id = '{{ id_acheteur }}';
+        
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            showError('Erreur', 'ID de l\'acheteur manquant');
+            return;
+        }
+        
+        console.log("Chargement des données pour l'acheteur ID:", id);
+        
+        // Afficher l'état de chargement
+        $('.company-profile').addClass('loading');
+        
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log("Données acheteur reçues:", response);
+                
+                if (!response) {
+                    console.error("Réponse vide de l'API");
+                    showError('Erreur', 'Réponse vide du serveur');
+                    return;
+                }
+                
+                const acheteur = response.acheteur || response;
+                
+                if (!acheteur) {
+                    console.error("Structure de réponse inattendue:", response);
+                    showError('Erreur', 'Format de données incorrect');
+                    return;
+                }
+                
+                // Mettre à jour les champs
+                updateAcheteurFields(acheteur);
+                
+                // Générer les modules
+                generateModulesGrid();
+                
+                // Retirer l'état de chargement
+                $('.company-profile').removeClass('loading');
+                
+                console.log("Données chargées avec succès");
+            },
+            error: function(xhr, status, error) {
+                console.error("Erreur API:", error);
+                $('.company-profile').removeClass('loading');
+                
+                let errorMessage = 'Erreur lors de la récupération des données';
+                if (xhr.status === 404) {
+                    errorMessage = 'Acheteur non trouvé';
+                } else if (xhr.status === 401) {
+                    errorMessage = 'Session expirée, veuillez vous reconnecter';
+                    setTimeout(() => window.location.href = '/login/', 2000);
+                } else if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        errorMessage = errorData.detail || errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = xhr.responseText.substring(0, 100) + '...';
+                    }
+                }
+                
+                showError('Erreur', errorMessage);
+            }
+        });
+    }
+    
+    // Fonction pour mettre à jour les champs de l'acheteur
+    function updateAcheteurFields(acheteur) {
+        // Fonction utilitaire pour obtenir une valeur sécurisée
+        function getSafeValue(obj, path, defaultValue = 'Non spécifié') {
+            if (!obj) return defaultValue;
+            const keys = path.split('.');
+            let current = obj;
+            for (let key of keys) {
+                if (current[key] === undefined || current[key] === null) {
+                    return defaultValue;
+                }
+                current = current[key];
+            }
+            return current || defaultValue;
+        }
+        
+        // Mettre à jour les champs
+        $('#editNom').text(getSafeValue(acheteur, 'nom'));
+        $('#editSigle').text(getSafeValue(acheteur, 'sigle'));
+        $('#editCode').text(getSafeValue(acheteur, 'code'));
+        
+        // Date de création
+        const dateCreation = getSafeValue(acheteur, 'date_creation', null);
+        if (dateCreation) {
+            try {
+                const date = new Date(dateCreation);
+                const formattedDate = date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                $('#editDateCreation').text(formattedDate);
+            } catch (e) {
+                $('#editDateCreation').text(dateCreation);
+            }
+        }
+        
+        // Autres champs
+        $('#editActivitePrincipale').text(getSafeValue(acheteur, 'activite_principale'));
+        $('#editDescription').html(getSafeValue(acheteur, 'description'));
+        $('#editEmail').text(getSafeValue(acheteur, 'email'));
+        $('#editFax').text(getSafeValue(acheteur, 'fax'));
+        $('#editBoitePostale').text(getSafeValue(acheteur, 'boite_postale'));
+        $('#editSiteInternet').html(getSafeValue(acheteur, 'site_internet'));
+        $('#editNumeroAdresse').text(getSafeValue(acheteur, 'numero_adresse'));
+        $('#editRueAdresse').text(getSafeValue(acheteur, 'rue_adresse'));
+        $('#editPays').text(getSafeValue(acheteur, 'pays.nom'));
+        $('#editProvince').text(getSafeValue(acheteur, 'province.nom'));
+        $('#editVille').text(getSafeValue(acheteur, 'ville.nom'));
+        $('#editFormeJuridique').text(getSafeValue(acheteur, 'forme_juridique.libelle'));
+        $('#editCategorieEntreprise').text(getSafeValue(acheteur, 'categorie_entreprise.libelle'));
+        $('#editStatutEntreprise').text(getSafeValue(acheteur, 'statut_entreprise.libelle'));
+    }
+    
+    // Fonction pour générer la grille des modules
+    function generateModulesGrid() {
+        console.log("Génération des modules...");
+        
+        const modules = [
+            { title: "Résumé", url: "{% url 'dash_root_manage_acheteur_resume' id_acheteur %}", color: "success", icon: "fas fa-chart-pie" },
+            { title: "Évaluation du Risque", url: "{% url 'dash_root_manage_acheteur_risk_rating' id_acheteur %}", color: "success", icon: "fas fa-shield-alt" },
+            { title: "Opinion Crédit ACREMAC", url: "{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}", color: "success", icon: "fas fa-comment-dollar" },
+            { title: "Données enregistrées", url: "{% url 'dash_root_manage_acheteur_data_save' id_acheteur %}", color: "success", icon: "fas fa-database" },
+            { title: "Tendance", url: "{% url 'dash_root_manage_acheteur_tendance' id_acheteur %}", color: "success", icon: "fas fa-chart-line" },
+            { title: "Responsables", url: "{% url 'dash_root_manage_acheteur_responsable' id_acheteur %}", color: "success", icon: "fas fa-users" },
+            { title: "Antécédents Juridiques", url: "{% url 'dash_root_manage_acheteur_antecedent' id_acheteur %}", color: "success", icon: "fas fa-balance-scale" },
+            { title: "Management du Risque", url: "{% url 'dash_root_manage_acheteur_gestion_risque' id_acheteur %}", color: "success", icon: "fas fa-exclamation-triangle" },
+            { title: "Conseil d'administration", url: "{% url 'dash_root_manage_acheteur_membre_conseil' id_acheteur %}", color: "success", icon: "fas fa-user-tie" },
+            { title: "Capital Social", url: "{% url 'dash_root_manage_acheteur_composition_capital' id_acheteur %}", color: "success", icon: "fas fa-coins" },
+            { title: "Actionnaires", url: "{% url 'dash_root_manage_acheteur_actionnaire' id_acheteur %}", color: "success", icon: "fas fa-hand-holding-usd" },
+            { title: "Filiales & Branches", url: "{% url 'dash_root_manage_acheteur_filiale_optimized' id_acheteur %}", color: "success", icon: "fas fa-sitemap" },
+            { title: "Analyse Sectorielle", url: "{% url 'dash_root_manage_acheteur_analyse_sectorielle' id_acheteur %}", color: "success", icon: "fas fa-industry" },
+            { title: "Opérations & Historique", url: "{% url 'dash_root_manage_acheteur_operation_historique' id_acheteur %}", color: "success", icon: "fas fa-history" },
+            { title: "Propriétés & Actifs", url: "{% url 'dash_root_manage_acheteur_propriete_actif' id_acheteur %}", color: "success", icon: "fas fa-building" },
+            { title: "Conditions d'achat", url: "{% url 'dash_root_manage_acheteur_condition_achat' id_acheteur %}", color: "success", icon: "fas fa-shopping-cart" },
+            { title: "Conditions de vente", url: "{% url 'dash_root_manage_acheteur_condition_vente' id_acheteur %}", color: "success", icon: "fas fa-store" },
+            { title: "Sommaire & Avis", url: "{% url 'dash_root_manage_acheteur_sommaire_avis' id_acheteur %}", color: "success", icon: "fas fa-file-alt" },
+            { title: "Conseils", url: "{% url 'dash_root_manage_acheteur_advice' id_acheteur %}", color: "success", icon: "fas fa-lightbulb" },
+            { title: "Géopolitiques", url: "{% url 'dash_root_manage_acheteur_geopolitic' id_acheteur %}", color: "success", icon: "fas fa-globe-africa" },
+            { title: "Comptes Financiers", url: "{% url 'dash_root_manage_acheteur_compte_financier' id_acheteur %}", color: "success", icon: "fas fa-file-invoice-dollar" },
+            { title: "Données Bancaires", url: "{% url 'dash_root_manage_acheteur_banking_optimized' id_acheteur %}", color: "success", icon: "fas fa-university" },
+            { title: "Portables", url: "{% url 'dash_root_manage_portable_acheteur' id_acheteur %}", color: "success", icon: "fas fa-mobile-alt" },
+            { title: "Téléphones", url: "{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}", color: "success", icon: "fas fa-phone" },
+            { title: "Adresses", url: "{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}", color: "success", icon: "fas fa-map-marker-alt" },
+            { title: "Emails", url: "{% url 'dash_root_manage_email_acheteur' id_acheteur %}", color: "success", icon: "fas fa-envelope" },
+            { title: "Codes NACE", url: "{% url 'dash_root_manage_code_nace_acheteur' id_acheteur %}", color: "success", icon: "fas fa-code" },
+            { title: "Codes NAF", url: "{% url 'dash_root_manage_code_naf_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-barcode" },
+            { title: "Documents", url: "{% url 'dash_root_manage_document_acheteur' id_acheteur %}", color: "info", icon: "fas fa-folder-open" },
+            { title: "Procédures Collectives", url: "{% url 'dash_root_manage_procedure_collective_acheteur' id_acheteur %}", color: "info", icon: "fas fa-gavel" },
+            { title: "Registres de Commerce", url: "{% url 'dash_root_manage_registre_commerce_acheteur' id_acheteur %}", color: "info", icon: "fas fa-book" },
+            { title: "Cotisations Sociales", url: "{% url 'dash_root_manage_cotisation_acheteur' id_acheteur %}", color: "info", icon: "fas fa-file-contract" },
+            { title: "Produits & Services", url: "{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}", color: "info", icon: "fas fa-boxes" },
+            { title: "Marques", url: "{% url 'dash_root_manage_marque_acheteur' id_acheteur %}", color: "info", icon: "fas fa-trademark" },
+            { title: "SWOT", url: "{% url 'dash_root_manage_swot_acheteur' id_acheteur %}", color: "info", icon: "fas fa-crosshairs" },
+            { title: "Certifications", url: "{% url 'dash_root_certification_acheteur' id_acheteur %}", color: "info", icon: "fas fa-certificate" },
+            { title: "Innovation & Développement", url: "{% url 'dash_root_innovation_acheteur' id_acheteur %}", color: "info", icon: "fas fa-lightbulb" },
+            { title: "Stratégie & Planification", url: "{% url 'dash_root_strategie_acheteur' id_acheteur %}", color: "info", icon: "fas fa-chess" },
+            { title: "Conformité & Réglementation", url: "{% url 'dash_root_conformite_acheteur' id_acheteur %}", color: "info", icon: "fas fa-balance-scale-right" },
+            { title: "Scoring sans bilan", url: "{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}", color: "success", icon: "fas fa-calculator" },
+            { title: "Scoring avec bilan", url: "{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}", color: "success", icon: "fas fa-chart-bar" }
+        ];
+        
+        const grid = $('#modulesGridContainer');
+        grid.empty();
+        
+        modules.forEach((module, index) => {
+            const moduleCard = `
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="${module.icon}"></i>
+                    </div>
+                    <h6 class="module-title">${module.title}</h6>
+                    <a href="${module.url}" target="_blank" 
+                       class="btn btn-${module.color}-module module-btn">
+                        <i class="fas fa-external-link-alt me-1"></i> Accéder
+                    </a>
+                </div>
+            `;
+            grid.append(moduleCard);
+        });
+        
+        console.log("Modules générés:", modules.length);
+    }
+    
+    // ========== GESTION DU MODAL DE RAPPORT ==========
+    
+    let selectedCommandeId = null;
+    let searchTimeout = null;
+    
+    // Recherche de commande par ID
+    $('#commandeId').on('input', function() {
+        const commandeId = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!commandeId) {
+            $('#commandeInfo').hide();
+            selectedCommandeId = null;
+            return;
+        }
+        
+        $('#commandeInfo').html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Chargement...</span></div> Recherche en cours...</div>').show();
+        
+        searchTimeout = setTimeout(() => {
+            searchCommande(commandeId);
+        }, 500);
+    });
+    
+    // Fonction pour rechercher une commande
+    function searchCommande(commandeId) {
+        if (!/^\d+$/.test(commandeId)) {
+            $('#commandeInfo').html('<div class="alert alert-warning p-2">Veuillez entrer un ID numérique valide</div>').show();
+            return;
+        }
+        
+        $.ajax({
+            url: `/api/commande-details/${commandeId}/`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-light">Informations de la commande #${commandeId}</div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Référence:</strong> <span class="text-primary">${response.data.notre_ref || 'N/A'}</span></p>
+                                    <p><strong>Client:</strong> ${response.data.client ? response.data.client.username : 'N/A'}</p>
+                                    <p><strong>Acheteur:</strong> ${response.data.acheteur ? response.data.acheteur.nom : 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Date réception:</strong> ${response.data.date_recept_commande || 'N/A'}</p>
+                                    <p><strong>Pays:</strong> ${response.data.pays ? response.data.pays.nom : 'N/A'}</p>
+                                    <p><strong>Devise:</strong> <span class="badge bg-secondary">${response.data.devise_credit_demande ? response.data.devise_credit_demande.code : 'N/A'}</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <small class="text-muted">Commande sélectionnée</small>
+                            </div>
+                        </div>
+                    `).show();
+                    
+                    selectedCommandeId = commandeId;
+                } else {
+                    $('#commandeInfo').html(`<div class="alert alert-danger p-2">${response.message || 'Commande non trouvée'}</div>`).show();
+                    selectedCommandeId = null;
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#commandeInfo').html('<div class="alert alert-danger p-2">Erreur de connexion au serveur</div>').show();
+                selectedCommandeId = null;
+                console.error("Erreur:", error);
+            }
+        });
+    }
+    
+    // Gestion du click sur le bouton Générer
+    $('#confirmGenerate').on('click', function(e) {
+        e.preventDefault();
+        console.log("Génération du rapport...");
+        
+        // Récupérer l'ID de l'acheteur depuis le bouton
+        const acheteurId = $(this).data('acheteur-id') || '{{ id_acheteur }}';
+        const commandeId = $('#commandeId').val() || selectedCommandeId;
+        const language = $('#language').val();
+        const currency = $('#currency').val();
+        const balanceType = $('#balanceType').val();
+        const format = $('#format').val();
+        
+        console.log("Paramètres:", {
+            acheteurId,
+            commandeId,
+            language,
+            currency,
+            balanceType,
+            format
+        });
+        
+        // Validation
+        if (!acheteurId) {
+            showError('Erreur', 'ID de l\'acheteur manquant');
+            return;
+        }
+        
+        // Récupérer le token d'authentification
+        const token = getAuthToken();
+        
+        if (!token) {
+            showError('Erreur d\'authentification', 'Token d\'authentification manquant. Veuillez vous reconnecter.');
+            return;
+        }
+        
+        // Afficher le loading
+        Swal.fire({
+            title: 'Génération en cours...',
+            text: 'Veuillez patienter pendant la génération du rapport.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Construire l'URL
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+        
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
+        console.log("URL de requête:", url);
+        
+        // Requête AJAX
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            xhrFields: {
+                responseType: format.toLowerCase() === 'pdf' ? 'blob' : 
+                            format.toLowerCase() === 'xml' ? 'blob' : 'text'
+            },
+            success: function(response, status, xhr) {
+                console.log("Réponse reçue, format:", format);
+                Swal.close();
+                
+                handleReportResponse(response, format, acheteurId, xhr);
+                $('#generateReportModal').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                handleReportError(xhr);
+            }
+        });
+    });
+    
+    // Fonction pour gérer la réponse du rapport
+    function handleReportResponse(response, format, acheteurId, xhr) {
+        switch(format.toLowerCase()) {
+            case 'pdf':
+                handlePDFResponse(response, acheteurId);
+                break;
+            case 'html':
+                handleHTMLResponse(response, acheteurId);
+                break;
+            case 'xml':
+                handleXMLResponse(response, acheteurId, xhr);
+                break;
+            case 'json':
+                handleJSONResponse(response, acheteurId);
+                break;
+            default:
+                showError('Format non supporté', `Le format ${format} n'est pas supporté.`);
+        }
+    }
+    
+    // Gestion PDF
+    function handlePDFResponse(response, acheteurId) {
+        try {
+            const blob = new Blob([response], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_solvabilite_${acheteurId || 'rapport'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Message de succès avec options
+            Swal.fire({
+                icon: 'success',
+                title: 'PDF généré avec succès !',
+                html: `
+                    <div class="text-center">
+                        <p>Le rapport PDF a été téléchargé.</p>
+                        <div class="mt-3">
+                            <button id="closeModalBtn" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i>Fermer seulement
+                            </button>
+                            <button id="reloadPageBtn" class="btn btn-primary">
+                                <i class="fas fa-redo me-1"></i>Fermer et recharger
+                            </button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                didOpen: () => {
+                    $('#closeModalBtn').on('click', function() {
+                        Swal.close();
+                        $('#generateReportModal').modal('hide');
+                    });
+                    
+                    $('#reloadPageBtn').on('click', function() {
+                        Swal.close();
+                        $('#generateReportModal').modal('hide');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 300);
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Erreur PDF:", e);
+            showError('Erreur', 'Impossible de télécharger le PDF.');
+        }
+    }
+    
+    // Gestion HTML
+    function handleHTMLResponse(response, acheteurId) {
+        const blob = new Blob([response], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        // Message avec fermeture automatique
+        Swal.fire({
+            icon: 'success',
+            title: 'HTML généré !',
+            text: 'Le rapport HTML a été ouvert dans un nouvel onglet.',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            willClose: () => {
+                $('#generateReportModal').modal('hide');
+            }
+        });
+        
+        // Nettoyer l'URL après 10 secondes
+        setTimeout(() => {
+            if (newWindow && !newWindow.closed) {
+                window.URL.revokeObjectURL(url);
+            }
+        }, 10000);
+    }
+    
+    // Gestion XML
+    function handleXMLResponse(response, acheteurId, xhr) {
+        try {
+            const blob = new Blob([response], { type: 'application/xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_solvabilite_${acheteurId}.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès !',
+                text: 'Le rapport XML a été téléchargé.',
+                confirmButtonText: 'OK'
+            });
+        } catch (e) {
+            console.error("Erreur XML:", e);
+            showError('Erreur', 'Impossible de télécharger le XML.');
+        }
+    }
+    
+    // Gestion JSON
+    function handleJSONResponse(response, acheteurId) {
+        try {
+            const jsonData = typeof response === 'string' ? JSON.parse(response) : response;
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            
+            // Télécharger
+            const blob = new Blob([jsonString], { 
+                type: 'application/json; charset=utf-8' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_${acheteurId}_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Téléchargement réussi',
+                text: 'Le fichier JSON a été téléchargé.',
+                confirmButtonText: 'OK'
+            });
+        } catch (e) {
+            console.error("Erreur JSON:", e);
+            showError('Erreur JSON', 'Erreur lors du traitement du JSON.');
+        }
+    }
+    
+    // Gestion des erreurs
+    function handleReportError(xhr) {
+        let errorMessage = 'Erreur lors de la génération du rapport';
+        let details = '';
+        
+        if (xhr.status === 400) {
+            errorMessage = 'Requête incorrecte. Vérifiez les paramètres.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                details = xhr.responseJSON.error;
+            }
+        } else if (xhr.status === 403) {
+            errorMessage = 'Accès refusé. Vérifiez vos permissions.';
+        } else if (xhr.status === 404) {
+            errorMessage = 'Endpoint non trouvé. URL incorrecte.';
+        } else if (xhr.status === 500) {
+            errorMessage = 'Erreur interne du serveur.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                details = xhr.responseJSON.error;
+            }
+        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error;
+        }
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur ' + xhr.status,
+            text: errorMessage,
+            html: details ? `<div>${errorMessage}<br><small>${details}</small></div>` : errorMessage,
+            confirmButtonText: 'OK'
+        });
+        
+        console.error("Erreur détaillée:", {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseText: xhr.responseText
+        });
+    }
+    
+    // ========== FONCTIONS UTILITAIRES ==========
+    
+    // Fonction pour récupérer le token d'authentification
+    function getAuthToken() {
+        const token = localStorage.getItem('access_token') || 
+                     sessionStorage.getItem('access_token') ||
+                     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                     '{{ access }}';
+        
+        if (!token) {
+            console.warn("Aucun token d'authentification trouvé");
+        }
+        
+        return token;
+    }
+    
+    // ========== GESTION DES TOKENS AMÉLIORÉE ==========
+    
+    // Stocker les tokens dans localStorage
+    const accessTokenFromServer = '{{ access }}';
+    const refreshTokenFromServer = '{{ refresh }}';
+    
+    // Initialiser les tokens dans localStorage si disponibles
+    if (accessTokenFromServer && accessTokenFromServer !== 'None') {
+        localStorage.setItem('access_token', accessTokenFromServer);
+    }
+    if (refreshTokenFromServer && refreshTokenFromServer !== 'None') {
+        localStorage.setItem('refresh_token', refreshTokenFromServer);
+    }
+    
+    // Fonction pour récupérer le token d'accès
+    function getAccessToken() {
+        return localStorage.getItem('access_token') || 
+               sessionStorage.getItem('access_token') ||
+               '{{ access }}';
+    }
+    
+    // Fonction pour récupérer le token de rafraîchissement
+    function getRefreshToken() {
+        return localStorage.getItem('refresh_token') || 
+               sessionStorage.getItem('refresh_token') ||
+               '{{ refresh }}';
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    async function refreshAccessToken() {
+        const refreshToken = getRefreshToken();
+        
+        if (!refreshToken) {
+            console.error("Refresh token manquant");
+            redirectToLogin();
+            return null;
+        }
+        
+        try {
+            const response = await fetch('/api/token/refresh/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh: refreshToken })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const newAccessToken = data.access;
+                
+                // Stocker le nouveau token
+                localStorage.setItem('access_token', newAccessToken);
+                
+                // Mettre à jour le token dans le backend Django si nécessaire
+                if (typeof updateDjangoToken === 'function') {
+                    updateDjangoToken(newAccessToken);
+                }
+                
+                console.log("Token rafraîchi avec succès");
+                return newAccessToken;
+            } else {
+                console.error("Échec du rafraîchissement du token:", response.status);
+                redirectToLogin();
+                return null;
+            }
+        } catch (error) {
+            console.error("Erreur lors du rafraîchissement du token:", error);
+            redirectToLogin();
+            return null;
+        }
+    }
+    
+    // Fonction pour rediriger vers la page de connexion
+    function redirectToLogin() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Vous allez être redirigé vers la page de connexion.',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            willClose: () => {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Fonction pour obtenir les headers d'authentification
+    function getAuthHeaders() {
+        const token = getAccessToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (token && token !== 'None') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+    
+    // Configuration AJAX globale avec gestion d'erreurs
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            const token = getAccessToken();
+            if (token && token !== 'None') {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            }
+            
+            // Ajouter CSRF token pour les requêtes POST
+            if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
+                const csrftoken = getCookie('csrftoken');
+                if (csrftoken) {
+                    xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                }
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            // Gérer les erreurs 401 (Unauthorized)
+            if (xhr.status === 401) {
+                console.log("Token expiré, tentative de rafraîchissement...");
+                
+                // Tenter de rafraîchir le token et réessayer la requête
+                refreshAccessToken().then(newToken => {
+                    if (newToken) {
+                        console.log("Token rafraîchi, réessai de la requête...");
+                        
+                        // Recréer la requête originale avec le nouveau token
+                        const originalRequest = this;
+                        originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+                        
+                        // Réessayer la requête
+                        $.ajax(originalRequest);
+                    }
+                }).catch(error => {
+                    console.error("Impossible de rafraîchir le token:", error);
+                    showSessionExpired();
+                });
+                
+                // Retourner false pour empêcher l'exécution des autres gestionnaires d'erreurs
+                return false;
+            }
+            
+            // Gérer les autres erreurs
+            handleAjaxError(xhr, textStatus, errorThrown);
+        }
+    });
+    
+    // Fonction utilitaire pour récupérer un cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour gérer les erreurs AJAX
+    function handleAjaxError(xhr, textStatus, errorThrown) {
+        let errorMessage = 'Une erreur est survenue';
+        let details = '';
+        
+        switch(xhr.status) {
+            case 400:
+                errorMessage = 'Requête incorrecte';
+                if (xhr.responseJSON) {
+                    details = JSON.stringify(xhr.responseJSON, null, 2);
+                }
+                break;
+            case 403:
+                errorMessage = 'Accès refusé';
+                break;
+            case 404:
+                errorMessage = 'Ressource non trouvée';
+                break;
+            case 500:
+                errorMessage = 'Erreur interne du serveur';
+                break;
+            case 0:
+                errorMessage = 'Connexion au serveur impossible';
+                break;
+            default:
+                if (xhr.responseJSON && xhr.responseJSON.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                }
+        }
+        
+        console.error(`Erreur AJAX [${xhr.status}]:`, errorMessage, details);
+        
+        // Afficher l'erreur à l'utilisateur (sauf pour les erreurs de session)
+        if (xhr.status !== 401 && xhr.status !== 403) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                html: `<div class="text-start">
+                    <p>${errorMessage}</p>
+                    ${details ? `<small class="text-muted">${details.substring(0, 200)}...</small>` : ''}
+                </div>`,
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+    
+    // Fonction pour afficher l'erreur de session expirée
+    function showSessionExpired() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Veuillez vous reconnecter.',
+            confirmButtonText: 'Se reconnecter',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Fonctions d'affichage des messages
+    function showSuccess(title, text) {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: text,
+            confirmButtonColor: '#27ae60',
+            timer: 3000
+        });
+    }
+    
+    function showError(title, text) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: text,
+            confirmButtonColor: '#e74c3c'
+        });
+    }
+    
+    function showWarning(title, text) {
+        Swal.fire({
+            icon: 'warning',
+            title: title,
+            text: text,
+            confirmButtonColor: '#f39c12'
+        });
+    }
+    
+    // Effets de survol
+    $('.card').hover(
+        function() { $(this).addClass('shadow-lg'); },
+        function() { $(this).removeClass('shadow-lg'); }
+    );
+    
+    console.log("=== TEMPLATE INITIALISÉ AVEC SUCCÈS ===");
+});
+</script>
+{% endblock %}

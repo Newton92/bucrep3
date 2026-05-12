@@ -1,0 +1,1375 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --low-risk-gradient: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    --medium-risk-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --high-risk-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte de statistiques améliorée */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.stat-card.remboursabilite::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
+.stat-card.liquidite::before { background: linear-gradient(to bottom, #28a745, #20c997); }
+.stat-card.performance::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.stat-card.secteur::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+.stat-card.qualite-info::before { background: linear-gradient(to bottom, #17a2b8, #20c997); }
+.stat-card.garantie::before { background: linear-gradient(to bottom, #20c997, #0dcaf0); }
+.stat-card.terme::before { background: linear-gradient(to bottom, #6f42c1, #0d6efd); }
+.stat-card.mesure::before { background: linear-gradient(to bottom, #6610f2, #6f42c1); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-card.remboursabilite .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-card.liquidite .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-card.performance .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-card.secteur .stat-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+.stat-card.qualite-info .stat-icon { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+.stat-card.garantie .stat-icon { background: rgba(32, 201, 151, 0.1); color: #20c997; }
+.stat-card.terme .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-card.mesure .stat-icon { background: rgba(102, 16, 242, 0.1); color: #6610f2; }
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.badge-oui {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.badge-non {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Boutons améliorés */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Score de risque */
+.risk-score-container {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.risk-score-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.risk-score-low::before { background: var(--low-risk-gradient); }
+.risk-score-medium::before { background: var(--medium-risk-gradient); }
+.risk-score-high::before { background: var(--high-risk-gradient); }
+
+.risk-score-image-container {
+    width: 180px;
+    height: 90px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.risk-score-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.risk-score-value {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.risk-score-max {
+    font-size: 1.5rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.risk-score-label {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+/* Indicateurs de risque */
+.risk-indicator-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.risk-indicator-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.risk-cotation-card {
+    border-left-color: #0A95CA;
+    background: rgba(10, 149, 202, 0.05);
+}
+
+.risk-indice-card {
+    border-left-color: #6f42c1;
+    background: rgba(111, 66, 193, 0.05);
+}
+
+/* Formulaire amélioré */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3rem;
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Badges de statut */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Tooltip personnalisé */
+.custom-tooltip {
+    --bs-tooltip-bg: #2c3e50;
+    --bs-tooltip-color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .risk-score-value {
+        font-size: 2.5rem;
+    }
+    
+    .risk-score-image-container {
+        width: 150px;
+        height: 75px;
+    }
+}
+
+/* Animation pour les indicateurs */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-shield-alt text-primary me-2"></i>Évaluation de Risque
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion du profil de risque pour l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if risk_rating %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editRiskRatingModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter une évaluation
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Évaluation de Risque -->
+    {% if risk_rating %}
+    {% with score=risk_rating.calculate_risk_score %}
+    <div class="card enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Score et indicateurs principaux -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="risk-score-container {% if score <= 2 %}risk-score-low{% elif score <= 5 %}risk-score-medium{% else %}risk-score-high{% endif %}">
+                        <div class="risk-score-image-container">
+                            {% with risk_rating.get_risk_rating_image_url as image_url %}
+                            {% if image_url %}
+                            <img src="{{ image_url }}" alt="Score de risque" class="risk-score-image">
+                            {% else %}
+                            <div class="text-center">
+                                <i class="fas fa-chart-pie fa-4x text-primary mb-3"></i>
+                                <div class="risk-score-value">{{ score }}</div>
+                                <div class="risk-score-max">/8</div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="risk-score-value">{{ score }}</div>
+                        <div class="risk-score-max">/8</div>
+                        <p class="risk-score-label">Score de risque global</p>
+                        <small class="text-muted">
+                            {% if score <= 2 %}Risque faible
+                            {% elif score <= 5 %}Risque modéré
+                            {% else %}Risque élevé
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="risk-indicator-card risk-cotation-card">
+                                <h6 class="fw-bold mb-2">
+                                    <i class="fas fa-chart-line me-2"></i>Cotation du risque
+                                </h6>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold fs-5">{{ risk_rating.get_cotation_du_risque_display|default:"Non évalué" }}</span>
+                                    <button class="btn btn-sm btn-outline-info" 
+                                            data-bs-toggle="popover" 
+                                            data-bs-trigger="hover"
+                                            data-bs-placement="top"
+                                            data-bs-content="{{ risk_rating.get_cotation_explication }}">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="risk-indicator-card risk-indice-card">
+                                <h6 class="fw-bold mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Indice du risque
+                                </h6>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold fs-5">{{ risk_rating.get_indice_du_risque_display|default:"Non évalué" }}</span>
+                                    <button class="btn btn-sm btn-outline-info" 
+                                            data-bs-toggle="popover" 
+                                            data-bs-trigger="hover"
+                                            data-bs-placement="top"
+                                            data-bs-content="{{ risk_rating.get_indice_explication }}">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicateurs de risque détaillés -->
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-tachometer-alt me-2"></i>Indicateurs de Risque
+            </h5>
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card remboursabilite">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-check-alt"></i>
+                        </div>
+                        <div class="stat-label">Remboursabilité</div>
+                        <span class="stat-badge {% if risk_rating.remboursabilite %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.remboursabilite|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Capacité de remboursement</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card liquidite">
+                        <div class="stat-icon">
+                            <i class="fas fa-water"></i>
+                        </div>
+                        <div class="stat-label">Situation de Liquidité</div>
+                        <span class="stat-badge {% if risk_rating.situation_liquidite %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.situation_liquidite|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Disponibilités financières</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card performance">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-label">Performance & Rentabilité</div>
+                        <span class="stat-badge {% if risk_rating.performance_rentabilite %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.performance_rentabilite|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Résultats économiques</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card secteur">
+                        <div class="stat-icon">
+                            <i class="fas fa-industry"></i>
+                        </div>
+                        <div class="stat-label">Perspective du Secteur</div>
+                        <span class="stat-badge {% if risk_rating.perspective_secteur %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.perspective_secteur|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Environnement économique</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card qualite-info">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-label">Qualité de l'Information</div>
+                        <span class="stat-badge {% if risk_rating.qualite_information_analyse %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.qualite_information_analyse|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Fiabilité des données</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card garantie">
+                        <div class="stat-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="stat-label">Existence de Garantie</div>
+                        <span class="stat-badge {% if risk_rating.existence_garantie %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.existence_garantie|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Sécurité collatérale</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card terme">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-label">Terme Financier</div>
+                        <span class="stat-badge {% if risk_rating.terme_financier_duree_pret %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.terme_financier_duree_pret|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Conditions financières</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card mesure">
+                        <div class="stat-icon">
+                            <i class="fas fa-life-ring"></i>
+                        </div>
+                        <div class="stat-label">Mesure de Soutien</div>
+                        <span class="stat-badge {% if risk_rating.mesure_propre_soutenir_credit %}badge-oui{% else %}badge-non{% endif %}">
+                            {{ risk_rating.mesure_propre_soutenir_credit|yesno:"Oui,Non" }}
+                        </span>
+                        <small class="text-muted mt-2 d-block">Soutiens additionnels</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations supplémentaires -->
+            <div class="row g-4">
+                {% if risk_rating.interpretation %}
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-comment-dots text-primary me-2"></i>Interprétation
+                            </h6>
+                            <p class="mb-0">{{ risk_rating.interpretation }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if risk_rating.analyse %}
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-search text-primary me-2"></i>Analyse Détaillée
+                            </h6>
+                            <p class="mb-0">{{ risk_rating.analyse }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not risk_rating.interpretation and not risk_rating.analyse %}
+                <div class="col-12">
+                    <div class="text-center py-4 border rounded bg-light">
+                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Aucune analyse ou interprétation disponible</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            Créé le {{ risk_rating.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Dernière mise à jour : {{ risk_rating.updated_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-shield-alt empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucune évaluation de risque</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore d'évaluation de risque.<br>
+                    Créez-en une pour évaluer son profil de risque et prendre des décisions éclairées.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                    <i class="fas fa-plus-circle me-2"></i>Créer une évaluation
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout d'Évaluation de Risque -->
+<div class="modal fade" id="addRiskRatingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Évaluation de Risque
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addRiskRatingForm" class="enhanced-form">
+                <div class="modal-body">
+                    <!-- Score visuel dynamique -->
+                    <div class="risk-score-image-container mb-4 mx-auto">
+                        <img id="addRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
+                    </div>
+                    <div class="text-center mb-4">
+                        <h5 id="addRiskScoreValue" class="fw-bold">0/8</h5>
+                        <p class="text-muted small">Score de risque calculé automatiquement</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="remboursabilite" class="form-label">
+                                    <i class="fas fa-money-check-alt text-primary"></i>Remboursabilité
+                                </label>
+                                <select class="form-select risk-criteria" id="remboursabilite" name="remboursabilite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Bonne capacité de remboursement</option>
+                                    <option value="false">Non - Capacité de remboursement limitée</option>
+                                </select>
+                                <small class="form-text text-muted">Capacité de l'acheteur à rembourser ses engagements</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="situation_liquidite" class="form-label">
+                                    <i class="fas fa-water text-info"></i>Situation de Liquidité
+                                </label>
+                                <select class="form-select risk-criteria" id="situation_liquidite" name="situation_liquidite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Liquidité satisfaisante</option>
+                                    <option value="false">Non - Problèmes de liquidité</option>
+                                </select>
+                                <small class="form-text text-muted">Disponibilités financières immédiates</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="performance_rentabilite" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Performance & Rentabilité
+                                </label>
+                                <select class="form-select risk-criteria" id="performance_rentabilite" name="performance_rentabilite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Performance satisfaisante</option>
+                                    <option value="false">Non - Performance insuffisante</option>
+                                </select>
+                                <small class="form-text text-muted">Résultats économiques et rentabilité</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="perspective_secteur" class="form-label">
+                                    <i class="fas fa-industry text-warning"></i>Perspective du Secteur
+                                </label>
+                                <select class="form-select risk-criteria" id="perspective_secteur" name="perspective_secteur" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Secteur porteur</option>
+                                    <option value="false">Non - Secteur en difficulté</option>
+                                </select>
+                                <small class="form-text text-muted">Environnement économique du secteur</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="qualite_information_analyse" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Qualité de l'Information
+                                </label>
+                                <select class="form-select risk-criteria" id="qualite_information_analyse" name="qualite_information_analyse" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Information fiable</option>
+                                    <option value="false">Non - Information douteuse</option>
+                                </select>
+                                <small class="form-text text-muted">Fiabilité des données fournies</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="existence_garantie" class="form-label">
+                                    <i class="fas fa-handshake text-info"></i>Existence de Garantie
+                                </label>
+                                <select class="form-select risk-criteria" id="existence_garantie" name="existence_garantie" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Garanties existantes</option>
+                                    <option value="false">Non - Aucune garantie</option>
+                                </select>
+                                <small class="form-text text-muted">Sécurités collatérales disponibles</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="terme_financier_duree_pret" class="form-label">
+                                    <i class="fas fa-clock text-warning"></i>Terme Financier
+                                </label>
+                                <select class="form-select risk-criteria" id="terme_financier_duree_pret" name="terme_financier_duree_pret" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Conditions favorables</option>
+                                    <option value="false">Non - Conditions défavorables</option>
+                                </select>
+                                <small class="form-text text-muted">Conditions et durée des engagements</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="mesure_propre_soutenir_credit" class="form-label">
+                                    <i class="fas fa-life-ring text-success"></i>Mesure de Soutien
+                                </label>
+                                <select class="form-select risk-criteria" id="mesure_propre_soutenir_credit" name="mesure_propre_soutenir_credit" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Soutiens existants</option>
+                                    <option value="false">Non - Aucun soutien</option>
+                                </select>
+                                <small class="form-text text-muted">Mécanismes additionnels de soutien</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cotation_du_risque" class="form-label">
+                                    <i class="fas fa-chart-line text-primary"></i>Cotation du Risque
+                                </label>
+                                <select class="form-select" id="cotation_du_risque" name="cotation_du_risque" required>
+                                    <option value="">Sélectionnez une cotation</option>
+                                    <option value="non_douteux">Non douteux</option>
+                                    <option value="risque_faible">Risque faible</option>
+                                    <option value="risque_modere">Risque modéré</option>
+                                    <option value="mise_en_garde">Mise en garde</option>
+                                    <option value="peu_satisfaisant">Peu satisfaisant</option>
+                                    <option value="inacceptable">Inacceptable</option>
+                                </select>
+                                <small class="form-text text-muted">Classification globale du risque</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="indice_du_risque" class="form-label">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>Indice du Risque
+                                </label>
+                                <select class="form-select" id="indice_du_risque" name="indice_du_risque" required>
+                                    <option value="">Sélectionnez un indice</option>
+                                    <option value="eleve">Élevé</option>
+                                    <option value="moyen">Moyen</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="faible">Faible</option>
+                                </select>
+                                <small class="form-text text-muted">Niveau général de risque</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="interpretation" class="form-label">
+                            <i class="fas fa-comment-dots text-info"></i>Interprétation
+                        </label>
+                        <textarea class="form-control" id="interpretation" name="interpretation" 
+                                  rows="3" placeholder="Ajoutez une interprétation du profil de risque..."></textarea>
+                        <small class="form-text text-muted">Analyse synthétique du risque</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="analyse" class="form-label">
+                            <i class="fas fa-search text-success"></i>Analyse Détaillée
+                        </label>
+                        <textarea class="form-control" id="analyse" name="analyse" 
+                                  rows="3" placeholder="Ajoutez une analyse détaillée..."></textarea>
+                        <small class="form-text text-muted">Évaluation approfondie des facteurs de risque</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Créer l'évaluation
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification d'Évaluation de Risque -->
+<div class="modal fade" id="editRiskRatingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Évaluation de Risque
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRiskRatingForm" class="enhanced-form">
+                <input type="hidden" id="editRiskRatingId" name="id">
+                <div class="modal-body">
+                    <!-- Score visuel dynamique -->
+                    <div class="risk-score-image-container mb-4 mx-auto">
+                        <img id="editRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
+                    </div>
+                    <div class="text-center mb-4">
+                        <h5 id="editRiskScoreValue" class="fw-bold">0/8</h5>
+                        <p class="text-muted small">Score de risque calculé automatiquement</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRemboursabilite" class="form-label">
+                                    <i class="fas fa-money-check-alt text-primary"></i>Remboursabilité
+                                </label>
+                                <select class="form-select risk-criteria" id="editRemboursabilite" name="remboursabilite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Bonne capacité de remboursement</option>
+                                    <option value="false">Non - Capacité de remboursement limitée</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editSituationLiquidite" class="form-label">
+                                    <i class="fas fa-water text-info"></i>Situation de Liquidité
+                                </label>
+                                <select class="form-select risk-criteria" id="editSituationLiquidite" name="situation_liquidite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Liquidité satisfaisante</option>
+                                    <option value="false">Non - Problèmes de liquidité</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPerformanceRentabilite" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Performance & Rentabilité
+                                </label>
+                                <select class="form-select risk-criteria" id="editPerformanceRentabilite" name="performance_rentabilite" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Performance satisfaisante</option>
+                                    <option value="false">Non - Performance insuffisante</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPerspectiveSecteur" class="form-label">
+                                    <i class="fas fa-industry text-warning"></i>Perspective du Secteur
+                                </label>
+                                <select class="form-select risk-criteria" id="editPerspectiveSecteur" name="perspective_secteur" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Secteur porteur</option>
+                                    <option value="false">Non - Secteur en difficulté</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editQualiteInformationAnalyse" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Qualité de l'Information
+                                </label>
+                                <select class="form-select risk-criteria" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Information fiable</option>
+                                    <option value="false">Non - Information douteuse</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editExistenceGarantie" class="form-label">
+                                    <i class="fas fa-handshake text-info"></i>Existence de Garantie
+                                </label>
+                                <select class="form-select risk-criteria" id="editExistenceGarantie" name="existence_garantie" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Garanties existantes</option>
+                                    <option value="false">Non - Aucune garantie</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTermeFinancierDureePret" class="form-label">
+                                    <i class="fas fa-clock text-warning"></i>Terme Financier
+                                </label>
+                                <select class="form-select risk-criteria" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Conditions favorables</option>
+                                    <option value="false">Non - Conditions défavorables</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editMesurePropreSoutenirCredit" class="form-label">
+                                    <i class="fas fa-life-ring text-success"></i>Mesure de Soutien
+                                </label>
+                                <select class="form-select risk-criteria" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
+                                    <option value="">Sélectionnez</option>
+                                    <option value="true">Oui - Soutiens existants</option>
+                                    <option value="false">Non - Aucun soutien</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCotationDuRisque" class="form-label">
+                                    <i class="fas fa-chart-line text-primary"></i>Cotation du Risque
+                                </label>
+                                <select class="form-select" id="editCotationDuRisque" name="cotation_du_risque" required>
+                                    <option value="">Sélectionnez une cotation</option>
+                                    <option value="non_douteux">Non douteux</option>
+                                    <option value="risque_faible">Risque faible</option>
+                                    <option value="risque_modere">Risque modéré</option>
+                                    <option value="mise_en_garde">Mise en garde</option>
+                                    <option value="peu_satisfaisant">Peu satisfaisant</option>
+                                    <option value="inacceptable">Inacceptable</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editIndiceDuRisque" class="form-label">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>Indice du Risque
+                                </label>
+                                <select class="form-select" id="editIndiceDuRisque" name="indice_du_risque" required>
+                                    <option value="">Sélectionnez un indice</option>
+                                    <option value="eleve">Élevé</option>
+                                    <option value="moyen">Moyen</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="faible">Faible</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editInterpretation" class="form-label">
+                            <i class="fas fa-comment-dots text-info"></i>Interprétation
+                        </label>
+                        <textarea class="form-control" id="editInterpretation" name="interpretation" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editAnalyse" class="form-label">
+                            <i class="fas fa-search text-success"></i>Analyse Détaillée
+                        </label>
+                        <textarea class="form-control" id="editAnalyse" name="analyse" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'évaluation de risque</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/evaluation-risque/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    let currentRiskRating = {% if risk_rating %} {{ risk_rating.id|default:"null" }} {% else %} null {% endif %};
+
+    // Fonction pour calculer le score et mettre à jour l'image
+    function updateRiskImage(formId, imageId, scoreValueId) {
+        let score = 0;
+        const fields = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ];
+
+        // Calcul du score
+        fields.forEach(field => {
+            const $select = $(`${formId} [name="${field}"]`);
+            if ($select.length && $select.val() === 'true') {
+                score++;
+            }
+        });
+
+        // Mettre à jour l'image (score de 0 à 8)
+        const imagePath = `{% static 'riskrating/' %}${score}.svg`;
+        $(imageId).attr('src', imagePath);
+        
+        // Mettre à jour le texte du score
+        if (scoreValueId) {
+            $(scoreValueId).text(`${score}/8`);
+        }
+        
+        return score;
+    }
+
+    // Fonction pour obtenir le chemin de l'image basé sur le score
+    function getRiskImagePath(score) {
+        return `{% static 'riskrating/' %}${score}.svg`;
+    }
+
+    // Fonction pour calculer le score à partir de la réponse API
+    function calculateScoreFromResponse(response) {
+        let score = 0;
+        const fields = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ];
+
+        fields.forEach(field => {
+            if (response[field]) {
+                score++;
+            }
+        });
+
+        return score;
+    }
+
+    // Initialisation pour le formulaire d'ajout
+    $('#addRiskRatingModal').on('show.bs.modal', function () {
+        updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage', '#addRiskScoreValue');
+    });
+
+    // Écouteurs pour les changements dans le formulaire d'ajout
+    $('.risk-criteria').on('change', function() {
+        updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage', '#addRiskScoreValue');
+    });
+
+    // Initialisation pour le formulaire d'édition
+    $('#editRiskRatingModal').on('show.bs.modal', function () {
+        updateRiskImage('#editRiskRatingForm', '#editRiskRatingImage', '#editRiskScoreValue');
+    });
+
+    // Écouteurs pour les changements dans le formulaire d'édition
+    $('#editRiskRatingModal .risk-criteria').on('change', function() {
+        updateRiskImage('#editRiskRatingForm', '#editRiskRatingImage', '#editRiskScoreValue');
+    });
+
+    // Charger les données de l'évaluation
+    function loadRiskRatingData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response && !response.message) {
+                    currentRiskRating = response;
+                    populateEditForm(response);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status !== 404) {
+                    console.error('Erreur lors du chargement des données:', xhr);
+                }
+            }
+        });
+    }
+
+    // Remplir le formulaire d'édition
+    function populateEditForm(riskRating) {
+        if (!riskRating) return;
+        
+        $('#editRiskRatingId').val(riskRating.id);
+        
+        // Mettre à jour les champs booléens
+        $('#editRemboursabilite').val(riskRating.remboursabilite ? "true" : "false");
+        $('#editSituationLiquidite').val(riskRating.situation_liquidite ? "true" : "false");
+        $('#editPerformanceRentabilite').val(riskRating.performance_rentabilite ? "true" : "false");
+        $('#editPerspectiveSecteur').val(riskRating.perspective_secteur ? "true" : "false");
+        $('#editQualiteInformationAnalyse').val(riskRating.qualite_information_analyse ? "true" : "false");
+        $('#editExistenceGarantie').val(riskRating.existence_garantie ? "true" : "false");
+        $('#editTermeFinancierDureePret').val(riskRating.terme_financier_duree_pret ? "true" : "false");
+        $('#editMesurePropreSoutenirCredit').val(riskRating.mesure_propre_soutenir_credit ? "true" : "false");
+        
+        // Mettre à jour les autres champs
+        $('#editCotationDuRisque').val(riskRating.cotation_du_risque || '');
+        $('#editIndiceDuRisque').val(riskRating.indice_du_risque || '');
+        $('#editInterpretation').val(riskRating.interpretation || '');
+        $('#editAnalyse').val(riskRating.analyse || '');
+        
+        // Mettre à jour l'image
+        const score = calculateScoreFromResponse(riskRating);
+        $('#editRiskRatingImage').attr('src', getRiskImagePath(score));
+        $('#editRiskScoreValue').text(`${score}/8`);
+    }
+
+    // Formulaire d'ajout
+    $('#addRiskRatingForm').on('submit', function(e) {
+        e.preventDefault();
+        submitRiskRatingForm('POST', $(this).serialize(), '#submitAddBtn', 'addRiskRatingModal');
+    });
+
+    // Formulaire de modification
+    $('#editRiskRatingForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        console.log(formData);
+        submitRiskRatingForm('POST', formData, '#submitEditBtn', 'editRiskRatingModal');
+    });
+
+    // Soumission du formulaire
+    function submitRiskRatingForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+
+        console.log(formData);
+        
+        $.ajax({
+            url: '{{ risk_rating.id }}' ? "/api/acheteur/{{ acheteur.id }}/editer-une-evaluation-risque/{{ risk_rating.id }}/" : "/api/acheteur/{{ acheteur.id }}/ajouter-une-evaluation-risque/",
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: currentRiskRating ? 'Évaluation mise à jour avec succès' : 'Évaluation créée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    errorMessage = Object.values(xhr.responseJSON).join('\n');
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    }
+
+    // Suppression de l'évaluation
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Évaluation supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de supprimer l\'évaluation'
+                });
+            }
+        });
+    });
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialiser les popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    });
+
+    // Charger les données au démarrage
+    loadRiskRatingData();
+});
+</script>
+{% endblock %}

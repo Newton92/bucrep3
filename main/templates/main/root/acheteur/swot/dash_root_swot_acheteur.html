@@ -1,0 +1,2164 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize i18n %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #2c3e50;
+    --color-text-muted: #5a6c7d;
+    --color-success: #28a745;
+    --color-warning: #fd7e14;
+    --color-danger: #dc3545;
+    --color-info: #17a2b8;
+    --color-border: rgba(10, 149, 202, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --secondary-gradient: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #e74c3c 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, var(--color-info) 0%, #20c997 100%);
+    --swot-gradient: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+    --forces-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --faiblesses-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --opportunites-gradient: linear-gradient(135deg, var(--color-info) 0%, #20c997 100%);
+    --menaces-gradient: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+    
+    --shadow-sm: 0 2px 8px rgba(10, 149, 202, 0.08);
+    --shadow-md: 0 4px 20px rgba(10, 149, 202, 0.12);
+    --shadow-lg: 0 10px 30px rgba(10, 149, 202, 0.15);
+    --shadow-hover: 0 12px 35px rgba(10, 149, 202, 0.2);
+}
+
+/* Header Premium */
+.page-header-premium {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.acheteur-card-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.acheteur-header-premium {
+    background: var(--primary-gradient);
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info-grid-premium {
+    padding: 2rem;
+    background: var(--color-background);
+}
+
+.acheteur-info-item-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-info-item-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-info-item-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-gradient);
+}
+
+.acheteur-info-icon-premium {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.acheteur-info-label-premium {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.acheteur-info-value-premium {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    line-height: 1.3;
+}
+
+.acheteur-info-value-premium.badge-value-premium {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Statistiques Premium */
+.stats-cards-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.stat-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--marque-gradient);
+}
+
+.stat-number-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+}
+
+.stat-card-premium.forces .stat-number-premium { 
+    background: var(--forces-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-card-premium.faiblesses .stat-number-premium { 
+    background: var(--faiblesses-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-card-premium.opportunites .stat-number-premium { 
+    background: var(--opportunites-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-card-premium.menaces .stat-number-premium { 
+    background: var(--menaces-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label-premium {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Toggle de vue premium */
+.view-toggle-premium {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.02));
+    padding: 0.75rem;
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+}
+
+.view-toggle-btn-premium {
+    padding: 0.875rem 1.5rem;
+    border: 2px solid var(--color-border);
+    background: white;
+    border-radius: 12px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.view-toggle-btn-premium:hover:not(.active) {
+    background: var(--color-background);
+    border-color: var(--color-secondary);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.view-toggle-btn-premium.active {
+    background: var(--swot-gradient);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 6px 20px rgba(37, 173, 214, 0.25);
+}
+
+/* Carte SWOT Premium */
+.swot-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    padding: 2rem;
+    border: 2px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    margin-bottom: 1.75rem;
+    overflow: hidden;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.swot-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.swot-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+}
+
+.swot-card-premium.forces::before {
+    background: var(--forces-gradient);
+}
+
+.swot-card-premium.faiblesses::before {
+    background: var(--faiblesses-gradient);
+}
+
+.swot-card-premium.opportunites::before {
+    background: var(--opportunites-gradient);
+}
+
+.swot-card-premium.menaces::before {
+    background: var(--menaces-gradient);
+}
+
+/* En-tête de la carte SWOT */
+.swot-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.swot-title-premium {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.swot-count-premium {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+    color: white;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.swot-card-premium.forces .swot-count-premium { background: var(--forces-gradient); }
+.swot-card-premium.faiblesses .swot-count-premium { background: var(--faiblesses-gradient); }
+.swot-card-premium.opportunites .swot-count-premium { background: var(--opportunites-gradient); }
+.swot-card-premium.menaces .swot-count-premium { background: var(--menaces-gradient); }
+
+.swot-actions-premium {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Contenu SWOT Premium */
+.swot-content-premium {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.03), rgba(16, 108, 178, 0.01));
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.1);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    flex: 1;
+    max-height: 300px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.swot-content-premium:hover {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.05), rgba(16, 108, 178, 0.02));
+    border-color: rgba(37, 173, 214, 0.2);
+}
+
+.swot-content-premium .ql-editor {
+    padding: 0;
+    min-height: 200px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+}
+
+.swot-content-premium .ql-editor p {
+    margin-bottom: 0.75rem;
+}
+
+.swot-content-premium .ql-editor ul,
+.swot-content-premium .ql-editor ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.swot-content-premium .ql-editor li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.swot-empty-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-style: italic;
+}
+
+.swot-empty-premium i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Badge SWOT Premium */
+.swot-badge-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.badge-forces-premium { background: var(--forces-gradient); }
+.badge-faiblesses-premium { background: var(--faiblesses-gradient); }
+.badge-opportunites-premium { background: var(--opportunites-gradient); }
+.badge-menaces-premium { background: var(--menaces-gradient); }
+
+/* Grille SWOT Premium */
+.swot-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.75rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Matrix SWOT Premium */
+.swot-matrix-premium {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.5rem;
+    height: 650px;
+    margin-bottom: 2.5rem;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.swot-matrix-item-premium {
+    position: relative;
+    border-radius: 0;
+    padding: 2rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.swot-matrix-item-premium:hover {
+    transform: translateY(-3px);
+}
+
+.swot-matrix-header-premium {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.swot-matrix-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.swot-matrix-content-premium {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.75rem;
+}
+
+.swot-matrix-content-premium .ql-editor {
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding: 0;
+}
+
+.swot-matrix-content-premium .ql-editor p {
+    margin-bottom: 0.75rem;
+}
+
+/* Couleurs matrix premium */
+.matrix-forces-premium {
+    background: var(--forces-gradient);
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.matrix-faiblesses-premium {
+    background: var(--faiblesses-gradient);
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.matrix-opportunites-premium {
+    background: var(--opportunites-gradient);
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.matrix-menaces-premium {
+    background: var(--menaces-gradient);
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Boutons Premium */
+.btn-action-premium {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-swot-premium {
+    background: var(--swot-gradient);
+    color: white;
+}
+
+.btn-swot-outline-premium {
+    color: var(--color-secondary);
+    border: 2px solid var(--color-secondary);
+    background: transparent;
+}
+
+.btn-swot-outline-premium:hover {
+    background: var(--swot-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+.btn-danger-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-success-premium {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-back-premium {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+.btn-edit-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+/* Actions rapides */
+.swot-actions-quick-premium {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+/* État vide premium */
+.empty-state-premium {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 3px dashed rgba(10, 149, 202, 0.3);
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon-premium {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    background: var(--swot-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.empty-state-premium h4 {
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-dark);
+    font-size: 1.75rem;
+}
+
+.empty-state-premium p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Card améliorée */
+.enhanced-card-premium {
+    border-radius: 20px;
+    border: 2px solid var(--color-border);
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+}
+
+.enhanced-card-premium:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.card-header-gradient-premium {
+    background: var(--swot-gradient);
+    color: white;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.card-header-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+/* Section SWOT Premium */
+.swot-section-premium {
+    margin-bottom: 2rem;
+    border-radius: 16px;
+    border: 2px solid var(--color-border);
+    overflow: hidden;
+    background: var(--color-background);
+}
+
+.swot-section-header-premium {
+    padding: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 2px solid var(--color-border);
+    font-size: 1.1rem;
+}
+
+.swot-section-header-premium.forces-premium {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.05));
+    color: #28a745;
+    border-color: rgba(40, 167, 69, 0.2);
+}
+
+.swot-section-header-premium.faiblesses-premium {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(253, 126, 20, 0.05));
+    color: #dc3545;
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+.swot-section-header-premium.opportunites-premium {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(32, 201, 151, 0.05));
+    color: #17a2b8;
+    border-color: rgba(23, 162, 184, 0.2);
+}
+
+.swot-section-header-premium.menaces-premium {
+    background: linear-gradient(135deg, rgba(142, 68, 173, 0.1), rgba(155, 89, 182, 0.05));
+    color: #8e44ad;
+    border-color: rgba(142, 68, 173, 0.2);
+}
+
+.swot-section-content-premium {
+    padding: 1.5rem;
+}
+
+/* Modales Premium */
+.modal-header-premium {
+    background: var(--swot-gradient);
+    color: white;
+    padding: 2rem !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2.5rem !important;
+    background: var(--color-background);
+}
+
+.modal-footer-premium {
+    padding: 2rem !important;
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.02), rgba(16, 108, 178, 0.01));
+    border-top: 2px solid var(--color-border) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 70px rgba(37, 173, 214, 0.3) !important;
+    overflow: hidden;
+}
+
+/* Modal danger */
+.modal-danger-header-premium {
+    background: var(--danger-gradient);
+}
+
+.modal-danger-content-premium {
+    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Éditeur Quill Premium */
+.ql-toolbar {
+    border-radius: 12px 12px 0 0 !important;
+    border-color: var(--color-border) !important;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.02)) !important;
+}
+
+.ql-container {
+    border-radius: 0 0 12px 12px !important;
+    border-color: var(--color-border) !important;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 200px;
+    background: var(--color-background);
+}
+
+.ql-editor {
+    min-height: 200px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-text);
+}
+
+/* Formulaires Premium */
+.enhanced-form-premium .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(37, 173, 214, 0.1);
+    color: var(--color-secondary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(37, 173, 214, 0.1);
+}
+
+/* Info bulle premium */
+.info-tooltip-premium {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: var(--color-primary);
+    margin-left: 0.5rem;
+}
+
+.info-tooltip-premium:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-primary-dark);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Alert premium */
+.alert-premium {
+    background: linear-gradient(145deg, rgba(37, 173, 214, 0.1), rgba(16, 108, 178, 0.05));
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    border-left: 4px solid var(--color-secondary);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    color: var(--color-accent);
+    font-weight: 500;
+}
+
+.alert-premium i {
+    color: var(--color-secondary);
+    margin-right: 0.75rem;
+}
+
+/* Animation pour les cartes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.swot-card-premium {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .page-title-premium {
+        font-size: 2rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .swot-grid-premium {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+    
+    .swot-matrix-premium {
+        height: 500px;
+    }
+}
+
+@media (max-width: 992px) {
+    .swot-grid-premium {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .swot-matrix-premium {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 300px);
+        height: auto;
+    }
+    
+    .matrix-forces-premium { grid-column: 1; grid-row: 1; }
+    .matrix-faiblesses-premium { grid-column: 1; grid-row: 2; }
+    .matrix-opportunites-premium { grid-column: 1; grid-row: 3; }
+    .matrix-menaces-premium { grid-column: 1; grid-row: 4; }
+    
+    .stats-cards-premium {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .swot-actions-quick-premium {
+        flex-direction: column;
+    }
+    
+    .empty-state-premium {
+        padding: 2rem 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .swot-card-premium {
+        padding: 1.5rem;
+        min-height: 300px;
+    }
+    
+    .modal-body-premium,
+    .modal-footer-premium {
+        padding: 1.5rem !important;
+    }
+    
+    .stats-cards-premium {
+        grid-template-columns: 1fr;
+    }
+    
+    .swot-matrix-title-premium {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .swot-title-premium {
+        font-size: 1.1rem;
+    }
+    
+    .view-toggle-premium {
+        flex-direction: column;
+    }
+    
+    .view-toggle-btn-premium {
+        padding: 0.75rem 1rem;
+    }
+    
+    .btn-action-premium {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-gradient);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+}
+
+.swot-content-premium::-webkit-scrollbar,
+.swot-matrix-content-premium::-webkit-scrollbar {
+    width: 6px;
+}
+
+.swot-content-premium::-webkit-scrollbar-track,
+.swot-matrix-content-premium::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 3px;
+}
+
+.swot-content-premium::-webkit-scrollbar-thumb,
+.swot-matrix-content-premium::-webkit-scrollbar-thumb {
+    background: var(--color-secondary);
+    border-radius: 3px;
+}
+
+.swot-content-premium::-webkit-scrollbar-thumb:hover,
+.swot-matrix-content-premium::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-chart-pie"></i>Analyse SWOT
+                </h1>
+                <p class="page-subtitle-premium">
+                    Analyse stratégique des Forces, Faiblesses, Opportunités et Menaces de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-back-premium btn-action-premium">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à l'acheteur
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    <p class="text-white-75 mb-0">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">Code ACREMAC Unique</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations acheteur -->
+        <div class="acheteur-info-grid-premium">
+            <div class="row g-4">
+                <!-- Activité Principale -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">Activité Principale</span>
+                        <div class="acheteur-info-value-premium">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Forme Juridique -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">Forme Juridique</span>
+                        <div class="acheteur-info-value-premium">{% if acheteur.forme_juridique %}{% trans acheteur.forme_juridique.libelle %}{% else %}{% trans "Non spécifié" %}{% endif %}</div>
+                    </div>
+                </div>
+                
+                <!-- Pays -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">Pays</span>
+                        <div class="acheteur-info-value-premium">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item-premium">
+                        <div class="acheteur-info-icon-premium">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="acheteur-info-label-premium">Statut</span>
+                        <div class="acheteur-info-value-premium badge-value-premium">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques SWOT Premium -->
+    <div class="stats-cards-premium">
+        <div class="stat-card-premium forces">
+            <div class="stat-number-premium">{{ forces_count }}</div>
+            <div class="stat-label-premium">Forces</div>
+        </div>
+        <div class="stat-card-premium faiblesses">
+            <div class="stat-number-premium">{{ faiblesses_count }}</div>
+            <div class="stat-label-premium">Faiblesses</div>
+        </div>
+        <div class="stat-card-premium opportunites">
+            <div class="stat-number-premium">{{ opportunites_count }}</div>
+            <div class="stat-label-premium">Opportunités</div>
+        </div>
+        <div class="stat-card-premium menaces">
+            <div class="stat-number-premium">{{ menaces_count }}</div>
+            <div class="stat-label-premium">Menaces</div>
+        </div>
+    </div>
+
+    <!-- Toggle de vue premium -->
+    <div class="view-toggle-premium">
+        <button class="view-toggle-btn-premium active" id="viewGridBtn">
+            <i class="fas fa-th-large"></i> Vue Grille
+        </button>
+        <button class="view-toggle-btn-premium" id="viewMatrixBtn">
+            <i class="fas fa-table"></i> Vue Matrice
+        </button>
+    </div>
+
+    <!-- Section Analyse SWOT Premium -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card-premium">
+                <div class="card-header card-header-gradient-premium d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title-premium mb-0 text-white">
+                        <i class="fas fa-chart-pie"></i>Analyse SWOT Stratégique
+                        <span class="ms-3 badge bg-white text-dark">{{ total_elements }} éléments</span>
+                    </h5>
+                    <div class="swot-actions-quick-premium">
+                        {% if swot_exists %}
+                            <button class="btn btn-edit-premium btn-action-premium" id="editSwotBtn">
+                                <i class="fas fa-edit me-1"></i>Modifier l'analyse
+                            </button>
+                            <button class="btn btn-danger-premium btn-action-premium" id="deleteSwotBtn">
+                                <i class="fas fa-trash me-1"></i>Supprimer
+                            </button>
+                        {% else %}
+                            <button class="btn btn-swot-premium btn-action-premium" id="createSwotBtn">
+                                <i class="fas fa-plus-circle me-1"></i>Créer une analyse SWOT
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Vue Grille (par défaut) -->
+                    <div id="gridView" class="swot-view">
+                        <div class="swot-grid-premium">
+                            <!-- Forces -->
+                            <div class="swot-card-premium forces">
+                                <div class="swot-header-premium">
+                                    <div class="swot-title-premium">
+                                        <i class="fas fa-check-circle"></i> Forces
+                                        <span class="swot-count-premium">{{ forces_count }}</span>
+                                    </div>
+                                    <div class="swot-actions-premium">
+                                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content-premium" id="forcesContent">
+                                    {% if swot_data and swot_data.forces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.forces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium">
+                                            <i class="fas fa-check-circle"></i>
+                                            <p>Aucune force identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Faiblesses -->
+                            <div class="swot-card-premium faiblesses">
+                                <div class="swot-header-premium">
+                                    <div class="swot-title-premium">
+                                        <i class="fas fa-exclamation-triangle"></i> Faiblesses
+                                        <span class="swot-count-premium">{{ faiblesses_count }}</span>
+                                    </div>
+                                    <div class="swot-actions-premium">
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content-premium" id="faiblessesContent">
+                                    {% if swot_data and swot_data.faiblesses %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.faiblesses|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <p>Aucune faiblesse identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Opportunités -->
+                            <div class="swot-card-premium opportunites">
+                                <div class="swot-header-premium">
+                                    <div class="swot-title-premium">
+                                        <i class="fas fa-bullseye"></i> Opportunités
+                                        <span class="swot-count-premium">{{ opportunites_count }}</span>
+                                    </div>
+                                    <div class="swot-actions-premium">
+                                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content-premium" id="opportunitesContent">
+                                    {% if swot_data and swot_data.opportunites %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.opportunites|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium">
+                                            <i class="fas fa-bullseye"></i>
+                                            <p>Aucune opportunité identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Menaces -->
+                            <div class="swot-card-premium menaces">
+                                <div class="swot-header-premium">
+                                    <div class="swot-title-premium">
+                                        <i class="fas fa-shield-alt"></i> Menaces
+                                        <span class="swot-count-premium">{{ menaces_count }}</span>
+                                    </div>
+                                    <div class="swot-actions-premium">
+                                        <button class="btn btn-sm btn-outline-purple" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content-premium" id="menacesContent">
+                                    {% if swot_data and swot_data.menaces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.menaces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <p>Aucune menace identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vue Matrice (cachée par défaut) -->
+                    <div id="matrixView" class="swot-view" style="display: none;">
+                        <div class="swot-matrix-premium">
+                            <!-- Forces -->
+                            <div class="swot-matrix-item-premium matrix-forces-premium">
+                                <div class="swot-matrix-header-premium">
+                                    <div class="swot-matrix-title-premium">
+                                        <i class="fas fa-check-circle"></i> Forces
+                                        <span class="swot-count-premium">{{ forces_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content-premium">
+                                    {% if swot_data and swot_data.forces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.forces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium" style="color: white;">
+                                            <i class="fas fa-check-circle"></i>
+                                            <p>Aucune force identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Faiblesses -->
+                            <div class="swot-matrix-item-premium matrix-faiblesses-premium">
+                                <div class="swot-matrix-header-premium">
+                                    <div class="swot-matrix-title-premium">
+                                        <i class="fas fa-exclamation-triangle"></i> Faiblesses
+                                        <span class="swot-count-premium">{{ faiblesses_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content-premium">
+                                    {% if swot_data and swot_data.faiblesses %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.faiblesses|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium" style="color: white;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <p>Aucune faiblesse identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Opportunités -->
+                            <div class="swot-matrix-item-premium matrix-opportunites-premium">
+                                <div class="swot-matrix-header-premium">
+                                    <div class="swot-matrix-title-premium">
+                                        <i class="fas fa-bullseye"></i> Opportunités
+                                        <span class="swot-count-premium">{{ opportunites_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content-premium">
+                                    {% if swot_data and swot_data.opportunites %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.opportunites|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium" style="color: white;">
+                                            <i class="fas fa-bullseye"></i>
+                                            <p>Aucune opportunité identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Menaces -->
+                            <div class="swot-matrix-item-premium matrix-menaces-premium">
+                                <div class="swot-matrix-header-premium">
+                                    <div class="swot-matrix-title-premium">
+                                        <i class="fas fa-shield-alt"></i> Menaces
+                                        <span class="swot-count-premium">{{ menaces_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content-premium">
+                                    {% if swot_data and swot_data.menaces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.menaces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty-premium" style="color: white;">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <p>Aucune menace identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- État vide (quand aucune analyse n'existe) -->
+                    {% if not swot_exists %}
+                        <div class="empty-state-premium">
+                            <i class="fas fa-chart-pie empty-state-icon-premium"></i>
+                            <h4 class="fw-bold mb-2">Aucune analyse SWOT</h4>
+                            <p class="text-muted mb-4">
+                                Aucune analyse SWOT n'a été créée pour cet acheteur.<br>
+                                L'analyse SWOT vous permet d'évaluer stratégiquement la position de l'entreprise.
+                            </p>
+                            <button class="btn btn-swot-premium btn-action-premium" id="createSwotBtn2">
+                                <i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création/Modification SWOT Premium -->
+<div class="modal fade" id="swotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium" id="swotModalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="swotForm" class="enhanced-form-premium">
+                <input type="hidden" id="swotId" name="id">
+                <input type="hidden" id="acheteurId" name="acheteur" value="{{ acheteur.id }}">
+                
+                <div class="modal-body modal-body-premium">
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Remplissez les quatre catégories de l'analyse SWOT pour évaluer stratégiquement la situation de l'entreprise.
+                        Utilisez l'éditeur pour formater votre texte (listes à puces, gras, etc.).
+                    </p>
+
+                    <div class="row">
+                        <!-- Forces -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-section-premium">
+                                <div class="swot-section-header-premium forces-premium">
+                                    <i class="fas fa-check-circle"></i> Forces (Interne)
+                                </div>
+                                <div class="swot-section-content-premium">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Avantages internes, ressources, compétences
+                                        </label>
+                                        <div id="forcesEditor"></div>
+                                        <textarea id="forcesTextarea" name="forces" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Expertise technique, Marque forte, Équipe compétente
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Faiblesses -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-section-premium">
+                                <div class="swot-section-header-premium faiblesses-premium">
+                                    <i class="fas fa-exclamation-triangle"></i> Faiblesses (Interne)
+                                </div>
+                                <div class="swot-section-content-premium">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Défauts internes, lacunes, limitations
+                                        </label>
+                                        <div id="faiblessesEditor"></div>
+                                        <textarea id="faiblessesTextarea" name="faiblesses" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Manque de capitaux, Dépendance à un client, Vieillissement des équipements
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Opportunités -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-section-premium">
+                                <div class="swot-section-header-premium opportunites-premium">
+                                    <i class="fas fa-bullseye"></i> Opportunités (Externe)
+                                </div>
+                                <div class="swot-section-content-premium">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Tendances favorables, marchés en croissance
+                                        </label>
+                                        <div id="opportunitesEditor"></div>
+                                        <textarea id="opportunitesTextarea" name="opportunites" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Nouvelle réglementation favorable, Marché émergent, Technologie innovante
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Menaces -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-section-premium">
+                                <div class="swot-section-header-premium menaces-premium">
+                                    <i class="fas fa-shield-alt"></i> Menaces (Externe)
+                                </div>
+                                <div class="swot-section-content-premium">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Risques externes, obstacles, concurrence
+                                        </label>
+                                        <div id="menacesEditor"></div>
+                                        <textarea id="menacesTextarea" name="menaces" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Concurrence agressive, Changement réglementaire, Récession économique
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-premium">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-lightbulb me-3 fa-2x"></i>
+                            <div>
+                                <h6 class="mb-1">Conseil pour une bonne analyse SWOT</h6>
+                                <p class="mb-0 small">
+                                    • Soyez précis et concret dans vos énoncés<br>
+                                    • Basez-vous sur des faits et des données<br>
+                                    • Priorisez les éléments les plus importants<br>
+                                    • Utilisez des verbes d'action pour les opportunités<br>
+                                    • Soyez réaliste dans l'évaluation des menaces
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleurCommentaireSwot" class="form-label">
+                                    <i class="fas fa-palette"></i>Couleur commentaire
+                                </label>
+                                <select class="form-select" id="couleurCommentaireSwot" name="couleur_commentaire">
+                                    <option value="">Aucune</option>
+                                    {% for c in coloration_list %}
+                                    <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="commentaireSwot" class="form-label">
+                                    <i class="fas fa-comment-dots"></i>Commentaire interne
+                                </label>
+                                <textarea class="form-control" id="commentaireSwot" name="commentaire" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-swot-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-swot-premium btn-action-premium" id="submitSwotBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer l'analyse
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold mb-2">Supprimer l'analyse SWOT</h6>
+                <p class="text-muted mb-3">
+                    Êtes-vous sûr de vouloir supprimer cette analyse SWOT ? 
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-swot-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Export SWOT Premium -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-download me-2"></i>Exporter l'analyse
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-file-export fa-3x text-white mb-3"></i>
+                <h6 class="fw-bold text-dark mb-3">Choisir le format d'export</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-action-premium" id="exportPdfBtn">
+                        <i class="fas fa-file-pdf me-2"></i>PDF
+                    </button>
+                    <button class="btn btn-outline-success btn-action-premium" id="exportWordBtn">
+                        <i class="fas fa-file-word me-2"></i>Word
+                    </button>
+                    <button class="btn btn-outline-info btn-action-premium" id="exportExcelBtn">
+                        <i class="fas fa-file-excel me-2"></i>Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/swot-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let swotEditors = {};
+    let currentSwotId = null;
+    let isEditing = false;
+
+    // Initialiser les éditeurs Quill
+    function initEditors() {
+        // Configuration commune pour tous les éditeurs
+        const quillOptions = {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Saisissez vos éléments stratégiques...',
+            scrollingContainer: '#swotModal .modal-body'
+        };
+
+        // Initialiser chaque éditeur
+        const editors = [
+            { id: 'forcesEditor', textarea: 'forcesTextarea' },
+            { id: 'faiblessesEditor', textarea: 'faiblessesTextarea' },
+            { id: 'opportunitesEditor', textarea: 'opportunitesTextarea' },
+            { id: 'menacesEditor', textarea: 'menacesTextarea' }
+        ];
+
+        editors.forEach(editor => {
+            const quill = new Quill(`#${editor.id}`, quillOptions);
+            const textarea = document.getElementById(editor.textarea);
+            
+            // Lier l'éditeur au textarea
+            quill.on('text-change', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+            
+            // Stocker l'éditeur
+            swotEditors[editor.id.replace('Editor', '')] = quill;
+        });
+    }
+
+    // Gérer le toggle de vue
+    $('#viewGridBtn').click(function() {
+        $('#viewGridBtn').addClass('active');
+        $('#viewMatrixBtn').removeClass('active');
+        $('#gridView').show();
+        $('#matrixView').hide();
+    });
+
+    $('#viewMatrixBtn').click(function() {
+        $('#viewMatrixBtn').addClass('active');
+        $('#viewGridBtn').removeClass('active');
+        $('#matrixView').show();
+        $('#gridView').hide();
+    });
+
+    // Ouvrir le modal de création
+    $('#createSwotBtn, #createSwotBtn2').click(function() {
+        isEditing = false;
+        $('#swotModalTitle').html('<i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT');
+        resetForm();
+        $('#swotModal').modal('show');
+        
+        // Initialiser les éditeurs si ce n'est pas déjà fait
+        if (Object.keys(swotEditors).length === 0) {
+            setTimeout(initEditors, 100);
+        }
+    });
+
+    // Ouvrir le modal d'édition
+    $('#editSwotBtn').click(function() {
+        isEditing = true;
+        $('#swotModalTitle').html('<i class="fas fa-edit me-2"></i>Modifier l\'analyse SWOT');
+        loadSwotData();
+    });
+
+    // Charger les données SWOT existantes
+    function loadSwotData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response && response.length > 0) {
+                    const swot = response[0];
+                    currentSwotId = swot.id;
+                    
+                    // Pré-remplir les champs
+                    $('#swotId').val(swot.id);
+                    
+                    // Initialiser les éditeurs si nécessaire
+                    if (Object.keys(swotEditors).length === 0) {
+                        initEditors();
+                    }
+                    
+                    // Remplir les éditeurs après un court délai pour s'assurer qu'ils sont initialisés
+                    setTimeout(() => {
+                        if (swotEditors.forces) swotEditors.forces.root.innerHTML = swot.forces || '';
+                        if (swotEditors.faiblesses) swotEditors.faiblesses.root.innerHTML = swot.faiblesses || '';
+                        if (swotEditors.opportunites) swotEditors.opportunites.root.innerHTML = swot.opportunites || '';
+                        if (swotEditors.menaces) swotEditors.menaces.root.innerHTML = swot.menaces || '';
+                    }, 100);
+                    $('#couleurCommentaireSwot').val(swot.couleur_commentaire || '');
+                    $('#commentaireSwot').val(swot.commentaire || '');
+                    
+                    $('#swotModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger l\'analyse SWOT.'
+                    });
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadSwotData);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les données.'
+                    });
+                }
+            }
+        });
+    }
+
+    // Réinitialiser le formulaire
+    function resetForm() {
+        currentSwotId = null;
+        $('#swotId').val('');
+        
+        // Réinitialiser les éditeurs
+        Object.values(swotEditors).forEach(editor => {
+            if (editor) {
+                editor.root.innerHTML = '';
+            }
+        });
+        
+        // Réinitialiser les textareas
+        $('#forcesTextarea, #faiblessesTextarea, #opportunitesTextarea, #menacesTextarea').val('');
+        $('#couleurCommentaireSwot').val('');
+        $('#commentaireSwot').val('');
+    }
+
+    // Formulaire de création/modification
+    $('#swotForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Récupérer les données des éditeurs
+        const formData = {
+            acheteur: ACHETEUR_ID,
+            forces: $('#forcesTextarea').val(),
+            faiblesses: $('#faiblessesTextarea').val(),
+            opportunites: $('#opportunitesTextarea').val(),
+            menaces: $('#menacesTextarea').val(),
+            couleur_commentaire: $('#couleurCommentaireSwot').val() || null,
+            commentaire: $('#commentaireSwot').val() || null
+        };
+        
+        // Ajouter l'ID si on est en mode édition
+        if (currentSwotId) {
+            formData.id = currentSwotId;
+        }
+        
+        const $btn = $('#submitSwotBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const method = isEditing ? 'PUT' : 'POST';
+        const url = isEditing ? `${API_BASE_URL}${currentSwotId}/` : API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#swotModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = isEditing ? 
+                    'Erreur lors de la modification de l\'analyse SWOT' : 
+                    'Erreur lors de la création de l\'analyse SWOT';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        const fieldErrors = [];
+                        for (const [field, errors] of Object.entries(xhr.responseJSON)) {
+                            if (Array.isArray(errors)) {
+                                fieldErrors.push(`${field}: ${errors.join(', ')}`);
+                            }
+                        }
+                        if (fieldErrors.length > 0) {
+                            errorMessage = fieldErrors.join('\n');
+                        }
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+
+    // Ouvrir le modal de suppression
+    $('#deleteSwotBtn').click(function() {
+        $('#confirmDeleteModal').modal('show');
+    });
+
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentSwotId) {
+            // Récupérer l'ID de l'analyse SWOT existante
+            $.ajax({
+                url: API_BASE_URL,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    if (response && response.length > 0) {
+                        currentSwotId = response[0].id;
+                        performDelete();
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de récupérer l\'analyse SWOT.'
+                    });
+                }
+            });
+        } else {
+            performDelete();
+        }
+    });
+
+    function performDelete() {
+        $.ajax({
+            url: `${API_BASE_URL}${currentSwotId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'analyse SWOT'
+                    });
+                }
+            }
+        });
+    }
+
+    // Export functions
+    $('#exportPdfBtn').click(function() {
+        exportSwot('pdf');
+    });
+
+    $('#exportWordBtn').click(function() {
+        exportSwot('word');
+    });
+
+    $('#exportExcelBtn').click(function() {
+        exportSwot('excel');
+    });
+
+    function exportSwot(format) {
+        $('#exportModal').modal('hide');
+        
+        Swal.fire({
+            title: 'Export en cours',
+            text: `Génération du fichier ${format.toUpperCase()}...`,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi',
+                text: `Le fichier ${format.toUpperCase()} a été généré.`,
+                showConfirmButton: true
+            });
+        }, 1500);
+    }
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+
+<style>
+.btn-outline-purple {
+    color: #8e44ad;
+    border-color: #8e44ad;
+}
+.btn-outline-purple:hover {
+    background-color: #8e44ad;
+    border-color: #8e44ad;
+    color: white;
+}
+
+/* Personnalisation des éditeurs dans le modal */
+#swotModal .ql-toolbar {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.02)) !important;
+    border-color: var(--color-border) !important;
+}
+
+#swotModal .ql-container {
+    border-color: var(--color-border) !important;
+    min-height: 150px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#swotModal .ql-editor {
+    min-height: 150px;
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}

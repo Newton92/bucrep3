@@ -1,0 +1,1785 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+/* Cartes Actionnaires */
+.actionnaire-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+}
+
+.actionnaire-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: #0A95CA;
+}
+
+.actionnaire-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #0A95CA, #1c6ea4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.actionnaire-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.actionnaire-percentage {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0A95CA;
+    margin-bottom: 0.5rem;
+}
+
+/* Jauge de pourcentage */
+.percentage-bar {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.percentage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0A95CA, #1c6ea4);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Statistiques */
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.25rem;
+}
+
+.stat-total .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-percentage .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-commentaires .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-color .stat-icon { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table responsive */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e3e6f0;
+}
+
+.table th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e3e6f0;
+    font-weight: 600;
+    color: #495057;
+    padding: 0.75rem 1rem;
+}
+
+.table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Formulaires */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form .select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    min-height: 42px;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Boutons */
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action i {
+    font-size: 0.9rem;
+}
+
+/* Aperçu couleur */
+.color-preview {
+    width: 100%;
+    height: 38px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+/* Badge pourcentage */
+.badge-percentage {
+    background: linear-gradient(135deg, #0A95CA, #1c6ea4);
+    color: white;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+/* Card header gradient */
+.card-header-gradient {
+    background: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    color: white;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .actionnaire-card {
+        padding: 1rem;
+    }
+    
+    .actionnaire-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Avatar */
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Tooltip */
+[data-bs-toggle="tooltip"] {
+    cursor: pointer;
+}
+
+/* Progress bar container */
+.progress-container {
+    position: relative;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #0A95CA, #1c6ea4);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-pie text-primary me-2"></i>Gestion des Actionnaires
+            </h1>
+            <p class="text-muted mb-0">
+                Gérez la composition actionnariale de l'entreprise
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addActionnaireModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter un actionnaire
+            </button>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur avec total actionnaires -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-percentage me-1"></i>
+                        <span id="totalPourcentage">{{ stats.pourcentage_total|floatformat:2 }}</span>%
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Total détention</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-hashtag text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Code ACREMAC</small>
+                            <span class="fw-medium">{{ acheteur.code }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-users text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Actionnaires</small>
+                            <span class="fw-medium">{{ stats.total }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Total Actionnaires</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-percentage">
+                <div class="stat-icon">
+                    <i class="fas fa-percent"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_pourcentage }}</div>
+                <div class="stat-label">Avec Pourcentage</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-color">
+                <div class="stat-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_couleur }}</div>
+                <div class="stat-label">Avec Couleur</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat-commentaires">
+                <div class="stat-icon">
+                    <i class="fas fa-comment"></i>
+                </div>
+                <div class="stat-value">{{ stats.avec_commentaire }}</div>
+                <div class="stat-label">Avec Commentaire</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actionnaires Récents -->
+    {% if actionnaires_recent %}
+    <div class="mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="fas fa-history me-2"></i>Actionnaires récemment modifiés
+        </h5>
+        <div class="row g-3">
+            {% for actionnaire in actionnaires_recent %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="actionnaire-card">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="actionnaire-icon">
+                            {{ actionnaire.nom|first|upper }}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="actionnaire-name">
+                                        {{ actionnaire.nom }} {{ actionnaire.prenom|first }}.
+                                    </div>
+                                    <div class="actionnaire-percentage">
+                                        {{ actionnaire.pourcentage|default:"-" }}%
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item edit-actionnaire-btn" href="#" data-id="{{ actionnaire.id }}">
+                                                <i class="fas fa-edit me-2"></i>Modifier
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item delete-actionnaire-btn" href="#" data-id="{{ actionnaire.id }}">
+                                                <i class="fas fa-trash me-2"></i>Supprimer
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% if actionnaire.pourcentage %}
+                            <div class="percentage-bar">
+                                <div class="percentage-fill" style="width: {{ actionnaire.pourcentage }}%"></div>
+                            </div>
+                            {% endif %}
+                            {% if actionnaire.couleur_commentaire %}
+                            <div class="mt-2">
+                                <span class="badge" style="background-color: {{ actionnaire.couleur_commentaire.code_couleur|default:'#6c757d' }}">
+                                    {{ actionnaire.couleur_commentaire.couleur }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtres et Recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-10">
+                    <div class="form-group mb-0">
+                        <label class="form-label">
+                            <i class="fas fa-search"></i>Recherche
+                        </label>
+                        <input type="text" class="form-control" id="searchInput" 
+                               placeholder="Nom, prénom, pourcentage, commentaire...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" id="applyFilters" style="margin-top: 24px;">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table des Actionnaires -->
+    <div class="card border">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Liste des Actionnaires
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small" for="selectAll">
+                            Sélectionner tout
+                        </label>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm" id="deleteSelected" disabled>
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="actionnaireTable">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="toggleAll">
+                                </div>
+                            </th>
+                            <th>Actionnaire</th>
+                            <th>Pourcentage</th>
+                            <th>Couleur</th>
+                            <th>Commentaire</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actionnaireTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3" id="paginationContainer">
+                <div class="text-muted small" id="paginationInfo"></div>
+                <nav>
+                    <ul class="pagination mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Actionnaire -->
+<div class="modal fade" id="addActionnaireModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Actionnaire
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addActionnaireForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="nom" class="form-label">
+                                    <i class="fas fa-user text-primary"></i>Nom
+                                </label>
+                                <input type="text" class="form-control" id="nom" name="nom" required
+                                       placeholder="Ex: DUPONT">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="prenom" class="form-label">
+                                    <i class="fas fa-user text-primary"></i>Prénom
+                                </label>
+                                <input type="text" class="form-control" id="prenom" name="prenom" required
+                                       placeholder="Ex: Jean">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pourcentage" class="form-label">
+                            <i class="fas fa-percentage text-primary"></i>Pourcentage de détention
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="pourcentage" name="pourcentage"
+                                   step="0.01" min="0" max="100" placeholder="Ex: 25.50">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">Pourcentage restant disponible: <span id="pourcentageRestant">100.00</span>%</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="couleur_commentaire" class="form-label">
+                            <i class="fas fa-palette text-primary"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                {{ coloration.couleur }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu couleur
+                                </label>
+                                <div class="color-preview" id="colorPreview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                  placeholder="Commentaires additionnels sur l'actionnaire..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Actionnaire -->
+<div class="modal fade" id="editActionnaireModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Actionnaire
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editActionnaireForm" class="enhanced-form">
+                <input type="hidden" id="editActionnaireId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editNom" class="form-label">
+                                    <i class="fas fa-user text-primary"></i>Nom
+                                </label>
+                                <input type="text" class="form-control" id="editNom" name="nom" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPrenom" class="form-label">
+                                    <i class="fas fa-user text-primary"></i>Prénom
+                                </label>
+                                <input type="text" class="form-control" id="editPrenom" name="prenom" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPourcentage" class="form-label">
+                            <i class="fas fa-percentage text-primary"></i>Pourcentage de détention
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="editPourcentage" name="pourcentage"
+                                   step="0.01" min="0" max="100">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">Pourcentage restant disponible: <span id="editPourcentageRestant">100.00</span>%</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaire" class="form-label">
+                            <i class="fas fa-palette text-primary"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                {{ coloration.couleur }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-eye-dropper"></i>Aperçu couleur
+                                </label>
+                                <div class="color-preview" id="editColorPreview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le(s) actionnaire(s)</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Statistiques Détaillées -->
+<div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>Statistiques Détaillées
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Répartition par pourcentage</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="repartitionChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Informations</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Total pourcentage
+                                        <span class="badge bg-primary rounded-pill" id="modalTotalPourcentage">0%</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Pourcentage disponible
+                                        <span class="badge bg-success rounded-pill" id="modalPourcentageDisponible">100%</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Moyenne par actionnaire
+                                        <span class="badge bg-info rounded-pill" id="modalMoyennePourcentage">0%</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = {{ acheteur.id }};
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/actionnaires/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+
+    // Testez d'abord avec une URL simple
+    console.log("Acheteur ID:", ACHETEUR_ID);
+    console.log("API URL:", API_BASE_URL);
+    
+    // Variables d'état - CORRECTION ICI
+    let currentPage = 1;
+    let currentFilters = {};
+    let selectedActionnaires = new Set();
+    
+    // CORRECTION CRITIQUE: Convertir la valeur Django en format JavaScript
+    let totalPourcentage = parseFloat('{{ stats.pourcentage_total|default:0 }}'.replace(',', '.'));
+    if (isNaN(totalPourcentage)) {
+        totalPourcentage = 0;
+    }
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+        
+        // Gérer l'aperçu des couleurs
+        $('#couleur_commentaire, #editCouleurCommentaire').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const color = selectedOption.data('color');
+            const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
+            if (color) {
+                $(previewId).css({
+                    'background': color,
+                    'border-color': color
+                });
+            } else {
+                $(previewId).css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+            }
+        });
+        
+        // Initialiser l'aperçu des couleurs
+        $('#colorPreview, #editColorPreview').css({
+            'background': '#f8f9fa',
+            'border-color': '#e3e6f0'
+        });
+    }
+
+    // Mettre à jour le pourcentage disponible
+    function updatePourcentageDisponible() {
+        const pourcentageRestant = 100 - totalPourcentage;
+        $('#pourcentageRestant, #editPourcentageRestant').text(pourcentageRestant.toFixed(2));
+        
+        // Mettre à jour la validation
+        $('#pourcentage, #editPourcentage').attr('max', pourcentageRestant);
+    }
+
+    // CORRECTION : Gestion du champ pourcentage
+    $('#pourcentage, #editPourcentage').on('input', function() {
+        const $input = $(this);
+        const value = $input.val();
+        
+        try {
+            if (value.trim() !== '') {
+                const validated = validatePourcentage(value);
+                if (validated) {
+                    $input.val(validated);
+                }
+            }
+        } catch (error) {
+            // On ne bloque pas la saisie, on validera à la soumission
+        }
+        
+        // Mettre à jour le pourcentage restant
+        updatePourcentageRestant();
+    });
+
+    // CORRECTION : Mettre à jour le pourcentage restant
+    function updatePourcentageRestant() {
+        const pourcentageSaisi = parseFloat($('#pourcentage').val()) || 0;
+        const pourcentageRestant = 100 - (totalPourcentage + pourcentageSaisi);
+        $('#pourcentageRestant').text(Math.max(0, pourcentageRestant).toFixed(2));
+    }
+
+    // Initialisation
+    initSelect2();
+    updatePourcentageDisponible();
+    loadActionnaires();
+    
+    // Charger les actionnaires
+    function loadActionnaires(page = 1, filters = {}) {
+        currentPage = page;
+        currentFilters = filters;
+        
+        const params = new URLSearchParams({
+            page: page,
+            ...filters
+        });
+        
+        $.ajax({
+            url: `${API_BASE_URL}?${params}`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadActionnaires(page, filters));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les actionnaires'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour la table
+    function updateTable(actionnaires) {
+        const tbody = $('#actionnaireTableBody');
+        tbody.empty();
+        
+        if (actionnaires.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun actionnaire trouvé</h5>
+                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouvel actionnaire</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        actionnaires.forEach((actionnaire, index) => {
+            const isSelected = selectedActionnaires.has(actionnaire.id.toString());
+            const pourcentage = actionnaire.pourcentage || 0;
+            const couleur = actionnaire.couleur_commentaire?.code_couleur || '#6c757d';
+            const commentairePreview = actionnaire.commentaire ? 
+                (actionnaire.commentaire.length > 50 ? actionnaire.commentaire.substring(0, 50) + '...' : actionnaire.commentaire) : 
+                'Aucun';
+            
+            const row = `
+                <tr data-id="${actionnaire.id}">
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input row-checkbox" type="checkbox" 
+                                   data-id="${actionnaire.id}" ${isSelected ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-3 bg-primary rounded-circle d-flex align-items-center justify-content-center text-white">
+                                ${actionnaire.nom ? actionnaire.nom.charAt(0).toUpperCase() : '?'}
+                            </div>
+                            <div>
+                                <strong>${actionnaire.nom} ${actionnaire.prenom}</strong>
+                                <div class="text-muted small">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Ajouté le ${actionnaire.created_at_formatted || ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="badge-percentage mb-1">${pourcentage}%</span>
+                            <div class="progress-container">
+                                <div class="progress-fill" style="width: ${pourcentage}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        ${actionnaire.couleur_commentaire ? `
+                            <span class="badge" style="background-color: ${couleur}">
+                                ${actionnaire.couleur_commentaire.couleur}
+                            </span>
+                        ` : 'Non spécifié'}
+                    </td>
+                    <td>
+                        <span class="text-muted" title="${actionnaire.commentaire || ''}">
+                            ${commentairePreview}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${actionnaire.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${actionnaire.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Initialiser les tooltips
+        $('[title]').tooltip();
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const paginationControls = $('#paginationControls');
+        paginationControls.empty();
+        
+        if (response.count === 0) {
+            $('#paginationContainer').hide();
+            return;
+        }
+        
+        $('#paginationContainer').show();
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} actionnaires`
+        );
+        
+        // Bouton précédent
+        if (response.previous) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        }
+        
+        // Pages
+        for (let i = 1; i <= response.total_pages; i++) {
+            paginationControls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Bouton suivant
+        if (response.next) {
+            paginationControls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        }
+    }
+    
+    // Appliquer les filtres
+    $('#applyFilters').on('click', function() {
+        const filters = {
+            search: $('#searchInput').val()
+        };
+        loadActionnaires(1, filters);
+    });
+    
+    // Recherche en temps réel
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $('#applyFilters').click();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            loadActionnaires(page, currentFilters);
+        }
+    });
+    
+    // Formulaire d'ajout
+    // CORRECTION DU SCRIPT EXISTANT - Partie ajout d'actionnaire
+    // CORRECTION : Formulaire d'ajout - Version corrigée
+    $('#addActionnaireForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Récupérer les données du formulaire
+        const formData = {
+            nom: $('#nom').val().trim().toUpperCase(),
+            prenom: $('#prenom').val().trim(),
+            couleur_commentaire: $('#couleur_commentaire').val() || null,
+            commentaire: $('#commentaire').val().trim() || ''
+        };
+        
+        // CORRECTION : Gérer le pourcentage
+        let pourcentageVal = $('#pourcentage').val().trim();
+        if (pourcentageVal !== '') {
+            // Nettoyer la valeur
+            pourcentageVal = pourcentageVal.replace(',', '.');
+            
+            // Validation côté client
+            const pourcentageNum = parseFloat(pourcentageVal);
+            if (isNaN(pourcentageNum)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Veuillez entrer un pourcentage valide (ex: 25.50)'
+                });
+                $('#pourcentage').focus();
+                return;
+            }
+            
+            if (pourcentageNum < 0 || pourcentageNum > 100) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Le pourcentage doit être compris entre 0 et 100'
+                });
+                $('#pourcentage').focus();
+                return;
+            }
+            
+            // Limiter à 2 décimales
+            formData.pourcentage = pourcentageNum.toFixed(2);
+        } else {
+            formData.pourcentage = null;
+        }
+        
+        // Validation des noms
+        if (!formData.nom || formData.nom.length < 2) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le nom doit contenir au moins 2 caractères'
+            });
+            $('#nom').focus();
+            return;
+        }
+        
+        if (!formData.prenom || formData.prenom.length < 2) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le prénom doit contenir au moins 2 caractères'
+            });
+            $('#prenom').focus();
+            return;
+        }
+        
+        // Afficher le loading
+        const $btn = $('#submitAddBtn');
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').hide();
+        
+        // Envoyer la requête
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/actionnaires/`,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                // Cacher le loading
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                // Fermer le modal
+                const addModal = bootstrap.Modal.getInstance($('#addActionnaireModal')[0]);
+                addModal.hide();
+                
+                // Réinitialiser le formulaire
+                $('#addActionnaireForm')[0].reset();
+                $('#couleur_commentaire').val(null).trigger('change');
+                $('#colorPreview').css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+                
+                // Mettre à jour les statistiques
+                if (response.pourcentage_total !== undefined) {
+                    const total = parseFloat(response.pourcentage_total);
+                    totalPourcentage = total;
+                    $('#totalPourcentage').text(total.toFixed(2));
+                    updatePourcentageDisponible();
+                }
+                
+                // Afficher le succès et recharger
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Actionnaire ajouté avec succès',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // CORRECTION : Recharger les données
+                    loadActionnaires(currentPage, currentFilters);
+                    loadStats();
+                });
+            },
+            error: function(xhr) {
+                // Cacher le loading
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.pourcentage) {
+                        errorMessage = xhr.responseJSON.pourcentage.join ? 
+                            `Pourcentage: ${xhr.responseJSON.pourcentage.join(', ')}` : 
+                            `Pourcentage: ${xhr.responseJSON.pourcentage}`;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#addActionnaireForm').submit();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+    });
+
+
+    // CORRECTION : Fonction pour valider le format de pourcentage
+    function validatePourcentage(value) {
+        if (!value || value.trim() === '') {
+            return null; // Permettre les valeurs vides
+        }
+        
+        // Remplacer la virgule par un point
+        value = value.replace(',', '.');
+        
+        // Vérifier le format numérique
+        if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+            throw new Error('Format invalide. Utilisez 2 décimales max (ex: 25.50)');
+        }
+        
+        const num = parseFloat(value);
+        if (isNaN(num)) {
+            throw new Error('Valeur numérique invalide');
+        }
+        
+        if (num < 0 || num > 100) {
+            throw new Error('Doit être entre 0 et 100');
+        }
+        
+        return num.toFixed(2);
+    }
+    
+    // Formulaire de modification
+    // CORRECTION : Formulaire de modification
+    $('#editActionnaireForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Récupérer les données
+        const formData = {
+            nom: $('#editNom').val().trim().toUpperCase(),
+            prenom: $('#editPrenom').val().trim(),
+            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
+            commentaire: $('#editCommentaire').val().trim() || ''
+        };
+        
+        // CORRECTION : Gérer le pourcentage
+        let pourcentageVal = $('#editPourcentage').val().trim();
+        if (pourcentageVal !== '') {
+            pourcentageVal = pourcentageVal.replace(',', '.');
+            const pourcentageNum = parseFloat(pourcentageVal);
+            
+            if (isNaN(pourcentageNum)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Pourcentage invalide'
+                });
+                return;
+            }
+            
+            if (pourcentageNum < 0 || pourcentageNum > 100) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Le pourcentage doit être entre 0 et 100'
+                });
+                return;
+            }
+            
+            formData.pourcentage = pourcentageNum.toFixed(2);
+        } else {
+            formData.pourcentage = null;
+        }
+        
+        const actionnaireId = $('#editActionnaireId').val();
+        
+        // Afficher le loading
+        const $btn = $('#submitEditBtn');
+        $btn.prop('disabled', true);
+        $btn.find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').hide();
+        
+        $.ajax({
+            url: `${API_BASE_URL}${actionnaireId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                // Cacher le loading
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                // Fermer le modal
+                const editModal = bootstrap.Modal.getInstance($('#editActionnaireModal')[0]);
+                editModal.hide();
+                
+                // Mettre à jour les statistiques
+                if (response.pourcentage_total !== undefined) {
+                    const total = parseFloat(response.pourcentage_total);
+                    totalPourcentage = total;
+                    $('#totalPourcentage').text(total.toFixed(2));
+                    updatePourcentageDisponible();
+                }
+                
+                // Afficher le succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Actionnaire modifié avec succès',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // CORRECTION : Recharger les données
+                    loadActionnaires(currentPage, currentFilters);
+                    loadStats();
+                });
+            },
+            error: function(xhr) {
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#editActionnaireForm').submit();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: errorMessage
+                    });
+                }
+            }
+        });
+    });
+      
+    
+    // Soumission du formulaire
+    function submitActionnaireForm(method, data, submitBtn, modalId, actionnaireId = null) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const url = actionnaireId ? 
+            `${API_BASE_URL}${actionnaireId}/` : 
+            API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                // Mettre à jour le pourcentage total
+                if (response.data && response.data.pourcentage) {
+                    if (method === 'POST') {
+                        totalPourcentage += parseFloat(response.data.pourcentage);
+                    } else if (method === 'PUT') {
+                        // Pour la mise à jour, on recharge les stats
+                        loadStats();
+                    }
+                    updatePourcentageDisponible();
+                }
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                $('#colorPreview, #editColorPreview').css({
+                    'background': '#f8f9fa',
+                    'border-color': '#e3e6f0'
+                });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Opération réussie',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadActionnaires(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitActionnaireForm(method, data, submitBtn, modalId, actionnaireId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+
+    // Édition d'un actionnaire - Version corrigée
+    $(document).on('click', '.edit-btn', function() {
+        const actionnaireId = $(this).data('id');
+        
+        // Récupérer les détails de l'actionnaire
+        $.ajax({
+            url: `${API_BASE_URL}${actionnaireId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir le formulaire
+                $('#editActionnaireId').val(response.id);
+                $('#editNom').val(response.nom);
+                $('#editPrenom').val(response.prenom);
+                
+                // CORRECTION : Gérer le pourcentage
+                if (response.pourcentage !== null) {
+                    $('#editPourcentage').val(parseFloat(response.pourcentage).toFixed(2));
+                } else {
+                    $('#editPourcentage').val('');
+                }
+                
+                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
+                $('#editCommentaire').val(response.commentaire || '');
+                
+                // Aperçu de la couleur
+                if (response.couleur_commentaire?.code_couleur) {
+                    $('#editColorPreview').css({
+                        'background': response.couleur_commentaire.code_couleur,
+                        'border-color': response.couleur_commentaire.code_couleur
+                    });
+                } else {
+                    $('#editColorPreview').css({
+                        'background': '#f8f9fa',
+                        'border-color': '#e3e6f0'
+                    });
+                }
+                
+                // Calculer le pourcentage restant disponible
+                const pourcentageActuel = response.pourcentage ? parseFloat(response.pourcentage) : 0;
+                const pourcentageRestant = 100 - (totalPourcentage - pourcentageActuel);
+                $('#editPourcentageRestant').text(pourcentageRestant.toFixed(2));
+                
+                // Ajuster la validation max
+                $('#editPourcentage').attr('max', pourcentageRestant);
+                
+                $('#editActionnaireModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('.edit-btn[data-id="' + actionnaireId + '"]').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les données de l\'actionnaire'
+                    });
+                }
+            }
+        });
+    });
+
+
+    // Suppression d'un actionnaire
+    $(document).on('click', '.delete-btn', function() {
+        const actionnaireId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Supprimer l\'actionnaire ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteActionnaires([actionnaireId]);
+            }
+        });
+    });
+    
+    // Suppression multiple
+    $('#deleteSelected').on('click', function() {
+        if (selectedActionnaires.size === 0) return;
+        
+        Swal.fire({
+            title: `Supprimer ${selectedActionnaires.size} actionnaire(s) ?`,
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteActionnaires(Array.from(selectedActionnaires));
+            }
+        });
+    });
+    
+    // Fonction de suppression
+    function deleteActionnaires(ids) {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: ids }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                // Recalculer le pourcentage total après suppression
+                loadStats();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Réinitialiser la sélection
+                    selectedActionnaires.clear();
+                    $('#deleteSelected').prop('disabled', true);
+                    $('#selectAll').prop('checked', false);
+                    
+                    // Recharger la liste
+                    loadActionnaires(currentPage, currentFilters);
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => deleteActionnaires(ids));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer le(s) actionnaire(s)'
+                    });
+                }
+            }
+        });
+    }
+
+    // Sélection multiple
+    $(document).on('change', '.row-checkbox', function() {
+        const id = $(this).data('id').toString();
+        
+        if ($(this).prop('checked')) {
+            selectedActionnaires.add(id);
+        } else {
+            selectedActionnaires.delete(id);
+            $('#selectAll').prop('checked', false);
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#toggleAll').on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        
+        if (isChecked) {
+            $('.row-checkbox').each(function() {
+                selectedActionnaires.add($(this).data('id').toString());
+            });
+        } else {
+            selectedActionnaires.clear();
+        }
+        
+        updateDeleteButtonState();
+    });
+    
+    $('#selectAll').on('change', function() {
+        $('#toggleAll').prop('checked', $(this).prop('checked'));
+        $('#toggleAll').change();
+    });
+    
+    function updateDeleteButtonState() {
+        const hasSelection = selectedActionnaires.size > 0;
+        $('#deleteSelected').prop('disabled', !hasSelection);
+        $('#selectAll').prop('checked', hasSelection && 
+            selectedActionnaires.size === $('.row-checkbox').length);
+    }
+    
+    // Charger les statistiques
+    function loadStats() {
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/actionnaires/stats/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const pourcentageTotal = response.pourcentage_total || 0;
+                totalPourcentage = pourcentageTotal;
+                $('#totalPourcentage').text(pourcentageTotal.toFixed(2));
+                updatePourcentageDisponible();
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialiser les tooltips Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Gérer l'ouverture du modal d'ajout
+    $('#addActionnaireModal').on('shown.bs.modal', function() {
+        $('#nom').focus();
+    });
+    
+    // Gérer l'ouverture du modal d'édition
+    $('#editActionnaireModal').on('shown.bs.modal', function() {
+        $('#editNom').focus();
+    });
+});
+</script>
+{% endblock %}

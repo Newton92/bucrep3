@@ -1,571 +1,1936 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-border: rgba(13, 128, 190, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --achat-gradient: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    --local-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    --import-gradient: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+    --clients-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+    --fournisseur-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Header Premium Élevé */
+.page-header-premium {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card-premium {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.acheteur-header-premium {
+    background: var(--primary-gradient);
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille d'informations acheteur */
+.acheteur-info-grid {
+    padding: 2rem;
+}
+
+.acheteur-info-item {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-info-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-info-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.acheteur-info-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.acheteur-info-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.acheteur-info-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    line-height: 1.3;
+}
+
+.acheteur-info-value.badge-value {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Carte Conditions d'Achat Unique Premium */
+.achat-unique-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(23, 162, 184, 0.02));
+    border-radius: 20px;
+    padding: 2.5rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(23, 162, 184, 0.08);
+}
+
+.achat-unique-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(23, 162, 184, 0.15);
+}
+
+.achat-unique-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--achat-gradient);
+    border-radius: 5px 0 0 5px;
+}
+
+/* En-tête de la carte premium */
+.achat-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+    position: relative;
+}
+
+.achat-header-premium::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, #17a2b8, transparent);
+}
+
+.achat-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--achat-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.achat-title-premium i {
+    color: #17a2b8;
+    font-size: 2rem;
+}
+
+.achat-status-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--success-gradient);
+    color: white;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+.achat-actions-premium {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Grille d'informations conditions premium */
+.achat-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.achat-card-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.achat-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.achat-card-premium.local { border-left: 4px solid #20c997; }
+.achat-card-premium.importation { border-left: 4px solid #6610f2; }
+.achat-card-premium.clients { border-left: 4px solid #fd7e14; }
+.achat-card-premium.fournisseur { border-left: 4px solid #dc3545; }
+
+/* Sections de contenu premium */
+.achat-section-premium {
+    margin-bottom: 0;
+}
+
+.achat-label-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    font-size: 1.25rem;
+}
+
+.achat-label-premium i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.1);
+}
+
+.achat-label-premium i.local {
+    background: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+}
+
+.achat-label-premium i.importation {
+    background: rgba(102, 16, 242, 0.1);
+    color: #6610f2;
+}
+
+.achat-label-premium i.clients {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.achat-label-premium i.fournisseur {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Contenu des sections */
+.achat-content-premium {
+    color: var(--color-text);
+    line-height: 1.8;
+    font-size: 1.05rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.achat-content-premium pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    line-height: 1.7;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+
+/* Tags conditions premium */
+.condition-tags-section-premium {
+    margin-top: 1.5rem;
+}
+
+.condition-tags-title-premium {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.condition-tags-container-premium {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.condition-tag-premium {
+    padding: 0.75rem 1.25rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
+}
+
+.condition-tag-premium.local {
+    background: var(--local-gradient);
+    color: white;
+}
+
+.condition-tag-premium.importation {
+    background: var(--import-gradient);
+    color: white;
+}
+
+.condition-tag-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(23, 162, 184, 0.25);
+}
+
+/* Badge compteur premium */
+.badge-count-premium {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Informations temporelles premium */
+.achat-info-temporelle-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 2px solid var(--color-border);
+}
+
+.achat-info-temp-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.achat-info-temp-item-premium:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.achat-info-temp-icon-premium {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #17a2b8;
+    background: rgba(23, 162, 184, 0.1);
+}
+
+.achat-info-temp-details-premium {
+    flex: 1;
+}
+
+.achat-info-temp-label-premium {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.achat-info-temp-value-premium {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+/* État vide premium */
+.achat-empty-state-premium {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 2px dashed rgba(13, 128, 190, 0.3);
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.achat-empty-state-icon-premium {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    background: var(--achat-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.achat-empty-state-premium h4 {
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-dark);
+    font-size: 1.75rem;
+}
+
+.achat-empty-state-premium p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Boutons premium */
+.btn-action-premium {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-achat-premium {
+    background: var(--achat-gradient);
+    color: white;
+}
+
+.btn-achat-outline-premium {
+    color: #17a2b8;
+    border: 2px solid #17a2b8;
+    background: transparent;
+}
+
+.btn-achat-outline-premium:hover {
+    background: var(--achat-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+.btn-warning-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-danger-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-back-premium {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+/* Formulaires premium */
+.enhanced-form-premium .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.1);
+}
+
+/* Form controls premium */
+.enhanced-form-premium .form-control,
+.enhanced-form-premium .form-select,
+.enhanced-form-premium textarea {
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+    min-height: 56px;
+}
+
+.enhanced-form-premium .form-control:focus,
+.enhanced-form-premium .form-select:focus,
+.enhanced-form-premium textarea:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.15);
+    background: var(--color-background);
+}
+
+.enhanced-form-premium textarea {
+    min-height: 180px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* Styles Premium pour Select2 */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border) !important;
+    border-radius: 12px !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 1rem !important;
+    min-height: 56px !important;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)) !important;
+    color: var(--color-text) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection:hover {
+    border-color: rgba(37, 173, 214, 0.3) !important;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.03)) !important;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: #17a2b8 !important;
+    box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.15) !important;
+    background: var(--color-background) !important;
+}
+
+/* Sélection multiple */
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    min-height: 56px !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background: var(--achat-gradient) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 20px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+    box-shadow: 0 2px 6px rgba(23, 162, 184, 0.2) !important;
+}
+
+/* Dropdown Premium */
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border) !important;
+    border-radius: 12px !important;
+    margin-top: 4px !important;
+    background: var(--color-background) !important;
+    box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15) !important;
+    overflow: hidden !important;
+    z-index: 1060 !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option {
+    padding: 0.875rem 1.25rem !important;
+    color: var(--color-text) !important;
+    font-size: 1rem !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    position: relative;
+}
+
+.select2-container--bootstrap-5 .select2-results__option:hover {
+    background: linear-gradient(90deg, rgba(23, 162, 184, 0.1), transparent) !important;
+    color: var(--color-primary-dark) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected {
+    background: var(--achat-gradient) !important;
+    color: white !important;
+}
+
+/* Modales premium */
+.modal-header-premium {
+    background: var(--achat-gradient);
+    color: white;
+    padding: 2rem !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2.5rem !important;
+    background: var(--color-background);
+}
+
+.modal-footer-premium {
+    padding: 2rem !important;
+    background: linear-gradient(145deg, rgba(23, 162, 184, 0.02), rgba(19, 132, 150, 0.01));
+    border-top: 2px solid var(--color-border) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 70px rgba(23, 162, 184, 0.3) !important;
+    overflow: hidden;
+}
+
+/* Modal danger */
+.modal-danger-header-premium {
+    background: var(--danger-gradient);
+}
+
+.modal-danger-content-premium {
+    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Style pour les préformattés vides */
+.empty-content-message {
+    color: var(--color-text-muted);
+    font-style: italic;
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    border-radius: 12px;
+    border: 2px dashed var(--color-border);
+}
+
+/* Animation d'édition en temps réel */
+.editing-indicator-premium {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--achat-gradient);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.editing-indicator-premium.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Styles pour le titre des sections modales */
+.modal-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Scrollbar personnalisée */
+.achat-content-premium::-webkit-scrollbar,
+pre::-webkit-scrollbar {
+    width: 6px;
+}
+
+.achat-content-premium::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track {
+    background: rgba(10, 149, 202, 0.05);
+    border-radius: 3px;
+}
+
+.achat-content-premium::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb {
+    background: rgba(10, 149, 202, 0.2);
+    border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .page-title-premium {
+        font-size: 2rem;
+    }
+    
+    .acheteur-title-premium,
+    .achat-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .achat-grid-premium {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .achat-header-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .achat-actions-premium {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .achat-info-temporelle-premium {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .achat-unique-card-premium,
+    .achat-card-premium {
+        padding: 1.5rem;
+    }
+    
+    .modal-body-premium,
+    .modal-footer-premium {
+        padding: 1.5rem !important;
+    }
+    
+    .condition-tags-container-premium {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-title-premium,
+    .achat-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .achat-label-premium {
+        font-size: 1.1rem;
+    }
+    
+    .btn-action-premium {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .condition-tag-premium {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .achat-actions-premium {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-cart-check fa-fw me-1"></i>Gestion des Conditions d'Achat de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header Premium Élevé -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-shopping-cart"></i>{% trans "Conditions d'Achat" %}
+                </h1>
+                <p class="page-subtitle-premium">
+                    Fiche unique des conditions d'achat locales et d'importation de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-back-premium btn-action-premium">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countConditionAchat">Module de Gestion des Conditions d'Achat</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des conditions d'achat propres à l'acheteur notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    <p class="text-white-75 mb-0">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC Unique" %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations acheteur -->
+        <div class="acheteur-info-grid">
+            <div class="row g-4">
+                <!-- Activité Principale -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Activité Principale" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Pays -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Pays d'Opération" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Statut" %}</span>
+                        <div class="acheteur-info-value badge-value">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Importation : </strong><span style="color: #FF5733;">IMP</span><br>
-                        <strong>Les Clients : </strong><span style="color: #33FF57;">CLI</span><br>
-                        <strong>Fournisseur : </strong><span style="color: #3357FF;">FRN</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
-            </div>
-        </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Conditions d'Achat START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Conditions d'Achat</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+    <!-- Section Conditions d'Achat -->
+    <div class="row">
+        <div class="col-12">
+            {% if has_condition_achat %}
+                <!-- Affichage des conditions existantes -->
+                <div class="achat-unique-card-premium">
+                    <div class="achat-header-premium">
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addConditionAchatModal">
-                                Ajouter une Condition d'Achat
+                            <div class="achat-status-badge-premium mt-2">
+                                <i class="fas fa-check-circle"></i>{% trans "Conditions enregistrées" %}
+                            </div>
+                        </div>
+                        <div class="achat-actions-premium">
+                            <button class="btn btn-warning-premium btn-action-premium edit-achat-btn" data-id="{{ condition_achat.id }}">
+                                <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
+                            </button>
+                            <button class="btn btn-danger-premium btn-action-premium delete-achat-btn" data-id="{{ condition_achat.id }}">
+                                <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
                             </button>
                         </div>
                     </div>
-                </div>
-                <!-- Search and select END -->
 
-                <!-- Conditions d'Achat list START -->
-                <div class="table-responsive border-0" id="conditionAchatList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Local</th>
-                                <th scope="col" class="border-0">Importation</th>
-                                <th scope="col" class="border-0">Les Clients</th>
-                                <th scope="col" class="border-0">Fournisseur</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
+                    <!-- Grille des informations premium -->
+                    <div class="achat-grid-premium">
+                        <!-- Conditions Locales -->
+                        <div class="achat-card-premium local">
+                            <div class="achat-section-premium">
+                                <div class="achat-label-premium">
+                                    <i class="fas fa-home local"></i>
+                                    Conditions Locales
+                                    <span class="badge-count-premium">{{ condition_achat.local.count }}</span>
+                                </div>
+                                <div class="condition-tags-section-premium">
+                                    <div class="condition-tags-container-premium">
+                                        {% for item in condition_achat.local.all %}
+                                            <span class="condition-tag-premium local">
+                                                <i class="fas fa-home"></i>
+                                                {{ item.nom }}
+                                            </span>
+                                        {% empty %}
+                                            <div class="empty-content-message w-100">
+                                                <i class="fas fa-home fa-2x mb-3"></i>
+                                                <p class="mb-0">{% trans "Aucune condition locale spécifiée" %}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="conditionAchatTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
-                </div>
-                <!-- Conditions d'Achat list END -->
-            </div>
-            <!-- Card body END -->
+                        <!-- Conditions d'Importation -->
+                        <div class="achat-card-premium importation">
+                            <div class="achat-section-premium">
+                                <div class="achat-label-premium">
+                                    <i class="fas fa-globe importation"></i>
+                                    Conditions d'Importation
+                                    <span class="badge-count-premium">{{ condition_achat.importation.count }}</span>
+                                </div>
+                                <div class="condition-tags-section-premium">
+                                    <div class="condition-tags-container-premium">
+                                        {% for item in condition_achat.importation.all %}
+                                            <span class="condition-tag-premium importation">
+                                                <i class="fas fa-globe"></i>
+                                                {{ item.nom }}
+                                            </span>
+                                        {% empty %}
+                                            <div class="empty-content-message w-100">
+                                                <i class="fas fa-globe fa-2x mb-3"></i>
+                                                <p class="mb-0">{% trans "Aucune condition d'importation spécifiée" %}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                        <!-- Les Clients -->
+                        <div class="achat-card-premium clients">
+                            <div class="achat-section-premium">
+                                <div class="achat-label-premium">
+                                    <i class="fas fa-users clients"></i>
+                                    Les Clients
+                                </div>
+                                <div class="achat-content-premium">
+                                    {% if condition_achat.les_clients %}
+                                        <pre>{{ condition_achat.les_clients }}</pre>
+                                    {% else %}
+                                        <div class="empty-content-message">
+                                            <i class="fas fa-users fa-2x mb-3"></i>
+                                            <p class="mb-0">{% trans "Aucune information sur les clients" %}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fournisseur -->
+                        <div class="achat-card-premium fournisseur">
+                            <div class="achat-section-premium">
+                                <div class="achat-label-premium">
+                                    <i class="fas fa-truck fournisseur"></i>
+                                    Fournisseur
+                                </div>
+                                <div class="achat-content-premium">
+                                    {% if condition_achat.fournisseur %}
+                                        <pre>{{ condition_achat.fournisseur }}</pre>
+                                    {% else %}
+                                        <div class="empty-content-message">
+                                            <i class="fas fa-truck fa-2x mb-3"></i>
+                                            <p class="mb-0">{% trans "Aucune information sur les fournisseurs" %}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations temporelles premium -->
+                    <div class="achat-info-temporelle-premium">
+                        <div class="achat-info-temp-item-premium">
+                            <div class="achat-info-temp-icon-premium">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="achat-info-temp-details-premium">
+                                <div class="achat-info-temp-label-premium">{% trans "Créé le" %}</div>
+                                <div class="achat-info-temp-value-premium">
+                                    {{ condition_achat.created_at|date:"d/m/Y" }}
+                                    <small class="d-block text-muted fs-xs">à {{ condition_achat.created_at|date:"H:i" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="achat-info-temp-item-premium">
+                            <div class="achat-info-temp-icon-premium">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="achat-info-temp-details-premium">
+                                <div class="achat-info-temp-label-premium">{% trans "Dernière mise à jour" %}</div>
+                                <div class="achat-info-temp-value-premium">
+                                    {{ condition_achat.updated_at|date:"d/m/Y H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="achat-info-temp-item-premium">
+                            <div class="achat-info-temp-icon-premium">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="achat-info-temp-details-premium">
+                                <div class="achat-info-temp-label-premium">{% trans "Conditions Locales" %}</div>
+                                <div class="achat-info-temp-value-premium">{{ condition_achat.local.count }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="achat-info-temp-item-premium">
+                            <div class="achat-info-temp-icon-premium">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div class="achat-info-temp-details-premium">
+                                <div class="achat-info-temp-label-premium">{% trans "Conditions Importation" %}</div>
+                                <div class="achat-info-temp-value-premium">{{ condition_achat.importation.count }}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <!-- Card footer END -->
+            {% else %}
+                <!-- État vide premium -->
+                <div class="achat-empty-state-premium">
+                    <i class="fas fa-shopping-cart achat-empty-state-icon-premium"></i>
+                    <h4 class="fw-bold mb-3">{% trans "Aucune condition d'achat enregistrée" %}</h4>
+                    <p class="text-muted mb-4">
+                        Cet acheteur ne possède pas encore de fiche de conditions d'achat.<br>
+                        Créez une fiche pour gérer les conditions locales et d'importation.
+                    </p>
+                    <button class="btn btn-achat-premium btn-action-premium" id="openCreateModalBtn">
+                        <i class="fas fa-plus-circle me-2"></i>{% trans "Créer les conditions d'achat" %}
+                    </button>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
-<!-- Conditions d'Achat END -->
 
-<!-- Add Condition d'Achat Modal START -->
-<div class="modal fade" id="addConditionAchatModal" tabindex="-1" aria-labelledby="addConditionAchatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addConditionAchatModalLabel">Ajouter une Condition d'Achat</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Indicateur d'édition en temps réel -->
+<div class="editing-indicator-premium" id="editingIndicator">
+    <div class="spinner-border spinner-border-sm" role="status"></div>
+    <span>{% trans "Mise à jour en cours..." %}</span>
+</div>
+
+<!-- Modal Création Conditions d'Achat Premium -->
+<div class="modal fade" id="addAchatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouvelles Conditions d'Achat" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addConditionAchatForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="local" class="form-label">Local</label>
-                        <input type="text" class="form-control" id="local" name="local">
+            <form id="addAchatForm" class="enhanced-form-premium">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section conditions locales -->
+                    <h5 class="modal-section-title">
+                        <i class="fas fa-home me-2 text-success"></i>{% trans "Conditions Locales" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="local" class="form-label">
+                                    <i class="fas fa-home"></i>{% trans "Sélection des conditions locales" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="local" name="local" multiple="multiple">
+                                    {% for condition in conditions_liste %}
+                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Sélectionnez les conditions d'achat locales applicables
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="importation" class="form-label">Importation</label>
-                        <textarea class="form-control" id="importation" name="importation" rows="3"></textarea>
+
+                    <!-- Section conditions d'importation -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-globe me-2 text-primary"></i>{% trans "Conditions d'Importation" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="importation" class="form-label">
+                                    <i class="fas fa-globe"></i>{% trans "Sélection des conditions d'importation" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="importation" name="importation" multiple="multiple">
+                                    {% for condition in conditions_liste %}
+                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Sélectionnez les conditions d'achat d'importation applicables
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="les_clients" class="form-label">Les Clients</label>
-                        <textarea class="form-control" id="les_clients" name="les_clients" rows="3"></textarea>
+
+                    <!-- Section les clients -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-users me-2 text-warning"></i>{% trans "Les Clients" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="les_clients" class="form-label">
+                                    <i class="fas fa-users"></i>{% trans "Informations sur les clients" %}
+                                </label>
+                                <textarea class="form-control" id="les_clients" 
+                                          name="les_clients" 
+                                          rows="5"
+                                          placeholder="Décrivez les clients de l'acheteur, leurs caractéristiques, les relations commerciales..."></textarea>
+                                <small class="form-text text-muted">
+                                    Description de la clientèle et des relations clients
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="fournisseur" class="form-label">Fournisseur</label>
-                        <textarea class="form-control" id="fournisseur" name="fournisseur" rows="3"></textarea>
+
+                    <!-- Section fournisseur -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-truck me-2 text-danger"></i>{% trans "Fournisseur" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="fournisseur" class="form-label">
+                                    <i class="fas fa-truck"></i>{% trans "Informations sur les fournisseurs" %}
+                                </label>
+                                <textarea class="form-control" id="fournisseur" 
+                                          name="fournisseur" 
+                                          rows="5"
+                                          placeholder="Décrivez les fournisseurs de l'acheteur, les conditions d'approvisionnement, les relations fournisseurs..."></textarea>
+                                <small class="form-text text-muted">
+                                    Description des fournisseurs et des relations d'approvisionnement
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-achat-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-achat-premium btn-action-premium" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-2"></i>{% trans "Créer les conditions" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Conditions d'Achat Premium -->
+<div class="modal fade" id="editAchatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier les Conditions d'Achat" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAchatForm" class="enhanced-form-premium">
+                <input type="hidden" id="editAchatId" name="id">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section conditions locales -->
+                    <h5 class="modal-section-title">
+                        <i class="fas fa-home me-2 text-success"></i>{% trans "Conditions Locales" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editLocal" class="form-label">
+                                    <i class="fas fa-home"></i>{% trans "Sélection des conditions locales" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="editLocal" name="local" multiple="multiple">
+                                    {% for condition in conditions_liste %}
+                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section conditions d'importation -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-globe me-2 text-primary"></i>{% trans "Conditions d'Importation" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editImportation" class="form-label">
+                                    <i class="fas fa-globe"></i>{% trans "Sélection des conditions d'importation" %}
+                                </label>
+                                <select class="form-select select2-with-search" id="editImportation" name="importation" multiple="multiple">
+                                    {% for condition in conditions_liste %}
+                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section les clients -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-users me-2 text-warning"></i>{% trans "Les Clients" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editLesClients" class="form-label">
+                                    <i class="fas fa-users"></i>{% trans "Informations sur les clients" %}
+                                </label>
+                                <textarea class="form-control" id="editLesClients" 
+                                          name="les_clients" 
+                                          rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section fournisseur -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-truck me-2 text-danger"></i>{% trans "Fournisseur" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editFournisseur" class="form-label">
+                                    <i class="fas fa-truck"></i>{% trans "Informations sur les fournisseurs" %}
+                                </label>
+                                <textarea class="form-control" id="editFournisseur" 
+                                          name="fournisseur" 
+                                          rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-achat-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning-premium btn-action-premium" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold mb-3">{% trans "Supprimer les conditions d'achat" %}</h6>
+                <p class="text-dark mb-0" id="deleteConfirmationText">
+                    Cette action supprimera définitivement les conditions d'achat.<br>
+                    Cette opération est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-achat-outline-premium btn-action-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Add Condition d'Achat Modal END -->
-
-<!-- Edit Condition d'Achat Modal START -->
-<div class="modal fade" id="editConditionAchatModal" tabindex="-1" aria-labelledby="editConditionAchatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editConditionAchatModalLabel">Editer une Condition d'Achat</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editConditionAchatForm">
-                    <input type="hidden" id="editConditionAchatId" name="id">
-                    <div class="mb-3">
-                        <label for="editLocal" class="form-label">Local</label>
-                        <input type="text" class="form-control" id="editLocal" name="local">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editImportation" class="form-label">Importation</label>
-                        <textarea class="form-control" id="editImportation" name="importation" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editLesClients" class="form-label">Les Clients</label>
-                        <textarea class="form-control" id="editLesClients" name="les_clients" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editFournisseur" class="form-label">Fournisseur</label>
-                        <textarea class="form-control" id="editFournisseur" name="fournisseur" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Edit Condition d'Achat Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#importation, #editImportation, #les_clients, #editLesClients, #fournisseur, #editFournisseur',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/condition-achat/`;
+    const CONDITIONS_API_URL = '/api/conditions-achat/';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentAchatId = null;
+    let conditionsData = [];
+
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une ou plusieurs options',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
         });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
+    }
+    
+    // Charger les conditions disponibles
+    function loadConditions() {
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: CONDITIONS_API_URL,
             type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                // Vérifier la structure de la réponse
+                if (Array.isArray(response)) {
+                    conditionsData = response;
+                } else if (response.results && Array.isArray(response.results)) {
+                    conditionsData = response.results;
+                } else if (response.data && Array.isArray(response.data)) {
+                    conditionsData = response.data;
+                } else {
+                    console.error('Structure de réponse inattendue:', response);
+                    conditionsData = [];
                 }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                
+                updateSelect2Options();
             },
             error: function(xhr) {
+                console.error('Erreur lors du chargement des conditions:', xhr);
+                // Fallback aux données du template
+                useTemplateConditions();
+            }
+        });
+    }
+    
+    // Utiliser les conditions du template Django
+    function useTemplateConditions() {
+        console.log('Utilisation des conditions du template');
+        // Les options sont déjà pré-remplies dans le HTML
+        conditionsData = [];
+        
+        // Mettre à jour Select2 avec les options existantes
+        $('#local, #editLocal').each(function() {
+            if ($(this).find('option').length === 0) {
+                {% for condition in conditions_liste %}
+                $(this).append(new Option('{{ condition.nom }}', '{{ condition.id }}', false, false));
+                {% endfor %}
+            }
+        });
+        
+        $('#importation, #editImportation').each(function() {
+            if ($(this).find('option').length === 0) {
+                {% for condition in conditions_liste %}
+                $(this).append(new Option('{{ condition.nom }}', '{{ condition.id }}', false, false));
+                {% endfor %}
+            }
+        });
+        
+        $('#local, #importation, #editLocal, #editImportation').trigger('change');
+    }
+    
+    // Mettre à jour les options Select2
+    function updateSelect2Options() {
+        $('#local, #editLocal, #importation, #editImportation').empty();
+        
+        conditionsData.forEach(function(cond) {
+            if (cond && cond.id && cond.nom) {
+                $('#local').append(new Option(cond.nom, cond.id, false, false));
+                $('#editLocal').append(new Option(cond.nom, cond.id, false, false));
+                $('#importation').append(new Option(cond.nom, cond.id, false, false));
+                $('#editImportation').append(new Option(cond.nom, cond.id, false, false));
+            }
+        });
+        
+        $('#local, #importation, #editLocal, #editImportation').trigger('change');
+    }
+    
+    // Mettre à jour l'affichage après modification
+    function updateAchatDisplay(achatData) {
+        // Mettre à jour les tags locaux
+        const localTags = achatData.local_list || [];
+        let localTagsHtml = '';
+        if (localTags.length > 0) {
+            localTags.forEach(function(item) {
+                localTagsHtml += `<span class="condition-tag-premium local"><i class="fas fa-home"></i> ${item.nom}</span>`;
+            });
+        } else {
+            localTagsHtml = `<div class="empty-content-message w-100">
+                <i class="fas fa-home fa-2x mb-3"></i>
+                <p class="mb-0">Aucune condition locale spécifiée</p>
+            </div>`;
+        }
+        
+        // Mettre à jour les tags d'importation
+        const importationTags = achatData.importation_list || [];
+        let importationTagsHtml = '';
+        if (importationTags.length > 0) {
+            importationTags.forEach(function(item) {
+                importationTagsHtml += `<span class="condition-tag-premium importation"><i class="fas fa-globe"></i> ${item.nom}</span>`;
+            });
+        } else {
+            importationTagsHtml = `<div class="empty-content-message w-100">
+                <i class="fas fa-globe fa-2x mb-3"></i>
+                <p class="mb-0">Aucune condition d'importation spécifiée</p>
+            </div>`;
+        }
+        
+        // Mettre à jour le contenu clients
+        const clientsHtml = achatData.les_clients ? 
+            `<pre>${achatData.les_clients}</pre>` : 
+            `<div class="empty-content-message">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <p class="mb-0">Aucune information sur les clients</p>
+            </div>`;
+        
+        // Mettre à jour le contenu fournisseur
+        const fournisseurHtml = achatData.fournisseur ? 
+            `<pre>${achatData.fournisseur}</pre>` : 
+            `<div class="empty-content-message">
+                <i class="fas fa-truck fa-2x mb-3"></i>
+                <p class="mb-0">Aucune information sur les fournisseurs</p>
+            </div>`;
+        
+        // Mettre à jour les compteurs
+        const localCount = localTags.length;
+        const importationCount = importationTags.length;
+        
+        // Mettre à jour le DOM
+        $('.achat-card-premium.local .condition-tags-container-premium').html(localTagsHtml);
+        $('.achat-card-premium.importation .condition-tags-container-premium').html(importationTagsHtml);
+        $('.achat-card-premium.clients .achat-content-premium').html(clientsHtml);
+        $('.achat-card-premium.fournisseur .achat-content-premium').html(fournisseurHtml);
+        
+        // Mettre à jour les badges de comptage
+        $('.achat-card-premium.local .badge-count-premium').text(localCount);
+        $('.achat-card-premium.importation .badge-count-premium').text(importationCount);
+        
+        // Mettre à jour les informations temporelles
+        $('.achat-info-temporelle-premium .achat-info-temp-item-premium:nth-child(3) .achat-info-temp-value-premium').text(localCount);
+        $('.achat-info-temporelle-premium .achat-info-temp-item-premium:nth-child(4) .achat-info-temp-value-premium').text(importationCount);
+        
+        if (achatData.updated_at_formatted) {
+            $('.achat-info-temporelle-premium .achat-info-temp-item-premium:nth-child(2) .achat-info-temp-value-premium').html(achatData.updated_at_formatted);
+        }
+    }
+    
+    // Initialisation
+    initSelect2();
+    loadConditions();
+    
+    // Gérer la fermeture des modals
+    $('.modal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+        $('.select2-with-search').val(null).trigger('change');
+    });
+    
+    // Bouton pour créer de nouvelles conditions
+    $(document).on('click', '#openCreateModalBtn', function() {
+        $('#addAchatModal').modal('show');
+    });
+    
+    // Bouton pour modifier les conditions
+    $(document).on('click', '.edit-achat-btn', function() {
+        currentAchatId = $(this).data('id');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response.exists === false) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Ces conditions d\'achat n\'existent plus'
+                    });
+                    return;
+                }
+                
+                $('#editAchatId').val(response.id);
+                $('#editLesClients').val(response.les_clients || '');
+                $('#editFournisseur').val(response.fournisseur || '');
+                
+                // Sélectionner les conditions
+                const localIds = response.local_list ? response.local_list.map(item => item.id) : [];
+                const importationIds = response.importation_list ? response.importation_list.map(item => item.id) : [];
+                
+                $('#editLocal').val(localIds).trigger('change');
+                $('#editImportation').val(importationIds).trigger('change');
+                
+                $('#editAchatModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails des conditions d\'achat.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Bouton pour supprimer les conditions
+    $(document).on('click', '.delete-achat-btn', function() {
+        currentAchatId = $(this).data('id');
+        
+        $('#deleteConfirmationText').html(`
+            Êtes-vous sûr de vouloir supprimer les conditions d'achat ?<br><br>
+            Cette action est irréversible.
+        `);
+        
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Formulaire d'ajout
+    $('#addAchatForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            if (key === 'local' || key === 'importation') {
+                if (!data[key]) data[key] = [];
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        });
+        
+        submitAchatForm(data, '#submitAddBtn', 'addAchatModal', 'POST');
+    });
+    
+    // Formulaire de modification
+    $('#editAchatForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            if (key === 'local' || key === 'importation') {
+                if (!data[key]) data[key] = [];
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        });
+        
+        data['id'] = $('#editAchatId').val();
+        submitAchatForm(data, '#submitEditBtn', 'editAchatModal', 'PUT');
+    });
+    
+    // Soumission du formulaire
+    function submitAchatForm(data, submitBtn, modalId, method) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        showEditingIndicator();
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                const modal = bootstrap.Modal.getInstance($('#' + modalId)[0]);
+                if (modal) modal.hide();
+                
+                setTimeout(() => hideEditingIndicator(), 1000);
+                
+                if (method === 'POST') {
+                    // Création : recharger la page
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: response.message || 'Conditions d\'achat créées avec succès',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    // Modification : mettre à jour l'affichage
+                    updateAchatDisplay(response.data || response);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: response.message || 'Conditions d\'achat mises à jour avec succès',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                hideEditingIndicator();
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => submitAchatForm(data, submitBtn, modalId, method));
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression des conditions
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentAchatId) return;
+        
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        showEditingIndicator();
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                
+                setTimeout(() => hideEditingIndicator(), 1000);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Conditions d\'achat supprimées avec succès',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                hideEditingIndicator();
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#confirmDeleteBtn').click());
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer les conditions d\'achat'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Afficher l'indicateur d'édition
+    function showEditingIndicator() {
+        $('#editingIndicator').addClass('show');
+    }
+    
+    // Cacher l'indicateur d'édition
+    function hideEditingIndicator() {
+        $('#editingIndicator').removeClass('show');
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback) callback();
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
-    });
-
+    }
+});
 </script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load condition achat data
-        function loadConditionAchat(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-conditions-achat/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update condition achat table body
-                    $('#conditionAchatTableBody').html('');
-                    response.results.forEach(function(conditionAchat, index) {
-                        $('#conditionAchatTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + conditionAchat.local + '</td>' +
-                            '<td>' + conditionAchat.importation + '</td>' +
-                            '<td>' + conditionAchat.les_clients + '</td>' +
-                            '<td>' + conditionAchat.fournisseur + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + conditionAchat.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + conditionAchat.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadConditionAchat();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadConditionAchat(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadConditionAchat(page, search);
-        });
-
-        // Add Condition Achat form submission
-        $('#addConditionAchatForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-condition-achat/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Condition d\'achat ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addConditionAchatModal').modal('hide');
-                        loadConditionAchat();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la condition d\'achat.',
-                    });
-                }
-            });
-        });
-
-        // Edit Condition Achat button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-condition-achat/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editConditionAchatId').val(response.id);
-                    $('#editLocal').val(response.local);
-                    tinymce.get('editImportation').setContent(response.importation);
-                    tinymce.get('editLesClients').setContent(response.les_clients);
-                    tinymce.get('editFournisseur').setContent(response.fournisseur);
-                    $('#editConditionAchatModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la condition d\'achat.',
-                    });
-                }
-            });
-        });
-
-        // Edit Condition Achat form submission
-        $('#editConditionAchatForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editConditionAchatId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-condition-achat/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Condition d\'achat mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editConditionAchatModal').modal('hide');
-                        loadConditionAchat();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la condition d\'achat.',
-                    });
-                }
-            });
-        });
-
-        // Delete Condition Achat button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-conditions-achat/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La condition d\'achat a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadConditionAchat();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la condition d\'achat.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
-    });
-</script>
-
 {% endblock %}

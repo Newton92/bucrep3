@@ -1,0 +1,2603 @@
+{% extends 'main/root/base.html' %}
+
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, var(--color-info) 0%, #25add6 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de résumé */
+.summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.summary-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tableau moderne */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.03);
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.95rem;
+    min-width: 120px;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-info-enhanced {
+    background: var(--info-gradient);
+    color: white;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 1.5rem;
+    background: var(--color-background);
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+/* Section de légende */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    min-width: 60px;
+    font-size: 0.85rem;
+}
+
+.legend-name {
+    font-size: 0.85rem;
+    color: var(--color-text);
+    flex: 1;
+}
+
+/* Badges pour les catégories */
+.category-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.badge-incorporel {
+    background: rgba(37, 173, 214, 0.1);
+    color: #25add6;
+    border: 1px solid rgba(37, 173, 214, 0.3);
+}
+
+.badge-corporel {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.badge-financier {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.badge-courant {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Pagination améliorée */
+.pagination-enhanced .page-link {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-enhanced .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.delay-1 {
+    animation-delay: 0.1s;
+}
+
+.delay-2 {
+    animation-delay: 0.2s;
+}
+
+.delay-3 {
+    animation-delay: 0.3s;
+}
+
+/* Alertes personnalisées */
+.custom-alert {
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.custom-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+.custom-alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+/* Fix pour les tables horizontales */
+.table-responsive-horizontal {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1px;
+}
+
+/* Catégories de colonnes */
+.column-group-header {
+    background: var(--color-primary-light);
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
+    vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-info-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem 0.75rem;
+    }
+    
+    .acheteur-info-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .column-group-header {
+        font-size: 0.8rem;
+        padding: 0.25rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .value-cell {
+        min-width: 100px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Style pour les selects améliorés */
+.select2-enhanced {
+    width: 100%;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+    color: var(--color-text);
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background-color: white;
+    z-index: 1060 !important;
+}
+
+/* Style pour les totaux */
+.total-row {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    font-weight: 700;
+}
+
+.total-row td {
+    border-top: 2px solid var(--color-primary);
+}
+
+/* Bannière IFRS */
+.ifrs-banner {
+    background: linear-gradient(135deg, #0A95CA, #0d80be);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ifrs-banner-icon {
+    font-size: 2rem;
+}
+
+/* Indicateurs de performance */
+.performance-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.indicator-up {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--color-success);
+}
+
+.indicator-down {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--color-danger);
+}
+
+.indicator-neutral {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title text-white">
+                    <i class="fas fa-balance-scale me-3"></i>{% trans "Bilan IFRS COBAC - Gestion des Actifs" %}
+                </h1>
+                <p class="dashboard-subtitle">
+                    Module de gestion des actifs selon les normes IFRS COBAC
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" 
+                   class="btn-enhanced btn-danger-enhanced">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-success">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-muted">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span class="text-warning">{{ acheteur.code }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Date de création" %}</small>
+                            <div class="fw-bold">
+                                {% if acheteur.date_creation %}
+                                    {{ acheteur.date_creation|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifié
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Activité principale" %}</small>
+                            <div class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Statut" %}</small>
+                            <div class="fw-bold text-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bannière IFRS -->
+    <div class="ifrs-banner animate-in delay-2">
+        <div class="ifrs-banner-icon">
+            <i class="fas fa-globe-europe"></i>
+        </div>
+        <div>
+            <h5 class="mb-1 fw-bold text-white">{% trans "Normes IFRS COBAC" %}</h5>
+            <p class="mb-0">Gestion des états financiers selon les normes internationales IFRS adaptées par la COBAC</p>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé par catégorie -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #25add6 0%, #0A95CA 100%);">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Actif Non Courant" %}</h5>
+                <div class="summary-value" id="totalNonCourant">0</div>
+                <p class="text-muted mb-0">{% trans "Immobilisations incorporelles, corporelles et financières" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Actif Courant" %}</h5>
+                <div class="summary-value" id="totalCourant">0</div>
+                <p class="text-muted mb-0">{% trans "Stocks, créances et trésorerie" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-3">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Total Actif" %}</h5>
+                <div class="summary-value" id="totalActif">0</div>
+                <p class="text-muted mb-0">{% trans "Somme des actifs non courants et courants" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-3">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Périodes" %}</h5>
+                <div class="summary-value" id="countPeriodes">0</div>
+                <p class="text-muted mb-0">{% trans "Bilans enregistrés" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Information & Légende -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-key text-primary me-2"></i>{% trans "Légende des Comptes IFRS" %}
+                        </h6>
+                        <div class="legend-grid">
+                            <!-- Actif Non Courant -->
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #25add6;"></div>
+                                <span class="legend-code">{% trans "Goodwill" %}</span>
+                                <span class="legend-name">{% trans "Goodwill (écart d'acquisition)" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #25add6;"></div>
+                                <span class="legend-code">{% trans "Marques" %}</span>
+                                <span class="legend-name">{% trans "Marques et droits d'auteur" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #25add6;"></div>
+                                <span class="legend-code">{% trans "Brevets" %}</span>
+                                <span class="legend-name">{% trans "Brevets et licences" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #25add6;"></div>
+                                <span class="legend-code">AII</span>
+                                <span class="legend-name">{% trans "Autres immobilisations incorporelles" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #28a745;"></div>
+                                <span class="legend-code">{% trans "Terrains" %}</span>
+                                <span class="legend-name">{% trans "Terrains" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #28a745;"></div>
+                                <span class="legend-code">{% trans "Bâtiments" %}</span>
+                                <span class="legend-name">{% trans "Bâtiments" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #28a745;"></div>
+                                <span class="legend-code">{% trans "Matériel" %}</span>
+                                <span class="legend-name">{% trans "Matériel et équipement" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">{% trans "Participations" %}</span>
+                                <span class="legend-name">{% trans "Participations dans des sociétés" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">{% trans "Prêts LT" %}</span>
+                                <span class="legend-name">{% trans "Prêts à long terme" %}</span>
+                            </div>
+                            
+                            <!-- Actif Courant -->
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">MP</span>
+                                <span class="legend-name">{% trans "Matières premières" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">PF</span>
+                                <span class="legend-name">{% trans "Produits finis" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">{% trans "Créances CT" %}</span>
+                                <span class="legend-name">{% trans "Créances à court terme" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">{% trans "Avances" %}</span>
+                                <span class="legend-name">{% trans "Avances et acomptes" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">{% trans "Créances D" %}</span>
+                                <span class="legend-name">{% trans "Créances diverses" %}</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">{% trans "Disponibilités" %}</span>
+                                <span class="legend-name">{% trans "Disponibilités bancaires" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="custom-alert custom-alert-info">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle fa-lg mt-1 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-2">{% trans "Informations IFRS COBAC" %}</h6>
+                                <p class="mb-0">
+                                    Ce module permet la gestion des états financiers selon les normes IFRS adaptées 
+                                    par la COBAC (Commission Bancaire de l'Afrique Centrale). Les actifs sont classés 
+                                    en non courants et courants selon leur liquidité.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Type de bilan -->
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>{% trans "Types de Bilan" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-primary fs-4" id="countAnnuel">0</div>
+                                    <small class="text-muted">{% trans "Bilans annuels" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-info fs-4" id="countSemestriel">0</div>
+                                    <small class="text-muted">{% trans "Bilans semestriels" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Répartition -->
+                    <div class="mt-4">
+                        <div class="card border-primary bg-primary bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold mb-2">{% trans "Répartition des Actifs" %}</h6>
+                                <div class="d-flex justify-content-around">
+                                    <div>
+                                        <div class="fw-bold text-primary" id="pourcentageNonCourant">0%</div>
+                                        <small class="text-muted">{% trans "Non Courant" %}</small>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-success" id="pourcentageCourant">0%</div>
+                                        <small class="text-muted">{% trans "Courant" %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Actifs IFRS -->
+    <div class="card border-0 shadow-sm mb-4 animate-in delay-2">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fas fa-table me-2"></i>{% trans "Liste des Actifs IFRS" %}
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="search" class="form-control border-start-0" id="searchInput" 
+                                       placeholder="Rechercher par année, semestre...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
+                                    data-bs-toggle="modal" data-bs-target="#addActifModal">
+                                <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter Actif" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive-horizontal">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">#</th>
+                            <th rowspan="2">{% trans "Période" %}</th>
+                            <th rowspan="2">{% trans "Type" %}</th>
+                            <th colspan="4" class="column-group-header">
+                                <span class="badge badge-incorporel">{% trans "ACTIF NON COURANT" %}</span>
+                            </th>
+                            <th colspan="8" class="column-group-header">
+                                <span class="badge badge-courant">{% trans "ACTIF COURANT" %}</span>
+                            </th>
+                            <th rowspan="2" class="text-end">{% trans "Total Actif" %}</th>
+                            <th rowspan="2" class="text-center">{% trans "Actions" %}</th>
+                        </tr>
+                        <tr>
+                            <!-- Actif Non Courant -->
+                            <th class="small">{% trans "Goodwill" %}</th>
+                            <th class="small">{% trans "Marques" %}</th>
+                            <th class="small">{% trans "Brevets" %}</th>
+                            <th class="small" title="Autres immobilisations incorporelles">{% trans "Autres Inc." %}</th>
+                            <th class="small">{% trans "Terrains" %}</th>
+                            <th class="small">{% trans "Bâtiments" %}</th>
+                            <th class="small">{% trans "Matériel" %}</th>
+                            <th class="small">{% trans "Participations" %}</th>
+                            <th class="small">{% trans "Prêts LT" %}</th>
+                            
+                            <!-- Actif Courant -->
+                            <th class="small">Matières 1ères</th>
+                            <th class="small">{% trans "Produits finis" %}</th>
+                            <th class="small">{% trans "Créances CT" %}</th>
+                            <th class="small">{% trans "Avances" %}</th>
+                            <th class="small">{% trans "Créances D" %}</th>
+                            <th class="small">{% trans "Disponibilités" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actifTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                    <tfoot id="actifTableFooter" style="display: none;">
+                        <tr class="total-row">
+                            <td colspan="3" class="text-end fw-bold">{% trans "TOTAUX" %}</td>
+                            <!-- Non Courant -->
+                            <td class="text-end fw-bold" id="footerGoodwill">0</td>
+                            <td class="text-end fw-bold" id="footerMarques">0</td>
+                            <td class="text-end fw-bold" id="footerBrevets">0</td>
+                            <td class="text-end fw-bold" id="footerAII">0</td>
+                            <td class="text-end fw-bold" id="footerTerrains">0</td>
+                            <td class="text-end fw-bold" id="footerBatiments">0</td>
+                            <td class="text-end fw-bold" id="footerMateriel">0</td>
+                            <td class="text-end fw-bold" id="footerParticipations">0</td>
+                            <td class="text-end fw-bold" id="footerPrets">0</td>
+                            
+                            <!-- Courant -->
+                            <td class="text-end fw-bold" id="footerMatieres">0</td>
+                            <td class="text-end fw-bold" id="footerProduits">0</td>
+                            <td class="text-end fw-bold" id="footerCreancesCT">0</td>
+                            <td class="text-end fw-bold" id="footerAvances">0</td>
+                            <td class="text-end fw-bold" id="footerCreancesD">0</td>
+                            <td class="text-end fw-bold" id="footerDisponibilites">0</td>
+                            
+                            <!-- Total -->
+                            <td class="text-end fw-bold text-primary" id="footerTotal">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Aucun résultat -->
+            <div id="noResults" class="text-center py-5" style="display: none;">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">{% trans "Aucun actif IFRS trouvé" %}</h5>
+                <p class="text-muted mb-0">Cliquez sur "Ajouter Actif" pour commencer à enregistrer</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted small" id="paginationInfo">
+                        Chargement des données...
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex justify-content-md-end">
+                        <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Actif -->
+<div class="modal fade enhanced-modal" id="addActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouvel Actif IFRS" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addActifForm" class="enhanced-form">
+                <input type="hidden" name="acheteur" value="{{ acheteur.id }}" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez tous les champs ci-dessous pour ajouter un nouvel actif selon les normes IFRS COBAC.
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Type de bilan -->
+                        <div class="col-md-6 mb-3">
+                            <label for="type_bilan" class="form-label">
+                                <i class="fas fa-calendar"></i>Type de bilan *
+                            </label>
+                            <select class="form-select" id="type_bilan" name="type_bilan" required>
+                                <option value="">{% trans "Sélectionnez un type..." %}</option>
+                                <option value="annuel">{% trans "Bilan annuel" %}</option>
+                                <option value="semestriel">{% trans "Bilan semestriel" %}</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Année -->
+                        <div class="col-md-6 mb-3">
+                            <label for="annee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
+                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Semestre (conditionnel) -->
+                        <div class="col-md-6 mb-3" id="semestreField" style="display: none;">
+                            <label for="semestre" class="form-label">
+                                <i class="fas fa-calendar-week"></i>Semestre *
+                            </label>
+                            <select class="form-select" id="semestre" name="semestre">
+                                <option value="">{% trans "Sélectionnez un semestre..." %}</option>
+                                <option value="1">1er semestre (Janvier - Juin)</option>
+                                <option value="2">2e semestre (Juillet - Décembre)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-building text-primary me-2"></i>{% trans "Actif Non Courant" %}
+                            </h6>
+                        </div>
+                        
+                        <!-- Immobilisations incorporelles -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-brain me-2"></i>{% trans "Immobilisations incorporelles" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="goodwill" class="form-label">
+                                Goodwill *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="goodwill" 
+                                       name="goodwill" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="marques_et_droits_auteur" class="form-label">
+                                Marques et droits d'auteur *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="marques_et_droits_auteur" 
+                                       name="marques_et_droits_auteur" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="brevets_et_licences" class="form-label">
+                                Brevets et licences *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="brevets_et_licences" 
+                                       name="brevets_et_licences" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_immobilisations_incorporelles" class="form-label">
+                                Autres immobilisations incorporelles *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_immobilisations_incorporelles" 
+                                       name="autres_immobilisations_incorporelles" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Immobilisations corporelles -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-success mb-2">
+                                <i class="fas fa-building me-2"></i>{% trans "Immobilisations corporelles" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="terrains" class="form-label">
+                                Terrains *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="terrains" 
+                                       name="terrains" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="batiments" class="form-label">
+                                Bâtiments *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="batiments" 
+                                       name="batiments" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="materiel_et_equipement" class="form-label">
+                                Matériel et équipement *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="materiel_et_equipement" 
+                                       name="materiel_et_equipement" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Immobilisations financières -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-warning mb-2">
+                                <i class="fas fa-chart-line me-2"></i>{% trans "Immobilisations financières" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="participations_dans_des_societes" class="form-label">
+                                Participations dans des sociétés *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="participations_dans_des_societes" 
+                                       name="participations_dans_des_societes" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="prets_a_long_terme" class="form-label">
+                                Prêts à long terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="prets_a_long_terme" 
+                                       name="prets_a_long_terme" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-exchange-alt text-danger me-2"></i>{% trans "Actif Courant" %}
+                            </h6>
+                        </div>
+                        
+                        <!-- Stocks -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-boxes me-2"></i>{% trans "Stocks" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="matieres_premieres" class="form-label">
+                                Matières premières *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="matieres_premieres" 
+                                       name="matieres_premieres" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="produits_finis" class="form-label">
+                                Produits finis *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="produits_finis" 
+                                       name="produits_finis" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Créances -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>{% trans "Créances" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="creances_a_court_terme" class="form-label">
+                                Créances à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="creances_a_court_terme" 
+                                       name="creances_a_court_terme" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="avances_et_acomptes" class="form-label">
+                                Avances et acomptes *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="avances_et_acomptes" 
+                                       name="avances_et_acomptes" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="creances_diverses" class="form-label">
+                                Créances diverses *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="creances_diverses" 
+                                       name="creances_diverses" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Trésorerie -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-piggy-bank me-2"></i>{% trans "Trésorerie" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="disponibilites_bancaires" class="form-label">
+                                Disponibilités bancaires *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="disponibilites_bancaires" 
+                                       name="disponibilites_bancaires" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé par Catégorie IFRS" %}
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Actif Non Courant:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryNonCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations incorporelles:</small>
+                                                <small class="fw-bold float-end" id="summaryIncorporelles">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations corporelles:</small>
+                                                <small class="fw-bold float-end" id="summaryCorporelles">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations financières:</small>
+                                                <small class="fw-bold float-end" id="summaryFinancieres">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Actif Courant:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Stocks:</small>
+                                                <small class="fw-bold float-end" id="summaryStocks">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Créances:</small>
+                                                <small class="fw-bold float-end" id="summaryCreances">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Trésorerie:</small>
+                                                <small class="fw-bold float-end" id="summaryTresorerie">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="pt-2 border-top">
+                                                <span class="text-primary fw-bold fs-5">{% trans "Total Actif IFRS:" %}</span>
+                                                <span class="fw-bold text-primary float-end fs-5" id="summaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
+                                    style="background: #ffc107; color: #000;">
+                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Actif -->
+<div class="modal fade enhanced-modal" id="editActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Actif IFRS" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editActifForm" class="enhanced-form">
+                <input type="hidden" id="editActifId" name="id">
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Modifiez les champs ci-dessous pour mettre à jour l'actif selon les normes IFRS COBAC.
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Type de bilan -->
+                        <div class="col-md-4 mb-3">
+                            <label for="editTypeBilan" class="form-label">
+                                <i class="fas fa-calendar"></i>Type de bilan *
+                            </label>
+                            <select class="form-select" id="editTypeBilan" name="type_bilan" required>
+                                <option value="annuel">{% trans "Bilan annuel" %}</option>
+                                <option value="semestriel">{% trans "Bilan semestriel" %}</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Année -->
+                        <div class="col-md-4 mb-3">
+                            <label for="editAnnee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Semestre (conditionnel) -->
+                        <div class="col-md-4 mb-3" id="editSemestreField" style="display: none;">
+                            <label for="editSemestre" class="form-label">
+                                <i class="fas fa-calendar-week"></i>Semestre *
+                            </label>
+                            <select class="form-select" id="editSemestre" name="semestre">
+                                <option value="1">1er semestre (Janvier - Juin)</option>
+                                <option value="2">2e semestre (Juillet - Décembre)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-building text-primary me-2"></i>{% trans "Actif Non Courant" %}
+                            </h6>
+                        </div>
+                        
+                        <!-- Section: Immobilisations incorporelles -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-brain me-2"></i>{% trans "Immobilisations incorporelles" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editGoodwill" class="form-label">
+                                Goodwill (écart d'acquisition) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editGoodwill" 
+                                       name="goodwill" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editMarquesEtDroitsAuteur" class="form-label">
+                                Marques et droits d'auteur *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editMarquesEtDroitsAuteur" 
+                                       name="marques_et_droits_auteur" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editBrevetsEtLicences" class="form-label">
+                                Brevets et licences *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editBrevetsEtLicences" 
+                                       name="brevets_et_licences" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editAutresImmobilisationsIncorporelles" class="form-label">
+                                Autres immobilisations incorporelles *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editAutresImmobilisationsIncorporelles" 
+                                       name="autres_immobilisations_incorporelles" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section: Immobilisations corporelles -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-success mb-2">
+                                <i class="fas fa-building me-2"></i>{% trans "Immobilisations corporelles" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editTerrains" class="form-label">
+                                Terrains *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editTerrains" 
+                                       name="terrains" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editBatiments" class="form-label">
+                                Bâtiments *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editBatiments" 
+                                       name="batiments" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editMaterielEtEquipement" class="form-label">
+                                Matériel et équipement *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editMaterielEtEquipement" 
+                                       name="materiel_et_equipement" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section: Immobilisations financières -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-warning mb-2">
+                                <i class="fas fa-chart-line me-2"></i>{% trans "Immobilisations financières" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editParticipationsDansDesSocietes" class="form-label">
+                                Participations dans des sociétés *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editParticipationsDansDesSocietes" 
+                                       name="participations_dans_des_societes" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editPretsALongTerme" class="form-label">
+                                Prêts à long terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editPretsALongTerme" 
+                                       name="prets_a_long_terme" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-exchange-alt text-danger me-2"></i>{% trans "Actif Courant" %}
+                            </h6>
+                        </div>
+                        
+                        <!-- Section: Stocks -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-boxes me-2"></i>{% trans "Stocks" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editMatieresPremieres" class="form-label">
+                                Matières premières *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editMatieresPremieres" 
+                                       name="matieres_premieres" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editProduitsFinis" class="form-label">
+                                Produits finis *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editProduitsFinis" 
+                                       name="produits_finis" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section: Créances -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>{% trans "Créances" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editCreancesACourtTerme" class="form-label">
+                                Créances à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCreancesACourtTerme" 
+                                       name="creances_a_court_terme" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editAvancesEtAcomptes" class="form-label">
+                                Avances et acomptes *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editAvancesEtAcomptes" 
+                                       name="avances_et_acomptes" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editCreancesDiverses" class="form-label">
+                                Créances diverses *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCreancesDiverses" 
+                                       name="creances_diverses" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section: Trésorerie -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-danger mb-2">
+                                <i class="fas fa-piggy-bank me-2"></i>{% trans "Trésorerie" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="editDisponibilitesBancaires" class="form-label">
+                                Disponibilités bancaires *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editDisponibilitesBancaires" 
+                                       name="disponibilites_bancaires" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé par Catégorie IFRS" %}
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Actif Non Courant:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryNonCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations incorporelles:</small>
+                                                <small class="fw-bold float-end" id="editSummaryIncorporelles">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations corporelles:</small>
+                                                <small class="fw-bold float-end" id="editSummaryCorporelles">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Immobilisations financières:</small>
+                                                <small class="fw-bold float-end" id="editSummaryFinancieres">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Actif Courant:" %}</span>
+                                                <span class="fw-bold float-end" id="editSummaryCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Stocks:</small>
+                                                <small class="fw-bold float-end" id="editSummaryStocks">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Créances:</small>
+                                                <small class="fw-bold float-end" id="editSummaryCreances">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Trésorerie:</small>
+                                                <small class="fw-bold float-end" id="editSummaryTresorerie">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="pt-2 border-top">
+                                                <span class="text-primary fw-bold fs-5">{% trans "Total Actif IFRS:" %}</span>
+                                                <span class="fw-bold text-primary float-end fs-5" id="editSummaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let selectedActifId = null;
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    const TYPE_BILAN_CHOICES = JSON.parse('{{ type_bilan_choices|safe }}');
+    const SEMESTRE_CHOICES = JSON.parse('{{ semestre_choices|safe }}');
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+    
+    // Formater en devise
+    function formatCurrency(num) {
+        return formatNumber(num) + ' FCFA';
+    }
+    
+    // Initialiser Select2
+    function initSelect2() {
+        const select2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addActifModal')
+        };
+        
+        const editSelect2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#editActifModal')
+        };
+        
+        $('#annee').select2(select2Config);
+        $('#editAnnee').select2(editSelect2Config);
+    }
+    
+    // Gérer l'affichage du champ semestre
+    $('#type_bilan').on('change', function() {
+        if ($(this).val() === 'semestriel') {
+            $('#semestreField').show();
+            $('#semestre').prop('required', true);
+        } else {
+            $('#semestreField').hide();
+            $('#semestre').prop('required', false);
+            $('#semestre').val('');
+        }
+    });
+    
+    $('#editTypeBilan').on('change', function() {
+        if ($(this).val() === 'semestriel') {
+            $('#editSemestreField').show();
+            $('#editSemestre').prop('required', true);
+        } else {
+            $('#editSemestreField').hide();
+            $('#editSemestre').prop('required', false);
+            $('#editSemestre').val('');
+        }
+    });
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateAddFormSummaries() {
+        // Actif Non Courant - Immobilisations incorporelles
+        const goodwill = parseFloat($('#goodwill').val()) || 0;
+        const marques = parseFloat($('#marques_et_droits_auteur').val()) || 0;
+        const brevets = parseFloat($('#brevets_et_licences').val()) || 0;
+        const autresImmoIncorporelles = parseFloat($('#autres_immobilisations_incorporelles').val()) || 0;
+        
+        // Actif Non Courant - Immobilisations corporelles
+        const terrains = parseFloat($('#terrains').val()) || 0;
+        const batiments = parseFloat($('#batiments').val()) || 0;
+        const materiel = parseFloat($('#materiel_et_equipement').val()) || 0;
+        
+        // Actif Non Courant - Immobilisations financières
+        const participations = parseFloat($('#participations_dans_des_societes').val()) || 0;
+        const prets = parseFloat($('#prets_a_long_terme').val()) || 0;
+        
+        // Actif Courant - Stocks
+        const matieresPremieres = parseFloat($('#matieres_premieres').val()) || 0;
+        const produitsFinis = parseFloat($('#produits_finis').val()) || 0;
+        
+        // Actif Courant - Créances
+        const creancesCT = parseFloat($('#creances_a_court_terme').val()) || 0;
+        const avances = parseFloat($('#avances_et_acomptes').val()) || 0;
+        const creancesDiverses = parseFloat($('#creances_diverses').val()) || 0;
+        
+        // Actif Courant - Trésorerie
+        const disponibilites = parseFloat($('#disponibilites_bancaires').val()) || 0;
+        
+        // Totaux par catégorie
+        const totalIncorporelles = goodwill + marques + brevets + autresImmoIncorporelles;
+        const totalCorporelles = terrains + batiments + materiel;
+        const totalFinancieres = participations + prets;
+        const totalNonCourant = totalIncorporelles + totalCorporelles + totalFinancieres;
+        
+        const totalStocks = matieresPremieres + produitsFinis;
+        const totalCreances = creancesCT + avances + creancesDiverses;
+        const totalTresorerie = disponibilites;
+        const totalCourant = totalStocks + totalCreances + totalTresorerie;
+        
+        const totalGeneral = totalNonCourant + totalCourant;
+        
+        // Mise à jour des résumés
+        $('#summaryIncorporelles').text(formatCurrency(totalIncorporelles));
+        $('#summaryCorporelles').text(formatCurrency(totalCorporelles));
+        $('#summaryFinancieres').text(formatCurrency(totalFinancieres));
+        $('#summaryNonCourant').text(formatCurrency(totalNonCourant));
+        
+        $('#summaryStocks').text(formatCurrency(totalStocks));
+        $('#summaryCreances').text(formatCurrency(totalCreances));
+        $('#summaryTresorerie').text(formatCurrency(totalTresorerie));
+        $('#summaryCourant').text(formatCurrency(totalCourant));
+        
+        $('#summaryTotal').text(formatCurrency(totalGeneral));
+    }
+    
+    // Écouter les changements dans les champs du formulaire d'ajout
+    $('#addActifForm input[type="number"]').on('input', updateAddFormSummaries);
+    
+    // Charger les actifs
+    function loadActifs() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/liste-des-actifs/?page=${currentPage}&search=${encodeURIComponent(currentSearch)}`;
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#actifTableBody').html(`
+                    <tr>
+                        <td colspan="18" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Chargement des données IFRS...</p>
+                        </td>
+                    </tr>
+                `);
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+                updateStats(response.results);
+            },
+            error: function(xhr) {
+                $('#actifTableBody').html(`
+                    <tr>
+                        <td colspan="18" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données IFRS. Veuillez réessayer.</p>
+                        </td>
+                    </tr>
+                `);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadActifs);
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour le tableau
+    function updateTable(actifs) {
+        const tbody = $('#actifTableBody');
+        tbody.empty();
+        
+        if (actifs.length === 0) {
+            $('#noResults').show();
+            $('#actifTableFooter').hide();
+            return;
+        }
+        
+        $('#noResults').hide();
+        
+        // Initialiser les totaux
+        const totaux = {
+            goodwill: 0, marques: 0, brevets: 0, autresImmoIncorporelles: 0,
+            terrains: 0, batiments: 0, materiel: 0,
+            participations: 0, prets: 0,
+            matieresPremieres: 0, produitsFinis: 0,
+            creancesCT: 0, avances: 0, creancesDiverses: 0,
+            disponibilites: 0,
+            total: 0
+        };
+        
+        const anneesSet = new Set();
+        let countAnnuel = 0;
+        let countSemestriel = 0;
+        
+        actifs.forEach((actif, index) => {
+            const startIndex = (currentPage - 1) * actifs.length;
+            const rowNumber = startIndex + index + 1;
+            
+            // Période
+            let periode = actif.annee?.annee || 'N/A';
+            if (actif.semestre) {
+                const semestreLabel = SEMESTRE_CHOICES.find(s => s.value == actif.semestre)?.label || `Semestre ${actif.semestre}`;
+                periode += ` - ${semestreLabel}`;
+            }
+            anneesSet.add(actif.annee?.annee);
+            
+            // Type de bilan
+            const typeBilan = actif.type_bilan_display || (actif.type_bilan === 'annuel' ? 'Annuel' : 'Semestriel');
+            if (actif.type_bilan === 'annuel') countAnnuel++;
+            else countSemestriel++;
+            
+            // Récupérer les valeurs
+            const goodwill = parseFloat(actif.goodwill) || 0;
+            const marques = parseFloat(actif.marques_et_droits_auteur) || 0;
+            const brevets = parseFloat(actif.brevets_et_licences) || 0;
+            const autresImmoIncorporelles = parseFloat(actif.autres_immobilisations_incorporelles) || 0;
+            const terrains = parseFloat(actif.terrains) || 0;
+            const batiments = parseFloat(actif.batiments) || 0;
+            const materiel = parseFloat(actif.materiel_et_equipement) || 0;
+            const participations = parseFloat(actif.participations_dans_des_societes) || 0;
+            const prets = parseFloat(actif.prets_a_long_terme) || 0;
+            const matieresPremieres = parseFloat(actif.matieres_premieres) || 0;
+            const produitsFinis = parseFloat(actif.produits_finis) || 0;
+            const creancesCT = parseFloat(actif.creances_a_court_terme) || 0;
+            const avances = parseFloat(actif.avances_et_acomptes) || 0;
+            const creancesDiverses = parseFloat(actif.creances_diverses) || 0;
+            const disponibilites = parseFloat(actif.disponibilites_bancaires) || 0;
+            
+            // Calculer les totaux partiels
+            const totalNonCourant = actif.total_actif_non_courant || (goodwill + marques + brevets + autresImmoIncorporelles + 
+                terrains + batiments + materiel + participations + prets);
+            
+            const totalCourant = actif.total_actif_courant || (matieresPremieres + produitsFinis + creancesCT + 
+                avances + creancesDiverses + disponibilites);
+            
+            const totalGeneral = actif.total_actif || (totalNonCourant + totalCourant);
+            
+            // Accumuler les totaux
+            totaux.goodwill += goodwill;
+            totaux.marques += marques;
+            totaux.brevets += brevets;
+            totaux.autresImmoIncorporelles += autresImmoIncorporelles;
+            totaux.terrains += terrains;
+            totaux.batiments += batiments;
+            totaux.materiel += materiel;
+            totaux.participations += participations;
+            totaux.prets += prets;
+            totaux.matieresPremieres += matieresPremieres;
+            totaux.produitsFinis += produitsFinis;
+            totaux.creancesCT += creancesCT;
+            totaux.avances += avances;
+            totaux.creancesDiverses += creancesDiverses;
+            totaux.disponibilites += disponibilites;
+            totaux.total += totalGeneral;
+            
+            // Badge pour le type de bilan
+            const typeBadgeClass = actif.type_bilan === 'annuel' ? 'bg-success' : 'bg-info';
+            const typeBadgeText = actif.type_bilan === 'annuel' ? 'Annuel' : 'Semestriel';
+            
+            const row = `
+                <tr data-id="${actif.id}" class="actif-row">
+                    <td>${rowNumber}</td>
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-white fw-bold">
+                            ${periode}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${typeBadgeClass}">
+                            ${typeBadgeText}
+                        </span>
+                    </td>
+                    
+                    <!-- Actif Non Courant -->
+                    <td class="value-cell">${formatNumber(goodwill)}</td>
+                    <td class="value-cell">${formatNumber(marques)}</td>
+                    <td class="value-cell">${formatNumber(brevets)}</td>
+                    <td class="value-cell">${formatNumber(autresImmoIncorporelles)}</td>
+                    <td class="value-cell">${formatNumber(terrains)}</td>
+                    <td class="value-cell">${formatNumber(batiments)}</td>
+                    <td class="value-cell">${formatNumber(materiel)}</td>
+                    <td class="value-cell">${formatNumber(participations)}</td>
+                    <td class="value-cell">${formatNumber(prets)}</td>
+                    
+                    <!-- Actif Courant -->
+                    <td class="value-cell">${formatNumber(matieresPremieres)}</td>
+                    <td class="value-cell">${formatNumber(produitsFinis)}</td>
+                    <td class="value-cell">${formatNumber(creancesCT)}</td>
+                    <td class="value-cell">${formatNumber(avances)}</td>
+                    <td class="value-cell">${formatNumber(creancesDiverses)}</td>
+                    <td class="value-cell">${formatNumber(disponibilites)}</td>
+                    
+                    <!-- Total -->
+                    <td class="value-cell fw-bold text-primary">${formatNumber(totalGeneral)}</td>
+                    
+                    <!-- Actions -->
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${actif.id}" 
+                                    data-bs-toggle="tooltip" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${actif.id}" 
+                                    data-bs-toggle="tooltip" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer
+        updateFooterTotals(totaux);
+        $('#actifTableFooter').show();
+        
+        // Mettre à jour les compteurs
+        $('#countPeriodes').text(actifs.length);
+        $('#countAnnuel').text(countAnnuel);
+        $('#countSemestriel').text(countSemestriel);
+        $('#countAnnees').text(anneesSet.size);
+    }
+    
+    // Mettre à jour les totaux du footer
+    function updateFooterTotals(totaux) {
+        $('#footerGoodwill').text(formatNumber(totaux.goodwill));
+        $('#footerMarques').text(formatNumber(totaux.marques));
+        $('#footerBrevets').text(formatNumber(totaux.brevets));
+        $('#footerAII').text(formatNumber(totaux.autresImmoIncorporelles));
+        $('#footerTerrains').text(formatNumber(totaux.terrains));
+        $('#footerBatiments').text(formatNumber(totaux.batiments));
+        $('#footerMateriel').text(formatNumber(totaux.materiel));
+        $('#footerParticipations').text(formatNumber(totaux.participations));
+        $('#footerPrets').text(formatNumber(totaux.prets));
+        $('#footerMatieres').text(formatNumber(totaux.matieresPremieres));
+        $('#footerProduits').text(formatNumber(totaux.produitsFinis));
+        $('#footerCreancesCT').text(formatNumber(totaux.creancesCT));
+        $('#footerAvances').text(formatNumber(totaux.avances));
+        $('#footerCreancesD').text(formatNumber(totaux.creancesDiverses));
+        $('#footerDisponibilites').text(formatNumber(totaux.disponibilites));
+        $('#footerTotal').text(formatNumber(totaux.total));
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStats(actifs) {
+        let totalNonCourant = 0;
+        let totalCourant = 0;
+        
+        actifs.forEach(actif => {
+            totalNonCourant += parseFloat(actif.total_actif_non_courant) || 0;
+            totalCourant += parseFloat(actif.total_actif_courant) || 0;
+        });
+        
+        const totalGeneral = totalNonCourant + totalCourant;
+        const pourcentageNonCourant = totalGeneral > 0 ? Math.round((totalNonCourant / totalGeneral) * 100) : 0;
+        const pourcentageCourant = totalGeneral > 0 ? Math.round((totalCourant / totalGeneral) * 100) : 0;
+        
+        $('#totalNonCourant').text(formatNumber(totalNonCourant));
+        $('#totalCourant').text(formatNumber(totalCourant));
+        $('#totalActif').text(formatNumber(totalGeneral));
+        $('#pourcentageNonCourant').text(pourcentageNonCourant + '%');
+        $('#pourcentageCourant').text(pourcentageCourant + '%');
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        const startIndex = ((currentPage - 1) * 10) + 1;
+        const endIndex = Math.min(currentPage * 10, response.count);
+        
+        $('#paginationInfo').text(
+            `Affichage ${startIndex} à ${endIndex} sur ${response.count} actifs IFRS`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+    
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadActifs();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadActifs();
+            $('html, body').animate({
+                scrollTop: $('#actifTableBody').offset().top - 100
+            }, 500);
+        }
+    });
+    
+    // Effacer le formulaire d'ajout
+    $('#clearAddFormBtn').on('click', function() {
+        Swal.fire({
+            title: 'Confirmer l\'effacement',
+            text: 'Êtes-vous sûr de vouloir effacer tous les champs du formulaire ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, effacer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#addActifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                $('#semestreField').hide();
+                $('#semestre').val('');
+                updateAddFormSummaries();
+            }
+        });
+    });
+    
+    // Fonction pour mettre à jour les résumés dans le formulaire d'édition
+    function updateEditFormSummaries() {
+        // Actif Non Courant - Immobilisations incorporelles
+        const goodwill = parseFloat($('#editGoodwill').val()) || 0;
+        const marques = parseFloat($('#editMarquesEtDroitsAuteur').val()) || 0;
+        const brevets = parseFloat($('#editBrevetsEtLicences').val()) || 0;
+        const autresImmoIncorporelles = parseFloat($('#editAutresImmobilisationsIncorporelles').val()) || 0;
+        
+        // Actif Non Courant - Immobilisations corporelles
+        const terrains = parseFloat($('#editTerrains').val()) || 0;
+        const batiments = parseFloat($('#editBatiments').val()) || 0;
+        const materiel = parseFloat($('#editMaterielEtEquipement').val()) || 0;
+        
+        // Actif Non Courant - Immobilisations financières
+        const participations = parseFloat($('#editParticipationsDansDesSocietes').val()) || 0;
+        const prets = parseFloat($('#editPretsALongTerme').val()) || 0;
+        
+        // Actif Courant - Stocks
+        const matieresPremieres = parseFloat($('#editMatieresPremieres').val()) || 0;
+        const produitsFinis = parseFloat($('#editProduitsFinis').val()) || 0;
+        
+        // Actif Courant - Créances
+        const creancesCT = parseFloat($('#editCreancesACourtTerme').val()) || 0;
+        const avances = parseFloat($('#editAvancesEtAcomptes').val()) || 0;
+        const creancesDiverses = parseFloat($('#editCreancesDiverses').val()) || 0;
+        
+        // Actif Courant - Trésorerie
+        const disponibilites = parseFloat($('#editDisponibilitesBancaires').val()) || 0;
+        
+        // Totaux par catégorie
+        const totalIncorporelles = goodwill + marques + brevets + autresImmoIncorporelles;
+        const totalCorporelles = terrains + batiments + materiel;
+        const totalFinancieres = participations + prets;
+        const totalNonCourant = totalIncorporelles + totalCorporelles + totalFinancieres;
+        
+        const totalStocks = matieresPremieres + produitsFinis;
+        const totalCreances = creancesCT + avances + creancesDiverses;
+        const totalTresorerie = disponibilites;
+        const totalCourant = totalStocks + totalCreances + totalTresorerie;
+        
+        const totalGeneral = totalNonCourant + totalCourant;
+        
+        // Mise à jour des résumés
+        $('#editSummaryIncorporelles').text(formatCurrency(totalIncorporelles));
+        $('#editSummaryCorporelles').text(formatCurrency(totalCorporelles));
+        $('#editSummaryFinancieres').text(formatCurrency(totalFinancieres));
+        $('#editSummaryNonCourant').text(formatCurrency(totalNonCourant));
+        
+        $('#editSummaryStocks').text(formatCurrency(totalStocks));
+        $('#editSummaryCreances').text(formatCurrency(totalCreances));
+        $('#editSummaryTresorerie').text(formatCurrency(totalTresorerie));
+        $('#editSummaryCourant').text(formatCurrency(totalCourant));
+        
+        $('#editSummaryTotal').text(formatCurrency(totalGeneral));
+    }
+
+    // Écouter les changements dans les champs du formulaire d'édition
+    $('#editActifForm input[type="number"]').on('input', updateEditFormSummaries);
+
+    // Éditer un actif
+    // Mettre à jour le code JavaScript pour l'édition d'actif
+    $(document).on('click', '.edit-btn', function() {
+        const actifId = $(this).data('id');
+        selectedActifId = actifId;
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/obtenir-un-actif/${actifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir les champs du formulaire d'édition
+                $('#editActifId').val(response.id);
+                $('#editTypeBilan').val(response.type_bilan);
+                $('#editAnnee').val(response.annee?.id).trigger('change');
+                
+                // Gérer le semestre
+                if (response.type_bilan === 'semestriel') {
+                    $('#editSemestreField').show();
+                    $('#editSemestre').val(response.semestre).prop('required', true);
+                } else {
+                    $('#editSemestreField').hide();
+                    $('#editSemestre').val('').prop('required', false);
+                }
+                
+                // Remplir les valeurs des champs IFRS
+                $('#editGoodwill').val(response.goodwill);
+                $('#editMarquesEtDroitsAuteur').val(response.marques_et_droits_auteur);
+                $('#editBrevetsEtLicences').val(response.brevets_et_licences);
+                $('#editAutresImmobilisationsIncorporelles').val(response.autres_immobilisations_incorporelles);
+                $('#editTerrains').val(response.terrains);
+                $('#editBatiments').val(response.batiments);
+                $('#editMaterielEtEquipement').val(response.materiel_et_equipement);
+                $('#editParticipationsDansDesSocietes').val(response.participations_dans_des_societes);
+                $('#editPretsALongTerme').val(response.prets_a_long_terme);
+                $('#editMatieresPremieres').val(response.matieres_premieres);
+                $('#editProduitsFinis').val(response.produits_finis);
+                $('#editCreancesACourtTerme').val(response.creances_a_court_terme);
+                $('#editAvancesEtAcomptes').val(response.avances_et_acomptes);
+                $('#editCreancesDiverses').val(response.creances_diverses);
+                $('#editDisponibilitesBancaires').val(response.disponibilites_bancaires);
+                
+                // Mettre à jour les résumés
+                updateEditFormSummaries();
+                
+                $('#editActifModal').modal('show');
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données de l\'actif IFRS.'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(`.edit-btn[data-id="${actifId}"]`).click();
+                    });
+                }
+            }
+        });
+    });
+        
+    // Supprimer un actif
+    $(document).on('click', '.delete-btn', function() {
+        const actifId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            text: 'Êtes-vous sûr de vouloir supprimer cet actif IFRS ? Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/supprimer-des-actifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [actifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé',
+                            text: 'Actif IFRS supprimé avec succès',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadActifs();
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer l\'actif IFRS.'
+                        });
+                        
+                        if (xhr.status === 401) {
+                            refreshAccessToken(() => {
+                                $(`.delete-btn[data-id="${actifId}"]`).click();
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'ajout
+    $('#addActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validation du semestre
+        const typeBilan = $('#type_bilan').val();
+        const semestre = $('#semestre').val();
+        
+        if (typeBilan === 'semestriel' && !semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre est obligatoire pour un bilan semestriel.'
+            });
+            return;
+        }
+        
+        if (typeBilan === 'annuel' && semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            });
+            return;
+        }
+        
+        const formData = $(this).serialize();
+        const $btn = $('#addActifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/ajouter-un-actif/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#addActifModal').modal('hide');
+                $('#addActifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                $('#semestreField').hide();
+                $('#semestre').val('');
+                updateAddFormSummaries();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif IFRS ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadActifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    } else if (xhr.responseJSON.semestre) {
+                        errorMessage = xhr.responseJSON.semestre;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'édition
+    $('#editActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validation du semestre
+        const typeBilan = $('#editTypeBilan').val();
+        const semestre = $('#editSemestre').val();
+        
+        if (typeBilan === 'semestriel' && !semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre est obligatoire pour un bilan semestriel.'
+            });
+            return;
+        }
+        
+        if (typeBilan === 'annuel' && semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            });
+            return;
+        }
+        
+        const formData = $(this).serialize();
+        const $btn = $('#editActifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/editer-un-actif/${selectedActifId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#editActifModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif IFRS mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadActifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    } else if (xhr.responseJSON.semestre) {
+                        errorMessage = xhr.responseJSON.semestre;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Initialisation
+    function init() {
+        // Initialiser les tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        
+        // Initialiser Select2
+        initSelect2();
+        
+        // Charger les données initiales
+        loadActifs();
+        updateAddFormSummaries();
+    }
+    
+    init();
+});
+</script>
+{% endblock %}

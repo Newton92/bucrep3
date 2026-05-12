@@ -1,795 +1,2698 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-purple: #6f42c1;
+    --color-pink: #e83e8c;
+    --color-teal: #20c997;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, var(--color-teal) 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, #e83e8c 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: var(--radius-xl);
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.dashboard-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem 2rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de catégories de passifs */
+.category-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 2px solid transparent;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-primary);
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--primary-gradient);
+}
+
+.category-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.category-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+}
+
+.category-count {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.category-progress {
+    height: 8px;
+    background: rgba(10, 149, 202, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.category-progress-bar {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* Tableau compact des passifs */
+.compact-table-container {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.table-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    border-bottom: 2px solid var(--color-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.compact-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.compact-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compact-table th.text-end {
+    text-align: right;
+}
+
+.compact-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.compact-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.compact-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.03);
+}
+
+.compact-table tfoot {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    border-top: 3px solid var(--color-primary);
+}
+
+.compact-table tfoot td {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-primary-dark);
+    padding: 1.25rem;
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.95rem;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+.value-negative {
+    color: var(--color-danger);
+}
+
+.value-zero {
+    color: var(--color-text-light);
+}
+
+/* Section de légende améliorée */
+.legend-section {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+    cursor: help;
+}
+
+.legend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-primary);
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    min-width: 45px;
+    flex-shrink: 0;
+}
+
+.legend-name {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+/* Actions rapides */
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.quick-action-btn {
+    flex: 1;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.quick-action-btn i {
+    font-size: 1.25rem;
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-warning-enhanced {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-outline-enhanced {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline-enhanced:hover {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 2rem;
+    background: var(--color-background);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+    outline: none;
+}
+
+/* Cartes de formulaire */
+.form-section-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.form-section-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.form-section-header h6 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section-body {
+    padding: 1.5rem;
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Statistiques détaillées */
+.stats-detail-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.stats-detail-card .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.stats-detail-card .stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-success);
+    font-size: 1.1rem;
+}
+
+/* Style Bilan Comptable pour le modal de détail */
+.bilan-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.bilan-table th,
+.bilan-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border: 1px solid var(--color-border);
+}
+
+.bilan-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.bilan-table .section-header {
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.bilan-table .subsection-header {
+    background: rgba(10, 149, 202, 0.05);
+    font-weight: 600;
+    color: var(--color-primary-dark);
+}
+
+.bilan-table .indent-1 {
+    padding-left: 2rem;
+}
+
+.bilan-table .indent-2 {
+    padding-left: 3rem;
+}
+
+.bilan-table .total-row {
+    background: rgba(10, 149, 202, 0.05);
+    font-weight: 700;
+    border-top: 2px solid var(--color-primary);
+}
+
+.bilan-table .grand-total-row {
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    border-top: 3px solid var(--color-primary-dark);
+}
+
+.bilan-table .text-end {
+    text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.75rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
+    
+    .category-card {
+        padding: 1.25rem;
+    }
+    
+    .category-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-summary-header {
+        padding: 1.25rem;
+    }
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(10, 149, 202, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Classique - Passifs de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countPassifs">Module de Gestion des Passifs</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un passif notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="dashboard-title text-white">
+                    <i class="fas fa-balance-scale-left me-3"></i>{% trans "Bilan Classique - Passifs" %}
+                </h1>
+                <p class="dashboard-subtitle">
+                    Gestion complète des passifs financiers de l'acheteur.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}" 
+                   class="btn-enhanced btn-warning-enhanced">
+                    <i class="fas fa-arrow-left me-2 text-white"></i>{% trans "Retour à l'acheteur" %}
+                </a>
+                <button class="btn-enhanced btn-success-enhanced" data-bs-toggle="modal" data-bs-target="#addPassifModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouveau Passif" %}
+                </button>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-md-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                        <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-primary">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-muted">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span class="text-warning">{{ acheteur.code }}</span>
+                    </span>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Capital Social : </strong><span id="">CS</span><br>
-                        <strong>Primes : </strong><span id="">PR</span><br>
-                        <strong>ECA : </strong><span id="">ECA</span><br>
-                        <strong>Réserve : </strong><span id="">RE</span><br>
-                        <strong>Report à Nouveau : </strong><span id="">RAN</span><br>
-                        <strong>Résultat Exercice : </strong><span id="">REX</span><br>
-                        <strong>Subvention Réglementée : </strong><span id="">SR</span><br>
-                        <strong>Provision Réglementée : </strong><span id="">PR</span><br>
-                        <strong>Emprunts : </strong><span id="">EM</span><br>
-                        <strong>Dette Crédit Bail Contrat Assimilé : </strong><span id="">DCBCA</span><br>
-                        <strong>Dette Financière Diverses : </strong><span id="">DDF</span><br>
-                        <strong>Provision Financière Risque Charge : </strong><span id="">PFRC</span><br>
-                        <strong>Dette Fournisseurs Divers : </strong><span id="">DFD</span><br>
-                        <strong>Avance et Acomptes Recu : </strong><span id="">AAR</span><br>
-                        <strong>Dette : </strong><span id="">DE</span><br>
-                        <strong>Dette Fiscales Sociales : </strong><span id="">DFS</span><br>
-                        <strong>Autres Dette : </strong><span id="">AD</span><br>
-                        <strong>Banques Crédit Escompte : </strong><span id="">BCE</span><br>
-                        <strong>Banque Crédit Caisse : </strong><span id="">BCC</span><br>
-                        <strong>Banques Découvert : </strong><span id="">BD</span><br>
-                        <strong>Ecart Conversion Passif : </strong><span id="">ECP</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- PASSIFS START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Passifs</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-4">
-                        <!-- Short by filter -->
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addPassifModal">
-                                Ajouter un Passif
+                            <small class="text-muted">{% trans "Date de création" %}</small>
+                            <div class="fw-bold">
+                                {% if acheteur.date_creation %}
+                                    {{ acheteur.date_creation|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifié
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Activité principale" %}</small>
+                            <div class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Statut" %}</small>
+                            <div class="fw-bold text-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de catégories de passifs -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-1">
+                <div class="category-icon">
+                    <i class="fas fa-landmark"></i>
+                </div>
+                <h5 class="category-title">{% trans "Capitaux Propres" %}</h5>
+                <div class="category-count" id="countCapitauxPropres">0</div>
+                <p class="text-muted mb-0">{% trans "CS, PR, ECA, RE, RAN, REX" %}</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressCapitauxPropres" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-2">
+                <div class="category-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <h5 class="category-title">{% trans "Dettes à Long Terme" %}</h5>
+                <div class="category-count" id="countDettesLongTerme">0</div>
+                <p class="text-muted mb-0">{% trans "EM, DCBCA, DDF, PFRC" %}</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressDettesLongTerme" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-3">
+                <div class="category-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h5 class="category-title">{% trans "Dettes à Court Terme" %}</h5>
+                <div class="category-count" id="countDettesCourtTerme">0</div>
+                <p class="text-muted mb-0">{% trans "DFD, AAR, DE, DFS, AD" %}</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressDettesCourtTerme" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in">
+                <div class="category-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h5 class="category-title">{% trans "Trésorerie Passive" %}</h5>
+                <div class="category-count" id="countTresoreriePassive">0</div>
+                <p class="text-muted mb-0">{% trans "BCE, BCC, BD, ECP" %}</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressTresoreriePassive" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions animate-in delay-1">
+        <a href="#" class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#addPassifModal">
+            <i class="fas fa-plus-circle"></i>
+            Ajouter un passif
+        </a>
+        <a href="#" class="quick-action-btn" id="viewSummaryBtn">
+            <i class="fas fa-chart-pie"></i>
+            Voir le résumé
+        </a>
+        <a href="#" class="quick-action-btn" id="compareYearsBtn">
+            <i class="fas fa-balance-scale"></i>
+            Comparer les années
+        </a>
+        <a href="#" class="quick-action-btn" id="generateReportBtn">
+            <i class="fas fa-file-pdf"></i>
+            Générer un rapport
+        </a>
+    </div>
+
+    <!-- Section Légende -->
+    <div class="legend-section animate-in delay-2">
+        <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-key text-primary me-2"></i>
+            <h5 class="mb-0 fw-bold">{% trans "Légende des Abréviations" %}</h5>
+            <button class="btn btn-link ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#legendCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        
+        <div class="collapse show" id="legendCollapse">
+            <div class="legend-grid">
+                <div class="legend-item" title="Capital Social">
+                    <div class="legend-color" style="background: #0A95CA;"></div>
+                    <span class="legend-code">CS</span>
+                    <span class="legend-name">{% trans "Capital Social" %}</span>
+                </div>
+                <div class="legend-item" title="Primes">
+                    <div class="legend-color" style="background: #25add6;"></div>
+                    <span class="legend-code">PR</span>
+                    <span class="legend-name">{% trans "Primes" %}</span>
+                </div>
+                <div class="legend-item" title="Écarts de Réévaluation">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span class="legend-code">ECA</span>
+                    <span class="legend-name">{% trans "Écarts de Réévaluation" %}</span>
+                </div>
+                <div class="legend-item" title="Réserve">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span class="legend-code">RE</span>
+                    <span class="legend-name">{% trans "Réserve" %}</span>
+                </div>
+                <div class="legend-item" title="Report à Nouveau">
+                    <div class="legend-color" style="background: #6f42c1;"></div>
+                    <span class="legend-code">RAN</span>
+                    <span class="legend-name">{% trans "Report à Nouveau" %}</span>
+                </div>
+                <div class="legend-item" title="Résultat Exercice">
+                    <div class="legend-color" style="background: #0d80be;"></div>
+                    <span class="legend-code">REX</span>
+                    <span class="legend-name">{% trans "Résultat Exercice" %}</span>
+                </div>
+                <div class="legend-item" title="Subvention Réglementée">
+                    <div class="legend-color" style="background: #17a2b8;"></div>
+                    <span class="legend-code">SR</span>
+                    <span class="legend-name">{% trans "Subvention Réglementée" %}</span>
+                </div>
+                <div class="legend-item" title="Provision Réglementée">
+                    <div class="legend-color" style="background: #20c997;"></div>
+                    <span class="legend-code">PR</span>
+                    <span class="legend-name">{% trans "Provision Réglementée" %}</span>
+                </div>
+                <div class="legend-item" title="Emprunts">
+                    <div class="legend-color" style="background: #e83e8c;"></div>
+                    <span class="legend-code">EM</span>
+                    <span class="legend-name">{% trans "Emprunts" %}</span>
+                </div>
+                <div class="legend-item" title="Dette Crédit Bail">
+                    <div class="legend-color" style="background: #fd7e14;"></div>
+                    <span class="legend-code">{% trans "DCBCA" %}</span>
+                    <span class="legend-name">{% trans "Dette Crédit Bail" %}</span>
+                </div>
+                <div class="legend-item" title="Dettes Financières Diverses">
+                    <div class="legend-color" style="background: #6c757d;"></div>
+                    <span class="legend-code">DDF</span>
+                    <span class="legend-name">{% trans "Dettes Financières Diverses" %}</span>
+                </div>
+                <div class="legend-item" title="Provision Financière">
+                    <div class="legend-color" style="background: #343a40;"></div>
+                    <span class="legend-code">{% trans "PFRC" %}</span>
+                    <span class="legend-name">{% trans "Provision Financière" %}</span>
+                </div>
+                <div class="legend-item" title="Dette Fournisseurs Divers">
+                    <div class="legend-color" style="background: #0A95CA;"></div>
+                    <span class="legend-code">DFD</span>
+                    <span class="legend-name">{% trans "Dette Fournisseurs Divers" %}</span>
+                </div>
+                <div class="legend-item" title="Avances et Acomptes Reçus">
+                    <div class="legend-color" style="background: #25add6;"></div>
+                    <span class="legend-code">AAR</span>
+                    <span class="legend-name">{% trans "Avances et Acomptes Reçus" %}</span>
+                </div>
+                <div class="legend-item" title="Dettes">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span class="legend-code">DE</span>
+                    <span class="legend-name">{% trans "Dettes" %}</span>
+                </div>
+                <div class="legend-item" title="Dettes Fiscales et Sociales">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span class="legend-code">DFS</span>
+                    <span class="legend-name">{% trans "Dettes Fiscales et Sociales" %}</span>
+                </div>
+                <div class="legend-item" title="Autres Dettes">
+                    <div class="legend-color" style="background: #6f42c1;"></div>
+                    <span class="legend-code">AD</span>
+                    <span class="legend-name">{% trans "Autres Dettes" %}</span>
+                </div>
+                <div class="legend-item" title="Banques Crédit Escompte">
+                    <div class="legend-color" style="background: #0d80be;"></div>
+                    <span class="legend-code">BCE</span>
+                    <span class="legend-name">{% trans "Banques Crédit Escompte" %}</span>
+                </div>
+                <div class="legend-item" title="Banque Crédit Caisse">
+                    <div class="legend-color" style="background: #17a2b8;"></div>
+                    <span class="legend-code">BCC</span>
+                    <span class="legend-name">{% trans "Banque Crédit Caisse" %}</span>
+                </div>
+                <div class="legend-item" title="Banques Découvert">
+                    <div class="legend-color" style="background: #20c997;"></div>
+                    <span class="legend-code">BD</span>
+                    <span class="legend-name">{% trans "Banques Découvert" %}</span>
+                </div>
+                <div class="legend-item" title="Écart Conversion Passif">
+                    <div class="legend-color" style="background: #e83e8c;"></div>
+                    <span class="legend-code">ECP</span>
+                    <span class="legend-name">{% trans "Écart Conversion Passif" %}</span>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Survolez une abréviation pour voir la description complète
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Passifs -->
+    <div class="compact-table-container animate-in delay-2">
+        <div class="table-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list me-2"></i>{% trans "Passifs par Année" %}
+                    </h5>
+                    <small class="text-muted" id="tableInfo">{% trans "Cliquez sur une année pour voir les détails" %}</small>
+                </div>
+                
+                <div class="d-flex gap-2 w-100 w-md-auto">
+                    <div class="flex-grow-1">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="search" class="form-control border-start-0" id="searchInput" 
+                                   placeholder="Rechercher par année...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive" style="max-height: 600px;">
+            <table class="compact-table" id="passifsTable">
+                <thead>
+                    <tr>
+                        <th>{% trans "Année" %}</th>
+                        <th class="text-end">{% trans "Capitaux Propres" %}</th>
+                        <th class="text-end">{% trans "Dettes Financières" %}</th>
+                        <th class="text-end">{% trans "Passif Circulant" %}</th>
+                        <th class="text-end">{% trans "Trésorerie Passif" %}</th>
+                        <th class="text-end">{% trans "Total Général" %}</th>
+                        <th class="text-center">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="passifsTableBody">
+                    <!-- Rempli par JavaScript -->
+                </tbody>
+                <tfoot id="passifsTableFooter" style="display: none;">
+                    <tr>
+                        <td class="fw-bold">{% trans "TOTAL" %}</td>
+                        <td class="text-end fw-bold" id="footerCapitauxPropres">0</td>
+                        <td class="text-end fw-bold" id="footerDettesLongTerme">0</td>
+                        <td class="text-end fw-bold" id="footerDettesCourtTerme">0</td>
+                        <td class="text-end fw-bold" id="footerTresoreriePassive">0</td>
+                        <td class="text-end fw-bold" id="footerGeneral">0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted small" id="paginationInfo">
+                Chargement des données...
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Passif -->
+<div class="modal fade enhanced-modal" id="addPassifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouveau Passif" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPassifForm" class="enhanced-form">
+                <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez les champs ci-dessous pour ajouter un nouveau passif. Les champs marqués d'un astérisque (*) sont obligatoires.
+                    </div>
+
+                    <!-- Sélection de l'année -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-calendar-alt text-danger"></i> {% trans "Année du Passif" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="form-group">
+                                        <label for="annee" class="form-label">
+                                            <i class="fas fa-calendar-check"></i>Sélectionnez l'année*
+                                        </label>
+                                        <select class="form-select" id="annee" name="annee" required>
+                                            <option value="">{% trans "Choisissez une année..." %}</option>
+                                            {% for annee in annee_list %}
+                                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Section 1: Capitaux Propres -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-landmark text-primary"></i> {% trans "Capitaux Propres" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="capital_social" class="form-label">
+                                                    <i class="fas fa-building"></i>{% trans "Capital Social" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="capital_social" 
+                                                       name="capital_social" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="primes" class="form-label">
+                                                    <i class="fas fa-award"></i>{% trans "Primes" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="primes" 
+                                                       name="primes" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="ecarts_de_reevaluation" class="form-label">
+                                                    <i class="fas fa-balance-scale"></i>{% trans "Écarts de Réévaluation" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="ecarts_de_reevaluation" 
+                                                       name="ecarts_de_reevaluation" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="reserve" class="form-label">
+                                                    <i class="fas fa-piggy-bank"></i>{% trans "Réserve" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="reserve" 
+                                                       name="reserve" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="report_a_nouveau" class="form-label">
+                                                    <i class="fas fa-forward"></i>{% trans "Report à Nouveau" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="report_a_nouveau" 
+                                                       name="report_a_nouveau" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="resultat_exercice" class="form-label">
+                                                    <i class="fas fa-chart-line"></i>{% trans "Résultat Exercice" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="resultat_exercice" 
+                                                       name="resultat_exercice" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="subv_invest" class="form-label">
+                                                    <i class="fas fa-hand-holding-usd"></i>{% trans "Subvention Réglementée" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="subv_invest" 
+                                                       name="subv_invest" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="provision_regl" class="form-label">
+                                                    <i class="fas fa-shield-alt"></i>{% trans "Provision Réglementée" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="provision_regl" 
+                                                       name="provision_regl" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Dettes à Long Terme -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-hand-holding-usd text-success"></i> {% trans "Dettes à Long Terme" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="form-group">
+                                        <label for="emprunts" class="form-label">
+                                            <i class="fas fa-university"></i>{% trans "Emprunts" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="emprunts" 
+                                               name="emprunts" step="0.01" min="0" value="0" required>
+                                        
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="dette_credit_bail_contrat_assimile" class="form-label">
+                                            <i class="fas fa-file-contract"></i>{% trans "Dette Crédit Bail Contrat Assimilé" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="dette_credit_bail_contrat_assimile" 
+                                               name="dette_credit_bail_contrat_assimile" step="0.01" min="0" value="0" required>
+                                        
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="dettes_financiere_diverses" class="form-label">
+                                            <i class="fas fa-money-bill-wave"></i>{% trans "Dettes Financières Diverses" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="dettes_financiere_diverses" 
+                                               name="dettes_financiere_diverses" step="0.01" min="0" value="0" required>
+                                        
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="provision_financiere_risque_charge" class="form-label">
+                                            <i class="fas fa-exclamation-triangle"></i>{% trans "Provision Financière Risque Charge" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="provision_financiere_risque_charge" 
+                                               name="provision_financiere_risque_charge" step="0.01" min="0" value="0" required>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 3: Dettes à Court Terme -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-file-invoice-dollar text-warning"></i> {% trans "Dettes à Court Terme" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="dettes_fournisseurs_divers" class="form-label">
+                                                    <i class="fas fa-truck"></i>{% trans "Dette Fournisseurs Divers" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="dettes_fournisseurs_divers" 
+                                                       name="dettes_fournisseurs_divers" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="avance_et_acomptes_recu" class="form-label">
+                                                    <i class="fas fa-hand-holding"></i>{% trans "Avance et Acomptes Reçus" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="avance_et_acomptes_recu" 
+                                                       name="avance_et_acomptes_recu" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="dette" class="form-label">
+                                                    <i class="fas fa-file-invoice"></i>{% trans "Dettes" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="dette" 
+                                                       name="dettes" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="dette_fiscales_sociales" class="form-label">
+                                                    <i class="fas fa-gavel"></i>{% trans "Dette Fiscales Sociales" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="dette_fiscales_sociales" 
+                                                       name="dette_fiscales_sociales" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="autres_dettes" class="form-label">
+                                            <i class="fas fa-ellipsis-h"></i>{% trans "Autres Dettes" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="autres_dettes" 
+                                               name="autres_dettes" step="0.01" min="0" value="0" required>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 4: Trésorerie Passive -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-university text-purple"></i> {% trans "Trésorerie Passive" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="banques_credit_escompte" class="form-label">
+                                                    <i class="fas fa-credit-card"></i>{% trans "Banques Crédit Escompte" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="banques_credit_escompte" 
+                                                       name="banques_credit_escompte" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="banque_credit_caisse" class="form-label">
+                                                    <i class="fas fa-wallet"></i>{% trans "Banque Crédit Caisse" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="banque_credit_caisse" 
+                                                       name="banque_credit_caisse" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="banques_decouvert" class="form-label">
+                                                    <i class="fas fa-minus-circle"></i>{% trans "Banques Découvert" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="banques_decouvert" 
+                                                       name="banques_decouvert" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="ecart_conversion_passif" class="form-label">
+                                                    <i class="fas fa-exchange-alt"></i>{% trans "Écart Conversion Passif" %}
+                                                </label>
+                                                <input type="number" class="form-control" id="ecart_conversion_passif" 
+                                                       name="ecart_conversion_passif" step="0.01" min="0" value="0" required>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Résumé des données saisies -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-calculator text-success"></i> {% trans "Résumé des Montants Saisis" %}</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">{% trans "Capitaux Propres:" %}</span><br>
+                                                    <span class="stat-value" id="summaryCapitauxPropres">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">{% trans "Dettes Financières:" %}</span><br>
+                                                    <span class="stat-value" id="summaryDettesLongTerme">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">{% trans "Passif Circulant:" %}</span><br>
+                                                    <span class="stat-value" id="summaryDettesCourtTerme">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">{% trans "Total Général:" %}</span><br>
+                                                    <span class="stat-value text-primary" id="summaryTotal">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced btn-warning-enhanced" id="clearFormBtn">
+                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitAddBtn">
+                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer le Passif" %}
                             </button>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
+            </form>
+        </div>
+    </div>
+</div>
 
-                <!-- Passif list START -->
-                <div class="table-responsive border-0" id="passifList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
+<!-- Modal Détail Passif - Style Bilan -->
+<div class="modal fade enhanced-modal" id="detailPassifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-chart-bar me-2"></i>{% trans "Bilan Détaillé du Passif" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <h4 id="detailAnnee" class="mb-1"></h4>
+                                <p class="text-muted mb-0" id="detailAcheteur"></p>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="year-badge fs-6 mb-2" id="detailTotal"></span>
+                                <small class="text-muted" id="detailLastUpdated"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tableau style bilan comptable -->
+                <div class="table-responsive">
+                    <table class="bilan-table">
+                        <thead>
                             <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">CS</th>
-                                <th scope="col" class="border-0">PR</th>
-                                <th scope="col" class="border-0">ECA</th>
-                                <th scope="col" class="border-0">RE</th>
-                                <th scope="col" class="border-0">RAN</th>
-                                <th scope="col" class="border-0">REX</th>
-                                <th scope="col" class="border-0">SR</th>
-                                <th scope="col" class="border-0">PR</th>
-                                <th scope="col" class="border-0">EM</th>
-                                <th scope="col" class="border-0">DCBCA</th>
-                                <th scope="col" class="border-0">DDF</th>
-                                <th scope="col" class="border-0">PFRC</th>
-                                <th scope="col" class="border-0">DFD</th>
-                                <th scope="col" class="border-0">AAR</th>
-                                <th scope="col" class="border-0">DE</th>
-                                <th scope="col" class="border-0">DFS</th>
-                                <th scope="col" class="border-0">AD</th>
-                                <th scope="col" class="border-0">BCE</th>
-                                <th scope="col" class="border-0">BCC</th>
-                                <th scope="col" class="border-0">BD</th>
-                                <th scope="col" class="border-0">ECP</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
+                                <th style="width: 50%;">{% trans "PASSIF" %}</th>
+                                <th class="text-end" style="width: 25%;">{% trans "MONTANT" %}</th>
+                                <th class="text-end" style="width: 25%;">%</th>
                             </tr>
                         </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="passifTableBody"></tbody>
-                        <!-- Table body END -->
+                        <tbody id="bilanTableBody">
+                            <!-- Rempli par JavaScript -->
+                        </tbody>
                     </table>
                 </div>
-                <!-- Passif list END -->
             </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between w-100">
+                    <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Fermer" %}
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn-enhanced btn-danger-enhanced" id="deleteDetailBtn">
+                            <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                        </button>
+                        <button type="button" class="btn-enhanced btn-primary-enhanced" id="editDetailBtn">
+                            <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
+                        </button>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
         </div>
     </div>
 </div>
-<!-- PASSIFS END -->
 
-<!-- Add Passif Modal START -->
-<div class="modal fade" id="addPassifModal" tabindex="-1" aria-labelledby="addPassifModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Modification Passif -->
+<div class="modal fade enhanced-modal" id="editPassifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addPassifModalLabel">Ajouter un Passif</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Passif" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addPassifForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="capital_social" class="form-label">Capital Social</label>
-                        <input type="number" class="form-control" id="capital_social" name="capital_social" required>
+            <form id="editPassifForm" class="enhanced-form">
+                <input type="hidden" id="editPassifId" name="id">
+                
+                <div class="modal-body">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-3">{% trans "Chargement des données..." %}</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="primes" class="form-label">Primes</label>
-                        <input type="number" class="form-control" id="primes" name="primes" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced btn-warning-enhanced" id="resetEditFormBtn">
+                                <i class="fas fa-undo me-2"></i>{% trans "Réinitialiser" %}
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitEditBtn">
+                                <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="ecarts_de_reevaluation" class="form-label">ECA</label>
-                        <input type="number" class="form-control" id="ecarts_de_reevaluation" name="ecarts_de_reevaluation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reserve" class="form-label">Réserve</label>
-                        <input type="number" class="form-control" id="reserve" name="reserve" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="report_a_nouveau" class="form-label">Report à Nouveau</label>
-                        <input type="number" class="form-control" id="report_a_nouveau" name="report_a_nouveau" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="resultat_exercice" class="form-label">Résultat Exercice</label>
-                        <input type="number" class="form-control" id="resultat_exercice" name="resultat_exercice" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="subv_invest" class="form-label">Subvention Réglementée</label>
-                        <input type="number" class="form-control" id="subv_invest" name="subv_invest" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="provision_regl" class="form-label">Provision Réglementée</label>
-                        <input type="number" class="form-control" id="provision_regl" name="provision_regl" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="emprunts" class="form-label">Emprunts</label>
-                        <input type="number" class="form-control" id="emprunts" name="emprunts" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dette_credit_bail_contrat_assimile" class="form-label">Dette Crédit Bail Contrat Assimilé</label>
-                        <input type="number" class="form-control" id="dette_credit_bail_contrat_assimile" name="dette_credit_bail_contrat_assimile" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dettes_financiere_diverses" class="form-label">Dette Financière Diverses</label>
-                        <input type="number" class="form-control" id="dettes_financiere_diverses" name="dettes_financiere_diverses" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="provision_financiere_risque_charge" class="form-label">Provision Financière Risque Charge</label>
-                        <input type="number" class="form-control" id="provision_financiere_risque_charge" name="provision_financiere_risque_charge" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dettes_fournisseurs_divers" class="form-label">Dette Fournisseurs Divers</label>
-                        <input type="number" class="form-control" id="dettes_fournisseurs_divers" name="dettes_fournisseurs_divers" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="avance_et_acomptes_recu" class="form-label">Avance et Acomptes Recu</label>
-                        <input type="number" class="form-control" id="avance_et_acomptes_recu" name="avance_et_acomptes_recu" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dette" class="form-label">Dette</label>
-                        <input type="number" class="form-control" id="dette" name="dettes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dette_fiscales_sociales" class="form-label">Dette Fiscales Sociales</label>
-                        <input type="number" class="form-control" id="dette_fiscales_sociales" name="dette_fiscales_sociales" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_dettes" class="form-label">Autres Dette</label>
-                        <input type="number" class="form-control" id="autres_dettes" name="autres_dettes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="banques_credit_escompte" class="form-label">Banques Crédit Escompte</label>
-                        <input type="number" class="form-control" id="banques_credit_escompte" name="banques_credit_escompte" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="banque_credit_caisse" class="form-label">Banque Crédit Caisse</label>
-                        <input type="number" class="form-control" id="banque_credit_caisse" name="banque_credit_caisse" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="banques_decouvert" class="form-label">Banques Découvert</label>
-                        <input type="number" class="form-control" id="banques_decouvert" name="banques_decouvert" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="ecart_conversion_passif" class="form-label">Ecart Conversion Passif</label>
-                        <input type="number" class="form-control" id="ecart_conversion_passif" name="ecart_conversion_passif" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="annee" class="form-label">Année</label>
-                        <select class="form-select" id="annee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: var(--shadow-xl);">
+            <div class="modal-header" style="background: var(--danger-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation de suppression" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt fa-4x" style="color: var(--color-danger);"></i>
+                </div>
+                <h6 class="fw-bold mb-2 text-danger">{% trans "Êtes-vous sûr de vouloir supprimer ce passif ?" %}</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Cette action est irréversible. Toutes les données associées à ce passif seront définitivement supprimées.
+                </p>
+                <div class="mt-3 p-3 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Année: <span id="deleteAnnee" class="fw-bold"></span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn-enhanced btn-danger-enhanced" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer définitivement" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Add Passif Modal END -->
-
-<!-- Edit Passif Modal START -->
-<div class="modal fade" id="editPassifModal" tabindex="-1" aria-labelledby="editPassifModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editPassifModalLabel">Editer un Passif</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editPassifForm">
-                    <input type="hidden" id="editPassifId" name="id">
-                    <div class="mb-3">
-                        <label for="editCapitalSocial" class="form-label">Capital Social</label>
-                        <input type="number" class="form-control" id="editCapitalSocial" name="capital_social" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editPrimes" class="form-label">Primes</label>
-                        <input type="number" class="form-control" id="editPrimes" name="primes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editEcartsDeReevaluation" class="form-label">ECA</label>
-                        <input type="number" class="form-control" id="editEcartsDeReevaluation" name="ecarts_de_reevaluation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editReserve" class="form-label">Réserve</label>
-                        <input type="number" class="form-control" id="editReserve" name="reserve" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editReportANouveau" class="form-label">Report à Nouveau</label>
-                        <input type="number" class="form-control" id="editReportANouveau" name="report_a_nouveau" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editResultatExercice" class="form-label">Résultat Exercice</label>
-                        <input type="number" class="form-control" id="editResultatExercice" name="resultat_exercice" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editSubventionReglementee" class="form-label">Subvention Réglementée</label>
-                        <input type="number" class="form-control" id="editSubventionReglementee" name="subv_invest" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editProvisionReglementee" class="form-label">Provision Réglementée</label>
-                        <input type="number" class="form-control" id="editProvisionReglementee" name="provision_reglementee" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editEmprunts" class="form-label">Emprunts</label>
-                        <input type="number" class="form-control" id="editEmprunts" name="emprunts" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDetteCreditBailContratAssimile" class="form-label">Dette Crédit Bail Contrat Assimilé</label>
-                        <input type="number" class="form-control" id="editDetteCreditBailContratAssimile" name="dette_credit_bail_contrat_assimile" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDetteFinanciereDiverses" class="form-label">Dette Financière Diverses</label>
-                        <input type="number" class="form-control" id="editDetteFinanciereDiverses" name="dettes_financiere_diverses" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editProvisionFinanciereRisqueCharge" class="form-label">Provision Financière Risque Charge</label>
-                        <input type="number" class="form-control" id="editProvisionFinanciereRisqueCharge" name="provision_financiere_risque_charge" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDetteFournisseursDivers" class="form-label">Dette Fournisseurs Divers</label>
-                        <input type="number" class="form-control" id="editDetteFournisseursDivers" name="dettes_fournisseurs_divers" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAvanceEtAcomptesRecu" class="form-label">Avance et Acomptes Recu</label>
-                        <input type="number" class="form-control" id="editAvanceEtAcomptesRecu" name="avance_et_acomptes_recu" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDette" class="form-label">Dette</label>
-                        <input type="number" class="form-control" id="editDette" name="dettes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDetteFiscalesSociales" class="form-label">Dette Fiscales Sociales</label>
-                        <input type="number" class="form-control" id="editDetteFiscalesSociales" name="dettes_fiscales_sociales" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresDettes" class="form-label">Autres Dette</label>
-                        <input type="number" class="form-control" id="editAutresDettes" name="autres_dettes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editBanquesCreditEscompte" class="form-label">Banques Crédit Escompte</label>
-                        <input type="number" class="form-control" id="editBanquesCreditEscompte" name="banques_credit_escompte" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editBanqueCreditCaisse" class="form-label">Banque Crédit Caisse</label>
-                        <input type="number" class="form-control" id="editBanqueCreditCaisse" name="banque_credit_caisse" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editBanquesDecouvert" class="form-label">Banques Découvert</label>
-                        <input type="number" class="form-control" id="editBanquesDecouvert" name="banques_decouvert" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editEcartConversionPassif" class="form-label">Ecart Conversion Passif</label>
-                        <input type="number" class="form-control" id="editEcartConversionPassif" name="ecart_conversion_passif" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAnnee" class="form-label">Année</label>
-                        <select class="form-select" id="editAnnee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Edit Passif Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#description, #editDescription, #editCommentaire, #commentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
-        $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function(response) {
-                console.log(response);
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
-                });
-                console.error("Erreur AJAX :", xhr.responseText);
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let passifsData = [];
+    let selectedPassifId = null;
+    const ACHETEUR_ID = '{{ id_acheteur }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: function() {
+                return $(this).closest('.modal');
             }
         });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load passifs data
-        function loadPassifs(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-classique/liste-des-passifs/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update passifs table body
-                    $('#passifTableBody').html('');
-                    response.results.forEach(function(passif, index) {
-                        $('#passifTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td class="text-success">' + passif.capital_social + '</td>' +
-                            '<td class="text-success">' + passif.primes + '</td>' +
-                            '<td class="text-success">' + passif.ecarts_de_reevaluation + '</td>' +
-                            '<td class="text-success">' + passif.reserve + '</td>' +
-                            '<td class="text-success">' + passif.report_a_nouveau + '</td>' +
-                            '<td class="text-success">' + passif.resultat_exercice + '</td>' +
-                            '<td class="text-success">' + passif.subv_invest + '</td>' +
-                            '<td class="text-success">' + passif.provision_regl + '</td>' +
-                            '<td class="text-success">' + passif.emprunts + '</td>' +
-                            '<td class="text-success">' + passif.dette_credit_bail_contrat_assimile + '</td>' +
-                            '<td class="text-success">' + passif.dettes_financiere_diverses + '</td>' +
-                            '<td class="text-success">' + passif.provision_financiere_risque_charge + '</td>' +
-                            '<td class="text-success">' + passif.dettes_fournisseurs_divers + '</td>' +
-                            '<td class="text-success">' + passif.avance_et_acomptes_recu + '</td>' +
-                            '<td class="text-success">' + passif.dettes + '</td>' +
-                            '<td class="text-success">' + passif.dettes_fiscales_sociales + '</td>' +
-                            '<td class="text-success">' + passif.autres_dettes + '</td>' +
-                            '<td class="text-success">' + passif.banques_credit_escompte + '</td>' +
-                            '<td class="text-success">' + passif.banque_credit_caisse + '</td>' +
-                            '<td class="text-success">' + passif.banques_decouvert + '</td>' +
-                            '<td class="text-success">' + passif.ecart_conversion_passif + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + passif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + passif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadPassifs();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadPassifs(1, search);
+    }
+    
+    // Initialiser les tooltips
+    function initTooltips() {
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        $('.legend-item').tooltip({
+            placement: 'top',
+            trigger: 'hover'
         });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadPassifs(page, search);
+    }
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
         });
+    }
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateFormSummaries() {
+        let totalCapitauxPropres = 0;
+        let totalDettesLongTerme = 0;
+        let totalDettesCourtTerme = 0;
+        let totalTresoreriePassive = 0;
+        let totalGeneral = 0;
 
-        // Add Passif form submission
-        $('#addPassifForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            console.log(formData);
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-classique/ajouter-un-passif/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Passif ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addPassifModal').modal('hide');
-                        loadPassifs();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout du passif.',
-                    });
-                }
-            });
-        });
+        const capitauxPropresFields = [
+            'capital_social', 'primes', 'ecarts_de_reevaluation', 'reserve',
+            'report_a_nouveau', 'resultat_exercice', 'subv_invest', 'provision_regl'
+        ];
+        const dettesLongTermeFields = [
+            'emprunts', 'dette_credit_bail_contrat_assimile',
+            'dettes_financiere_diverses', 'provision_financiere_risque_charge'
+        ];
+        const dettesCourtTermeFields = [
+            'dettes_fournisseurs_divers', 'avance_et_acomptes_recu',
+            'dette', 'dette_fiscales_sociales', 'autres_dettes'
+        ];
+        const tresoreriePassiveFields = [
+            'banques_credit_escompte', 'banque_credit_caisse',
+            'banques_decouvert', 'ecart_conversion_passif'
+        ];
 
-        // Edit Passif button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-classique/editer-un-passif/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editPassifId').val(response.id);
-                    $('#editCapitalSocial').val(response.capital_social);
-                    $('#editPrimes').val(response.primes);
-                    $('#editEcartsDeReevaluation').val(response.ecarts_de_reevaluation);
-                    $('#editReserve').val(response.reserve);
-                    $('#editReportANouveau').val(response.report_a_nouveau);
-                    $('#editResultatExercice').val(response.resultat_exercice);
-                    $('#editSubventionReglementee').val(response.subv_invest);
-                    $('#editProvisionReglementee').val(response.provision_regl);
-                    $('#editEmprunts').val(response.emprunts);
-                    $('#editDetteCreditBailContratAssimile').val(response.dette_credit_bail_contrat_assimile);
-                    $('#editDetteFinanciereDiverses').val(response.dettes_financiere_diverses);
-                    $('#editProvisionFinanciereRisqueCharge').val(response.provision_financiere_risque_charge);
-                    $('#editDetteFournisseursDivers').val(response.dettes_fournisseurs_divers);
-                    $('#editAvanceEtAcomptesRecu').val(response.avance_et_acomptes_recu);
-                    $('#editDette').val(response.dettes);
-                    $('#editDetteFiscalesSociales').val(response.dettes_fiscales_sociales);
-                    $('#editAutresDettes').val(response.autres_dettes);
-                    $('#editBanquesCreditEscompte').val(response.banques_credit_escompte);
-                    $('#editBanqueCreditCaisse').val(response.banque_credit_caisse);
-                    $('#editBanquesDecouvert').val(response.banques_decouvert);
-                    $('#editEcartConversionPassif').val(response.ecart_conversion_passif);
-                    $('#editAnnee').val(response.annee);
-                    $('#editPassifModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données du passif.',
-                    });
-                }
-            });
-        });
+        capitauxPropresFields.forEach(f => { totalCapitauxPropres += parseFloat($(`#${f}`).val()) || 0; });
+        dettesLongTermeFields.forEach(f => { totalDettesLongTerme += parseFloat($(`#${f}`).val()) || 0; });
+        dettesCourtTermeFields.forEach(f => { totalDettesCourtTerme += parseFloat($(`#${f}`).val()) || 0; });
+        tresoreriePassiveFields.forEach(f => { totalTresoreriePassive += parseFloat($(`#${f}`).val()) || 0; });
 
-        // Edit Passif form submission
-        $('#editPassifForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editPassifId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-classique/editer-un-passif/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Passif mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editPassifModal').modal('hide');
-                        loadPassifs();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour du passif.',
-                    });
-                }
-            });
-        });
+        totalGeneral = totalCapitauxPropres + totalDettesLongTerme + totalDettesCourtTerme + totalTresoreriePassive;
 
-        // Delete Passif button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
+        $('#summaryCapitauxPropres').text(formatNumber(totalCapitauxPropres));
+        $('#summaryDettesLongTerme').text(formatNumber(totalDettesLongTerme));
+        $('#summaryDettesCourtTerme').text(formatNumber(totalDettesCourtTerme));
+        $('#summaryTotal').text(formatNumber(totalGeneral));
+    }
+        
+    // Écouter les changements dans les champs de formulaire
+    function setupFormListeners() {
+        $('input[type="number"]').on('input', updateFormSummaries);
+        
+        $('#clearFormBtn').on('click', function() {
             Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
+                title: 'Effacer le formulaire ?',
+                text: 'Toutes les données saisies seront perdues.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, effacer',
+                cancelButtonText: 'Annuler'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-classique/supprimer-des-passifs/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'Le passif a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadPassifs();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression du passif.',
-                            });
-                        }
-                    });
+                    $('#addPassifForm')[0].reset();
+                    $('#annee').val(null).trigger('change');
+                    updateFormSummaries();
                 }
             });
         });
+        
+        $('#resetEditFormBtn').on('click', function() {
+            Swal.fire({
+                title: 'Réinitialiser les modifications ?',
+                text: 'Toutes les modifications seront perdues et les valeurs d\'origine restaurées.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, réinitialiser',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    loadPassifForEdit(selectedPassifId);
+                }
+            });
+        });
+    }
 
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
+    // Charger les passifs
+    function loadPassifs() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-classique/liste-des-passifs/?page=${currentPage}&search=${currentSearch}`;
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#passifsTableBody').html(`
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-2 text-muted">Chargement des données...</p>
+                        </td>
+                    </tr>
+                `);
+            },
+            success: function(response) {
+                passifsData = response.results;
+                updateTable(passifsData);
+                updatePagination(response);
+                updateStats(passifsData);
+            },
+            error: function(xhr) {
+                $('#passifsTableBody').html(`
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données. Veuillez réessayer.</p>
+                            <button class="btn btn-sm btn-primary" onclick="loadPassifs()">
+                                <i class="fas fa-redo me-1"></i>Réessayer
+                            </button>
+                        </td>
+                    </tr>
+                `);
+                console.error('Erreur lors du chargement des passifs:', xhr);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadPassifs);
                 }
             }
         });
+    }
 
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
+    // Mettre à jour le tableau
+    function updateTable(passifs) {
+        const tbody = $('#passifsTableBody');
+        tbody.empty();
+        
+        if (passifs.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun passif trouvé</h5>
+                        <p class="text-muted mb-0">Cliquez sur "Nouveau Passif" pour en ajouter un</p>
+                    </td>
+                </tr>
+            `);
+            $('#passifsTableFooter').hide();
+            return;
+        }
+        
+        let totaux = {
+            capitauxPropres: 0,
+            dettesLongTerme: 0,
+            dettesCourtTerme: 0,
+            tresoreriePassive: 0,
+            general: 0
+        };
+        
+        passifs.forEach((passif) => {
+            const year = passif.annee?.annee || 'N/A';
+            
+            // Calculer les totaux pour cette ligne
+            const totalCapitauxPropres = 
+                parseFloat(passif.capital_social || 0) +
+                parseFloat(passif.primes || 0) +
+                parseFloat(passif.ecarts_de_reevaluation || 0) +
+                parseFloat(passif.reserve || 0) +
+                parseFloat(passif.report_a_nouveau || 0) +
+                parseFloat(passif.resultat_exercice || 0) +
+                parseFloat(passif.subv_invest || 0) +
+                parseFloat(passif.provision_regl || 0);
+            
+            const totalDettesLongTerme = 
+                parseFloat(passif.emprunts || 0) +
+                parseFloat(passif.dette_credit_bail_contrat_assimile || 0) +
+                parseFloat(passif.dettes_financiere_diverses || 0) +
+                parseFloat(passif.provision_financiere_risque_charge || 0);
+            
+            const totalDettesCourtTerme = 
+                parseFloat(passif.dettes_fournisseurs_divers || 0) +
+                parseFloat(passif.avance_et_acomptes_recu || 0) +
+                parseFloat(passif.dettes || 0) +
+                parseFloat(passif.dettes_fiscales_sociales || 0) +
+                parseFloat(passif.autres_dettes || 0);
+            
+            const totalTresoreriePassive = 
+                parseFloat(passif.banques_credit_escompte || 0) +
+                parseFloat(passif.banque_credit_caisse || 0) +
+                parseFloat(passif.banques_decouvert || 0) +
+                parseFloat(passif.ecart_conversion_passif || 0);
+            
+            const totalGeneral = totalCapitauxPropres + totalDettesLongTerme + totalDettesCourtTerme + totalTresoreriePassive;
+            
+            // Ajouter aux totaux globaux
+            totaux.capitauxPropres += totalCapitauxPropres;
+            totaux.dettesLongTerme += totalDettesLongTerme;
+            totaux.dettesCourtTerme += totalDettesCourtTerme;
+            totaux.tresoreriePassive += totalTresoreriePassive;
+            totaux.general += totalGeneral;
+            
+            const row = `
+                <tr data-id="${passif.id}" class="passif-row">
+                    <td>
+                        <span class="year-badge">
+                            <i class="fas fa-calendar me-1"></i>${year}
+                        </span>
+                    </td>
+                    <td class="value-cell value-positive">
+                        ${formatNumber(totalCapitauxPropres)}
+                    </td>
+                    <td class="value-cell ${totalDettesLongTerme > 0 ? 'value-negative' : 'value-zero'}">
+                        ${formatNumber(totalDettesLongTerme)}
+                    </td>
+                    <td class="value-cell ${totalDettesCourtTerme > 0 ? 'value-negative' : 'value-zero'}">
+                        ${formatNumber(totalDettesCourtTerme)}
+                    </td>
+                    <td class="value-cell ${totalTresoreriePassive > 0 ? 'value-negative' : 'value-zero'}">
+                        ${formatNumber(totalTresoreriePassive)}
+                    </td>
+                    <td class="value-cell value-negative fw-bold">
+                        ${formatNumber(totalGeneral)}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary detail-btn" data-id="${passif.id}" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning edit-btn" data-id="${passif.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${passif.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer
+        $('#footerCapitauxPropres').text(formatNumber(totaux.capitauxPropres));
+        $('#footerDettesLongTerme').text(formatNumber(totaux.dettesLongTerme));
+        $('#footerDettesCourtTerme').text(formatNumber(totaux.dettesCourtTerme));
+        $('#footerTresoreriePassive').text(formatNumber(totaux.tresoreriePassive));
+        $('#footerGeneral').text(formatNumber(totaux.general));
+        $('#passifsTableFooter').show();
+    }
+
+    // Mettre à jour les statistiques
+    function updateStats(passifs) {
+        let totalCapitauxPropres = 0;
+        let totalDettesLongTerme = 0;
+        let totalDettesCourtTerme = 0;
+        let totalTresoreriePassive = 0;
+        
+        passifs.forEach(passif => {
+            totalCapitauxPropres += 
+                parseFloat(passif.capital_social || 0) +
+                parseFloat(passif.primes || 0) +
+                parseFloat(passif.ecarts_de_reevaluation || 0) +
+                parseFloat(passif.reserve || 0) +
+                parseFloat(passif.report_a_nouveau || 0) +
+                parseFloat(passif.resultat_exercice || 0) +
+                parseFloat(passif.subv_invest || 0) +
+                parseFloat(passif.provision_regl || 0);
+            
+            totalDettesLongTerme += 
+                parseFloat(passif.emprunts || 0) +
+                parseFloat(passif.dette_credit_bail_contrat_assimile || 0) +
+                parseFloat(passif.dettes_financiere_diverses || 0) +
+                parseFloat(passif.provision_financiere_risque_charge || 0);
+            
+            totalDettesCourtTerme += 
+                parseFloat(passif.dettes_fournisseurs_divers || 0) +
+                parseFloat(passif.avance_et_acomptes_recu || 0) +
+                parseFloat(passif.dettes || 0) +
+                parseFloat(passif.dettes_fiscales_sociales || 0) +
+                parseFloat(passif.autres_dettes || 0);
+            
+            totalTresoreriePassive += 
+                parseFloat(passif.banques_credit_escompte || 0) +
+                parseFloat(passif.banque_credit_caisse || 0) +
+                parseFloat(passif.banques_decouvert || 0) +
+                parseFloat(passif.ecart_conversion_passif || 0);
+        });
+        
+        const totalGeneral = totalCapitauxPropres + totalDettesLongTerme + totalDettesCourtTerme + totalTresoreriePassive;
+        
+        $('#countCapitauxPropres').text(formatNumber(totalCapitauxPropres));
+        $('#countDettesLongTerme').text(formatNumber(totalDettesLongTerme));
+        $('#countDettesCourtTerme').text(formatNumber(totalDettesCourtTerme));
+        $('#countTresoreriePassive').text(formatNumber(totalTresoreriePassive));
+        
+        const maxValue = Math.max(totalCapitauxPropres, totalDettesLongTerme, totalDettesCourtTerme, totalTresoreriePassive);
+        
+        if (maxValue > 0) {
+            $('#progressCapitauxPropres').css('width', (totalCapitauxPropres / maxValue * 100) + '%');
+            $('#progressDettesLongTerme').css('width', (totalDettesLongTerme / maxValue * 100) + '%');
+            $('#progressDettesCourtTerme').css('width', (totalDettesCourtTerme / maxValue * 100) + '%');
+            $('#progressTresoreriePassive').css('width', (totalTresoreriePassive / maxValue * 100) + '%');
+        }
+        
+        $('#tableInfo').text(`${passifs.length} passif(s) chargé(s) | Total général: ${formatNumber(totalGeneral)}`);
+    }
+
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} passifs`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadPassifs();
+        }, 500);
+    });
+
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadPassifs();
+            $('html, body').animate({
+                scrollTop: $('#passifsTableBody').offset().top - 100
+            }, 500);
         }
     });
-</script>
 
+    // Voir les détails d'un passif
+    $(document).on('click', '.detail-btn', function() {
+        const passifId = $(this).data('id');
+        const passif = passifsData.find(p => p.id === passifId);
+        
+        if (passif) {
+            showDetailModal(passif);
+        }
+    });
+
+    // Afficher le modal de détails - Style bilan
+    function showDetailModal(passif) {
+        selectedPassifId = passif.id;
+        
+        const year = passif.annee?.annee || 'N/A';
+        $('#detailAnnee').text(`Passif ${year}`);
+        $('#detailAcheteur').text('{{ acheteur.nom }}');
+        
+        // Calculer les totaux
+        const totalCapitauxPropres = 
+            parseFloat(passif.capital_social || 0) +
+            parseFloat(passif.primes || 0) +
+            parseFloat(passif.ecarts_de_reevaluation || 0) +
+            parseFloat(passif.reserve || 0) +
+            parseFloat(passif.report_a_nouveau || 0) +
+            parseFloat(passif.resultat_exercice || 0) +
+            parseFloat(passif.subv_invest || 0) +
+            parseFloat(passif.provision_regl || 0);
+        
+        const totalDettesLongTerme = 
+            parseFloat(passif.emprunts || 0) +
+            parseFloat(passif.dette_credit_bail_contrat_assimile || 0) +
+            parseFloat(passif.dettes_financiere_diverses || 0) +
+            parseFloat(passif.provision_financiere_risque_charge || 0);
+        
+        const totalDettesCourtTerme = 
+            parseFloat(passif.dettes_fournisseurs_divers || 0) +
+            parseFloat(passif.avance_et_acomptes_recu || 0) +
+            parseFloat(passif.dettes || 0) +
+            parseFloat(passif.dettes_fiscales_sociales || 0) +
+            parseFloat(passif.autres_dettes || 0);
+        
+        const totalTresoreriePassive = 
+            parseFloat(passif.banques_credit_escompte || 0) +
+            parseFloat(passif.banque_credit_caisse || 0) +
+            parseFloat(passif.banques_decouvert || 0) +
+            parseFloat(passif.ecart_conversion_passif || 0);
+        
+        const totalGeneral = totalCapitauxPropres + totalDettesLongTerme + totalDettesCourtTerme + totalTresoreriePassive;
+        
+        $('#detailTotal').text('Total: ' + formatNumber(totalGeneral));
+        $('#detailLastUpdated').text('Dernière mise à jour: ' + new Date().toLocaleDateString('fr-FR'));
+        
+        // Remplir le tableau style bilan
+        const tbody = $('#bilanTableBody');
+        tbody.empty();
+        
+        // Fonction helper pour calculer le pourcentage
+        const calcPercent = (value, total) => {
+            if (total === 0) return '0.00';
+            return ((value / total) * 100).toFixed(2);
+        };
+        
+        // CAPITAUX PROPRES
+        tbody.append(`
+            <tr class="section-header">
+                <td colspan="3">CAPITAUX PROPRES</td>
+            </tr>
+        `);
+        
+        tbody.append(`
+            <tr>
+                <td class="indent-1">Capital Social</td>
+                <td class="text-end">${formatNumber(passif.capital_social)}</td>
+                <td class="text-end">${calcPercent(passif.capital_social, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Primes</td>
+                <td class="text-end">${formatNumber(passif.primes)}</td>
+                <td class="text-end">${calcPercent(passif.primes, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Écarts de Réévaluation</td>
+                <td class="text-end">${formatNumber(passif.ecarts_de_reevaluation)}</td>
+                <td class="text-end">${calcPercent(passif.ecarts_de_reevaluation, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Réserve</td>
+                <td class="text-end">${formatNumber(passif.reserve)}</td>
+                <td class="text-end">${calcPercent(passif.reserve, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Report à Nouveau</td>
+                <td class="text-end">${formatNumber(passif.report_a_nouveau)}</td>
+                <td class="text-end">${calcPercent(passif.report_a_nouveau, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Résultat Exercice</td>
+                <td class="text-end">${formatNumber(passif.resultat_exercice)}</td>
+                <td class="text-end">${calcPercent(passif.resultat_exercice, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Subvention Réglementée</td>
+                <td class="text-end">${formatNumber(passif.subv_invest)}</td>
+                <td class="text-end">${calcPercent(passif.subv_invest, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Provision Réglementée</td>
+                <td class="text-end">${formatNumber(passif.provision_regl)}</td>
+                <td class="text-end">${calcPercent(passif.provision_regl, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // Total Capitaux Propres
+        tbody.append(`
+            <tr class="total-row">
+                <td>TOTAL CAPITAUX PROPRES</td>
+                <td class="text-end">${formatNumber(totalCapitauxPropres)}</td>
+                <td class="text-end">${calcPercent(totalCapitauxPropres, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // DETTES À LONG TERME
+        tbody.append(`
+            <tr class="section-header">
+                <td colspan="3">DETTES À LONG TERME</td>
+            </tr>
+        `);
+        
+        tbody.append(`
+            <tr>
+                <td class="indent-1">Emprunts</td>
+                <td class="text-end">${formatNumber(passif.emprunts)}</td>
+                <td class="text-end">${calcPercent(passif.emprunts, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Dette Crédit Bail Contrat Assimilé</td>
+                <td class="text-end">${formatNumber(passif.dette_credit_bail_contrat_assimile)}</td>
+                <td class="text-end">${calcPercent(passif.dette_credit_bail_contrat_assimile, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Dettes Financières Diverses</td>
+                <td class="text-end">${formatNumber(passif.dettes_financiere_diverses)}</td>
+                <td class="text-end">${calcPercent(passif.dettes_financiere_diverses, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Provision Financière Risque Charge</td>
+                <td class="text-end">${formatNumber(passif.provision_financiere_risque_charge)}</td>
+                <td class="text-end">${calcPercent(passif.provision_financiere_risque_charge, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // Total Dettes Long Terme
+        tbody.append(`
+            <tr class="total-row">
+                <td>TOTAL DETTES LONG TERME</td>
+                <td class="text-end">${formatNumber(totalDettesLongTerme)}</td>
+                <td class="text-end">${calcPercent(totalDettesLongTerme, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // DETTES À COURT TERME
+        tbody.append(`
+            <tr class="section-header">
+                <td colspan="3">DETTES À COURT TERME</td>
+            </tr>
+        `);
+        
+        tbody.append(`
+            <tr>
+                <td class="indent-1">Dette Fournisseurs Divers</td>
+                <td class="text-end">${formatNumber(passif.dettes_fournisseurs_divers)}</td>
+                <td class="text-end">${calcPercent(passif.dettes_fournisseurs_divers, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Avance et Acomptes Reçus</td>
+                <td class="text-end">${formatNumber(passif.avance_et_acomptes_recu)}</td>
+                <td class="text-end">${calcPercent(passif.avance_et_acomptes_recu, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Dettes</td>
+                <td class="text-end">${formatNumber(passif.dettes)}</td>
+                <td class="text-end">${calcPercent(passif.dettes, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Dette Fiscales Sociales</td>
+                <td class="text-end">${formatNumber(passif.dettes_fiscales_sociales)}</td>
+                <td class="text-end">${calcPercent(passif.dettes_fiscales_sociales, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Autres Dettes</td>
+                <td class="text-end">${formatNumber(passif.autres_dettes)}</td>
+                <td class="text-end">${calcPercent(passif.autres_dettes, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // Total Dettes Court Terme
+        tbody.append(`
+            <tr class="total-row">
+                <td>TOTAL DETTES COURT TERME</td>
+                <td class="text-end">${formatNumber(totalDettesCourtTerme)}</td>
+                <td class="text-end">${calcPercent(totalDettesCourtTerme, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // TRÉSORERIE PASSIVE
+        tbody.append(`
+            <tr class="section-header">
+                <td colspan="3">TRÉSORERIE PASSIVE</td>
+            </tr>
+        `);
+        
+        tbody.append(`
+            <tr>
+                <td class="indent-1">Banques Crédit Escompte</td>
+                <td class="text-end">${formatNumber(passif.banques_credit_escompte)}</td>
+                <td class="text-end">${calcPercent(passif.banques_credit_escompte, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Banque Crédit Caisse</td>
+                <td class="text-end">${formatNumber(passif.banque_credit_caisse)}</td>
+                <td class="text-end">${calcPercent(passif.banque_credit_caisse, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Banques Découvert</td>
+                <td class="text-end">${formatNumber(passif.banques_decouvert)}</td>
+                <td class="text-end">${calcPercent(passif.banques_decouvert, totalGeneral)}%</td>
+            </tr>
+            <tr>
+                <td class="indent-1">Écart Conversion Passif</td>
+                <td class="text-end">${formatNumber(passif.ecart_conversion_passif)}</td>
+                <td class="text-end">${calcPercent(passif.ecart_conversion_passif, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // Total Trésorerie Passive
+        tbody.append(`
+            <tr class="total-row">
+                <td>TOTAL TRÉSORERIE PASSIVE</td>
+                <td class="text-end">${formatNumber(totalTresoreriePassive)}</td>
+                <td class="text-end">${calcPercent(totalTresoreriePassive, totalGeneral)}%</td>
+            </tr>
+        `);
+        
+        // TOTAL GÉNÉRAL
+        tbody.append(`
+            <tr class="grand-total-row">
+                <td>TOTAL GÉNÉRAL</td>
+                <td class="text-end">${formatNumber(totalGeneral)}</td>
+                <td class="text-end">100.00%</td>
+            </tr>
+        `);
+        
+        $('#detailPassifModal').modal('show');
+    }
+
+    // Éditer un passif
+    $(document).on('click', '.edit-btn', function() {
+        const passifId = $(this).data('id');
+        selectedPassifId = passifId;
+        loadPassifForEdit(passifId);
+    });
+
+    // Charger un passif pour modification
+    function loadPassifForEdit(passifId) {
+        $('#editPassifModal').modal('show');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/editer-un-passif/${passifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Cloner le HTML du formulaire d'ajout
+                const addFormHTML = $('#addPassifForm').html();
+                $('#editPassifForm .modal-body').html(addFormHTML);
+                
+                // Changer les IDs pour éviter les conflits
+                $('#editPassifForm .modal-body').find('input, select, textarea').each(function() {
+                    const oldId = $(this).attr('id');
+                    if (oldId) {
+                        $(this).attr('id', 'edit_' + oldId);
+                        $(this).attr('name', $(this).attr('name')); // Garder le même name
+                    }
+                });
+                
+                // Mettre à jour les IDs des labels
+                $('#editPassifForm .modal-body').find('label').each(function() {
+                    const oldFor = $(this).attr('for');
+                    if (oldFor) {
+                        $(this).attr('for', 'edit_' + oldFor);
+                    }
+                });
+                
+                // Remplir les champs avec les données
+                $('#editPassifId').val(response.id);
+                
+                // Liste de tous les champs
+                const fields = [
+                    'capital_social', 'primes', 'ecarts_de_reevaluation', 'reserve',
+                    'report_a_nouveau', 'resultat_exercice', 'subv_invest', 'provision_regl',
+                    'emprunts', 'dette_credit_bail_contrat_assimile', 'dettes_financiere_diverses',
+                    'provision_financiere_risque_charge', 'dettes_fournisseurs_divers',
+                    'avance_et_acomptes_recu', 'dette', 'dette_fiscales_sociales', 'autres_dettes',
+                    'banques_credit_escompte', 'banque_credit_caisse', 'banques_decouvert',
+                    'ecart_conversion_passif'
+                ];
+                
+                fields.forEach(field => {
+                    const editFieldId = 'edit_' + field;
+                    if (response[field] !== undefined && response[field] !== null) {
+                        $(`#${editFieldId}`).val(response[field]);
+                    }
+                });
+                
+                // Remplir l'année
+                if (response.annee) {
+                    $('#edit_annee').val(response.annee).trigger('change');
+                }
+                
+                // Réinitialiser Select2
+                initSelect2();
+                
+                // Mettre à jour les résumés
+                updateEditFormSummaries();
+                
+                // Configurer les écouteurs
+                $('#editPassifForm input[type="number"]').on('input', updateEditFormSummaries);
+                
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement du passif:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données du passif.'
+                });
+                $('#editPassifModal').modal('hide');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadPassifForEdit(passifId));
+                }
+            }
+        });
+    }
+
+    // Mettre à jour les résumés du formulaire d'édition
+    function updateEditFormSummaries() {
+        let totalCapitauxPropres = 0;
+        let totalDettesLongTerme = 0;
+        let totalDettesCourtTerme = 0;
+        let totalTresoreriePassive = 0;
+        let totalGeneral = 0;
+
+        const capitauxPropresFields = [
+            'edit_capital_social', 'edit_primes', 'edit_ecarts_de_reevaluation', 'edit_reserve',
+            'edit_report_a_nouveau', 'edit_resultat_exercice', 'edit_subv_invest', 'edit_provision_regl'
+        ];
+        const dettesLongTermeFields = [
+            'edit_emprunts', 'edit_dette_credit_bail_contrat_assimile',
+            'edit_dettes_financiere_diverses', 'edit_provision_financiere_risque_charge'
+        ];
+        const dettesCourtTermeFields = [
+            'edit_dettes_fournisseurs_divers', 'edit_avance_et_acomptes_recu',
+            'edit_dette', 'edit_dette_fiscales_sociales', 'edit_autres_dettes'
+        ];
+        const tresoreriePassiveFields = [
+            'edit_banques_credit_escompte', 'edit_banque_credit_caisse',
+            'edit_banques_decouvert', 'edit_ecart_conversion_passif'
+        ];
+
+        capitauxPropresFields.forEach(f => { totalCapitauxPropres += parseFloat($(`#${f}`).val()) || 0; });
+        dettesLongTermeFields.forEach(f => { totalDettesLongTerme += parseFloat($(`#${f}`).val()) || 0; });
+        dettesCourtTermeFields.forEach(f => { totalDettesCourtTerme += parseFloat($(`#${f}`).val()) || 0; });
+        tresoreriePassiveFields.forEach(f => { totalTresoreriePassive += parseFloat($(`#${f}`).val()) || 0; });
+
+        totalGeneral = totalCapitauxPropres + totalDettesLongTerme + totalDettesCourtTerme + totalTresoreriePassive;
+
+        $('#editPassifForm #summaryCapitauxPropres').text(formatNumber(totalCapitauxPropres));
+        $('#editPassifForm #summaryDettesLongTerme').text(formatNumber(totalDettesLongTerme));
+        $('#editPassifForm #summaryDettesCourtTerme').text(formatNumber(totalDettesCourtTerme));
+        $('#editPassifForm #summaryTotal').text(formatNumber(totalGeneral));
+    }
+
+    // Soumettre le formulaire d'ajout
+    $('#addPassifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#submitAddBtn');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/ajouter-un-passif/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#addPassifModal').modal('hide');
+                $('#addPassifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                updateFormSummaries();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Passif ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadPassifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addPassifForm').submit());
+                }
+            }
+        });
+    });
+
+    // Soumettre le formulaire d'édition
+    $('#editPassifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#submitEditBtn');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/editer-un-passif/${selectedPassifId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#editPassifModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Passif mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadPassifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editPassifForm').submit());
+                }
+            }
+        });
+    });
+
+    // Supprimer un passif
+    $(document).on('click', '.delete-btn', function() {
+        const passifId = $(this).data('id');
+        const passif = passifsData.find(p => p.id === passifId);
+        
+        if (passif) {
+            selectedPassifId = passifId;
+            $('#deleteAnnee').text(passif.annee?.annee || 'N/A');
+            $('#confirmDeleteModal').modal('show');
+        }
+    });
+
+    $('#deleteDetailBtn').on('click', function() {
+        const passif = passifsData.find(p => p.id === selectedPassifId);
+        if (passif) {
+            $('#deleteAnnee').text(passif.annee?.annee || 'N/A');
+            $('#detailPassifModal').modal('hide');
+            $('#confirmDeleteModal').modal('show');
+        }
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/supprimer-des-passifs/`,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: [selectedPassifId] }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Supprimé',
+                    text: 'Passif supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadPassifs();
+            },
+            error: function(xhr) {
+                let errorMessage = 'Une erreur est survenue lors de la suppression';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#confirmDeleteBtn').click());
+                }
+            }
+        });
+    });
+
+    $('#editDetailBtn').on('click', function() {
+        $('#detailPassifModal').modal('hide');
+        if (selectedPassifId) {
+            loadPassifForEdit(selectedPassifId);
+        }
+    });
+
+    // Actions rapides
+    $('#viewSummaryBtn, #compareYearsBtn').on('click', function(e) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'info',
+            title: 'Fonctionnalité en développement',
+            text: 'Cette fonctionnalité sera bientôt disponible.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    });
+
+    $('#generateReportBtn').on('click', function(e) {
+        e.preventDefault();
+        Swal.fire({
+            icon: 'info',
+            title: 'Génération de rapport',
+            text: 'Fonctionnalité de génération de rapport en cours de développement...',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    });
+
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialisation
+    function init() {
+        initSelect2();
+        initTooltips();
+        setupFormListeners();
+        loadPassifs();
+        updateFormSummaries();
+        
+        setTimeout(() => {
+            $('.category-card').addClass('animate-in');
+        }, 100);
+    }
+
+    init();
+
+});
+</script>
 {% endblock %}

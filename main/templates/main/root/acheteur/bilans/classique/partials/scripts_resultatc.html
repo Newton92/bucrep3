@@ -1,0 +1,226 @@
+{% load i18n %}
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+
+    function refreshAccessToken() {
+        $.ajax({
+            url: "{% url 'token_refresh' %}",
+            type: 'POST',
+            data: { 'refresh': refreshToken },
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            success: function(response) {
+                accessToken = response.access;
+            },
+            error: function() {
+                console.error("Échec du rafraîchissement automatique du jeton.");
+            }
+        });
+    }
+    setInterval(refreshAccessToken, 240000);
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializeResultatCCalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            const ca = p($(`input[name="vente_de_mdses_${suffix}"]`).val()) + p($(`input[name="ventes_de_produits_fabriques_${suffix}"]`).val()) + p($(`input[name="travaux_services_vendus_${suffix}"]`).val()) + p($(`input[name="produit_accessoires_${suffix}"]`).val());
+            const totalI = ca + p($(`input[name="production_imblise_${suffix}"]`).val()) + p($(`input[name="subventions_exploitations_${suffix}"]`).val()) + p($(`input[name="production_stockee_${suffix}"]`).val()) + p($(`input[name="reprises_de_provision_${suffix}"]`).val()) + p($(`input[name="transferts_charges_${suffix}"]`).val()) + p($(`input[name="autres_produits_${suffix}"]`).val());
+            const totalII = p($(`input[name="achat_mdses_${suffix}"]`).val()) + p($(`input[name="variation_stock_mdses_${suffix}"]`).val()) + p($(`input[name="achat_mp_autres_appro_${suffix}"]`).val()) + p($(`input[name="var_stk_mp_app_${suffix}"]`).val()) + p($(`input[name="autres_achats_${suffix}"]`).val()) + p($(`input[name="variation_de_stocks_autres_appro_${suffix}"]`).val()) + p($(`input[name="transports_${suffix}"]`).val()) + p($(`input[name="services_ext_${suffix}"]`).val()) + p($(`input[name="impots_taxes_${suffix}"]`).val()) + p($(`input[name="autres_charges_valeur_ajoutee_${suffix}"]`).val()) + p($(`input[name="charges_personnel_${suffix}"]`).val()) + p($(`input[name="dotation_aux_amorts_${suffix}"]`).val()) + p($(`input[name="dotation_aux_provisions_${suffix}"]`).val()) + p($(`input[name="autres_charges_excedent_brute_${suffix}"]`).val());
+            
+            const totalFinancier = (p($(`input[name="revenus_fin_assimiles_${suffix}"]`).val()) + p($(`input[name="prof_vmp_et_cre_actif_immo_${suffix}"]`).val()) + p($(`input[name="interets_produit_assim_${suffix}"]`).val()) + p($(`input[name="reprise_prov_et_transfert_${suffix}"]`).val()) + p($(`input[name="diff_positive_de_change_${suffix}"]`).val()) + p($(`input[name="prod_nets_cessions_vmp_${suffix}"]`).val())) - (p($(`input[name="dap_${suffix}"]`).val()) + p($(`input[name="frais_fin_charges_assi_${suffix}"]`).val()) + p($(`input[name="diff_negatives_de_change_${suffix}"]`).val()) + p($(`input[name="ch_nettes_cessions_vmp_${suffix}"]`).val()));
+            const totalExceptionnel = (p($(`input[name="sur_op_gestion_prod_except_${suffix}"]`).val()) + p($(`input[name="sur_op_en_capital_prod_except_${suffix}"]`).val()) + p($(`input[name="reprise_prov_transfert_${suffix}"]`).val())) - (p($(`input[name="sur_op_gestion_charg_except_${suffix}"]`).val()) + p($(`input[name="sur_op_en_capital_charg_except_${suffix}"]`).val()) + p($(`input[name="dap_et_transfert_charg_except_${suffix}"]`).val()));
+            const participationEtImpots = p($(`input[name="participation_salairies_${suffix}"]`).val()) + p($(`input[name="impot_sur_benefices_${suffix}"]`).val());
+
+            const resultatNet = (totalI - totalII) + totalFinancier + totalExceptionnel - participationEtImpots;
+
+            $(`#ca_${suffix}`).val(formatCurrency(ca));
+            $(`#total_I_${suffix}`).val(formatCurrency(totalI));
+            $(`#total_II_${suffix}`).val(formatCurrency(totalII));
+            $(`#resultat_financier_calc_${suffix}`).val(formatCurrency(totalFinancier));
+            $(`#resultat_excep_calc_${suffix}`).val(formatCurrency(totalExceptionnel));
+            $(`#resultat_exercice_${suffix}`).val(formatCurrency(resultatNet));
+        }
+
+        $(`#collapseResultatC${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializeResultatCCalculations(suffix));
+
+    // --- LOGIQUE POUR LA SOUMISSION ET LES MODALS (inchangée) ---
+    $('#form-resultats-c-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-resultatc'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-resultat-c' %}",
+            type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer {{ access }}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Comptes de résultat enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+    
+    // LOGIQUE DU MODAL DE VUE (inchangée)
+    $('#listing-resultats-c-pane').on('click', '.btn-view-resultatc', function() {
+        const resultatId = $(this).data('resultat-id');
+        const loader = $('#modal-resultatc-loader'), content = $('#resultatc-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-resultat-c' 0 %}`.replace('0', resultatId),
+            headers: { 'Authorization': `Bearer {{ access }}` },
+            success: function(data) {
+                $('#modal-resultatc-acheteur').text(data.acheteur.nom);
+                $('#modal-resultatc-annee').text(data.annee.annee);
+                $('#total-resultatc-I').text(formatCurrency(data.total_I));
+                $('#modal-resultatc-ca').text(formatCurrency(data.ca));
+                $('#modal-resultatc-vente_de_mdses').text(formatCurrency(data.vente_de_mdses));
+                // ... remplir tous les autres champs
+                
+                $('#modal-resultatc-resultat_financier').text(formatCurrency(data.resultat_financier));
+                $('#modal-resultatc-financier_total_I').text(formatCurrency(data.financier_total_I));
+                $('#modal-resultatc-financier_total_II').text(formatCurrency(data.financier_total_II));
+                $('#modal-resultatc-resultat_excep').text(formatCurrency(data.resultat_excep));
+                $('#modal-resultatc-excep_total_I').text(formatCurrency(data.excep_total_I));
+                $('#modal-resultatc-excep_total_II').text(formatCurrency(data.excep_total_II));
+                $('#modal-resultatc-resultat_exercice').text(formatCurrency(data.resultat_exercice));
+                loader.hide();
+                content.show();
+            },
+            error: () => {
+                loader.hide();
+                content.html('<div class="alert alert-danger">Impossible de charger les détails.</div>').show();
+            }
+        });
+    });
+    
+    // LOGIQUE DU MODAL DE MODIFICATION
+    $('#listing-resultats-c-pane').on('click', '.btn-edit-resultatc', function() {
+        const resultatId = $(this).data('resultat-id');
+        const formContent = $('#edit-resultatc-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditResultatCTotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const ca = p($('input[name="vente_de_mdses"]').val()) + p($('input[name="ventes_de_produits_fabriques"]').val()) + p($('input[name="travaux_services_vendus"]').val()) + p($('input[name="produit_accessoires"]').val());
+            const totalI = ca + p($('input[name="production_imblise"]').val()) + p($('input[name="subventions_exploitations"]').val()) + p($('input[name="production_stockee"]').val()) + p($('input[name="reprises_de_provision"]').val()) + p($('input[name="transferts_charges"]').val()) + p($('input[name="autres_produits"]').val());
+            const totalII = p($('input[name="achat_mdses"]').val()) + p($('input[name="variation_stock_mdses"]').val()) + p($('input[name="achat_mp_autres_appro"]').val()) + p($('input[name="var_stk_mp_app"]').val()) + p($('input[name="autres_achats"]').val()) + p($('input[name="variation_de_stocks_autres_appro"]').val()) + p($('input[name="transports"]').val()) + p($('input[name="services_ext"]').val()) + p($('input[name="impots_taxes"]').val()) + p($('input[name="autres_charges_valeur_ajoutee"]').val()) + p($('input[name="charges_personnel"]').val()) + p($('input[name="dotation_aux_amorts"]').val()) + p($('input[name="dotation_aux_provisions"]').val()) + p($('input[name="autres_charges_excedent_brute"]').val());
+            
+            const totalFinancier = (p($('input[name="revenus_fin_assimiles"]').val()) + p($('input[name="prof_vmp_et_cre_actif_immo"]').val()) + p($('input[name="interets_produit_assim"]').val()) + p($('input[name="reprise_prov_et_transfert"]').val()) + p($('input[name="diff_positive_de_change"]').val()) + p($('input[name="prod_nets_cessions_vmp"]').val())) - (p($('input[name="dap"]').val()) + p($('input[name="frais_fin_charges_assi"]').val()) + p($('input[name="diff_negatives_de_change"]').val()) + p($('input[name="ch_nettes_cessions_vmp"]').val()));
+            const totalExceptionnel = (p($('input[name="sur_op_gestion_prod_except"]').val()) + p($('input[name="sur_op_en_capital_prod_except"]').val()) + p($('input[name="reprise_prov_transfert"]').val())) - (p($('input[name="sur_op_gestion_charg_except"]').val()) + p($('input[name="sur_op_en_capital_charg_except"]').val()) + p($('input[name="dap_et_transfert_charg_except"]').val()));
+            const participationEtImpots = p($('input[name="participation_salairies"]').val()) + p($('input[name="impot_sur_benefices"]').val());
+
+            const resultatNet = (totalI - totalII) + totalFinancier + totalExceptionnel - participationEtImpots;
+            
+            $('#edit_ca').val(formatCurrency(ca));
+            $('#edit_total_I').val(formatCurrency(totalI));
+            $('#edit_total_II').val(formatCurrency(totalII));
+            $('#edit_resultat_financier_calc').val(formatCurrency(totalFinancier));
+            $('#edit_resultat_excep_calc').val(formatCurrency(totalExceptionnel));
+            $('#edit_resultat_exercice').val(formatCurrency(resultatNet));
+        }
+        
+        $.ajax({
+            url: `{% url 'get-resultat-c' 0 %}`.replace('0', resultatId),
+            headers: { 'Authorization': `Bearer {{ access }}` },
+            success: function(data) {
+                $('#edit-resultatc-id').val(data.id);
+                
+                let formHtml = `
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="edit_annee" class="form-label">Année</label>
+                            <select name="annee" id="edit_annee" class="form-select">
+                                {% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5>
+                    <hr>
+                    <h4 class="text-primary mt-4">PRODUITS DES ACTIVITÉS ORDINAIRES (I)</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Vente de marchandises</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-ca-input" name="vente_de_mdses" id="edit_vente_de_mdses" value="${data.vente_de_mdses || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Ventes de produits fabriqués</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-ca-input" name="ventes_de_produits_fabriques" id="edit_ventes_de_produits_fabriques" value="${data.ventes_de_produits_fabriques || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Travaux et services vendus</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-ca-input" name="travaux_services_vendus" id="edit_travaux_services_vendus" value="${data.travaux_services_vendus || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Produits accessoires</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-ca-input" name="produit_accessoires" id="edit_produit_accessoires" value="${data.produit_accessoires || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">CHIFFRE D'AFFAIRES</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_ca" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mb-2 mt-3"><div class="col-md-8"><label class="form-label mb-0">Production immobilisée</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="production_imblise" id="edit_production_imblise" value="${data.production_imblise || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Subventions d'exploitation</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="subventions_exploitations" id="edit_subventions_exploitations" value="${data.subventions_exploitations || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Production stockée</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="production_stockee" id="edit_production_stockee" value="${data.production_stockee || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Reprises de provisions</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="reprises_de_provision" id="edit_reprises_de_provision" value="${data.reprises_de_provision || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Transferts de charges</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="transferts_charges" id="edit_transferts_charges" value="${data.transferts_charges || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres produits</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-ordinaires-input" name="autres_produits" id="edit_autres_produits" value="${data.autres_produits || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL I</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_total_I" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">CHARGES DES ACTIVITÉS ORDINAIRES (II)</h4>
+                    <h6 class="text-muted mt-3 mb-2">Achats consommés</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Achat de marchandises</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="achat_mdses" id="edit_achat_mdses" value="${data.achat_mdses || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Variation de stock de marchandises</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="variation_stock_mdses" id="edit_variation_stock_mdses" value="${data.variation_stock_mdses || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Achat MP & autres appro.</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="achat_mp_autres_appro" id="edit_achat_mp_autres_appro" value="${data.achat_mp_autres_appro || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Variation de stock MP & appro.</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="var_stk_mp_app" id="edit_var_stk_mp_app" value="${data.var_stk_mp_app || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres achats</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="autres_achats" id="edit_autres_achats" value="${data.autres_achats || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Variation de stock autres appro.</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="variation_de_stocks_autres_appro" id="edit_variation_de_stocks_autres_appro" value="${data.variation_de_stocks_autres_appro || 0}"></div></div>
+                    <h6 class="text-muted mt-3 mb-2">Services extérieurs et autres charges</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Transports</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="transports" id="edit_transports" value="${data.transports || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Services extérieurs</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="services_ext" id="edit_services_ext" value="${data.services_ext || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Impôts et taxes</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="impots_taxes" id="edit_impots_taxes" value="${data.impots_taxes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres charges sur valeur ajoutée</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="autres_charges_valeur_ajoutee" id="edit_autres_charges_valeur_ajoutee" value="${data.autres_charges_valeur_ajoutee || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Charges de personnel</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="charges_personnel" id="edit_charges_personnel" value="${data.charges_personnel || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Dotations aux amortissements</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="dotation_aux_amorts" id="edit_dotation_aux_amorts" value="${data.dotation_aux_amorts || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Dotations aux provisions</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="dotation_aux_provisions" id="edit_dotation_aux_provisions" value="${data.dotation_aux_provisions || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Autres charges sur EBE</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-ordinaires-input" name="autres_charges_excedent_brute" id="edit_autres_charges_excedent_brute" value="${data.autres_charges_excedent_brute || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL II</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_total_II" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">RÉSULTAT FINANCIER</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Revenus financiers et assimilés</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="revenus_fin_assimiles" id="edit_revenus_fin_assimiles" value="${data.revenus_fin_assimiles || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Profits sur VMP & créances</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="prof_vmp_et_cre_actif_immo" id="edit_prof_vmp_et_cre_actif_immo" value="${data.prof_vmp_et_cre_actif_immo || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Intérêts et produits assimilés</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="interets_produit_assim" id="edit_interets_produit_assim" value="${data.interets_produit_assim || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Reprise de provisions et transfert</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="reprise_prov_et_transfert" id="edit_reprise_prov_et_transfert" value="${data.reprise_prov_et_transfert || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Différences de change positives</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="diff_positive_de_change" id="edit_diff_positive_de_change" value="${data.diff_positive_de_change || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Produits nets de cessions VMP</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-fin-input" name="prod_nets_cessions_vmp" id="edit_prod_nets_cessions_vmp" value="${data.prod_nets_cessions_vmp || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL PRODUITS FINANCIERS</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_financier_total_I" readonly style="background-color: #e9ecef;"></div></div>
+                    <h6 class="text-muted mt-3 mb-2">Charges financières</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Dot. aux prov. & dépréciations</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-fin-input" name="dap" id="edit_dap" value="${data.dap || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Frais fin. & charges assimilées</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-fin-input" name="frais_fin_charges_assi" id="edit_frais_fin_charges_assi" value="${data.frais_fin_charges_assi || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Différences de change négatives</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-fin-input" name="diff_negatives_de_change" id="edit_diff_negatives_de_change" value="${data.diff_negatives_de_change || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Charges nettes de cessions VMP</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-fin-input" name="ch_nettes_cessions_vmp" id="edit_ch_nettes_cessions_vmp" value="${data.ch_nettes_cessions_vmp || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL CHARGES FINANCIÈRES</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_financier_total_II" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">RÉSULTAT FINANCIER</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_resultat_financier" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">RÉSULTAT EXCEPTIONNEL</h4>
+                    <h6 class="text-muted mt-3 mb-2">Produits exceptionnels</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Sur opérations de gestion</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-excep-input" name="sur_op_gestion_prod_except" id="edit_sur_op_gestion_prod_except" value="${data.sur_op_gestion_prod_except || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Sur opérations en capital</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-excep-input" name="sur_op_en_capital_prod_except" id="edit_sur_op_en_capital_prod_except" value="${data.sur_op_en_capital_prod_except || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Reprise de provisions et transfert</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-prods-excep-input" name="reprise_prov_transfert" id="edit_reprise_prov_transfert" value="${data.reprise_prov_transfert || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL PRODUITS EXCEPTIONNELS</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_excep_total_I" readonly style="background-color: #e9ecef;"></div></div>
+                    <h6 class="text-muted mt-3 mb-2">Charges exceptionnelles</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Sur opérations de gestion</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-excep-input" name="sur_op_gestion_charg_except" id="edit_sur_op_gestion_charg_except" value="${data.sur_op_gestion_charg_except || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Sur opérations en capital</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-excep-input" name="sur_op_en_capital_charg_except" id="edit_sur_op_en_capital_charg_except" value="${data.sur_op_en_capital_charg_except || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Dot. aux prov. & transfert</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control resultatc-charges-excep-input" name="dap_et_transfert_charg_except" id="edit_dap_et_transfert_charg_except" value="${data.dap_et_transfert_charg_except || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">TOTAL CHARGES EXCEPTIONNELLES</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_excep_total_II" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-8"><label class="form-label fw-bold mb-0">RÉSULTAT EXCEPTIONNEL</label></div><div class="col-md-4"><input type="text" class="form-control fw-bold" id="edit_resultat_excep" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">PARTICIPATIONS ET IMPÔTS</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Participation des salariés</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="participation_salairies" id="edit_participation_salairies" value="${data.participation_salairies || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-8"><label class="form-label mb-0">Impôts sur les bénéfices</label></div><div class="col-md-4"><input type="number" step="0.01" class="form-control" name="impot_sur_benefices" id="edit_impot_sur_benefices" value="${data.impot_sur_benefices || 0}"></div></div>
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-light p-3 rounded"><div class="col-md-8"><h5 class="mb-0">RÉSULTAT NET DE L'EXERCICE</h5></div><div class="col-md-4"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_resultat_exercice" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                updateEditResultatCTotals();
+                $('#form-edit-resultatc').on('input', 'input[type="number"]', updateEditResultatCTotals);
+            }
+        });
+    });
+    
+    $('#form-edit-resultatc').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), resultatId = $('#edit-resultatc-id').val(), btn = $('#btn-save-resultatc-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-resultat-c' 0 %}`.replace('0', resultatId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer {{ access }}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-resultatc').modal('hide'); Swal.fire('Modifié !', 'Le compte de résultat a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

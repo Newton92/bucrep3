@@ -1,0 +1,1488 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<!-- MapLibre GL CSS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ========== VARIABLES ========== */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ========== GLOBAL STYLES ========== */
+body {
+    background-color: #f5f7fb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.2rem 1.5rem;
+    font-weight: 600;
+    border-bottom: none;
+}
+
+/* ========== HEADER SECTION ========== */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), #4a6491);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+/* ========== COMPANY PROFILE SECTION ========== */
+.company-profile {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.company-header {
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    padding: 2rem;
+    color: white;
+    position: relative;
+}
+
+.company-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+.company-logo {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.company-logo i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+}
+
+.company-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.company-sigle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.info-card {
+    background: var(--light-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--secondary-color);
+    transition: var(--transition);
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h6 {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-card h6 i {
+    color: var(--secondary-color);
+}
+
+.info-content {
+    color: #555;
+    line-height: 1.6;
+}
+
+.info-item {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 140px;
+    display: inline-block;
+}
+
+.info-value {
+    color: #666;
+}
+
+/* ========== BALANCE SECTION ========== */
+.balance-section {
+    margin-top: 2rem;
+}
+
+.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Couleurs spécifiques pour chaque type de bilan */
+.balance-english {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.balance-classic {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.balance-syscohada {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.balance-banking {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.balance-ifrs {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.balance-header {
+    position: relative;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.balance-header h6 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.balance-body {
+    padding: 1.5rem;
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.balance-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.balance-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.balance-btn-all {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ========== MODULES SECTION ========== */
+.modules-container {
+    margin-top: 2rem;
+}
+
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.25rem;
+}
+
+.module-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid #eef2f7;
+    position: relative;
+    overflow: hidden;
+}
+
+.module-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--secondary-color);
+}
+
+.module-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.module-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.module-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.module-btn i {
+    font-size: 0.9rem;
+}
+
+.module-btn:hover {
+    transform: scale(1.02);
+}
+
+/* ========== BUTTON CATEGORIES ========== */
+.btn-success-module { 
+    background: linear-gradient(135deg, #27ae60, #2ecc71); 
+    color: white;
+    border: none;
+}
+.btn-warning-module { 
+    background: linear-gradient(135deg, #f39c12, #f1c40f); 
+    color: white;
+    border: none;
+}
+.btn-info-module { 
+    background: linear-gradient(135deg, #3498db, #2980b9); 
+    color: white;
+    border: none;
+}
+.btn-dark-module { 
+    background: linear-gradient(135deg, #2c3e50, #34495e); 
+    color: white;
+    border: none;
+}
+.btn-secondary-module { 
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6); 
+    color: white;
+    border: none;
+}
+.btn-danger-module { 
+    background: linear-gradient(135deg, #c0392b, #e74c3c); 
+    color: white;
+    border: none;
+}
+.btn-default-module { 
+    background: linear-gradient(135deg, #bdc3c7, #ecf0f1); 
+    color: #2c3e50;
+    border: none;
+}
+
+/* ========== MODAL STYLES ========== */
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+    border: none;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* ========== REPORTS SECTION ========== */
+.reports-section {
+    margin-top: 2rem;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.report-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid #3498db;
+}
+
+.report-card h6 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1200px) {
+    .balance-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .balance-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modules-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .company-header {
+        padding: 1.5rem;
+    }
+    
+    .company-name {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-label {
+        min-width: 120px;
+        font-size: 0.9rem;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* ========== CUSTOM SCROLLBAR ========== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* ========== LOADING STATES ========== */
+.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--secondary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========== STATUS BADGES ========== */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-active {
+    background: rgba(46, 204, 113, 0.1);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-inactive {
+    background: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Header Section -->
+<div class="page-header fade-in">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-building me-2"></i>Gestion des Acheteurs
+            </h1>
+            <p class="page-subtitle">
+                Interface de consultation et de gestion complète des informations de l'acheteur
+            </p>
+        </div>
+        <div class="d-none d-md-block">
+            <span class="badge bg-light text-dark fs-6">
+                <i class="fas fa-id-card me-2"></i>Fiche Acheteur
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Company Profile Section -->
+<div class="card company-profile fade-in">
+    <div class="company-header">
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+            <div class="company-logo">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h1 class="company-name" id="editNom"></h1>
+                <div class="company-sigle" id="editSigle"></div>
+            </div>
+            <div class="company-badge">
+                <span id="editCode"></span>
+                <small class="d-block mt-1">Code ACREMAC</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <!-- Company Description -->
+        <div class="info-card">
+            <h6><i class="fas fa-file-alt"></i> Description</h6>
+            <div class="info-content" id="editDescription"></div>
+        </div>
+
+        <!-- Main Activity -->
+        <div class="info-card">
+            <h6><i class="fas fa-briefcase"></i> Activité Principale</h6>
+            <div class="info-content" id="editActivitePrincipale"></div>
+        </div>
+
+        <!-- Creation Date -->
+        <div class="info-card">
+            <h6><i class="fas fa-calendar-alt"></i> Date de Création</h6>
+            <div class="info-content">
+                <span id="editDateCreation"></span>
+            </div>
+        </div>
+
+        <!-- Contact & Address -->
+        <div class="info-card">
+            <h6><i class="fas fa-address-book"></i> Contact & Adresse</h6>
+            <div class="info-content">
+                <div class="info-item">
+                    <span class="info-label">Fax :</span>
+                    <span class="info-value" id="editFax"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email :</span>
+                    <span class="info-value" id="editEmail"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Site web :</span>
+                    <span class="info-value" id="editSiteInternet"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Boîte postale :</span>
+                    <span class="info-value" id="editBoitePostale"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Adresse :</span>
+                    <span class="info-value">
+                        <span id="editRueAdresse"></span> 
+                        <span id="editNumeroAdresse"></span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Localisation :</span>
+                    <span class="info-value">
+                        <span id="editVille"></span>, 
+                        <span id="editProvince"></span>, 
+                        <span id="editPays"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legal Information -->
+        <div class="info-card">
+            <h6><i class="fas fa-balance-scale"></i> Informations Juridiques</h6>
+            <div class="info-content">
+                <div class="info-item">
+                    <span class="info-label">Forme juridique :</span>
+                    <span class="info-value" id="editFormeJuridique"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Taille :</span>
+                    <span class="info-value" id="editCategorieEntreprise"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Statut actuel :</span>
+                    <span class="status-badge status-active" id="editStatutEntreprise"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Balance Types Section -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-balance-scale-right me-2"></i>Types de Bilans</h5>
+    </div>
+    <div class="card-body">
+        <div class="balance-grid">
+            <!-- English Balance -->
+            <div class="balance-card balance-english">
+                <div class="balance-header">
+                    <h6><i class="fas fa-file-invoice-dollar"></i>Bilan Anglais</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_anglais' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- Classic Balance -->
+            <div class="balance-card balance-classic">
+                <div class="balance-header">
+                    <h6><i class="fas fa-chart-line"></i>Bilan Classique</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_classique' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- SYSCOHADA Balance -->
+            <div class="balance-card balance-syscohada">
+                <div class="balance-header">
+                    <h6><i class="fas fa-calculator"></i>Bilan SYSCOHADA</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_resultat_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-calculator me-1"></i>Résultats
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_syscohada' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- Banking Balance -->
+            <div class="balance-card balance-banking">
+                <div class="balance-header">
+                    <h6><i class="fas fa-university"></i>Bilan Bancaire</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_asset_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_liabilitie_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_expense_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-money-bill-wave me-1"></i>Dépenses
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_actif_bancaire' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules
+                    </a>
+                </div>
+            </div>
+
+            <!-- IFRS COBAC Balance -->
+            <div class="balance-card balance-ifrs">
+                <div class="balance-header">
+                    <h6><i class="fas fa-chart-bar"></i>Bilan IFRS COBAC</h6>
+                </div>
+                <div class="balance-body">
+                    <a href="{% url 'dash_root_manage_acheteur_actif_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Actifs IFRS
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_passif_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-chart-line me-1"></i>Passifs IFRS
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_compte_financier_irfs' id_acheteur %}" target="_blank" 
+                       class="balance-btn">
+                        <i class="fas fa-file-invoice-dollar me-1"></i>Comptes Financiers
+                    </a>
+                    <a href="{% url 'dash_root_manage_acheteur_bilan_irfs_cobac' id_acheteur %}" target="_blank" 
+                       class="balance-btn balance-btn-all">
+                        <i class="fas fa-list me-1"></i>Tous les modules IFRS
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modules Navigation -->
+<div class="card fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-th-large me-2"></i>Modules de Gestion</h5>
+    </div>
+    <div class="card-body">
+        <div class="modules-grid">
+            {% comment %} Modules seront insérés dynamiquement {% endcomment %}
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Reports Section -->
+<div class="card mt-4 fade-in">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Rapports</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <p class="text-muted mb-3">
+                    Générez des rapports détaillés sous différents formats pour analyser la solvabilité et les performances de l'acheteur.
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                    <i class="fas fa-cogs me-2"></i>Générer un rapport
+                </button>
+            </div>
+        </div>
+        
+        <div class="reports-grid mt-3">
+            <div class="report-card">
+                <h6><i class="fas fa-file-contract text-primary"></i> Rapports de Solvabilité</h6>
+                <p class="text-muted mb-3">Analyses détaillées de la situation financière</p>
+                <a href="{% url 'dash_root_manage_acheteur_report_solvency' id_acheteur %}" target="_blank" 
+                   class="btn btn-dark-module w-100">
+                    <i class="fas fa-external-link-alt me-2"></i>Consulter
+                </a>
+            </div>
+            
+            <div class="report-card">
+                <h6><i class="fas fa-envelope text-info"></i> Mailings</h6>
+                <p class="text-muted mb-3">Communication et envois d'emails</p>
+                <a href="{% url 'dash_root_manage_acheteur_emailling' id_acheteur %}" target="_blank" 
+                   class="btn btn-info-module w-100">
+                    <i class="fas fa-external-link-alt me-2"></i>Gérer
+                </a>
+            </div>
+            
+            <div class="report-card">
+                <h6><i class="fas fa-cogs text-warning"></i> Rapports Personnalisés</h6>
+                <p class="text-muted mb-3">Générez des rapports sur mesure</p>
+                <button type="button" class="btn btn-warning-module w-100" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                    <i class="fas fa-cogs me-2"></i>Configurer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Generation Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>Paramètres du Rapport
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="commandeId" class="form-label">ID de la commande</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="commandeId" placeholder="Entrez l'ID de la commande">
+                            </div>
+                            <div class="form-text">Laissez vide pour un rapport général</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="language" class="form-label">Langue</label>
+                            <select class="form-select" id="language">
+                                <option value="fr">Français</option>
+                                <option value="en">Anglais</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="commandeInfo" class="card mb-3" style="display: none;">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-info-circle me-2"></i>Informations de la commande
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Référence:</strong> <span id="commandeRef" class="text-primary"></span></p>
+                                    <p class="mb-2"><strong>Client:</strong> <span id="commandeClient"></span></p>
+                                    <p class="mb-2"><strong>Acheteur:</strong> <span id="commandeAcheteur"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Date réception:</strong> <span id="commandeDateReception"></span></p>
+                                    <p class="mb-2"><strong>Pays:</strong> <span id="commandePays"></span></p>
+                                    <p class="mb-2"><strong>Devise:</strong> <span id="commandeDevise" class="badge bg-secondary"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="currency" class="form-label">Devise</label>
+                            <select class="form-select" id="currency">
+                                <option value="USD">Dollar US (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                                <option value="FCFA">FCFA</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="balanceType" class="form-label">Type de Bilan</label>
+                            <select class="form-select" id="balanceType">
+                                <option value="Classique">Classique</option>
+                                <option value="Anglais">Anglais</option>
+                                <option value="Syscohada">SYSCOHADA</option>
+                                <option value="Bancaire">Bancaire</option>
+                                <option value="Ifrs">IFRS COBAC</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="format" class="form-label">Format du rapport</label>
+                        <select class="form-select" id="format">
+                            <option value="pdf">PDF (Recommandé)</option>
+                            <option value="html">HTML</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmGenerate">
+                    <i class="fas fa-play me-2"></i>Générer le rapport
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Font Awesome -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+<script>
+$(document).ready(function() {
+
+    // Stockage des tokens
+    let accessToken = '{{ access }}';
+    let refreshToken = '{{ refresh }}';
+
+    
+    // Initialize with fade-in effect
+    $('.fade-in').css('opacity', '0');
+    setTimeout(() => {
+        $('.fade-in').css({
+            'opacity': '1',
+            'transition': 'opacity 0.5s ease'
+        });
+    }, 100);
+
+    // Load Acheteur Data
+    function loadAcheteurData() {
+        const id = '{{ id_acheteur }}';
+        
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            showError('Erreur', 'ID de l\'acheteur manquant');
+            return;
+        }
+
+        // Show loading state
+        $('.company-profile').addClass('loading');
+        
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('Données acheteur:', response);
+                
+                // Update company profile
+                $('#editNom').text(response.nom || 'Non spécifié');
+                $('#editSigle').text(response.sigle || 'Non spécifié');
+                $('#editCode').text(response.code || 'Non spécifié');
+                
+                // Format date
+                if (response.date_creation) {
+                    const date = new Date(response.date_creation);
+                    const formattedDate = date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    $('#editDateCreation').text(formattedDate);
+                }
+                
+                // Update other fields
+                $('#editActivitePrincipale').text(response.activite_principale || 'Non spécifié');
+                $('#editStatutEntreprise').text(response.statut_entreprise?.libelle || 'Non spécifié');
+                $('#editCategorieEntreprise').text(response.categorie_entreprise?.libelle || 'Non spécifié');
+                $('#editFormeJuridique').text(response.forme_juridique?.libelle || 'Non spécifié');
+                $('#editDescription').html(response.description || 'Aucune description disponible');
+                $('#editEmail').text(response.email || 'Non spécifié');
+                $('#editFax').text(response.fax || 'Non spécifié');
+                $('#editBoitePostale').text(response.boite_postale || 'Non spécifié');
+                $('#editCodePostal').text(response.code_postal || 'Non spécifié');
+                $('#editSiteInternet').html(response.site_internet ? 
+                    `<a href="https://${response.site_internet}" target="_blank">${response.site_internet}</a>` : 
+                    'Non spécifié');
+                $('#editNumeroAdresse').text(response.numero_adresse || 'Non spécifié');
+                $('#editRueAdresse').text(response.rue_adresse || 'Non spécifié');
+                $('#editPays').text(response.pays?.nom || 'Non spécifié');
+                $('#editProvince').text(response.province?.nom || 'Non spécifié');
+                $('#editVille').text(response.ville?.nom || 'Non spécifié');
+                
+                // Remove loading state
+                $('.company-profile').removeClass('loading');
+                
+                // Generate modules grid dynamically
+                generateModulesGrid();
+            },
+            error: function(xhr) {
+                $('.company-profile').removeClass('loading');
+                
+                let errorMessage = 'Erreur lors de la récupération des données';
+                if (xhr.status === 404) {
+                    errorMessage = 'Acheteur non trouvé';
+                } else if (xhr.status === 401) {
+                    errorMessage = 'Session expirée, veuillez vous reconnecter';
+                    setTimeout(() => window.location.href = '/login/', 2000);
+                }
+                
+                showError('Erreur', errorMessage);
+                console.error("Erreur AJAX:", xhr.responseText);
+            }
+        });
+    }
+
+    // Generate modules grid dynamically
+    function generateModulesGrid() {
+        const modules = [
+            // Main modules (green)
+            { title: "Résumé", url: "{% url 'dash_root_manage_acheteur_resume' id_acheteur %}", color: "success", icon: "fas fa-chart-pie" },
+            { title: "Évaluation du Risque", url: "{% url 'dash_root_manage_acheteur_risk_rating' id_acheteur %}", color: "success", icon: "fas fa-shield-alt" },
+            { title: "Opinion Crédit", url: "{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}", color: "success", icon: "fas fa-comment-dollar" },
+            { title: "Données enregistrées", url: "{% url 'dash_root_manage_acheteur_data_save' id_acheteur %}", color: "success", icon: "fas fa-database" },
+            { title: "Tendance", url: "{% url 'dash_root_manage_acheteur_tendance' id_acheteur %}", color: "success", icon: "fas fa-chart-line" },
+            { title: "Responsables", url: "{% url 'dash_root_manage_acheteur_responsable' id_acheteur %}", color: "success", icon: "fas fa-users" },
+            
+            // Secondary modules (orange)
+            { title: "Portables", url: "{% url 'dash_root_manage_portable_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-mobile-alt" },
+            { title: "Téléphones", url: "{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-phone" },
+            { title: "Adresses", url: "{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-map-marker-alt" },
+            { title: "Emails", url: "{% url 'dash_root_manage_email_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-envelope" },
+            { title: "Codes NACE", url: "{% url 'dash_root_manage_code_nace_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-code" },
+            { title: "Codes NAF", url: "{% url 'dash_root_manage_code_naf_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-barcode" },
+            
+            // Info modules (blue)
+            { title: "Documents", url: "{% url 'dash_root_manage_document_acheteur' id_acheteur %}", color: "info", icon: "fas fa-file" },
+            { title: "Produits & Services", url: "{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}", color: "info", icon: "fas fa-box" },
+            { title: "SWOT", url: "{% url 'dash_root_manage_swot_acheteur' id_acheteur %}", color: "info", icon: "fas fa-crosshairs" },
+            { title: "Certifications", url: "{% url 'dash_root_certification_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-certificate" },
+            
+            // Scoring modules (gray)
+            { title: "Scoring sans bilan", url: "{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}", color: "secondary", icon: "fas fa-calculator" },
+            { title: "Scoring avec bilan", url: "{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}", color: "secondary", icon: "fas fa-calculator" }
+        ];
+        
+        const grid = $('.modules-grid');
+        grid.empty();
+        
+        modules.forEach(module => {
+            const moduleCard = `
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="${module.icon}"></i>
+                    </div>
+                    <h6 class="module-title">${module.title}</h6>
+                    <a href="${module.url}" target="_blank" 
+                       class="btn btn-${module.color}-module module-btn">
+                        <i class="fas fa-external-link-alt me-1"></i> Accéder
+                    </a>
+                </div>
+            `;
+            grid.append(moduleCard);
+        });
+    }
+
+    // Search command functionality
+    let selectedCommandeId = null;
+    let searchTimeout = null;
+    
+    $('#commandeId').on('input', function() {
+        const commandeId = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!commandeId) {
+            $('#commandeInfo').hide('fade');
+            selectedCommandeId = null;
+            return;
+        }
+        
+        $('#commandeInfo').html(`
+            <div class="card-header bg-light">
+                <i class="fas fa-spinner fa-spin me-2"></i>Recherche en cours...
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 mb-0">Recherche de la commande #${commandeId}</p>
+            </div>
+        `).show();
+        
+        searchTimeout = setTimeout(() => searchCommande(commandeId), 500);
+    });
+    
+    function searchCommande(commandeId) {
+        if (!/^\d+$/.test(commandeId)) {
+            $('#commandeInfo').html(`
+                <div class="card-header bg-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ID invalide
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">Veuillez entrer un ID numérique valide</p>
+                </div>
+            `).show();
+            return;
+        }
+        
+        $.ajax({
+            url: `/api/commande-details/${commandeId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-check-circle me-2"></i>Commande trouvée
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Référence:</strong> 
+                                        <span class="text-primary fw-bold">${response.data.notre_ref || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Client:</strong> 
+                                        <span>${response.data.client?.username || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Acheteur:</strong> 
+                                        <span>${response.data.acheteur?.nom || 'N/A'}</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Date réception:</strong> 
+                                        <span class="badge bg-info">${response.data.date_recept_commande || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Pays:</strong> 
+                                        <span>${response.data.pays?.nom || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Devise:</strong> 
+                                        <span class="badge bg-secondary">${response.data.devise_credit_demande?.code || 'N/A'}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Commande sélectionnée pour le rapport
+                                </small>
+                            </div>
+                        </div>
+                    `).show();
+                    selectedCommandeId = commandeId;
+                } else {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-times-circle me-2"></i>Commande non trouvée
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">${response.message || 'Aucune commande correspondante'}</p>
+                        </div>
+                    `).show();
+                    selectedCommandeId = null;
+                }
+            },
+            error: function(xhr) {
+                $('#commandeInfo').html(`
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Erreur de connexion
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">Impossible de récupérer les informations de la commande</p>
+                    </div>
+                `).show();
+                selectedCommandeId = null;
+                console.error("Erreur:", xhr.responseText);
+            }
+        });
+    }
+
+    // Report generation
+    $('#confirmGenerate').on('click', function(e) {
+        e.preventDefault();
+        
+        const language = $('#language').val();
+        const currency = $('#currency').val();
+        const balanceType = $('#balanceType').val();
+        const format = $('#format').val();
+        const commandeId = selectedCommandeId || $('#commandeId').val();
+        const acheteurId = '{{ id_acheteur }}';
+        
+        // Validation
+        if (format === 'pdf' && !commandeId) {
+            showWarning('Information', 'Pour un rapport PDF, il est recommandé de sélectionner une commande.');
+        }
+        
+        // Show loading
+        Swal.fire({
+            title: 'Génération du rapport',
+            html: `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p>Préparation du rapport en cours...</p>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: 45%"></div>
+                    </div>
+                </div>
+            `,
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+        
+        // Build URL
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+        
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
+        
+        // AJAX request
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer {{ access }}`
+            },
+            xhrFields: {
+                responseType: ['pdf', 'xml'].includes(format.toLowerCase()) ? 'blob' : 'text'
+            },
+            success: function(response, status, xhr) {
+                Swal.close();
+                
+                if (format.toLowerCase() === 'pdf') {
+                    downloadFile(response, `rapport_${acheteurId}.pdf`, 'application/pdf');
+                    showSuccess('Succès', 'Le rapport PDF a été téléchargé avec succès.');
+                } else if (format === 'html') {
+                    downloadFile(response, `rapport_${acheteurId}.html`, 'text/html');
+                    showSuccess('Succès', 'Le rapport HTML a été téléchargé.');
+                } else if (format.toLowerCase() === 'xml') {
+                    downloadFile(response, `rapport_${acheteurId}.zip`, 'application/zip');
+                    showSuccess('Succès', 'Le fichier ZIP (XML+XSD) a été téléchargé.');
+                } else if (format === 'json') {
+                    const jsonString = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+                    downloadFile(jsonString, `rapport_${acheteurId}.json`, 'application/json');
+                    showSuccess('Succès', 'Le fichier JSON a été téléchargé.');
+                }
+                
+                $('#generateReportModal').modal('hide');
+            },
+            error: function(xhr) {
+                Swal.close();
+                
+                let errorMessage = 'Erreur lors de la génération du rapport';
+                if (xhr.status === 400) {
+                    errorMessage = 'Paramètres incorrects';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Endpoint non trouvé';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur serveur interne';
+                }
+                
+                showError('Erreur', errorMessage);
+                console.error("Erreur détaillée:", xhr.responseText);
+            }
+        });
+    });
+
+    // Utility functions
+    function downloadFile(data, filename, mimeType) {
+        const blob = new Blob([data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
+    function showSuccess(title, text) {
+        Swal.fire({
+            icon: 'success',
+            title: title,
+            text: text,
+            confirmButtonColor: '#27ae60',
+            timer: 3000
+        });
+    }
+
+    function showError(title, text) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: text,
+            confirmButtonColor: '#e74c3c'
+        });
+    }
+
+    function showWarning(title, text) {
+        Swal.fire({
+            icon: 'warning',
+            title: title,
+            text: text,
+            confirmButtonColor: '#f39c12'
+        });
+    }
+
+    
+    // Configuration AJAX globale avec intercepteur
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            if (accessToken) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            }
+        }
+    });
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+
+    // Initialize
+    loadAcheteurData();
+    
+    // Add hover effects to all cards
+    $('.card').hover(
+        function() { $(this).addClass('shadow-lg'); },
+        function() { $(this).removeClass('shadow-lg'); }
+    );
+});
+</script>
+{% endblock %}

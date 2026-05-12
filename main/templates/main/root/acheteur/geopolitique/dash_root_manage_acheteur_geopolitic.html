@@ -1,550 +1,2411 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-border: rgba(13, 128, 190, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
+    --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+    --geopolitic-gradient: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+}
+
+/* Header Premium Élevé */
+.page-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-title-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card-premium {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s ease-out 0.1s both;
+    position: relative;
+}
+
+.acheteur-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acheteur-subtitle-premium {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille d'informations acheteur */
+.acheteur-info-grid {
+    padding: 2rem;
+}
+
+.acheteur-info-item {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.acheteur-info-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-info-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.acheteur-info-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.acheteur-info-icon.activity { background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent)); }
+.acheteur-info-icon.country { background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)); }
+.acheteur-info-icon.status { background: var(--success-gradient); }
+
+.acheteur-info-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.acheteur-info-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    line-height: 1.3;
+}
+
+.acheteur-info-value.badge-value {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Carte Géopolitique Unique Premium */
+.geopolitic-unique-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.geopolitic-unique-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(10, 149, 202, 0.15);
+    border-color: transparent;
+}
+
+.geopolitic-unique-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0a95ca, #25add6);
+    border-radius: 5px 0 0 5px;
+}
+
+/* En-tête de la carte premium */
+.geopolitic-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    position: relative;
+}
+
+.geopolitic-header-premium::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary), transparent);
+}
+
+.geopolitic-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.geopolitic-title-premium i {
+    color: var(--color-primary);
+    font-size: 2rem;
+}
+
+.geopolitic-actions-premium {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Scoreboard Premium amélioré */
+.scoreboard-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.scoreboard-premium-two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.score-item-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.75rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.score-item-premium:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.score-item-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.score-label-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    font-size: 1.1rem;
+}
+
+.score-label-premium i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+/* Jauge de score premium */
+.gauge-container-premium {
+    position: relative;
+    height: 28px;
+    background: rgba(13, 128, 190, 0.05);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.gauge-fill-premium {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 0.5s ease;
+    background: linear-gradient(90deg, #dc3545, #fd7e14, #ffc107, #28a745);
+    position: relative;
+}
+
+.gauge-fill-premium::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.2) 0%, 
+        rgba(255,255,255,0.1) 50%, 
+        rgba(255,255,255,0.2) 100%);
+}
+
+.gauge-value-premium {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 800;
+    font-size: 1rem;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+}
+
+.score-text-premium {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0;
+    min-height: 20px;
+    font-weight: 600;
+}
+
+/* Score moyen premium */
+.average-score-premium {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.2);
+}
+
+.average-score-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.average-score-content-premium h5 {
+    margin: 0 0 0.75rem 0;
+    font-weight: 700;
+    font-size: 1.25rem;
+    opacity: 0.95;
+}
+
+.average-score-value-premium {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Sections de contenu premium */
+.sections-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+.section-card-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.section-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.section-card-premium.political {
+    border-left: 4px solid #6f42c1;
+}
+
+.section-card-premium.economic {
+    border-left: 4px solid #20c997;
+}
+
+.content-section-premium {
+    margin-bottom: 0;
+}
+
+.content-label-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    font-size: 1.25rem;
+}
+
+.content-label-premium i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+.content-box-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    border-radius: 12px;
+    padding: 1.5rem;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    color: var(--color-text);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.content-box-premium::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    font-size: 5rem;
+    color: rgba(10, 149, 202, 0.1);
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+.content-box-premium p {
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.content-box-premium p:last-child {
+    margin-bottom: 0;
+}
+
+/* Informations temporelles premium */
+.info-temporelle-premium {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 2px solid rgba(13, 128, 190, 0.1);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.info-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.info-item-premium:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.info-item-premium i {
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+/* État vide premium */
+.empty-state-premium {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 2px dashed rgba(13, 128, 190, 0.3);
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon-premium {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.empty-state-premium h4 {
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-dark);
+    font-size: 1.75rem;
+}
+
+.empty-state-premium p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Boutons premium */
+.btn-action-premium {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-action-premium::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action-premium:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-primary-premium {
+    background: var(--primary-gradient);
+    color: var(--color-background);
+}
+
+.btn-outline-primary-premium {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary-premium:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+.btn-success-premium {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-warning-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-danger-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+/* Formulaires premium pour les jauges */
+.enhanced-form-premium .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+/* Contrôle de jauge premium */
+.gauge-control-premium {
+    margin-top: 1rem;
+}
+
+.gauge-control-slider-premium {
+    width: 100%;
+    height: 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, #dc3545 0%, #fd7e14 33%, #ffc107 66%, #28a745 100%);
+    border-radius: 6px;
+    outline: none;
+    margin: 1rem 0;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.gauge-control-slider-premium::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 3px solid var(--color-primary);
+    box-shadow: 0 4px 10px rgba(10, 149, 202, 0.3);
+    transition: all 0.3s ease;
+}
+
+.gauge-control-slider-premium::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(10, 149, 202, 0.4);
+}
+
+.gauge-control-slider-premium::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 3px solid var(--color-primary);
+    box-shadow: 0 4px 10px rgba(10, 149, 202, 0.3);
+}
+
+.gauge-control-value-premium {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.75rem;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
+    padding: 1rem;
+    border-radius: 12px;
+    display: inline-block;
+    min-width: 120px;
+}
+
+.gauge-control-buttons-premium {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.gauge-control-btn-premium {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(13, 128, 190, 0.2);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.gauge-control-btn-premium:hover {
+    transform: translateY(-3px);
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 6px 15px rgba(10, 149, 202, 0.2);
+}
+
+.gauge-control-btn-premium.reset-btn {
+    width: auto;
+    padding: 0 1rem;
+    border-radius: 22px;
+}
+
+/* Form controls premium */
+.enhanced-form-premium .form-control,
+.enhanced-form-premium textarea {
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+    min-height: 56px;
+}
+
+.enhanced-form-premium .form-control:focus,
+.enhanced-form-premium textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background: var(--color-background);
+}
+
+.enhanced-form-premium textarea {
+    min-height: 180px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* Légende des scores premium */
+.score-legend-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.02));
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.score-legend-premium h6 {
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.legend-items-premium {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.legend-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.3s ease;
+}
+
+.legend-item-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+.legend-color-premium {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Modales premium */
+.modal-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    padding: 2rem !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2.5rem !important;
+    background: var(--color-background);
+}
+
+.modal-footer-premium {
+    padding: 2rem !important;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    border-top: 2px solid rgba(13, 128, 190, 0.1) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 70px rgba(10, 149, 202, 0.3) !important;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Modal danger */
+.modal-danger-header-premium {
+    background: var(--danger-gradient);
+}
+
+.modal-danger-content-premium {
+    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
+}
+
+.modal-danger-icon-premium {
+    font-size: 4rem;
+    background: var(--danger-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .page-title-premium {
+        font-size: 2rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .geopolitic-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .sections-grid-premium {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .scoreboard-premium,
+    .scoreboard-premium-two {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .geopolitic-header-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .geopolitic-actions-premium {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .scoreboard-premium,
+    .scoreboard-premium-two {
+        grid-template-columns: 1fr;
+    }
+    
+    .average-score-premium {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .info-temporelle-premium {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .empty-state-premium {
+        padding: 3rem 1.5rem;
+    }
+    
+    .modal-body-premium,
+    .modal-footer-premium {
+        padding: 1.5rem !important;
+    }
+    
+    .legend-items-premium {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .geopolitic-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .content-label-premium,
+    .score-label-premium {
+        font-size: 1.1rem;
+    }
+    
+    .btn-action-premium {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    .page-header-premium::before,
+    .acheteur-header-premium::before,
+    .modal-header-premium::before,
+    .average-score-premium::before,
+    .acheteur-info-item:hover,
+    .geopolitic-unique-card-premium:hover,
+    .score-item-premium:hover,
+    .section-card-premium:hover,
+    .info-item-premium:hover,
+    .btn-action-premium:hover,
+    .legend-item-premium:hover,
+    .gauge-control-btn-premium:hover,
+    .gauge-control-slider-premium::-webkit-slider-thumb:hover {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Petits ajustements */
+.form-text-premium {
+    color: var(--color-text-muted) !important;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+}
+
+/* Styles spécifiques pour le titre des sections modales */
+.modal-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i> Gestion des Données Géopolitiques de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header Premium Élevé -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-globe-americas"></i>{% trans "Analyse Géopolitique" %}
+                </h1>
+                <p class="page-subtitle-premium">
+                    Évaluation complète des risques et opportunités géopolitiques
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action-premium">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
+                </a>
+                {% if not geopolitic %}
+                <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addGeopoliticModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Créer l'analyse" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countGeopolitics">Module de Gestion des Données Géopolitiques</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des données géopolitiques propres à l'acheteur notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    <p class="acheteur-subtitle-premium mb-0">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC Unique" %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations acheteur -->
+        <div class="acheteur-info-grid">
+            <div class="row g-4">
+                <!-- Activité Principale -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.1s;">
+                        <div class="acheteur-info-icon activity">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Activité Principale" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Pays -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.2s;">
+                        <div class="acheteur-info-icon country">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Pays d'Opération" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.pays.nom|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-4 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.3s;">
+                        <div class="acheteur-info-icon status">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Statut" %}</span>
+                        <div class="acheteur-info-value badge-value">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
+    <!-- Section Géopolitique -->
+    <div class="row">
+        <div class="col-12">
+            {% if geopolitic %}
+            <!-- Affichage de l'analyse existante -->
+            <div class="geopolitic-unique-card-premium">
+                <div class="geopolitic-header-premium">
+                    <div class="geopolitic-title-premium">
+                        <i class="fas fa-globe-americas"></i>
+                        Analyse Géopolitique Complète
+                    </div>
+                    <div class="geopolitic-actions-premium">
+                        <button class="btn btn-warning-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#editGeopoliticModal">
+                            <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
+                        </button>
+                        <button class="btn btn-danger-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                        </button>
                     </div>
                 </div>
 
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Données Politiques : </strong><span style="color: #33FF57;">DP</span><br>
-                        <strong>Données Économiques : </strong><span style="color: #FF5733;">DE</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
-            </div>
-        </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Données Géopolitiques START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Données Géopolitiques</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
+                <!-- Scoreboard des indicateurs - Partie 1 -->
+                <div class="scoreboard-premium">
+                    <!-- Stabilité politique -->
+                    <div class="score-item-premium" data-indicator="stabilite">
+                        <div class="score-label-premium">
+                            <i class="fas fa-landmark"></i>
+                            Stabilité Politique
+                        </div>
+                        <div class="gauge-container-premium">
+                            <div class="gauge-fill-premium" 
+                                data-score="{{ geopolitic.stabilite_politique|default:0 }}"
+                                style="width: {% widthratio geopolitic.stabilite_politique|default:0 10 100 %}%"></div>
+                            <div class="gauge-value-premium">{{ geopolitic.stabilite_politique|default:0 }}/10</div>
+                        </div>
+                        <p class="score-text-premium" id="stabiliteText"></p>
                     </div>
 
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+                    <!-- État de droit -->
+                    <div class="score-item-premium" data-indicator="droit">
+                        <div class="score-label-premium">
+                            <i class="fas fa-balance-scale"></i>
+                            État de Droit
+                        </div>
+                        <div class="gauge-container-premium">
+                            <div class="gauge-fill-premium" 
+                                data-score="{{ geopolitic.etat_droit|default:0 }}"
+                                style="width: {% widthratio geopolitic.etat_droit|default:0 10 100 %}%"></div>
+                            <div class="gauge-value-premium">{{ geopolitic.etat_droit|default:0 }}/10</div>
+                        </div>
+                        <p class="score-text-premium" id="droitText"></p>
+                    </div>
+
+                    <!-- Efficacité gouvernementale -->
+                    <div class="score-item-premium" data-indicator="efficacite">
+                        <div class="score-label-premium">
+                            <i class="fas fa-cogs"></i>
+                            Efficacité Gouvernementale
+                        </div>
+                        <div class="gauge-container-premium">
+                            <div class="gauge-fill-premium" 
+                                data-score="{{ geopolitic.efficacite|default:0 }}"
+                                style="width: {% widthratio geopolitic.efficacite|default:0 10 100 %}%"></div>
+                            <div class="gauge-value-premium">{{ geopolitic.efficacite|default:0 }}/10</div>
+                        </div>
+                        <p class="score-text-premium" id="efficaciteText"></p>
+                    </div>
+                </div>
+
+                <!-- Scoreboard des indicateurs - Partie 2 -->
+                <div class="scoreboard-premium-two">
+                    <!-- Qualité réglementaire -->
+                    <div class="score-item-premium" data-indicator="qualite">
+                        <div class="score-label-premium">
+                            <i class="fas fa-file-contract"></i>
+                            Qualité Réglementaire
+                        </div>
+                        <div class="gauge-container-premium">
+                            <div class="gauge-fill-premium" 
+                                data-score="{{ geopolitic.qualite|default:0 }}"
+                                style="width: {% widthratio geopolitic.qualite|default:0 10 100 %}%"></div>
+                            <div class="gauge-value-premium">{{ geopolitic.qualite|default:0 }}/10</div>
+                        </div>
+                        <p class="score-text-premium" id="qualiteText"></p>
+                    </div>
+
+                    <!-- Liberté d'expression -->
+                    <div class="score-item-premium" data-indicator="liberte">
+                        <div class="score-label-premium">
+                            <i class="fas fa-comment-dots"></i>
+                            Liberté d'Expression
+                        </div>
+                        <div class="gauge-container-premium">
+                            <div class="gauge-fill-premium" 
+                                data-score="{{ geopolitic.liberte_expression|default:0 }}"
+                                style="width: {% widthratio geopolitic.liberte_expression|default:0 10 100 %}%"></div>
+                            <div class="gauge-value-premium">{{ geopolitic.liberte_expression|default:0 }}/10</div>
+                        </div>
+                        <p class="score-text-premium" id="liberteText"></p>
+                    </div>
+
+                    <!-- Score moyen -->
+                    <div class="average-score-premium">
+                        <div class="average-score-content-premium">
+                            <h5 class="text-white">{% trans "Score Global Moyen" %}</h5>
+                            <p class="average-score-value-premium" id="averageScore">
+                                {% with average=geopolitic.get_average_score %}
+                                    {% if average %}{{ average|floatformat:1 }}{% else %}0{% endif %}/10
+                                {% endwith %}
+                            </p>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addGeopoliticModal">
-                                Ajouter une Donnée Géopolitique
-                            </button>
+                            <i class="fas fa-chart-bar fa-3x opacity-75"></i>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
 
-                <!-- Données Géopolitiques list START -->
-                <div class="table-responsive border-0" id="geopoliticsList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Données Politiques</th>
-                                <th scope="col" class="border-0">Données Économiques</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
+                <!-- Sections de données -->
+                <div class="sections-grid-premium">
+                    <!-- Données politiques -->
+                    <div class="section-card-premium political">
+                        <div class="content-section-premium">
+                            <div class="content-label-premium">
+                                <i class="fas fa-landmark"></i>
+                                Analyse Politique
+                            </div>
+                            <div class="content-box-premium">
+                                {{ geopolitic.donnees_politiques|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
 
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="geopoliticsTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                    <!-- Données économiques -->
+                    <div class="section-card-premium economic">
+                        <div class="content-section-premium">
+                            <div class="content-label-premium">
+                                <i class="fas fa-chart-line"></i>
+                                Analyse Économique
+                            </div>
+                            <div class="content-box-premium">
+                                {{ geopolitic.donnees_economiques|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <!-- Données Géopolitiques list END -->
-            </div>
-            <!-- Card body END -->
 
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <!-- Informations temporelles -->
+                <div class="info-temporelle-premium">
+                    <div class="info-item-premium">
+                        <i class="fas fa-calendar-plus"></i>
+                        <div>
+                            <div class="fw-medium">Créée le {{ geopolitic.created_at|date:"d/m/Y" }}</div>
+                            <small class="text-muted">à {{ geopolitic.created_at|date:"H:i" }}</small>
+                        </div>
+                    </div>
+                    <div class="info-item-premium">
+                        <i class="fas fa-sync-alt"></i>
+                        <div>
+                            <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
+                            <small class="text-muted">{{ geopolitic.updated_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
+            {% else %}
+            <!-- État vide premium -->
+            <div class="empty-state-premium">
+                <i class="fas fa-globe-americas empty-state-icon-premium"></i>
+                <h4 class="fw-bold mb-3">{% trans "Analyse Géopolitique Non Définie" %}</h4>
+                <p class="text-muted mb-4">
+                    L'acheteur ne possède pas encore d'analyse géopolitique complète.<br>
+                    Cette analyse permet d'évaluer les risques politiques, économiques<br>
+                    et réglementaires liés à l'environnement d'opération.
+                </p>
+                <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addGeopoliticModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Démarrer l'Analyse Géopolitique" %}
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-<!-- Données Géopolitiques END -->
 
-<!-- Add Donnée Géopolitique Modal START -->
-<div class="modal fade" id="addGeopoliticModal" tabindex="-1" aria-labelledby="addGeopoliticModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addGeopoliticModalLabel">Ajouter une Donnée Géopolitique</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Ajout Géopolitique Premium -->
+<div class="modal fade" id="addGeopoliticModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouvelle Analyse Géopolitique" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addGeopoliticForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="donnees_politiques" class="form-label">Données Politiques</label>
-                        <textarea class="form-control" id="donnees_politiques" name="donnees_politiques" rows="4"></textarea>
+            <form id="addGeopoliticForm" class="enhanced-form-premium">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section des scores -->
+                    <h5 class="modal-section-title">
+                        <i class="fas fa-chart-bar me-2"></i>Indicateurs Géopolitiques (0-10)
+                    </h5>
+                    
+                    <div class="row">
+                        <!-- Stabilité politique -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="stabilite_politique" class="form-label">
+                                    <i class="fas fa-landmark"></i>{% trans "Stabilité Politique" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="stabiliteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="stabilite_politique" 
+                                           name="stabilite_politique" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="stabilite_politique" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="stabilite_politique" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="stabilite_politique" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text form-text-premium">
+                                    0=Très instable • 5=Moyen • 10=Très stable<br>
+                                    Évalue la stabilité du gouvernement et des institutions politiques
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- État de droit -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="etat_droit" class="form-label">
+                                    <i class="fas fa-balance-scale"></i>{% trans "État de Droit" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="etatDroitValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="etat_droit" 
+                                           name="etat_droit" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="etat_droit" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="etat_droit" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="etat_droit" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text form-text-premium">
+                                    0=Faible • 5=Moyen • 10=Forte application de la loi<br>
+                                    Mesure la qualité de l'application des lois et de la justice
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="donnees_economiques" class="form-label">Données Économiques</label>
-                        <textarea class="form-control" id="donnees_economiques" name="donnees_economiques" rows="4"></textarea>
+
+                    <div class="row">
+                        <!-- Efficacité gouvernementale -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="efficacite" class="form-label">
+                                    <i class="fas fa-cogs"></i>{% trans "Efficacité Gouvernementale" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="efficaciteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="efficacite" 
+                                           name="efficacite" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="efficacite" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="efficacite" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="efficacite" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text form-text-premium">
+                                    0=Très inefficace • 5=Moyen • 10=Très efficace<br>
+                                    Évalue la capacité du gouvernement à mettre en œuvre ses politiques
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Qualité réglementaire -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="qualite" class="form-label">
+                                    <i class="fas fa-file-contract"></i>{% trans "Qualité Réglementaire" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="qualiteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="qualite" 
+                                           name="qualite" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="qualite" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="qualite" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="qualite" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text form-text-premium">
+                                    0=Mauvaise • 5=Moyenne • 10=Excellente réglementation<br>
+                                    Mesure la qualité et la transparence des réglementations
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
+
+                    <div class="row">
+                        <!-- Liberté d'expression -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="liberte_expression" class="form-label">
+                                    <i class="fas fa-comment-dots"></i>{% trans "Liberté d'Expression" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="liberteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="liberte_expression" 
+                                           name="liberte_expression" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="liberte_expression" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="liberte_expression" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="liberte_expression" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text form-text-premium">
+                                    0=Très restrictive • 5=Moyenne • 10=Très libre<br>
+                                    Évalue la liberté de la presse et d'expression
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Légende des scores -->
+                        <div class="col-md-6 mb-4">
+                            <div class="score-legend-premium">
+                                <h6><i class="fas fa-info-circle me-2"></i>{% trans "Légende des Scores" %}</h6>
+                                <div class="legend-items-premium">
+                                    <div class="legend-item-premium">
+                                        <div class="legend-color-premium" style="background: #dc3545;"></div>
+                                        <span><strong>0-3:</strong> {% trans "Risque Critique" %}</span>
+                                    </div>
+                                    <div class="legend-item-premium">
+                                        <div class="legend-color-premium" style="background: #fd7e14;"></div>
+                                        <span><strong>4-5:</strong> {% trans "Risque Élevé" %}</span>
+                                    </div>
+                                    <div class="legend-item-premium">
+                                        <div class="legend-color-premium" style="background: #ffc107;"></div>
+                                        <span><strong>6-7:</strong> {% trans "Acceptable" %}</span>
+                                    </div>
+                                    <div class="legend-item-premium">
+                                        <div class="legend-color-premium" style="background: #28a745;"></div>
+                                        <span><strong>8-10:</strong> {% trans "Bon/Sécurisé" %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section des données -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-file-alt me-2"></i>{% trans "Analyses Détaillées" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="donnees_politiques" class="form-label">
+                                    <i class="fas fa-landmark"></i>{% trans "Analyse Politique" %}
+                                </label>
+                                <textarea class="form-control" id="donnees_politiques" name="donnees_politiques" rows="8"
+                                          placeholder="Analyse de la situation politique :
+• Stabilité gouvernementale et institutions
+• Relations internationales et diplomatiques
+• Climat politique et risques de conflits
+• Élections et transitions politiques
+• Corruption et gouvernance..."></textarea>
+                                <small class="form-text form-text-premium">
+                                    Analyse complète de l'environnement politique et des risques associés
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="donnees_economiques" class="form-label">
+                                    <i class="fas fa-chart-line"></i>{% trans "Analyse Économique" %}
+                                </label>
+                                <textarea class="form-control" id="donnees_economiques" name="donnees_economiques" rows="8"
+                                          placeholder="Analyse de la situation économique :
+• Croissance économique et perspectives
+• Inflation et politique monétaire
+• Dette publique et équilibre budgétaire
+• Indicateurs clés et tendances
+• Relations économiques internationales..."></textarea>
+                                <small class="form-text form-text-premium">
+                                    Analyse des conditions économiques et des risques financiers
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success-premium btn-action-premium" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-2"></i>{% trans "Créer l'analyse" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Géopolitique Premium -->
+<div class="modal fade" id="editGeopoliticModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Analyse Géopolitique" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editGeopoliticForm" class="enhanced-form-premium">
+                <input type="hidden" id="editGeopoliticId" name="id">
+                <div class="modal-body modal-body-premium">
+                    <!-- Section des scores -->
+                    <h5 class="modal-section-title">
+                        <i class="fas fa-chart-bar me-2"></i>Indicateurs Géopolitiques (0-10)
+                    </h5>
+                    
+                    <div class="row">
+                        <!-- Stabilité politique -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="editStabilitePolitique" class="form-label">
+                                    <i class="fas fa-landmark"></i>{% trans "Stabilité Politique" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="editStabiliteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="editStabilitePolitique" 
+                                           name="stabilite_politique" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editStabilitePolitique" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="editStabilitePolitique" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editStabilitePolitique" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- État de droit -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="editEtatDroit" class="form-label">
+                                    <i class="fas fa-balance-scale"></i>{% trans "État de Droit" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="editEtatDroitValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="editEtatDroit" 
+                                           name="etat_droit" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editEtatDroit" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="editEtatDroit" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editEtatDroit" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Efficacité gouvernementale -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="editEfficacite" class="form-label">
+                                    <i class="fas fa-cogs"></i>{% trans "Efficacité Gouvernementale" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="editEfficaciteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="editEfficacite" 
+                                           name="efficacite" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editEfficacite" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="editEfficacite" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editEfficacite" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Qualité réglementaire -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="editQualite" class="form-label">
+                                    <i class="fas fa-file-contract"></i>{% trans "Qualité Réglementaire" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="editQualiteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="editQualite" 
+                                           name="qualite" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editQualite" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="editQualite" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editQualite" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Liberté d'expression -->
+                        <div class="col-md-6 mb-4">
+                            <div class="form-group">
+                                <label for="editLiberteExpression" class="form-label">
+                                    <i class="fas fa-comment-dots"></i>{% trans "Liberté d'Expression" %}
+                                </label>
+                                <div class="gauge-control-premium">
+                                    <div class="gauge-control-value-premium">
+                                        Score: <span id="editLiberteValue">5</span>/10
+                                    </div>
+                                    <input type="range" class="gauge-control-slider-premium" id="editLiberteExpression" 
+                                           name="liberte_expression" min="0" max="10" value="5">
+                                    <div class="gauge-control-buttons-premium">
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editLiberteExpression" data-action="decrement">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium reset-btn" data-target="editLiberteExpression" data-action="reset" data-reset="5">
+                                            Réinitialiser
+                                        </button>
+                                        <button type="button" class="gauge-control-btn-premium" data-target="editLiberteExpression" data-action="increment">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section des données -->
+                    <h5 class="modal-section-title mt-5">
+                        <i class="fas fa-file-alt me-2"></i>{% trans "Analyses Détaillées" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDonneesPolitiques" class="form-label">
+                                    <i class="fas fa-landmark"></i>{% trans "Analyse Politique" %}
+                                </label>
+                                <textarea class="form-control" id="editDonneesPolitiques" name="donnees_politiques" rows="8"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDonneesEconomiques" class="form-label">
+                                    <i class="fas fa-chart-line"></i>{% trans "Analyse Économique" %}
+                                </label>
+                                <textarea class="form-control" id="editDonneesEconomiques" name="donnees_economiques" rows="8"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning-premium btn-action-premium" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt modal-danger-icon-premium"></i>
+                </div>
+                <h6 class="fw-bold mb-3" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Supprimer l'analyse géopolitique
+                </h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Cette action supprimera définitivement l'analyse géopolitique.<br>
+                    Cette opération est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Add Donnée Géopolitique Modal END -->
-
-<!-- Edit Donnée Géopolitique Modal START -->
-<div class="modal fade" id="editGeopoliticModal" tabindex="-1" aria-labelledby="editGeopoliticModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editGeopoliticModalLabel">Editer une Donnée Géopolitique</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editGeopoliticForm">
-                    <input type="hidden" id="editGeopoliticId" name="id">
-                    <div class="mb-3">
-                        <label for="editDonneesPolitiques" class="form-label">Données Politiques</label>
-                        <textarea class="form-control" id="editDonneesPolitiques" name="donnees_politiques" rows="4"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDonneesEconomiques" class="form-label">Données Économiques</label>
-                        <textarea class="form-control" id="editDonneesEconomiques" name="donnees_economiques" rows="4"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Edit Donnée Géopolitique Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#donnees_politiques, #donnees_economiques, #editDonneesPolitiques, #editDonneesEconomiques',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/geopolitics/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
 
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+    // Fonctions utilitaires pour les scores
+    function getScoreColorClass(score) {
+        const scoreNum = parseInt(score);
+        if (scoreNum >= 8) return 'gauge-success';
+        if (scoreNum >= 6) return 'gauge-warning';
+        if (scoreNum >= 4) return 'gauge-danger';
+        return 'gauge-danger';
+    }
+
+    function getScoreText(score, indicator) {
+        const scoreNum = parseInt(score);
+        
+        if (scoreNum >= 8) {
+            const texts = {
+                'stabilite': 'Très stable • Risque faible',
+                'droit': 'Forte application de la loi • Sécurisé',
+                'efficacite': 'Très efficace • Gouvernance excellente',
+                'qualite': 'Excellente réglementation • Transparente',
+                'liberte': 'Très libre • Presse indépendante'
+            };
+            return texts[indicator] || 'Excellent • Risque faible';
         }
+        
+        if (scoreNum >= 6) {
+            const texts = {
+                'stabilite': 'Stable • Risque modéré',
+                'droit': 'Bon état de droit • Acceptable',
+                'efficacite': 'Efficace • Gouvernance satisfaisante',
+                'qualite': 'Bonne réglementation • Adéquate',
+                'liberte': 'Libre • Presse relativement libre'
+            };
+            return texts[indicator] || 'Bon • Risque modéré';
+        }
+        
+        if (scoreNum >= 4) {
+            const texts = {
+                'stabilite': 'Modérément stable • Risque élevé',
+                'droit': 'État de droit moyen • Risque élevé',
+                'efficacite': 'Modérément efficace • Risque élevé',
+                'qualite': 'Réglementation moyenne • Risque élevé',
+                'liberte': 'Modérément libre • Restrictions importantes'
+            };
+            return texts[indicator] || 'Moyen • Risque élevé';
+        }
+        
+        const texts = {
+            'stabilite': 'Instable • Risque critique',
+            'droit': 'Faible état de droit • Risque critique',
+            'efficacite': 'Inefficace • Risque critique',
+            'qualite': 'Mauvaise réglementation • Risque critique',
+            'liberte': 'Restrictive • Risque critique'
+        };
+        return texts[indicator] || 'Faible • Risque critique';
+    }
 
+    // Fonction pour initialiser les scores
+    function initializeGeopoliticScores() {
+        // Pour chaque élément de score
+        $('.score-item-premium').each(function() {
+            const $item = $(this);
+            const indicator = $item.data('indicator');
+            const $gaugeFill = $item.find('.gauge-fill-premium');
+            const $scoreText = $item.find('.score-text-premium');
+            const score = $gaugeFill.data('score') || 0;
+            
+            // Appliquer la classe de couleur
+            const colorClass = getScoreColorClass(score);
+            $gaugeFill.addClass(colorClass);
+            
+            // Mettre à jour le texte descriptif
+            const descriptiveText = getScoreText(score, indicator);
+            $scoreText.text(descriptiveText);
+            
+            // Ajuster la couleur du texte
+            if (score >= 8) {
+                $scoreText.css('color', '#28a745');
+                $scoreText.css('font-weight', '700');
+            } else if (score >= 6) {
+                $scoreText.css('color', '#ffc107');
+                $scoreText.css('font-weight', '600');
+            } else if (score >= 4) {
+                $scoreText.css('color', '#fd7e14');
+                $scoreText.css('font-weight', '600');
+            } else {
+                $scoreText.css('color', '#dc3545');
+                $scoreText.css('font-weight', '700');
+            }
+        });
+        
+        // Calculer et mettre à jour le score moyen
+        updateAverageScore();
+    }
+
+    // Fonction pour calculer le score moyen
+    function updateAverageScore() {
+        let total = 0;
+        let count = 0;
+        
+        $('.gauge-fill-premium[data-score]').each(function() {
+            const score = parseInt($(this).data('score')) || 0;
+            if (!isNaN(score)) {
+                total += score;
+                count++;
+            }
+        });
+        
+        const average = count > 0 ? (total / count).toFixed(1) : 0;
+        
+        // Mettre à jour l'affichage
+        $('#averageScore').text(`${average}/10`);
+        
+        // Colorer le score moyen
+        const $averageScore = $('#averageScore');
+        const avgNum = parseFloat(average);
+        
+        if (avgNum >= 8) {
+            $averageScore.css('color', '#28a745');
+        } else if (avgNum >= 6) {
+            $averageScore.css('color', '#ffc107');
+        } else if (avgNum >= 4) {
+            $averageScore.css('color', '#fd7e14');
+        } else {
+            $averageScore.css('color', '#dc3545');
+        }
+    }
+        
+    // Initialisation des jauges premium
+    function initGaugesPremium() {
+        // Fonction pour mettre à jour l'affichage de la jauge
+        function updateGaugeDisplay(slider, valueSpan) {
+            const value = slider.value;
+            valueSpan.textContent = value;
+            
+            // Mettre à jour la couleur du texte selon la valeur
+            const scoreNum = parseInt(value);
+            if (scoreNum >= 8) {
+                valueSpan.style.color = '#28a745';
+                valueSpan.style.fontWeight = '700';
+            } else if (scoreNum >= 6) {
+                valueSpan.style.color = '#ffc107';
+                valueSpan.style.fontWeight = '600';
+            } else if (scoreNum >= 4) {
+                valueSpan.style.color = '#fd7e14';
+                valueSpan.style.fontWeight = '600';
+            } else {
+                valueSpan.style.color = '#dc3545';
+                valueSpan.style.fontWeight = '700';
+            }
+        }
+        
+        // Initialiser tous les sliders
+        $('input[type="range"].gauge-control-slider-premium').each(function() {
+            const slider = this;
+            const valueSpan = $(this).closest('.gauge-control-premium').find('.gauge-control-value-premium span')[0];
+            
+            // Mettre à jour l'affichage initial
+            updateGaugeDisplay(slider, valueSpan);
+            
+            // Mettre à jour lors du changement
+            $(slider).on('input', function() {
+                updateGaugeDisplay(slider, valueSpan);
+            });
+        });
+        
+        // Gérer les boutons de contrôle des jauges
+        $('.gauge-control-btn-premium').click(function() {
+            const targetId = $(this).data('target');
+            const action = $(this).data('action');
+            const slider = document.getElementById(targetId);
+            const valueSpan = $(this).closest('.gauge-control-premium').find('.gauge-control-value-premium span')[0];
+            
+            let currentValue = parseInt(slider.value);
+            
+            switch(action) {
+                case 'increment':
+                    if (currentValue < 10) {
+                        slider.value = currentValue + 1;
+                    }
+                    break;
+                case 'decrement':
+                    if (currentValue > 0) {
+                        slider.value = currentValue - 1;
+                    }
+                    break;
+                case 'reset':
+                    const resetValue = $(this).data('reset');
+                    slider.value = resetValue;
+                    break;
+            }
+            
+            // Déclencher l'événement input pour mettre à jour l'affichage
+            slider.dispatchEvent(new Event('input'));
+        });
+    }
+    
+    // Initialisation
+    initGaugesPremium();
+
+    // Initialiser les scores géopolitiques
+    initializeGeopoliticScores();
+    
+    // Si une analyse existe, pré-remplir le formulaire d'édition
+    {% if geopolitic %}
+    function populateEditForm() {
+        const geopoliticData = JSON.parse('{{ geopolitic_json|escapejs }}');
+        
+        $('#editGeopoliticId').val(geopoliticData.id);
+        $('#editDonneesPolitiques').val(geopoliticData.donnees_politiques || '');
+        $('#editDonneesEconomiques').val(geopoliticData.donnees_economiques || '');
+        
+        // Remplir les jauges avec les scores existants
+        const scoreFields = {
+            'stabilite_politique': { slider: '#editStabilitePolitique', value: '#editStabiliteValue' },
+            'etat_droit': { slider: '#editEtatDroit', value: '#editEtatDroitValue' },
+            'efficacite': { slider: '#editEfficacite', value: '#editEfficaciteValue' },
+            'qualite': { slider: '#editQualite', value: '#editQualiteValue' },
+            'liberte_expression': { slider: '#editLiberteExpression', value: '#editLiberteValue' }
+        };
+        
+        for (const [field, elements] of Object.entries(scoreFields)) {
+            const score = geopoliticData[field] || '5';
+            $(elements.slider).val(score);
+            $(elements.slider).trigger('input');
+        }
+    }
+    
+    $('#editGeopoliticModal').on('shown.bs.modal', function() {
+        populateEditForm();
+    });
+    {% endif %}
+    
+    // Gérer l'ouverture des modals
+    $('#addGeopoliticModal').on('shown.bs.modal', function() {
+        $('#donnees_politiques').focus();
+    });
+
+    $('#editGeopoliticModal').on('shown.bs.modal', function() {
+        $('#editDonneesPolitiques').focus();
+    });
+    
+    // Gérer la fermeture des modals
+    $('#addGeopoliticModal, #editGeopoliticModal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+        
+        // Réinitialiser les jauges à 5
+        $('input[type="range"].gauge-control-slider-premium').val(5).trigger('input');
+    });
+    
+    // Formulaire d'ajout
+    $('#addGeopoliticForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitGeopoliticForm(data, '#submitAddBtn', 'addGeopoliticModal');
+    });
+    
+    // Formulaire de modification
+    $('#editGeopoliticForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Inclure l'ID dans les données
+        const geopoliticId = $('#editGeopoliticId').val();
+        data['id'] = geopoliticId;
+        
+        submitGeopoliticForm(data, '#submitEditBtn', 'editGeopoliticModal');
+    });
+    
+    // Soumission du formulaire - POST pour création et modification
+    function submitGeopoliticForm(data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Validation des scores
+        const scoreFields = ['stabilite_politique', 'etat_droit', 'efficacite', 'qualite', 'liberte_expression'];
+        for (const field of scoreFields) {
+            if (data[field]) {
+                const score = parseInt(data[field]);
+                if (isNaN(score) || score < 0 || score > 10) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de validation',
+                        text: `Le score ${field.replace('_', ' ')} doit être compris entre 0 et 10.`,
+                        confirmButtonText: 'OK',
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                    return;
+                }
+            }
+        }
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                const modal = bootstrap.Modal.getInstance($('#' + modalId)[0]);
+                if (modal) modal.hide();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Opération réussie',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitGeopoliticForm(data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression de l'analyse
+    $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Analyse géopolitique supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.message || 'Impossible de supprimer l\'analyse géopolitique',
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load geopolitic data
-        function loadGeopolitics(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-donnees-geopolitiques/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update geopolitics table body
-                    $('#geopoliticsTableBody').html('');
-                    response.results.forEach(function(geopolitic, index) {
-                        $('#geopoliticsTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + geopolitic.donnees_politiques + '</td>' +
-                            '<td>' + geopolitic.donnees_economiques + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + geopolitic.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + geopolitic.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadGeopolitics();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadGeopolitics(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadGeopolitics(page, search);
-        });
-
-        // Add Geopolitic form submission
-        $('#addGeopoliticForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-un-donnee-geopolitique/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Donnée géopolitique ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addGeopoliticModal').modal('hide');
-                        loadGeopolitics();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la donnée géopolitique.',
-                    });
-                }
-            });
-        });
-
-        // Edit Geopolitic button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-donnee-geopolitique/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editGeopoliticId').val(response.id);
-                    $('#editDonneesPolitiques').val(response.donnees_politiques);
-                    $('#editDonneesEconomiques').val(response.donnees_economiques);
-                    $('#editGeopoliticModal').modal('show');
-
-                    tinymce.get('editDonneesPolitiques').setContent(response.donnees_politiques);
-                    tinymce.get('editDonneesEconomiques').setContent(response.donnees_economiques);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données géopolitiques.',
-                    });
-                }
-            });
-        });
-
-        // Edit Geopolitic form submission
-        $('#editGeopoliticForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editGeopoliticId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-donnee-geopolitique/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Donnée géopolitique mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editGeopoliticModal').modal('hide');
-                        loadGeopolitics();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la donnée géopolitique.',
-                    });
-                }
-            });
-        });
-
-        // Delete Geopolitic button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-donnees-geopolitiques/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La donnée géopolitique a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadGeopolitics();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la donnée géopolitique.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
     });
+    
+    // Effet de ripple sur les boutons premium
+    $(document).on('click', '.btn-action-premium', function(e) {
+        const $btn = $(this);
+        const btnOffset = $btn.offset();
+        const x = e.pageX - btnOffset.left;
+        const y = e.pageY - btnOffset.top;
+        
+        const $ripple = $('<span class="ripple-effect"></span>');
+        $ripple.css({
+            left: x + 'px',
+            top: y + 'px',
+            position: 'absolute',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.7)',
+            transform: 'scale(0)',
+            animation: 'ripple 0.6s linear',
+            pointerEvents: 'none',
+            zIndex: 1
+        });
+        
+        $btn.css('position', 'relative').append($ripple);
+        
+        setTimeout(function() {
+            $ripple.remove();
+        }, 600);
+    });
+});
 </script>
-
 {% endblock %}

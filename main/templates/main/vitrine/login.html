@@ -1,0 +1,749 @@
+{% load i18n %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% trans "Connexion — BUCREP" %}</title>
+    <meta name="description" content="Accédez à votre espace privé BUCREP">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="shortcut icon" href="{% static 'assets/images/bucrep-image.PNG' %}">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- SweetAlert -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.min.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blue-deep:   #0a2a4a;
+            --blue-mid:    #0d80be;
+            --blue-bright: #0a95ca;
+            --blue-light:  #25add6;
+            --blue-pale:   #e6f4ff;
+            --white:       #ffffff;
+            --gray-50:     #f8fafc;
+            --gray-100:    #f1f5f9;
+            --gray-200:    #e2e8f0;
+            --gray-400:    #94a3b8;
+            --gray-600:    #475569;
+            --gray-800:    #1e293b;
+            --radius-sm:   8px;
+            --radius-md:   12px;
+            --radius-lg:   20px;
+            --shadow-card: 0 20px 60px rgba(10,42,74,.12), 0 4px 16px rgba(10,42,74,.06);
+            --transition:  all .25s cubic-bezier(.4,0,.2,1);
+        }
+
+        html, body { height: 100%; font-family: 'Inter', sans-serif; }
+
+        body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+            background: var(--gray-50);
+        }
+
+        /* ── LEFT PANEL ─────────────────────────────────── */
+        .panel-brand {
+            position: relative;
+            background: linear-gradient(150deg, var(--blue-deep) 0%, #073d6e 50%, #0b5a9c 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px 52px;
+            overflow: hidden;
+            color: var(--white);
+        }
+
+        /* Cercles décoratifs */
+        .panel-brand::before {
+            content: '';
+            position: absolute;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,173,214,.18) 0%, transparent 70%);
+            top: -80px; right: -80px;
+            pointer-events: none;
+        }
+        .panel-brand::after {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(10,149,202,.12) 0%, transparent 70%);
+            bottom: -60px; left: -60px;
+            pointer-events: none;
+        }
+
+        .brand-top { position: relative; z-index: 1; }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .brand-logo img { height: 40px; width: auto; }
+        .brand-logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -.5px;
+        }
+        .brand-logo-text span { color: var(--blue-light); }
+
+        .brand-version {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: .7rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            color: rgba(255,255,255,.8);
+        }
+        .brand-version i { font-size: .65rem; color: var(--blue-light); }
+
+        .brand-middle { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 0; }
+
+        .brand-headline {
+            font-size: 2.1rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -.5px;
+            margin-bottom: 16px;
+        }
+        .brand-headline span { color: var(--blue-light); }
+
+        .brand-sub {
+            font-size: .95rem;
+            color: rgba(255,255,255,.65);
+            line-height: 1.6;
+            max-width: 340px;
+            margin-bottom: 36px;
+        }
+
+        .brand-features { display: flex; flex-direction: column; gap: 14px; }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .feature-icon {
+            width: 38px; height: 38px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            color: var(--blue-light);
+        }
+        .feature-text { font-size: .85rem; color: rgba(255,255,255,.8); line-height: 1.4; }
+        .feature-text strong { color: var(--white); font-weight: 600; display: block; }
+
+        .brand-bottom { position: relative; z-index: 1; }
+
+        .brand-secure {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            font-size: .8rem;
+            color: rgba(255,255,255,.7);
+        }
+        .brand-secure i { color: #4ade80; font-size: .9rem; }
+
+        /* ── RIGHT PANEL ─────────────────────────────────── */
+        .panel-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 48px 52px;
+            background: var(--white);
+            position: relative;
+        }
+
+        .form-wrapper { width: 100%; max-width: 400px; }
+
+        /* Top bar (langue + retour) */
+        .form-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .8rem;
+            font-weight: 500;
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .back-link:hover { color: var(--blue-mid); }
+        .back-link i { font-size: .75rem; }
+
+        /* Lang switcher */
+        .lang-pill {
+            display: inline-flex;
+            align-items: center;
+            background: var(--gray-100);
+            border-radius: 999px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            font-size: .75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-400);
+            letter-spacing: .04em;
+            text-decoration: none;
+        }
+        .lang-btn img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; opacity: .5; transition: var(--transition); }
+        .lang-btn.active { background: var(--white); color: var(--blue-mid); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .lang-btn.active img { opacity: 1; }
+        .lang-btn:hover:not(.active) { color: var(--blue-mid); }
+
+        /* Heading */
+        .form-heading { margin-bottom: 32px; }
+        .form-heading h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--gray-800);
+            letter-spacing: -.5px;
+            margin-bottom: 6px;
+        }
+        .form-heading p { font-size: .9rem; color: var(--gray-400); }
+        .form-heading p strong { color: var(--blue-mid); font-weight: 600; }
+
+        /* Form fields */
+        .field-group { margin-bottom: 20px; }
+        .field-label {
+            display: block;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+            letter-spacing: .02em;
+        }
+        .field-wrap { position: relative; }
+        .field-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: .95rem;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+        .field-input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: .9rem;
+            font-family: inherit;
+            color: var(--gray-800);
+            background: var(--white);
+            transition: var(--transition);
+            outline: none;
+        }
+        .field-input::placeholder { color: var(--gray-400); }
+        .field-input:hover { border-color: var(--blue-light); }
+        .field-input:focus {
+            border-color: var(--blue-mid);
+            box-shadow: 0 0 0 3px rgba(13,128,190,.1);
+        }
+        .field-input:focus ~ .field-icon { color: var(--blue-mid); }
+        .field-input.is-error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+
+        .field-error {
+            display: none;
+            font-size: .75rem;
+            color: #ef4444;
+            margin-top: 5px;
+        }
+        .field-error.show { display: block; }
+
+        /* Password toggle */
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 4px;
+            border-radius: 4px;
+            font-size: .95rem;
+            transition: var(--transition);
+        }
+        .toggle-pw:hover { color: var(--blue-mid); background: var(--gray-100); }
+
+        /* Forgot link */
+        .forgot-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+        .forgot-link {
+            font-size: .8rem;
+            font-weight: 500;
+            color: var(--blue-mid);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .forgot-link:hover { color: var(--blue-deep); text-decoration: underline; }
+
+        /* Submit button */
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--blue-bright) 0%, var(--blue-mid) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: .95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: .01em;
+            box-shadow: 0 4px 14px rgba(13,128,190,.25);
+        }
+        .btn-submit:hover {
+            background: linear-gradient(135deg, var(--blue-mid) 0%, var(--blue-deep) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(13,128,190,.35);
+        }
+        .btn-submit:active { transform: translateY(0); }
+        .btn-submit:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.4);
+            border-top-color: var(--white);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Alert inline */
+        .alert-error {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 20px;
+            font-size: .85rem;
+            color: #b91c1c;
+        }
+        .alert-error.show { display: flex; }
+        .alert-error i { margin-top: 1px; font-size: 1rem; flex-shrink: 0; }
+
+        /* Alert success */
+        .alert-success {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 20px;
+            font-size: .85rem;
+            color: #15803d;
+        }
+        .alert-success.show { display: flex; }
+        .alert-success i { margin-top: 1px; font-size: 1rem; flex-shrink: 0; }
+
+        /* Footer form */
+        .form-footer {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            font-size: .78rem;
+            color: var(--gray-400);
+        }
+        .form-footer a { color: var(--gray-400); text-decoration: none; }
+        .form-footer a:hover { color: var(--blue-mid); }
+
+        /* Animation d'entrée */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .form-wrapper { animation: fadeUp .45s ease-out both; }
+
+        /* ── RESPONSIVE ─────────────────────────────────── */
+        @media (max-width: 900px) {
+            body { grid-template-columns: 1fr; }
+            .panel-brand { display: none; }
+            .panel-form { padding: 32px 24px; min-height: 100vh; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ LEFT PANEL ═══════════════ -->
+<aside class="panel-brand">
+
+    <div class="brand-top">
+        <a href="{% url 'index' %}" class="brand-logo">
+            <img src="{% static 'assets/images/bucrep-image.PNG' %}" alt="BUCREP">
+            <span class="brand-logo-text">BUC<span>REP</span></span>
+        </a>
+        <div class="brand-version">
+            <i class="bi bi-lightning-charge-fill"></i>
+            VERSION 3.0
+        </div>
+    </div>
+
+    <div class="brand-middle">
+        <h2 class="brand-headline">
+            {% trans "La plateforme" %}<br>
+            {% trans "de solvabilité" %}<br>
+            <span>{% trans "d'entreprise" %}</span>
+        </h2>
+        <p class="brand-sub">
+            {% trans "Analysez, évaluez et gérez le risque de crédit de vos partenaires commerciaux en toute confiance." %}
+        </p>
+
+        <div class="brand-features">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="feature-text">
+                    <strong>{% trans "Rapports de solvabilité" %}</strong>
+                    {% trans "Génération instantanée selon 5 normes comptables" %}
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+                <div class="feature-text">
+                    <strong>{% trans "Analyse de risque" %}</strong>
+                    {% trans "Scoring, alertes et suivi des entreprises en temps réel" %}
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="bi bi-globe-americas"></i></div>
+                <div class="feature-text">
+                    <strong>{% trans "Multi-pays" %}</strong>
+                    {% trans "Couverture de l'espace CEMAC et au-delà" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="brand-bottom">
+        <div class="brand-secure">
+            <i class="bi bi-shield-lock-fill"></i>
+            {% trans "Connexion chiffrée SSL/TLS — données protégées" %}
+        </div>
+    </div>
+
+</aside>
+
+<!-- ═══════════════ RIGHT PANEL ═══════════════ -->
+<main class="panel-form">
+    <div class="form-wrapper">
+
+        <!-- Top bar -->
+        <div class="form-topbar">
+            <div></div>
+            <div class="lang-pill">
+                <button class="lang-btn" id="flag-fr" data-lang="fr" title="Français">
+                    <img src="{% static 'assets/images/french.png' %}" alt="FR"> FR
+                </button>
+                <button class="lang-btn" id="flag-en" data-lang="en" title="English">
+                    <img src="{% static 'assets/images/english.png' %}" alt="EN"> EN
+                </button>
+            </div>
+        </div>
+
+        <!-- Heading -->
+        <div class="form-heading">
+            <h1>{% trans "Bon retour" %} 👋</h1>
+            <p>{% trans "Connectez-vous à votre" %} <strong>{% trans "espace privé" %}</strong></p>
+        </div>
+
+        <!-- Alert erreur -->
+        <div class="alert-error" id="alertError">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span id="alertErrorText">{% trans "Identifiants invalides." %}</span>
+        </div>
+
+        <!-- Alert succès -->
+        <div class="alert-success" id="alertSuccess">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>{% trans "Authentification réussie. Redirection en cours…" %}</span>
+        </div>
+
+        <!-- Form -->
+        <form id="loginForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div class="field-group">
+                <label class="field-label" for="username">{% trans "Identifiant" %}</label>
+                <div class="field-wrap">
+                    <i class="bi bi-person field-icon"></i>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="field-input"
+                        placeholder="{% trans 'Votre pseudo' %}"
+                        autocomplete="username"
+                        autofocus
+                        required>
+                </div>
+                <div class="field-error" id="errUsername">{% trans "Ce champ est requis." %}</div>
+            </div>
+
+            <!-- Password -->
+            <div class="field-group">
+                <label class="field-label" for="password">{% trans "Mot de passe" %}</label>
+                <div class="field-wrap">
+                    <i class="bi bi-lock field-icon"></i>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="field-input"
+                        style="padding-right: 44px;"
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                        required>
+                    <button type="button" class="toggle-pw" id="togglePw" aria-label="{% trans 'Afficher le mot de passe' %}">
+                        <i class="bi bi-eye-slash" id="togglePwIcon"></i>
+                    </button>
+                </div>
+                <div class="field-error" id="errPassword">{% trans "Ce champ est requis." %}</div>
+            </div>
+
+            <!-- Mot de passe oublié -->
+            <div class="forgot-row">
+                <a href="{% url 'forgot_auth' %}" class="forgot-link">
+                    {% trans "Mot de passe oublié ?" %}
+                </a>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-submit" id="btnSubmit">
+                <span id="btnText">{% trans "Se connecter" %}</span>
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="form-footer">
+            © {% now "Y" %} ACREMAC —
+            <a href="{% url 'policy_confidentiality' %}">{% trans "Confidentialité" %}</a> ·
+            <a href="{% url 'terms_of_use' %}">{% trans "CGU" %}</a>
+        </div>
+
+    </div><!-- /form-wrapper -->
+</main>
+
+<!-- Formulaire changement de langue (caché) -->
+<form id="language-form" action="{% url 'set_language' %}" method="post" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <input type="hidden" id="language-input" name="language">
+</form>
+
+<!-- SweetAlert -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.all.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(function () {
+
+    /* ── Helpers ── */
+    function getCsrf() {
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function showError(msg) {
+        $('#alertSuccess').removeClass('show');
+        $('#alertErrorText').text(msg);
+        $('#alertError').addClass('show');
+    }
+
+    function showSuccess() {
+        $('#alertError').removeClass('show');
+        $('#alertSuccess').addClass('show');
+    }
+
+    function setLoading(on) {
+        const btn  = $('#btnSubmit');
+        const text = $('#btnText');
+        btn.prop('disabled', on);
+        if (on) {
+            text.html('<div class="spinner"></div>&nbsp;{% trans "Vérification…" %}');
+        } else {
+            text.text('{% trans "Se connecter" %}');
+        }
+    }
+
+    function clearErrors() {
+        $('.field-input').removeClass('is-error');
+        $('.field-error').removeClass('show');
+        $('#alertError').removeClass('show');
+    }
+
+    /* ── Password toggle ── */
+    $('#togglePw').on('click', function () {
+        const pw   = $('#password');
+        const icon = $('#togglePwIcon');
+        const show = pw.attr('type') === 'password';
+        pw.attr('type', show ? 'text' : 'password');
+        icon.toggleClass('bi-eye-slash', !show).toggleClass('bi-eye', show);
+        $(this).attr('aria-label', show ? '{% trans "Masquer le mot de passe" %}' : '{% trans "Afficher le mot de passe" %}');
+    });
+
+    /* ── Live validation ── */
+    $('#username').on('input', function () {
+        if ($(this).val().trim()) {
+            $(this).removeClass('is-error');
+            $('#errUsername').removeClass('show');
+        }
+    });
+    $('#password').on('input', function () {
+        if ($(this).val()) {
+            $(this).removeClass('is-error');
+            $('#errPassword').removeClass('show');
+        }
+    });
+
+    /* ── Form submit ── */
+    $('#loginForm').on('submit', function (e) {
+        e.preventDefault();
+        clearErrors();
+
+        const username = $('#username').val().trim();
+        const password = $('#password').val();
+        let valid = true;
+
+        if (!username) {
+            $('#username').addClass('is-error');
+            $('#errUsername').addClass('show');
+            valid = false;
+        }
+        if (!password) {
+            $('#password').addClass('is-error');
+            $('#errPassword').addClass('show');
+            valid = false;
+        }
+        if (!valid) return;
+
+        setLoading(true);
+
+        $.ajax({
+            url: '/api/login/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ username, password }),
+            headers: { 'X-CSRFToken': getCsrf() },
+            success: function (res) {
+                showSuccess();
+                localStorage.setItem('access_token',  res.access  || '');
+                localStorage.setItem('refresh_token', res.refresh || '');
+                setTimeout(function () {
+                    // Respect ?next= parameter set by @login_required
+                    var params = new URLSearchParams(window.location.search);
+                    var next = params.get('next');
+                    // Safety: only allow relative internal URLs
+                    if (next && next.startsWith('/') && !next.startsWith('//')) {
+                        window.location.href = next;
+                    } else {
+                        window.location.href = res.reset_url || '/root-dashboard/';
+                    }
+                }, 900);
+            },
+            error: function (xhr) {
+                setLoading(false);
+                let msg = '{% trans "Identifiants invalides. Veuillez réessayer." %}';
+                try {
+                    const d = xhr.responseJSON;
+                    if (d && d.detail) msg = d.detail;
+                    else if (d && d.non_field_errors) msg = d.non_field_errors[0];
+                } catch (_) {}
+                showError(msg);
+                $('#password').val('').focus();
+            }
+        });
+    });
+
+    /* ── Langue ── */
+    function setActiveLang(lang) {
+        ['fr','en'].forEach(function (l) {
+            $('#flag-' + l).toggleClass('active', l === lang);
+        });
+    }
+    const htmlLang = (document.documentElement.lang || 'fr').slice(0,2);
+    setActiveLang(localStorage.getItem('ui_lang') || htmlLang);
+
+    $('.lang-btn').on('click', function (e) {
+        e.preventDefault();
+        const lang = $(this).data('lang');
+        $('#language-input').val(lang);
+        setActiveLang(lang);
+        localStorage.setItem('ui_lang', lang);
+        $('#language-form').submit();
+    });
+
+});
+</script>
+</body>
+</html>

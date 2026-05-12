@@ -1,0 +1,181 @@
+{% load i18n %}
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+
+    function refreshAccessToken() {
+        $.ajax({ url: "{% url 'token_refresh' %}", type: 'POST', data: { 'refresh': refreshToken }, headers: {'X-CSRFToken': '{{ csrf_token }}'}, success: function(response) { accessToken = response.access; }, error: function() { console.error("Échec du rafraîchissement automatique du jeton."); } });
+    }
+    setInterval(refreshAccessToken, 240000);
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializePassifSCalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalCapitauxPropres = (p($(`input[name="capital_${suffix}"]`).val()) - p($(`input[name="capital_non_appele_apporteurs_${suffix}"]`).val())) + p($(`input[name="primes_liees_capital_social_${suffix}"]`).val()) + p($(`input[name="ecart_reevaluation_${suffix}"]`).val()) + p($(`input[name="reserves_indisponibles_${suffix}"]`).val()) + p($(`input[name="reserves_libres_${suffix}"]`).val()) + p($(`input[name="report_nouveau_${suffix}"]`).val()) + p($(`input[name="resultat_net_exercice_${suffix}"]`).val()) + p($(`input[name="subventions_investissements_${suffix}"]`).val()) + p($(`input[name="provisions_reglees_${suffix}"]`).val());
+            const totalDettesFinancieres = p($(`input[name="emprunts_dettes_financieres_diverse_${suffix}"]`).val()) + p($(`input[name="dettes_location_vente_${suffix}"]`).val()) + p($(`input[name="provisions_risques_charges_${suffix}"]`).val());
+            const totalPassifsCourants = p($(`input[name="passif_circulant_hao_${suffix}"]`).val()) + p($(`input[name="clients_avances_recues_${suffix}"]`).val()) + p($(`input[name="fournisseurs_exploitation_${suffix}"]`).val()) + p($(`input[name="dettes_fiscales_sociales_${suffix}"]`).val()) + p($(`input[name="autres_dettes_${suffix}"]`).val()) + p($(`input[name="provisions_risques_court_terme_${suffix}"]`).val());
+            const totalTresorerie = p($(`input[name="banques_credit_escompte_${suffix}"]`).val()) + p($(`input[name="banques_etablissements_financiers_credit_caisse_${suffix}"]`).val());
+            const ecartConversionPassif = p($(`input[name="ecart_conversion_passif_${suffix}"]`).val());
+            const totalPassifs = totalCapitauxPropres + totalDettesFinancieres + totalPassifsCourants + totalTresorerie + ecartConversionPassif;
+            
+            $(`#total_capitaux_propres_${suffix}`).val(formatCurrency(totalCapitauxPropres));
+            $(`#total_dettes_financieres_${suffix}`).val(formatCurrency(totalDettesFinancieres));
+            $(`#total_passifs_courants_${suffix}`).val(formatCurrency(totalPassifsCourants));
+            $(`#total_tresorerie_equivalents_${suffix}`).val(formatCurrency(totalTresorerie));
+            $(`#total_passifs_${suffix}`).val(formatCurrency(totalPassifs));
+        }
+
+        $(`#collapsePassifS{{ suffix }}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializePassifSCalculations(suffix));
+
+    // --- LOGIQUE POUR LA SOUMISSION ET LES MODALS ---
+    $('#form-passifs-s-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-passifs'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-passif-s' %}",
+            type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Passifs enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+
+    // LOGIQUE DU MODAL DE VUE (inchangée)
+    $('#listing-passifs-s-pane').on('click', '.btn-view-passifs', function() {
+        const passifId = $(this).data('passif-id');
+        const loader = $('#modal-passifs-loader'), content = $('#passifs-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-passif-s' 0 %}`.replace('0', passifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#modal-passifs-acheteur').text(data.acheteur.nom);
+                $('#modal-passifs-annee').text(data.annee.annee);
+                $('#total-passifs-capitaux-propres').text(formatCurrency(data.total_capitaux_propres_ressources_similaires));
+                $('#modal-passifs-capital').text(formatCurrency(data.capital));
+                $('#modal-passifs-capital_non_appele_apporteurs').text(formatCurrency(data.capital_non_appele_apporteurs));
+                $('#modal-passifs-primes_liees_capital_social').text(formatCurrency(data.primes_liees_capital_social));
+                $('#modal-passifs-ecart_reevaluation').text(formatCurrency(data.ecart_reevaluation));
+                $('#modal-passifs-reserves_indisponibles').text(formatCurrency(data.reserves_indisponibles));
+                $('#modal-passifs-reserves_libres').text(formatCurrency(data.reserves_libres));
+                $('#modal-passifs-report_nouveau').text(formatCurrency(data.report_nouveau));
+                $('#modal-passifs-resultat_net_exercice').text(formatCurrency(data.resultat_net_exercice));
+                $('#modal-passifs-subventions_investissements').text(formatCurrency(data.subventions_investissements));
+                $('#modal-passifs-provisions_reglees').text(formatCurrency(data.provisions_reglees));
+                $('#total-passifs-dettes-long-terme').text(formatCurrency(data.total_dettes_financieres_ressources_similaires));
+                $('#modal-passifs-emprunts_dettes_financieres_diverse').text(formatCurrency(data.emprunts_dettes_financieres_diverse));
+                $('#modal-passifs-dettes_location_vente').text(formatCurrency(data.dettes_location_vente));
+                $('#modal-passifs-provisions_risques_charges').text(formatCurrency(data.provisions_risques_charges));
+                $('#total-passifs-courants').text(formatCurrency(data.total_passifs_courants));
+                $('#modal-passifs-passif_circulant_hao').text(formatCurrency(data.passif_circulant_hao));
+                $('#modal-passifs-clients_avances_recues').text(formatCurrency(data.clients_avances_recues));
+                $('#modal-passifs-fournisseurs_exploitation').text(formatCurrency(data.fournisseurs_exploitation));
+                $('#modal-passifs-dettes_fiscales_sociales').text(formatCurrency(data.dettes_fiscales_sociales));
+                $('#modal-passifs-autres_dettes').text(formatCurrency(data.autres_dettes));
+                $('#modal-passifs-provisions_risques_court_terme').text(formatCurrency(data.provisions_risques_court_terme));
+                $('#total-passifs-tresorerie').text(formatCurrency(data.total_tresorerie_equivalents));
+                $('#modal-passifs-banques_credit_escompte').text(formatCurrency(data.banques_credit_escompte));
+                $('#modal-passifs-banques_etablissements_financiers_credit_caisse').text(formatCurrency(data.banques_etablissements_financiers_credit_caisse));
+                $('#modal-passifs-ecart_conversion_passif').text(formatCurrency(data.ecart_conversion_passif));
+                $('#total-general-passifs').text(formatCurrency(data.total_passifs));
+                loader.hide(); content.show();
+            },
+            error: () => { loader.hide(); content.html('<div class="alert alert-danger">Impossible de charger les détails du passif.</div>').show(); }
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE MODIFICATION ---
+    $('#listing-passifs-s-pane').on('click', '.btn-edit-passifs', function() {
+        const passifId = $(this).data('passif-id');
+        const formContent = $('#edit-passifs-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditPassifSTotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalCapitauxPropres = (p($('#edit_capital').val()) - p($('#edit_capital_non_appele_apporteurs').val())) + p($('#edit_primes_liees_capital_social').val()) + p($('#edit_ecart_reevaluation').val()) + p($('#edit_reserves_indisponibles').val()) + p($('#edit_reserves_libres').val()) + p($('#edit_report_nouveau').val()) + p($('#edit_resultat_net_exercice').val()) + p($('#edit_subventions_investissements').val()) + p($('#edit_provisions_reglees').val());
+            const totalDettesFinancieres = p($('#edit_emprunts_dettes_financieres_diverse').val()) + p($('#edit_dettes_location_vente').val()) + p($('#edit_provisions_risques_charges').val());
+            const totalPassifsCourants = p($('#edit_passif_circulant_hao').val()) + p($('#edit_clients_avances_recues').val()) + p($('#edit_fournisseurs_exploitation').val()) + p($('#edit_dettes_fiscales_sociales').val()) + p($('#edit_autres_dettes').val()) + p($('#edit_provisions_risques_court_terme').val());
+            const totalTresorerie = p($('#edit_banques_credit_escompte').val()) + p($('#edit_banques_etablissements_financiers_credit_caisse').val());
+            const ecartConversionPassif = p($('#edit_ecart_conversion_passif').val());
+            const totalPassifs = totalCapitauxPropres + totalDettesFinancieres + totalPassifsCourants + totalTresorerie + ecartConversionPassif;
+            
+            $('#edit_total_capitaux_propres').val(formatCurrency(totalCapitauxPropres));
+            $('#edit_total_dettes_financieres').val(formatCurrency(totalDettesFinancieres));
+            $('#edit_total_passifs_courants').val(formatCurrency(totalPassifsCourants));
+            $('#edit_total_tresorerie_equivalents').val(formatCurrency(totalTresorerie));
+            $('#edit_total_passifs').val(formatCurrency(totalPassifs));
+        }
+
+        $.ajax({
+            url: `{% url 'get-passif-s' 0 %}`.replace('0', passifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#edit-passifs-id').val(data.id);
+                let formHtml = `
+                    <div class="row g-3 mb-4"><div class="col-md-6"><label for="edit_annee" class="form-label">Année</label><select name="annee" id="edit_annee" class="form-select">{% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}</select></div></div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5><hr>
+                    <h4 class="text-primary mt-4">CAPITAUX PROPRES & RESSOURCES SIMILAIRES</h4>
+                    <h6 class="text-muted mt-3 mb-2">Capitaux propres</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_capital" class="form-label mb-0">Capital</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="capital" id="edit_capital" value="${data.capital || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_capital_non_appele_apporteurs" class="form-label mb-0">Capital non appelé des apporteurs (-)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="capital_non_appele_apporteurs" id="edit_capital_non_appele_apporteurs" value="${data.capital_non_appele_apporteurs || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_primes_liees_capital_social" class="form-label mb-0">Primes liées au capital social</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="primes_liees_capital_social" id="edit_primes_liees_capital_social" value="${data.primes_liees_capital_social || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_ecart_reevaluation" class="form-label mb-0">Écart de réévaluation</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="ecart_reevaluation" id="edit_ecart_reevaluation" value="${data.ecart_reevaluation || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_reserves_indisponibles" class="form-label mb-0">Réserves indisponibles</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="reserves_indisponibles" id="edit_reserves_indisponibles" value="${data.reserves_indisponibles || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_reserves_libres" class="form-label mb-0">Réserves libres</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="reserves_libres" id="edit_reserves_libres" value="${data.reserves_libres || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_report_nouveau" class="form-label mb-0">Report à nouveau (+ ou -)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="report_nouveau" id="edit_report_nouveau" value="${data.report_nouveau || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_resultat_net_exercice" class="form-label mb-0">Résultat net de l'exercice (+ ou -)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="resultat_net_exercice" id="edit_resultat_net_exercice" value="${data.resultat_net_exercice || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_subventions_investissements" class="form-label mb-0">Subventions d'investissements</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="subventions_investissements" id="edit_subventions_investissements" value="${data.subventions_investissements || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_provisions_reglees" class="form-label mb-0">Provisions réglées</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="provisions_reglees" id="edit_provisions_reglees" value="${data.provisions_reglees || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_capitaux_propres" class="form-label fw-bold mb-0">TOTAL CAPITAUX PROPRES</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_capitaux_propres" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">DETTES FINANCIÈRES & RESSOURCES ASSIMILÉES</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_emprunts_dettes_financieres_diverse" class="form-label mb-0">Emprunts et dettes financières diverses</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="emprunts_dettes_financieres_diverse" id="edit_emprunts_dettes_financieres_diverse" value="${data.emprunts_dettes_financieres_diverse || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_dettes_location_vente" class="form-label mb-0">Dettes de location-vente</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="dettes_location_vente" id="edit_dettes_location_vente" value="${data.dettes_location_vente || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_provisions_risques_charges" class="form-label mb-0">Provisions pour risques et charges</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="provisions_risques_charges" id="edit_provisions_risques_charges" value="${data.provisions_risques_charges || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_dettes_financieres" class="form-label fw-bold mb-0">TOTAL DETTES FINANCIÈRES</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_dettes_financieres" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">PASSIF CIRCULANT (HORS TRÉSORERIE)</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_passif_circulant_hao" class="form-label mb-0">Passif circulant HAO</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="passif_circulant_hao" id="edit_passif_circulant_hao" value="${data.passif_circulant_hao || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_clients_avances_recues" class="form-label mb-0">Clients, avances reçues</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="clients_avances_recues" id="edit_clients_avances_recues" value="${data.clients_avances_recues || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_fournisseurs_exploitation" class="form-label mb-0">Fournisseurs d'exploitation</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="fournisseurs_exploitation" id="edit_fournisseurs_exploitation" value="${data.fournisseurs_exploitation || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_dettes_fiscales_sociales" class="form-label mb-0">Dettes fiscales et sociales</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="dettes_fiscales_sociales" id="edit_dettes_fiscales_sociales" value="${data.dettes_fiscales_sociales || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres_dettes" class="form-label mb-0">Autres dettes</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres_dettes" id="edit_autres_dettes" value="${data.autres_dettes || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_provisions_risques_court_terme" class="form-label mb-0">Provisions pour risques à court terme</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="provisions_risques_court_terme" id="edit_provisions_risques_court_terme" value="${data.provisions_risques_court_terme || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_passifs_courants" class="form-label fw-bold mb-0">TOTAL PASSIFS COURANTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_passifs_courants" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">TRÉSORERIE & ÉQUIVALENTS</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banques_credit_escompte" class="form-label mb-0">Banques, crédits d'escompte</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banques_credit_escompte" id="edit_banques_credit_escompte" value="${data.banques_credit_escompte || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banques_etablissements_financiers_credit_caisse" class="form-label mb-0">Banques, établissements financiers et crédits de caisse</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banques_etablissements_financiers_credit_caisse" id="edit_banques_etablissements_financiers_credit_caisse" value="${data.banques_etablissements_financiers_credit_caisse || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_tresorerie_equivalents" class="form-label fw-bold mb-0">TOTAL TRÉSORERIE ET ÉQUIVALENTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_tresorerie_equivalents" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">ÉCARTS DE CONVERSION PASSIF</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_ecart_conversion_passif" class="form-label mb-0">Écarts de conversion - Passif</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="ecart_conversion_passif" id="edit_ecart_conversion_passif" value="${data.ecart_conversion_passif || 0}"></div></div>
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-success text-white p-3 rounded"><div class="col-md-6"><h5 class="mb-0">TOTAL GÉNÉRAL PASSIF</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_total_passifs" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                $('#form-edit-passifs').on('input', 'input[type="number"]', updateEditPassifSTotals);
+                updateEditPassifSTotals(); // Appel initial
+            },
+            error: function(xhr) { formContent.html('<div class="alert alert-danger">Impossible de charger le formulaire de modification du passif.</div>'); }
+        });
+    });
+
+    $('#form-edit-passifs').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), passifId = $('#edit-passifs-id').val(), btn = $('#btn-save-passifs-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-passif-s' 0 %}`.replace('0', passifId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer {{ access }}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-passifs').modal('hide'); Swal.fire('Modifié !', 'Le passif a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

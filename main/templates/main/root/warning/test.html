@@ -1,0 +1,317 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+.color-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+    margin-left: 5px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-exclamation-triangle fa-fw me-1"></i>Ajouter une Alerte</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAlertes">Module de Gestion des Alertes</h4>
+                    <span>Dans ce module, vous pouvez ajouter une alerte et y associer des documents.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Ajout d'une Alerte START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom">
+                <h4 class="card-header-title">Etape 2 - Documents associés</h4>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body vstack gap-4">
+
+                <form id="addAlerteForm">
+
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Documents</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Search and select START -->
+                            <div class="row g-3 align-items-center justify-content-between mb-3">
+                                <!-- Search -->
+                                <div class="col-md-7">
+                                    <div>
+                                        <a href="" class="btn btn-secondary w-100 mb-0">
+                                            Documents associés
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Select option -->
+                                <div class="col-md-5">
+                                    <!-- Short by filter -->
+                                    <div>
+                                        <a href="#" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" id="openAddDocumentModal">
+                                            Ajouter un Document
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Search and select END -->
+                            <!-- Alertes list START -->
+                            <div class="table-responsive border-0" id="alertesList">
+                                <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                                    <!-- Table head -->
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col" class="border-0 rounded-start">#</th>
+                                            <th scope="col" class="border-0">Titre</th>
+                                            <th scope="col" class="border-0">Fichier</th>
+                                            <th scope="col" class="border-0 rounded-end">Action</th>
+                                        </tr>
+                                    </thead>
+
+                                    <!-- Table body START -->
+                                    <tbody class="border-top-0" id="documentAlertesTableBody">
+                                        {% for doc in documents %}
+                                        <td>{{ doc.id }}</td>
+                                        <td>{{ doc.titre }}</td>
+                                        <td><a href="{{ doc.fichier }}" target="_blank">Voir le fichier</a></td>
+                                        <td>
+                                            <a href="{{ doc.fichier }}" target="_blank"><i class="bi bi-eye"></i></a>
+                                            <a href="#" onclick="deleteDocument('{{ doc.id }}')"><i class="bi bi-trash"></i></a>
+                                        </td>
+                                        {% endfor %}
+                                    </tbody>
+                                    <!-- Table body END -->
+                                </table>
+                            </div>
+                            <!-- Alertes list END -->
+                        </div>
+
+                        <!-- Modal pour ajouter un document -->
+                        <div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addDocumentModalLabel">Ajouter un Document</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="addDocumentForm" enctype="multipart/form-data">
+                                            <div class="mb-3">
+                                                <label for="documentAlerte" class="form-label">Alerte associé</label>
+                                                <input type="text" class="form-control" id="documentAlerte" disabled value="{{ alerte.reference }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="documentTitle" class="form-label">Titre</label>
+                                                <input type="text" class="form-control" id="documentTitle" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="documentFile" class="form-label">Fichier PDF</label>
+                                                <input type="file" class="form-control" id="documentFile" accept=".pdf" required>
+                                            </div>
+                                            <input type="hidden" id="alerteId" value="{{ alerte.id }}">
+                                            <button type="submit" class="btn btn-primary">Ajouter</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <br>
+
+                    <!-- Button -->
+                    <div class="text-end">
+                        <a href="" class="btn btn-primary mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
+                            <i class="bi bi-plus-lg"></i> Passer a l'étape finale
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- Card body END -->
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Ajout d'une Alerte END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    // Ouvrir le modal pour ajouter un document
+    $('#openAddDocumentModal').on('click', function(e) {
+        e.preventDefault();
+        $('#addDocumentModal').modal('show');
+    });
+
+    // Soumettre le formulaire pour ajouter un document
+    $('#addDocumentModal').on('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData();
+        formData.append('titre', $('#documentTitle').val());
+        formData.append('fichier', $('#documentFile')[0].files[0]);
+        formData.append('alerte', $('#alerteId').val());
+
+        $.ajax({
+            url: '/api/ajouter-un-document-alerte/',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès!',
+                    text: 'Le document a été ajouté avec succès.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Rafraîchir la page ou mettre à jour le tableau des documents
+                    // Rediriger vers l'URL souhaitée
+                    window.location.href = '/root-dashboard/warnings/ajouter-une-alerte/etape-2/' + '{{ reference }}' + '/?token={{ access }}';
+                });
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur!',
+                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        });
+    });
+});
+</script>
+
+<script>
+    $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#commentaire, #editCommentaire, #content',  // Sélecteurs pour les textareas
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 500
+        });
+
+        // Fonction pour supprimer un document
+        window.deleteDocument = function(id) {
+            $.ajax({
+                url: `/api/document-alertes/${id}/`,
+                type: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                success: function(data) {
+                    // Supprimer la ligne du tableau
+                    $(`tr[data-id="${id}"]`).remove();
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        };
+
+        // Gestion de l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token si expiré
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    $.ajax(this); // Réessayer la requête
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '/login/';
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

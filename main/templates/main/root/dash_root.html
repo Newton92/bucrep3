@@ -1,146 +1,1633 @@
 {% extends 'main/root/base.html' %}
 
-{% load i18n %}
-{% load static %}
+{% load i18n static %}
 
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>
+    /* Variables CSS harmonisées avec le template principal */
+    :root {
+        /* Palette bleue principale */
+        --primary-light: #fcfefe;    /* Blanc bleuté très clair */
+        --primary-blue: #0a95ca;     /* Bleu principal clair */
+        --primary-medium: #0d80be;   /* Bleu principal moyen */
+        --primary-accent: #25add6;   /* Bleu accentuation */
+        --primary-dark: #106cb2;     /* Bleu foncé */
+        
+        --primary-color: #0d80be;    /* Couleur principale */
+        --primary-dark-color: #106cb2; /* Version foncée */
+        --secondary-color: #25add6;  /* Couleur secondaire */
+        --accent-color: #0a95ca;     /* Couleur d'accent */
+        --light-color: #fcfefe;      /* Fond clair */
+        
+        /* Dégradés harmonisés */
+        --primary-gradient: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        --secondary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+        --light-gradient: linear-gradient(135deg, var(--light-color) 0%, #e6f4ff 100%);
+        --success-gradient: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #ffda6a 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e35d6a 100%);
+        
+        /* Variables UI */
+        --shadow-light: 0 4px 20px rgba(10, 149, 202, 0.08);
+        --shadow-medium: 0 8px 30px rgba(13, 128, 190, 0.12);
+        --shadow-heavy: 0 12px 40px rgba(16, 108, 178, 0.15);
+        --border-radius-card: 16px;
+        --border-radius-element: 12px;
+        --border-radius-sm: 8px;
+        --transition: all 0.3s ease;
+    }
 
+    /* Améliorations globales */
+    .dashboard-card {
+        border: none;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        transition: var(--transition);
+        background: white;
+        overflow: hidden;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
 
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(13, 128, 190, 0.2);
+    }
 
-{% block css %}{% endblock %}
+    .card-header {
+        background: linear-gradient(90deg, var(--light-color) 0%, #ffffff 100%);
+        border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+        padding: 1.25rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
 
+    .card-header-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.1rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-header-title i {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+
+    /* Counter cards améliorées */
+    .counter-card {
+        position: relative;
+        overflow: hidden;
+        border: none !important;
+        background: white;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        transition: var(--transition);
+        border: 1px solid rgba(13, 128, 190, 0.1) !important;
+    }
+
+    .counter-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .counter-card:hover::before {
+        opacity: 1;
+    }
+
+    .counter-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(13, 128, 190, 0.2) !important;
+    }
+
+    .counter-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2);
+        transition: var(--transition);
+    }
+
+    .counter-card:hover .counter-icon {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(13, 128, 190, 0.3);
+    }
+
+    .counter-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+
+    .counter-label {
+        font-size: 0.9rem;
+        color: var(--primary-medium);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Badges harmonisés */
+    .badge {
+        border: none;
+        font-weight: 600;
+    }
+
+    .badge.bg-light {
+        background: linear-gradient(135deg, var(--light-color), #e6f4ff) !important;
+        color: var(--primary-dark) !important;
+        border: 1px solid rgba(13, 128, 190, 0.2) !important;
+    }
+
+    .badge.bg-success {
+        background: var(--success-gradient) !important;
+        color: white !important;
+    }
+
+    .badge.bg-primary {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+    }
+
+    /* Carte améliorée */
+    #map { 
+        height: 500px; 
+        width: 100%;
+        border-radius: var(--border-radius-element);
+        z-index: 1;
+        box-shadow: var(--shadow-light);
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .leaflet-popup-content {
+        font-family: 'DM Sans', sans-serif;
+        min-width: 250px;
+        padding: 0.75rem;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--border-radius-sm) !important;
+        box-shadow: var(--shadow-medium) !important;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .leaflet-popup-tip {
+        background: white !important;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .country-active {
+        font-weight: 700;
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .country-inactive {
+        color: rgba(13, 128, 190, 0.5);
+    }
+    
+    .map-legend {
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius-element);
+        box-shadow: var(--shadow-light);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .map-legend i {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        display: inline-block;
+        border-radius: 3px;
+        vertical-align: middle;
+    }
+    
+    .country-stats {
+        background: var(--light-gradient);
+        border-radius: var(--border-radius-element);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .country-stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+        align-items: center;
+    }
+    
+    .country-stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .country-stat-item span:first-child {
+        color: var(--primary-medium);
+        font-weight: 500;
+    }
+
+    .country-stat-item span:last-child {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--primary-dark);
+    }
+
+    /* Graphiques harmonisés */
+    .chart-container {
+        position: relative;
+        height: 280px;
+        padding: 1rem;
+    }
+
+    .chart-card {
+        border: none;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        overflow: hidden;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .chart-card .card-header {
+        background: white;
+    }
+
+    /* Boutons harmonisés */
+    .btn {
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        transition: var(--transition);
+        border: 2px solid transparent;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(13, 128, 190, 0.3);
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        border: none;
+    }
+
+    .btn-danger {
+        background: var(--danger-gradient);
+        border: none;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        background: transparent;
+        font-weight: 500;
+        padding: 0.375rem 1rem;
+        border-radius: var(--border-radius-sm);
+        transition: var(--transition);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2);
+    }
+
+    .btn-outline-success {
+        border: 2px solid #198754;
+        color: #198754;
+        background: transparent;
+    }
+
+    .btn-outline-success:hover {
+        background: #198754;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid rgba(13, 128, 190, 0.3);
+        color: var(--primary-medium);
+    }
+
+    .btn-outline-secondary:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(13, 128, 190, 0.05);
+    }
+
+    /* En-tête de page */
+    .page-header {
+        background: linear-gradient(90deg, white 0%, var(--light-color) 100%);
+        padding: 1.5rem;
+        border-radius: var(--border-radius-element);
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-color);
+        box-shadow: var(--shadow-light);
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-title i {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+
+    /* Alertes harmonisées */
+    .alert-info {
+        background: linear-gradient(135deg, rgba(13, 128, 190, 0.1) 0%, rgba(37, 173, 214, 0.1) 100%) !important;
+        border: 1px solid rgba(13, 128, 190, 0.2) !important;
+        color: var(--primary-dark) !important;
+    }
+
+    .alert-info .alert-heading {
+        color: var(--primary-dark) !important;
+    }
+
+    .alert-info i {
+        color: var(--primary-color) !important;
+    }
+
+    /* Grille responsive améliorée */
+    @media (max-width: 768px) {
+        .counter-card {
+            margin-bottom: 1rem;
+        }
+        
+        .counter-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.25rem;
+        }
+        
+        .counter-value {
+            font-size: 1.5rem;
+        }
+        
+        #map {
+            height: 400px;
+        }
+        
+        .page-header {
+            padding: 1rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* Animation de chargement */
+    .loading-placeholder {
+        background: linear-gradient(90deg, rgba(13, 128, 190, 0.1) 25%, rgba(37, 173, 214, 0.1) 50%, rgba(13, 128, 190, 0.1) 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: var(--border-radius-sm);
+        min-height: 20px;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Tooltip personnalisé */
+    .custom-tooltip {
+        position: relative;
+        cursor: help;
+    }
+
+    .custom-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--primary-dark);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.85rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 5px;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* Scrollbar personnalisée */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(13, 128, 190, 0.1);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary-gradient);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    }
+
+    /* Séparateurs améliorés */
+    .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(13, 128, 190, 0.2), transparent);
+        margin: 1.5rem 0;
+    }
+
+    .vr {
+        background-color: rgba(13, 128, 190, 0.2);
+    }
+
+    /* Dropdown amélioré */
+    .dropdown-menu {
+        border: 1px solid rgba(13, 128, 190, 0.1);
+        box-shadow: var(--shadow-medium);
+        border-radius: var(--border-radius-sm);
+    }
+
+    .dropdown-item {
+        border-radius: var(--border-radius-sm);
+        margin: 2px 8px;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(13, 128, 190, 0.1);
+    }
+
+    /* Icônes colorées */
+    .bi-arrow-up-circle.text-success {
+        color: #198754 !important;
+    }
+
+    .bi-arrow-down-circle.text-danger {
+        color: #dc3545 !important;
+    }
+
+    /* Text colors harmonisés */
+    .text-muted {
+        color: rgba(13, 128, 190, 0.7) !important;
+    }
+
+    .text-success {
+        color: #198754 !important;
+    }
+
+    .text-dark {
+        color: var(--primary-dark) !important;
+    }
+
+    .fw-bold.text-success {
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .fw-bold.text-dark {
+        color: var(--primary-dark) !important;
+    }
+
+    /* Card footer */
+    .card-footer {
+        background: var(--light-color) !important;
+        border-top: 1px solid rgba(13, 128, 190, 0.1) !important;
+    }
+
+    /* ── HERO HEADER ───────────────────────────── */
+    .dash-hero {
+        background: linear-gradient(120deg, #ffffff 0%, #eaf5fd 100%);
+        border: 1px solid rgba(13,128,190,.12);
+        border-left: 5px solid var(--primary-color);
+        border-radius: var(--border-radius-element);
+        padding: 1.5rem 1.75rem;
+        box-shadow: var(--shadow-light);
+    }
+    .dash-greeting { font-size: .85rem; color: var(--primary-medium); letter-spacing: .02em; }
+    .dash-title {
+        font-size: 1.7rem; font-weight: 800;
+        color: var(--primary-dark);
+        display: flex; align-items: center; gap: .5rem;
+    }
+    .dash-title i { color: var(--primary-color); }
+    .dash-subtitle { font-size: .82rem; color: rgba(13,128,190,.65); margin-top: .2rem; }
+
+    .dash-date-pill, .dash-time-pill {
+        display: flex; align-items: center; gap: 5px;
+        background: white; border: 1px solid rgba(13,128,190,.18);
+        border-radius: 999px; padding: 5px 13px;
+        font-size: .8rem; color: var(--primary-dark);
+        font-weight: 600; box-shadow: 0 1px 4px rgba(13,128,190,.08);
+    }
+    .dash-date-pill i, .dash-time-pill i { color: var(--primary-color); }
+
+    .dash-live-dot {
+        display: flex; align-items: center; gap: 6px;
+        background: rgba(25,135,84,.1); color: #198754;
+        border-radius: 999px; padding: 5px 13px;
+        font-size: .78rem; font-weight: 700;
+    }
+    .live-pulse {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #198754; display: inline-block;
+        animation: livePulse 1.4s ease infinite;
+    }
+    @keyframes livePulse {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50% { opacity: .4; transform: scale(1.4); }
+    }
+
+    /* ── KPI CARDS ─────────────────────────────── */
+    .kpi-card {
+        border-radius: var(--border-radius-card);
+        padding: 1.25rem 1rem;
+        display: flex; align-items: center; gap: 1rem;
+        border: none; position: relative; overflow: hidden;
+        box-shadow: var(--shadow-light);
+        transition: var(--transition);
+        background: white;
+        border-left: 4px solid transparent;
+    }
+    .kpi-card::after {
+        content: ''; position: absolute;
+        top: -30px; right: -30px;
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        opacity: .06;
+    }
+    .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-medium); }
+
+    .kpi-primary  { border-left-color: var(--primary-color); }
+    .kpi-primary::after  { background: var(--primary-color); }
+    .kpi-cyan     { border-left-color: #25add6; }
+    .kpi-cyan::after     { background: #25add6; }
+    .kpi-danger   { border-left-color: #dc3545; }
+    .kpi-danger::after   { background: #dc3545; }
+    .kpi-success  { border-left-color: #198754; }
+    .kpi-success::after  { background: #198754; }
+
+    .kpi-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; flex-shrink: 0; color: white;
+        transition: var(--transition);
+    }
+    .kpi-primary .kpi-icon  { background: var(--primary-gradient); }
+    .kpi-cyan    .kpi-icon  { background: linear-gradient(135deg,#25add6,#0a95ca); }
+    .kpi-danger  .kpi-icon  { background: var(--danger-gradient); }
+    .kpi-success .kpi-icon  { background: var(--success-gradient); }
+    .kpi-card:hover .kpi-icon { transform: scale(1.1) rotate(-3deg); }
+
+    .kpi-body { flex: 1; min-width: 0; }
+    .kpi-value {
+        font-size: 1.9rem; font-weight: 800;
+        color: var(--primary-dark); line-height: 1;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .kpi-label {
+        font-size: .75rem; font-weight: 700; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--primary-medium);
+        margin: .2rem 0 .35rem;
+    }
+    .kpi-trend {
+        font-size: .78rem; color: #198754; font-weight: 500;
+        display: flex; align-items: center; gap: 2px;
+    }
+    .kpi-trend-danger { color: #dc3545; }
+
+    /* ── GEO STAT BOXES ────────────────────────── */
+    .geo-stat-box {
+        border-radius: var(--border-radius-sm);
+        padding: .75rem 1rem; text-align: center;
+        border: 1px solid transparent;
+    }
+    .geo-active  { background: rgba(25,135,84,.07);  border-color: rgba(25,135,84,.2); }
+    .geo-inactive{ background: rgba(108,117,125,.07); border-color: rgba(108,117,125,.2); }
+    .geo-total   { background: rgba(13,128,190,.07); border-color: rgba(13,128,190,.15); }
+    .geo-stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary-dark); line-height: 1; }
+    .geo-active .geo-stat-value  { color: #198754; }
+    .geo-inactive .geo-stat-value{ color: #6c757d; }
+    .geo-total .geo-stat-value   { color: var(--primary-color); }
+    .geo-stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; color: #6c757d; margin-top: .25rem; }
+
+    /* ── MAP FOOTER DOTS ───────────────────────── */
+    .map-dot {
+        width: 12px; height: 12px; border-radius: 3px;
+        display: inline-block; flex-shrink: 0;
+    }
+
+    /* ── CHART CONTAINER ───────────────────────── */
+    .chart-container {
+        position: relative; height: 280px; padding: 1rem;
+    }
+
+    /* ── RESPONSIVE ────────────────────────────── */
+    @media (max-width: 576px) {
+        .dash-hero { padding: 1rem; }
+        .dash-title { font-size: 1.3rem; }
+        .kpi-card { padding: .9rem .75rem; gap: .65rem; }
+        .kpi-value { font-size: 1.4rem; }
+        .kpi-icon { width: 42px; height: 42px; font-size: 1.1rem; border-radius: 10px; }
+        #map { height: 360px !important; }
+        .dash-date-pill span { display: none; }
+    }
+
+    @media (max-width: 768px) {
+        #map { height: 400px; }
+    }
+</style>
+{% endblock %}
 
 {% block body %}
 
+<!-- ═══════════════════════════════════════════
+     HERO HEADER
+════════════════════════════════════════════ -->
+<div class="dash-hero mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+        <div>
+            <p class="dash-greeting mb-1">{% trans "Bonjour" %}, <strong>{{ user.username }}</strong> 👋</p>
+            <h1 class="dash-title mb-0">
+                <i class="bi bi-speedometer2"></i> {% trans "Dashboard" %}
+            </h1>
+            <p class="dash-subtitle mb-0">{% trans "Vue d'ensemble de votre plateforme - Données en temps réel" %}</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="dash-date-pill">
+                <i class="bi bi-calendar3 me-1"></i>
+                <span>{{ current_date|date:"l d F Y" }}</span>
+            </div>
+            <div class="dash-time-pill" id="liveClock">
+                <i class="bi bi-clock me-1"></i>
+                <span>{{ current_time|time:"H:i" }}</span>
+            </div>
+            <span class="dash-live-dot" title="{% trans 'Données en temps réel' %}">
+                <span class="live-pulse"></span> Live
+            </span>
+        </div>
+    </div>
+</div>
 
-<!-- Title START -->
-<div class="row">
+<!-- ═══════════════════════════════════════════
+     KPI CARDS — 4 métriques clés
+════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-primary">
+            <div class="kpi-icon"><i class="bi bi-cart-check"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ commandes.count }}</div>
+                <div class="kpi-label">{% trans "Commandes" %}</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-arrow-up-short"></i>
+                    <span id="ordersTrend">—</span> {% trans "ce mois" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-cyan">
+            <div class="kpi-icon"><i class="bi bi-people"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ acheteurs.count }}</div>
+                <div class="kpi-label">{% trans "Acheteurs" %}</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-arrow-up-short"></i>
+                    <span id="buyersTrend">—</span> {% trans "ce mois" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-danger">
+            <div class="kpi-icon"><i class="bi bi-bell"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ alertes.count }}</div>
+                <div class="kpi-label">{% trans "Alertes" %}</div>
+                <div class="kpi-trend kpi-trend-danger">
+                    <i class="bi bi-arrow-down-short"></i>
+                    <span id="alertsTrend">—</span> {% trans "ce mois" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-success">
+            <div class="kpi-icon"><i class="bi bi-globe-americas"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value" id="activeCountriesCount">{{ actifs_count }}</div>
+                <div class="kpi-label">{% trans "Pays actifs" %}</div>
+                <div class="kpi-trend">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ total_pays }} {% trans "Total pays" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MONITORING CHART (large) + GEO RÉSUMÉ
+════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+    <!-- Monitoring (col-8) -->
+    <div class="col-lg-8">
+        <div class="chart-card card h-100">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-header-title">
+                    <i class="bi bi-activity"></i>
+                    {% trans "Monitoring" %}
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar me-1"></i>{% trans "Mois" %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#">{% trans "Jour" %}</a></li>
+                        <li><a class="dropdown-item" href="#">{% trans "Semaine" %}</a></li>
+                        <li><a class="dropdown-item" href="#">{% trans "Mois" %}</a></li>
+                        <li><a class="dropdown-item" href="#">{% trans "Année" %}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="chart-container" style="height:300px;">
+                    <canvas id="alertelogsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Résumé géographique (col-4) -->
+    <div class="col-lg-4">
+        <div class="dashboard-card card h-100">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">
+                    <i class="bi bi-pin-map"></i>
+                    {% trans "Couverture géo" %}
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <!-- Grandes métriques géo -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="geo-stat-box geo-active">
+                            <div class="geo-stat-value" id="activeCountries">{{ actifs_count }}</div>
+                            <div class="geo-stat-label">{% trans "Pays actifs" %}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="geo-stat-box geo-inactive">
+                            <div class="geo-stat-value" id="inactiveCountries">{{ inactifs_count }}</div>
+                            <div class="geo-stat-label">{% trans "Pays inactifs" %}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="geo-stat-box geo-total">
+                            <div class="geo-stat-value" id="totalCountries">{{ total_pays }}</div>
+                            <div class="geo-stat-label">{% trans "Total pays configurés" %}</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Barre de progression géo -->
+                {% if total_pays > 0 %}
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">{% trans "Taux de couverture" %}</small>
+                        <small class="fw-bold text-primary">{{ actifs_count }}/{{ total_pays }}</small>
+                    </div>
+                    <div class="progress" style="height:8px;border-radius:8px;">
+                        <div class="progress-bar bg-primary" style="width:{% widthratio actifs_count total_pays 100 %}%;border-radius:8px;"></div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-muted small py-2">
+                    <i class="bi bi-info-circle me-1"></i>{% trans "Aucun pays configuré" %}
+                </div>
+                {% endif %}
+                <!-- Actions rapides -->
+                <div class="d-flex gap-2 mt-3">
+                    <a href="#map-section" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="bi bi-globe me-1"></i>{% trans "Voir carte" %}
+                    </a>
+                    <button class="btn btn-sm btn-outline-success flex-fill" id="exportCountries">
+                        <i class="bi bi-download me-1"></i>{% trans "Exporter" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     3 CHARTS — Commandes / Acheteurs / Alertes
+════════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="chart-card card h-100">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center py-2">
+                <h6 class="card-header-title mb-0" style="font-size:.95rem;">
+                    <i class="bi bi-cart" style="color:var(--primary-color);"></i>
+                    {% trans "Commandes" %}
+                </h6>
+                <span class="badge" style="background:var(--primary-gradient);color:white;font-size:.7rem;">
+                    {% trans "En temps réel" %}
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="chart-container" style="height:220px;">
+                    <canvas id="commandesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card card h-100">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center py-2">
+                <h6 class="card-header-title mb-0" style="font-size:.95rem;">
+                    <i class="bi bi-person-plus" style="color:#25add6;"></i>
+                    {% trans "Acheteurs" %}
+                </h6>
+                <a href="{% url 'dash_root_acheteur' %}" class="badge text-decoration-none"
+                   style="background:rgba(37,173,214,.12);color:#25add6;font-size:.7rem;">
+                    {% trans "Détails" %} →
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="chart-container" style="height:220px;">
+                    <canvas id="acheteursChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card card h-100">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center py-2">
+                <h6 class="card-header-title mb-0" style="font-size:.95rem;">
+                    <i class="bi bi-exclamation-triangle" style="color:#dc3545;"></i>
+                    {% trans "Alertes" %}
+                </h6>
+                <span class="badge" style="background:var(--danger-gradient);color:white;font-size:.7rem;">
+                    {% trans "En temps réel" %}
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="chart-container" style="height:220px;">
+                    <canvas id="alertesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CARTE INTERACTIVE
+════════════════════════════════════════════ -->
+<div class="row g-3" id="map-section">
     <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-house fa-fw me-1"></i>Dashboard Root</h3>
-    </div>
-</div>	
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Icon -->
-                <div class="icon-xl bg-success rounded-3 text-white">
-                    <i class="bi bi-bag"></i>
+        <div class="dashboard-card card">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-header-title mb-0">
+                        <i class="bi bi-globe-americas"></i>
+                        {% trans "Couverture Géographique ACREMAC" %}
+                    </h5>
+                    <small class="text-muted">{% trans "Acheteurs par pays — cliquez sur un pays pour les détails" %}</small>
                 </div>
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Commandes</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary" id="resetMapView">
+                        <i class="bi bi-arrows-fullscreen me-1"></i>{% trans "Vue initiale" %}
+                    </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Counter item -->
-    <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Icon -->
-                <div class="icon-xl bg-info rounded-3 text-white">
-                    <i class="bi bi-handbag"></i>
-                </div>
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Acheteurs</span>
-                </div>
+            <div class="card-body p-0 p-lg-3">
+                <div id="map"></div>
             </div>
-        </div>
-    </div>
 
-    <!-- Counter item -->
-    <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Icon -->
-                <div class="icon-xl bg-warning rounded-3 text-white">
-                    <i class="bi bi-incognito"></i>
+            <div class="card-footer border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="map-dot" style="background:#063d5c;"></span>
+                        <small class="text-muted">50+</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="map-dot" style="background:#1076a8;"></span>
+                        <small class="text-muted">5–49</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="map-dot" style="background:#4ab0e8;"></span>
+                        <small class="text-muted">0–4</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="map-dot" style="background:#e9ecef;border:1px solid #ced4da;"></span>
+                        <small class="text-muted">{% trans "Non configuré" %}</small>
+                    </div>
                 </div>
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Alertes</span>
-                </div>
+                <small class="text-muted">
+                    {% trans "Dernière mise à jour" %} : <span id="lastUpdate">—</span>
+                </small>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- Graph START -->
-<div class="row g-4">
-    <!-- Booking Chart START -->
-    <div class="col-lg-12 col-xl-12">
-        <!-- Chart START -->
-        <div class="card border h-100">
-            <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Evolution des Commandes (2024)</h5>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Live clock
+    (function() {
+        const el = document.getElementById('liveClock');
+        if (!el) return;
+        function tick() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2,'0');
+            const m = String(now.getMinutes()).padStart(2,'0');
+            el.querySelector('span').textContent = h + ':' + m;
+        }
+        tick();
+        setInterval(tick, 60000);
+    })();
+
+    const DASH_TRANS = {
+        buyersCreated:    '{% trans "Acheteurs créés" %}',
+        alertLogsCreated: '{% trans "Alertes monitoring créées" %}',
+        ordersCreated:    '{% trans "Commandes créées" %}',
+        alertsCreated:    '{% trans "Alertes créées" %}',
+        unknownCountry:   '{% trans "Pays inconnu" %}',
+        activeInDash:     '{% trans "Actif dans le dashboard" %}',
+        capital:          '{% trans "Capitale" %}',
+        capitalOf:        '{% trans "Capitale de" %}',
+        notConfigured:    '{% trans "Non configuré pour le dashboard" %}',
+        notDefined:       '{% trans "Non défini" %}',
+        loadError:        '{% trans "Erreur de chargement des données" %}',
+        mapLoadError:     '{% trans "Impossible de charger la carte" %}',
+        mapInitError:     '{% trans "Erreur de chargement de la carte" %}',
+        exportSuccess:    '{% trans "Export réussi" %}',
+        exportCount:      '{% trans "%d pays exportés" %}',
+        noData:           '{% trans "Aucune donnée" %}',
+        nothingToExport:  '{% trans "Aucun pays à exporter" %}',
+        code:             '{% trans "Code" %}',
+    };
+
+    const ACCESS_TOKEN = "{{ access }}";
+    console.log("JWT ACCESS TOKEN :", ACCESS_TOKEN);
+    
+    // Mettre à jour l'heure
+    const UI_LOCALE = '{{ LANGUAGE_CODE|default:"fr" }}' === 'en' ? 'en-GB' : 'fr-FR';
+    function updateDateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString(UI_LOCALE);
+        const timeStr = now.toLocaleTimeString(UI_LOCALE, {hour: '2-digit', minute:'2-digit'});
+        
+        // Mettre à jour l'heure dans le header si les éléments existent
+        const dateElement = document.querySelector('[data-date]');
+        const timeElement = document.querySelector('[data-time]');
+        
+        if (dateElement) dateElement.textContent = dateStr;
+        if (timeElement) timeElement.textContent = timeStr;
+        
+        // Mettre à jour la dernière mise à jour
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = timeStr;
+        }
+    }
+    
+    // Mettre à jour l'heure toutes les minutes
+    setInterval(updateDateTime, 60000);
+    updateDateTime(); // Initial call
+</script>
+
+<script>
+function fetchWithAuth(url, options = {}) {
+    console.log("📡 Fetch URL :", url);
+
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${ACCESS_TOKEN}`,
+            ...(options.headers || {})
+        }
+    })
+    .then(response => {
+        console.log("🔁 Status :", response.status);
+
+        if (response.status === 401) {
+            console.error("❌ 401 Unauthorized → Token invalide ou expiré");
+            throw new Error("Unauthorized");
+        }
+
+        if (!response.ok) {
+            console.error("❌ Erreur HTTP :", response.status);
+            throw new Error(`HTTP error ${response.status}`);
+        }
+
+        return response.json();
+    })
+    .catch(error => {
+        console.error("🔥 Fetch error :", error);
+        throw error;
+    });
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Configuration globale de Chart.js harmonisée
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.color = 'rgba(13, 128, 190, 0.7)';
+    Chart.defaults.borderColor = 'rgba(13, 128, 190, 0.1)';
+    
+    // Options communes pour tous les graphiques
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(13, 128, 190, 0.9)',
+                titleFont: {
+                    size: 14,
+                    family: "'DM Sans', sans-serif"
+                },
+                bodyFont: {
+                    size: 13,
+                    family: "'DM Sans', sans-serif"
+                },
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 12
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(13, 128, 190, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    font: {
+                        size: 12
+                    },
+                    padding: 10
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(13, 128, 190, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    font: {
+                        size: 12
+                    },
+                    padding: 10
+                }
+            }
+        }
+    };
+
+    // Palette de couleurs harmonisée
+    const chartColors = {
+        primary: {
+            bg: 'rgba(13, 128, 190, 0.2)',
+            border: 'rgba(13, 128, 190, 1)',
+            gradient: ['rgba(13, 128, 190, 0.4)', 'rgba(13, 128, 190, 0.1)']
+        },
+        secondary: {
+            bg: 'rgba(37, 173, 214, 0.2)',
+            border: 'rgba(37, 173, 214, 1)',
+            gradient: ['rgba(37, 173, 214, 0.4)', 'rgba(37, 173, 214, 0.1)']
+        },
+        accent: {
+            bg: 'rgba(10, 149, 202, 0.2)',
+            border: 'rgba(10, 149, 202, 1)',
+            gradient: ['rgba(10, 149, 202, 0.4)', 'rgba(10, 149, 202, 0.1)']
+        },
+        success: {
+            bg: 'rgba(25, 135, 84, 0.2)',
+            border: 'rgba(25, 135, 84, 1)',
+            gradient: ['rgba(25, 135, 84, 0.4)', 'rgba(25, 135, 84, 0.1)']
+        },
+        warning: {
+            bg: 'rgba(255, 193, 7, 0.2)',
+            border: 'rgba(255, 193, 7, 1)',
+            gradient: ['rgba(255, 193, 7, 0.4)', 'rgba(255, 193, 7, 0.1)']
+        },
+        danger: {
+            bg: 'rgba(220, 53, 69, 0.2)',
+            border: 'rgba(220, 53, 69, 1)',
+            gradient: ['rgba(220, 53, 69, 0.4)', 'rgba(220, 53, 69, 0.1)']
+        }
+    };
+
+    // Fonction pour créer un dégradé de couleur
+    function createChartGradient(ctx, colorType) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, chartColors[colorType].gradient[0]);
+        gradient.addColorStop(1, chartColors[colorType].gradient[1]);
+        return gradient;
+    }
+
+    // Récupérer les données des acheteurs
+    fetch('/api/acheteurs-par-mois/')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('acheteursChart').getContext('2d');
+            
+            const acheteursChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: DASH_TRANS.buyersCreated,
+                        data: data.data,
+                        backgroundColor: createChartGradient(ctx, 'secondary'),
+                        borderColor: chartColors.secondary.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.secondary.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: chartOptions
+            });
+        });
+
+    // Récupérer les données des AlerteLogs
+    fetch('/api/alertelogs-par-mois/')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('alertelogsChart').getContext('2d');
+            
+            const alertelogsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: DASH_TRANS.alertLogsCreated,
+                        data: data.data,
+                        backgroundColor: createChartGradient(ctx, 'accent'),
+                        borderColor: chartColors.accent.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.accent.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: chartOptions
+            });
+        });
+
+    // Récupérer les données des Commandes
+    fetch('/api/commandes-par-mois/')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('commandesChart').getContext('2d');
+            
+            const commandesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: DASH_TRANS.ordersCreated,
+                        data: data.data,
+                        backgroundColor: createChartGradient(ctx, 'success'),
+                        borderColor: chartColors.success.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.success.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: chartOptions
+            });
+        });
+
+    // Récupérer les données des alertes
+    fetch('/api/alertes-par-mois/')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('alertesChart').getContext('2d');
+            
+            const alertesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: DASH_TRANS.alertsCreated,
+                        data: data.data,
+                        backgroundColor: createChartGradient(ctx, 'danger'),
+                        borderColor: chartColors.danger.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.danger.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: chartOptions
+            });
+        });
+</script>
+
+<!-- ... (le reste du code JavaScript reste identique) ... -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- SCRIPT DE LA CARTE COMPLET -->
+<script>
+// Données pays injectées depuis Django (session auth, pas de fetch JWT)
+const PAYS_MAP_DATA = {{ pays_map_data|safe }};
+
+document.addEventListener("DOMContentLoaded", function () {
+    const mapElement = document.getElementById('map');
+    if (!mapElement) return;
+
+    try {
+        const map = L.map('map', { zoomControl: true }).setView([2, 20], 3);
+        
+        // Ajouter la couche OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 18,
+            minZoom: 2
+        }).addTo(map);
+        
+        // Mapping des codes ISO (A3 vers A2)
+        const codeMappingToA2 = {
+            "BEN": "BJ", "CMR": "CM", "CIV": "CI", "GAB": "GA", "GHA": "GH", 
+            "MLI": "ML", "MAR": "MA", "SEN": "SN", "AGO": "AO", "BDI": "BI",
+            "BFA": "BF", "CAF": "CF", "COD": "CD", "COG": "CG", "DJI": "DJ",
+            "DZA": "DZ", "EGY": "EG", "ERI": "ER", "ETH": "ET", "GIN": "GN",
+            "GMB": "GM", "GNB": "GW", "GNQ": "GQ", "KEN": "KE", "LBR": "LR",
+            "LBY": "LY", "LSO": "LS", "MDG": "MG", "MOZ": "MZ", "MRT": "MR",
+            "MWI": "MW", "NAM": "NA", "NER": "NE", "NGA": "NG", "RWA": "RW",
+            "SDN": "SD", "SLE": "SL", "SOM": "SO", "SSD": "SS", "SWZ": "SZ",
+            "TCD": "TD", "TGO": "TG", "TZA": "TZ", "UGA": "UG", "ZAF": "ZA",
+            "ZMB": "ZM", "ZWE": "ZW", "TUN": "TN",
+        };
+
+        // Coordonnées des capitales
+        const capitales = {
+            "BJ": { lat: 6.3725, lng: 2.3914, capitale: "Porto-Novo" },
+            "CM": { lat: 3.8480, lng: 11.5021, capitale: "Yaoundé" },
+            "CI": { lat: 5.3594, lng: -4.0083, capitale: "Yamoussoukro" },
+            "GA": { lat: 0.4162, lng: 9.4673, capitale: "Libreville" },
+            "GH": { lat: 5.6037, lng: -0.1870, capitale: "Accra" },
+            "ML": { lat: 12.6392, lng: -8.0029, capitale: "Bamako" },
+            "MA": { lat: 33.9716, lng: -6.8498, capitale: "Rabat" },
+            "SN": { lat: 14.6928, lng: -17.4467, capitale: "Dakar" },
+            "BF": { lat: 12.3714, lng: -1.5197, capitale: "Ouagadougou" },
+            "CF": { lat: 4.3947, lng: 18.5582, capitale: "Bangui" },
+            "CG": { lat: -4.2634, lng: 15.2429, capitale: "Brazzaville" },
+            "CD": { lat: -4.3250, lng: 15.3222, capitale: "Kinshasa" },
+            "NE": { lat: 13.5127, lng: 2.1126, capitale: "Niamey" },
+            "NG": { lat: 9.0765, lng: 7.3986, capitale: "Abuja" },
+            "TD": { lat: 12.1348, lng: 15.0557, capitale: "N'Djamena" },
+            "TG": { lat: 6.1375, lng: 1.2123, capitale: "Lomé" },
+            "ZA": { lat: -25.7313, lng: 28.2184, capitale: "Pretoria" },
+            "GN": { lat: 9.6412, lng: -13.5784, capitale: "Conakry" },
+            "GW": { lat: 11.8636, lng: -15.5846, capitale: "Bissau" },
+            "GQ": { lat: 3.7523, lng: 8.7741, capitale: "Malabo" },
+            "MR": { lat: 18.0731, lng: -15.9582, capitale: "Nouakchott" },
+        };
+        
+        // Données directes depuis Django (pas de fetch API)
+        let paysActifs = PAYS_MAP_DATA;
+        let activeCountriesSet = new Set(
+            paysActifs.map(p => codeMappingToA2[p.code] || p.code)
+        );
+
+        // Map acheteurs par code ISO A2
+        const acheteursByCode = {};
+        paysActifs.forEach(p => {
+            const a2 = codeMappingToA2[p.code] || p.code;
+            acheteursByCode[a2] = p.nb_acheteurs || 0;
+        });
+
+        function loadDashboardCountries() {
+            // Afficher badge "aucun pays" si DB vide
+            if (paysActifs.length === 0) {
+                const info = L.control({ position: 'topright' });
+                info.onAdd = function() {
+                    const d = L.DomUtil.create('div');
+                    d.style.cssText = 'background:rgba(255,193,7,.9);color:#333;padding:8px 14px;border-radius:8px;font-size:.82rem;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.15);';
+                    d.innerHTML = '<i class="bi bi-info-circle me-1"></i>{% trans "Aucun pays configuré dans la base" %}';
+                    return d;
+                };
+                info.addTo(map);
+            }
+            loadGeoJson();
+        }
+        
+        // Charger le GeoJSON et créer la carte
+        function loadGeoJson() {
+            fetch("{% static 'geo/countries.geo.json' %}")
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(geojson => {
+                    console.log("🧭 GeoJSON chargé avec", geojson.features.length, "pays");
+                    
+                    // Couleur selon nombre d'acheteurs (dégradé bleu)
+                    function getBuyerColor(nb) {
+                        if (nb === 0) return '#4ab0e8';
+                        if (nb < 5)  return '#2196c4';
+                        if (nb < 20) return '#1076a8';
+                        if (nb < 50) return '#0a5a82';
+                        return '#063d5c';
+                    }
+
+                    // Ajouter les polygones des pays
+                    const geojsonLayer = L.geoJSON(geojson, {
+                        style: function(feature) {
+                            const isoA2 = codeMappingToA2[feature.id];
+                            const isActive = isoA2 && activeCountriesSet.has(isoA2);
+                            const nb = isActive ? (acheteursByCode[isoA2] || 0) : 0;
+                            return {
+                                fillColor: isActive ? getBuyerColor(nb) : '#e9ecef',
+                                weight: isActive ? 2 : 1,
+                                opacity: 1,
+                                color: isActive ? '#106cb2' : '#ced4da',
+                                fillOpacity: isActive ? 0.75 : 0.3
+                            };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            const isoA3 = feature.id;
+                            const isoA2 = codeMappingToA2[isoA3];
+                            const countryName = feature.properties?.name || DASH_TRANS.unknownCountry;
+                            const paysInfo = paysActifs.find(p => (codeMappingToA2[p.code] || p.code) === isoA2);
+                            const nbAcheteurs = isoA2 ? (acheteursByCode[isoA2] || 0) : 0;
+                            const capitaleInfo = capitales[isoA2];
+
+                            let popupContent = `
+                                <div style="min-width:260px;font-family:'DM Sans',sans-serif;padding:4px;">
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                        <img src="https://flagcdn.com/w40/${(isoA2||'').toLowerCase()}.png"
+                                             style="width:32px;height:22px;border-radius:3px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,.2);"
+                                             onerror="this.style.display='none'">
+                                        <h6 style="color:#0d80be;margin:0;font-weight:700;">${countryName}</h6>
+                                    </div>`;
+
+                            if (paysInfo) {
+                                popupContent += `
+                                    <div style="background:rgba(13,128,190,.08);padding:10px;border-radius:8px;margin-bottom:8px;">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                            <span style="font-size:.8rem;color:#198754;font-weight:600;">
+                                                <i class="bi bi-check-circle-fill"></i> ${DASH_TRANS.activeInDash}
+                                            </span>
+                                        </div>
+                                        <div style="text-align:center;background:white;border-radius:8px;padding:8px 12px;border:1px solid rgba(13,128,190,.2);">
+                                            <div style="font-size:1.8rem;font-weight:800;color:#0d80be;line-height:1;">${nbAcheteurs}</div>
+                                            <div style="font-size:.75rem;color:#6c757d;margin-top:2px;">{% trans "Acheteurs" %}</div>
+                                        </div>`;
+                                if (capitaleInfo) {
+                                    popupContent += `
+                                        <p style="margin:6px 0 0;font-size:.85rem;">
+                                            <span style="color:#6c757d;">${DASH_TRANS.capital}:</span>
+                                            <strong style="color:#0d80be;"> ${capitaleInfo.capitale}</strong>
+                                        </p>`;
+                                }
+                                popupContent += `</div>`;
+                            } else {
+                                popupContent += `
+                                    <div style="background:#f8f9fa;padding:10px;border-radius:8px;text-align:center;color:#6c757d;font-size:.85rem;">
+                                        <i class="bi bi-dash-circle me-1"></i>${DASH_TRANS.notConfigured}
+                                    </div>`;
+                            }
+
+                            popupContent += `</div>`;
+
+                            layer.bindPopup(popupContent, { maxWidth: 300 });
+
+                            // Tooltip léger au survol
+                            const tooltipText = paysInfo
+                                ? `<strong>${countryName}</strong><br>${nbAcheteurs} {% trans "Acheteurs" %}`
+                                : countryName;
+                            layer.bindTooltip(tooltipText, { direction:'top', sticky:true, opacity:0.95 });
+
+                            layer.on('mouseover', function() {
+                                this.setStyle({
+                                    weight: 3,
+                                    color: paysInfo ? '#0d80be' : '#6c757d',
+                                    fillOpacity: paysInfo ? 0.9 : 0.4
+                                });
+                                this.openTooltip();
+                            });
+                            layer.on('mouseout', function() {
+                                geojsonLayer.resetStyle(this);
+                                this.closeTooltip();
+                            });
+                            layer.on('click', function() {
+                                this.openPopup();
+                            });
+                        }
+                    }).addTo(map);
+                    
+                    // Ajouter des marqueurs pour les capitales des pays actifs
+                    paysActifs.forEach(pays => {
+                        const capitaleInfo = capitales[pays.code];
+                        if (capitaleInfo) {
+                            const marker = L.marker([capitaleInfo.lat, capitaleInfo.lng], {
+                                icon: L.divIcon({
+                                    className: 'custom-marker',
+                                    html: `<div style="background-color: #0d80be; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                                    iconSize: [14, 14],
+                                    iconAnchor: [7, 7]
+                                })
+                            }).addTo(map);
+                            
+                            marker.bindPopup(`
+                                <div style="min-width: 200px; font-family: 'DM Sans', sans-serif;">
+                                    <h6 style="color: #0d80be; margin-bottom: 5px;">
+                                        <i class="bi bi-building"></i> ${capitaleInfo.capitale}
+                                    </h6>
+                                    <p style="margin: 5px 0; font-size: 0.9rem;">
+                                        ${DASH_TRANS.capitalOf} <strong>${pays.nom}</strong>
+                                    </p>
+                                    <p style="margin: 5px 0; font-size: 0.85rem; color: #6c757d;">
+                                        ${capitaleInfo.lat.toFixed(4)}°, ${capitaleInfo.lng.toFixed(4)}°
+                                    </p>
+                                </div>
+                            `);
+                        }
+                    });
+                    
+                    // Ajouter légende acheteurs
+                    const legend = L.control({ position: 'bottomright' });
+                    legend.onAdd = function() {
+                        const div = L.DomUtil.create('div', 'leaflet-control');
+                        div.style.cssText = 'background:white;padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:.78rem;min-width:130px;';
+                        div.innerHTML = `
+                            <div style="font-weight:700;color:#0d80be;margin-bottom:6px;">{% trans "Acheteurs" %}</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;height:14px;background:#063d5c;border-radius:3px;display:inline-block;"></span> 50+</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;height:14px;background:#0a5a82;border-radius:3px;display:inline-block;"></span> 20 – 49</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;height:14px;background:#1076a8;border-radius:3px;display:inline-block;"></span> 5 – 19</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;height:14px;background:#2196c4;border-radius:3px;display:inline-block;"></span> 1 – 4</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;height:14px;background:#4ab0e8;border-radius:3px;display:inline-block;"></span> 0</div>
+                            <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:#e9ecef;border-radius:3px;display:inline-block;"></span> {% trans "Non configuré" %}</div>
+                        `;
+                        return div;
+                    };
+                    legend.addTo(map);
+
+                    // Mettre à jour la dernière mise à jour
+                    const lastUpdateEl = document.getElementById('lastUpdate');
+                    if (lastUpdateEl) {
+                        const now = new Date();
+                        lastUpdateEl.textContent = now.toLocaleTimeString(UI_LOCALE);
+                    }
+                })
+                .catch(err => {
+                    console.error("❌ Erreur chargement GeoJSON:", err);
+                    showErrorOnMap(DASH_TRANS.mapLoadError);
+                });
+        }
+        
+        // Fonction pour afficher une erreur
+        function showErrorOnMap(message) {
+            L.popup()
+                .setLatLng(map.getCenter())
+                .setContent(`<div class="alert alert-danger m-0">${message}</div>`)
+                .openOn(map);
+        }
+        
+        // Bouton reset vue
+        document.getElementById('resetMapView')?.addEventListener('click', function() {
+            map.setView([2, 20], 3);
+        });
+        
+        // Bouton export
+        document.getElementById('exportCountries')?.addEventListener('click', function() {
+            if (paysActifs.length > 0) {
+                const dataStr = JSON.stringify(paysActifs, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportName = 'pays-dashboard-' + new Date().toISOString().slice(0,10) + '.json';
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', dataUri);
+                link.setAttribute('download', exportName);
+                link.click();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: DASH_TRANS.exportSuccess,
+                    text: DASH_TRANS.exportCount.replace('%d', paysActifs.length),
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: DASH_TRANS.noData,
+                    text: DASH_TRANS.nothingToExport,
+                    confirmButtonColor: '#0d80be'
+                });
+            }
+        });
+        
+        // Gestionnaire de redimensionnement
+        window.addEventListener('resize', function() {
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+        
+        // Charger les données
+        loadDashboardCountries();
+        
+    } catch (error) {
+        console.error("❌ Erreur d'initialisation:", error);
+        mapElement.innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${DASH_TRANS.mapInitError}
             </div>
-            <!-- Card body -->
-            <div class="card-body">
-                <!-- Apex chart -->
-                <div id="apexChartTrafficStats" class="mt-2"></div>
-            </div>
-        </div>
-        <!-- Chart END -->
-    </div>
-    <!-- Booking Chart END -->
-
-    <!-- Booking graph START -->
-    <div class="col-lg-6">
-        <div class="card border h-100">
-
-            <!-- Card header -->
-            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Acheteurs</h5>
-                <a href="#" class="btn btn-link p-0 mb-0"></a>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body p-3">
-                <!-- Chart -->
-                <div class="col-sm-6 mx-auto">
-                    <div class="d-flex justify-content-center" id="ChartTrafficViews"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Booking graph END -->
-
-    <!-- Booking graph START -->
-    <div class="col-lg-6">
-        <div class="card shadow h-100">
-            <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Alertes</h5>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body p-3">
-                <!-- Chart -->
-                <div class="col-sm-6 mx-auto">
-                    <div class="d-flex justify-content-center" id="ChartTrafficRooms"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Booking graph END -->
-
-</div>	
-<!-- Graph END -->
-
-
+        `;
+    }
+});
+</script>
 
 {% endblock %}
 
 
-{% block scripts %}{% endblock %}

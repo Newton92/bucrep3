@@ -1,0 +1,1201 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte téléphone */
+.telephone-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.telephone-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.telephone-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0A95CA, #1c6ea4);
+}
+
+/* En-tête de la carte */
+.telephone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.telephone-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.telephone-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Actions rapides */
+.telephone-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-call {
+    background: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-call:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(10, 149, 202, 0.3);
+    color: white;
+}
+
+/* Informations métadonnées */
+.telephone-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* Badge de statut */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-primary {
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+    border: 1px solid rgba(10, 149, 202, 0.2);
+}
+
+.badge-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.enhanced-form .form-control:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des téléphones */
+.telephones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0A95CA;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .telephones-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .telephone-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .telephone-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .telephone-number {
+        font-size: 1.25rem;
+    }
+    
+    .telephone-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Indicateur téléphone fixe */
+.phone-fixed-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #0A95CA;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-phone text-primary me-2"></i>Numéros de Téléphone Fixe
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des numéros de téléphone fixe de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ telephones_count }}</div>
+            <div class="stat-label">Téléphones enregistrés</div>
+        </div>
+    </div>
+
+    <!-- Section Téléphones -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-phone me-2"></i>Liste des Téléphones Fixes
+                    </h5>
+                    <div>
+                        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addTelephoneModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter un téléphone
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchTelephoneInput" 
+                                       placeholder="Rechercher un numéro...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>Effacer
+                        </button>
+                    </div>
+
+                    {% if telephones %}
+                    <!-- Grille des téléphones -->
+                    <div class="telephones-grid" id="telephonesContainer">
+                        {% for telephone in telephones %}
+                        <div class="telephone-card" data-id="{{ telephone.id }}">
+                            <!-- Indicateur téléphone fixe -->
+                            <span class="phone-fixed-indicator">
+                                <i class="fas fa-phone"></i> Fixe
+                            </span>
+                            <br>
+                            
+                            <div class="telephone-header">
+                                <div>
+                                    <span class="telephone-number">
+                                        {{ telephone.get_formatted_number|default:telephone.telephone }}
+                                    </span>
+                                </div>
+                                <div class="telephone-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-telephone-btn" 
+                                            data-id="{{ telephone.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-telephone-btn" 
+                                            data-id="{{ telephone.id }}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Actions rapides -->
+                            <div class="telephone-actions-quick">
+                                <a href="{{ telephone.get_call_link }}" 
+                                   class="btn-call"
+                                   target="_blank">
+                                    <i class="fas fa-phone-alt"></i>
+                                    Appeler
+                                </a>
+                            </div>
+
+                            <!-- Métadonnées -->
+                            <div class="telephone-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>
+                                        Créé par: <strong>{{ telephone.created_by.get_full_name|default:"Inconnu" }}</strong>
+                                    </span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ telephone.created_at|date:"d/m/Y H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination (si nécessaire) -->
+                    {% if telephones_count > 10 %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav>
+                            <ul class="pagination">
+                                <li class="page-item disabled">
+                                    <span class="page-link">Précédent</span>
+                                </li>
+                                <li class="page-item active">
+                                    <span class="page-link">1</span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">Suivant</span>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- État vide -->
+                    <div class="empty-state">
+                        <i class="fas fa-phone empty-state-icon"></i>
+                        <h4 class="fw-bold mb-2">Aucun téléphone enregistré</h4>
+                        <p class="text-muted mb-4">
+                            Cet acheteur ne possède pas encore de numéro de téléphone fixe enregistré.<br>
+                            Ajoutez des téléphones pour faciliter les communications professionnelles.
+                        </p>
+                        <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addTelephoneModal">
+                            <i class="fas fa-plus-circle me-2"></i>Ajouter le premier téléphone
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Téléphone -->
+<div class="modal fade" id="addTelephoneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Téléphone Fixe
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addTelephoneForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="telephone" class="form-label">
+                            <i class="fas fa-phone text-primary"></i>Numéro de téléphone fixe
+                        </label>
+                        <input type="text" class="form-control" id="telephone" name="telephone" 
+                            placeholder="Ex: +241 01 23 45 67, 01 23 45 67, 032 12 34 56" 
+                            pattern="^\+?[0-9\s\-\(\)]{6,20}$"
+                            required>
+                        <div class="form-text">
+                            Format accepté pour téléphone fixe: 
+                            <ul class="mb-0">
+                                <li>International: +241 01 23 45 67</li>
+                                <li>Local: 01 23 45 67</li>
+                                <li>Avec indicatif régional: 032 12 34 56</li>
+                                <li>Minimum 6 chiffres</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Téléphone -->
+<div class="modal fade" id="editTelephoneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier un Téléphone Fixe
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editTelephoneForm" class="enhanced-form">
+                <input type="hidden" id="editTelephoneId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editTelephone" class="form-label">
+                            <i class="fas fa-phone text-primary"></i>Numéro de téléphone fixe
+                        </label>
+                        <input type="text" class="form-control" id="editTelephone" name="telephone" required>
+                    </div>
+                    <div class="telephone-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Créé par: <strong id="createdByInfo"></strong></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Le: <span id="createdAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le téléphone</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer ce numéro de téléphone fixe ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="fw-bold mt-3" id="deleteTelephoneNumber"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/telephones/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentTelephoneId = null;
+    
+    // Formatter de numéro de téléphone
+    function formatPhoneNumber(phoneNumber) {
+        if (!phoneNumber) return '';
+        
+        // Nettoyer le numéro
+        const cleaned = phoneNumber.replace(/\D/g, '');
+        
+        // Format par préfixe de pays
+        const formatRules = {
+            '241': (num) => { // Gabon
+                if (num.length === 11) {
+                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 11)}`;
+                } else if (num.length === 8) {
+                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
+                } else if (num.length === 9) {
+                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 9)}`;
+                }
+                return phoneNumber;
+            },
+            '225': (num) => { // Côte d'Ivoire
+                if (num.length === 12) {
+                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 12)}`;
+                } else if (num.length === 10) {
+                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)} ${num.substring(8, 10)}`;
+                } else if (num.length === 8) {
+                    return `${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
+                }
+                return phoneNumber;
+            },
+            '223': (num) => { // Mali
+                if (num.length === 11) {
+                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 11)}`;
+                } else if (num.length === 8) {
+                    return `${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
+                }
+                return phoneNumber;
+            }
+        };
+        
+        // Chercher le format correspondant
+        for (const prefix in formatRules) {
+            if (cleaned.startsWith(prefix)) {
+                return formatRules[prefix](cleaned);
+            }
+        }
+        
+        // Format pour numéros courts (téléphone fixe)
+        if (cleaned.length === 6) {
+            return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)}`;
+        } else if (cleaned.length === 7) {
+            return `${cleaned.substring(0, 3)} ${cleaned.substring(3, 5)} ${cleaned.substring(5, 7)}`;
+        } else if (cleaned.length === 8) {
+            return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
+        } else if (cleaned.length === 9) {
+            return `${cleaned.substring(0, 3)} ${cleaned.substring(3, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7, 9)}`;
+        } else if (cleaned.length === 10) {
+            return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)} ${cleaned.substring(8, 10)}`;
+        }
+        
+        // Retourner le numéro original si aucun format ne correspond
+        return phoneNumber;
+    }
+    
+    // Initialiser le formatteur de numéro
+    function initPhoneFormatters() {
+        // Configuration pour l'ajout
+        $('#telephone').on('input', function() {
+            const cleaned = $(this).val().replace(/\D/g, '');
+            const $input = $(this);
+            
+            if (cleaned.length >= 6 && cleaned.length <= 15) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+        
+        // Configuration pour l'édition
+        $('#editTelephone').on('input', function() {
+            const cleaned = $(this).val().replace(/\D/g, '');
+            const $input = $(this);
+            
+            if (cleaned.length >= 6 && cleaned.length <= 15) {
+                $input.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                $input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+    }
+
+    // Initialisation
+    initPhoneFormatters();
+    
+    // Charger les téléphones
+    function loadTelephones(search = '') {
+        let url = API_BASE_URL;
+        if (search) {
+            url += `?search=${encodeURIComponent(search)}`;
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const telephonesContainer = $('#telephonesContainer');
+                const emptyState = $('.empty-state');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les téléphones
+                    let html = '';
+                    response.results.forEach(function(telephone) {
+                        const formattedNumber = formatPhoneNumber(telephone.telephone);
+                        const createdBy = telephone.created_by?.full_name || telephone.created_by?.username || 'Inconnu';
+                        const createdAt = new Date(telephone.created_at).toLocaleString('fr-FR');
+                        
+                        html += `
+                        <div class="telephone-card" data-id="${telephone.id}">
+                            <!-- Indicateur téléphone fixe -->
+                            <span class="phone-fixed-indicator">
+                                <i class="fas fa-phone"></i> Fixe
+                            </span>
+                            <br>
+                            
+                            <div class="telephone-header">
+                                <div>
+                                    <span class="telephone-number">${formattedNumber}</span>
+                                </div>
+                                <div class="telephone-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-telephone-btn" 
+                                            data-id="${telephone.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-telephone-btn" 
+                                            data-id="${telephone.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="telephone-actions-quick">
+                                <a href="tel:${telephone.telephone.replace(/\s+/g, '')}" 
+                                   class="btn-call"
+                                   target="_blank">
+                                    <i class="fas fa-phone-alt"></i>
+                                    Appeler
+                                </a>
+                            </div>
+
+                            <div class="telephone-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Créé par: <strong>${createdBy}</strong></span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${createdAt}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    telephonesContainer.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                } else {
+                    // Afficher l'état vide
+                    if (!emptyState.length) {
+                        telephonesContainer.html(`
+                            <div class="empty-state">
+                                <i class="fas fa-phone empty-state-icon"></i>
+                                <h4 class="fw-bold mb-2">Aucun téléphone trouvé</h4>
+                                <p class="text-muted mb-4">
+                                    Aucun numéro de téléphone fixe ne correspond à votre recherche.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
+                }
+                
+                // Mettre à jour le compteur
+                $('#portablesCount').text(response.count || response.results?.length || 0);
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les numéros de téléphone.'
+                });
+            }
+        });
+    }
+    
+    // Recherche de téléphones
+    $('#searchTelephoneInput').on('input', function() {
+        const search = $(this).val();
+        loadTelephones(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchTelephoneInput').val('');
+        loadTelephones();
+    });
+    
+    // Formulaire d'ajout
+    $('#addTelephoneForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const telephoneNumber = $('#telephone').val();
+        if (!telephoneNumber || telephoneNumber.replace(/\D/g, '').length < 6) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir un numéro de téléphone valide (minimum 6 chiffres).'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify({ telephone: telephoneNumber }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addTelephoneModal').modal('hide');
+                $('#addTelephoneForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadTelephones();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout du téléphone';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.telephone) {
+                        errorMessage = xhr.responseJSON.telephone.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-telephone-btn', function() {
+        const telephoneId = $(this).data('id');
+        currentTelephoneId = telephoneId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${telephoneId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editTelephoneId').val(response.id);
+                $('#editTelephone').val(response.telephone);
+                $('#createdByInfo').text(response.created_by?.full_name || response.created_by?.username || 'Inconnu');
+                $('#createdAtInfo').text(new Date(response.created_at).toLocaleString('fr-FR'));
+                $('#editTelephoneModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails du téléphone.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editTelephoneForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentTelephoneId) return;
+        
+        const telephoneNumber = $('#editTelephone').val();
+        if (!telephoneNumber || telephoneNumber.replace(/\D/g, '').length < 6) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Format invalide',
+                text: 'Veuillez saisir un numéro de téléphone valide (minimum 6 chiffres).'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentTelephoneId}/`,
+            type: 'PUT',
+            data: JSON.stringify({ telephone: telephoneNumber }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editTelephoneModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadTelephones();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification du téléphone';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.telephone) {
+                        errorMessage = xhr.responseJSON.telephone.join('\n');
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-telephone-btn', function() {
+        const telephoneId = $(this).data('id');
+        const telephoneNumber = $(this).closest('.telephone-card').find('.telephone-number').text();
+        
+        currentTelephoneId = telephoneId;
+        $('#deleteTelephoneNumber').text(telephoneNumber);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentTelephoneId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentTelephoneId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadTelephones();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer le téléphone'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Charger les téléphones au démarrage
+    loadTelephones();
+});
+</script>
+{% endblock %}

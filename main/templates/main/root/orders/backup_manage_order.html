@@ -1,0 +1,390 @@
+{% extends 'main/root/base.html' %}
+
+{% load i18n static %}
+
+{% block styles %}
+<style>
+    .timeline-wrap { position: relative; }
+    .timeline-wrap:before {
+        content: "";
+        position: absolute;
+        left: 18px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dfe6ee;
+    }
+    .timeline-item { position: relative; padding-left: 48px; margin-bottom: 18px; }
+    .timeline-dot {
+        position: absolute;
+        left: 10px;
+        top: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #0d6efd;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #dfe6ee;
+    }
+    .timeline-card { border: 1px solid #e9edf3; border-radius: 10px; padding: 12px; background: #fff; }
+    .timeline-card.type-creation, .timeline-dot.type-creation { background: #0d6efd; }
+    .timeline-card.type-affectation, .timeline-dot.type-affectation { background: #6f42c1; }
+    .timeline-card.type-soumission, .timeline-dot.type-soumission { background: #0dcaf0; }
+    .timeline-card.type-validation, .timeline-dot.type-validation { background: #198754; }
+    .timeline-card.type-correction, .timeline-dot.type-correction { background: #fd7e14; }
+    .timeline-card.type-envoi_client, .timeline-dot.type-envoi_client { background: #20c997; }
+    .timeline-card.type-cloture, .timeline-dot.type-cloture { background: #198754; }
+    .timeline-card.type-annulation, .timeline-dot.type-annulation { background: #dc3545; }
+    .timeline-card.type-autre, .timeline-dot.type-autre { background: #6c757d; }
+    .timeline-card.type-update, .timeline-dot.type-update { background: #adb5bd; }
+    .timeline-card.type-suppression, .timeline-dot.type-suppression { background: #212529; }
+    .timeline-card.type-history { background: #f8f9fa; }
+    .timeline-card[class*="type-"] { color: #fff; border: 0; }
+    .timeline-card.type-update, .timeline-card.type-history { color: #212529; border: 1px solid #dee2e6; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fs-4 mb-0"><i class="bi bi-gear me-1"></i>Manager Commande</h3>
+            <p class="text-muted mb-0">Suivi du cycle de vie et audit métier de la commande.</p>
+        </div>
+        <a href="{% url 'dash_root_order' %}" class="btn btn-light border"><i class="bi bi-arrow-left"></i> Retour</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card border h-100">
+            <div class="card-header border-bottom">
+                <h5 class="mb-0">Résumé commande</h5>
+            </div>
+            <div class="card-body" id="commandeSummary">
+                <p class="mb-1"><strong>Référence:</strong> <span id="sumRef">{{ commande.notre_ref|default:"-" }}</span></p>
+                <p class="mb-1"><strong>Raison sociale:</strong> <span id="sumCompany">{{ commande.raison_sociale|default:"-" }}</span></p>
+                <p class="mb-1"><strong>Client:</strong> <span id="sumClient">{{ commande.client.username|default:"-" }}</span></p>
+                <p class="mb-1"><strong>Acheteur:</strong> <span id="sumAcheteur">{{ commande.acheteur.nom|default:"-" }}</span></p>
+                <p class="mb-1"><strong>Statut actuel:</strong> <span class="badge bg-primary" id="sumStatus">{{ commande.status }}</span></p>
+                <p class="mb-1"><strong>Date envoi client:</strong> <span id="sumSentDate">{{ commande.date_envoi_client|default:"-" }}</span></p>
+                <p class="mb-0"><strong>Email envoyé:</strong> <span id="sumEmailSent">{{ commande.email_envoye|yesno:"Oui,Non" }}</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border h-100">
+            <div class="card-header border-bottom">
+                <h5 class="mb-0">Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <form id="statusUpdateForm" class="row g-2">
+                    <div class="col-md-5">
+                        <label class="form-label">Nouveau statut</label>
+                        <select class="form-select" id="quickStatus" name="status" required>
+                            {% for val, lab in status_choices %}
+                                <option value="{{ val }}">{{ lab }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Commentaire</label>
+                        <input class="form-control" id="quickComment" name="commentaire" placeholder="Optionnel">
+                    </div>
+                    <div class="col-md-2 d-grid align-self-end">
+                        <button class="btn btn-primary" type="submit">Appliquer</button>
+                    </div>
+                </form>
+
+                <hr>
+
+                <form id="timelineAddForm" class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Type d'action</label>
+                        <select class="form-select" id="tlType" name="type">
+                            {% for val, lab in action_types %}
+                                <option value="{{ val }}">{{ lab }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Action</label>
+                        <input class="form-control" id="tlAction" name="action" required placeholder="Ex: rapport envoyé pour validation">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Commentaire</label>
+                        <textarea class="form-control" id="tlComment" name="commentaire" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Validateur (optionnel)</label>
+                        <select class="form-select" id="tlValidateur" name="validateur_id">
+                            <option value="">---------</option>
+                            {% for v in validateur_list %}
+                                <option value="{{ v.id }}">{{ v.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-12 d-grid">
+                        <button class="btn btn-outline-primary" type="submit">Ajouter au timeline</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Timeline d'audit</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-success" id="btnExportCsv"><i class="bi bi-filetype-csv"></i> CSV</button>
+                    <button class="btn btn-sm btn-outline-danger" id="btnExportPdf"><i class="bi bi-filetype-pdf"></i> PDF</button>
+                    <button class="btn btn-sm btn-light border" id="btnRefreshTimeline"><i class="bi bi-arrow-repeat"></i> Actualiser</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select" id="timelineTypeFilter">
+                            <option value="">Tous types</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="timelineUserFilter">
+                            <option value="">Tous utilisateurs</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" class="form-control" id="timelineDateFrom">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" class="form-control" id="timelineDateTo">
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button class="btn btn-outline-primary w-100" id="btnApplyTimelineFilters">Filtrer</button>
+                        <button class="btn btn-outline-secondary w-100" id="btnResetTimelineFilters">Reset</button>
+                    </div>
+                </div>
+                <div id="timelineContainer" class="timeline-wrap"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    const commandeId = {{ id_commande }};
+    const accessToken = "{{ access|escapejs }}";
+    const baseUrl = `/api/orders/module/${commandeId}`;
+
+    const statusBadgeClass = (status) => ({
+        nouvelle: "bg-primary",
+        en_cours: "bg-warning text-dark",
+        rapport_soumis: "bg-info text-dark",
+        rapport_valide: "bg-success",
+        envoye_client: "bg-secondary",
+        terminee: "bg-success",
+        annulee: "bg-danger",
+    }[status] || "bg-light text-dark");
+
+    const notify = (type, text) => {
+        if (window.Swal) {
+            Swal.fire({ icon: type, text, timer: 1800, showConfirmButton: false });
+        } else {
+            alert(text);
+        }
+    };
+
+    const apiFetch = async (url, options = {}) => {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                ...(options.headers || {}),
+            },
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: "Erreur API" }));
+            throw err;
+        }
+        return res.status === 204 ? null : res.json();
+    };
+
+    const renderSummary = (commande) => {
+        document.getElementById("sumRef").textContent = commande.notre_ref || "-";
+        document.getElementById("sumCompany").textContent = commande.raison_sociale || "-";
+        document.getElementById("sumClient").textContent = (commande.client && commande.client.username) || "-";
+        document.getElementById("sumAcheteur").textContent = (commande.acheteur && commande.acheteur.nom) || "-";
+        const statusEl = document.getElementById("sumStatus");
+        statusEl.textContent = commande.status || "-";
+        statusEl.className = `badge ${statusBadgeClass(commande.status)}`;
+        document.getElementById("sumSentDate").textContent = commande.date_envoi_client || "-";
+        document.getElementById("sumEmailSent").textContent = commande.email_envoye ? "Oui" : "Non";
+    };
+
+    const renderTimeline = (timeline) => {
+        const container = document.getElementById("timelineContainer");
+        if (!timeline || !timeline.length) {
+            container.innerHTML = `<p class="text-muted mb-0">Aucun événement pour cette commande.</p>`;
+            return;
+        }
+
+        const normalizeType = (ev) => {
+            if (ev.source === "history") return `type-${ev.type || "history"}`;
+            return `type-${String(ev.type || "AUTRE").toLowerCase()}`;
+        };
+
+        container.innerHTML = timeline.map((ev) => `
+            <div class="timeline-item">
+                <span class="timeline-dot ${normalizeType(ev)}"></span>
+                <div class="timeline-card ${normalizeType(ev)}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <strong>${ev.type_label || ev.type || "-"}</strong>
+                        <small class="text-muted">${ev.date_action ? new Date(ev.date_action).toLocaleString() : "-"}</small>
+                    </div>
+                    <div>${ev.action || "-"}</div>
+                    ${ev.commentaire ? `<div class="text-muted small mt-1">${ev.commentaire}</div>` : ""}
+                    <div class="small text-primary mt-1">Par: ${ev.user || "Systeme"} (${ev.source || "-"})</div>
+                </div>
+            </div>
+        `).join("");
+    };
+
+    const timelineFilterParams = () => {
+        const type = document.getElementById("timelineTypeFilter").value;
+        const user = document.getElementById("timelineUserFilter").value;
+        const dateFrom = document.getElementById("timelineDateFrom").value;
+        const dateTo = document.getElementById("timelineDateTo").value;
+        const params = new URLSearchParams();
+        if (type) params.append("type", type);
+        if (user) params.append("user", user);
+        if (dateFrom) params.append("date_from", dateFrom);
+        if (dateTo) params.append("date_to", dateTo);
+        return params.toString();
+    };
+
+    const hydrateTimelineFilters = (data) => {
+        const typeSelect = document.getElementById("timelineTypeFilter");
+        const userSelect = document.getElementById("timelineUserFilter");
+        const currentType = typeSelect.value;
+        const currentUser = userSelect.value;
+
+        if (!typeSelect.dataset.loaded) {
+            typeSelect.innerHTML = `<option value="">Tous types</option>`;
+            (data.action_types || []).forEach((t) => {
+                typeSelect.insertAdjacentHTML("beforeend", `<option value="${t.value}">${t.label}</option>`);
+            });
+            typeSelect.dataset.loaded = "1";
+        }
+        if (!userSelect.dataset.loaded) {
+            userSelect.innerHTML = `<option value="">Tous utilisateurs</option>`;
+            (data.timeline_users || []).forEach((u) => {
+                userSelect.insertAdjacentHTML("beforeend", `<option value="${u.id}">${u.username}</option>`);
+            });
+            userSelect.dataset.loaded = "1";
+        }
+        typeSelect.value = currentType;
+        userSelect.value = currentUser;
+    };
+
+    const loadTimeline = async () => {
+        try {
+            const qs = timelineFilterParams();
+            const data = await apiFetch(`${baseUrl}/timeline/${qs ? `?${qs}` : ""}`);
+            hydrateTimelineFilters(data);
+            renderSummary(data.commande);
+            renderTimeline(data.timeline);
+        } catch (err) {
+            notify("error", err.detail || "Erreur chargement timeline.");
+        }
+    };
+
+    document.getElementById("btnRefreshTimeline").addEventListener("click", loadTimeline);
+    document.getElementById("btnApplyTimelineFilters").addEventListener("click", (e) => { e.preventDefault(); loadTimeline(); });
+    document.getElementById("btnResetTimelineFilters").addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("timelineTypeFilter").value = "";
+        document.getElementById("timelineUserFilter").value = "";
+        document.getElementById("timelineDateFrom").value = "";
+        document.getElementById("timelineDateTo").value = "";
+        loadTimeline();
+    });
+
+    const exportTimeline = async (format) => {
+        try {
+            const qs = timelineFilterParams();
+            const url = `${baseUrl}/timeline/export/?format=${format}${qs ? `&${qs}` : ""}`;
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: "Erreur export." }));
+                throw err;
+            }
+            const blob = await res.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `timeline_commande_${commandeId}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(link.href);
+        } catch (err) {
+            notify("error", err.detail || "Erreur export timeline.");
+        }
+    };
+
+    document.getElementById("btnExportCsv").addEventListener("click", () => exportTimeline("csv"));
+    document.getElementById("btnExportPdf").addEventListener("click", () => exportTimeline("pdf"));
+
+    document.getElementById("statusUpdateForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = {
+            status: document.getElementById("quickStatus").value,
+            commentaire: document.getElementById("quickComment").value.trim(),
+        };
+        try {
+            await apiFetch(`${baseUrl}/status/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            notify("success", "Statut mis à jour.");
+            document.getElementById("quickComment").value = "";
+            await loadTimeline();
+        } catch (err) {
+            notify("error", err.detail || "Erreur mise à jour statut.");
+        }
+    });
+
+    document.getElementById("timelineAddForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const payload = {
+            type: document.getElementById("tlType").value,
+            action: document.getElementById("tlAction").value.trim(),
+            commentaire: document.getElementById("tlComment").value.trim(),
+            validateur_id: document.getElementById("tlValidateur").value || null,
+        };
+        try {
+            await apiFetch(`${baseUrl}/timeline/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            notify("success", "Événement ajouté au timeline.");
+            document.getElementById("tlAction").value = "";
+            document.getElementById("tlComment").value = "";
+            document.getElementById("tlValidateur").value = "";
+            await loadTimeline();
+        } catch (err) {
+            notify("error", err.detail || "Erreur ajout événement.");
+        }
+    });
+
+    loadTimeline();
+})();
+</script>
+{% endblock %}

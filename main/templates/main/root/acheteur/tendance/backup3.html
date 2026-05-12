@@ -1,0 +1,1169 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+}
+
+/* Carte de tendance améliorée */
+.tendance-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.tendance-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.tendance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.tendance-card.avis-commercial::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
+.tendance-card.presse-media::before { background: linear-gradient(to bottom, #28a745, #20c997); }
+.tendance-card.informations::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.tendance-card.alarmes::before { background: linear-gradient(to bottom, #dc3545, #fd7e14); }
+.tendance-card.concurrents::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.tendance-card.commentaire::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+
+.tendance-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.tendance-card.avis-commercial .tendance-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.tendance-card.presse-media .tendance-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.tendance-card.informations .tendance-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.tendance-card.alarmes .tendance-icon { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.tendance-card.concurrents .tendance-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.tendance-card.commentaire .tendance-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+
+.tendance-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.tendance-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+/* Badges d'avis */
+.avis-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.badge-negatif { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); }
+.badge-inconnu { background: rgba(108, 117, 125, 0.1); color: #6c757d; border: 1px solid rgba(108, 117, 125, 0.2); }
+.badge-moyen { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2); }
+.badge-bon { background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.2); }
+.badge-tres-bien { background: rgba(0, 123, 255, 0.1); color: #007bff; border: 1px solid rgba(0, 123, 255, 0.2); }
+.badge-info { background: rgba(23, 162, 184, 0.1); color: #17a2b8; border: 1px solid rgba(23, 162, 184, 0.2); }
+.badge-warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.2); }
+.badge-danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); }
+
+/* Contenu riche */
+.rich-content {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #0A95CA;
+    position: relative;
+    min-height: 100px;
+}
+
+.rich-content::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+.rich-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Légende */
+.legend-box {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+}
+
+.legend-text {
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* Zone de texte améliorée */
+.textarea-enhanced {
+    background: linear-gradient(to bottom, transparent 95%, #f0f0f0 95%);
+    background-size: 100% 1.5em;
+    line-height: 1.5em;
+    padding: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Style pour les textareas avec lignes de repère */
+.textarea-lined {
+    background-image: linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+    background-size: 100% 1.5em;
+}
+
+/* Score badges */
+.score-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.score-40 { background: #28a745; color: white; }
+.score-35 { background: #20c997; color: white; }
+.score-30 { background: #17a2b8; color: white; }
+.score-25 { background: #0d6efd; color: white; }
+.score-20 { background: #6f42c1; color: white; }
+.score-15 { background: #fd7e14; color: white; }
+.score-10 { background: #6c757d; color: white; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tendance-card {
+        padding: 1rem;
+    }
+    
+    .tendance-value {
+        font-size: 1.25rem;
+    }
+    
+    .tendance-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .rich-content {
+        padding: 1rem;
+    }
+    
+    .enhanced-form textarea.form-control {
+        min-height: 120px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-line text-primary me-2"></i>Analyse de Tendance
+            </h1>
+            <p class="text-muted mb-0">
+                Évaluation commerciale et concurrentielle de l'entreprise
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if tendance %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editTendanceModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter l'analyse
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Légende -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="legend-box">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-key me-2"></i>Légende des indicateurs
+                </h6>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-text">
+                                <strong>AC:</strong> Avis Commercial
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745;"></div>
+                            <span class="legend-text">
+                                <strong>PM:</strong> Presse & Médias
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6f42c1;"></div>
+                            <span class="legend-text">
+                                <strong>PI:</strong> Plus d'Infos
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #dc3545;"></div>
+                            <span class="legend-text">
+                                <strong>AL:</strong> Alarmes
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6f42c1;"></div>
+                            <span class="legend-text">
+                                <strong>PC:</strong> Concurrents
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fd7e14;"></div>
+                            <span class="legend-text">
+                                <strong>C:</strong> Commentaire
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analyse de Tendance -->
+    {% if tendance %}
+    <div class="card border enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Premier bloc : Avis Commercial, Presse & Médias, Plus d'Informations, Alarmes -->
+            <div class="row g-4 mb-4">
+                <!-- Avis Commercial -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="tendance-card avis-commercial">
+                        <div class="tendance-icon">
+                            <i class="fas fa-comment-dollar"></i>
+                        </div>
+                        <div class="tendance-label">Avis Commercial</div>
+                        {% if tendance.avis_commercial %}
+                            {% with avis=tendance.avis_commercial|lower %}
+                            <span class="avis-badge 
+                                {% if 'négatif' in avis %}badge-negatif
+                                {% elif 'inconnu' in avis %}badge-inconnu
+                                {% elif 'moyen' in avis %}badge-moyen
+                                {% elif 'bon' in avis %}badge-bon
+                                {% elif 'très bien' in avis %}badge-tres-bien
+                                {% else %}badge-inconnu{% endif %}">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                {{ tendance.avis_commercial }}
+                            </span>
+                            {% endwith %}
+                        {% else %}
+                            <div class="tendance-value">Non évalué</div>
+                        {% endif %}
+                        {% if tendance.avis_commercial_ref %}
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-link me-1"></i>Référence: {{ tendance.avis_commercial_ref.libelle }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Presse & Médias -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="tendance-card presse-media">
+                        <div class="tendance-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="tendance-label">Presse & Médias</div>
+                        {% if tendance.presse_media %}
+                        <div class="tendance-value">{{ tendance.presse_media|truncatechars:30 }}</div>
+                        {% else %}
+                        <div class="tendance-value">Aucune information</div>
+                        {% endif %}
+                        <small class="text-muted">Couverture médiatique</small>
+                    </div>
+                </div>
+                
+                <!-- Plus d'Informations -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="tendance-card informations">
+                        <div class="tendance-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="tendance-label">Plus d'Informations</div>
+                        {% if tendance.plus_informations %}
+                            {% with info=tendance.plus_informations %}
+                            <div class="tendance-value">
+                                {% if "40" in info %}<span class="score-badge score-40">40</span>
+                                {% elif "35" in info %}<span class="score-badge score-35">35</span>
+                                {% elif "30" in info %}<span class="score-badge score-30">30</span>
+                                {% elif "25" in info %}<span class="score-badge score-25">25</span>
+                                {% elif "20" in info %}<span class="score-badge score-20">20</span>
+                                {% elif "15" in info %}<span class="score-badge score-15">15</span>
+                                {% elif "10" in info %}<span class="score-badge score-10">10</span>
+                                {% endif %}
+                                {{ info|slice:"3:"|default:info }}
+                            </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="tendance-value">Non spécifié</div>
+                        {% endif %}
+                        <small class="text-muted">Notation de structure</small>
+                    </div>
+                </div>
+                
+                <!-- Alarmes -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="tendance-card alarmes">
+                        <div class="tendance-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="tendance-label">Alarmes</div>
+                        {% if tendance.alarmes %}
+                            <span class="avis-badge badge-danger">
+                                <i class="fas fa-bell me-1"></i>
+                                {{ tendance.alarmes|truncatechars:30 }}
+                            </span>
+                        {% else %}
+                            <div class="tendance-value">Aucune alerte</div>
+                            <span class="avis-badge badge-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Situation normale
+                            </span>
+                        {% endif %}
+                        <small class="text-muted">Alertes juridiques</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Principaux Concurrents -->
+            {% if tendance.principaux_concurrent %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-users text-purple me-2"></i>Analyse Concurrentielle
+                </h5>
+                <div class="rich-content">
+                    {{ tendance.principaux_concurrent|safe|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Commentaire -->
+            {% if tendance.commentaire %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-comment-dots text-orange me-2"></i>Commentaire d'analyse
+                </h5>
+                <div class="rich-content">
+                    {{ tendance.commentaire|safe|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            Analyse créée le {{ tendance.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Dernière mise à jour : {{ tendance.updated_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-chart-line empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucune analyse de tendance</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore d'analyse de tendance.<br>
+                    Ajoutez une évaluation commerciale et concurrentielle complète.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter l'analyse
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Tendance -->
+<div class="modal fade" id="addTendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Analyse de Tendance
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addTendanceForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="avis_commercial" class="form-label">
+                                    <i class="fas fa-comment-dollar text-primary"></i>Avis Commercial
+                                </label>
+                                <select class="form-select select2-with-search" id="avis_commercial" name="avis_commercial">
+                                    <option value="">Sélectionnez un avis</option>
+                                    <option value="Négatif">Négatif</option>
+                                    <option value="Inconnu">Inconnu</option>
+                                    <option value="Moyen">Moyen</option>
+                                    <option value="Bon">Bon</option>
+                                    <option value="Très bien">Très bien</option>
+                                </select>
+                                <small class="form-text text-muted">Évaluation générale de la santé commerciale</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="avis_commercial_ref" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Avis Commercial
+                                </label>
+                                <select class="form-select select2-with-search" id="avis_commercial_ref" name="avis_commercial_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for avis in commercial_list %}
+                                    <option value="{{ avis.id }}">{{ avis.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Lien avec la base de référence</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="plus_informations" class="form-label">
+                                    <i class="fas fa-info-circle text-purple"></i>Plus d'Informations
+                                </label>
+                                <select class="form-select select2-with-search" id="plus_informations" name="plus_informations">
+                                    <option value="">Sélectionnez une option</option>
+                                    <option value="40 Cette société est une filiale d'un groupe">
+                                        40 - Cette société est une filiale d'un groupe
+                                    </option>
+                                    <option value="35 Cette société est une société autonome">
+                                        35 - Cette société est une société autonome
+                                    </option>
+                                    <option value="30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante">
+                                        30 - Filiale indépendante
+                                    </option>
+                                    <option value="25 Cette entreprise est considérée comme une grande entreprise">
+                                        25 - Grande entreprise
+                                    </option>
+                                    <option value="20 Cette entreprise est considérée comme une entreprise de taille moyenne">
+                                        20 - Entreprise de taille moyenne
+                                    </option>
+                                    <option value="15 Cette entreprise est considérée comme une petite entreprise">
+                                        15 - Petite entreprise
+                                    </option>
+                                    <option value="10 Inconnu de nos sources">
+                                        10 - Inconnu de nos sources
+                                    </option>
+                                </select>
+                                <small class="form-text text-muted">Notation de la structure d'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="alarmes" class="form-label">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>Alarmes
+                                </label>
+                                <select class="form-select select2-with-search" id="alarmes" name="alarmes">
+                                    <option value="">Sélectionnez une alerte</option>
+                                    <option value="Risque d'insolvabilité">
+                                        Risque d'insolvabilité
+                                    </option>
+                                    <option value="Une procédure préliminaire a été demandée">
+                                        Demande de composition juridique
+                                    </option>
+                                    <option value="Une procédure prématurée a été suspendue">
+                                        Procédure prématurée suspendue
+                                    </option>
+                                    <option value="La composition du tribunal à la suite d'un examen préliminaire">
+                                        Composition du tribunal après examen
+                                    </option>
+                                    <option value="Ouverture de la composition judiciaire">
+                                        Ouverture composition judiciaire
+                                    </option>
+                                    <option value="Refus de l'homologation, la corruption est attendue">
+                                        Refus homologation (corruption)
+                                    </option>
+                                </select>
+                                <small class="form-text text-muted">Alertes juridiques et financières</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="presse_media" class="form-label">
+                            <i class="fas fa-newspaper text-success"></i>Presse & Médias
+                        </label>
+                        <input type="text" class="form-control" 
+                               id="presse_media" name="presse_media" 
+                               placeholder="Ex: Bonne couverture médiatique, réputation solide...">
+                        <small class="form-text text-muted">Perception médiatique et réputation publique</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="principaux_concurrent" class="form-label">
+                            <i class="fas fa-users text-purple"></i>Principaux Concurrents
+                        </label>
+                        <textarea class="form-control" id="principaux_concurrent" name="principaux_concurrent" 
+                                  rows="4" placeholder="Décrivez les principaux concurrents, leurs forces et faiblesses..."></textarea>
+                        <small class="form-text text-muted">Analyse détaillée de l'environnement concurrentiel</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-orange"></i>Commentaire d'analyse
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="4" placeholder="Ajoutez des observations et recommandations..."></textarea>
+                        <small class="form-text text-muted">Synthèse et recommandations stratégiques</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification de Tendance -->
+<div class="modal fade" id="editTendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Analyse de Tendance
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editTendanceForm" class="enhanced-form">
+                <input type="hidden" id="editTendanceId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editAvisCommercial" class="form-label">
+                                    <i class="fas fa-comment-dollar text-primary"></i>Avis Commercial
+                                </label>
+                                <select class="form-select select2-with-search" id="editAvisCommercial" name="avis_commercial">
+                                    <option value="">Sélectionnez un avis</option>
+                                    <option value="Négatif">Négatif</option>
+                                    <option value="Inconnu">Inconnu</option>
+                                    <option value="Moyen">Moyen</option>
+                                    <option value="Bon">Bon</option>
+                                    <option value="Très bien">Très bien</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRefAvisCommercial" class="form-label">
+                                    <i class="fas fa-link text-info"></i>Référence Avis Commercial
+                                </label>
+                                <select class="form-select select2-with-search" id="editRefAvisCommercial" name="avis_commercial_ref">
+                                    <option value="">Sélectionnez une référence</option>
+                                    {% for avis in commercial_list %}
+                                    <option value="{{ avis.id }}">{{ avis.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPlusInformations" class="form-label">
+                                    <i class="fas fa-info-circle text-purple"></i>Plus d'Informations
+                                </label>
+                                <select class="form-select select2-with-search" id="editPlusInformations" name="plus_informations">
+                                    <option value="">Sélectionnez une option</option>
+                                    <option value="40 Cette société est une filiale d'un groupe">
+                                        40 - Cette société est une filiale d'un groupe
+                                    </option>
+                                    <option value="35 Cette société est une société autonome">
+                                        35 - Cette société est une société autonome
+                                    </option>
+                                    <option value="30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante">
+                                        30 - Filiale indépendante
+                                    </option>
+                                    <option value="25 Cette entreprise est considérée comme une grande entreprise">
+                                        25 - Grande entreprise
+                                    </option>
+                                    <option value="20 Cette entreprise est considérée comme une entreprise de taille moyenne">
+                                        20 - Entreprise de taille moyenne
+                                    </option>
+                                    <option value="15 Cette entreprise est considérée comme une petite entreprise">
+                                        15 - Petite entreprise
+                                    </option>
+                                    <option value="10 Inconnu de nos sources">
+                                        10 - Inconnu de nos sources
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editAlarmes" class="form-label">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>Alarmes
+                                </label>
+                                <select class="form-select select2-with-search" id="editAlarmes" name="alarmes">
+                                    <option value="">Sélectionnez une alerte</option>
+                                    <option value="Risque d'insolvabilité">
+                                        Risque d'insolvabilité
+                                    </option>
+                                    <option value="Une procédure préliminaire a été demandée">
+                                        Demande de composition juridique
+                                    </option>
+                                    <option value="Une procédure prématurée a été suspendue">
+                                        Procédure prématurée suspendue
+                                    </option>
+                                    <option value="La composition du tribunal à la suite d'un examen préliminaire">
+                                        Composition du tribunal après examen
+                                    </option>
+                                    <option value="Ouverture de la composition judiciaire">
+                                        Ouverture composition judiciaire
+                                    </option>
+                                    <option value="Refus de l'homologation, la corruption est attendue">
+                                        Refus homologation (corruption)
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPresseMedia" class="form-label">
+                            <i class="fas fa-newspaper text-success"></i>Presse & Médias
+                        </label>
+                        <input type="text" class="form-control" 
+                               id="editPresseMedia" name="presse_media">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPrincipauxConcurrent" class="form-label">
+                            <i class="fas fa-users text-purple"></i>Principaux Concurrents
+                        </label>
+                        <textarea class="form-control" id="editPrincipauxConcurrent" name="principaux_concurrent" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-orange"></i>Commentaire d'analyse
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'analyse de tendance</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette analyse ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/tendance/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Charger les données de l'acheteur
+    const acheteurData = JSON.parse('{{ acheteur_json|escapejs }}');
+    
+    // Charger les données de la tendance si elles existent
+    let tendanceData = null;
+    try {
+        tendanceData = JSON.parse('{{ tendance_json|escapejs }}');
+    } catch(e) {
+        console.log('Aucune donnée de tendance trouvée');
+        tendanceData = null;
+    }
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addTendanceModal, #editTendanceModal').on('shown.bs.modal', function() {
+        setTimeout(initSelect2, 100);
+    });
+    
+    // Remplir le formulaire d'édition
+    function populateEditForm() {
+        if (!tendanceData) return;
+        
+        console.log('Remplissage du formulaire avec:', tendanceData);
+        
+        $('#editTendanceId').val(tendanceData.id);
+        $('#editAvisCommercial').val(tendanceData.avis_commercial || '').trigger('change');
+        $('#editRefAvisCommercial').val(tendanceData.avis_commercial_ref || '').trigger('change');
+        $('#editPlusInformations').val(tendanceData.plus_informations || '').trigger('change');
+        $('#editAlarmes').val(tendanceData.alarmes || '').trigger('change');
+        $('#editPresseMedia').val(tendanceData.presse_media || '');
+        $('#editPrincipauxConcurrent').val(tendanceData.principaux_concurrent || '');
+        $('#editCommentaire').val(tendanceData.commentaire || '');
+    }
+    
+    // Gérer l'ouverture du modal d'édition
+    $('#editTendanceModal').on('shown.bs.modal', function() {
+        // Remplir les champs du formulaire
+        populateEditForm();
+        
+        // Réinitialiser Select2 pour les champs d'édition
+        setTimeout(() => {
+            $('#editAvisCommercial').trigger('change');
+            $('#editRefAvisCommercial').trigger('change');
+            $('#editPlusInformations').trigger('change');
+            $('#editAlarmes').trigger('change');
+        }, 200);
+    });
+    
+    // Réinitialiser quand les modaux se ferment
+    $('#addTendanceModal').on('hidden.bs.modal', function() {
+        // Réinitialiser le formulaire
+        $('#addTendanceForm')[0].reset();
+        $('.select2-with-search').val(null).trigger('change');
+    });
+    
+    // Formulaire d'ajout
+    $('#addTendanceForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Utiliser FormData pour une meilleure gestion
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitTendanceForm('POST', data, '#submitAddBtn', 'addTendanceModal');
+    });
+    
+    // Formulaire de modification
+    $('#editTendanceForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Utiliser FormData pour une meilleure gestion
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitTendanceForm('POST', data, '#submitEditBtn', 'editTendanceModal');
+    });
+    
+    // Soumission du formulaire
+    function submitTendanceForm(method, data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    console.log('Erreur serveur:', xhr.responseJSON);
+                    if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    } else {
+                        errorMessage = xhr.responseJSON.detail || errorMessage;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitTendanceForm(method, data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression de la tendance
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Analyse supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer l\'analyse'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi avec succès');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

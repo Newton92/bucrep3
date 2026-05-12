@@ -1,0 +1,602 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<style>
+:root {
+    --primary: #0d80be;
+    --primary-dark: #0a6ca0;
+    --primary-light: rgba(13,128,190,0.08);
+    --border: rgba(13,128,190,0.15);
+    --dark: #1e2a38;
+    --gray: #6c757d;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+body { background: #f0f4f8; }
+
+/* ── Page header ── */
+.page-header {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.page-header .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+.page-header .back-btn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.page-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+    flex: 1;
+}
+.page-header .ref-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray);
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+}
+.btn-save {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.55rem 1.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.btn-save:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── Layout ── */
+.create-wrapper {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem 4rem;
+}
+
+/* ── Section card ── */
+.section-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+.section-card .section-head {
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: #fafbfc;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.section-head h2 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+.section-head .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+}
+.section-body {
+    padding: 1.5rem;
+    display: grid;
+    gap: 1.1rem;
+}
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+
+/* ── Field ── */
+.field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.02em;
+}
+.field label .req { color: #e53935; margin-left: 2px; }
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    border: 1.5px solid #dee2e6;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.85rem;
+    font-size: 0.88rem;
+    color: var(--dark);
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13,128,190,0.12);
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.field .hint {
+    font-size: 0.73rem;
+    color: var(--gray);
+    margin-top: 0.25rem;
+}
+
+/* ── Toggle switch ── */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+}
+.toggle-row label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+.form-switch .form-check-input {
+    width: 2.4em;
+    height: 1.3em;
+    cursor: pointer;
+}
+
+/* ── Success toast ── */
+.toast-wrapper {
+    position: fixed;
+    top: 80px;
+    right: 1.5rem;
+    z-index: 9999;
+}
+
+/* ── Barre bas de page ── */
+.form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.5rem;
+    margin-top: 0.5rem;
+}
+.btn-cancel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.55rem 1.4rem;
+    border-radius: 20px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+.btn-cancel:hover {
+    background: #f8f9fa;
+    color: var(--dark);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
+    .col-span-3, .col-span-4 { grid-column: span 2; }
+}
+@media (max-width: 576px) {
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+    .col-span-2, .col-span-3, .col-span-4 { grid-column: span 1; }
+    .create-wrapper { padding: 0 0.75rem 4rem; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Header fixe -->
+<div class="page-header">
+    <a href="{% url 'dash_root_order' %}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> {% trans "Retour" %}
+    </a>
+    <h1><i class="fas fa-plus-circle me-2" style="color:var(--primary);font-size:1rem;"></i>{% trans "Nouvelle commande" %}</h1>
+    <span class="ref-badge">{% trans "Référence auto-générée à la création" %}</span>
+    <button type="button" class="btn-save" id="btnSubmit">
+        <i class="fas fa-save"></i> {% trans "Enregistrer" %}
+    </button>
+</div>
+
+<div class="create-wrapper">
+<form id="createOrderForm" novalidate>
+
+    <!-- 1. Informations principales -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Informations principales" %}</h2></div>
+        <div class="section-body cols-3">
+            <div class="field col-span-2">
+                <label>{% trans "Raison sociale" %} <span class="req">*</span></label>
+                <input type="text" name="raison_sociale" id="raison_sociale" required placeholder="{% trans 'Nom de la société analysée' %}">
+            </div>
+            <div class="field">
+                <label>{% trans "Référence client" %}</label>
+                <input type="text" name="reference_client" id="reference_client" placeholder="{% trans 'Réf. transmise par le client' %}">
+            </div>
+            <div class="field">
+                <label>{% trans "Client" %}</label>
+                <select name="client" id="client">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    {% for c in client_list %}
+                        <option value="{{ c.id }}">{{ c.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Acheteur" %}</label>
+                <select name="acheteur" id="acheteur">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    {% for a in acheteur_list %}
+                        <option value="{{ a.id }}">{{ a.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "N° identification entreprise" %}</label>
+                <input type="text" name="company_identification_number" id="company_identification_number" placeholder="NIF / RCCM…">
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Rapport & Statut -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Type de rapport & Statut" %}</h2></div>
+        <div class="section-body cols-3">
+            <div class="field">
+                <label>{% trans "Type de rapport" %}</label>
+                <select name="type_rapport" id="type_rapport">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    {% for tv, tl in type_rapport_choices %}
+                        <option value="{{ tv }}">{{ tl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Statut initial" %}</label>
+                <select name="status" id="status">
+                    {% for sv, sl in status_choices %}
+                        <option value="{{ sv }}"{% if sv == 'nouvelle' %} selected{% endif %}>{{ sl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Priorité" %}</label>
+                <select name="priorite" id="priorite">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    <option value="BASSE">{% trans "Basse" %}</option>
+                    <option value="NORMALE" selected>{% trans "Normale" %}</option>
+                    <option value="HAUTE">{% trans "Haute" %}</option>
+                    <option value="URGENTE">{% trans "Urgente" %}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Validateur" %}</label>
+                <select name="validateur" id="validateur">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    {% for u in validateur_list %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Impression avec états financiers" %}</label>
+                <select name="imprimer_avec_etats_fin" id="imprimer_avec_etats_fin">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    <option value="Oui">{% trans "Oui" %}</option>
+                    <option value="Non">{% trans "Non" %}</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Nom du contact client" %}</label>
+                <input type="text" name="client_nom" id="client_nom" placeholder="{% trans 'Prénom Nom' %}">
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Dates & Délais -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Dates & Délais" %}</h2></div>
+        <div class="section-body cols-4">
+            <div class="field">
+                <label>{% trans "Date de réception" %}</label>
+                <input type="date" name="date_recept_commande" id="date_recept_commande">
+            </div>
+            <div class="field">
+                <label>{% trans "Date du rapport" %}</label>
+                <input type="date" name="date_rapport" id="date_rapport">
+            </div>
+            <div class="field">
+                <label>{% trans "Délais" %}</label>
+                <input type="text" name="delais" id="delais" placeholder="{% trans 'Ex : 7 jours' %}">
+            </div>
+            <div class="field">
+                <label>{% trans "Date d'envoi client" %}</label>
+                <input type="datetime-local" name="date_envoi_client" id="date_envoi_client">
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Crédit -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Crédit" %}</h2></div>
+        <div class="section-body cols-4">
+            <div class="field">
+                <label>{% trans "Crédit demandé" %}</label>
+                <input type="number" step="0.01" name="credit_demande" id="credit_demande" placeholder="0.00">
+            </div>
+            <div class="field">
+                <label>{% trans "Devise (demandé)" %}</label>
+                <select name="devise_credit_demande" id="devise_credit_demande">
+                    <option value="">—</option>
+                    {% for d in devise_list %}
+                        <option value="{{ d.id }}">{{ d.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>{% trans "Crédit recommandé" %}</label>
+                <input type="number" step="0.01" name="credit_recommande" id="credit_recommande" placeholder="0.00">
+            </div>
+            <div class="field">
+                <label>{% trans "Devise (recommandé)" %}</label>
+                <select name="devise_credit_recommande" id="devise_credit_recommande">
+                    <option value="">—</option>
+                    {% for d in devise_list %}
+                        <option value="{{ d.id }}">{{ d.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Adresse -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Adresse" %}</h2></div>
+        <div class="section-body cols-4">
+            <div class="field">
+                <label>{% trans "Ville" %}</label>
+                <select name="ville" id="ville">
+                    <option value="">— {% trans "Sélectionner" %} —</option>
+                    {% for v in ville_list %}
+                        <option value="{{ v.id }}">{{ v.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field col-span-2">
+                <label>{% trans "Rue" %}</label>
+                <input type="text" name="rue_adresse" id="rue_adresse" placeholder="{% trans 'Nom et numéro de voie' %}">
+            </div>
+            <div class="field">
+                <label>{% trans "Code postal" %}</label>
+                <input type="text" name="code_postale_adresse" id="code_postale_adresse">
+            </div>
+            <div class="field">
+                <label>{% trans "Téléphone" %}</label>
+                <input type="text" name="telephone" id="telephone">
+            </div>
+            <div class="field">
+                <label>{% trans "Email" %}</label>
+                <input type="email" name="email" id="email">
+            </div>
+            <div class="field">
+                <label>{% trans "Boîte postale" %}</label>
+                <input type="text" name="post_office" id="post_office">
+            </div>
+            <div class="field">
+                <label>{% trans "État / Région" %}</label>
+                <input type="text" name="state" id="state">
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Commentaires & Prestataire -->
+    <div class="section-card">
+        <div class="section-head"><span class="dot"></span><h2>{% trans "Informations complémentaires" %}</h2></div>
+        <div class="section-body cols-2">
+            <div class="field">
+                <label>{% trans "Prestataire" %}</label>
+                <input type="text" name="provider" id="provider" placeholder="{% trans 'Nom du prestataire' %}">
+            </div>
+            <div class="field">
+                <div class="toggle-row">
+                    <label for="email_envoye">{% trans "Email déjà envoyé" %}</label>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" name="email_envoye" id="email_envoye">
+                    </div>
+                </div>
+            </div>
+            <div class="field col-span-2">
+                <label>{% trans "Commentaires" %}</label>
+                <textarea name="comments" id="comments" maxlength="100" placeholder="{% trans 'Remarques ou instructions particulières…' %}"></textarea>
+                <p class="hint">{% trans "100 caractères maximum" %}</p>
+            </div>
+        </div>
+    </div>
+
+<!-- Barre de validation bas de page -->
+<div class="form-footer">
+    <a href="{% url 'dash_root_order' %}" class="btn-cancel">
+        <i class="fas fa-times"></i> {% trans "Annuler" %}
+    </a>
+    <button type="button" class="btn-save" id="btnSubmitBottom">
+        <i class="fas fa-save"></i> {% trans "Enregistrer la commande" %}
+    </button>
+</div>
+
+</form>
+</div>
+
+<input type="hidden" id="access_token" value="{{ access }}">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function () {
+    const TOKEN = document.getElementById('access_token').value;
+    const API   = '/api/orders/module/';
+
+    async function apiFetch(url, opts = {}) {
+        const res = await fetch(url, {
+            ...opts,
+            headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+                'Content-Type': 'application/json',
+                ...(opts.headers || {}),
+            },
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const msg = body.detail || body.error || body.message
+                || (body.errors ? JSON.stringify(body.errors) : null)
+                || "{% trans 'Une erreur est survenue' %}";
+            throw new Error(msg);
+        }
+        return body;
+    }
+
+    function buildPayload() {
+        const form = document.getElementById('createOrderForm');
+        const data = {};
+
+        form.querySelectorAll('input, select, textarea').forEach(el => {
+            if (!el.name) return;
+            if (el.type === 'checkbox') {
+                data[el.name] = el.checked;
+            } else {
+                const v = el.value.trim();
+                if (v !== '') data[el.name] = v;
+            }
+        });
+
+        // Conversion FK en entiers
+        ['client', 'acheteur', 'validateur', 'ville',
+         'devise_credit_demande', 'devise_credit_recommande'].forEach(k => {
+            if (data[k]) data[k] = parseInt(data[k], 10);
+        });
+
+        if (!data.status) data.status = 'nouvelle';
+        return data;
+    }
+
+    async function submitOrder() {
+        const btn    = document.getElementById('btnSubmit');
+        const btnBot = document.getElementById('btnSubmitBottom');
+        const raisonSociale = document.getElementById('raison_sociale').value.trim();
+
+        if (!raisonSociale) {
+            document.getElementById('raison_sociale').focus();
+            Swal.fire({
+                icon: 'warning',
+                title: "{% trans 'Champ requis' %}",
+                text: "{% trans 'La raison sociale est obligatoire.' %}",
+                confirmButtonColor: '#0d80be',
+            });
+            return;
+        }
+
+        const setLoading = (on) => {
+            btn.disabled    = on;
+            btnBot.disabled = on;
+            const html = on
+                ? '<i class="fas fa-spinner fa-spin"></i> {% trans "Enregistrement…" %}'
+                : '<i class="fas fa-save"></i> {% trans "Enregistrer" %}';
+            btn.innerHTML    = html;
+            btnBot.innerHTML = on ? html : '<i class="fas fa-save"></i> {% trans "Enregistrer la commande" %}';
+        };
+
+        setLoading(true);
+
+        try {
+            const payload = buildPayload();
+            const result  = await apiFetch(API, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            await Swal.fire({
+                icon: 'success',
+                title: "{% trans 'Commande créée' %}",
+                html: `<p class="mb-1">{% trans 'Référence' %} : <strong>${result.notre_ref || result.id}</strong></p>`,
+                confirmButtonColor: '#0d80be',
+                confirmButtonText: "{% trans 'Voir les commandes' %}",
+                showDenyButton: true,
+                denyButtonText: "{% trans 'Créer une autre' %}",
+                denyButtonColor: '#6c757d',
+            }).then(r => {
+                if (r.isDenied) {
+                    document.getElementById('createOrderForm').reset();
+                    setLoading(false);
+                } else {
+                    window.location.href = "{% url 'dash_root_order' %}";
+                }
+            });
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: "{% trans 'Erreur' %}",
+                text: err.message,
+                confirmButtonColor: '#0d80be',
+            });
+            setLoading(false);
+        }
+    }
+
+    document.getElementById('btnSubmit').addEventListener('click', submitOrder);
+    document.getElementById('btnSubmitBottom').addEventListener('click', submitOrder);
+})();
+</script>
+{% endblock %}

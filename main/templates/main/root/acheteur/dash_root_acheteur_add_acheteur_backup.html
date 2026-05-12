@@ -1,0 +1,1626 @@
+{% extends 'main/root/base.html' %}
+
+{% load i18n %}
+{% load static %}
+
+{% block styles %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    /* ========== THÈME DE COULEURS ========== */
+    :root {
+        --color-light: #fcfefe;      /* Fond clair, texte sur fond foncé */
+        --color-primary: #0a95ca;    /* Primaire principal */
+        --color-primary-dark: #0d80be; /* Primaire foncé (hover, états actifs) */
+        --color-primary-light: #25add6; /* Primaire clair (bordures, accents) */
+        --color-secondary: #106cb2;   /* Secondaire (boutons secondaires, fonds) */
+    }
+
+    /* ========== STYLES GÉNÉRAUX ========== */
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* ========== CHAMP CODE NACE ========== */
+    #code_nace.select2 {
+        width: 100% !important;
+    }
+
+    /* Conteneur Select2 */
+    .select2-container--bootstrap-5.select2-container--focus {
+        width: 100% !important;
+    }
+
+    /* Assurer que le champ occupe toute la largeur */
+    .select2-container--bootstrap-5 {
+        width: 100% !important;
+    }
+
+    /* Champ Select2 personnalisé pour code NACE */
+    #code_nace + .select2-container {
+        width: 100% !important;
+        margin-top: 4px;
+    }
+
+    /* Ajustement de la hauteur */
+    #code_nace + .select2-container .select2-selection {
+        min-height: 46px;
+        border-radius: 8px;
+        border: 1px solid rgba(37, 173, 214, 0.3);
+    }
+
+    #code_nace + .select2-container .select2-selection--single {
+        height: 46px;
+    }
+
+    #code_nace + .select2-container .select2-selection__rendered {
+        line-height: 44px !important;
+        padding-left: 15px !important;
+    }
+
+    /* Dropdown plus large */
+    .select2-dropdown {
+        min-width: 500px !important;
+        max-width: 800px !important;
+    }
+
+    /* Options avec texte complet */
+    .select2-results__option {
+        white-space: normal !important;
+        padding: 8px 15px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Surcharger les styles Bootstrap pour ce champ spécifique */
+    .col-md-12 .select2-container--bootstrap-5 {
+        width: 100% !important;
+        display: block !important;
+    }
+
+    /* Classe spécifique pour les Select2 en pleine largeur */
+    .select2-full-width + .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .form-control.select2-full-width {
+        width: 100% !important;
+        display: none; /* Cacher l'élément original, Select2 le remplace */
+    }
+
+    /* Correction pour Bootstrap 5 */
+    .select2-container--bootstrap-5 .select2-selection {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    /* Assurer que le conteneur parent occupe toute la largeur */
+    .col-md-12 {
+        width: 100%;
+    }
+
+    .col-md-12 .select2-container {
+        width: 100% !important;
+    }
+
+    /* ========== SECTIONS DU FORMULAIRE ========== */
+    .form-section {
+        background: rgba(10, 149, 202, 0.02);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid var(--color-primary);
+        border: 1px solid rgba(37, 173, 214, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        box-shadow: 0 5px 20px rgba(10, 149, 202, 0.1);
+        border-color: rgba(37, 173, 214, 0.3);
+    }
+    
+    .section-title {
+        color: var(--color-primary-dark);
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(10, 149, 202, 0.1);
+    }
+    
+    .section-title i {
+        font-size: 1.2rem;
+        background: rgba(10, 149, 202, 0.1);
+        padding: 8px;
+        border-radius: 8px;
+        color: var(--color-primary);
+    }
+    
+    /* ========== CHAMPS DE FORMULAIRE ========== */
+    .form-label {
+        font-weight: 500;
+        color: var(--color-primary-dark);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .form-label:after {
+        content: attr(data-help);
+        font-size: 0.8rem;
+        color: var(--color-primary-light);
+        font-weight: normal;
+        margin-left: auto;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+        background-color: white;
+    }
+    
+    /* ========== INDICATEURS DE PROGRESSION ========== */
+    .progress-indicator {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        counter-reset: step;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid rgba(37, 173, 214, 0.15);
+        box-shadow: 0 2px 10px rgba(10, 149, 202, 0.05);
+    }
+    
+    .step {
+        text-align: center;
+        position: relative;
+        flex: 1;
+    }
+    
+    .step:before {
+        counter-increment: step;
+        content: counter(step);
+        width: 45px;
+        height: 45px;
+        line-height: 45px;
+        border-radius: 50%;
+        background: rgba(10, 149, 202, 0.1);
+        color: var(--color-primary);
+        display: block;
+        margin: 0 auto 10px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .step.active:before {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 5px rgba(10, 149, 202, 0.2);
+    }
+    
+    .step.completed:before {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+    }
+    
+    .step-label {
+        font-size: 0.85rem;
+        color: var(--color-primary-dark);
+        font-weight: 500;
+    }
+    
+    .step.active .step-label {
+        color: var(--color-primary);
+        font-weight: 600;
+    }
+    
+    /* ========== CARTES ========== */
+    .card-form {
+        border: 1px solid rgba(37, 173, 214, 0.2);
+        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        color: white;
+        border: none;
+        padding: 20px 30px;
+    }
+    
+    .card-header-title {
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* ========== CARTE DE LOCALISATION ========== */
+    .map-container {
+        border-radius: 12px;
+        overflow: hidden;
+        height: 300px;
+        border: 2px solid rgba(37, 173, 214, 0.3);
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.1);
+    }
+    
+    #map {
+        height: 100%;
+        width: 100%;
+    }
+    
+    /* ========== SÉLECTEURS DE COULEUR ========== */
+    .color-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    
+    .color-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .color-option:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    
+    .color-option.selected {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.3);
+    }
+    
+    .color-preview {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        background: rgba(10, 149, 202, 0.1);
+        margin-top: 10px;
+        border: 1px solid rgba(10, 149, 202, 0.2);
+    }
+    
+    .color-circle {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* ========== BOUTONS ========== */
+    .btn-submit {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border: none;
+        padding: 12px 35px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(10, 149, 202, 0.3);
+        background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-secondary) 100%);
+    }
+    
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .btn-outline-primary {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(10, 149, 202, 0.2);
+    }
+    
+    /* ========== MESSAGES D'AIDE ========== */
+    .form-text-help {
+        font-size: 0.85rem;
+        color: var(--color-primary-light);
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .form-text-help:before {
+        content: "💡";
+        font-size: 0.9rem;
+    }
+    
+    /* ========== VALIDATION ========== */
+    .is-valid {
+        border-color: #28a745 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .invalid-feedback:before {
+        content: "⚠";
+    }
+    
+    /* ========== LOADING ANIMATION ========== */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(10, 149, 202, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+        backdrop-filter: blur(3px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loading-content {
+        text-align: center;
+        background: white;
+        padding: 40px 50px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(10, 149, 202, 0.15);
+        border: 2px solid rgba(37, 173, 214, 0.2);
+        animation: fadeInUp 0.4s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(10, 149, 202, 0.1);
+        border-top: 4px solid var(--color-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        color: var(--color-primary);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-top: 15px;
+    }
+    
+    /* ========== INPUT GROUPS ========== */
+    .input-group-text {
+        background-color: rgba(10, 149, 202, 0.1);
+        border-color: rgba(37, 173, 214, 0.3);
+        color: var(--color-primary-dark);
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .input-group .form-control:last-child {
+        border-radius: 0 8px 8px 0;
+    }
+    
+    /* ========== SELECT2 PERSONNALISÉ ========== */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        border-radius: 8px;
+        min-height: 46px;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 44px;
+        padding-left: 15px;
+        color: var(--color-primary-dark);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(10, 149, 202, 0.1);
+    }
+
+    /* Styles pour les options NACE */
+    .nace-option {
+        padding: 8px 12px;
+        line-height: 1.4;
+    }
+
+    .nace-code {
+        font-weight: bold;
+        color: var(--color-primary);
+        min-width: 60px;
+        display: inline-block;
+    }
+
+    .nace-label {
+        color: #333;
+    }
+
+    /* Dropdown spécifique NACE */
+    .select2-nace-dropdown {
+        min-width: 600px !important;
+        max-width: 800px !important;
+        border: 1px solid rgba(37, 173, 214, 0.3);
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(10, 149, 202, 0.1);
+    }
+
+    /* Container spécifique */
+    .select2-full-width-container {
+        width: 100% !important;
+    }
+
+    /* Correction de l'affichage en mobile */
+    @media (max-width: 768px) {
+        .select2-nace-dropdown {
+            min-width: 100% !important;
+            max-width: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+        }
+        
+        .nace-option {
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+        
+        .nace-code {
+            min-width: 50px;
+        }
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+        .step-indicator {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .step:before {
+            margin: 0;
+            flex-shrink: 0;
+        }
+        
+        .input-group {
+            flex-direction: column;
+        }
+        
+        .input-group .form-control,
+        .input-group .input-group-text {
+            border-radius: 8px !important;
+            margin-bottom: 10px;
+        }
+        
+        .form-section {
+            padding: 15px;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+
+
+<!-- Overlay de chargement -->
+<div class="loading-overlay">
+    <div class="spinner"></div>
+</div>
+
+<!-- Titre -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="profileTitle" style="color: var(--primary-dark);">
+                        <i class="bi bi-person-gear me-2"></i>{% trans "Ajouter un nouvel acheteur" %}
+                    </h4>
+                    <span class="text-muted">
+                        {% trans "Remplissez le formulaire ci-dessous pour ajouter un nouvel acheteur." %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Indicateur de progression -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-form">
+            <div class="card-body">
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-label">Généralités</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-label">Contacts</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-label">Localisation</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-label">Opinion</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulaire -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-form">
+            <div class="card-header">
+                <h4 class="card-header-title mb-0"><i class="bi bi-person-plus me-2"></i>Informations de l'acheteur</h4>
+            </div>
+
+            <div class="card-body">
+                <form id="addAcheteurForm" class="vstack gap-4" novalidate>
+
+                    <!-- Section 1: Généralités -->
+                    <div class="form-section" data-section="1">
+                        <h5 class="section-title"><i class="bi bi-info-circle"></i> Généralités sur l'acheteur</h5>
+                        
+                        <div class="row g-3">
+                            <!-- Nom -->
+                            <div class="col-md-6">
+                                <label class="form-label">Nom de l'acheteur *</label>
+                                <input type="text" class="form-control" id="nom" name="nom" 
+                                       placeholder="Ex: BATI PLUS" required
+                                       data-validation="required|min:2">
+                                <div class="form-text-help">Nom complet de l'entreprise acheteuse</div>
+                                <div class="invalid-feedback">Veuillez saisir un nom valide (minimum 2 caractères)</div>
+                            </div>
+                            
+                            <!-- Sigle -->
+                            <div class="col-md-6">
+                                <label class="form-label">Sigle</label>
+                                <input type="text" class="form-control" id="sigle" name="sigle" 
+                                       placeholder="Ex: BATI+">
+                                <div class="form-text-help">Sigle ou abréviation de l'entreprise</div>
+                            </div>
+                            
+                            <!-- Date de création -->
+                            <div class="col-md-6">
+                                <label class="form-label">Date de création *</label>
+                                <input type="date" class="form-control flatpickr" id="date_creation" 
+                                       name="date_creation" required
+                                       data-validation="required">
+                                <div class="form-text-help">Date de création officielle de l'entreprise</div>
+                                <div class="invalid-feedback">Veuillez sélectionner une date valide</div>
+                            </div>
+                            
+                            <!-- Activité principale -->
+                            <div class="col-md-6">
+                                <label class="form-label">Activité principale *</label>
+                                <input type="text" class="form-control" id="activite_principale" 
+                                       name="activite_principale" 
+                                       placeholder="Ex: Vente de produits de construction" required
+                                       data-validation="required|min:3">
+                                <div class="form-text-help">Activité principale exercée par l'acheteur</div>
+                                <div class="invalid-feedback">Veuillez saisir une activité principale</div>
+                            </div>
+                            
+                            <!-- Statut -->
+                            <div class="col-md-6">
+                                <label for="statut_entreprise" class="form-label">Statut *</label>
+                                <select class="form-select select2" id="statut_entreprise" 
+                                        name="statut_entreprise" required
+                                        data-validation="required">
+                                    <option value="">Sélectionnez...</option>
+                                    {% for statut in statut_list %}
+                                        <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner un statut</div>
+                            </div>
+                            
+                            <!-- Forme juridique -->
+                            <div class="col-md-6">
+                                <label for="forme_juridique" class="form-label">Forme juridique *</label>
+                                <select class="form-select select2" id="forme_juridique" 
+                                        name="forme_juridique" required
+                                        data-validation="required">
+                                    <option value="">Sélectionnez...</option>
+                                    {% for juridique in juridique_list %}
+                                        <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une forme juridique</div>
+                            </div>
+                            
+                            <!-- Catégorie -->
+                            <div class="col-md-6">
+                                <label for="categorie_entreprise" class="form-label">Catégorie</label>
+                                <select class="form-select select2" id="categorie_entreprise" 
+                                        name="categorie_entreprise">
+                                    <option value="">Sélectionnez...</option>
+                                    {% for categorie in categorie_list %}
+                                        <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text-help">Veuillez sélectionner une catégorie d'entreprise</div>
+                            </div>
+
+                            <!-- Code NACE -->
+                            <div class="col-md-6 mb-3">
+                                <label for="code_nace" class="form-label">Code NACE</label>
+                                <select class="form-control select2" id="code_nace" name="code_nace">
+                                    <option value="">Sélectionnez...</option>
+                                    {% for code_nace in code_nace_list %}
+                                        <!-- IMPORTANT: value="{{ code_nace.id }}" envoie la valeur complète -->
+                                        <option value="{{ code_nace.id }}">
+                                            {{ code_nace.code }} - {{ code_nace.libelle }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text-help">
+                                    Code d'activité économique (NACE) - Optionnel
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="3" placeholder="Description détaillée de l'acheteur..."></textarea>
+                                <div class="form-text-help">Décrivez brièvement l'acheteur et ses activités</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Contacts -->
+                    <div class="form-section" data-section="2">
+                        <h5 class="section-title"><i class="bi bi-telephone"></i> Contacts de l'acheteur</h5>
+                        
+                        <div class="row g-3">
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label class="form-label">Email principal</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="contact@entreprise.ga"
+                                       data-validation="email">
+                                <div class="form-text-help">Adresse email principale</div>
+                                <div class="invalid-feedback">Veuillez saisir une adresse email valide</div>
+                            </div>
+                            
+                            <!-- Fax -->
+                            <div class="col-md-6">
+                                <label class="form-label">Fax</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-fax"></i></span>
+                                    <input type="text" class="form-control" id="fax" name="fax" 
+                                           placeholder="(+241) 22 22 22 22">
+                                </div>
+                            </div>
+                            
+                            <!-- Boîte postale -->
+                            <div class="col-md-6">
+                                <label class="form-label">Boîte postale</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">BP</span>
+                                    <input type="text" class="form-control" id="boite_postale" 
+                                           name="boite_postale" placeholder="2022 Libreville, Gabon">
+                                </div>
+                            </div>
+                            
+                            <!-- Code postal -->
+                            <div class="col-md-6">
+                                <label class="form-label">Code postal</label>
+                                <input type="text" class="form-control" id="code_postal" 
+                                       name="code_postal" placeholder="241">
+                            </div>
+                            
+                            <!-- Site internet -->
+                            <div class="col-12">
+                                <label class="form-label">Site internet</label>
+                                <input type="text" class="form-control" id="site_internet" 
+                                    name="site_internet" placeholder="exemple.com"
+                                    pattern="^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$">
+                                <div class="form-text-help">Entrez uniquement le nom de domaine (ex: exemple.com)</div>
+                                <div class="invalid-feedback">Format invalide. Utilisez: exemple.com</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Localisation -->
+                    <div class="form-section" data-section="3">
+                        <h5 class="section-title"><i class="bi bi-geo-alt"></i> Localisation de l'acheteur</h5>
+                        
+                        <div class="row g-3">
+                            <!-- Adresse -->
+                            <div class="col-md-3">
+                                <label class="form-label">Numéro</label>
+                                <input type="text" class="form-control" id="numero_adresse" 
+                                       name="numero_adresse" placeholder="17345">
+                            </div>
+                            
+                            <div class="col-md-9">
+                                <label class="form-label">Rue</label>
+                                <input type="text" class="form-control" id="rue_adresse" 
+                                       name="rue_adresse" placeholder="Rue Camp de Gaulle">
+                            </div>
+                            
+                            <!-- Pays -->
+                            <div class="col-md-4">
+                                <label for="pays" class="form-label">Pays *</label>
+                                <select class="form-select select2" id="pays" name="pays" required
+                                        data-validation="required">
+                                    <option value="">Sélectionnez...</option>
+                                    {% for pays in pays_list %}
+                                        <option value="{{ pays.id }}" 
+                                                {% if request.user.pays.id == pays.id %}selected{% endif %}>
+                                            {{ pays.nom }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner un pays</div>
+                            </div>
+                            
+                            <!-- Province -->
+                            <div class="col-md-4">
+                                <label for="province" class="form-label">Province *</label>
+                                <select class="form-select select2" id="province" name="province" 
+                                        disabled required data-validation="required">
+                                    <option value="">Sélectionnez...</option>
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une province</div>
+                            </div>
+                            
+                            <!-- Ville -->
+                            <div class="col-md-4">
+                                <label for="ville" class="form-label">Ville *</label>
+                                <select class="form-select select2" id="ville" name="ville" 
+                                        disabled required data-validation="required">
+                                    <option value="">Sélectionnez...</option>
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une ville</div>
+                            </div>
+                            
+                            <!-- Carte (optionnelle) -->
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Localisation sur la carte (optionnel)</label>
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            id="btn-locate" disabled>
+                                        <i class="bi bi-geo-alt me-1"></i>Localiser
+                                    </button>
+                                </div>
+                                <div class="map-container">
+                                    <div id="map"></div>
+                                </div>
+                                <input type="hidden" id="latitude" name="latitude">
+                                <input type="hidden" id="longitude" name="longitude">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Opinion -->
+                    <div class="form-section" data-section="4">
+                        <h5 class="section-title"><i class="bi bi-chat-left-text"></i> Opinion ACREMAC</h5>
+                        
+                        <div class="row g-3">
+                            <!-- Coloration -->
+                            <div class="col-md-6">
+                                <label for="couleur_commentaire" class="form-label">Coloration *</label>
+                                <select class="form-select select2" id="couleur_commentaire" 
+                                        name="couleur_commentaire" required
+                                        data-validation="required">
+                                    <option value="">Sélectionnez une couleur...</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}" 
+                                                data-color="{{ coloration.code }}">
+                                            {{ coloration.couleur }} - [{{ coloration.code }}]
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="color-preview mt-2" id="colorPreview" style="display: none;">
+                                    <div class="color-circle" style="background-color: #000;"></div>
+                                    <span id="colorName">Aucune couleur sélectionnée</span>
+                                </div>
+                                <div class="invalid-feedback">Veuillez sélectionner une coloration</div>
+                            </div>
+                            
+                            <!-- Commentaire -->
+                            <div class="col-12">
+                                <label for="commentaire" class="form-label">Commentaire *</label>
+                                <textarea class="form-control" id="commentaire" name="commentaire" 
+                                          rows="4" placeholder="Votre commentaire sur cet acheteur..."
+                                          required data-validation="required|min:10"></textarea>
+                                <div class="form-text-help">Minimum 10 caractères. Décrivez votre opinion sur cet acheteur.</div>
+                                <div class="invalid-feedback">Veuillez saisir un commentaire (minimum 10 caractères)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top" style="border-color: rgba(37, 173, 214, 0.2) !important;">
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-prev" disabled>
+                                <i class="bi bi-chevron-left me-1"></i>Précédent
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-next">
+                                Suivant<i class="bi bi-chevron-right ms-1"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-danger me-2" id="btn-reset">
+                                <i class="bi bi-x-circle me-1"></i>Annuler
+                            </button>
+                            <button type="submit" class="btn btn-submit" id="btn-submit" disabled>
+                                <i class="bi bi-check-lg me-1"></i>Ajouter l'acheteur
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Librairies nécessaires -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
+
+<script>
+$(document).ready(function() {
+
+    // Stockage des tokens
+    let accessToken = '{{ access }}';
+    let refreshToken = '{{ refresh }}';
+
+    // Variables globales
+    let currentStep = 1;
+    let totalSteps = 4;
+    let map = null;
+    let validationRules = {};
+    
+    // Initialisation Select2
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Sélectionnez...',
+        allowClear: true,
+        language: {
+            noResults: function() {
+                return "Aucun résultat trouvé";
+            }
+        }
+    });
+    
+    // Initialisation Flatpickr (si présent)
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr('.flatpickr', {
+            dateFormat: 'Y-m-d',
+            locale: 'fr'
+        });
+    }
+
+    // Gestion des étapes
+    function updateSteps() {
+        $('.step').removeClass('active completed');
+        
+        $('.step').each(function() {
+            const step = parseInt($(this).data('step'));
+            if (step < currentStep) {
+                $(this).addClass('completed');
+            } else if (step === currentStep) {
+                $(this).addClass('active');
+            }
+        });
+        
+        $('.form-section').hide();
+        $(`.form-section[data-section="${currentStep}"]`).show();
+        
+        // Mettre à jour les boutons
+        $('#btn-prev').prop('disabled', currentStep === 1);
+        $('#btn-next').toggle(currentStep < totalSteps);
+        $('#btn-submit').prop('disabled', currentStep !== totalSteps);
+        $('#btn-submit').toggle(currentStep === totalSteps);
+    }
+    
+    // Navigation entre étapes
+    $('#btn-next').on('click', function() {
+        if (validateStep(currentStep)) {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateSteps();
+            }
+        }
+    });
+    
+    $('#btn-prev').on('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateSteps();
+        }
+    });
+    
+    // Cliquer sur les étapes
+    $('.step').on('click', function() {
+        const step = parseInt($(this).data('step'));
+        if (step < currentStep) {
+            currentStep = step;
+            updateSteps();
+        }
+    });
+
+    
+    // Validation par étape
+    function validateStep(step) {
+        let isValid = true;
+        const section = $(`.form-section[data-section="${step}"]`);
+        
+        section.find('[data-validation]').each(function() {
+            const $input = $(this);
+            const validation = $input.data('validation');
+            const value = $input.val();
+            const name = $input.attr('name');
+            
+            if (validation.includes('required') && !value.trim()) {
+                markInvalid($input, 'Ce champ est obligatoire');
+                isValid = false;
+            } else if (validation.includes('email') && value && !validator.isEmail(value)) {
+                markInvalid($input, 'Email invalide');
+                isValid = false;
+            } else if (validation.includes('url') && value && !validator.isURL('https://' + value)) {
+                markInvalid($input, 'URL invalide');
+                isValid = false;
+            } else if (validation.includes('min:') && value) {
+                const min = parseInt(validation.split('min:')[1]);
+                if (value.length < min) {
+                    markInvalid($input, `Minimum ${min} caractères`);
+                    isValid = false;
+                }
+            } else {
+                markValid($input);
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Fonctions de marquage validation
+    function markInvalid($input, message) {
+        $input.addClass('is-invalid').removeClass('is-valid');
+        let $feedback = $input.next('.invalid-feedback');
+        if ($feedback.length === 0) {
+            $feedback = $('<div class="invalid-feedback"></div>');
+            $input.after($feedback);
+        }
+        $feedback.text(message);
+    }
+    
+    function markValid($input) {
+        $input.addClass('is-valid').removeClass('is-invalid');
+        $input.next('.invalid-feedback').remove();
+    }
+    
+    // Réinitialisation des champs
+    $('#btn-reset').on('click', function() {
+        Swal.fire({
+            title: 'Êtes-vous sûr ?',
+            text: "Toutes les données saisies seront perdues.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0A95CA',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#addAcheteurForm')[0].reset();
+                $('.select2').val(null).trigger('change');
+                currentStep = 1;
+                updateSteps();
+                $('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                $('.invalid-feedback').remove();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Réinitialisé !',
+                    text: 'Le formulaire a été réinitialisé.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        });
+    });
+    
+    // Prévisualisation de la couleur
+    $('#couleur_commentaire').on('change', function() {
+        const selected = $(this).find('option:selected');
+        const colorCode = selected.data('color');
+        const colorName = selected.text().split(' - ')[0];
+        
+        if (colorCode) {
+            $('#colorPreview').show();
+            $('#colorPreview .color-circle').css('background-color', colorCode);
+            $('#colorName').text(colorName);
+        } else {
+            $('#colorPreview').hide();
+        }
+    });
+    
+    // Gestion des pays/provinces/villes
+    $('#pays').on('change', function() {
+        const paysId = $(this).val();
+        const $province = $('#province');
+        const $ville = $('#ville');
+        
+        if (paysId) {
+            $province.prop('disabled', false);
+            $ville.prop('disabled', true).val('').trigger('change');
+            
+            // Charger les provinces
+            loadProvinces(paysId);
+        } else {
+            $province.prop('disabled', true).val('').trigger('change');
+            $ville.prop('disabled', true).val('').trigger('change');
+        }
+    });
+    
+    function loadProvinces(paysId) {
+        const $province = $('#province');
+        
+        showLoading(true, 'Chargement des provinces...');
+        
+        $.ajax({
+            url: `/api/provinces/${paysId}/`,
+            type: 'GET',
+            headers: getHeaders(),
+            success: function(response) {
+                $province.empty().append('<option value="">Sélectionnez...</option>');
+                
+                if (response.results && response.results.length > 0) {
+                    response.results.forEach(function(province) {
+                        $province.append(new Option(province.nom, province.id));
+                    });
+                } else {
+                    $province.append('<option value="">Aucune province disponible</option>');
+                }
+                
+                $province.trigger('change');
+            },
+            error: function(xhr) {
+                console.error('Erreur chargement provinces:', xhr);
+                showError('Erreur lors du chargement des provinces');
+            },
+            complete: function() {
+                showLoading(false);
+            }
+        });
+    }
+    
+    $('#province').on('change', function() {
+        const provinceId = $(this).val();
+        const $ville = $('#ville');
+        
+        if (provinceId) {
+            $ville.prop('disabled', false);
+            loadVilles(provinceId);
+        } else {
+            $ville.prop('disabled', true).val('').trigger('change');
+        }
+    });
+    
+    function loadVilles(provinceId) {
+        const $ville = $('#ville');
+        
+        showLoading(true, 'Chargement des villes...');
+        
+        $.ajax({
+            url: `/api/villes/${provinceId}/`,
+            type: 'GET',
+            headers: getHeaders(),
+            success: function(response) {
+                $ville.empty().append('<option value="">Sélectionnez...</option>');
+                
+                if (response.results && response.results.length > 0) {
+                    response.results.forEach(function(ville) {
+                        $ville.append(new Option(ville.nom, ville.id));
+                    });
+                } else {
+                    $ville.append('<option value="">Aucune ville disponible</option>');
+                }
+            },
+            error: function(xhr) {
+                console.error('Erreur chargement villes:', xhr);
+                showError('Erreur lors du chargement des villes');
+            },
+            complete: function() {
+                showLoading(false);
+            }
+        });
+    }
+    
+    // Initialisation de la carte
+    function initMap() {
+        if (typeof maplibregl !== 'undefined') {
+            map = new maplibregl.Map({
+                container: 'map',
+                style: 'https://demotiles.maplibre.org/style.json',
+                center: [9.454, 0.395],
+                zoom: 12
+            });
+            
+            // Ajouter des contrôles
+            map.addControl(new maplibregl.NavigationControl());
+            
+            // Gestion du clic sur la carte
+            map.on('click', function(e) {
+                $('#latitude').val(e.lngLat.lat);
+                $('#longitude').val(e.lngLat.lng);
+                
+                // Ajouter un marqueur
+                if (window.marker) {
+                    window.marker.remove();
+                }
+                
+                window.marker = new maplibregl.Marker({
+                    color: '#0A95CA'
+                })
+                    .setLngLat([e.lngLat.lng, e.lngLat.lat])
+                    .addTo(map);
+            });
+            
+            // Activer le bouton de localisation
+            $('#btn-locate').prop('disabled', false).on('click', function() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lngLat = [position.coords.longitude, position.coords.latitude];
+                        map.flyTo({ center: lngLat, zoom: 15 });
+                        
+                        $('#latitude').val(position.coords.latitude);
+                        $('#longitude').val(position.coords.longitude);
+                        
+                        if (window.marker) {
+                            window.marker.remove();
+                        }
+                        
+                        window.marker = new maplibregl.Marker({
+                            color: '#0A95CA'
+                        })
+                            .setLngLat(lngLat)
+                            .addTo(map);
+                    }, function(error) {
+                        showError('Impossible d\'obtenir votre position');
+                    });
+                }
+            });
+        }
+    }
+    
+    // Soumission du formulaire
+    $('#addAcheteurForm').on('submit', function(event) {
+        event.preventDefault();
+
+        // Récupérer et nettoyer site_internet
+        let siteInternet = $('#site_internet').val().trim();
+        if (siteInternet) {
+            // Supprimer https:// si présent
+            siteInternet = siteInternet.replace(/^https?:\/\//i, '');
+            // Ajouter https:// pour l'envoi
+            siteInternet = 'https://' + siteInternet;
+            $('#site_internet').val(siteInternet);
+        }
+        
+        // Valider toutes les étapes
+        let allValid = true;
+        for (let i = 1; i <= totalSteps; i++) {
+            if (!validateStep(i)) {
+                allValid = false;
+                if (i < currentStep) {
+                    currentStep = i;
+                    updateSteps();
+                }
+                break;
+            }
+        }
+        
+        if (!allValid) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champs invalides',
+                text: 'Veuillez corriger les erreurs dans le formulaire',
+                confirmButtonColor: '#0A95CA'
+            });
+            return;
+        }
+        
+        // Préparer les données
+        const formData = {};
+        $(this).find('input, select, textarea').each(function() {
+            const name = $(this).attr('name');
+            if (name) {
+                let value = $(this).val();
+                
+                // Traitement spécial pour site_internet
+                if (name === 'site_internet' && value) {
+                    // Supprimer https:// ou http:// s'ils sont présents
+                    value = value.replace(/^https?:\/\//i, '');
+                    // Supprimer les espaces
+                    value = value.trim();
+                    // Supprimer le / final s'il existe
+                    value = value.replace(/\/$/, '');
+                }
+                
+                formData[name] = value;
+            }
+        });
+    
+        console.log('Données envoyées:', formData); // Pour debug
+        
+        // Ajouter les données supplémentaires
+        formData['created_by'] = '{{ request.user.id }}';
+        
+        // Envoyer la requête
+        submitForm(formData);
+    });
+    
+    function submitForm(formData) {
+        showLoading(true, 'Ajout de l\'acheteur en cours...');
+        
+        $.ajax({
+            url: '/api/ajouter-un-acheteur/',
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: getHeaders(),
+            success: function(response) {
+                showLoading(false);
+                
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès !',
+                        html: `
+                            <div class="text-center">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                                <h4 class="mt-3">Acheteur ajouté avec succès</h4>
+                                <p class="text-muted">${response.message}</p>
+                                <hr>
+                                <p><strong>Code :</strong> ${response.acheteur.code || '--'}</p>
+                                <p><strong>Nom :</strong> ${response.acheteur.nom}</p>
+                            </div>
+                        `,
+                        confirmButtonColor: '#0A95CA',
+                        confirmButtonText: 'Continuer',
+                        showCancelButton: true,
+                        cancelButtonText: 'Ajouter un autre'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
+                        } else {
+                            $('#addAcheteurForm')[0].reset();
+                            $('.select2').val(null).trigger('change');
+                            currentStep = 1;
+                            updateSteps();
+                            $('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                        }
+                    });
+                } else {
+                    showError(response.message || 'Erreur lors de l\'ajout');
+                }
+            },
+            error: function(xhr) {
+                showLoading(false);
+                
+                if (xhr.status === 401) {
+                    handleTokenExpired();
+                } else if (xhr.status === 400) {
+                    const errors = xhr.responseJSON;
+                    let errorMessage = 'Erreurs de validation :<br><ul class="text-start">';
+                    
+                    if (errors.errors) {
+                        Object.keys(errors.errors).forEach(key => {
+                            errorMessage += `<li>${key}: ${errors.errors[key].join(', ')}</li>`;
+                        });
+                    } else if (errors.message) {
+                        errorMessage = errors.message;
+                    }
+                    
+                    errorMessage += '</ul>';
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de validation',
+                        html: errorMessage,
+                        confirmButtonColor: '#0A95CA'
+                    });
+                } else {
+                    showError(xhr.responseJSON?.message || 'Une erreur est survenue');
+                }
+            }
+        });
+    }
+    
+    // Fonctions utilitaires
+    function getHeaders() {
+        return {
+            'Authorization': `Bearer ${getAccessToken()}`,
+            'X-CSRFToken': getCsrfToken()
+        };
+    }
+    
+    function getAccessToken() {
+        return '{{ access }}' || localStorage.getItem('access_token');
+    }
+    
+    function getCsrfToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+    
+    function showLoading(show, message = 'Chargement...') {
+        const $overlay = $('.loading-overlay');
+        
+        if (show) {
+            $overlay.show().html(`
+                <div class="text-center">
+                    <div class="spinner mb-3"></div>
+                    <p class="text-primary fw-medium">${message}</p>
+                </div>
+            `);
+        } else {
+            $overlay.hide();
+        }
+    }
+    
+    function showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: message,
+            confirmButtonColor: '#0A95CA'
+        });
+    }
+    
+    // Configuration AJAX globale avec intercepteur
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            if (accessToken) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            }
+        }
+    });
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+
+    // Initialisation
+    function init() {
+        updateSteps();
+        initMap();
+        
+        // Configurer la validation
+        setupValidation();
+
+        
+        // Auto-sélectionner le pays de l'utilisateur si disponible
+        {% if request.user.pays %}
+        $('#pays').val('{{ request.user.pays.id }}').trigger('change');
+        {% endif %}
+        
+        // Stocker l'action actuelle pour rejouer après refresh token
+        $(document).ajaxSend(function(event, xhr, settings) {
+            if (settings.type === 'POST' && settings.url.includes('ajouter-un-acheteur')) {
+                window.lastAction = function() {
+                    const formData = $('#addAcheteurForm').serializeArray();
+                    const data = {};
+                    formData.forEach(item => {
+                        data[item.name] = item.value;
+                    });
+                    submitForm(data);
+                };
+            }
+        });
+    }
+    
+    function setupValidation() {
+        // Validation en temps réel
+        $('#addAcheteurForm').find('[data-validation]').on('blur', function() {
+            validateField($(this));
+        });
+        
+        // Validation pour les select2
+        $('.select2').on('change', function() {
+            validateField($(this));
+        });
+    }
+    
+    function validateField($input) {
+        const validation = $input.data('validation');
+        const value = $input.val();
+        
+        if (!validation) return;
+        
+        if (validation.includes('required') && !value.trim()) {
+            markInvalid($input, 'Ce champ est obligatoire');
+            return false;
+        }
+        
+        if (value) {
+            if (validation.includes('email') && !validator.isEmail(value)) {
+                markInvalid($input, 'Email invalide');
+                return false;
+            }
+            
+            if (validation.includes('url') && !validator.isURL('https://' + value)) {
+                markInvalid($input, 'URL invalide');
+                return false;
+            }
+            
+            if (validation.includes('min:')) {
+                const min = parseInt(validation.split('min:')[1]);
+                if (value.length < min) {
+                    markInvalid($input, `Minimum ${min} caractères`);
+                    return false;
+                }
+            }
+        }
+        
+        markValid($input);
+        return true;
+    }
+    
+    // Démarrer l'initialisation
+    init();
+});
+</script>
+{% endblock %}

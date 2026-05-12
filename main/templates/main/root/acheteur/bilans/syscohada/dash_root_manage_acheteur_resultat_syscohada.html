@@ -1,938 +1,2900 @@
 {% extends 'main/root/base.html' %}
 
-{% load static %}
+{% load i18n static %}
 
-{% block css %}
-<!-- Ajoutez ici vos styles CSS spécifiques si nécessaire -->
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #e0a800 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de résumé */
+.summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.summary-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-warning-enhanced {
+    background: var(--warning-gradient);
+    color: #000;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 1.5rem;
+    background: var(--color-background);
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+/* Section de légende */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    min-width: 50px;
+    font-size: 0.9rem;
+}
+
+/* Tableau modernisé */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1rem 0.75rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modern-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.03);
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.85rem;
+    min-width: 80px;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+.value-negative {
+    color: var(--color-danger);
+}
+
+/* Badges pour les catégories */
+.category-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.badge-exploitation {
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+    border: 1px solid rgba(10, 149, 202, 0.3);
+}
+
+.badge-financier {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.badge-hao {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.badge-impot {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-info-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem 0.75rem;
+    }
+    
+    .acheteur-info-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .btn-enhanced {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .modern-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .value-cell {
+        min-width: 70px;
+    }
+}
+
+/* Pagination améliorée */
+.pagination-enhanced .page-link {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-enhanced .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.delay-1 {
+    animation-delay: 0.1s;
+}
+
+.delay-2 {
+    animation-delay: 0.2s;
+}
+
+/* Alertes personnalisées */
+.custom-alert {
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.custom-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+.custom-alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+/* Style pour les selects améliorés */
+.select2-enhanced {
+    width: 100%;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary) !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background-color: white;
+    z-index: 1060 !important;
+}
+
+/* Détails des résultats */
+.detail-section {
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-section h6 {
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--color-text-light);
+    font-weight: 500;
+}
+
+.detail-value {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+/* Indicateurs */
+.indicateur-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    margin-bottom: 1rem;
+}
+
+.indicateur-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+}
+
+.indicateur-label {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+/* Tooltips améliorés */
+.tooltip-enhanced {
+    --bs-tooltip-bg: var(--color-primary);
+    --bs-tooltip-color: white;
+}
+
+/* Badge pour année */
+.year-badge {
+    background: linear-gradient(135deg, #0A95CA, #25add6);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Table responsive wrapper */
+.table-responsive-wrapper {
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.table-responsive-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Actions group */
+.actions-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-text);
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn.view {
+    color: var(--color-info);
+    border-color: var(--color-info);
+}
+
+.action-btn.edit {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.action-btn.delete {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* Section résultats calculés */
+.resultats-calcul-section {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--color-border);
+}
+
+.resultat-item {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: white;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--color-border);
+}
+
+.resultat-label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.resultat-montant {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.montant-positif {
+    color: var(--color-success);
+}
+
+.montant-negatif {
+    color: var(--color-danger);
+}
+
+/* Ajustement pour table large */
+.compact-table th,
+.compact-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.compact-table .value-cell {
+    font-size: 0.8rem;
+}
+</style>
 {% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan SYSCOHADA - Résultats de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countResultats">Module de Gestion des Résultats</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un résultat notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title text-white">
+                    <i class="fas fa-chart-line me-3"></i>{% trans "Bilan SYSCOHADA - Résultats de l'Acheteur" %}
+                </h1>
+                <p class="dashboard-subtitle">
+                    Module de gestion complète des résultats selon le système SYSCOHADA
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}" 
+                   class="btn-enhanced btn-warning-enhanced">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                </a>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-md-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-success" id="editNom">{% trans "Chargement..." %}</h4>
+                    <p class="mb-0 text-muted" id="editSigle"></p>
                 </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span id="editCode" class="text-warning">{% trans "Chargement..." %}</span>
+                    </span>
                 </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Ventes de marchandises A : </strong><span id="">VMA</span><br>
-                        <strong>Achats de marchandises : </strong><span id="">AM</span><br>
-                        <strong>Variation des stocks de marchandises : </strong><span id="">VSM</span><br>
-                        <strong>Ventes de produits manufacturés B : </strong><span id="">VPM</span><br>
-                        <strong>Travaux, services vendus C : </strong><span id="">TSV</span><br>
-                        <strong>Produits accessoires D : </strong><span id="">PA</span><br>
-                        <strong>Production stockée : </strong><span id="">PS</span><br>
-                        <strong>Production Immobilisée : </strong><span id="">PI</span><br>
-                        <strong>Subvention d'exploitation : </strong><span id="">SE</span><br>
-                        <strong>Autres produits : </strong><span id="">AP</span><br>
-                        <strong>Transfert de charges d'exploitation : </strong><span id="">TCE</span><br>
-                        <strong>Achats de matières premières et fournitures connexes : </strong><span id="">AMPFC</span><br>
-                        <strong>Variation des stocks de matières premières et fournitures connexes : </strong><span id="">VSMFC</span><br>
-                        <strong>Autres achats : </strong><span id="">AA</span><br>
-                        <strong>Variation des stocks d'autres fournitures : </strong><span id="">VSAF</span><br>
-                        <strong>Transport : </strong><span id="">T</span><br>
-                        <strong>Services extérieurs : </strong><span id="">SE</span><br>
-                        <strong>Impôts et taxes : </strong><span id="">IT</span><br>
-                        <strong>Autres dépenses : </strong><span id="">AD</span><br>
-                        <strong>Frais de personnel : </strong><span id="">FP</span><br>
-                        <strong>Reprises de dépréciations, amortissements, provisions et pertes de valeur : </strong><span id="">RDA</span><br>
-                        <strong>Produits financiers et assimilés : </strong><span id="">PFA</span><br>
-                        <strong>Reprises sur provisions et pertes de valeur : </strong><span id="">RPPV</span><br>
-                        <strong>Transfert de charges financières : </strong><span id="">TCF</span><br>
-                        <strong>Charges financières et assimilées : </strong><span id="">CFA</span><br>
-                        <strong>Dotations aux provisions et dépréciations financières : </strong><span id="">DPDF</span><br>
-                        <strong>Produits des cessions d'immobilisations : </strong><span id="">PCI</span><br>
-                        <strong>Autres produits HAO : </strong><span id="">APH</span><br>
-                        <strong>Valeur comptable des cessions d'actifs immobilisés : </strong><span id="">VCCAI</span><br>
-                        <strong>Autres charges HAO : </strong><span id="">ACH</span><br>
-                        <strong>Participation des travailleurs : </strong><span id="">PT</span><br>
-                        <strong>Charge d'impôt sur le revenu : </strong><span id="">CIR</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
             </div>
         </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- RESULTATS START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Résultats</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-4">
-                        <!-- Short by filter -->
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addResultatModal">
-                                Ajouter un Résultat
+                            <small class="text-muted">{% trans "Date de création" %}</small>
+                            <div class="fw-bold" id="editDateCreation">{% trans "Chargement..." %}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Activité principale" %}</small>
+                            <div class="fw-bold" id="editActivitePrincipale">{% trans "Chargement..." %}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">{% trans "Statut" %}</small>
+                            <div class="fw-bold text-success" id="editStatutEntreprise">{% trans "Chargement..." %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé des résultats -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #0A95CA 0%, #106cb2 100%);">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Résultat d'Exploitation" %}</h5>
+                <div class="summary-value text-primary" id="totalResultatExploitation">0</div>
+                <p class="text-muted mb-0">{% trans "Chiffre d'affaires moins charges d'exploitation" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Résultat Financier" %}</h5>
+                <div class="summary-value text-success" id="totalResultatFinancier">0</div>
+                <p class="text-muted mb-0">{% trans "Produits financiers moins charges financières" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Résultat HAO" %}</h5>
+                <div class="summary-value text-warning" id="totalResultatHAO">0</div>
+                <p class="text-muted mb-0">{% trans "Opérations hors activité ordinaire" %}</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                    <i class="fas fa-scale-balanced"></i>
+                </div>
+                <h5 class="fw-bold">{% trans "Résultat Net" %}</h5>
+                <div class="summary-value text-danger" id="totalResultatNet">0</div>
+                <p class="text-muted mb-0">{% trans "Résultat final avant impôt" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Légende & Information -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-key text-primary me-2"></i>{% trans "Légende des Abréviations SYSCOHADA" %}
+                    </h6>
+                    <div class="legend-grid">
+                        <!-- Exploitation -->
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-code">VMA</span>
+                            <span class="legend-name">{% trans "Ventes de marchandises A" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-code">AM</span>
+                            <span class="legend-name">{% trans "Achats de marchandises" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-code">VPM</span>
+                            <span class="legend-name">{% trans "Ventes de produits manufacturés B" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-code">TSV</span>
+                            <span class="legend-name">{% trans "Travaux, services vendus C" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #0A95CA;"></div>
+                            <span class="legend-code">PA</span>
+                            <span class="legend-name">{% trans "Produits accessoires D" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745;"></div>
+                            <span class="legend-code">SE</span>
+                            <span class="legend-name">{% trans "Subvention d'exploitation" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745;"></div>
+                            <span class="legend-code">FP</span>
+                            <span class="legend-name">{% trans "Frais de personnel" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107;"></div>
+                            <span class="legend-code">PFA</span>
+                            <span class="legend-name">{% trans "Produits financiers et assimilés" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107;"></div>
+                            <span class="legend-code">CFA</span>
+                            <span class="legend-name">{% trans "Charges financières et assimilées" %}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #dc3545;"></div>
+                            <span class="legend-code">CIR</span>
+                            <span class="legend-name">{% trans "Charge d'impôt sur le revenu" %}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="custom-alert custom-alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>{% trans "Note :" %}</strong> Cliquez sur le nom de l'acheteur dans l'en-tête pour retourner à la page de gestion.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <!-- Statistiques rapides -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-chart-pie text-primary me-2"></i>{% trans "Statistiques des Résultats" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-primary fs-4" id="countResultats">0</div>
+                                    <small class="text-muted">{% trans "Résultats total" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-success fs-4" id="countAnnees">0</div>
+                                    <small class="text-muted">{% trans "Années couvertes" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Résultats calculés -->
+                    <div class="resultats-calcul-section">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résultats Calculés" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="resultat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="resultat-label">{% trans "Résultat d'Exploitation" %}</span>
+                                        <span class="resultat-montant montant-positif" id="calculResultatExploitation">0</span>
+                                    </div>
+                                </div>
+                                <div class="resultat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="resultat-label">{% trans "Résultat Financier" %}</span>
+                                        <span class="resultat-montant montant-positif" id="calculResultatFinancier">0</span>
+                                    </div>
+                                </div>
+                                <div class="resultat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="resultat-label">{% trans "Résultat HAO" %}</span>
+                                        <span class="resultat-montant montant-positif" id="calculResultatHAO">0</span>
+                                    </div>
+                                </div>
+                                <div class="resultat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="resultat-label">{% trans "Résultat Avant Impôt" %}</span>
+                                        <span class="resultat-montant montant-positif" id="calculResultatAvantImpot">0</span>
+                                    </div>
+                                </div>
+                                <div class="resultat-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="resultat-label">{% trans "Résultat Net" %}</span>
+                                        <span class="resultat-montant montant-positif" id="calculResultatNet">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicateurs clés -->
+                    <div>
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-chart-bar text-primary me-2"></i>{% trans "Indicateurs Clés" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="indicateur-card">
+                                    <div class="indicateur-value text-success" id="margeBrute">0%</div>
+                                    <div class="indicateur-label">{% trans "Marge brute" %}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="indicateur-card">
+                                    <div class="indicateur-value text-primary" id="ratioChargesPersonnel">0%</div>
+                                    <div class="indicateur-label">{% trans "Ratio frais personnel" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Résultats -->
+    <div class="card border-0 shadow-sm mb-4 animate-in delay-2">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fas fa-table me-2"></i>{% trans "Liste des Résultats SYSCOHADA" %}
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="search" class="form-control border-start-0" id="searchInput" 
+                                       placeholder="Rechercher par année...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
+                                    data-bs-toggle="modal" data-bs-target="#addResultatModal">
+                                <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter Résultat" %}
                             </button>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Resultat list START -->
-                <div class="table-responsive border-0" id="resultatList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">VMA</th>
-                                <th scope="col" class="border-0">AM</th>
-                                <th scope="col" class="border-0">VSM</th>
-                                <th scope="col" class="border-0">VPM</th>
-                                <th scope="col" class="border-0">TSV</th>
-                                <th scope="col" class="border-0">PA</th>
-                                <th scope="col" class="border-0">PS</th>
-                                <th scope="col" class="border-0">PI</th>
-                                <th scope="col" class="border-0">SE</th>
-                                <th scope="col" class="border-0">AP</th>
-                                <th scope="col" class="border-0">TCE</th>
-                                <th scope="col" class="border-0">AMPFC</th>
-                                <th scope="col" class="border-0">VSMFC</th>
-                                <th scope="col" class="border-0">AA</th>
-                                <th scope="col" class="border-0">VSAF</th>
-                                <th scope="col" class="border-0">T</th>
-                                <th scope="col" class="border-0">SE</th>
-                                <th scope="col" class="border-0">IT</th>
-                                <th scope="col" class="border-0">AD</th>
-                                <th scope="col" class="border-0">FP</th>
-                                <th scope="col" class="border-0">RDA</th>
-                                <th scope="col" class="border-0">PFA</th>
-                                <th scope="col" class="border-0">RPPV</th>
-                                <th scope="col" class="border-0">TCF</th>
-                                <th scope="col" class="border-0">CFA</th>
-                                <th scope="col" class="border-0">DPDF</th>
-                                <th scope="col" class="border-0">PCI</th>
-                                <th scope="col" class="border-0">APH</th>
-                                <th scope="col" class="border-0">VCCAI</th>
-                                <th scope="col" class="border-0">ACH</th>
-                                <th scope="col" class="border-0">PT</th>
-                                <th scope="col" class="border-0">CIR</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="resultatTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
-                </div>
-                <!-- Resultat list END -->
             </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="modern-table compact-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="border-0 rounded-start">#</th>
+                            <th scope="col" class="border-0">{% trans "Année" %}</th>
+                            <th scope="col" class="border-0 text-end" title="Ventes de marchandises A">{% trans "Ventes March." %}</th>
+                            <th scope="col" class="border-0 text-end" title="Achats de marchandises">{% trans "Achats March." %}</th>
+                            <th scope="col" class="border-0 text-end" title="Variation des stocks de marchandises">{% trans "Var. Stocks" %}</th>
+                            <th scope="col" class="border-0 text-end" title="Ventes de produits manufacturés B">{% trans "Ventes Prod." %}</th>
+                            <th scope="col" class="border-0 text-end" title="Travaux, services vendus C">{% trans "Travaux & Serv." %}</th>
+                            <th scope="col" class="border-0 text-end" title="Frais de personnel">{% trans "Frais Personnel" %}</th>
+                            <th scope="col" class="border-0 text-end" title="Charge d'impôt sur le revenu">{% trans "Charge Impôt" %}</th>
+                            <th scope="col" class="border-0 text-end" title="Résultat Net">{% trans "Résultat" %}</th>
+                            <th scope="col" class="border-0 rounded-end text-center">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultatTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                    <tfoot id="resultatTableFooter" style="display: none;">
+                        <tr class="bg-light fw-bold">
+                            <td colspan="2" class="text-end">{% trans "TOTAUX" %}</td>
+                            <td class="text-end text-primary" id="footerVMA">0</td>
+                            <td class="text-end text-danger" id="footerAM">0</td>
+                            <td class="text-end text-success" id="footerVSM">0</td>
+                            <td class="text-end text-primary" id="footerVPM">0</td>
+                            <td class="text-end text-primary" id="footerTSV">0</td>
+                            <td class="text-end text-warning" id="footerFP">0</td>
+                            <td class="text-end text-danger" id="footerCIR">0</td>
+                            <td class="text-end text-success" id="footerResultatNet">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Aucun résultat -->
+            <div id="noResults" class="text-center py-5" style="display: none;">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">{% trans "Aucun résultat trouvé" %}</h5>
+                <p class="text-muted mb-0">Cliquez sur "Ajouter Résultat" pour commencer à enregistrer</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted small" id="paginationInfo">
+                        Chargement des données...
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex justify-content-md-end">
+                        <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
                     </nav>
                 </div>
             </div>
-            <!-- Card footer END -->
         </div>
     </div>
 </div>
-<!-- RESULTATS END -->
 
-<!-- Add Resultat Modal START -->
-<div class="modal fade" id="addResultatModal" tabindex="-1" aria-labelledby="addResultatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Ajout Résultat -->
+<div class="modal fade enhanced-modal" id="addResultatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addResultatModalLabel">Ajouter un Résultat</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouveau Résultat SYSCOHADA" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addResultatForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="ventes_marchandises_a" class="form-label">Ventes de marchandises A</label>
-                        <input type="number" class="form-control" id="ventes_marchandises_a" name="ventes_marchandises_a" required>
+            <form id="addResultatForm" class="enhanced-form">
+                <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez tous les champs ci-dessous pour ajouter un nouveau résultat selon le plan comptable SYSCOHADA.
                     </div>
-                    <div class="mb-3">
-                        <label for="achats_marchandises" class="form-label">Achats de marchandises</label>
-                        <input type="number" class="form-control" id="achats_marchandises" name="achats_marchandises" required>
+                    
+                    <div class="row">
+                        <!-- Année -->
+                        <div class="col-md-12 mb-3">
+                            <label for="annee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
+                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Section Exploitation -->
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-industry text-primary me-2"></i>{% trans "Exploitation" %}
+                            </h6>
+                        </div>
+                        
+                        <!-- Ventes et Produits d'Exploitation -->
+                        <div class="col-md-6 mb-3">
+                            <label for="ventes_marchandises_a" class="form-label">
+                                <span class="badge badge-exploitation">VMA</span> Ventes de marchandises A *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="ventes_marchandises_a" 
+                                       name="ventes_marchandises_a" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="achats_marchandises" class="form-label">
+                                <span class="badge badge-exploitation">AM</span> Achats de marchandises *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="achats_marchandises" 
+                                       name="achats_marchandises" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="variation_stock_marchandises" class="form-label">
+                                <span class="badge badge-exploitation">VSM</span> Variation des stocks de marchandises *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="variation_stock_marchandises" 
+                                       name="variation_stock_marchandises" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="ventes_produits_manufactures" class="form-label">
+                                <span class="badge badge-exploitation">VPM</span> Ventes de produits manufacturés B *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="ventes_produits_manufactures" 
+                                       name="ventes_produits_manufactures" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="travaux_services_vendus_c" class="form-label">
+                                <span class="badge badge-exploitation">TSV</span> Travaux, services vendus C *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="travaux_services_vendus_c" 
+                                       name="travaux_services_vendus_c" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="produits_accessoires_d" class="form-label">
+                                <span class="badge badge-exploitation">PA</span> Produits accessoires D *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="produits_accessoires_d" 
+                                       name="produits_accessoires_d" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="production_stockee" class="form-label">
+                                <span class="badge badge-exploitation">PS</span> Production stockée *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="production_stockee" 
+                                       name="production_stockee" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="production_immobilisee" class="form-label">
+                                <span class="badge badge-exploitation">PI</span> Production Immobilisée *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="production_immobilisee" 
+                                       name="production_immobilisee" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="subvention_exploitation" class="form-label">
+                                <span class="badge badge-exploitation">SE</span> Subvention d'exploitation *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="subvention_exploitation" 
+                                       name="subvention_exploitation" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_produits" class="form-label">
+                                <span class="badge badge-exploitation">AP</span> Autres produits *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_produits" 
+                                       name="autres_produits" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="transfert_charges_exploitation" class="form-label">
+                                <span class="badge badge-exploitation">TCE</span> Transfert de charges d'exploitation *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="transfert_charges_exploitation" 
+                                       name="transfert_charges_exploitation" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="achats_matieres_premieres_fournitures_connexes" class="form-label">
+                                <span class="badge badge-exploitation">{% trans "AMPFC" %}</span> Achats de matières premières et fournitures connexes *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="achats_matieres_premieres_fournitures_connexes" 
+                                       name="achats_matieres_premieres_fournitures_connexes" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="variation_stock_matieres_premieres_fournitures_connexes" class="form-label">
+                                <span class="badge badge-exploitation">{% trans "VSMFC" %}</span> Variation des stocks de matières premières et fournitures connexes *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="variation_stock_matieres_premieres_fournitures_connexes" 
+                                       name="variation_stock_matieres_premieres_fournitures_connexes" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_achats" class="form-label">
+                                <span class="badge badge-exploitation">AA</span> Autres achats *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_achats" 
+                                       name="autres_achats" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="variation_stock_autres_fournitures" class="form-label">
+                                <span class="badge badge-exploitation">{% trans "VSAF" %}</span> Variation des stocks d'autres fournitures *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="variation_stock_autres_fournitures" 
+                                       name="variation_stock_autres_fournitures" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="transport" class="form-label">
+                                <span class="badge badge-exploitation">T</span> Transport *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="transport" 
+                                       name="transport" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="services_exterieurs" class="form-label">
+                                <span class="badge badge-exploitation">SE</span> Services extérieurs *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="services_exterieurs" 
+                                       name="services_exterieurs" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="impots_taxes" class="form-label">
+                                <span class="badge badge-exploitation">IT</span> Impôts et taxes *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="impots_taxes" 
+                                       name="impots_taxes" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_depenses" class="form-label">
+                                <span class="badge badge-exploitation">AD</span> Autres dépenses *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_depenses" 
+                                       name="autres_depenses" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="frais_personnel" class="form-label">
+                                <span class="badge badge-exploitation">FP</span> Frais de personnel *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="frais_personnel" 
+                                       name="frais_personnel" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="reprise_depreciations_amortissements_provision_pertes_valeurs_p" class="form-label">
+                                <span class="badge badge-exploitation">{% trans "RDA+" %}</span> Reprises de dépréciations, amortissements, provisions et pertes de valeur (+) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reprise_depreciations_amortissements_provision_pertes_valeurs_p" 
+                                       name="reprise_depreciations_amortissements_provision_pertes_valeurs_p" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="reprise_depreciations_amortissements_provision_pertes_valeurs_m" class="form-label">
+                                <span class="badge badge-exploitation">{% trans "RDA-" %}</span> Reprises de dépréciations, amortissements, provisions et pertes de valeur (-) *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reprise_depreciations_amortissements_provision_pertes_valeurs_m" 
+                                       name="reprise_depreciations_amortissements_provision_pertes_valeurs_m" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section Financière -->
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-university text-success me-2"></i>{% trans "Financier" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="produits_financiers_assimiles" class="form-label">
+                                <span class="badge badge-financier">PFA</span> Produits financiers et assimilés *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="produits_financiers_assimiles" 
+                                       name="produits_financiers_assimiles" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="reprise_provision_perte_valeur" class="form-label">
+                                <span class="badge badge-financier">{% trans "RPPV" %}</span> Reprises sur provisions et pertes de valeur *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reprise_provision_perte_valeur" 
+                                       name="reprise_provision_perte_valeur" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="transfert_charges_financieres" class="form-label">
+                                <span class="badge badge-financier">TCF</span> Transfert de charges financières *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="transfert_charges_financieres" 
+                                       name="transfert_charges_financieres" step="0.01" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="charges_financieres_assimilees" class="form-label">
+                                <span class="badge badge-financier">CFA</span> Charges financières et assimilées *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="charges_financieres_assimilees" 
+                                       name="charges_financieres_assimilees" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="dotations_provisions_depreciations_financieres" class="form-label">
+                                <span class="badge badge-financier">{% trans "DPDF" %}</span> Dotations aux provisions et dépréciations financières *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="dotations_provisions_depreciations_financieres" 
+                                       name="dotations_provisions_depreciations_financieres" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section HAO -->
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-exchange-alt text-warning me-2"></i>{% trans "Opérations Hors Activité Ordinaire (HAO)" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="produits_cession_immobilisations" class="form-label">
+                                <span class="badge badge-hao">PCI</span> Produits des cessions d'immobilisations *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="produits_cession_immobilisations" 
+                                       name="produits_cession_immobilisations" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_produits_hao" class="form-label">
+                                <span class="badge badge-hao">APH</span> Autres produits HAO *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_produits_hao" 
+                                       name="autres_produits_hao" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="valeur_comptable_cessions_actifs_immobilises" class="form-label">
+                                <span class="badge badge-hao">{% trans "VCCAI" %}</span> Valeur comptable des cessions d'actifs immobilisés *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="valeur_comptable_cessions_actifs_immobilises" 
+                                       name="valeur_comptable_cessions_actifs_immobilises" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_charges_hao" class="form-label">
+                                <span class="badge badge-hao">ACH</span> Autres charges HAO *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_charges_hao" 
+                                       name="autres_charges_hao" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Section Impôts -->
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-scale-balanced text-danger me-2"></i>{% trans "Impôts et Participation" %}
+                            </h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="participation_travailleurs" class="form-label">
+                                <span class="badge badge-impot">PT</span> Participation des travailleurs *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="participation_travailleurs" 
+                                       name="participation_travailleurs" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="charge_impot_revenu" class="form-label">
+                                <span class="badge badge-impot">CIR</span> Charge d'impôt sur le revenu *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="charge_impot_revenu" 
+                                       name="charge_impot_revenu" step="0.01" min="0" required>
+                                <span class="input-group-text">{% trans "FCFA" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé Calculé" %}
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Produits d'Exploitation:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryProduitsExploitation">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Charges d'Exploitation:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryChargesExploitation">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Résultat d'Exploitation:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryResultatExploitation">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Résultat Financier:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryResultatFinancier">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Résultat HAO:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryResultatHAO">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <span class="text-muted">{% trans "Avant Impôt:" %}</span>
+                                                <span class="fw-bold float-end" id="summaryAvantImpot">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="pt-2 border-top">
+                                                <span class="text-primary fw-bold fs-5">{% trans "Résultat Net:" %}</span>
+                                                <span class="fw-bold text-primary float-end fs-5" id="summaryResultatNet">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="variation_stock_marchandises" class="form-label">Variation des stocks de marchandises</label>
-                        <input type="number" class="form-control" id="variation_stock_marchandises" name="variation_stock_marchandises" required>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
+                                    style="background: #ffc107; color: #000;">
+                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="ventes_produits_manufactures" class="form-label">Ventes de produits manufacturés B</label>
-                        <input type="number" class="form-control" id="ventes_produits_manufactures" name="ventes_produits_manufactures" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="travaux_services_vendus_c" class="form-label">Travaux, services vendus C</label>
-                        <input type="number" class="form-control" id="travaux_services_vendus_c" name="travaux_services_vendus_c" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="produits_accessoires_d" class="form-label">Produits accessoires D</label>
-                        <input type="number" class="form-control" id="produits_accessoires_d" name="produits_accessoires_d" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="production_stockee" class="form-label">Production stockée</label>
-                        <input type="number" class="form-control" id="production_stockee" name="production_stockee" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="production_immobilisee" class="form-label">Production Immobilisée</label>
-                        <input type="number" class="form-control" id="production_immobilisee" name="production_immobilisee" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="subvention_exploitation" class="form-label">Subvention d'exploitation</label>
-                        <input type="number" class="form-control" id="subvention_exploitation" name="subvention_exploitation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_produits" class="form-label">Autres produits</label>
-                        <input type="number" class="form-control" id="autres_produits" name="autres_produits" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="transfert_charges_exploitation" class="form-label">Transfert de charges d'exploitation</label>
-                        <input type="number" class="form-control" id="transfert_charges_exploitation" name="transfert_charges_exploitation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="achats_matieres_premieres_fournitures_connexes" class="form-label">Achats de matières premières et fournitures connexes</label>
-                        <input type="number" class="form-control" id="achats_matieres_premieres_fournitures_connexes" name="achats_matieres_premieres_fournitures_connexes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="variation_stock_matieres_premieres_fournitures_connexes" class="form-label">Variation des stocks de matières premières et fournitures connexes</label>
-                        <input type="number" class="form-control" id="variation_stock_matieres_premieres_fournitures_connexes" name="variation_stock_matieres_premieres_fournitures_connexes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_achats" class="form-label">Autres achats</label>
-                        <input type="number" class="form-control" id="autres_achats" name="autres_achats" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="variation_stock_autres_fournitures" class="form-label">Variation des stocks d'autres fournitures</label>
-                        <input type="number" class="form-control" id="variation_stock_autres_fournitures" name="variation_stock_autres_fournitures" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="transport" class="form-label">Transport</label>
-                        <input type="number" class="form-control" id="transport" name="transport" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="services_exterieurs" class="form-label">Services extérieurs</label>
-                        <input type="number" class="form-control" id="services_exterieurs" name="services_exterieurs" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="impots_taxes" class="form-label">Impôts et taxes</label>
-                        <input type="number" class="form-control" id="impots_taxes" name="impots_taxes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_depenses" class="form-label">Autres dépenses</label>
-                        <input type="number" class="form-control" id="autres_depenses" name="autres_depenses" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="frais_personnel" class="form-label">Frais de personnel</label>
-                        <input type="number" class="form-control" id="frais_personnel" name="frais_personnel" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reprise_depreciations_amortissements_provision_pertes_valeurs_p" class="form-label">Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)</label>
-                        <input type="number" class="form-control" id="reprise_depreciations_amortissements_provision_pertes_valeurs_p" name="reprise_depreciations_amortissements_provision_pertes_valeurs_p" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reprise_depreciations_amortissements_provision_pertes_valeurs_m" class="form-label">Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)</label>
-                        <input type="number" class="form-control" id="reprise_depreciations_amortissements_provision_pertes_valeurs_m" name="reprise_depreciations_amortissements_provision_pertes_valeurs_m" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="produits_financiers_assimiles" class="form-label">Produits financiers et assimilés</label>
-                        <input type="number" class="form-control" id="produits_financiers_assimiles" name="produits_financiers_assimiles" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reprise_provision_perte_valeur" class="form-label">Reprises sur provisions et pertes de valeur</label>
-                        <input type="number" class="form-control" id="reprise_provision_perte_valeur" name="reprise_provision_perte_valeur" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="transfert_charges_financieres" class="form-label">Transfert de charges financières</label>
-                        <input type="number" class="form-control" id="transfert_charges_financieres" name="transfert_charges_financieres" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="charges_financieres_assimilees" class="form-label">Charges financières et assimilées</label>
-                        <input type="number" class="form-control" id="charges_financieres_assimilees" name="charges_financieres_assimilees" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dotations_provisions_depreciations_financieres" class="form-label">Dotations aux provisions et dépréciations financières</label>
-                        <input type="number" class="form-control" id="dotations_provisions_depreciations_financieres" name="dotations_provisions_depreciations_financieres" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="produits_cession_immobilisations" class="form-label">Produits des cessions d'immobilisations</label>
-                        <input type="number" class="form-control" id="produits_cession_immobilisations" name="produits_cession_immobilisations" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_produits_hao" class="form-label">Autres produits HAO</label>
-                        <input type="number" class="form-control" id="autres_produits_hao" name="autres_produits_hao" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="valeur_comptable_cessions_actifs_immobilises" class="form-label">Valeur comptable des cessions d'actifs immobilisés</label>
-                        <input type="number" class="form-control" id="valeur_comptable_cessions_actifs_immobilises" name="valeur_comptable_cessions_actifs_immobilises" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="autres_charges_hao" class="form-label">Autres charges HAO</label>
-                        <input type="number" class="form-control" id="autres_charges_hao" name="autres_charges_hao" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="participation_travailleurs" class="form-label">Participation des travailleurs</label>
-                        <input type="number" class="form-control" id="participation_travailleurs" name="participation_travailleurs" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="charge_impot_revenu" class="form-label">Charge d'impôt sur le revenu</label>
-                        <input type="number" class="form-control" id="charge_impot_revenu" name="charge_impot_revenu" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="annee" class="form-label">Année</label>
-                        <select class="form-select" id="annee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Resultat Modal END -->
 
-<!-- Edit Resultat Modal START -->
-<div class="modal fade" id="editResultatModal" tabindex="-1" aria-labelledby="editResultatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Détails Résultat -->
+<div class="modal fade enhanced-modal" id="detailResultatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editResultatModalLabel">Éditer un Résultat</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-eye me-2"></i>{% trans "Détails du Résultat" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="editResultatForm">
-                    <input type="hidden" id="editResultatId" name="id">
-                    <div class="mb-3">
-                        <label for="editVentesMarchandisesA" class="form-label">Ventes de marchandises A</label>
-                        <input type="number" class="form-control" id="editVentesMarchandisesA" name="ventes_marchandises_a" required>
+                <div class="custom-alert custom-alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Détails complets du résultat pour l'année sélectionnée.
+                </div>
+                
+                <!-- Info année -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-primary bg-opacity-10 border-primary">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-primary mb-2">{% trans "Année" %}</h6>
+                                <div class="fs-4 fw-bold" id="detailAnnee">-</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editAchatsMarchandises" class="form-label">Achats de marchandises</label>
-                        <input type="number" class="form-control" id="editAchatsMarchandises" name="achats_marchandises" required>
+                    <div class="col-md-6">
+                        <div class="card bg-success bg-opacity-10 border-success">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-success mb-2">{% trans "Résultat Net" %}</h6>
+                                <div class="fs-4 fw-bold" id="detailResultatNet">0 FCFA</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editVariationStockMarchandises" class="form-label">Variation des stocks de marchandises</label>
-                        <input type="number" class="form-control" id="editVariationStockMarchandises" name="variation_stock_marchandises" required>
+                </div>
+                
+                <!-- Exploitation -->
+                <div class="detail-section">
+                    <h6 class="fw-bold text-primary">
+                        <i class="fas fa-industry me-2"></i>{% trans "Exploitation" %}
+                        <span class="float-end" id="detailTotalExploitation">0 FCFA</span>
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Ventes de marchandises A (VMA):" %}</span>
+                                <span class="detail-value" id="detailVMA">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Achats de marchandises (AM):" %}</span>
+                                <span class="detail-value" id="detailAM">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Variation stocks marchandises (VSM):" %}</span>
+                                <span class="detail-value" id="detailVSM">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Ventes produits manufacturés (VPM):" %}</span>
+                                <span class="detail-value" id="detailVPM">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Travaux, services vendus (TSV):" %}</span>
+                                <span class="detail-value" id="detailTSV">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Produits accessoires D (PA):" %}</span>
+                                <span class="detail-value" id="detailPA">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Subvention d'exploitation (SE):" %}</span>
+                                <span class="detail-value" id="detailSE">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Frais de personnel (FP):" %}</span>
+                                <span class="detail-value" id="detailFP">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Autres dépenses (AD):" %}</span>
+                                <span class="detail-value" id="detailAD">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editVentesProduitsManufactures" class="form-label">Ventes de produits manufacturés B</label>
-                        <input type="number" class="form-control" id="editVentesProduitsManufactures" name="ventes_produits_manufactures" required>
+                </div>
+                
+                <!-- Financier -->
+                <div class="detail-section">
+                    <h6 class="fw-bold text-success">
+                        <i class="fas fa-university me-2"></i>{% trans "Financier" %}
+                        <span class="float-end" id="detailTotalFinancier">0 FCFA</span>
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Produits financiers (PFA):" %}</span>
+                                <span class="detail-value" id="detailPFA">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Reprises provisions (RPPV):" %}</span>
+                                <span class="detail-value" id="detailRPPV">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Charges financières (CFA):" %}</span>
+                                <span class="detail-value" id="detailCFA">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Dotations financières (DPDF):" %}</span>
+                                <span class="detail-value" id="detailDPDF">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editTravauxServicesVendusC" class="form-label">Travaux, services vendus C</label>
-                        <input type="number" class="form-control" id="editTravauxServicesVendusC" name="travaux_services_vendus_c" required>
+                </div>
+                
+                <!-- HAO -->
+                <div class="detail-section">
+                    <h6 class="fw-bold text-warning">
+                        <i class="fas fa-exchange-alt me-2"></i>{% trans "Opérations HAO" %}
+                        <span class="float-end" id="detailTotalHAO">0 FCFA</span>
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Produits cessions (PCI):" %}</span>
+                                <span class="detail-value" id="detailPCI">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Autres produits HAO (APH):" %}</span>
+                                <span class="detail-value" id="detailAPH">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Valeur cessions (VCCAI):" %}</span>
+                                <span class="detail-value" id="detailVCCAI">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Autres charges HAO (ACH):" %}</span>
+                                <span class="detail-value" id="detailACH">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editProduitsAccessoiresD" class="form-label">Produits accessoires D</label>
-                        <input type="number" class="form-control" id="editProduitsAccessoiresD" name="produits_accessoires_d" required>
+                </div>
+                
+                <!-- Impôts et Participation -->
+                <div class="detail-section">
+                    <h6 class="fw-bold text-danger">
+                        <i class="fas fa-scale-balanced me-2"></i>{% trans "Impôts et Participation" %}
+                        <span class="float-end" id="detailTotalImpot">0 FCFA</span>
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Participation travailleurs (PT):" %}</span>
+                                <span class="detail-value" id="detailPT">0</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <span class="detail-label">{% trans "Charge impôt revenu (CIR):" %}</span>
+                                <span class="detail-value" id="detailCIR">0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editProductionStockee" class="form-label">Production stockée</label>
-                        <input type="number" class="form-control" id="editProductionStockee" name="production_stockee" required>
+                </div>
+                
+                <!-- Résumé -->
+                <div class="card bg-light border">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-calculator text-primary me-2"></i>{% trans "Récapitulatif" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-row">
+                                    <span class="detail-label">{% trans "Résultat d'Exploitation:" %}</span>
+                                    <span class="detail-value" id="recapExploitation">0 FCFA</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">{% trans "Résultat Financier:" %}</span>
+                                    <span class="detail-value" id="recapFinancier">0 FCFA</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-row">
+                                    <span class="detail-label">{% trans "Résultat HAO:" %}</span>
+                                    <span class="detail-value" id="recapHAO">0 FCFA</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">{% trans "Résultat Avant Impôt:" %}</span>
+                                    <span class="detail-value" id="recapAvantImpot">0 FCFA</span>
+                                </div>
+                                <div class="detail-row pt-2 border-top mt-2">
+                                    <span class="detail-label fw-bold fs-5">{% trans "Résultat Net:" %}</span>
+                                    <span class="detail-value fw-bold fs-5 text-primary" id="recapResultatNet">0 FCFA</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editProductionImmobilisee" class="form-label">Production Immobilisée</label>
-                        <input type="number" class="form-control" id="editProductionImmobilisee" name="production_immobilisee" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editSubventionExploitation" class="form-label">Subvention d'exploitation</label>
-                        <input type="number" class="form-control" id="editSubventionExploitation" name="subvention_exploitation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresProduits" class="form-label">Autres produits</label>
-                        <input type="number" class="form-control" id="editAutresProduits" name="autres_produits" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTransfertChargesExploitation" class="form-label">Transfert de charges d'exploitation</label>
-                        <input type="number" class="form-control" id="editTransfertChargesExploitation" name="transfert_charges_exploitation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAchatsMatieresPremieresFournituresConnexes" class="form-label">Achats de matières premières et fournitures connexes</label>
-                        <input type="number" class="form-control" id="editAchatsMatieresPremieresFournituresConnexes" name="achats_matieres_premieres_fournitures_connexes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editVariationStockMatieresPremieresFournituresConnexes" class="form-label">Variation des stocks de matières premières et fournitures connexes</label>
-                        <input type="number" class="form-control" id="editVariationStockMatieresPremieresFournituresConnexes" name="variation_stock_matieres_premieres_fournitures_connexes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresAchats" class="form-label">Autres achats</label>
-                        <input type="number" class="form-control" id="editAutresAchats" name="autres_achats" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editVariationStockAutresFournitures" class="form-label">Variation des stocks d'autres fournitures</label>
-                        <input type="number" class="form-control" id="editVariationStockAutresFournitures" name="variation_stock_autres_fournitures" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTransport" class="form-label">Transport</label>
-                        <input type="number" class="form-control" id="editTransport" name="transport" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editServicesExterieurs" class="form-label">Services extérieurs</label>
-                        <input type="number" class="form-control" id="editServicesExterieurs" name="services_exterieurs" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editImpotsTaxes" class="form-label">Impôts et taxes</label>
-                        <input type="number" class="form-control" id="editImpotsTaxes" name="impots_taxes" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresDepenses" class="form-label">Autres dépenses</label>
-                        <input type="number" class="form-control" id="editAutresDepenses" name="autres_depenses" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editFraisPersonnel" class="form-label">Frais de personnel</label>
-                        <input type="number" class="form-control" id="editFraisPersonnel" name="frais_personnel" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRepriseDepreciationsAmortissementsProvisionPertesValeursP" class="form-label">Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)</label>
-                        <input type="number" class="form-control" id="editRepriseDepreciationsAmortissementsProvisionPertesValeursP" name="reprise_depreciations_amortissements_provision_pertes_valeurs_p" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRepriseDepreciationsAmortissementsProvisionPertesValeursM" class="form-label">Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)</label>
-                        <input type="number" class="form-control" id="editRepriseDepreciationsAmortissementsProvisionPertesValeursM" name="reprise_depreciations_amortissements_provision_pertes_valeurs_m" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editProduitsFinanciersAssimiles" class="form-label">Produits financiers et assimilés</label>
-                        <input type="number" class="form-control" id="editProduitsFinanciersAssimiles" name="produits_financiers_assimiles" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRepriseProvisionPerteValeur" class="form-label">Reprises sur provisions et pertes de valeur</label>
-                        <input type="number" class="form-control" id="editRepriseProvisionPerteValeur" name="reprise_provision_perte_valeur" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTransfertChargesFinancieres" class="form-label">Transfert de charges financières</label>
-                        <input type="number" class="form-control" id="editTransfertChargesFinancieres" name="transfert_charges_financieres" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editChargesFinancieresAssimilees" class="form-label">Charges financières et assimilées</label>
-                        <input type="number" class="form-control" id="editChargesFinancieresAssimilees" name="charges_financieres_assimilees" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDotationsProvisionsDepreciationsFinancieres" class="form-label">Dotations aux provisions et dépréciations financières</label>
-                        <input type="number" class="form-control" id="editDotationsProvisionsDepreciationsFinancieres" name="dotations_provisions_depreciations_financieres" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editProduitsCessionImmobilisations" class="form-label">Produits des cessions d'immobilisations</label>
-                        <input type="number" class="form-control" id="editProduitsCessionImmobilisations" name="produits_cession_immobilisations" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresProduitsHao" class="form-label">Autres produits HAO</label>
-                        <input type="number" class="form-control" id="editAutresProduitsHao" name="autres_produits_hao" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editValeurComptableCessionsActifsImmobilises" class="form-label">Valeur comptable des cessions d'actifs immobilisés</label>
-                        <input type="number" class="form-control" id="editValeurComptableCessionsActifsImmobilises" name="valeur_comptable_cessions_actifs_immobilises" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAutresChargesHao" class="form-label">Autres charges HAO</label>
-                        <input type="number" class="form-control" id="editAutresChargesHao" name="autres_charges_hao" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editParticipationTravailleurs" class="form-label">Participation des travailleurs</label>
-                        <input type="number" class="form-control" id="editParticipationTravailleurs" name="participation_travailleurs" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editChargeImpotRevenu" class="form-label">Charge d'impôt sur le revenu</label>
-                        <input type="number" class="form-control" id="editChargeImpotRevenu" name="charge_impot_revenu" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAnnee" class="form-label">Année</label>
-                        <select class="form-select" id="editAnnee" name="annee" required>
-                            {% for annee in annee_list %}
-                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                        style="background: #6c757d; color: white;">
+                    <i class="fas fa-times me-2"></i>{% trans "Fermer" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Resultat Modal END -->
 
+<!-- Modal Édition Résultat -->
+<div class="modal fade enhanced-modal" id="editResultatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Résultat" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editResultatForm" class="enhanced-form">
+                <input type="hidden" id="editResultatId" name="id">
+                
+                <div class="modal-body">
+                    <!-- Les mêmes champs que dans le modal d'ajout -->
+                    <!-- La structure est identique au modal d'ajout -->
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Modifiez les champs ci-dessous pour mettre à jour le résultat selon le plan comptable SYSCOHADA.
+                    </div>
+                    
+                    <!-- Le reste du formulaire d'édition sera généré dynamiquement par JavaScript -->
+                    <div id="editFormContent">
+                        <!-- Le contenu sera injecté ici par JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                        </button>
+                        <button type="submit" class="btn-enhanced btn-success-enhanced">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#description, #editDescription, #editCommentaire, #commentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let selectedResultatId = null;
+    const ACHETEUR_ID = '{{ id_acheteur }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
         });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
+    }
+    
+    // Formater en devise
+    function formatCurrency(num) {
+        return formatNumber(num) + ' FCFA';
+    }
+    
+    // Charger les informations de l'acheteur
+    function loadAcheteurInfo() {
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: `/api/consulter-un-acheteur/${ACHETEUR_ID}/`,
             type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-                console.log(response);
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
+                $('#editNom').text(response.nom || 'Non spécifié');
+                $('#editSigle').text(response.sigle || '');
+                $('#editCode').text(response.code || '');
                 if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                    const parts = response.date_creation.split('-');
+                    const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    $('#editDateCreation').text(formattedDate);
                 }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $('#editActivitePrincipale').text(response.activite_principale || 'Non spécifié');
+                $('#editStatutEntreprise').text(response.statut_entreprise?.libelle || 'Inconnu');
+            },
+            error: function(xhr) {
+                console.error("Erreur lors du chargement de l'acheteur:", xhr);
+            }
+        });
+    }
+    
+    // Calculer les indicateurs
+    function calculateIndicators(resultats) {
+        if (!resultats || resultats.length === 0) {
+            updateIndicatorCards(0, 0, 0, 0);
+            return;
+        }
+        
+        let totalProduits = 0;
+        let totalCharges = 0;
+        let totalResultatNet = 0;
+        let totalFraisPersonnel = 0;
+        let totalChiffreAffaires = 0;
+        
+        resultats.forEach(resultat => {
+            const vma = parseFloat(resultat.ventes_marchandises_a) || 0;
+            const vpm = parseFloat(resultat.ventes_produits_manufactures) || 0;
+            const tsv = parseFloat(resultat.travaux_services_vendus_c) || 0;
+            const pa = parseFloat(resultat.produits_accessoires_d) || 0;
+            const fp = parseFloat(resultat.frais_personnel) || 0;
+            const am = parseFloat(resultat.achats_marchandises) || 0;
+            const cir = parseFloat(resultat.charge_impot_revenu) || 0;
+            
+            // Calculer les indicateurs
+            totalChiffreAffaires += vma + vpm + tsv + pa;
+            totalFraisPersonnel += fp;
+            
+            // Calculer le résultat net approximatif
+            const resultatNet = calculateResultatNet(resultat);
+            totalResultatNet += resultatNet;
+        });
+        
+        // Calculer les ratios
+        const margeBrute = totalChiffreAffaires > 0 ? 
+            ((totalResultatNet / totalChiffreAffaires) * 100).toFixed(2) : 0;
+        const ratioFraisPersonnel = totalChiffreAffaires > 0 ?
+            ((totalFraisPersonnel / totalChiffreAffaires) * 100).toFixed(2) : 0;
+        
+        // Mettre à jour les indicateurs
+        updateIndicatorCards(totalResultatNet, margeBrute, ratioFraisPersonnel, resultats.length);
+    }
+    
+    // Mettre à jour les cartes d'indicateurs
+    function updateIndicatorCards(resultatNet, margeBrute, ratioFraisPersonnel, countResultats) {
+        $('#totalResultatNet').text(formatNumber(resultatNet));
+        $('#margeBrute').text(margeBrute + '%');
+        $('#ratioChargesPersonnel').text(ratioFraisPersonnel + '%');
+        $('#countResultats').text(countResultats);
+        
+        // Mettre à jour les résumés calculés
+        $('#calculResultatNet').text(formatCurrency(resultatNet));
+        $('#calculResultatAvantImpot').text(formatCurrency(resultatNet));
+    }
+    
+    // Calculer le résultat net à partir d'un objet résultat
+    function calculateResultatNet(resultat) {
+        // Produits d'exploitation
+        const produitsExploitation = 
+            (parseFloat(resultat.ventes_marchandises_a) || 0) +
+            (parseFloat(resultat.ventes_produits_manufactures) || 0) +
+            (parseFloat(resultat.travaux_services_vendus_c) || 0) +
+            (parseFloat(resultat.produits_accessoires_d) || 0) +
+            (parseFloat(resultat.production_stockee) || 0) +
+            (parseFloat(resultat.production_immobilisee) || 0) +
+            (parseFloat(resultat.subvention_exploitation) || 0) +
+            (parseFloat(resultat.autres_produits) || 0) +
+            (parseFloat(resultat.transfert_charges_exploitation) || 0);
+        
+        // Charges d'exploitation
+        const chargesExploitation = 
+            (parseFloat(resultat.achats_marchandises) || 0) +
+            (parseFloat(resultat.variation_stock_marchandises) || 0) +
+            (parseFloat(resultat.achats_matieres_premieres_fournitures_connexes) || 0) +
+            (parseFloat(resultat.variation_stock_matieres_premieres_fournitures_connexes) || 0) +
+            (parseFloat(resultat.autres_achats) || 0) +
+            (parseFloat(resultat.variation_stock_autres_fournitures) || 0) +
+            (parseFloat(resultat.transport) || 0) +
+            (parseFloat(resultat.services_exterieurs) || 0) +
+            (parseFloat(resultat.impots_taxes) || 0) +
+            (parseFloat(resultat.autres_depenses) || 0) +
+            (parseFloat(resultat.frais_personnel) || 0) +
+            (parseFloat(resultat.reprise_depreciations_amortissements_provision_pertes_valeurs_p) || 0) +
+            (parseFloat(resultat.reprise_depreciations_amortissements_provision_pertes_valeurs_m) || 0);
+        
+        // Produits financiers
+        const produitsFinanciers = 
+            (parseFloat(resultat.produits_financiers_assimiles) || 0) +
+            (parseFloat(resultat.reprise_provision_perte_valeur) || 0) +
+            (parseFloat(resultat.transfert_charges_financieres) || 0);
+        
+        // Charges financières
+        const chargesFinancieres = 
+            (parseFloat(resultat.charges_financieres_assimilees) || 0) +
+            (parseFloat(resultat.dotations_provisions_depreciations_financieres) || 0);
+        
+        // Résultat HAO
+        const produitsHAO = 
+            (parseFloat(resultat.produits_cession_immobilisations) || 0) +
+            (parseFloat(resultat.autres_produits_hao) || 0);
+        
+        const chargesHAO = 
+            (parseFloat(resultat.valeur_comptable_cessions_actifs_immobilises) || 0) +
+            (parseFloat(resultat.autres_charges_hao) || 0);
+        
+        // Impôts et participation
+        const impotsParticipation = 
+            (parseFloat(resultat.participation_travailleurs) || 0) +
+            (parseFloat(resultat.charge_impot_revenu) || 0);
+        
+        // Calcul des résultats intermédiaires
+        const resultatExploitation = produitsExploitation - chargesExploitation;
+        const resultatFinancier = produitsFinanciers - chargesFinancieres;
+        const resultatHAO = produitsHAO - chargesHAO;
+        const resultatAvantImpot = resultatExploitation + resultatFinancier + resultatHAO;
+        const resultatNet = resultatAvantImpot - impotsParticipation;
+        
+        return {
+            produitsExploitation,
+            chargesExploitation,
+            resultatExploitation,
+            produitsFinanciers,
+            chargesFinancieres,
+            resultatFinancier,
+            produitsHAO,
+            chargesHAO,
+            resultatHAO,
+            impotsParticipation,
+            resultatAvantImpot,
+            resultatNet
+        };
+    }
+    
+    // Charger les résultats
+    function loadResultats() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/liste-des-resultats/?page=${currentPage}&search=${currentSearch}`;
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#resultatTableBody').html(`
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Chargement des données...</p>
+                        </td>
+                    </tr>
+                `);
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+                calculateIndicators(response.results);
+                updateStatistics(response.results);
+            },
+            error: function(xhr) {
+                $('#resultatTableBody').html(`
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données. Veuillez réessayer.</p>
+                        </td>
+                    </tr>
+                `);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadResultats);
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour le tableau
+    function updateTable(resultats) {
+        const tbody = $('#resultatTableBody');
+        tbody.empty();
+        
+        if (resultats.length === 0) {
+            $('#noResults').show();
+            $('#resultatTableFooter').hide();
+            return;
+        }
+        
+        $('#noResults').hide();
+        
+        // Initialiser les totaux
+        let totalVMA = 0, totalAM = 0, totalVSM = 0, totalVPM = 0;
+        let totalTSV = 0, totalFP = 0, totalCIR = 0, totalResultat = 0;
+        const anneesSet = new Set();
+        
+        resultats.forEach((resultat, index) => {
+            const startIndex = (currentPage - 1) * resultats.length;
+            const rowNumber = startIndex + index + 1;
+            const annee = resultat.annee?.annee || 'N/A';
+            anneesSet.add(annee);
+            
+            // Récupérer les valeurs principales
+            const vma = parseFloat(resultat.ventes_marchandises_a) || 0;
+            const am = parseFloat(resultat.achats_marchandises) || 0;
+            const vsm = parseFloat(resultat.variation_stock_marchandises) || 0;
+            const vpm = parseFloat(resultat.ventes_produits_manufactures) || 0;
+            const tsv = parseFloat(resultat.travaux_services_vendus_c) || 0;
+            const fp = parseFloat(resultat.frais_personnel) || 0;
+            const cir = parseFloat(resultat.charge_impot_revenu) || 0;
+            
+            // Calculer le résultat net
+            const calculs = calculateResultatNet(resultat);
+            const resultatNet = calculs.resultatNet;
+            
+            // Accumuler les totaux
+            totalVMA += vma;
+            totalAM += am;
+            totalVSM += vsm;
+            totalVPM += vpm;
+            totalTSV += tsv;
+            totalFP += fp;
+            totalCIR += cir;
+            totalResultat += resultatNet;
+            
+            const row = `
+                <tr data-id="${resultat.id}" class="resultat-row">
+                    <td>${rowNumber}</td>
+                    <td>
+                        <span class="year-badge">
+                            ${annee}
+                        </span>
+                    </td>
+                    <!-- Valeurs principales -->
+                    <td class="value-cell text-primary">${formatNumber(vma)}</td>
+                    <td class="value-cell text-danger">${formatNumber(am)}</td>
+                    <td class="value-cell ${vsm >= 0 ? 'text-success' : 'text-danger'}">${formatNumber(vsm)}</td>
+                    <td class="value-cell text-primary">${formatNumber(vpm)}</td>
+                    <td class="value-cell text-primary">${formatNumber(tsv)}</td>
+                    <td class="value-cell text-warning">${formatNumber(fp)}</td>
+                    <td class="value-cell text-danger">${formatNumber(cir)}</td>
+                    <!-- Résultat Net -->
+                    <td class="value-cell fw-bold ${resultatNet >= 0 ? 'text-success' : 'text-danger'}">
+                        ${formatNumber(resultatNet)}
+                    </td>
+                    
+                    <!-- Actions -->
+                    <td class="text-center">
+                        <div class="actions-group">
+                            <button class="action-btn view" data-id="${resultat.id}" 
+                                    data-bs-toggle="tooltip" title="Consulter">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn edit" data-id="${resultat.id}" 
+                                    data-bs-toggle="tooltip" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete" data-id="${resultat.id}" 
+                                    data-bs-toggle="tooltip" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer
+        $('#footerVMA').text(formatNumber(totalVMA));
+        $('#footerAM').text(formatNumber(totalAM));
+        $('#footerVSM').text(formatNumber(totalVSM));
+        $('#footerVPM').text(formatNumber(totalVPM));
+        $('#footerTSV').text(formatNumber(totalTSV));
+        $('#footerFP').text(formatNumber(totalFP));
+        $('#footerCIR').text(formatNumber(totalCIR));
+        $('#footerResultatNet').text(formatNumber(totalResultat));
+        $('#resultatTableFooter').show();
+        
+        // Mettre à jour le compteur d'années
+        $('#countAnnees').text(anneesSet.size);
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStatistics(resultats) {
+        let totalResultatExploitation = 0;
+        let totalResultatFinancier = 0;
+        let totalResultatHAO = 0;
+        let totalResultatNet = 0;
+        
+        resultats.forEach(resultat => {
+            const calculs = calculateResultatNet(resultat);
+            totalResultatExploitation += calculs.resultatExploitation;
+            totalResultatFinancier += calculs.resultatFinancier;
+            totalResultatHAO += calculs.resultatHAO;
+            totalResultatNet += calculs.resultatNet;
+        });
+        
+        // Mettre à jour les cartes de résumé
+        $('#totalResultatExploitation').text(formatNumber(totalResultatExploitation));
+        $('#totalResultatFinancier').text(formatNumber(totalResultatFinancier));
+        $('#totalResultatHAO').text(formatNumber(totalResultatHAO));
+        $('#totalResultatNet').text(formatNumber(totalResultatNet));
+        
+        // Mettre à jour les résultats calculés
+        $('#calculResultatExploitation').text(formatCurrency(totalResultatExploitation));
+        $('#calculResultatFinancier').text(formatCurrency(totalResultatFinancier));
+        $('#calculResultatHAO').text(formatCurrency(totalResultatHAO));
+        $('#calculResultatAvantImpot').text(formatCurrency(totalResultatExploitation + totalResultatFinancier + totalResultatHAO));
+        $('#calculResultatNet').text(formatCurrency(totalResultatNet));
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} résultats`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+    
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadResultats();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadResultats();
+            $('html, body').animate({
+                scrollTop: $('#resultatTableBody').offset().top - 100
+            }, 500);
+        }
+    });
+    
+    // Consulter un résultat
+    $(document).on('click', '.view', function() {
+        const resultatId = $(this).data('id');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/editer-un-resultat/${resultatId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Mettre à jour les détails dans le modal
+                $('#detailAnnee').text(response.annee?.annee || 'N/A');
+                
+                // Exploitation
+                $('#detailVMA').text(formatNumber(response.ventes_marchandises_a));
+                $('#detailAM').text(formatNumber(response.achats_marchandises));
+                $('#detailVSM').text(formatNumber(response.variation_stock_marchandises));
+                $('#detailVPM').text(formatNumber(response.ventes_produits_manufactures));
+                $('#detailTSV').text(formatNumber(response.travaux_services_vendus_c));
+                $('#detailPA').text(formatNumber(response.produits_accessoires_d));
+                $('#detailSE').text(formatNumber(response.subvention_exploitation));
+                $('#detailFP').text(formatNumber(response.frais_personnel));
+                $('#detailAD').text(formatNumber(response.autres_depenses));
+                
+                // Financier
+                $('#detailPFA').text(formatNumber(response.produits_financiers_assimiles));
+                $('#detailRPPV').text(formatNumber(response.reprise_provision_perte_valeur));
+                $('#detailCFA').text(formatNumber(response.charges_financieres_assimilees));
+                $('#detailDPDF').text(formatNumber(response.dotations_provisions_depreciations_financieres));
+                
+                // HAO
+                $('#detailPCI').text(formatNumber(response.produits_cession_immobilisations));
+                $('#detailAPH').text(formatNumber(response.autres_produits_hao));
+                $('#detailVCCAI').text(formatNumber(response.valeur_comptable_cessions_actifs_immobilises));
+                $('#detailACH').text(formatNumber(response.autres_charges_hao));
+                
+                // Impôts
+                $('#detailPT').text(formatNumber(response.participation_travailleurs));
+                $('#detailCIR').text(formatNumber(response.charge_impot_revenu));
+                
+                // Calculer les totaux
+                const calculs = calculateResultatNet(response);
+                
+                // Mettre à jour les totaux dans le modal
+                $('#detailTotalExploitation').text(formatCurrency(calculs.produitsExploitation - calculs.chargesExploitation));
+                $('#detailTotalFinancier').text(formatCurrency(calculs.produitsFinanciers - calculs.chargesFinancieres));
+                $('#detailTotalHAO').text(formatCurrency(calculs.produitsHAO - calculs.chargesHAO));
+                $('#detailTotalImpot').text(formatCurrency(calculs.impotsParticipation));
+                $('#detailResultatNet').text(formatCurrency(calculs.resultatNet));
+                
+                // Mettre à jour le récapitulatif
+                $('#recapExploitation').text(formatCurrency(calculs.resultatExploitation));
+                $('#recapFinancier').text(formatCurrency(calculs.resultatFinancier));
+                $('#recapHAO').text(formatCurrency(calculs.resultatHAO));
+                $('#recapAvantImpot').text(formatCurrency(calculs.resultatAvantImpot));
+                $('#recapResultatNet').text(formatCurrency(calculs.resultatNet));
+                
+                $('#detailResultatModal').modal('show');
             },
             error: function(xhr) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les détails du résultat.'
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(`.view[data-id="${resultatId}"]`).click();
+                    });
+                }
             }
         });
     });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load resultats data
-        function loadResultats(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-syscohada/liste-des-resultats/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update resultats table body
-                    $('#resultatTableBody').html('');
-                    response.results.forEach(function(resultat, index) {
-                        $('#resultatTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td class="text-success">' + resultat.ventes_marchandises_a + '</td>' +
-                            '<td class="text-success">' + resultat.achats_marchandises + '</td>' +
-                            '<td class="text-success">' + resultat.variation_stock_marchandises + '</td>' +
-                            '<td class="text-success">' + resultat.ventes_produits_manufactures + '</td>' +
-                            '<td class="text-success">' + resultat.travaux_services_vendus_c + '</td>' +
-                            '<td class="text-success">' + resultat.produits_accessoires_d + '</td>' +
-                            '<td class="text-success">' + resultat.production_stockee + '</td>' +
-                            '<td class="text-success">' + resultat.production_immobilisee + '</td>' +
-                            '<td class="text-success">' + resultat.subvention_exploitation + '</td>' +
-                            '<td class="text-success">' + resultat.autres_produits + '</td>' +
-                            '<td class="text-success">' + resultat.transfert_charges_exploitation + '</td>' +
-                            '<td class="text-success">' + resultat.achats_matieres_premieres_fournitures_connexes + '</td>' +
-                            '<td class="text-success">' + resultat.variation_stock_matieres_premieres_fournitures_connexes + '</td>' +
-                            '<td class="text-success">' + resultat.autres_achats + '</td>' +
-                            '<td class="text-success">' + resultat.variation_stock_autres_fournitures + '</td>' +
-                            '<td class="text-success">' + resultat.transport + '</td>' +
-                            '<td class="text-success">' + resultat.services_exterieurs + '</td>' +
-                            '<td class="text-success">' + resultat.impots_taxes + '</td>' +
-                            '<td class="text-success">' + resultat.autres_depenses + '</td>' +
-                            '<td class="text-success">' + resultat.frais_personnel + '</td>' +
-                            '<td class="text-success">' + resultat.reprise_depreciations_amortissements_provision_pertes_valeurs_p + '</td>' +
-                            '<td class="text-success">' + resultat.reprise_depreciations_amortissements_provision_pertes_valeurs_m + '</td>' +
-                            '<td class="text-success">' + resultat.produits_financiers_assimiles + '</td>' +
-                            '<td class="text-success">' + resultat.reprise_provision_perte_valeur + '</td>' +
-                            '<td class="text-success">' + resultat.transfert_charges_financieres + '</td>' +
-                            '<td class="text-success">' + resultat.charges_financieres_assimilees + '</td>' +
-                            '<td class="text-success">' + resultat.dotations_provisions_depreciations_financieres + '</td>' +
-                            '<td class="text-success">' + resultat.produits_cession_immobilisations + '</td>' +
-                            '<td class="text-success">' + resultat.autres_produits_hao + '</td>' +
-                            '<td class="text-success">' + resultat.valeur_comptable_cessions_actifs_immobilises + '</td>' +
-                            '<td class="text-success">' + resultat.autres_charges_hao + '</td>' +
-                            '<td class="text-success">' + resultat.participation_travailleurs + '</td>' +
-                            '<td class="text-success">' + resultat.charge_impot_revenu + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + resultat.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Éditer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + resultat.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
+    
+    // Éditer un résultat
+    $(document).on('click', '.edit', function() {
+        const resultatId = $(this).data('id');
+        selectedResultatId = resultatId;
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/editer-un-resultat/${resultatId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Générer le formulaire d'édition dynamiquement
+                const formContent = generateEditForm(response);
+                $('#editFormContent').html(formContent);
+                
+                // Initialiser Select2
+                $('#editAnnee').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $('#editResultatModal')
+                });
+                
+                // Définir la valeur de l'année
+                $('#editAnnee').val(response.annee).trigger('change');
+                
+                // Mettre à jour les résumés
+                updateEditFormSummaries();
+                
+                $('#editResultatModal').modal('show');
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données du résultat.'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(`.edit[data-id="${resultatId}"]`).click();
                     });
                 }
-            });
+            }
+        });
+    });
+    
+    // Générer le formulaire d'édition
+    function generateEditForm(resultat) {
+        // Créer les champs de formulaire avec les valeurs du résultat
+        // Cette fonction génère un formulaire similaire à celui d'ajout
+        // mais avec les valeurs pré-remplies
+        let formHTML = `
+            <div class="row">
+                <!-- Année -->
+                <div class="col-md-12 mb-3">
+                    <label for="editAnnee" class="form-label">
+                        <i class="fas fa-calendar-alt"></i>Année *
+                    </label>
+                    <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
+                        {% for annee in annee_list %}
+                            <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+        `;
+        
+        // Ajouter tous les champs avec leurs valeurs
+        const fields = [
+            { id: 'ventes_marchandises_a', label: 'Ventes de marchandises A', badge: 'VMA' },
+            { id: 'achats_marchandises', label: 'Achats de marchandises', badge: 'AM' },
+            { id: 'variation_stock_marchandises', label: 'Variation des stocks de marchandises', badge: 'VSM' },
+            { id: 'ventes_produits_manufactures', label: 'Ventes de produits manufacturés B', badge: 'VPM' },
+            { id: 'travaux_services_vendus_c', label: 'Travaux, services vendus C', badge: 'TSV' },
+            { id: 'produits_accessoires_d', label: 'Produits accessoires D', badge: 'PA' },
+            { id: 'production_stockee', label: 'Production stockée', badge: 'PS' },
+            { id: 'production_immobilisee', label: 'Production Immobilisée', badge: 'PI' },
+            { id: 'subvention_exploitation', label: 'Subvention d\'exploitation', badge: 'SE' },
+            { id: 'autres_produits', label: 'Autres produits', badge: 'AP' },
+            { id: 'transfert_charges_exploitation', label: 'Transfert de charges d\'exploitation', badge: 'TCE' },
+            { id: 'achats_matieres_premieres_fournitures_connexes', label: 'Achats de matières premières et fournitures connexes', badge: 'AMPFC' },
+            { id: 'variation_stock_matieres_premieres_fournitures_connexes', label: 'Variation des stocks de matières premières et fournitures connexes', badge: 'VSMFC' },
+            { id: 'autres_achats', label: 'Autres achats', badge: 'AA' },
+            { id: 'variation_stock_autres_fournitures', label: 'Variation des stocks d\'autres fournitures', badge: 'VSAF' },
+            { id: 'transport', label: 'Transport', badge: 'T' },
+            { id: 'services_exterieurs', label: 'Services extérieurs', badge: 'SE' },
+            { id: 'impots_taxes', label: 'Impôts et taxes', badge: 'IT' },
+            { id: 'autres_depenses', label: 'Autres dépenses', badge: 'AD' },
+            { id: 'frais_personnel', label: 'Frais de personnel', badge: 'FP' },
+            { id: 'reprise_depreciations_amortissements_provision_pertes_valeurs_p', label: 'Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)', badge: 'RDA+' },
+            { id: 'reprise_depreciations_amortissements_provision_pertes_valeurs_m', label: 'Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)', badge: 'RDA-' },
+            { id: 'produits_financiers_assimiles', label: 'Produits financiers et assimilés', badge: 'PFA' },
+            { id: 'reprise_provision_perte_valeur', label: 'Reprises sur provisions et pertes de valeur', badge: 'RPPV' },
+            { id: 'transfert_charges_financieres', label: 'Transfert de charges financières', badge: 'TCF' },
+            { id: 'charges_financieres_assimilees', label: 'Charges financières et assimilées', badge: 'CFA' },
+            { id: 'dotations_provisions_depreciations_financieres', label: 'Dotations aux provisions et dépréciations financières', badge: 'DPDF' },
+            { id: 'produits_cession_immobilisations', label: 'Produits des cessions d\'immobilisations', badge: 'PCI' },
+            { id: 'autres_produits_hao', label: 'Autres produits HAO', badge: 'APH' },
+            { id: 'valeur_comptable_cessions_actifs_immobilises', label: 'Valeur comptable des cessions d\'actifs immobilisés', badge: 'VCCAI' },
+            { id: 'autres_charges_hao', label: 'Autres charges HAO', badge: 'ACH' },
+            { id: 'participation_travailleurs', label: 'Participation des travailleurs', badge: 'PT' },
+            { id: 'charge_impot_revenu', label: 'Charge d\'impôt sur le revenu', badge: 'CIR' }
+        ];
+        
+        fields.forEach((field, index) => {
+            const value = resultat[field.id] || 0;
+            const colClass = (index % 2 === 0) ? 'col-md-6 mb-3' : 'col-md-6 mb-3';
+            
+            formHTML += `
+                <div class="${colClass}">
+                    <label for="edit${field.id.replace(/_/g, '').replace(/^(.)/, (c) => c.toUpperCase())}" class="form-label">
+                        <span class="badge badge-exploitation">${field.badge}</span> ${field.label} *
+                    </label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="edit${field.id.replace(/_/g, '').replace(/^(.)/, (c) => c.toUpperCase())}" 
+                               name="${field.id}" value="${value}" step="0.01" required>
+                        <span class="input-group-text">FCFA</span>
+                    </div>
+                </div>
+            `;
+            
+            // Ajouter des sections
+            if (field.id === 'charge_impot_revenu') {
+                formHTML += `
+                    <!-- Résumé calculé -->
+                    <div class="col-md-12">
+                        <div class="card bg-light border">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-calculator text-primary me-2"></i>Résumé Calculé
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <span class="text-muted">Produits d'Exploitation:</span>
+                                            <span class="fw-bold float-end" id="editSummaryProduitsExploitation">0 FCFA</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="text-muted">Charges d'Exploitation:</span>
+                                            <span class="fw-bold float-end" id="editSummaryChargesExploitation">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <span class="text-muted">Résultat d'Exploitation:</span>
+                                            <span class="fw-bold float-end" id="editSummaryResultatExploitation">0 FCFA</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="text-muted">Résultat Financier:</span>
+                                            <span class="fw-bold float-end" id="editSummaryResultatFinancier">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <span class="text-muted">Résultat HAO:</span>
+                                            <span class="fw-bold float-end" id="editSummaryResultatHAO">0 FCFA</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="text-muted">Avant Impôt:</span>
+                                            <span class="fw-bold float-end" id="editSummaryAvantImpot">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="pt-2 border-top">
+                                            <span class="text-primary fw-bold fs-5">Résultat Net:</span>
+                                            <span class="fw-bold text-primary float-end fs-5" id="editSummaryResultatNet">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        formHTML += `</div>`;
+        return formHTML;
+    }
+    
+    // Mettre à jour les résumés dans le formulaire d'édition
+    function updateEditFormSummaries() {
+        // Récupérer toutes les valeurs du formulaire d'édition
+        const fields = [
+            'ventes_marchandises_a', 'achats_marchandises', 'variation_stock_marchandises',
+            'ventes_produits_manufactures', 'travaux_services_vendus_c', 'produits_accessoires_d',
+            'production_stockee', 'production_immobilisee', 'subvention_exploitation',
+            'autres_produits', 'transfert_charges_exploitation', 'achats_matieres_premieres_fournitures_connexes',
+            'variation_stock_matieres_premieres_fournitures_connexes', 'autres_achats',
+            'variation_stock_autres_fournitures', 'transport', 'services_exterieurs',
+            'impots_taxes', 'autres_depenses', 'frais_personnel',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_p',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_m',
+            'produits_financiers_assimiles', 'reprise_provision_perte_valeur',
+            'transfert_charges_financieres', 'charges_financieres_assimilees',
+            'dotations_provisions_depreciations_financieres', 'produits_cession_immobilisations',
+            'autres_produits_hao', 'valeur_comptable_cessions_actifs_immobilises',
+            'autres_charges_hao', 'participation_travailleurs', 'charge_impot_revenu'
+        ];
+        
+        const values = {};
+        fields.forEach(field => {
+            const input = $(`#edit${field.replace(/_/g, '').replace(/^(.)/, (c) => c.toUpperCase())}`);
+            values[field] = parseFloat(input.val()) || 0;
+        });
+        
+        // Calculer les résultats
+        const calculs = calculateResultatNet(values);
+        
+        // Mettre à jour les résumés
+        $('#editSummaryProduitsExploitation').text(formatCurrency(calculs.produitsExploitation));
+        $('#editSummaryChargesExploitation').text(formatCurrency(calculs.chargesExploitation));
+        $('#editSummaryResultatExploitation').text(formatCurrency(calculs.resultatExploitation));
+        $('#editSummaryResultatFinancier').text(formatCurrency(calculs.resultatFinancier));
+        $('#editSummaryResultatHAO').text(formatCurrency(calculs.resultatHAO));
+        $('#editSummaryAvantImpot').text(formatCurrency(calculs.resultatAvantImpot));
+        $('#editSummaryResultatNet').text(formatCurrency(calculs.resultatNet));
+    }
+    
+    // Supprimer un résultat
+    $(document).on('click', '.delete', function() {
+        const resultatId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            text: 'Êtes-vous sûr de vouloir supprimer ce résultat ? Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/supprimer-des-resultats/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [resultatId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé',
+                            text: 'Résultat supprimé avec succès',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadResultats();
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer le résultat.'
+                        });
+                        
+                        if (xhr.status === 401) {
+                            refreshAccessToken(() => {
+                                $(`.delete[data-id="${resultatId}"]`).click();
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateAddFormSummaries() {
+        // Calcul des totaux par catégorie
+        // Produits d'exploitation
+        const produitsExploitation = 
+            (parseFloat($('#ventes_marchandises_a').val()) || 0) +
+            (parseFloat($('#ventes_produits_manufactures').val()) || 0) +
+            (parseFloat($('#travaux_services_vendus_c').val()) || 0) +
+            (parseFloat($('#produits_accessoires_d').val()) || 0) +
+            (parseFloat($('#production_stockee').val()) || 0) +
+            (parseFloat($('#production_immobilisee').val()) || 0) +
+            (parseFloat($('#subvention_exploitation').val()) || 0) +
+            (parseFloat($('#autres_produits').val()) || 0) +
+            (parseFloat($('#transfert_charges_exploitation').val()) || 0);
+        
+        // Charges d'exploitation
+        const chargesExploitation = 
+            (parseFloat($('#achats_marchandises').val()) || 0) +
+            (parseFloat($('#variation_stock_marchandises').val()) || 0) +
+            (parseFloat($('#achats_matieres_premieres_fournitures_connexes').val()) || 0) +
+            (parseFloat($('#variation_stock_matieres_premieres_fournitures_connexes').val()) || 0) +
+            (parseFloat($('#autres_achats').val()) || 0) +
+            (parseFloat($('#variation_stock_autres_fournitures').val()) || 0) +
+            (parseFloat($('#transport').val()) || 0) +
+            (parseFloat($('#services_exterieurs').val()) || 0) +
+            (parseFloat($('#impots_taxes').val()) || 0) +
+            (parseFloat($('#autres_depenses').val()) || 0) +
+            (parseFloat($('#frais_personnel').val()) || 0) +
+            (parseFloat($('#reprise_depreciations_amortissements_provision_pertes_valeurs_p').val()) || 0) +
+            (parseFloat($('#reprise_depreciations_amortissements_provision_pertes_valeurs_m').val()) || 0);
+        
+        // Produits financiers
+        const produitsFinanciers = 
+            (parseFloat($('#produits_financiers_assimiles').val()) || 0) +
+            (parseFloat($('#reprise_provision_perte_valeur').val()) || 0) +
+            (parseFloat($('#transfert_charges_financieres').val()) || 0);
+        
+        // Charges financières
+        const chargesFinancieres = 
+            (parseFloat($('#charges_financieres_assimilees').val()) || 0) +
+            (parseFloat($('#dotations_provisions_depreciations_financieres').val()) || 0);
+        
+        // Résultat HAO
+        const produitsHAO = 
+            (parseFloat($('#produits_cession_immobilisations').val()) || 0) +
+            (parseFloat($('#autres_produits_hao').val()) || 0);
+        
+        const chargesHAO = 
+            (parseFloat($('#valeur_comptable_cessions_actifs_immobilises').val()) || 0) +
+            (parseFloat($('#autres_charges_hao').val()) || 0);
+        
+        // Impôts et participation
+        const impotsParticipation = 
+            (parseFloat($('#participation_travailleurs').val()) || 0) +
+            (parseFloat($('#charge_impot_revenu').val()) || 0);
+        
+        // Calcul des résultats intermédiaires
+        const resultatExploitation = produitsExploitation - chargesExploitation;
+        const resultatFinancier = produitsFinanciers - chargesFinancieres;
+        const resultatHAO = produitsHAO - chargesHAO;
+        const resultatAvantImpot = resultatExploitation + resultatFinancier + resultatHAO;
+        const resultatNet = resultatAvantImpot - impotsParticipation;
+        
+        // Mise à jour des résumés
+        $('#summaryProduitsExploitation').text(formatCurrency(produitsExploitation));
+        $('#summaryChargesExploitation').text(formatCurrency(chargesExploitation));
+        $('#summaryResultatExploitation').text(formatCurrency(resultatExploitation));
+        $('#summaryResultatFinancier').text(formatCurrency(resultatFinancier));
+        $('#summaryResultatHAO').text(formatCurrency(resultatHAO));
+        $('#summaryAvantImpot').text(formatCurrency(resultatAvantImpot));
+        $('#summaryResultatNet').text(formatCurrency(resultatNet));
+    }
+    
+    // Écouter les changements dans les champs du formulaire d'ajout
+    $('#addResultatForm input[type="number"]').on('input', updateAddFormSummaries);
+    
+    // Écouter les changements dans les champs du formulaire d'édition
+    $(document).on('input', '#editResultatForm input[type="number"]', updateEditFormSummaries);
+    
+    // Effacer le formulaire d'ajout
+    $('#clearAddFormBtn').on('click', function() {
+        Swal.fire({
+            title: 'Confirmer l\'effacement',
+            text: 'Êtes-vous sûr de vouloir effacer tous les champs du formulaire ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, effacer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#addResultatForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                updateAddFormSummaries();
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'ajout
+    $('#addResultatForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#addResultatForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/ajouter-un-resultat/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#addResultatModal').modal('hide');
+                $('#addResultatForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                updateAddFormSummaries();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Résultat ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadResultats();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addResultatForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'édition
+    $('#editResultatForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#editResultatForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-syscohada/editer-un-resultat/${selectedResultatId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#editResultatModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Résultat mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadResultats();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editResultatForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-
-        // Initial load
+        return cookieValue;
+    }
+    
+    // Initialisation
+    function init() {
+        // Initialiser les tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        
+        // Initialiser Select2
+        $('#annee').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addResultatModal')
+        });
+        
+        // Charger les données initiales
+        loadAcheteurInfo();
         loadResultats();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadResultats(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadResultats(page, search);
-        });
-
-        // Add Resultat form submission
-        $('#addResultatForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            console.log(formData);
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-syscohada/ajouter-un-resultat/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Résultat ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addResultatModal').modal('hide');
-                        loadResultats();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout du résultat.',
-                    });
-                }
-            });
-        });
-
-        // Edit Resultat button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-syscohada/editer-un-resultat/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editResultatId').val(response.id);
-                    $('#editVentesMarchandisesA').val(response.ventes_marchandises_a);
-                    $('#editAchatsMarchandises').val(response.achats_marchandises);
-                    $('#editVariationStockMarchandises').val(response.variation_stock_marchandises);
-                    $('#editVentesProduitsManufactures').val(response.ventes_produits_manufactures);
-                    $('#editTravauxServicesVendusC').val(response.travaux_services_vendus_c);
-                    $('#editProduitsAccessoiresD').val(response.produits_accessoires_d);
-                    $('#editProductionStockee').val(response.production_stockee);
-                    $('#editProductionImmobilisee').val(response.production_immobilisee);
-                    $('#editSubventionExploitation').val(response.subvention_exploitation);
-                    $('#editAutresProduits').val(response.autres_produits);
-                    $('#editTransfertChargesExploitation').val(response.transfert_charges_exploitation);
-                    $('#editAchatsMatieresPremieresFournituresConnexes').val(response.achats_matieres_premieres_fournitures_connexes);
-                    $('#editVariationStockMatieresPremieresFournituresConnexes').val(response.variation_stock_matieres_premieres_fournitures_connexes);
-                    $('#editAutresAchats').val(response.autres_achats);
-                    $('#editVariationStockAutresFournitures').val(response.variation_stock_autres_fournitures);
-                    $('#editTransport').val(response.transport);
-                    $('#editServicesExterieurs').val(response.services_exterieurs);
-                    $('#editImpotsTaxes').val(response.impots_taxes);
-                    $('#editAutresDepenses').val(response.autres_depenses);
-                    $('#editFraisPersonnel').val(response.frais_personnel);
-                    $('#editRepriseDepreciationsAmortissementsProvisionPertesValeursP').val(response.reprise_depreciations_amortissements_provision_pertes_valeurs_p);
-                    $('#editRepriseDepreciationsAmortissementsProvisionPertesValeursM').val(response.reprise_depreciations_amortissements_provision_pertes_valeurs_m);
-                    $('#editProduitsFinanciersAssimiles').val(response.produits_financiers_assimiles);
-                    $('#editRepriseProvisionPerteValeur').val(response.reprise_provision_perte_valeur);
-                    $('#editTransfertChargesFinancieres').val(response.transfert_charges_financieres);
-                    $('#editChargesFinancieresAssimilees').val(response.charges_financieres_assimilees);
-                    $('#editDotationsProvisionsDepreciationsFinancieres').val(response.dotations_provisions_depreciations_financieres);
-                    $('#editProduitsCessionImmobilisations').val(response.produits_cession_immobilisations);
-                    $('#editAutresProduitsHao').val(response.autres_produits_hao);
-                    $('#editValeurComptableCessionsActifsImmobilises').val(response.valeur_comptable_cessions_actifs_immobilises);
-                    $('#editAutresChargesHao').val(response.autres_charges_hao);
-                    $('#editParticipationTravailleurs').val(response.participation_travailleurs);
-                    $('#editChargeImpotRevenu').val(response.charge_impot_revenu);
-                    $('#editAnnee').val(response.annee);
-                    $('#editResultatModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données du résultat.',
-                    });
-                }
-            });
-        });
-
-        // Edit Resultat form submission
-        $('#editResultatForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editResultatId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-syscohada/editer-un-resultat/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Résultat mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editResultatModal').modal('hide');
-                        loadResultats();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour du résultat.',
-                    });
-                }
-            });
-        });
-
-        // Delete Resultat button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-syscohada/supprimer-des-resultats/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'Le résultat a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadResultats();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression du résultat.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
-        }
-    });
+        updateAddFormSummaries();
+    }
+    
+    init();
+});
 </script>
-
 {% endblock %}

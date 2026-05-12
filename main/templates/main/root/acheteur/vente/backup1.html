@@ -1,0 +1,1500 @@
+<!-- dash_root_manage_acheteur_condition_vente.html -->
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --vente-gradient: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);
+    --vente-light: rgba(111, 66, 193, 0.1);
+    --jugement-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+    --paiement-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+}
+
+/* Carte condition de vente unique */
+.vente-single-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    border: 3px solid #e3e6f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.vente-single-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(to right, #6f42c1, #6610f2);
+}
+
+.vente-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--vente-light);
+    color: #6f42c1;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 2px solid rgba(111, 66, 193, 0.3);
+}
+
+/* En-tête de la carte */
+.vente-single-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.vente-single-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.vente-single-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.vente-single-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Sections de contenu */
+.vente-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.vente-section-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.vente-section-card.local {
+    border-left: 4px solid #6610f2;
+}
+
+.vente-section-card.jugement {
+    border-left: 4px solid #fd7e14;
+}
+
+.vente-section-card.paiement {
+    border-left: 4px solid #20c997;
+}
+
+.vente-section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(111, 66, 193, 0.15);
+}
+
+.vente-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px dashed #e2e8f0;
+}
+
+.vente-section-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.vente-section-icon.local {
+    background: rgba(102, 16, 242, 0.1);
+    color: #6610f2;
+}
+
+.vente-section-icon.jugement {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.vente-section-icon.paiement {
+    background: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+}
+
+.vente-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.vente-section-content {
+    color: #4a5568;
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.vente-section-content .badge-choice {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.vente-section-content .badge-choice.jugement {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+    border: 1px solid rgba(253, 126, 20, 0.3);
+}
+
+.vente-section-content .badge-choice.paiement {
+    background: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+    border: 1px solid rgba(32, 201, 151, 0.3);
+}
+
+/* Tags conditions */
+.condition-tags-container {
+    margin-top: 1rem;
+}
+
+.condition-tags-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.condition-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.condition-tag {
+    background: rgba(102, 16, 242, 0.1);
+    color: #6610f2;
+    padding: 0.375rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(102, 16, 242, 0.3);
+    transition: all 0.2s ease;
+}
+
+.condition-tag:hover {
+    background: #6610f2;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Métadonnées */
+.vente-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+}
+
+.meta-card {
+    text-align: center;
+    padding: 1rem;
+}
+
+.meta-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--vente-light);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6f42c1;
+    margin: 0 auto 0.75rem;
+    font-size: 1rem;
+}
+
+.meta-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.meta-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* État vide (pas de condition de vente) */
+.vente-empty-state {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 20px;
+    border: 3px dashed #cbd5e0;
+    margin: 3rem 0;
+}
+
+.vente-empty-icon {
+    font-size: 5rem;
+    color: #a0aec0;
+    margin-bottom: 2rem;
+    opacity: 0.7;
+}
+
+.vente-empty-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.vente-empty-subtitle {
+    font-size: 1.1rem;
+    color: #718096;
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+}
+
+/* Formulaires */
+.vente-form-modal .modal-dialog {
+    max-width: 800px;
+}
+
+.vente-form-modal .modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+}
+
+.vente-form-modal .modal-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.vente-form-modal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.vente-form-modal .modal-body {
+    padding: 2rem;
+}
+
+.vente-form-modal .form-group {
+    margin-bottom: 1.75rem;
+}
+
+.vente-form-modal .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.vente-form-modal .form-control,
+.vente-form-modal .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.vente-form-modal .form-control:focus,
+.vente-form-modal .form-select:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.2);
+}
+
+.vente-form-modal textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Select2 personnalisé */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    min-height: 50px;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.2);
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background: rgba(102, 16, 242, 0.1);
+    border-color: #6610f2;
+    color: #6610f2;
+    border-radius: 20px;
+    padding: 0.375rem 1rem;
+    font-size: 0.9rem;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #6610f2;
+    margin-right: 0.5rem;
+}
+
+/* Boutons */
+.btn-vente {
+    background: linear-gradient(135deg, #6f42c1 0%, #6610f2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-vente:hover {
+    background: linear-gradient(135deg, #5e36b1 0%, #5a0ed9 100%);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(111, 66, 193, 0.3);
+}
+
+.btn-vente-outline {
+    background: transparent;
+    color: #6f42c1;
+    border: 2px solid #6f42c1;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-vente-outline:hover {
+    background: #6f42c1;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(111, 66, 193, 0.3);
+}
+
+.btn-action {
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .vente-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .vente-single-header {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .vente-single-card {
+        padding: 1.5rem;
+    }
+    
+    .vente-single-title {
+        font-size: 1.5rem;
+    }
+    
+    .vente-meta-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .vente-form-modal .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .vente-empty-state {
+        padding: 3rem 1.5rem;
+    }
+    
+    .vente-empty-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .vente-single-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-vente, .btn-vente-outline {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .vente-section-card {
+        padding: 1.25rem;
+    }
+}
+
+/* Animation de chargement */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.vente-content-loaded {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Indicateur d'édition en temps réel */
+.editing-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #6f42c1;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.editing-indicator.show {
+    display: flex;
+    animation: fadeInUp 0.3s ease;
+}
+
+/* Badge compteur */
+.badge-count {
+    background: var(--vente-light);
+    color: #6f42c1;
+    border-radius: 10px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-contract text-vente me-2"></i>Conditions de Vente
+            </h1>
+            <p class="text-muted mb-0">
+                Fiche unique des conditions de vente, recouvrement et comportement de paiement de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Conditions de Vente Unique -->
+    <div class="row">
+        <div class="col-12">
+            {% if has_condition_vente %}
+                <!-- Carte Conditions de Vente Existante -->
+                <div class="vente-single-card vente-content-loaded" id="venteCard" data-id="{{ condition_vente.id }}">
+                    <div class="vente-status">
+                        <i class="fas fa-check-circle me-2"></i>Conditions enregistrées
+                    </div>
+                    <br><br>
+                    
+                    <div class="vente-single-header">
+                        <div>
+                            <h2 class="vente-single-title">Conditions de Vente</h2>
+                            <p class="vente-single-subtitle">
+                                Fiche des conditions de vente de {{ acheteur.nom }}
+                            </p>
+                        </div>
+                        <div class="vente-single-actions">
+                            <button class="btn btn-vente-outline edit-vente-btn" data-id="{{ condition_vente.id }}">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </button>
+                            <button class="btn btn-danger delete-vente-btn" data-id="{{ condition_vente.id }}">
+                                <i class="fas fa-trash me-2"></i>Supprimer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sections de contenu -->
+                    <div class="vente-sections">
+                        <!-- Section Conditions Locales -->
+                        <div class="vente-section-card local">
+                            <div class="vente-section-header">
+                                <div class="vente-section-icon local">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <h3 class="vente-section-title">
+                                    Conditions Locales
+                                    <span class="badge-count">{{ condition_vente.local.count }}</span>
+                                </h3>
+                            </div>
+                            <div class="condition-tags-container">
+                                <div class="condition-tags" id="localTags">
+                                    {% for item in condition_vente.local.all %}
+                                        <span class="condition-tag">
+                                            <i class="fas fa-tag"></i> {{ item.nom }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="text-muted fst-italic">Aucune condition locale spécifiée</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Recouvrement de Dette -->
+                        <div class="vente-section-card jugement">
+                            <div class="vente-section-header">
+                                <div class="vente-section-icon jugement">
+                                    <i class="fas fa-gavel"></i>
+                                </div>
+                                <h3 class="vente-section-title">Recouvrement de Dette</h3>
+                            </div>
+                            <div class="vente-section-content" id="jugementContent">
+                                <span class="badge-choice jugement">
+                                    <i class="fas fa-balance-scale me-2"></i>
+                                    {{ condition_vente.recouvrement_de_dette_jugement|default:"Non spécifié" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Section Comportement de Paiement -->
+                        <div class="vente-section-card paiement">
+                            <div class="vente-section-header">
+                                <div class="vente-section-icon paiement">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <h3 class="vente-section-title">Comportement de Paiement</h3>
+                            </div>
+                            <div class="vente-section-content" id="paiementContent">
+                                <span class="badge-choice paiement">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    {{ condition_vente.comportement_de_paiement|default:"Non spécifié" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Métadonnées -->
+                    <div class="vente-meta-grid mt-4">
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                            </div>
+                            <div class="meta-label">Créé le</div>
+                            <div class="meta-value" id="createdAtValue">{{ condition_vente.created_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="meta-label">Modifié le</div>
+                            <div class="meta-value" id="updatedAtValue">{{ condition_vente.updated_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        
+                        <div class="meta-card">
+                            <div class="meta-icon">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="meta-label">Conditions Locales</div>
+                            <div class="meta-value">{{ condition_vente.local.count }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- État vide - Aucune condition de vente -->
+                <div class="vente-empty-state">
+                    <div class="vente-empty-icon">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h2 class="vente-empty-title">Aucune condition de vente enregistrée</h2>
+                    <p class="vente-empty-subtitle">
+                        Cet acheteur ne possède pas encore de fiche de conditions de vente.<br>
+                        Créez une fiche pour gérer les conditions locales, recouvrement et comportement de paiement.
+                    </p>
+                    <button class="btn btn-vente btn-lg" onclick="openCreateModal()">
+                        <i class="fas fa-plus-circle me-2"></i>Créer les conditions de vente
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Indicateur d'édition en temps réel -->
+<div class="editing-indicator" id="editingIndicator">
+    <div class="spinner-border spinner-border-sm" role="status"></div>
+    <span>Mise à jour en cours...</span>
+</div>
+
+<!-- Modal Création/Modification Conditions de Vente -->
+<div class="modal fade vente-form-modal" id="venteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelles Conditions de Vente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="venteForm" class="enhanced-form">
+                <input type="hidden" id="venteId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="local" class="form-label">
+                                    <i class="fas fa-store text-primary"></i>Conditions Locales
+                                </label>
+                                <select class="form-select" id="local" name="local" multiple="multiple">
+                                    {% for condition in conditions_liste %}
+                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Sélectionnez les conditions de vente locales
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="recouvrement_de_dette_jugement" class="form-label">
+                                    <i class="fas fa-gavel text-warning"></i>Recouvrement de Dette Jugement
+                                </label>
+                                <select class="form-select" id="recouvrement_de_dette_jugement" name="recouvrement_de_dette_jugement">
+                                    <option value="">Sélectionnez une option</option>
+                                    {% for choice in recouvrement_choices_list %}
+                                    <option value="{{ choice.value }}">{{ choice.label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    État du recouvrement de dette jugement
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="comportement_de_paiement" class="form-label">
+                                    <i class="fas fa-credit-card text-success"></i>Comportement de Paiement
+                                </label>
+                                <select class="form-select" id="comportement_de_paiement" name="comportement_de_paiement">
+                                    <option value="">Sélectionnez une option</option>
+                                    {% for choice in paiement_choices_list %}
+                                    <option value="{{ choice.value }}">{{ choice.label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Évaluation du comportement de paiement
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-vente" id="submitBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer les conditions de vente</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette fiche de conditions de vente ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="fw-bold mt-3" id="deleteVenteTitle"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/condition-vente/`;
+    const CONDITIONS_API_URL = '/api/conditions-vente/';
+    const CHOICES_API_URL = '/api/condition-vente/choices/';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentVenteId = null;
+    let conditionsData = [];
+    let recouvrementChoices = [];
+    let paiementChoices = [];
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('#local').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez les conditions',
+            allowClear: true,
+            width: '100%',
+            closeOnSelect: false
+        });
+        
+        $('#recouvrement_de_dette_jugement, #comportement_de_paiement').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une option',
+            width: '100%'
+        });
+    }
+    
+    // Charger les conditions disponibles
+    function loadConditions() {
+        $.ajax({
+            url: CONDITIONS_API_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                console.log('Réponse API conditions:', response);
+                
+                // Vérifier la structure de la réponse
+                if (Array.isArray(response)) {
+                    conditionsData = response;
+                } else if (response.results && Array.isArray(response.results)) {
+                    conditionsData = response.results;
+                } else if (response.data && Array.isArray(response.data)) {
+                    conditionsData = response.data;
+                } else {
+                    console.error('Structure de réponse inattendue:', response);
+                    conditionsData = [];
+                }
+                
+                updateSelect2Options();
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement des conditions:', xhr);
+                // Utiliser les données du template comme fallback
+                conditionsData = {{ conditions_json|safe }};
+                updateSelect2Options();
+            }
+        });
+    }
+    
+    // Charger les choix disponibles
+    function loadChoices() {
+        $.ajax({
+            url: CHOICES_API_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                recouvrementChoices = response.recouvrement_choices || [];
+                paiementChoices = response.paiement_choices || [];
+                updateChoicesSelect();
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement des choix:', xhr);
+                // Utiliser les données du template comme fallback
+                recouvrementChoices = {{ recouvrement_choices|safe }};
+                paiementChoices = {{ paiement_choices|safe }};
+                updateChoicesSelect();
+            }
+        });
+    }
+    
+    // Mettre à jour les options Select2
+    function updateSelect2Options() {
+        $('#local').empty();
+        
+        if (Array.isArray(conditionsData)) {
+            conditionsData.forEach(function(cond) {
+                if (cond && cond.id && cond.nom) {
+                    $('#local').append(new Option(cond.nom, cond.id, false, false));
+                }
+            });
+        }
+        
+        $('#local').trigger('change');
+    }
+    
+    // Mettre à jour les choix dans les selects
+    function updateChoicesSelect() {
+        // Recouvrement
+        $('#recouvrement_de_dette_jugement').empty();
+        $('#recouvrement_de_dette_jugement').append(new Option('Sélectionnez une option', '', true, false));
+        
+        if (Array.isArray(recouvrementChoices)) {
+            recouvrementChoices.forEach(function(choice) {
+                if (choice && choice.value && choice.label) {
+                    $('#recouvrement_de_dette_jugement').append(new Option(choice.label, choice.value, false, false));
+                }
+            });
+        }
+        
+        // Paiement
+        $('#comportement_de_paiement').empty();
+        $('#comportement_de_paiement').append(new Option('Sélectionnez une option', '', true, false));
+        
+        if (Array.isArray(paiementChoices)) {
+            paiementChoices.forEach(function(choice) {
+                if (choice && choice.value && choice.label) {
+                    $('#comportement_de_paiement').append(new Option(choice.label, choice.value, false, false));
+                }
+            });
+        }
+        
+        $('#recouvrement_de_dette_jugement, #comportement_de_paiement').trigger('change');
+    }
+    
+    // Mettre à jour l'affichage après modification
+    function updateVenteDisplay(venteData) {
+        // Mettre à jour les tags locaux
+        const localTags = venteData.local_list || [];
+        let localTagsHtml = '';
+        if (localTags.length > 0) {
+            localTags.forEach(function(item) {
+                localTagsHtml += `<span class="condition-tag"><i class="fas fa-tag"></i> ${item.nom}</span>`;
+            });
+        } else {
+            localTagsHtml = '<span class="text-muted fst-italic">Aucune condition locale spécifiée</span>';
+        }
+        $('#localTags').html(localTagsHtml);
+        
+        // Mettre à jour le recouvrement
+        const jugementContent = venteData.recouvrement_de_dette_jugement ? 
+            `<span class="badge-choice jugement"><i class="fas fa-balance-scale me-2"></i>${venteData.recouvrement_de_dette_jugement}</span>` : 
+            '<span class="text-muted fst-italic">Non spécifié</span>';
+        $('#jugementContent').html(jugementContent);
+        
+        // Mettre à jour le comportement de paiement
+        const paiementContent = venteData.comportement_de_paiement ? 
+            `<span class="badge-choice paiement"><i class="fas fa-credit-card me-2"></i>${venteData.comportement_de_paiement}</span>` : 
+            '<span class="text-muted fst-italic">Non spécifié</span>';
+        $('#paiementContent').html(paiementContent);
+        
+        // Mettre à jour les dates
+        if (venteData.created_at_formatted) {
+            $('#createdAtValue').text(venteData.created_at_formatted);
+        }
+        if (venteData.updated_at_formatted) {
+            $('#updatedAtValue').text(venteData.updated_at_formatted);
+        }
+        
+        // Mettre à jour le compteur
+        $('.badge-count').text(localTags.length);
+        
+        // Mettre à jour les métadonnées
+        $('.meta-value').eq(2).text(localTags.length);
+        
+        // Animation de mise à jour
+        $('#venteCard').addClass('vente-content-loaded');
+    }
+    
+    // Afficher l'indicateur d'édition
+    function showEditingIndicator() {
+        $('#editingIndicator').addClass('show');
+    }
+    
+    // Cacher l'indicateur d'édition
+    function hideEditingIndicator() {
+        setTimeout(() => {
+            $('#editingIndicator').removeClass('show');
+        }, 500);
+    }
+    
+    // Ouvrir le modal pour créer de nouvelles conditions
+    function openCreateModal() {
+        $('#modalTitle').html('<i class="fas fa-plus-circle me-2"></i>Nouvelles Conditions de Vente');
+        $('#venteForm')[0].reset();
+        $('#venteId').val('');
+        $('#local, #recouvrement_de_dette_jugement, #comportement_de_paiement').val(null).trigger('change');
+        $('#venteModal').modal('show');
+    }
+    
+    // Gérer le clic sur le bouton "Créer les conditions de vente"
+    $(document).on('click', '.btn-vente.btn-lg', function(e) {
+        e.preventDefault();
+        if ($(this).text().includes('Créer les conditions de vente')) {
+            openCreateModal();
+        }
+    });
+    
+    // Bouton pour modifier les conditions
+    $(document).on('click', '.edit-vente-btn', function() {
+        currentVenteId = $(this).data('id');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response.exists === false) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Ces conditions de vente n\'existent plus'
+                    });
+                    return;
+                }
+                
+                $('#modalTitle').html('<i class="fas fa-edit me-2"></i>Modifier les Conditions de Vente');
+                $('#venteId').val(response.id);
+                
+                // Sélectionner les options
+                if (response.recouvrement_de_dette_jugement) {
+                    $('#recouvrement_de_dette_jugement').val(response.recouvrement_de_dette_jugement).trigger('change');
+                }
+                if (response.comportement_de_paiement) {
+                    $('#comportement_de_paiement').val(response.comportement_de_paiement).trigger('change');
+                }
+                
+                // Sélectionner les conditions locales
+                const localIds = response.local_list ? response.local_list.map(item => item.id) : [];
+                $('#local').val(localIds).trigger('change');
+                
+                $('#venteModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails des conditions de vente.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de création/modification
+    $('#venteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $btn = $('#submitBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Préparer les données
+        const formData = {
+            recouvrement_de_dette_jugement: $('#recouvrement_de_dette_jugement').val() || '',
+            comportement_de_paiement: $('#comportement_de_paiement').val() || '',
+            local: $('#local').val() || []
+        };
+        
+        // Validation
+        if (!formData.recouvrement_de_dette_jugement && !formData.comportement_de_paiement && formData.local.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Formulaire incomplet',
+                text: 'Veuillez remplir au moins un champ avant d\'enregistrer.'
+            });
+            return;
+        }
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        // Déterminer si c'est une création ou une modification
+        const venteId = $('#venteId').val();
+        const method = venteId ? 'PUT' : 'POST';
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#venteModal').modal('hide');
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Mettre à jour l'affichage
+                updateVenteDisplay(response.data || response);
+                
+                // Mettre à jour l'état de la page
+                if (!venteId) {
+                    // Si création, remplacer l'état vide par la carte
+                    $('.vente-empty-state').remove();
+                    const venteCardHtml = generateVenteCardHtml(response);
+                    $('.col-12').append(venteCardHtml);
+                }
+                
+                // Message de succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Conditions de vente enregistrées avec succès',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'enregistrement des conditions de vente';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        errorMessage = JSON.stringify(xhr.responseJSON);
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Fonction pour générer le HTML de la carte après création
+    function generateVenteCardHtml(responseData) {
+        const data = responseData.data || responseData;
+        const localTags = data.local_list || [];
+        
+        const localTagsHtml = localTags.length > 0 ? 
+            localTags.map(item => 
+                `<span class="condition-tag"><i class="fas fa-tag"></i> ${item.nom}</span>`
+            ).join('') : 
+            '<span class="text-muted fst-italic">Aucune condition locale spécifiée</span>';
+        
+        const jugementHtml = data.recouvrement_de_dette_jugement ? 
+            `<span class="badge-choice jugement"><i class="fas fa-balance-scale me-2"></i>${data.recouvrement_de_dette_jugement}</span>` : 
+            '<span class="text-muted fst-italic">Non spécifié</span>';
+        
+        const paiementHtml = data.comportement_de_paiement ? 
+            `<span class="badge-choice paiement"><i class="fas fa-credit-card me-2"></i>${data.comportement_de_paiement}</span>` : 
+            '<span class="text-muted fst-italic">Non spécifié</span>';
+        
+        const localCount = localTags.length;
+        
+        return `
+            <div class="vente-single-card vente-content-loaded" id="venteCard" data-id="${data.id}">
+                <div class="vente-status">
+                    <i class="fas fa-check-circle me-2"></i>Conditions enregistrées
+                </div>
+                <br><br>
+                
+                <div class="vente-single-header">
+                    <div>
+                        <h2 class="vente-single-title">Conditions de Vente</h2>
+                        <p class="vente-single-subtitle">
+                            Fiche des conditions de vente de {{ acheteur.nom }}
+                        </p>
+                    </div>
+                    <div class="vente-single-actions">
+                        <button class="btn btn-vente-outline edit-vente-btn" data-id="${data.id}">
+                            <i class="fas fa-edit me-2"></i>Modifier
+                        </button>
+                        <button class="btn btn-danger delete-vente-btn" data-id="${data.id}">
+                            <i class="fas fa-trash me-2"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+
+                <div class="vente-sections">
+                    <div class="vente-section-card local">
+                        <div class="vente-section-header">
+                            <div class="vente-section-icon local">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <h3 class="vente-section-title">
+                                Conditions Locales
+                                <span class="badge-count">${localCount}</span>
+                            </h3>
+                        </div>
+                        <div class="condition-tags-container">
+                            <div class="condition-tags" id="localTags">
+                                ${localTagsHtml}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="vente-section-card jugement">
+                        <div class="vente-section-header">
+                            <div class="vente-section-icon jugement">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <h3 class="vente-section-title">Recouvrement de Dette</h3>
+                        </div>
+                        <div class="vente-section-content" id="jugementContent">
+                            ${jugementHtml}
+                        </div>
+                    </div>
+
+                    <div class="vente-section-card paiement">
+                        <div class="vente-section-header">
+                            <div class="vente-section-icon paiement">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <h3 class="vente-section-title">Comportement de Paiement</h3>
+                        </div>
+                        <div class="vente-section-content" id="paiementContent">
+                            ${paiementHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vente-meta-grid mt-4">
+                    <div class="meta-card">
+                        <div class="meta-icon">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <div class="meta-label">Créé le</div>
+                        <div class="meta-value" id="createdAtValue">${data.created_at_formatted || ''}</div>
+                    </div>
+                    
+                    <div class="meta-card">
+                        <div class="meta-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="meta-label">Modifié le</div>
+                        <div class="meta-value" id="updatedAtValue">${data.updated_at_formatted || ''}</div>
+                    </div>
+                    
+                    <div class="meta-card">
+                        <div class="meta-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="meta-label">Conditions Locales</div>
+                        <div class="meta-value">${localCount}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+    
+    // Bouton de suppression
+    $(document).on('click', '.delete-vente-btn', function() {
+        currentVenteId = $(this).data('id');
+        const venteTitle = $(this).closest('.vente-single-card').find('.vente-single-title').text();
+        
+        $('#deleteVenteTitle').text(venteTitle);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentVenteId) return;
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Supprimer la carte et afficher l'état vide
+                $('#venteCard').remove();
+                const emptyStateHtml = `
+                    <div class="vente-empty-state">
+                        <div class="vente-empty-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <h2 class="vente-empty-title">Aucune condition de vente enregistrée</h2>
+                        <p class="vente-empty-subtitle">
+                            Cet acheteur ne possède pas encore de fiche de conditions de vente.<br>
+                            Créez une fiche pour gérer les conditions locales, recouvrement et comportement de paiement.
+                        </p>
+                        <button class="btn btn-vente btn-lg" onclick="openCreateModal()">
+                            <i class="fas fa-plus-circle me-2"></i>Créer les conditions de vente
+                        </button>
+                    </div>`;
+                
+                $('.col-12').append(emptyStateHtml);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Conditions de vente supprimées avec succès',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || xhr.responseJSON?.error || 'Impossible de supprimer les conditions de vente'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialisation
+    initSelect2();
+    loadConditions();
+    loadChoices();
+    
+    // Exposer la fonction openCreateModal globalement
+    window.openCreateModal = openCreateModal;
+});
+</script>
+{% endblock %}

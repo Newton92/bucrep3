@@ -1,0 +1,582 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+
+{% block styles %}
+<!-- Bootstrap Select CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<style>
+    #score-image {
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    #score-image:hover {
+        transform: scale(1.05);
+    }
+    
+    #score-range {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Scoring de défaillance pour l'acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countRiskRatings">Module de Gestion du Scoring sans bilan</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une évaluation 
+                        du score de l'acheteur notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Score actuel -->
+    <!-- Dans votre template, remplacez l'affichage du score -->
+    <div class="col-sm-6 col-xl-6">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h5 class="card-title">Score actuel : 
+                        <span id="current-score" class="fw-bold fs-3">--</span>
+                    </h5>
+                    <p class="card-text" id="current-interpretation">--</p>
+                    <small class="text-muted" id="last-update">
+                        Dernière mise à jour: <span id="update-time">--</span>
+                    </small>
+                    
+                    <!-- Nouvelle section pour l'image du score -->
+                    <div class="mt-3 text-center">
+                        <div id="score-image-container">
+                            <img id="score-image" src="" alt="Niveau de risque" class="img-fluid" style="max-height: 150px; display: none;">
+                        </div>
+                        <div id="score-range" class="mt-2 small text-muted"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="col-sm-6 col-xl-6">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <form id="scoring-form" class="mt-4 col-sm-12">
+                    {% csrf_token %}
+                    <div class="form-group col-sm-12">
+                        <label for="comportement_de_paiement_ref">Comportement de paiement</label>
+                        <select class="form-control" id="comportement_de_paiement_ref" name="comportement_de_paiement_ref">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="age_company_ref">Âge de la société</label>
+                        <select class="form-control" id="age_company_ref" name="age_company_ref">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="forme_juridique">Forme juridique</label>
+                        <select class="form-control" id="forme_juridique" name="forme_juridique">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="avis_commercial_ref">Avis commercial</label>
+                        <select class="form-control" id="avis_commercial_ref" name="avis_commercial_ref">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="locaux_ref">Locaux</label>
+                        <select class="form-control" id="locaux_ref" name="locaux_ref">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="categories_nace_ref">Catégories NACE</label>
+                        <label for="categories_nace_ref">Catégories NACE</label>
+                        <select class="form-control selectpicker" id="categories_nace_ref" name="categories_nace_ref" multiple data-live-search="true" data-size="10" title="-- Sélectionnez une ou plusieurs catégories --">
+                            <option value="">-- Sélectionnez --</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="form-group col-sm-12">
+                        <label for="commentaire">Commentaire</label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
+                    </div>
+                    <br>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<!-- Pour la recherche en français (optionnel) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/i18n/defaults-fr_FR.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+<!-- TinyMCE -->
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#commentaire',
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 200
+        });
+    });
+</script>
+
+
+
+<script>
+
+
+$(document).ready(function() {
+    const acheteurId = '{{ id_acheteur }}';
+    const accessToken = "{{ access }}";
+    
+    console.log("=== DÉBUT DU DEBUG ===");
+    console.log("Acheteur ID:", acheteurId);
+    console.log("Token:", accessToken ? "PRÉSENT" : "MANQUANT");
+
+    // Fonction pour mettre à jour l'heure de dernière mise à jour
+    function updateLastUpdateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR');
+        const dateString = now.toLocaleDateString('fr-FR');
+        $('#update-time').text(`${dateString} à ${timeString}`);
+    }
+
+    // Fonction pour déterminer l'image à afficher en fonction du score
+    function getScoreImage(score) {
+        // Arrondir le score à l'entier le plus proche
+        const roundedScore = Math.round(score);
+        
+        // S'assurer que le score est entre 0 et 10
+        const finalScore = Math.max(0, Math.min(10, roundedScore));
+        
+        console.log(`🖼️ Score: ${score} → Arrondi: ${finalScore}`);
+        
+        // Retourner le chemin de l'image
+        return `/static/scoring/${finalScore}.png`;
+    }
+
+    // Fonction pour obtenir la description de la plage de score
+    function getScoreRangeDescription(score) {
+        const roundedScore = Math.round(score);
+        
+        const ranges = {
+            0: "Procédure d'insolvabilité",
+            1: "Risque extrêmement élevé",
+            2: "Risque très élevé", 
+            3: "Risque élevé",
+            4: "Risque important",
+            5: "Risque moyennement élevé",
+            6: "Risque acceptable",
+            7: "Risque modéré",
+            8: "Risque faible",
+            9: "Risque très faible",
+            10: "Risque excellent"
+        };
+        
+        return ranges[roundedScore] || "Non défini";
+    }
+
+    // Fonction pour mettre à jour l'affichage de l'image du score
+    function updateScoreImage(score) {
+        const imageElement = $('#score-image');
+        const rangeElement = $('#score-range');
+        
+        if (score !== undefined && score !== null) {
+            const imagePath = getScoreImage(score);
+            const rangeDescription = getScoreRangeDescription(score);
+            
+            console.log(`🖼️ Chargement de l'image: ${imagePath}`);
+            
+            // Mettre à jour l'image
+            imageElement.attr('src', imagePath);
+            imageElement.attr('alt', `Niveau de risque: ${rangeDescription}`);
+            imageElement.show();
+            
+            // Mettre à jour la description
+            rangeElement.text(`Plage: ${rangeDescription}`);
+        } else {
+            imageElement.hide();
+            rangeElement.text('');
+        }
+    }
+
+    // Fonction pour précharger les images (optionnel mais recommandé)
+    function preloadScoreImages() {
+        const images = [];
+        for (let i = 0; i <= 10; i++) {
+            const img = new Image();
+            img.src = `/static/scoring/${i}.png`;
+            images.push(img);
+        }
+        console.log("🖼️ Préchargement des images de scoring terminé");
+    }
+
+
+    // Fonction pour afficher les notifications SweetAlert
+    function showAlert(icon, title, text, timer = 3000) {
+        Swal.fire({
+            icon: icon,
+            title: title,
+            text: text,
+            timer: timer,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    }
+
+    // Fonction pour charger les options avec debug
+    function loadOptions(url, selectId) {
+        console.log(`Chargement de ${selectId} depuis ${url}`);
+        
+        return $.ajax({
+            url: url,
+            headers: {"Authorization": "Bearer " + accessToken},
+            success: function(response) {
+                console.log(`✅ Réponse ${selectId}:`, response);
+                
+                // EXTRAIRE les données du tableau 'results' de la réponse paginée
+                const data = response.results || response;
+                console.log(`📊 Données ${selectId}:`, data);
+                
+                const select = $(`#${selectId}`);
+                if (select.length === 0) {
+                    console.error(`❌ Élément #${selectId} non trouvé dans le DOM`);
+                    return;
+                }
+                
+                select.empty();
+                
+                if (selectId === "categories_nace_ref") {
+                    // Pour le select multiple avec Bootstrap Select
+                    data.forEach(item => {
+                        select.append(new Option(item.libelle, item.id));
+                    });
+                    console.log(`📋 ${selectId} rempli avec ${data.length} options`);
+                    
+                    // Initialiser Bootstrap Select après avoir ajouté les options
+                    select.selectpicker('refresh');
+                } else {
+                    // Pour les champs simples
+                    select.append(new Option("-- Sélectionnez --", ""));
+                    data.forEach(item => {
+                        select.append(new Option(item.libelle, item.id));
+                    });
+                    console.log(`📋 ${selectId} rempli avec ${data.length} options`);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(`❌ Erreur ${selectId}:`, {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText
+                });
+            }
+        });
+    }
+
+    // Charger les données du scoring avec debug
+    function loadScoring() {
+        console.log(`Chargement du scoring pour acheteur ${acheteurId}`);
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/scoring/`,
+            headers: {"Authorization": "Bearer " + accessToken},
+            success: function(data) {
+                console.log("📊 Données du scoring:", data);
+                
+                // Mettre à jour l'affichage du score
+                updateScoreDisplay(data);
+
+                // Dans loadScoring(), après updateScoreDisplay(data);
+                updateLastUpdateTime();
+                
+                // Mettre à jour les champs du formulaire
+                updateFormFields(data);
+
+                console.log("🔄 Application des valeurs aux dropdowns...");
+                
+                // Appliquer les valeurs aux dropdowns
+                applyScoringValues(data);
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ Erreur chargement scoring:", {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText
+                });
+                
+                // Afficher des valeurs par défaut en cas d'erreur
+                $("#current-score").text('0.0');
+                $("#current-interpretation").text('--');
+            }
+        });
+    }
+
+    // Fonction pour mettre à jour l'affichage du score
+    // Fonction pour mettre à jour l'affichage du score
+    function updateScoreDisplay(data) {
+        const score = data.scoring_value !== undefined ? data.scoring_value : 0.0;
+        const interpretation = data.interpretation || 'Aucune interprétation disponible';
+        
+        $("#current-score").text(score.toFixed(2));
+        $("#current-interpretation").text(interpretation);
+        
+        // Mettre à jour l'image du score
+        updateScoreImage(score);
+        
+        // Optionnel: Changer la couleur en fonction du score
+        updateScoreColor(score);
+    }
+
+    // Fonction pour mettre à jour la couleur du score
+    function updateScoreColor(score) {
+        const scoreElement = $("#current-score");
+        scoreElement.removeClass('text-success text-warning text-danger');
+        
+        if (score >= 7.5) {
+            scoreElement.addClass('text-success');
+        } else if (score >= 5.0) {
+            scoreElement.addClass('text-warning');
+        } else {
+            scoreElement.addClass('text-danger');
+        }
+    }
+
+    // Fonction pour mettre à jour les champs du formulaire
+    function updateFormFields(data) {
+        // Mettre à jour le commentaire
+        if (data.commentaire) {
+            if (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) {
+                tinymce.get('commentaire').setContent(data.commentaire);
+            } else {
+                $("#commentaire").val(data.commentaire);
+            }
+        } else {
+            if (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) {
+                tinymce.get('commentaire').setContent('');
+            } else {
+                $("#commentaire").val('');
+            }
+        }
+    }
+
+    // Fonction pour appliquer les valeurs du scoring aux dropdowns
+    function applyScoringValues(data) {
+        const mappings = [
+            { selector: "#comportement_de_paiement_ref", value: data.comportement_de_paiement_ref?.id },
+            { selector: "#age_company_ref", value: data.age_company_ref?.id },
+            { selector: "#forme_juridique", value: data.forme_juridique?.id },
+            { selector: "#avis_commercial_ref", value: data.avis_commercial_ref?.id },
+            { selector: "#locaux_ref", value: data.locaux_ref?.id }
+        ];
+
+        mappings.forEach(mapping => {
+            if (mapping.value) {
+                const select = $(mapping.selector);
+                if (select.length > 0) {
+                    select.val(mapping.value.toString());
+                    console.log(`✓ ${mapping.selector} = ${mapping.value}`);
+                } else {
+                    console.log(`⚠️ Sélecteur ${mapping.selector} non trouvé`);
+                }
+            } else {
+                // Réinitialiser si aucune valeur
+                $(mapping.selector).val('');
+            }
+        });
+
+        // Gestion des catégories NACE (multiple avec Bootstrap Select)
+        if (data.categories_nace_ref && data.categories_nace_ref.length > 0) {
+            const naceIds = data.categories_nace_ref.map(cat => cat.id.toString());
+            $("#categories_nace_ref").selectpicker('val', naceIds);
+            console.log(`✓ categories_nace_ref =`, naceIds);
+        } else {
+            // Réinitialiser si aucune catégorie
+            $("#categories_nace_ref").selectpicker('val', []);
+        }
+    }
+
+    // Gestion de la soumission du formulaire
+    // Gestion de la soumission du formulaire
+    $("#scoring-form").on("submit", function(e) {
+        e.preventDefault();
+        console.log("📤 Soumission du formulaire...");
+        
+        // Afficher un indicateur de chargement
+        const submitButton = $(this).find('button[type="submit"]');
+        const originalText = submitButton.text();
+        submitButton.html('<i class="spinner-border spinner-border-sm me-2"></i>Mise à jour...');
+        submitButton.prop('disabled', true);
+        
+        // Récupérer toutes les valeurs avec debug
+        const formData = {
+            comportement_de_paiement_ref_id: $("#comportement_de_paiement_ref").val() || null,
+            age_company_ref_id: $("#age_company_ref").val() || null,
+            forme_juridique_id: $("#forme_juridique").val() || null,
+            avis_commercial_ref_id: $("#avis_commercial_ref").val() || null,
+            locaux_ref_id: $("#locaux_ref").val() || null,
+            categories_nace_ref_ids: $("#categories_nace_ref").val() || [], // Note: 'categories_nace_ref_ids' au lieu de 'categories_nace_ref'
+            commentaire: (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) 
+                ? tinymce.get('commentaire').getContent() 
+                : $("#commentaire").val(),
+        };
+
+        console.log("📦 Données envoyées:", formData);
+        console.log("🔍 Vérification des IDs:", {
+            comportement: formData.comportement_de_paiement_ref_id,
+            age: formData.age_company_ref_id,
+            forme: formData.forme_juridique_id,
+            avis: formData.avis_commercial_ref_id,
+            locaux: formData.locaux_ref_id,
+            nace_categories: formData.categories_nace_ref_ids
+        });
+
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/scoring/`,
+            method: "PATCH",
+            headers: {
+                "Authorization": "Bearer " + accessToken,
+                "X-CSRFToken": $("input[name=csrfmiddlewaretoken]").val(),
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(formData),
+            success: function(data) {
+                console.log("✅ Scoring mis à jour:", data);
+                
+                // Réactiver le bouton
+                submitButton.html(originalText);
+                submitButton.prop('disabled', false);
+                
+                // Afficher le succès avec SweetAlert
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès !',
+                    html: `
+                        <div class="text-center">
+                            <h5>Score mis à jour !</h5>
+                            <p class="mb-2">Nouveau score: <strong>${data.scoring_value.toFixed(2)}/10</strong></p>
+                            <p class="text-muted small">${data.interpretation}</p>
+                        </div>
+                    `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6'
+                }).then((result) => {
+                    // Recharger les données pour afficher les nouvelles valeurs
+                    loadScoring();
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ Erreur mise à jour:", {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText
+                });
+                
+                // Réactiver le bouton
+                submitButton.html(originalText);
+                submitButton.prop('disabled', false);
+                
+                // Afficher l'erreur avec SweetAlert
+                let errorMessage = "Une erreur s'est produite lors de la mise à jour.";
+                if (xhr.responseText) {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        errorMessage = errorData.detail || errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = xhr.responseText.substring(0, 200) + '...';
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        });
+    });
+
+
+    // === DÉMARRAGE ===
+    console.log("🚀 Démarrage du chargement...");
+
+    // Précharger les images de scoring
+    preloadScoreImages();
+    
+    // Initialiser Bootstrap Select pour le champ categories_nace_ref
+    if ($('#categories_nace_ref').length) {
+        $('#categories_nace_ref').selectpicker({
+            liveSearch: true,
+            size: 10,
+            selectedTextFormat: 'count > 3',
+            countSelectedText: '{0} catégories sélectionnées',
+            noneSelectedText: '-- Sélectionnez --'
+        });
+    }
+    
+    // Charger les options après un court délai
+    setTimeout(() => {
+        console.log("📥 Chargement des options...");
+        
+        // Charger toutes les options séquentiellement
+        loadOptions("/api/comportement-paiement/", "comportement_de_paiement_ref")
+            .then(() => loadOptions("/api/age-societe/", "age_company_ref"))
+            .then(() => loadOptions("/api/forme-juridique/", "forme_juridique"))
+            .then(() => loadOptions("/api/avis-commercial/", "avis_commercial_ref"))
+            .then(() => loadOptions("/api/bail/", "locaux_ref"))
+            .then(() => loadOptions("/api/categorie-nace/", "categories_nace_ref"))
+            .then(() => {
+                console.log("✅ Toutes les options chargées");
+                // Charger le scoring après que les options soient chargées
+                setTimeout(loadScoring, 500);
+            })
+            .catch(error => {
+                console.error("❌ Erreur lors du chargement des options:", error);
+                showAlert('error', 'Erreur', 'Impossible de charger les options');
+            });
+    }, 500);
+});
+
+</script>
+{% endblock %}

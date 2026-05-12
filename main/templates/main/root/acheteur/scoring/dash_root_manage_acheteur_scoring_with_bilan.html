@@ -1,0 +1,1631 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<!-- Optimisation des imports CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* Variables CSS avec palette bleue unifiée */
+    :root {
+        --primary-color: #0d80be;
+        --secondary-color: #25add6;
+        --accent-color: #0a95ca;
+        --light-color: #fcfefe;
+        --dark-color: #106cb2;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --info-color: #3498db;
+        --primary-gradient: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        --secondary-gradient: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+        --success-gradient: linear-gradient(135deg, #2ecc71, #27ae60);
+        --warning-gradient: linear-gradient(135deg, #f39c12, #e67e22);
+        --danger-gradient: linear-gradient(135deg, #e74c3c, #c0392b);
+        --shadow-sm: 0 2px 8px rgba(12, 128, 190, 0.08);
+        --shadow-md: 0 4px 12px rgba(12, 128, 190, 0.1);
+        --shadow-lg: 0 10px 30px rgba(12, 128, 190, 0.15);
+        --shadow-xl: 0 20px 40px rgba(12, 128, 190, 0.2);
+        --border-radius-sm: 8px;
+        --border-radius-md: 12px;
+        --border-radius-lg: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background-color: #f8fafc;
+    }
+
+    /* Header premium avec effet shimmer */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 600px;
+    }
+
+    /* Cartes premium */
+    .enhanced-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        border: none;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        overflow: hidden;
+    }
+
+    .enhanced-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card-header-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        color: white;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
+        padding: 1.5rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-header-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    /* Styles pour les informations acheteur */
+    .acheteur-info-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        border-radius: 10px;
+        background: rgba(13, 128, 190, 0.03);
+        transition: var(--transition);
+    }
+
+    .acheteur-info-item:hover {
+        background: rgba(13, 128, 190, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .acheteur-info-item i {
+        color: var(--accent-color);
+        font-size: 1.25rem;
+        width: 24px;
+    }
+
+    .badge-premium {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Tabs améliorées */
+    .nav-tabs-custom {
+        border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+        padding: 0 2rem;
+        background: white;
+    }
+
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        margin-bottom: -2px;
+        transition: var(--transition);
+        border-radius: 8px 8px 0 0;
+        background: transparent;
+    }
+
+    .nav-tabs-custom .nav-link:hover {
+        color: var(--primary-color);
+        background-color: rgba(13, 128, 190, 0.05);
+    }
+
+    .nav-tabs-custom .nav-link.active {
+        color: var(--primary-color);
+        background-color: white;
+        border-bottom: 3px solid var(--primary-color);
+        font-weight: 700;
+        box-shadow: 0 -2px 10px rgba(13, 128, 190, 0.1);
+    }
+
+    /* Score Cards premium */
+    .score-card {
+        background: white;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+        border-radius: var(--border-radius-md);
+        padding: 1.75rem;
+        transition: var(--transition);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .score-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary-gradient);
+    }
+
+    .score-card.score-excellent { background: linear-gradient(135deg, rgba(46, 204, 113, 0.05), rgba(39, 174, 96, 0.02)); }
+    .score-card.score-good { background: linear-gradient(135deg, rgba(52, 152, 219, 0.05), rgba(41, 128, 185, 0.02)); }
+    .score-card.score-moderate { background: linear-gradient(135deg, rgba(243, 156, 18, 0.05), rgba(230, 126, 34, 0.02)); }
+    .score-card.score-poor { background: linear-gradient(135deg, rgba(231, 76, 60, 0.05), rgba(192, 57, 43, 0.02)); }
+    .score-card.score-critical { background: linear-gradient(135deg, rgba(192, 57, 43, 0.08), rgba(155, 44, 44, 0.04)); }
+
+    .score-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+        border-color: rgba(13, 128, 190, 0.2);
+    }
+
+    .score-value {
+        font-size: 3.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin: 1rem 0;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    .score-label {
+        font-size: 0.9rem;
+        color: var(--dark-color);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        opacity: 0.8;
+    }
+
+    /* Progress bars améliorées */
+    .progress-custom {
+        height: 10px;
+        border-radius: 5px;
+        background-color: rgba(13, 128, 190, 0.1);
+        overflow: hidden;
+        margin: 1.5rem 0;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar-custom {
+        border-radius: 5px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--secondary-gradient);
+    }
+
+    /* Badges premium */
+    .risk-badge {
+        padding: 0.5rem 1.25rem;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .risk-badge.risk-low {
+        background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(39, 174, 96, 0.1));
+        color: #27ae60;
+    }
+
+    .risk-badge.risk-moderate {
+        background: linear-gradient(135deg, rgba(243, 156, 18, 0.15), rgba(230, 126, 34, 0.1));
+        color: #f39c12;
+    }
+
+    .risk-badge.risk-high {
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+        color: #e74c3c;
+    }
+
+    .risk-badge.risk-very-high {
+        background: linear-gradient(135deg, rgba(192, 57, 43, 0.2), rgba(155, 44, 44, 0.15));
+        color: #c0392b;
+    }
+
+    .risk-badge.risk-critical {
+        background: linear-gradient(135deg, rgba(155, 44, 44, 0.25), rgba(128, 39, 39, 0.2));
+        color: #9b2c2c;
+    }
+
+    /* Tableaux premium */
+    .table-enhanced {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        background: white;
+    }
+
+    .table-enhanced thead th {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: white;
+        border: none;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        position: relative;
+    }
+
+    .table-enhanced thead th::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .table-enhanced tbody td {
+        padding: 0.875rem 1.25rem;
+        border-top: 1px solid rgba(13, 128, 190, 0.1);
+        transition: var(--transition);
+    }
+
+    .table-enhanced tbody tr:hover td {
+        background-color: rgba(13, 128, 190, 0.03);
+    }
+
+    /* Boutons premium */
+    .btn-action {
+        border-radius: var(--border-radius-md);
+        font-weight: 600;
+        padding: 0.75rem 1.75rem;
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .btn-action::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+
+    .btn-action:hover::before {
+        left: 100%;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--accent-color);
+        color: var(--accent-color);
+        background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        color: white;
+    }
+
+    /* Alertes premium */
+    .alert-enhanced {
+        border: none;
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem 1.75rem;
+        box-shadow: var(--shadow-sm);
+        background: white;
+        border-left: 4px solid;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .alert-enhanced::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+        background: currentColor;
+        opacity: 0.2;
+    }
+
+    .alert-info {
+        border-left-color: var(--info-color);
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.05), rgba(41, 128, 185, 0.02));
+    }
+
+    .alert-success {
+        border-left-color: var(--success-color);
+        background: linear-gradient(135deg, rgba(46, 204, 113, 0.05), rgba(39, 174, 96, 0.02));
+    }
+
+    .alert-warning {
+        border-left-color: var(--warning-color);
+        background: linear-gradient(135deg, rgba(243, 156, 18, 0.05), rgba(230, 126, 34, 0.02));
+    }
+
+    .alert-danger {
+        border-left-color: var(--danger-color);
+        background: linear-gradient(135deg, rgba(231, 76, 60, 0.05), rgba(192, 57, 43, 0.02));
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Score image container premium */
+    .score-image-container {
+        background: linear-gradient(135deg, rgba(13, 128, 190, 0.05), rgba(10, 149, 202, 0.02));
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 180px;
+        border: 2px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .score-image {
+        max-height: 140px;
+        transition: transform var(--transition);
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+    }
+
+    .score-image:hover {
+        transform: scale(1.1);
+    }
+
+    /* Timeline premium */
+    .timeline-enhanced {
+        position: relative;
+        padding-left: 2.5rem;
+    }
+
+    .timeline-enhanced::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+    }
+
+    .timeline-item-enhanced {
+        position: relative;
+        padding-bottom: 2rem;
+        padding-left: 0.5rem;
+    }
+
+    .timeline-item-enhanced::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 0.5rem;
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 50%;
+        background: var(--secondary-color);
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(37, 173, 214, 0.2);
+        z-index: 2;
+    }
+
+    /* Grid amélioré */
+    .grid-gap-enhanced {
+        gap: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+        }
+        
+        .score-value {
+            font-size: 2.5rem;
+        }
+        
+        .nav-tabs-custom {
+            padding: 0 1rem;
+        }
+        
+        .nav-tabs-custom .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .card-header-gradient {
+            padding: 1.25rem 1.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .page-header {
+            padding: 1.25rem;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+        }
+    }
+
+    /* Select2 personnalisé */
+    .select2-container--bootstrap-5 {
+        width: 100% !important;
+    }
+
+    .select2-dropdown {
+        border: 2px solid rgba(13, 128, 190, 0.1);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-lg);
+        margin-top: 5px;
+        overflow: hidden;
+    }
+
+    .select2-results__option {
+        padding: 0.75rem 1.25rem;
+        transition: var(--transition);
+    }
+
+    .select2-results__option--highlighted {
+        background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)) !important;
+        color: white !important;
+    }
+
+    .select2-search--dropdown {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    /* Tooltip personnalisé */
+    .custom-tooltip {
+        position: relative;
+        cursor: help;
+    }
+
+    .custom-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--dark-color), var(--primary-color));
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.85rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 10px;
+        box-shadow: var(--shadow-lg);
+        min-width: 200px;
+        text-align: center;
+    }
+
+    .custom-tooltip:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--primary-color);
+        margin-bottom: -6px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Header premium -->
+<header class="page-header animate-fade-in-up">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div>
+            <h3 class="page-title mb-2 text-white">
+                <i class="fas fa-chart-network me-3"></i>{% trans "Scoring ACREMAC Multi-Bilans" %}
+            </h3>
+            <p class="page-subtitle">
+                Analyse complète de la santé financière sur différents formats de bilans
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-warning btn-action">
+                <i class="fas fa-arrow-left me-1"></i>{% trans "Retour à l'acheteur" %}
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Encart Acheteur Premium -->
+<div class="card enhanced-card mb-4 animate-fade-in-up">
+    <div class="card-header card-header-gradient">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h5 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h5>
+                <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+            </div>
+            <div class="text-md-end">
+                <span class="badge-premium">
+                    <i class="fas fa-hashtag me-2"></i>{{ acheteur.code|default:"N/A" }}
+                </span>
+                <p class="mb-0 mt-2 small opacity-75">{% trans "Code Acheteur" %}</p>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="acheteur-info-item">
+                    <i class="fas fa-briefcase"></i>
+                    <div>
+                        <small class="text-muted d-block">{% trans "Activité principale" %}</small>
+                        <span class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="acheteur-info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div>
+                        <small class="text-muted d-block">{% trans "Date création" %}</small>
+                        <span class="fw-bold">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="acheteur-info-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <small class="text-muted d-block">{% trans "Statut" %}</small>
+                        <span class="fw-bold text-warning">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="acheteur-info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <small class="text-muted d-block">{% trans "Localisation" %}</small>
+                        <span class="fw-bold">{{ acheteur.ville.nom|default:"Non spécifié" }}, {{ acheteur.pays.nom|default:"" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Onglets premium -->
+<div class="card enhanced-card mb-4">
+    <div class="card-header-gradient">
+        <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0 text-white">
+                <i class="fas fa-file-invoice-dollar me-2"></i>{% trans "Sélection du type de bilan" %}
+            </h5>
+            <span class="badge bg-white text-primary px-3 py-2">
+                <i class="fas fa-sync-alt me-1"></i>{% trans "En temps réel" %}
+            </span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="nav-tabs-custom">
+            <ul class="nav nav-tabs" id="bilanTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="classique-tab" data-bs-toggle="tab" data-bs-target="#classique" type="button" role="tab">
+                        <i class="fas fa-building me-2"></i>{% trans "Bilan Classique" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bancaire-tab" data-bs-toggle="tab" data-bs-target="#bancaire" type="button" role="tab">
+                        <i class="fas fa-university me-2"></i>{% trans "Bilan Bancaire" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="syscohada-tab" data-bs-toggle="tab" data-bs-target="#syscohada" type="button" role="tab">
+                        <i class="fas fa-globe-africa me-2"></i>{% trans "Bilan SYSCOHADA" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="anglais-tab" data-bs-toggle="tab" data-bs-target="#anglais" type="button" role="tab">
+                        <i class="fas fa-language me-2"></i>{% trans "Bilan Anglais" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ifrs-tab" data-bs-toggle="tab" data-bs-target="#ifrs" type="button" role="tab">
+                        <i class="fas fa-chart-line me-2"></i>{% trans "Bilan IFRS COBAC" %}
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="tab-content p-4" id="bilanTabsContent">
+            <!-- ID acheteur caché -->
+            <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
+            
+            <!-- Onglets -->
+            <div class="tab-pane fade show active" id="classique" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_classique.html' %}
+            </div>
+            <div class="tab-pane fade" id="bancaire" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_bancaire.html' %}
+            </div>
+            <div class="tab-pane fade" id="syscohada" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_syscohada.html' %}
+            </div>
+            <div class="tab-pane fade" id="anglais" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_anglais.html' %}
+            </div>
+            <div class="tab-pane fade" id="ifrs" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_ifrs.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section des résultats -->
+<div id="globalResultsSection" class="d-none animate-fade-in-up">
+    <div class="card enhanced-card mb-4">
+        <div class="card-header-gradient d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 text-white">
+                <i class="fas fa-chart-bar me-2"></i>{% trans "Résultats du Score ACREMAC" %}
+                <span class="badge bg-white text-primary ms-2 px-3" id="currentBilanType"></span>
+            </h5>
+            <button class="btn btn-sm btn-light" onclick="$('#globalResultsSection').addClass('d-none')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="card-body p-4">
+            <div id="globalResultsContent">
+                <!-- Les résultats seront injectés ici -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de comparaison multi-bilans -->
+<div class="card enhanced-card mb-4">
+    <div class="card-header-gradient">
+        <h5 class="card-title mb-0 text-white">
+            <i class="fas fa-balance-scale me-2"></i>{% trans "Comparaison Multi-Bilans" %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row grid-gap-enhanced" id="comparisonPanel">
+            <!-- Les scores de différents bilans apparaîtront ici -->
+            <div class="col-12 text-center text-muted py-5">
+                <i class="fas fa-chart-pie display-4 mb-3 text-primary opacity-50"></i>
+                <p class="mb-0">
+                    Calculez des scores sur différents types de bilans pour comparer
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations ACREMAC premium -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card enhanced-card h-100">
+            <div class="card-header-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-info-circle me-2"></i>{% trans "Guide des Ratios ACREMAC" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="timeline-enhanced">
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-primary me-2">R1</span> {% trans "Frais financiers / EBE" %}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Mesure la part des frais financiers dans l'excédent brut d'exploitation
+                                </p>
+                            </div>
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-success me-2">R2</span> (Créances + disponibilités) / Dettes CT
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Évalue la couverture des dettes à court terme
+                                </p>
+                            </div>
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-info me-2">R3</span> {% trans "Capitaux permanents / Passif" %}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Analyse la structure financière à long terme
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="timeline-enhanced">
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-warning me-2">R4</span> {% trans "Valeur ajoutée / Chiffre d'affaires" %}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Mesure la performance économique de l'entreprise
+                                </p>
+                            </div>
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-danger me-2">R5</span> {% trans "Trésorerie / Ventes (jours)" %}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Évalue l'autonomie financière à court terme
+                                </p>
+                            </div>
+                            <div class="timeline-item-enhanced">
+                                <h6 class="mb-2">
+                                    <span class="badge bg-dark me-2">R6</span> {% trans "Fonds de roulement / CA (jours)" %}
+                                </h6>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Analyse la couverture du besoin en fonds de roulement
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card enhanced-card h-100">
+            <div class="card-header-gradient">
+                <h5 class="card-title mb-0 text-white">
+                    <i class="fas fa-sliders-h me-2"></i>{% trans "Échelle des Scores" %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-danger rounded">
+                        <span class="risk-badge risk-critical">S < -4.01</span>
+                        <small class="text-muted">{% trans "Risque très élevé" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-warning rounded">
+                        <span class="risk-badge risk-high">-4.01 ≤ S < -2.57</span>
+                        <small class="text-muted">{% trans "Risque élevé" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-warning rounded">
+                        <span class="risk-badge risk-high">-2.57 ≤ S < -1.00</span>
+                        <small class="text-muted">{% trans "Risque important" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-info rounded">
+                        <span class="risk-badge risk-moderate">-1.00 ≤ S < 0.28</span>
+                        <small class="text-muted">{% trans "Risque modéré" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-success rounded">
+                        <span class="risk-badge risk-low">0.28 ≤ S < 1.26</span>
+                        <small class="text-muted">{% trans "Risque normal" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-success rounded">
+                        <span class="risk-badge risk-low">1.26 ≤ S < 2.10</span>
+                        <small class="text-muted">{% trans "Risque acceptable" %}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-start border-4 border-primary rounded">
+                        <span class="risk-badge risk-low">S ≥ 2.10</span>
+                        <small class="text-muted">{% trans "Risque faible à excellent" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chemins statiques -->
+<div id="staticPaths" data-scoring-images="/static/scoring/" style="display: none;"></div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Import Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Lodash pour les utilitaires -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+
+<script>
+// =============================================
+// GESTIONNAIRE PRINCIPAL OPTIMISÉ
+// =============================================
+
+const SCORING_MANAGER = {
+    // Configuration
+    API_BASE: '/api',
+    accessToken: '{{ access }}',
+    currentBilanType: 'classique',
+    allScores: {},
+    calculationHistory: [],
+    
+    // Initialisation
+    init() {
+        console.log('🚀 Initialisation du module Scoring Multi-Bilans');
+        
+        // Initialiser Select2 pour les selects
+        this.initSelect2();
+        
+        // Gestion des onglets
+        $('#bilanTabs button').on('shown.bs.tab', (e) => {
+            this.currentBilanType = e.target.id.replace('-tab', '');
+            console.log(`📊 Onglet activé: ${this.currentBilanType}`);
+            this.loadYearsForBilanType(this.currentBilanType);
+            this.updateComparisonPanel();
+        });
+        
+        // Chargement initial
+        this.loadYearsForBilanType('classique');
+        this.initEventListeners();
+    },
+    
+    // Initialiser Select2
+    initSelect2() {
+        $('.select-year').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionner une année...',
+            allowClear: true,
+            width: '100%',
+            language: 'fr',
+            minimumResultsForSearch: 3
+        });
+    },
+    
+    // Écouteurs d'événements
+    initEventListeners() {
+        // Boutons de calcul globaux
+        $(document).on('click', '[id$="-btnCalculate"]', (e) => {
+            const type = e.target.id.replace('-btnCalculate', '');
+            this.calculateScore(type);
+        });
+        
+        // Auto-remplissage
+        $(document).on('click', '[id$="-btnAutoFill"]', (e) => {
+            const type = e.target.id.replace('-btnAutoFill', '');
+            this.autoFillYears(type);
+        });
+    },
+    
+    // Mapping bilan type → API segment
+    getApiEndpoint(bilanType) {
+        const map = {
+            'classique': 'bilan-classique',
+            'bancaire': 'bilan-bancaire',
+            'syscohada': 'bilan-syscohada',
+            'anglais': 'bilan-anglais',
+            'ifrs': 'bilan-ifrs'
+        };
+        return map[bilanType] || `bilan-${bilanType}`;
+    },
+
+    // Chargement des années
+    async loadYearsForBilanType(bilanType) {
+        try {
+            const acheteurId = $('#acheteurId').val();
+            const endpoint = `/api/scoring/${this.getApiEndpoint(bilanType)}/acheteurs/${acheteurId}/annees/`;
+            
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.populateYearSelects(bilanType, data.years || data.annees);
+            } else {
+                this.populateYearSelects(bilanType, this.generateDefaultYears());
+            }
+        } catch (error) {
+            console.error(`Erreur chargement années ${bilanType}:`, error);
+            this.populateYearSelects(bilanType, this.generateDefaultYears());
+        }
+    },
+    
+    // Génération d'années par défaut
+    generateDefaultYears() {
+        const currentYear = new Date().getFullYear();
+        return Array.from({length: 5}, (_, i) => currentYear - i);
+    },
+    
+    // Remplissage des selects
+    populateYearSelects(bilanType, years) {
+        const selects = [`#${bilanType}-anneeN`, `#${bilanType}-anneeN1`, `#${bilanType}-anneeN2`];
+        
+        selects.forEach((select, index) => {
+            if ($(select).length) {
+                $(select).empty().append('<option value="">Sélectionner...</option>');
+                years.forEach(year => {
+                    $(select).append(`<option value="${year}">${year}</option>`);
+                });
+                
+                // Auto-remplissage si disponible
+                if (years.length > index) {
+                    $(select).val(years[index]).trigger('change');
+                }
+            }
+        });
+    },
+    
+    // Calcul du score
+    async calculateScore(bilanType) {
+        const formData = this.prepareFormData(bilanType);
+        
+        if (!this.validateFormData(formData)) {
+            this.showToast('Veuillez sélectionner les 3 années', 'error');
+            return;
+        }
+        
+        const btnCalculate = $(`#${bilanType}-btnCalculate`);
+        const originalText = btnCalculate.html();
+        
+        try {
+            btnCalculate.prop('disabled', true)
+                       .html('<i class="fas fa-spinner fa-spin me-2"></i>Calcul en cours...');
+            
+            const response = await fetch(`${this.API_BASE}/scoring/${this.getApiEndpoint(bilanType)}/calculer-score/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+            
+            const result = await response.json();
+            this.handleCalculationResult(bilanType, result);
+            
+        } catch (error) {
+            console.error(`❌ Erreur calcul score ${bilanType}:`, error);
+            this.showToast(`Erreur lors du calcul: ${error.message}`, 'error');
+        } finally {
+            btnCalculate.prop('disabled', false).html(originalText);
+        }
+    },
+    
+    // Préparation des données du formulaire
+    prepareFormData(bilanType) {
+        return {
+            acheteur_id: parseInt($('#acheteurId').val()),
+            annee_n: parseInt($(`#${bilanType}-anneeN`).val()),
+            annee_n1: parseInt($(`#${bilanType}-anneeN1`).val()),
+            annee_n2: parseInt($(`#${bilanType}-anneeN2`).val()),
+            bilan_type: bilanType
+        };
+    },
+    
+    // Validation
+    validateFormData(formData) {
+        return formData.annee_n && formData.annee_n1 && formData.annee_n2;
+    },
+    
+    // Gestion du résultat
+    handleCalculationResult(bilanType, result) {
+        // Stockage
+        this.allScores[bilanType] = result;
+        this.calculationHistory.unshift({
+            type: bilanType,
+            score: result.scores.n.score,
+            date: new Date().toISOString()
+        });
+        
+        // Affichage
+        this.displayResults(bilanType, result);
+        $('#globalResultsSection').removeClass('d-none').addClass('animate-fade-in-up');
+        $('#currentBilanType').text(this.formatBilanType(bilanType));
+        
+        // Mise à jour du panel de comparaison
+        this.updateComparisonPanel();
+        
+        this.showToast(`Score ${bilanType} calculé avec succès`, 'success');
+    },
+    
+    // Affichage des résultats
+    displayResults(bilanType, data) {
+        const resultsHtml = this.generateResultsHtml(bilanType, data);
+        $('#globalResultsContent').html(resultsHtml);
+    },
+    
+    // Génération du HTML des résultats
+    generateResultsHtml(bilanType, data) {
+        const scoreData = data.scores.n;
+        const annees = data.annees;
+        
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="alert alert-info alert-enhanced">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fas ${this.getBilanIcon(bilanType)} fa-2x"></i>
+                            <div>
+                                <h5 class="alert-heading mb-1">Score ACREMAC - ${this.formatBilanType(bilanType)}</h5>
+                                <p class="mb-0">Analyse basée sur les années ${annees.n}, ${annees.n1}, ${annees.n2}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    ${this.generateMainScoreCard(scoreData, bilanType)}
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card enhanced-card h-100">
+                        <div class="card-header-gradient">
+                            <h6 class="card-title mb-0 text-white">
+                                <i class="fas fa-tachometer-alt me-2"></i>Indicateurs Clés
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateKeyIndicators(scoreData)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    ${this.generateSummaryCard(scoreData, bilanType, annees)}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card enhanced-card">
+                        <div class="card-header-gradient">
+                            <h6 class="card-title mb-0 text-white">
+                                <i class="fas fa-table me-2"></i>Détail des Ratios
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateRatiosTable(scoreData)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card enhanced-card h-100">
+                        <div class="card-header-gradient">
+                            <h6 class="card-title mb-0 text-white">
+                                <i class="fas fa-chart-line me-2"></i>Évolution
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateEvolutionChart(data.scores)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Carte de score principale
+    generateMainScoreCard(scoreData, bilanType) {
+        const scoreClass = this.getScoreClass(scoreData.score);
+        const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
+        const scoreImage = this.getScoreImage(scoreData.score);
+        
+        return `
+            <div class="card score-card ${scoreClass}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="score-image-container">
+                                <img src="${scoreImage}" alt="Score ${Math.round(scoreData.score)}" 
+                                     class="score-image">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="score-label">SCORE ${this.formatBilanType(bilanType)}</div>
+                            <div class="score-value">${scoreData.score.toFixed(2)}</div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="risk-badge ${this.getRiskBadgeClass(scoreData.score)} fs-6">
+                                    ${scoreData.classe_risque}
+                                </span>
+                                <span class="text-muted">${Math.round(scoreData.score)}/10</span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom" style="width: ${progressWidth}%"></div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <span class="badge bg-danger px-3 py-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    ${scoreData.probabilite_defaillance}% risque
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Indicateurs clés
+    generateKeyIndicators(scoreData) {
+        return `
+            <div class="d-grid gap-3">
+                <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                    <span class="fw-bold">Niveau de risque</span>
+                    <span class="risk-badge ${this.getRiskBadgeClass(scoreData.score)}">
+                        ${scoreData.classe_risque}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                    <span class="fw-bold">Probabilité défaillance</span>
+                    <span class="fw-bold text-danger">${scoreData.probabilite_defaillance}%</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                    <span class="fw-bold">Score brut</span>
+                    <span class="fw-bold">${scoreData.score.toFixed(2)}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                    <span class="fw-bold">Date calcul</span>
+                    <small class="text-muted">${new Date().toLocaleDateString('fr-FR')}</small>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Carte de synthèse
+    generateSummaryCard(scoreData, bilanType, annees) {
+        return `
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2 text-primary">${scoreData.classe_risque}</h5>
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                ${scoreData.commentaire}
+                            </p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-action" onclick="SCORING_MANAGER.downloadReport('${bilanType}')">
+                                    <i class="fas fa-download me-1"></i>Télécharger le rapport
+                                </button>
+                                <button class="btn btn-outline-success btn-action" onclick="SCORING_MANAGER.shareAnalysis('${bilanType}')">
+                                    <i class="fas fa-share-alt me-1"></i>Partager l'analyse
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="bg-white p-3 rounded shadow-sm border">
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-calendar-alt me-1"></i>Période analysée
+                                </small>
+                                <div class="fw-bold mt-2">${annees.n}, ${annees.n1}, ${annees.n2}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Tableau des ratios
+    generateRatiosTable(scoreData) {
+        let html = '<div class="table-responsive"><table class="table table-enhanced">';
+        html += `
+            <thead>
+                <tr>
+                    <th>Ratio</th>
+                    <th>Valeur</th>
+                    <th>Bornée</th>
+                    <th>Contribution</th>
+                    <th>Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        const coefficients = scoreData.coefficients || {};
+        const ratios_bornees = scoreData.ratios_bornees || {};
+        
+        Object.keys(ratios_bornees).forEach(ratioKey => {
+            const ratioBornee = ratios_bornees[ratioKey] || 0;
+            const coefficient = coefficients[ratioKey] || 0;
+            const contribution = coefficient * ratioBornee;
+            
+            html += `
+                <tr>
+                    <td><strong>${ratioKey.toUpperCase()}</strong></td>
+                    <td>${ratioBornee.toFixed(3)}</td>
+                    <td>${coefficient.toFixed(3)}</td>
+                    <td class="${contribution >= 0 ? 'text-success' : 'text-danger'} fw-bold">
+                        ${contribution.toFixed(3)}
+                    </td>
+                    <td>
+                        <div class="progress-custom" style="height: 8px;">
+                            <div class="progress-bar-custom ${contribution >= 0 ? 'bg-success' : 'bg-danger'}" 
+                                 style="width: ${Math.min(Math.abs(contribution) * 100, 100)}%">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table></div>';
+        return html;
+    },
+    
+    // Graphique d'évolution
+    generateEvolutionChart(scores) {
+        let html = '<div class="d-grid gap-2">';
+        
+        Object.keys(scores).forEach(yearKey => {
+            const yearData = scores[yearKey];
+            if (yearData.score !== undefined) {
+                const progress = Math.min(Math.max((yearData.score + 5) * 10, 0), 100);
+                const yearLabel = yearKey.toUpperCase().replace('N', 'Année N');
+                
+                html += `
+                    <div class="border rounded p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-primary">${yearLabel}</span>
+                            <span class="badge bg-primary">${yearData.score.toFixed(2)}</span>
+                        </div>
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom ${this.getScoreClass(yearData.score)}" 
+                                 style="width: ${progress}%">
+                            </div>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            ${yearData.classe_risque || ''}
+                        </small>
+                    </div>
+                `;
+            }
+        });
+        
+        html += '</div>';
+        return html;
+    },
+    
+    // Mise à jour du panel de comparaison
+    updateComparisonPanel() {
+        if (Object.keys(this.allScores).length === 0) {
+            $('#comparisonPanel').html(`
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="fas fa-balance-scale display-4 mb-3 text-primary opacity-50"></i>
+                    <p class="mb-0">Calculez des scores pour comparer les bilans</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        Object.keys(this.allScores).forEach(bilanType => {
+            const score = this.allScores[bilanType].scores.n.score;
+            const scoreClass = this.getScoreClass(score);
+            
+            html += `
+                <div class="col-md-4 mb-3">
+                    <div class="card score-card ${scoreClass} h-100">
+                        <div class="card-body text-center">
+                            <h6 class="card-title mb-3">
+                                <i class="fas ${this.getBilanIcon(bilanType)} me-2"></i>
+                                ${this.formatBilanType(bilanType)}
+                            </h6>
+                            <div class="score-value mb-3">${score.toFixed(2)}</div>
+                            <div class="risk-badge ${this.getRiskBadgeClass(score)} mb-3">
+                                ${this.allScores[bilanType].scores.n.classe_risque}
+                            </div>
+                            <div class="mt-4">
+                                <button class="btn btn-outline-primary btn-sm btn-action" 
+                                        onclick="SCORING_MANAGER.viewDetails('${bilanType}')">
+                                    <i class="fas fa-eye me-1"></i>Voir les détails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#comparisonPanel').html(html);
+    },
+    
+    // Utilitaires
+    getScoreImage(score) {
+        const roundedScore = Math.round(score);
+        const finalScore = Math.max(0, Math.min(10, roundedScore));
+        const basePath = $('#staticPaths').data('scoring-images');
+        return `${basePath}${finalScore}.png`;
+    },
+    
+    getScoreClass(score) {
+        if (score < -4.01) return 'score-critical';
+        if (score < -2.57) return 'score-poor';
+        if (score < -1.00) return 'score-moderate';
+        if (score < 0.28) return 'score-moderate';
+        if (score < 1.26) return 'score-good';
+        if (score < 2.10) return 'score-good';
+        return 'score-excellent';
+    },
+    
+    getRiskBadgeClass(score) {
+        if (score < -2.57) return 'risk-critical';
+        if (score < 0.28) return 'risk-moderate';
+        if (score < 1.26) return 'risk-low';
+        if (score < 2.10) return 'risk-low';
+        return 'risk-low';
+    },
+    
+    getBilanIcon(type) {
+        const icons = {
+            'classique': 'fa-building',
+            'bancaire': 'fa-university',
+            'syscohada': 'fa-globe-africa',
+            'anglais': 'fa-language',
+            'ifrs': 'fa-chart-line'
+        };
+        return icons[type] || 'fa-file-invoice';
+    },
+    
+    formatBilanType(type) {
+        const names = {
+            'classique': 'BILAN CLASSIQUE',
+            'bancaire': 'BILAN BANCAIRE',
+            'syscohada': 'BILAN SYSCOHADA',
+            'anglais': 'BILAN ANGLAIS',
+            'ifrs': 'BILAN IFRS COBAC'
+        };
+        return names[type] || type.toUpperCase();
+    },
+    
+    // Fonctions d'action
+    downloadReport(bilanType) {
+        this.showToast(`Génération du rapport ${bilanType}...`, 'info');
+        // Implémenter la génération du rapport
+    },
+    
+    shareAnalysis(bilanType) {
+        this.showToast(`Partage de l'analyse ${bilanType}...`, 'info');
+        // Implémenter le partage
+    },
+    
+    viewDetails(bilanType) {
+        if (this.allScores[bilanType]) {
+            this.displayResults(bilanType, this.allScores[bilanType]);
+            $('#globalResultsSection').removeClass('d-none').addClass('animate-fade-in-up');
+            $('#currentBilanType').text(this.formatBilanType(bilanType));
+            
+            // Scroll vers la section résultats
+            $('html, body').animate({
+                scrollTop: $('#globalResultsSection').offset().top - 100
+            }, 500);
+        }
+    },
+    
+    // Auto-remplissage
+    autoFillYears(bilanType) {
+        const years = this.generateDefaultYears();
+        $(`#${bilanType}-anneeN`).val(years[0]).trigger('change');
+        $(`#${bilanType}-anneeN1`).val(years[1]).trigger('change');
+        $(`#${bilanType}-anneeN2`).val(years[2]).trigger('change');
+        this.showToast(`Années ${bilanType} remplies automatiquement`, 'success');
+    },
+    
+    // Utilitaires généraux
+    getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    },
+    
+    showToast(message, type = 'info') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: 'linear-gradient(135deg, var(--primary-color), var(--accent-color))',
+            color: 'white',
+            iconColor: 'white',
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        Toast.fire({
+            icon: type,
+            title: message
+        });
+    }
+};
+
+// Global helpers used by inline onclick in partials
+function calculateScoreClassique() { SCORING_MANAGER.calculateScore('classique'); }
+function calculateScoreBancaire()   { SCORING_MANAGER.calculateScore('bancaire'); }
+function calculateScoreSyscohada()  { SCORING_MANAGER.calculateScore('syscohada'); }
+function calculateScoreAnglais()    { SCORING_MANAGER.calculateScore('anglais'); }
+function calculateScoreIfrs()       { SCORING_MANAGER.calculateScore('ifrs'); }
+function autoFillYears(type)        { SCORING_MANAGER.autoFillYears(type); }
+
+// Initialisation
+$(document).ready(() => {
+    SCORING_MANAGER.init();
+    
+    // Fonction pour récupérer le token CSRF
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+    
+});
+</script>
+{% endblock %}

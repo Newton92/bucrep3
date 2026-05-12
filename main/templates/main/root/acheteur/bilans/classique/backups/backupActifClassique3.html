@@ -1,0 +1,3457 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-purple: #6f42c1;
+    --color-pink: #e83e8c;
+    --color-teal: #20c997;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, var(--color-teal) 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, #e83e8c 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: var(--radius-xl);
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.dashboard-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem 2rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de catégories d'actifs */
+.category-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 2px solid transparent;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-primary);
+}
+
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--primary-gradient);
+}
+
+.category-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.category-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+}
+
+.category-count {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.category-progress {
+    height: 8px;
+    background: rgba(10, 149, 202, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.category-progress-bar {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* Tableau compact des actifs */
+.compact-table-container {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.table-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    border-bottom: 2px solid var(--color-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.compact-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.compact-table th {
+    background: rgba(10, 149, 202, 0.03);
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    border-bottom: 2px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.compact-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.compact-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.compact-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.02);
+}
+
+.compact-table tbody tr:hover td {
+    transform: translateX(5px);
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+.value-negative {
+    color: var(--color-danger);
+}
+
+.value-zero {
+    color: var(--color-text-light);
+}
+
+/* Badge d'année */
+.year-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-primary-light);
+    color: var(--color-primary-dark);
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 2px solid var(--color-primary);
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-enhanced::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-enhanced:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-warning-enhanced {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-outline-enhanced {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline-enhanced:hover {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-sm-enhanced {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-xl);
+    border: none;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 2rem;
+    background: var(--color-background);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.enhanced-modal .modal-footer {
+    background: white;
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+    outline: none;
+}
+
+.enhanced-form .input-group-text {
+    background: var(--color-primary-light);
+    border: 2px solid var(--color-border);
+    border-left: none;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+}
+
+.enhanced-form .input-group .form-control {
+    border-right: none;
+}
+
+/* Cartes de formulaire */
+.form-section-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.form-section-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.form-section-header h6 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section-body {
+    padding: 1.5rem;
+}
+
+.form-section-footer {
+    background: var(--color-background);
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+}
+
+/* Section de légende améliorée */
+.legend-section {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+    cursor: help;
+}
+
+.legend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-primary);
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    min-width: 45px;
+    flex-shrink: 0;
+}
+
+.legend-name {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+/* Pagination améliorée */
+.pagination-enhanced .page-link {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-enhanced .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.pagination-enhanced .page-link:hover {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Statistiques détaillées */
+.stats-detail-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.stats-detail-card .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.stats-detail-card .stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-success);
+    font-size: 1.1rem;
+}
+
+/* Barre de progression */
+.progress-bar-custom {
+    background: var(--primary-gradient);
+    border-radius: 4px;
+}
+
+/* Alertes personnalisées */
+.custom-alert {
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.custom-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+.custom-alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .dashboard-title {
+        font-size: 2rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .enhanced-modal .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .enhanced-modal .modal-body {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.75rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
+    
+    .category-card {
+        padding: 1.25rem;
+    }
+    
+    .category-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .compact-table {
+        font-size: 0.875rem;
+    }
+    
+    .compact-table th,
+    .compact-table td {
+        padding: 0.75rem 1rem;
+    }
+    
+    .btn-enhanced {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .btn-enhanced {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-summary-header {
+        padding: 1.25rem;
+    }
+    
+    .table-header {
+        padding: 1rem;
+    }
+}
+
+/* Scrollbar personnalisé */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-background);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
+}
+
+/* Accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Select2 personnalisé */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+    color: var(--color-text);
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: 10px;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: var(--color-primary) !important;
+    color: white !important;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(10, 149, 202, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Vue détaillée */
+.detail-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.detail-category-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--color-border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.detail-category-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.detail-category-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    padding: 1.25rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.detail-category-header h6 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.detail-category-body {
+    padding: 1.25rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item-label {
+    color: var(--color-text);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-item-value {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-success);
+    font-size: 1.1rem;
+}
+
+/* Actions rapides */
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.quick-action-btn {
+    flex: 1;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.quick-action-btn i {
+    font-size: 1.25rem;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="dashboard-title text-white">
+                    <i class="fas fa-chart-bar me-3"></i>Bilan Classique - Actifs
+                </h1>
+                <p class="dashboard-subtitle">
+                    Gestion complète des actifs financiers de l'acheteur.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}" 
+                   class="btn-enhanced btn-warning-enhanced">
+                    <i class="fas fa-arrow-left me-2 text-white"></i>Retour à l'acheteur
+                </a>
+                <button class="btn-enhanced btn-success-enhanced" data-bs-toggle="modal" data-bs-target="#addActifModal">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvel Actif
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-success" id="editNom">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-muted" id="editSigle">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span id="editCode" class="text-warning">{{ acheteur.code }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Date de création</small>
+                            <div class="fw-bold" id="editDateCreation">
+                                {% if acheteur.date_creation %}
+                                    {{ acheteur.date_creation|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifié
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Activité principale</small>
+                            <div class="fw-bold" id="editActivitePrincipale">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Statut</small>
+                            <div class="fw-bold text-success" id="editStatutEntreprise">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de catégories d'actifs -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-1">
+                <div class="category-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h5 class="category-title">Immobilisations Incorporelles</h5>
+                <div class="category-count" id="countIncorporelles">0</div>
+                <p class="text-muted mb-0">CSNA, FRD, BLL, FC, AII</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressIncorporelles" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-2">
+                <div class="category-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <h5 class="category-title">Immobilisations Corporelles</h5>
+                <div class="category-count" id="countCorporelles">0</div>
+                <p class="text-muted mb-0">T, C, MO, MT, AIC, IEC, AA</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressCorporelles" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in delay-3">
+                <div class="category-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5 class="category-title">Actifs Financiers</h5>
+                <div class="category-count" id="countFinanciers">0</div>
+                <p class="text-muted mb-0">P, PR, A</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressFinanciers" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="category-card animate-in">
+                <div class="category-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5 class="category-title">Stocks & Créances</h5>
+                <div class="category-count" id="countStocks">0</div>
+                <p class="text-muted mb-0">Stocks, CCR, AC, VE, BCPC</p>
+                <div class="category-progress">
+                    <div class="category-progress-bar" id="progressStocks" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions animate-in delay-1">
+        <a href="#" class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#addActifModal">
+            <i class="fas fa-plus-circle"></i>
+            Ajouter un actif
+        </a>
+        <a href="#" class="quick-action-btn" id="viewSummaryBtn">
+            <i class="fas fa-chart-pie"></i>
+            Voir le résumé
+        </a>
+        <a href="#" class="quick-action-btn" id="compareYearsBtn">
+            <i class="fas fa-balance-scale"></i>
+            Comparer les années
+        </a>
+        <a href="#" class="quick-action-btn" id="generateReportBtn">
+            <i class="fas fa-file-pdf"></i>
+            Générer un rapport
+        </a>
+    </div>
+
+    <!-- Section Légende -->
+    <div class="legend-section animate-in delay-2">
+        <div class="d-flex align-items-center mb-3">
+            <i class="fas fa-key text-primary me-2"></i>
+            <h5 class="mb-0 fw-bold">Légende des Abréviations</h5>
+            <button class="btn btn-link ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#legendCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        
+        <div class="collapse show" id="legendCollapse">
+            <div class="legend-grid">
+                <div class="legend-item" title="Capital Souscrit Non Appelé">
+                    <div class="legend-color" style="background: #0A95CA;"></div>
+                    <span class="legend-code">CSNA</span>
+                    <span class="legend-name">Capital Souscrit Non App</span>
+                </div>
+                <div class="legend-item" title="Frais de Recherche et Développement">
+                    <div class="legend-color" style="background: #25add6;"></div>
+                    <span class="legend-code">FRD</span>
+                    <span class="legend-name">Frais Recherche Développement</span>
+                </div>
+                <div class="legend-item" title="Brevets, Licences et Logiciels">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span class="legend-code">BLL</span>
+                    <span class="legend-name">Brevet Licence Logiciels</span>
+                </div>
+                <div class="legend-item" title="Fonds Commercial">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span class="legend-code">FC</span>
+                    <span class="legend-name">Fonds Commercial</span>
+                </div>
+                <div class="legend-item" title="Autres Immobilisations Incorporelles">
+                    <div class="legend-color" style="background: #6f42c1;"></div>
+                    <span class="legend-code">AII</span>
+                    <span class="legend-name">Autres Immobilisations Incorporelles</span>
+                </div>
+                <div class="legend-item" title="Terrains">
+                    <div class="legend-color" style="background: #0d80be;"></div>
+                    <span class="legend-code">T</span>
+                    <span class="legend-name">Terrains</span>
+                </div>
+                <div class="legend-item" title="Constructions">
+                    <div class="legend-color" style="background: #17a2b8;"></div>
+                    <span class="legend-code">C</span>
+                    <span class="legend-name">Constructions</span>
+                </div>
+                <div class="legend-item" title="Matériels et Outils">
+                    <div class="legend-color" style="background: #20c997;"></div>
+                    <span class="legend-code">MO</span>
+                    <span class="legend-name">Matériels et Outils</span>
+                </div>
+                <div class="legend-item" title="Matériel de Transport">
+                    <div class="legend-color" style="background: #e83e8c;"></div>
+                    <span class="legend-code">MT</span>
+                    <span class="legend-name">Matériel de Transport</span>
+                </div>
+                <div class="legend-item" title="Autres Immobilisations Corporelles">
+                    <div class="legend-color" style="background: #fd7e14;"></div>
+                    <span class="legend-code">AIC</span>
+                    <span class="legend-name">Autres Immobilisations Corporelles</span>
+                </div>
+                <div class="legend-item" title="Stocks Matières Premières">
+                    <div class="legend-color" style="background: #6c757d;"></div>
+                    <span class="legend-code">SMP</span>
+                    <span class="legend-name">Stocks MP</span>
+                </div>
+                <div class="legend-item" title="Clients et Comptes Rattachés">
+                    <div class="legend-color" style="background: #343a40;"></div>
+                    <span class="legend-code">CCR</span>
+                    <span class="legend-name">Clients et Comptes Rattachés</span>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Survolez une abréviation pour voir la description complète
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Actifs -->
+    <div class="compact-table-container animate-in delay-2">
+        <div class="table-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list me-2"></i>Actifs par Année
+                    </h5>
+                    <small class="text-muted" id="tableInfo">Cliquez sur une année pour voir les détails</small>
+                </div>
+                
+                <div class="d-flex gap-2 w-100 w-md-auto">
+                    <div class="flex-grow-1">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="search" class="form-control border-start-0" id="searchInput" 
+                                   placeholder="Rechercher par année...">
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn-enhanced btn-outline-enhanced btn-sm-enhanced" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-filter me-2"></i>Filtrer
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 250px;">
+                            <h6 class="dropdown-header">Filtrer par catégorie</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="filterIncorporelles" checked>
+                                <label class="form-check-label" for="filterIncorporelles">Immobilisations Incorporelles</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="filterCorporelles" checked>
+                                <label class="form-check-label" for="filterCorporelles">Immobilisations Corporelles</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="filterFinanciers" checked>
+                                <label class="form-check-label" for="filterFinanciers">Actifs Financiers</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="filterStocks" checked>
+                                <label class="form-check-label" for="filterStocks">Stocks & Créances</label>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="filterWithValuesOnly">
+                                <label class="form-check-label" for="filterWithValuesOnly">Avec valeurs seulement</label>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="btn btn-sm btn-primary w-100 mb-2" id="applyFiltersBtn">Appliquer</button>
+                            <button class="btn btn-sm btn-outline-secondary w-100" id="resetFiltersBtn">Réinitialiser</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive" style="max-height: 600px;">
+            <table class="compact-table" id="actifsTable">
+                <thead>
+                    <tr>
+                        <th width="80">Année</th>
+                        <th width="120">CSNA</th>
+                        <th width="120">FRD</th>
+                        <th width="120">BLL</th>
+                        <th width="120">FC</th>
+                        <th width="120">AII</th>
+                        <th width="120">Terrains</th>
+                        <th width="120">Constructions</th>
+                        <th width="120">MO</th>
+                        <th width="120">MT</th>
+                        <th width="50" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="actifsTableBody">
+                    <!-- Rempli par JavaScript -->
+                </tbody>
+                <tfoot id="actifsTableFooter" style="display: none;">
+                    <!-- Rempli par JavaScript -->
+                </tfoot>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted small" id="paginationInfo">
+                Chargement des données...
+            </div>
+            <nav>
+                <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Actif COMPLET -->
+<div class="modal fade enhanced-modal" id="addActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Nouvel Actif
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addActifForm" class="enhanced-form">
+                <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez les champs ci-dessous pour ajouter un nouvel actif. Les champs marqués d'un astérisque (*) sont obligatoires.
+                    </div>
+
+                    <div class="row">
+                        <!-- Section 1: Immobilisations Incorporelles -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-building text-primary"></i> Immobilisations Incorporelles</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="capital_souscrit_non_app" class="form-label">
+                                                    <i class="fas fa-landmark"></i>CSNA*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="capital_souscrit_non_app" 
+                                                           name="capital_souscrit_non_app" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Capital Souscrit Non Appelé</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="frais_recherche_developpement" class="form-label">
+                                                    <i class="fas fa-flask"></i>FRD*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="frais_recherche_developpement" 
+                                                           name="frais_recherche_developpement" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Frais Recherche Développement</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="brevet_licence_logiciels" class="form-label">
+                                                    <i class="fas fa-copyright"></i>BLL*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="brevet_licence_logiciels" 
+                                                           name="brevet_licence_logiciels" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Brevet Licence Logiciels</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="fonds_commercial" class="form-label">
+                                                    <i class="fas fa-store"></i>FC*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="fonds_commercial" 
+                                                           name="fonds_commercial" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Fonds Commercial</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="autres_immobilisations_incorporelles" class="form-label">
+                                            <i class="fas fa-asterisk"></i>AII*
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="autres_immobilisations_incorporelles" 
+                                                   name="autres_immobilisations_incorporelles" step="0.01" min="0" required>
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                        <small class="text-muted">Autres Immobilisations Incorporelles</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Immobilisations Corporelles -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-industry text-success"></i> Immobilisations Corporelles</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="terrains" class="form-label">
+                                                    <i class="fas fa-mountain"></i>Terrains*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="terrains" 
+                                                           name="terrains" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="constructions" class="form-label">
+                                                    <i class="fas fa-building"></i>Constructions*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="constructions" 
+                                                           name="constructions" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="materiels_et_outils" class="form-label">
+                                                    <i class="fas fa-tools"></i>MO*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="materiels_et_outils" 
+                                                           name="materiels_et_outils" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Matériels et Outils</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="materiel_de_transport" class="form-label">
+                                                    <i class="fas fa-truck"></i>MT*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="materiel_de_transport" 
+                                                           name="materiel_de_transport" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Matériel de Transport</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="autres_immos_corp" class="form-label">
+                                                    <i class="fas fa-box"></i>AIC*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="autres_immos_corp" 
+                                                           name="autres_immos_corp" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Autres Immobilisations Corporelles</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="immos_en_cours" class="form-label">
+                                                    <i class="fas fa-hard-hat"></i>IEC*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="immos_en_cours" 
+                                                           name="immos_en_cours" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Immobilisations en Cours</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="avances_et_acptes" class="form-label">
+                                            <i class="fas fa-hand-holding-usd"></i>AA*
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="avances_et_acptes" 
+                                                   name="avances_et_acptes" step="0.01" min="0" required>
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                        <small class="text-muted">Avances et Acomptes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 3: Actifs Financiers -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-chart-line text-warning"></i> Actifs Financiers</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="participations" class="form-label">
+                                                    <i class="fas fa-users"></i>P*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="participations" 
+                                                           name="participations" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Participations</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="prets" class="form-label">
+                                                    <i class="fas fa-handshake"></i>PR*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="prets" 
+                                                           name="prets" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Prêts</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="autres" class="form-label">
+                                            <i class="fas fa-ellipsis-h"></i>Autres*
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="autres" 
+                                                   name="autres" step="0.01" min="0" required>
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                        <small class="text-muted">Autres actifs financiers</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 4: Stocks -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-boxes text-purple"></i> Stocks</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="stocks_mp" class="form-label">
+                                                    <i class="fas fa-cubes"></i>SMP*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="stocks_mp" 
+                                                           name="stocks_mp" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Stocks Matières Premières</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="stocks_pf" class="form-label">
+                                                    <i class="fas fa-cube"></i>SPF*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="stocks_pf" 
+                                                           name="stocks_pf" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Stocks Produits Finis</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="stocks_encours_mp" class="form-label">
+                                                    <i class="fas fa-spinner"></i>SEMP*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="stocks_encours_mp" 
+                                                           name="stocks_encours_mp" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Stocks Encours MP</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="stocks_encours_pf" class="form-label">
+                                                    <i class="fas fa-hourglass-half"></i>SEPF*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="stocks_encours_pf" 
+                                                           name="stocks_encours_pf" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Stocks Encours PF</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="stocks_mses" class="form-label">
+                                            <i class="fas fa-box-open"></i>SMS*
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="stocks_mses" 
+                                                   name="stocks_mses" step="0.01" min="0" required>
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                        <small class="text-muted">Stocks Matières et Fournitures</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 5: Créances et Trésorerie -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-file-invoice-dollar text-info"></i> Créances</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="avances_acptes_verses" class="form-label">
+                                                    <i class="fas fa-hand-holding-usd"></i>AAV*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="avances_acptes_verses" 
+                                                           name="avances_acptes_verses" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Avances Acomptes Versés</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="clients_et_cptes_rattaches" class="form-label">
+                                                    <i class="fas fa-user-tie"></i>CCR*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="clients_et_cptes_rattaches" 
+                                                           name="clients_et_cptes_rattaches" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Clients et Comptes Rattachés</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="autres_creances" class="form-label">
+                                                    <i class="fas fa-receipt"></i>AC*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="autres_creances" 
+                                                           name="autres_creances" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Autres Créances</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="valeurs_a_encaisser" class="form-label">
+                                                    <i class="fas fa-money-check-alt"></i>VE*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="valeurs_a_encaisser" 
+                                                           name="valeurs_a_encaisser" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Valeurs à Encaisser</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 6: Trésorerie et Autres -->
+                        <div class="col-md-6">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-university text-primary"></i> Trésorerie et Autres</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="form-group">
+                                        <label for="banques_cheques_postaux_caisse" class="form-label">
+                                            <i class="fas fa-piggy-bank"></i>BCPC*
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="banques_cheques_postaux_caisse" 
+                                                   name="banques_cheques_postaux_caisse" step="0.01" min="0" required>
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                        <small class="text-muted">Banques, Chèques Postaux, Caisse</small>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="charges_a_repartir_et_frais_etablissement" class="form-label">
+                                                    <i class="fas fa-chart-pie"></i>CARFE*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="charges_a_repartir_et_frais_etablissement" 
+                                                           name="charges_a_repartir_et_frais_etablissement" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Charges à Répartir</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="amortissements" class="form-label">
+                                                    <i class="fas fa-chart-line-down"></i>AMO*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="amortissements" 
+                                                           name="amortissements" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Amortissements</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="provisions_stocks" class="form-label">
+                                                    <i class="fas fa-shield-alt"></i>PS*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="provisions_stocks" 
+                                                           name="provisions_stocks" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Provisions Stocks</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="provisions_creances" class="form-label">
+                                                    <i class="fas fa-user-shield"></i>PC*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="provisions_creances" 
+                                                           name="provisions_creances" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Provisions Créances</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="provisions_vmp" class="form-label">
+                                                    <i class="fas fa-chart-bar"></i>PVMP*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="provisions_vmp" 
+                                                           name="provisions_vmp" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Provisions VMP</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 7: Autres champs -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-ellipsis-h text-muted"></i> Autres Informations</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="cca" class="form-label">
+                                                    <i class="fas fa-file-invoice"></i>CCA*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="cca" 
+                                                           name="cca" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Comptes de Régularisation</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="primes_de_rbt" class="form-label">
+                                                    <i class="fas fa-award"></i>PRBT*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="primes_de_rbt" 
+                                                           name="primes_de_rbt" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Primes de Remboursement</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="eca" class="form-label">
+                                                    <i class="fas fa-balance-scale"></i>ECA*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="eca" 
+                                                           name="eca" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Écarts de Conversion</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="ene" class="form-label">
+                                                    <i class="fas fa-bolt"></i>ENE*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="ene" 
+                                                           name="eene" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Écarts Négatifs</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="effectif" class="form-label">
+                                                    <i class="fas fa-users"></i>Effectif*
+                                                </label>
+                                                <input type="number" class="form-control" id="effectif" 
+                                                       name="effectif" min="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="stocks_encours_services" class="form-label">
+                                                    <i class="fas fa-concierge-bell"></i>SES*
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control" id="stocks_encours_services" 
+                                                           name="stocks_encours_services" step="0.01" min="0" required>
+                                                    <span class="input-group-text">€</span>
+                                                </div>
+                                                <small class="text-muted">Stocks Encours Services</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sélection de l'année -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-calendar-alt text-danger"></i> Année de l'Actif</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="form-group">
+                                        <label for="annee" class="form-label">
+                                            <i class="fas fa-calendar-check"></i>Sélectionnez l'année*
+                                        </label>
+                                        <select class="form-select select2-with-search" id="annee" name="annee" required>
+                                            <option value="">Choisissez une année...</option>
+                                            {% for annee in annee_list %}
+                                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="text-muted">Sélectionnez l'année fiscale pour cet actif</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Résumé des données saisies -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-section-card">
+                                <div class="form-section-header">
+                                    <h6><i class="fas fa-calculator text-success"></i> Résumé des Montants Saisis</h6>
+                                </div>
+                                <div class="form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">Total Incorporelles:</span>
+                                                    <span class="stat-value" id="summaryIncorporelles">0 €</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">Total Corporelles:</span>
+                                                    <span class="stat-value" id="summaryCorporelles">0 €</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">Total Financiers:</span>
+                                                    <span class="stat-value" id="summaryFinanciers">0 €</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stats-detail-card">
+                                                <div class="stat-item">
+                                                    <span class="stat-label">Total Général:</span>
+                                                    <span class="stat-value text-primary" id="summaryTotal">0 €</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced btn-warning-enhanced" id="clearFormBtn">
+                                <i class="fas fa-broom me-2"></i>Effacer
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitAddBtn">
+                                <i class="fas fa-check me-2"></i>Enregistrer l'Actif
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Détail Actif COMPLET -->
+<div class="modal fade enhanced-modal" id="detailActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>Détails Complets de l'Actif
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <h4 id="detailAnnee" class="mb-1"></h4>
+                                <p class="text-muted mb-0" id="detailAcheteur"></p>
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="year-badge fs-6 mb-2" id="detailTotal"></span>
+                                <small class="text-muted" id="detailLastUpdated"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Résumé statistique -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="stats-detail-card">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Actifs Incorporels:</span>
+                                        <span class="stat-value" id="detailStatsIncorporelles">0 €</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Actifs Corporels:</span>
+                                        <span class="stat-value" id="detailStatsCorporelles">0 €</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Actifs Financiers:</span>
+                                        <span class="stat-value" id="detailStatsFinanciers">0 €</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Stocks & Créances:</span>
+                                        <span class="stat-value" id="detailStatsStocks">0 €</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Grille détaillée -->
+                <div class="detail-view-grid" id="detailContent">
+                    <!-- Rempli par JavaScript -->
+                </div>
+                
+                <!-- Informations complémentaires -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="custom-alert custom-alert-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Les valeurs affichées sont en euros. Cliquez sur "Modifier" pour apporter des changements à cet actif.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between w-100">
+                    <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Fermer
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn-enhanced btn-danger-enhanced" id="deleteDetailBtn">
+                            <i class="fas fa-trash me-2"></i>Supprimer
+                        </button>
+                        <button type="button" class="btn-enhanced btn-primary-enhanced" id="editDetailBtn">
+                            <i class="fas fa-edit me-2"></i>Modifier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Actif -->
+<div class="modal fade enhanced-modal" id="editActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Actif
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editActifForm" class="enhanced-form">
+                <input type="hidden" id="editActifId" name="id">
+                
+                <div class="modal-body">
+                    <!-- Le contenu est identique au modal d'ajout, mais avec des IDs "edit" -->
+                    <!-- Pour éviter la redondance, on va utiliser le même HTML et le remplir avec JavaScript -->
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-3">Chargement des données...</p>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced btn-warning-enhanced" id="resetEditFormBtn">
+                                <i class="fas fa-undo me-2"></i>Réinitialiser
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitEditBtn">
+                                <i class="fas fa-save me-2"></i>Mettre à jour
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: var(--shadow-xl);">
+            <div class="modal-header" style="background: var(--danger-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt fa-4x" style="color: var(--color-danger);"></i>
+                </div>
+                <h6 class="fw-bold mb-2 text-danger">Êtes-vous sûr de vouloir supprimer cet actif ?</h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Cette action est irréversible. Toutes les données associées à cet actif seront définitivement supprimées.
+                </p>
+                <div class="mt-3 p-3 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Année: <span id="deleteAnnee" class="fw-bold"></span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </button>
+                <button type="button" class="btn-enhanced btn-danger-enhanced" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Supprimer définitivement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Export -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: var(--shadow-xl);">
+            <div class="modal-header" style="background: var(--success-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-file-export me-2"></i>Exporter les données
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-section-card h-100">
+                            <div class="form-section-header">
+                                <h6><i class="fas fa-file-excel text-success"></i> Format Excel</h6>
+                            </div>
+                            <div class="form-section-body text-center">
+                                <i class="fas fa-file-excel fa-4x text-success mb-3"></i>
+                                <p>Export complet avec toutes les colonnes et formules</p>
+                                <button class="btn btn-success w-100" id="exportExcelBtn">
+                                    <i class="fas fa-download me-2"></i>Exporter en Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-section-card h-100">
+                            <div class="form-section-header">
+                                <h6><i class="fas fa-file-pdf text-danger"></i> Format PDF</h6>
+                            </div>
+                            <div class="form-section-body text-center">
+                                <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                <p>Rapport formaté pour impression et archivage</p>
+                                <button class="btn btn-danger w-100" id="exportPdfBtn">
+                                    <i class="fas fa-download me-2"></i>Exporter en PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section-card mt-3">
+                    <div class="form-section-header">
+                        <h6><i class="fas fa-filter text-primary"></i> Options d'export</h6>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="exportAllYears" checked>
+                            <label class="form-check-label" for="exportAllYears">Toutes les années</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="exportWithDetails" checked>
+                            <label class="form-check-label" for="exportWithDetails">Inclure les détails complets</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="exportOnlyActive" checked>
+                            <label class="form-check-label" for="exportOnlyActive">Uniquement les actifs avec valeurs</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-enhanced btn-outline-enhanced" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let actifsData = [];
+    let selectedActifId = null;
+    const ACHETEUR_ID = '{{ id_acheteur }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('#addActifModal, #editActifModal')
+        });
+    }
+    
+    // Initialiser les tooltips
+    function initTooltips() {
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        $('.legend-item').tooltip({
+            placement: 'top',
+            trigger: 'hover'
+        });
+    }
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }) + ' €';
+    }
+    
+    // Calculer la classe CSS pour les valeurs
+    function getValueClass(value) {
+        if (!value || parseFloat(value) === 0) return 'value-zero';
+        return parseFloat(value) > 0 ? 'value-positive' : 'value-negative';
+    }
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateFormSummaries() {
+        // Calculer les totaux par catégorie
+        let totalIncorporelles = 0;
+        let totalCorporelles = 0;
+        let totalFinanciers = 0;
+        let totalGeneral = 0;
+        
+        // Liste des champs par catégorie
+        const incorporellesFields = [
+            'capital_souscrit_non_app',
+            'frais_recherche_developpement',
+            'brevet_licence_logiciels',
+            'fonds_commercial',
+            'autres_immobilisations_incorporelles'
+        ];
+        
+        const corporellesFields = [
+            'terrains',
+            'constructions',
+            'materiels_et_outils',
+            'materiel_de_transport',
+            'autres_immos_corp',
+            'immos_en_cours',
+            'avances_et_acptes'
+        ];
+        
+        const financiersFields = [
+            'participations',
+            'prets',
+            'autres'
+        ];
+        
+        // Calculer les totaux
+        incorporellesFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalIncorporelles += value;
+            totalGeneral += value;
+        });
+        
+        corporellesFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalCorporelles += value;
+            totalGeneral += value;
+        });
+        
+        financiersFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalFinanciers += value;
+            totalGeneral += value;
+        });
+        
+        // Mettre à jour les affichages
+        $('#summaryIncorporelles').text(formatNumber(totalIncorporelles));
+        $('#summaryCorporelles').text(formatNumber(totalCorporelles));
+        $('#summaryFinanciers').text(formatNumber(totalFinanciers));
+        $('#summaryTotal').text(formatNumber(totalGeneral));
+    }
+    
+    // Écouter les changements dans les champs de formulaire
+    function setupFormListeners() {
+        // Écouter tous les champs numériques
+        $('input[type="number"]').on('input', updateFormSummaries);
+        
+        // Bouton effacer le formulaire
+        $('#clearFormBtn').on('click', function() {
+            Swal.fire({
+                title: 'Effacer le formulaire ?',
+                text: 'Toutes les données saisies seront perdues.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, effacer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#addActifForm')[0].reset();
+                    $('#annee').val(null).trigger('change');
+                    updateFormSummaries();
+                }
+            });
+        });
+        
+        // Bouton réinitialiser le formulaire d'édition
+        $('#resetEditFormBtn').on('click', function() {
+            Swal.fire({
+                title: 'Réinitialiser les modifications ?',
+                text: 'Toutes les modifications seront perdues et les valeurs d\'origine restaurées.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, réinitialiser',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    loadActifForEdit(selectedActifId);
+                }
+            });
+        });
+    }
+    
+    // Charger les données de l'acheteur
+    function loadAcheteurData() {
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${ACHETEUR_ID}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Les données sont déjà affichées via Django template
+                console.log('Données acheteur chargées:', response);
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement des données de l\'acheteur:', xhr);
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadAcheteurData);
+                }
+            }
+        });
+    }
+    
+    // Charger les actifs
+    function loadActifs() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-classique/liste-des-actifs/?page=${currentPage}&search=${currentSearch}`;
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#actifsTableBody').html(`
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-2 text-muted">Chargement des données...</p>
+                        </td>
+                    </tr>
+                `);
+            },
+            success: function(response) {
+                actifsData = response.results;
+                updateTable(actifsData);
+                updatePagination(response);
+                updateStats(actifsData);
+            },
+            error: function(xhr) {
+                $('#actifsTableBody').html(`
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données. Veuillez réessayer.</p>
+                            <button class="btn btn-sm btn-primary" onclick="loadActifs()">
+                                <i class="fas fa-redo me-1"></i>Réessayer
+                            </button>
+                        </td>
+                    </tr>
+                `);
+                console.error('Erreur lors du chargement des actifs:', xhr);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadActifs);
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour le tableau
+    function updateTable(actifs) {
+        const tbody = $('#actifsTableBody');
+        tbody.empty();
+        
+        if (actifs.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="11" class="text-center py-5">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun actif trouvé</h5>
+                        <p class="text-muted mb-0">Cliquez sur "Nouvel Actif" pour en ajouter un</p>
+                    </td>
+                </tr>
+            `);
+            $('#actifsTableFooter').hide();
+            return;
+        }
+        
+        // Calculer les totaux pour le footer
+        let totals = {
+            csna: 0,
+            frd: 0,
+            bll: 0,
+            fc: 0,
+            aii: 0,
+            terrains: 0,
+            constructions: 0,
+            mo: 0,
+            mt: 0
+        };
+        
+        actifs.forEach((actif, index) => {
+            const year = actif.annee?.annee || 'N/A';
+            const rowNumber = index + 1 + ((currentPage - 1) * 10);
+            
+            // Ajouter aux totaux
+            totals.csna += parseFloat(actif.capital_souscrit_non_app || 0);
+            totals.frd += parseFloat(actif.frais_recherche_developpement || 0);
+            totals.bll += parseFloat(actif.brevet_licence_logiciels || 0);
+            totals.fc += parseFloat(actif.fonds_commercial || 0);
+            totals.aii += parseFloat(actif.autres_immobilisations_incorporelles || 0);
+            totals.terrains += parseFloat(actif.terrains || 0);
+            totals.constructions += parseFloat(actif.constructions || 0);
+            totals.mo += parseFloat(actif.materiels_et_outils || 0);
+            totals.mt += parseFloat(actif.materiel_de_transport || 0);
+            
+            const row = `
+                <tr data-id="${actif.id}" class="actif-row">
+                    <td>
+                        <span class="year-badge">
+                            <i class="fas fa-calendar me-1"></i>${year}
+                        </span>
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.capital_souscrit_non_app)}">
+                        ${formatNumber(actif.capital_souscrit_non_app)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.frais_recherche_developpement)}">
+                        ${formatNumber(actif.frais_recherche_developpement)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.brevet_licence_logiciels)}">
+                        ${formatNumber(actif.brevet_licence_logiciels)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.fonds_commercial)}">
+                        ${formatNumber(actif.fonds_commercial)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.autres_immobilisations_incorporelles)}">
+                        ${formatNumber(actif.autres_immobilisations_incorporelles)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.terrains)}">
+                        ${formatNumber(actif.terrains)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.constructions)}">
+                        ${formatNumber(actif.constructions)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.materiels_et_outils)}">
+                        ${formatNumber(actif.materiels_et_outils)}
+                    </td>
+                    <td class="value-cell ${getValueClass(actif.materiel_de_transport)}">
+                        ${formatNumber(actif.materiel_de_transport)}
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary detail-btn" data-id="${actif.id}" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning edit-btn" data-id="${actif.id}" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${actif.id}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer avec les totaux
+        updateTableFooter(totals);
+        $('#actifsTableFooter').show();
+    }
+    
+    // Mettre à jour le footer du tableau
+    function updateTableFooter(totals) {
+        const tfoot = $('#actifsTableFooter');
+        tfoot.empty();
+        
+        const footerRow = `
+            <tr style="background-color: rgba(10, 149, 202, 0.05);">
+                <td class="fw-bold">Total</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.csna)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.frd)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.bll)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.fc)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.aii)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.terrains)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.constructions)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.mo)}</td>
+                <td class="value-cell value-positive fw-bold">${formatNumber(totals.mt)}</td>
+                <td></td>
+            </tr>
+        `;
+        
+        tfoot.html(footerRow);
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStats(actifs) {
+        let totalIncorporelles = 0;
+        let totalCorporelles = 0;
+        let totalFinanciers = 0;
+        let totalStocks = 0;
+        let totalGeneral = 0;
+        
+        actifs.forEach(actif => {
+            // Incorporelles
+            totalIncorporelles += parseFloat(actif.capital_souscrit_non_app || 0) +
+                                 parseFloat(actif.frais_recherche_developpement || 0) +
+                                 parseFloat(actif.brevet_licence_logiciels || 0) +
+                                 parseFloat(actif.fonds_commercial || 0) +
+                                 parseFloat(actif.autres_immobilisations_incorporelles || 0);
+            
+            // Corporelles
+            totalCorporelles += parseFloat(actif.terrains || 0) +
+                               parseFloat(actif.constructions || 0) +
+                               parseFloat(actif.materiels_et_outils || 0) +
+                               parseFloat(actif.materiel_de_transport || 0) +
+                               parseFloat(actif.autres_immos_corp || 0) +
+                               parseFloat(actif.immos_en_cours || 0) +
+                               parseFloat(actif.avances_et_acptes || 0);
+            
+            // Financiers
+            totalFinanciers += parseFloat(actif.participations || 0) +
+                              parseFloat(actif.prets || 0) +
+                              parseFloat(actif.autres || 0);
+            
+            // Stocks
+            totalStocks += parseFloat(actif.stocks_mp || 0) +
+                          parseFloat(actif.stocks_pf || 0) +
+                          parseFloat(actif.stocks_encours_mp || 0) +
+                          parseFloat(actif.stocks_encours_pf || 0) +
+                          parseFloat(actif.stocks_mses || 0) +
+                          parseFloat(actif.avances_acptes_verses || 0) +
+                          parseFloat(actif.clients_et_cptes_rattaches || 0) +
+                          parseFloat(actif.autres_creances || 0) +
+                          parseFloat(actif.valeurs_a_encaisser || 0) +
+                          parseFloat(actif.banques_cheques_postaux_caisse || 0);
+        });
+        
+        totalGeneral = totalIncorporelles + totalCorporelles + totalFinanciers + totalStocks;
+        
+        // Mettre à jour les cartes
+        $('#countIncorporelles').text(formatNumber(totalIncorporelles));
+        $('#countCorporelles').text(formatNumber(totalCorporelles));
+        $('#countFinanciers').text(formatNumber(totalFinanciers));
+        $('#countStocks').text(formatNumber(totalStocks));
+        
+        // Mettre à jour les barres de progression (basées sur le total général)
+        const maxValue = Math.max(totalIncorporelles, totalCorporelles, totalFinanciers, totalStocks);
+        
+        if (maxValue > 0) {
+            $('#progressIncorporelles').css('width', (totalIncorporelles / maxValue * 100) + '%');
+            $('#progressCorporelles').css('width', (totalCorporelles / maxValue * 100) + '%');
+            $('#progressFinanciers').css('width', (totalFinanciers / maxValue * 100) + '%');
+            $('#progressStocks').css('width', (totalStocks / maxValue * 100) + '%');
+        }
+        
+        // Mettre à jour l'info du tableau
+        $('#tableInfo').text(`${actifs.length} actif(s) chargé(s) | Total général: ${formatNumber(totalGeneral)}`);
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        $('#paginationInfo').text(
+            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} actifs`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+    
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadActifs();
+        }, 500);
+    });
+    
+    // Appliquer les filtres
+    $('#applyFiltersBtn').on('click', function() {
+        // Pour l'instant, on recharge simplement les données
+        // À implémenter: logique de filtrage côté serveur
+        loadActifs();
+    });
+    
+    // Réinitialiser les filtres
+    $('#resetFiltersBtn').on('click', function() {
+        $('#searchInput').val('');
+        $('input[type="checkbox"]').prop('checked', true);
+        currentSearch = '';
+        currentPage = 1;
+        loadActifs();
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadActifs();
+            $('html, body').animate({
+                scrollTop: $('#actifsTableBody').offset().top - 100
+            }, 500);
+        }
+    });
+    
+    // Voir les détails d'un actif
+    $(document).on('click', '.detail-btn', function() {
+        const actifId = $(this).data('id');
+        const actif = actifsData.find(a => a.id === actifId);
+        
+        if (actif) {
+            showDetailModal(actif);
+        }
+    });
+    
+    // Afficher le modal de détails
+    function showDetailModal(actif) {
+        selectedActifId = actif.id;
+        
+        // Mettre à jour les informations de base
+        const year = actif.annee?.annee || 'N/A';
+        $('#detailAnnee').text(`Actif ${year}`);
+        $('#detailAcheteur').text('{{ acheteur.nom }}');
+        
+        // Calculer les totaux
+        const totalIncorporelles = parseFloat(actif.capital_souscrit_non_app || 0) +
+                                  parseFloat(actif.frais_recherche_developpement || 0) +
+                                  parseFloat(actif.brevet_licence_logiciels || 0) +
+                                  parseFloat(actif.fonds_commercial || 0) +
+                                  parseFloat(actif.autres_immobilisations_incorporelles || 0);
+        
+        const totalCorporelles = parseFloat(actif.terrains || 0) +
+                                parseFloat(actif.constructions || 0) +
+                                parseFloat(actif.materiels_et_outils || 0) +
+                                parseFloat(actif.materiel_de_transport || 0) +
+                                parseFloat(actif.autres_immos_corp || 0) +
+                                parseFloat(actif.immos_en_cours || 0) +
+                                parseFloat(actif.avances_et_acptes || 0);
+        
+        const totalFinanciers = parseFloat(actif.participations || 0) +
+                               parseFloat(actif.prets || 0) +
+                               parseFloat(actif.autres || 0);
+        
+        const totalStocks = parseFloat(actif.stocks_mp || 0) +
+                           parseFloat(actif.stocks_pf || 0) +
+                           parseFloat(actif.stocks_encours_mp || 0) +
+                           parseFloat(actif.stocks_encours_pf || 0) +
+                           parseFloat(actif.stocks_mses || 0);
+        
+        const totalGeneral = totalIncorporelles + totalCorporelles + totalFinanciers + totalStocks;
+        
+        $('#detailTotal').text(formatNumber(totalGeneral));
+        $('#detailLastUpdated').text('Dernière mise à jour: ' + new Date().toLocaleDateString('fr-FR'));
+        
+        // Mettre à jour les statistiques
+        $('#detailStatsIncorporelles').text(formatNumber(totalIncorporelles));
+        $('#detailStatsCorporelles').text(formatNumber(totalCorporelles));
+        $('#detailStatsFinanciers').text(formatNumber(totalFinanciers));
+        $('#detailStatsStocks').text(formatNumber(totalStocks));
+        
+        // Remplir la grille détaillée
+        const content = $('#detailContent');
+        content.empty();
+        
+        // Catégories détaillées
+        const categories = [
+            {
+                title: 'Immobilisations Incorporelles',
+                icon: 'building',
+                color: 'primary',
+                items: [
+                    { label: 'Capital Souscrit Non Appelé', value: actif.capital_souscrit_non_app, code: 'CSNA', icon: 'landmark' },
+                    { label: 'Frais Recherche Développement', value: actif.frais_recherche_developpement, code: 'FRD', icon: 'flask' },
+                    { label: 'Brevet Licence Logiciels', value: actif.brevet_licence_logiciels, code: 'BLL', icon: 'copyright' },
+                    { label: 'Fonds Commercial', value: actif.fonds_commercial, code: 'FC', icon: 'store' },
+                    { label: 'Autres Immobilisations Incorporelles', value: actif.autres_immobilisations_incorporelles, code: 'AII', icon: 'asterisk' }
+                ]
+            },
+            {
+                title: 'Immobilisations Corporelles',
+                icon: 'industry',
+                color: 'success',
+                items: [
+                    { label: 'Terrains', value: actif.terrains, code: 'T', icon: 'mountain' },
+                    { label: 'Constructions', value: actif.constructions, code: 'C', icon: 'building' },
+                    { label: 'Matériels et Outils', value: actif.materiels_et_outils, code: 'MO', icon: 'tools' },
+                    { label: 'Matériel de Transport', value: actif.materiel_de_transport, code: 'MT', icon: 'truck' },
+                    { label: 'Autres Immobilisations Corporelles', value: actif.autres_immos_corp, code: 'AIC', icon: 'box' },
+                    { label: 'Immobilisations en Cours', value: actif.immos_en_cours, code: 'IEC', icon: 'hard-hat' },
+                    { label: 'Avances et Acomptes', value: actif.avances_et_acptes, code: 'AA', icon: 'hand-holding-usd' }
+                ]
+            },
+            {
+                title: 'Actifs Financiers',
+                icon: 'chart-line',
+                color: 'warning',
+                items: [
+                    { label: 'Participations', value: actif.participations, code: 'P', icon: 'users' },
+                    { label: 'Prêts', value: actif.prets, code: 'PR', icon: 'handshake' },
+                    { label: 'Autres actifs financiers', value: actif.autres, code: 'A', icon: 'ellipsis-h' }
+                ]
+            },
+            {
+                title: 'Stocks',
+                icon: 'boxes',
+                color: 'purple',
+                items: [
+                    { label: 'Stocks Matières Premières', value: actif.stocks_mp, code: 'SMP', icon: 'cubes' },
+                    { label: 'Stocks Produits Finis', value: actif.stocks_pf, code: 'SPF', icon: 'cube' },
+                    { label: 'Stocks Encours MP', value: actif.stocks_encours_mp, code: 'SEMP', icon: 'spinner' },
+                    { label: 'Stocks Encours PF', value: actif.stocks_encours_pf, code: 'SEPF', icon: 'hourglass-half' },
+                    { label: 'Stocks Matières et Fournitures', value: actif.stocks_mses, code: 'SMS', icon: 'box-open' },
+                    { label: 'Stocks Encours Services', value: actif.stocks_encours_services, code: 'SES', icon: 'concierge-bell' }
+                ]
+            },
+            {
+                title: 'Créances',
+                icon: 'file-invoice-dollar',
+                color: 'info',
+                items: [
+                    { label: 'Avances Acomptes Versés', value: actif.avances_acptes_verses, code: 'AAV', icon: 'hand-holding-usd' },
+                    { label: 'Clients et Comptes Rattachés', value: actif.clients_et_cptes_rattaches, code: 'CCR', icon: 'user-tie' },
+                    { label: 'Autres Créances', value: actif.autres_creances, code: 'AC', icon: 'receipt' },
+                    { label: 'Valeurs à Encaisser', value: actif.valeurs_a_encaisser, code: 'VE', icon: 'money-check-alt' }
+                ]
+            },
+            {
+                title: 'Trésorerie et Autres',
+                icon: 'university',
+                color: 'primary',
+                items: [
+                    { label: 'Banques, Chèques Postaux, Caisse', value: actif.banques_cheques_postaux_caisse, code: 'BCPC', icon: 'piggy-bank' },
+                    { label: 'Comptes de Régularisation', value: actif.cca, code: 'CCA', icon: 'file-invoice' },
+                    { label: 'Charges à Répartir', value: actif.charges_a_repartir_et_frais_etablissement, code: 'CARFE', icon: 'chart-pie' },
+                    { label: 'Primes de Remboursement', value: actif.primes_de_rbt, code: 'PRBT', icon: 'award' },
+                    { label: 'Écarts de Conversion', value: actif.eca, code: 'ECA', icon: 'balance-scale' },
+                    { label: 'Écarts Négatifs', value: actif.eene, code: 'ENE', icon: 'bolt' },
+                    { label: 'Amortissements', value: actif.amortissements, code: 'AMO', icon: 'chart-line-down' },
+                    { label: 'Provisions Stocks', value: actif.provisions_stocks, code: 'PS', icon: 'shield-alt' },
+                    { label: 'Provisions Créances', value: actif.provisions_creances, code: 'PC', icon: 'user-shield' },
+                    { label: 'Provisions VMP', value: actif.provisions_vmp, code: 'PVMP', icon: 'chart-bar' }
+                ]
+            }
+        ];
+        
+        // Ajouter chaque catégorie
+        categories.forEach(category => {
+            const section = `
+                <div class="detail-category-card">
+                    <div class="detail-category-header">
+                        <h6>
+                            <i class="fas fa-${category.icon} text-${category.color} me-2"></i>
+                            ${category.title}
+                        </h6>
+                    </div>
+                    <div class="detail-category-body">
+                        ${category.items.map(item => `
+                            <div class="detail-item">
+                                <div class="detail-item-label">
+                                    <i class="fas fa-${item.icon} text-muted me-2"></i>
+                                    <span>
+                                        <small class="text-muted d-block">${item.code}</small>
+                                        ${item.label}
+                                    </span>
+                                </div>
+                                <div class="detail-item-value ${getValueClass(item.value)}">
+                                    ${formatNumber(item.value)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            content.append(section);
+        });
+        
+        $('#detailActifModal').modal('show');
+    }
+    
+    // Éditer un actif
+    $(document).on('click', '.edit-btn', function() {
+        const actifId = $(this).data('id');
+        selectedActifId = actifId;
+        loadActifForEdit(actifId);
+    });
+    
+    // Charger un actif pour modification
+    function loadActifForEdit(actifId) {
+        $('#editActifModal').modal('show');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/editer-un-actif/${actifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir le modal avec le HTML du formulaire d'ajout
+                const addFormHTML = $('#addActifForm').html();
+                $('#editActifForm .modal-body').html(addFormHTML);
+                
+                // Changer les IDs pour éviter les conflits
+                $('#editActifForm .modal-body').find('input, select, textarea').each(function() {
+                    const oldId = $(this).attr('id');
+                    if (oldId) {
+                        $(this).attr('id', 'edit' + oldId.charAt(0).toUpperCase() + oldId.slice(1));
+                    }
+                });
+                
+                // Mettre à jour les IDs des labels
+                $('#editActifForm .modal-body').find('label').each(function() {
+                    const oldFor = $(this).attr('for');
+                    if (oldFor) {
+                        $(this).attr('for', 'edit' + oldFor.charAt(0).toUpperCase() + oldFor.slice(1));
+                    }
+                });
+                
+                // Remplir les champs avec les données
+                $('#editActifId').val(response.id);
+                
+                // Remplir tous les champs
+                const fields = [
+                    'capital_souscrit_non_app',
+                    'frais_recherche_developpement',
+                    'brevet_licence_logiciels',
+                    'fonds_commercial',
+                    'autres_immobilisations_incorporelles',
+                    'terrains',
+                    'constructions',
+                    'materiels_et_outils',
+                    'materiel_de_transport',
+                    'autres_immos_corp',
+                    'immos_en_cours',
+                    'avances_et_acptes',
+                    'participations',
+                    'prets',
+                    'autres',
+                    'stocks_mp',
+                    'stocks_encours_mp',
+                    'stocks_pf',
+                    'stocks_encours_pf',
+                    'stocks_encours_services',
+                    'stocks_mses',
+                    'avances_acptes_verses',
+                    'clients_et_cptes_rattaches',
+                    'autres_creances',
+                    'valeurs_a_encaisser',
+                    'banques_cheques_postaux_caisse',
+                    'cca',
+                    'charges_a_repartir_et_frais_etablissement',
+                    'primes_de_rbt',
+                    'eca',
+                    'eene',
+                    'effectif',
+                    'amortissements',
+                    'provisions_stocks',
+                    'provisions_creances',
+                    'provisions_vmp'
+                ];
+                
+                fields.forEach(field => {
+                    const editFieldId = 'edit' + field.charAt(0).toUpperCase() + field.slice(1);
+                    if (response[field] !== undefined && response[field] !== null) {
+                        $(`#${editFieldId}`).val(response[field]);
+                    }
+                });
+                
+                // Remplir l'année
+                if (response.annee) {
+                    $('#editAnnee').val(response.annee).trigger('change');
+                }
+                
+                // Réinitialiser Select2
+                initSelect2();
+                
+                // Mettre à jour les résumés
+                updateEditFormSummaries();
+                
+                // Configurer les écouteurs
+                setupEditFormListeners();
+                
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement de l\'actif:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données de l\'actif.'
+                });
+                $('#editActifModal').modal('hide');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => loadActifForEdit(actifId));
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour les résumés du formulaire d'édition
+    function updateEditFormSummaries() {
+        // Similaire à updateFormSummaries mais avec les IDs "edit"
+        let totalIncorporelles = 0;
+        let totalCorporelles = 0;
+        let totalFinanciers = 0;
+        let totalGeneral = 0;
+        
+        const incorporellesFields = [
+            'editCapital_souscrit_non_app',
+            'editFrais_recherche_developpement',
+            'editBrevet_licence_logiciels',
+            'editFonds_commercial',
+            'editAutres_immobilisations_incorporelles'
+        ];
+        
+        const corporellesFields = [
+            'editTerrains',
+            'editConstructions',
+            'editMateriels_et_outils',
+            'editMateriel_de_transport',
+            'editAutres_immos_corp',
+            'editImmos_en_cours',
+            'editAvances_et_acptes'
+        ];
+        
+        const financiersFields = [
+            'editParticipations',
+            'editPrets',
+            'editAutres'
+        ];
+        
+        incorporellesFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalIncorporelles += value;
+            totalGeneral += value;
+        });
+        
+        corporellesFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalCorporelles += value;
+            totalGeneral += value;
+        });
+        
+        financiersFields.forEach(field => {
+            const value = parseFloat($(`#${field}`).val()) || 0;
+            totalFinanciers += value;
+            totalGeneral += value;
+        });
+        
+        $('#editSummaryIncorporelles').text(formatNumber(totalIncorporelles));
+        $('#editSummaryCorporelles').text(formatNumber(totalCorporelles));
+        $('#editSummaryFinanciers').text(formatNumber(totalFinanciers));
+        $('#editSummaryTotal').text(formatNumber(totalGeneral));
+    }
+    
+    // Configurer les écouteurs du formulaire d'édition
+    function setupEditFormListeners() {
+        // Écouter tous les champs numériques
+        $('#editActifForm input[type="number"]').on('input', updateEditFormSummaries);
+    }
+    
+    // Soumettre le formulaire d'ajout
+    $('#addActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#submitAddBtn');
+        const originalText = $btn.html();
+        
+        // Afficher le loading
+        $btn.prop('disabled', true);
+        $btn.html('<span class="loading-spinner spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/ajouter-un-actif/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                // Réinitialiser le bouton
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                // Fermer le modal
+                $('#addActifModal').modal('hide');
+                
+                // Réinitialiser le formulaire
+                $('#addActifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                updateFormSummaries();
+                
+                // Afficher le succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                // Recharger les données
+                loadActifs();
+            },
+            error: function(xhr) {
+                // Réinitialiser le bouton
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'édition
+    $('#editActifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const $btn = $('#submitEditBtn');
+        const originalText = $btn.html();
+        
+        // Afficher le loading
+        $btn.prop('disabled', true);
+        $btn.html('<span class="loading-spinner spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/editer-un-actif/${selectedActifId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                // Réinitialiser le bouton
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                // Fermer le modal
+                $('#editActifModal').modal('hide');
+                
+                // Afficher le succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                // Recharger les données
+                loadActifs();
+            },
+            error: function(xhr) {
+                // Réinitialiser le bouton
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editActifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Supprimer un actif
+    $(document).on('click', '.delete-btn', function() {
+        const actifId = $(this).data('id');
+        const actif = actifsData.find(a => a.id === actifId);
+        
+        if (actif) {
+            selectedActifId = actifId;
+            $('#deleteAnnee').text(actif.annee?.annee || 'N/A');
+            $('#confirmDeleteModal').modal('show');
+        }
+    });
+    
+    // Confirmer la suppression depuis le modal de détails
+    $('#deleteDetailBtn').on('click', function() {
+        const actif = actifsData.find(a => a.id === selectedActifId);
+        if (actif) {
+            $('#deleteAnnee').text(actif.annee?.annee || 'N/A');
+            $('#detailActifModal').modal('hide');
+            $('#confirmDeleteModal').modal('show');
+        }
+    });
+    
+    // Confirmer la suppression définitive
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-classique/supprimer-des-actifs/`,
+            type: 'DELETE',
+            data: JSON.stringify({ ids: [selectedActifId] }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Supprimé',
+                    text: 'Actif supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                // Recharger les données
+                loadActifs();
+            },
+            error: function(xhr) {
+                let errorMessage = 'Une erreur est survenue lors de la suppression';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#confirmDeleteBtn').click());
+                }
+            }
+        });
+    });
+    
+    // Bouton d'export
+    $('#exportBtn').on('click', function() {
+        $('#exportModal').modal('show');
+    });
+    
+    // Exporter en Excel
+    $('#exportExcelBtn').on('click', function() {
+        // À implémenter: logique d'export Excel
+        Swal.fire({
+            icon: 'info',
+            title: 'Export Excel',
+            text: 'Fonctionnalité d\'export Excel en cours de développement...',
+            timer: 2000,
+            showConfirmButton: false,
+            background: '#f8fafc',
+            color: '#2d3748'
+        });
+    });
+    
+    // Exporter en PDF
+    $('#exportPdfBtn').on('click', function() {
+        // À implémenter: logique d'export PDF
+        Swal.fire({
+            icon: 'info',
+            title: 'Export PDF',
+            text: 'Fonctionnalité d\'export PDF en cours de développement...',
+            timer: 2000,
+            showConfirmButton: false,
+            background: '#f8fafc',
+            color: '#2d3748'
+        });
+    });
+    
+    // Bouton modifier depuis le modal de détails
+    $('#editDetailBtn').on('click', function() {
+        $('#detailActifModal').modal('hide');
+        if (selectedActifId) {
+            loadActifForEdit(selectedActifId);
+        }
+    });
+    
+    // Actions rapides
+    $('#viewSummaryBtn').on('click', function(e) {
+        e.preventDefault();
+        // À implémenter: vue résumé
+        Swal.fire({
+            icon: 'info',
+            title: 'Résumé',
+            text: 'Fonctionnalité de résumé en cours de développement...',
+            timer: 2000,
+            showConfirmButton: false,
+            background: '#f8fafc',
+            color: '#2d3748'
+        });
+    });
+    
+    $('#compareYearsBtn').on('click', function(e) {
+        e.preventDefault();
+        // À implémenter: comparaison d'années
+        Swal.fire({
+            icon: 'info',
+            title: 'Comparaison',
+            text: 'Fonctionnalité de comparaison en cours de développement...',
+            timer: 2000,
+            showConfirmButton: false,
+            background: '#f8fafc',
+            color: '#2d3748'
+        });
+    });
+    
+    $('#generateReportBtn').on('click', function(e) {
+        e.preventDefault();
+        $('#exportModal').modal('show');
+    });
+    
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    // Mettre à jour le token
+                    // Note: Dans une vraie application, vous devriez stocker ce token
+                    // et le réutiliser dans les prochaines requêtes
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    background: '#f8fafc',
+                    color: '#2d3748'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Initialisation
+    function init() {
+        initSelect2();
+        initTooltips();
+        setupFormListeners();
+        loadAcheteurData();
+        loadActifs();
+        updateFormSummaries();
+        
+        // Animation des cartes
+        setTimeout(() => {
+            $('.category-card').addClass('animate-in');
+        }, 100);
+    }
+    
+    // Lancer l'initialisation
+    init();
+});
+</script>
+{% endblock %}

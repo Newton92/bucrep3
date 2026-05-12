@@ -1,333 +1,1111 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static %}
 
-{% load static %}
+{% block styles %}
+<!-- Font Awesome 6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- SweetAlert2 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Animate.css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
-{% block css %}
-<!-- Leaflet CSS -->
-<!-- MapLibre GL JS -->
-<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
 <style>
-.map-container {
-    border-radius: 15px;  /* Bordures arrondies */
-    overflow: hidden; /* Empêche la carte de dépasser */
-    height: 400px; /* Hauteur fixe */
-    border: 2px solid #ddd; /* Bordure grise légère */
+:root {
+    --primary: #0d80be;
+    --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #106cb2);
+    --secondary: #25add6;
+    --success: #28a745;
+    --success-gradient: linear-gradient(135deg, #28a745, #20c997);
+    --warning: #ffc107;
+    --warning-gradient: linear-gradient(135deg, #ffc107, #fd7e14);
+    --danger: #dc3545;
+    --danger-gradient: linear-gradient(135deg, #dc3545, #fd7e14);
+    --info: #17a2b8;
+    --dark: #2c3e50;
+    --light: #f8fafc;
+    --gray: #6c757d;
+    --border-radius: 16px;
+    --border-radius-sm: 12px;
+    --border-radius-lg: 20px;
+    --box-shadow: 0 8px 25px rgba(13, 110, 178, 0.08);
+    --box-shadow-hover: 0 15px 35px rgba(13, 110, 178, 0.15);
+    --box-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#map {
+body {
+    background: linear-gradient(135deg, #f5f7fa, #e9ecef);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header */
+.page-header {
+    background: var(--primary-gradient);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(13, 110, 178, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.page-header h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.page-header p {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0.25rem 0 0 0;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+}
+
+.btn-back:hover {
+    background: white;
+    color: var(--primary);
+    border-color: white;
+    transform: translateX(-5px);
+}
+
+/* Cartes */
+.order-card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-card);
+    transition: var(--transition);
+    overflow: hidden;
     height: 100%;
-    width: 100%;
-    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
 }
 
-</style>
+.order-card:hover {
+    box-shadow: var(--box-shadow-hover);
+    transform: translateY(-5px);
+}
 
+.order-card-header {
+    background: linear-gradient(135deg, #f8fafc, #eef2f6);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid rgba(13, 110, 178, 0.1);
+}
+
+.order-card-header h5 {
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.order-card-header h5 i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.order-card-body {
+    padding: 1.5rem;
+}
+
+/* Résumé commande */
+.summary-item {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(13, 110, 178, 0.1);
+    transition: var(--transition);
+}
+
+.summary-item:hover {
+    border-color: var(--primary);
+    background: white;
+    transform: translateX(5px);
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.summary-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.summary-badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+/* Badges de statut */
+.status-badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    display: inline-block;
+}
+
+.status-badge.nouvelle { background: rgba(13, 110, 178, 0.1); color: #0d80be; }
+.status-badge.en_cours { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+.status-badge.rapport_soumis { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+.status-badge.rapport_valide { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.status-badge.envoye_client { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.status-badge.terminee { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-badge.annulee { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+
+/* Actions rapides */
+.quick-actions {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-radius: var(--border-radius-sm);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.quick-actions-title {
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quick-actions-title i {
+    font-size: 1.2rem;
+}
+
+/* Formulaires */
+.form-label {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid rgba(13, 110, 178, 0.1);
+    border-radius: var(--border-radius-sm);
+    padding: 0.6rem 1rem;
+    transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 178, 0.15);
+    outline: none;
+}
+
+.btn-action {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(13, 110, 178, 0.3);
+    color: white;
+}
+
+.btn-outline-action {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: var(--border-radius-sm);
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-outline-action:hover {
+    background: var(--primary-gradient);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Timeline */
+.timeline-container {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(13, 110, 178, 0.2), rgba(13, 110, 178, 0.6), rgba(13, 110, 178, 0.2));
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 1.5rem;
+    animation: slideInLeft 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 16px;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px rgba(13, 110, 178, 0.2);
+    z-index: 2;
+}
+
+.timeline-dot.creation { background: #0d80be; }
+.timeline-dot.affectation { background: #6f42c1; }
+.timeline-dot.soumission { background: #17a2b8; }
+.timeline-dot.validation { background: #28a745; }
+.timeline-dot.correction { background: #fd7e14; }
+.timeline-dot.envoi_client { background: #20c997; }
+.timeline-dot.cloture { background: #28a745; }
+.timeline-dot.annulation { background: #dc3545; }
+.timeline-dot.update { background: #6c757d; }
+.timeline-dot.suppression { background: #343a40; }
+.timeline-dot.history { background: #adb5bd; }
+
+.timeline-card {
+    background: white;
+    border-radius: var(--border-radius-sm);
+    padding: 1.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid;
+    transition: var(--transition);
+}
+
+.timeline-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 20px rgba(13, 110, 178, 0.15);
+}
+
+.timeline-card.creation { border-left-color: #0d80be; }
+.timeline-card.affectation { border-left-color: #6f42c1; }
+.timeline-card.soumission { border-left-color: #17a2b8; }
+.timeline-card.validation { border-left-color: #28a745; }
+.timeline-card.correction { border-left-color: #fd7e14; }
+.timeline-card.envoi_client { border-left-color: #20c997; }
+.timeline-card.cloture { border-left-color: #28a745; }
+.timeline-card.annulation { border-left-color: #dc3545; }
+.timeline-card.update { border-left-color: #6c757d; }
+.timeline-card.suppression { border-left-color: #343a40; }
+.timeline-card.history { border-left-color: #adb5bd; }
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-type {
+    font-weight: 700;
+    color: var(--dark);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.timeline-date {
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.timeline-action {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+}
+
+.timeline-comment {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+    border-left: 3px solid var(--primary);
+}
+
+.timeline-user {
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeline-user i {
+    font-size: 0.9rem;
+}
+
+/* Filtres */
+.filters-wrapper {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-radius: var(--border-radius-sm);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(13, 110, 178, 0.1);
+}
+
+.filter-label {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Boutons d'export */
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-export {
+    background: white;
+    border: 2px solid rgba(13, 110, 178, 0.2);
+    color: var(--primary);
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.btn-export:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-export i {
+    margin-right: 0.3rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: var(--border-radius);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--gray);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h6 {
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--gray);
+    margin-bottom: 0;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(13, 110, 178, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* SweetAlert2 personnalisé */
+.swal2-popup {
+    border-radius: 16px !important;
+    padding: 2rem !important;
+}
+
+.swal2-title {
+    color: var(--dark) !important;
+    font-weight: 700 !important;
+}
+
+.swal2-confirm {
+    background: var(--primary-gradient) !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+}
+
+.swal2-cancel {
+    border-radius: 10px !important;
+    padding: 0.75rem 2rem !important;
+    font-weight: 600 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header h3 {
+        font-size: 1.4rem;
+    }
+    
+    .btn-back {
+        margin-top: 1rem;
+    }
+    
+    .timeline-container::before {
+        left: 16px;
+    }
+    
+    .timeline-item {
+        padding-left: 45px;
+    }
+    
+    .timeline-dot {
+        left: 10px;
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .export-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .btn-export {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Commandes</h3>
+<div class="container-fluid px-4">
+    <!-- Header Premium -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h3><i class="fas fa-tasks me-2"></i>Manager Commande</h3>
+                    <p>Suivi du cycle de vie et audit métier de la commande</p>
+                </div>
+                <a href="{% url 'dash_root_order' %}" class="btn-back">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+            </div>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countAcheteurs">Module de Gestion des Commandes</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une commande de rapport notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Cartes principales -->
+    <div class="row g-4">
+        <!-- Résumé commande -->
+        <div class="col-lg-5">
+            <div class="order-card animate__animated animate__fadeInLeft" style="animation-delay: 0.1s;">
+                <div class="order-card-header">
+                    <h5><i class="fas fa-info-circle"></i>Résumé commande</h5>
+                </div>
+                <div class="order-card-body">
+                    <div class="summary-item">
+                        <div class="summary-label">Référence</div>
+                        <div class="summary-value" id="sumRef">{{ commande.notre_ref|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Raison sociale</div>
+                        <div class="summary-value" id="sumCompany">{{ commande.raison_sociale|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Client</div>
+                        <div class="summary-value" id="sumClient">{{ commande.client.username|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Acheteur</div>
+                        <div class="summary-value" id="sumAcheteur">{{ commande.acheteur.nom|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Statut actuel</div>
+                        <div class="summary-value">
+                            <span class="status-badge" id="sumStatus">{{ commande.status }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Date envoi client</div>
+                        <div class="summary-value" id="sumSentDate">{{ commande.date_envoi_client|default:"-" }}</div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <div class="summary-label">Email envoyé</div>
+                        <div class="summary-value" id="sumEmailSent">{{ commande.email_envoye|yesno:"Oui,Non" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="col-lg-7">
+            <div class="order-card animate__animated animate__fadeInRight" style="animation-delay: 0.2s;">
+                <div class="order-card-header">
+                    <h5><i class="fas fa-bolt"></i>Actions rapides</h5>
+                </div>
+                <div class="order-card-body">
+                    <!-- Mise à jour statut -->
+                    <div class="quick-actions">
+                        <div class="quick-actions-title">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Mise à jour du statut</span>
+                        </div>
+                        <form id="statusUpdateForm" class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label">Nouveau statut</label>
+                                <select class="form-select" id="quickStatus" name="status" required>
+                                    {% for val, lab in status_choices %}
+                                        <option value="{{ val }}">{{ lab }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Commentaire</label>
+                                <input class="form-control" id="quickComment" name="commentaire" 
+                                       placeholder="Optionnel">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn-action w-100" type="submit">
+                                    <i class="fas fa-check me-1"></i>Appliquer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Ajout au timeline -->
+                    <div class="quick-actions">
+                        <div class="quick-actions-title">
+                            <i class="fas fa-clock"></i>
+                            <span>Ajouter un événement</span>
+                        </div>
+                        <form id="timelineAddForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Type d'action</label>
+                                <select class="form-select" id="tlType" name="type">
+                                    {% for val, lab in action_types %}
+                                        <option value="{{ val }}">{{ lab }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Action</label>
+                                <input class="form-control" id="tlAction" name="action" 
+                                       required placeholder="Ex: rapport envoyé pour validation">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Commentaire</label>
+                                <textarea class="form-control" id="tlComment" name="commentaire" 
+                                          rows="2" placeholder="Détails de l'action..."></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Validateur</label>
+                                <select class="form-select" id="tlValidateur" name="validateur_id">
+                                    <option value="">---------</option>
+                                    {% for v in validateur_list %}
+                                        <option value="{{ v.id }}">{{ v.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn-outline-action w-100" type="submit">
+                                    <i class="fas fa-plus-circle me-2"></i>Ajouter au timeline
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline d'audit -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="order-card animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                <div class="order-card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-history"></i>Timeline d'audit</h5>
+                    <div class="export-buttons">
+                        <button class="btn-export" id="btnExportCsv">
+                            <i class="fas fa-file-csv"></i>CSV
+                        </button>
+                        <button class="btn-export" id="btnExportPdf">
+                            <i class="fas fa-file-pdf"></i>PDF
+                        </button>
+                        <button class="btn-export" id="btnRefreshTimeline">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="order-card-body">
+                    <!-- Filtres -->
+                    <div class="filters-wrapper">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="filter-label">Type</div>
+                                <select class="form-select" id="timelineTypeFilter">
+                                    <option value="">Tous types</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="filter-label">Utilisateur</div>
+                                <select class="form-select" id="timelineUserFilter">
+                                    <option value="">Tous utilisateurs</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="filter-label">Date début</div>
+                                <input type="date" class="form-control" id="timelineDateFrom">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="filter-label">Date fin</div>
+                                <input type="date" class="form-control" id="timelineDateTo">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end gap-2">
+                                <button class="btn-action w-50" id="btnApplyTimelineFilters">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <button class="btn-outline-action w-50" id="btnResetTimelineFilters">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div id="timelineContainer" class="timeline-container"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- Commandes d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                        <!-- Title -->
-                    <div class="ms-2">
-                        <h6 class="card-title mb-0" id="editRaisonSociale"></h6>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editAcheteur"></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" target="_blank" class="btn btn-dark-soft mb-0">Client Demandeur</a>
-                    <p class="text-success text-md-end mb-0" id="editClient"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs">A propos de la commande</h6>
-                        <strong>Réference ACREMAC : </strong><span class="text-primary" id="editRefAcremac"></span><br>
-                        <strong>Réference Client : </strong><span class="text-primary" id="editRefClient"></span><br>
-
-                        <span><br></span>
-
-                        <strong>Date de Réception : </strong><span class="text-info" id="editDateReception"></span><br>
-                        <strong>Date du Rapport : </strong><span class="text-info" id="editDateRapport"></span><br>
-
-                        <span><br></span>
-                        
-                        <strong>Délai : </strong><span class="text-danger" id="editDelais"></span><br>
-                        <strong>Priorité : </strong><span class="text-danger" id="editPriorite"></span><br>
-                        <strong>Type de Rapport : </strong><span class="text-info" id="editTypeRapport"></span><br>
-                        <strong>Référence Type de Rapport : </strong><span class="text-warning" id="editRefTypeRapport"></span><br>
-
-                        <span><br></span>
-                        
-                        <strong>Crédit Demandé : </strong><span class="text-warning" id="editCreditDemande"></span><br>
-                        <strong>Devise Crédit Demandé : </strong><span class="text-warning" id="editDeviseCreditDemande"></span><br>
-                        <strong>Crédit Recommandé : </strong><span class="text-info" id="editCreditRecommande"></span><br>
-                        <strong>Devise Crédit Recommandé : </strong><span class="text-info" id="editDeviseCreditRecommande"></span><br>
-                    </div>
-                </div>
-                <br>
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs">Contats & Adresse</h6>
-                        <strong>Téléphone : </strong><span class="text-info" id="editTelephone"></span><br>
-                        <strong>Email : </strong><span class="text-info" id="editEmail"></span><br>
-                        <strong>Code postal : </strong><span class="text-info" id="editCodePostaleAdresse"></span><br>
-                        <strong>Rue adresse : </strong><span class="text-info" id="editRueAdresse"></span><br>
-                        <strong>Numéro adresse : </strong><span class="text-info" id="editNumeroAdresse"></span><br>
-                        <strong>Pays : </strong><span class="text-info" id="editPays"></span><br>
-                        <strong>Province : </strong><span class="text-info" id="editProvince"></span><br>
-                        <strong>Ville : </strong><span class="text-info" id="editVille"></span><br>
-                    </div>
-                </div>
-                <br>
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs">Acheteur</h6>
-                        <span class="text-info" id="editAcheteur2"></span>
-                    </div>
-                </div>
-                <br>
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs">Client</h6>
-                        <span class="text-info" id="editClient2"></span>
-                    </div>
-                </div>
-                <br>
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs">Statut actuel</h6>
-                        
-                        <a href="#" target="_blank" class="btn btn-default border mb-0"><span class="text-success" id="editStatut"></span></a>
-                    </div>
-                </div>
-
-
-            </div>
-
-
-        </div>
-        <!-- Card item END -->
-
-        
-
-
-    </div>
-</div>
-<!-- Commandes d'Entreprise END -->
-
-
-<!-- Commandes d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-        <!-- Wishlist START -->
-        <div class="card border">
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <h6><u>Suivi d'une Commande (statut)</u></h6>
-                <span>A partir de cette interface, vous aurez la possibilite de consulter l'evolution d'une commande dans son traitement !</span>
-                <br><br>
-
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">1. Nouvelle commande &nbsp;</a>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">2. Affectation commande &nbsp;</a>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">3. Rapport soumis &nbsp;</a>
-                <br><br>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">4. Validation &nbsp;</a>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">5. Correction &nbsp;</a>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">6. Envoi au Client &nbsp;</a>
-                <br><br>
-                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">7. Rappel Notification &nbsp;</a>
-            </div>
-        </div>
-        <!-- Wishlist END -->
-    </div>
-</div>
-<!-- Commandes d'Entreprise END -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- Hidden fields -->
+<input type="hidden" id="access_token" value="{{ access }}">
+<input type="hidden" id="commande_id" value="{{ id_commande }}">
 {% endblock %}
 
 {% block scripts %}
-
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(document).ready(function() {
+(function() {
+    // ============================================
+    // CONFIGURATION
+    // ============================================
+    const COMMANDE_ID = {{ id_commande }};
+    const ACCESS_TOKEN = "{{ access|escapejs }}";
+    const BASE_URL = `/api/orders/module/${COMMANDE_ID}`;
 
-    // Load Commande on load
-    $(document).ready(function() {
-        const id = '{{ id_commande }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de la commande est introuvable.");
-            return;
-        }
-
-        $.ajax({
-            url: `/api/consulter-une-commande/${id}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function(response) {
-                console.log(response);
-                $('#editCommandeId').val(response.id);
-                $('#editRefAcremac').val(response.notre_ref).text(response.notre_ref);
-                $('#editRefClient').val(response.reference_client).text(response.reference_client);
-                $('#editDelais').val(response.delais).text(response.delais);
-
-                if (response.date_recept_commande) {
-                    let parts = response.date_recept_commande.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateReception').val(response.date_recept_commande).text(formattedDate);
-                }
-                if (response.date_rapport) {
-                    let parts = response.date_rapport.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateRapport').val(response.date_rapport).text(formattedDate);
-                }
-                
-                $('#editPriorite').val(response.priorite).text(response.priorite);
-                $('#editRaisonSociale').val(response.raison_sociale).text(response.raison_sociale);
-                $('#editTypeRapport').val(response.type_rapport).text(response.type_rapport);
-                $('#editRefTypeRapport').val(response.ref_type_rapport.libelle).text(response.ref_type_rapport.libelle);
-
-                $('#editCreditDemande').val(response.credit_demande).text(response.credit_demande);
-                $('#editDeviseCreditDemande').val(response.devise_credit_demande.nom).text(response.devise_credit_demande.nom);
-
-                $('#editCreditRecommande').val(response.credit_recommande).text(response.credit_recommande);
-                $('#editDeviseCreditRecommande').val(response.devise_credit_recommande.nom).text(response.devise_credit_recommande.nom);
-
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editCodePostaleAdresse').val(response.code_postale_adresse).text(response.code_postale_adresse);
-                $('#editTelephone').val(response.telephone).text(response.telephone);
-                $('#editEmail').val(response.email).text(response.email);
-
-                $('#editPays').val(response.ville.province.pays.nom).text(response.ville.province.pays.nom);
-                $('#editProvince').val(response.ville.province.nom).text(response.ville.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-                
-                $('#editClient').val(response.client.username).text(response.client.username);
-                $('#editAcheteur').val(response.acheteur.nom).text(response.acheteur.nom);
-                
-                $('#editClient2').val(response.client.username).text(response.client.username);
-                $('#editAcheteur2').val(response.acheteur.nom).text(response.acheteur.nom);
-
-                $('#editStatut').val(response.status).text(response.status);
-                    
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de la commande.',
-                });
-                console.error("Erreur AJAX :", xhr.responseText);
-            }
-        });
-    });
-
-    // Gestion de l'expiration du token
-    $.ajaxSetup({
-        statusCode: {
-            401: function() {
-                refreshToken();
-            }
-        }
-    });
-
-    // Rafraîchir le token si expiré
-    function refreshToken() {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
-            contentType: 'application/json',
-            success: function(response) {
-                localStorage.setItem('access_token', response.access);
-                $.ajax(this); // Réessayer la requête
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '/login/';
-                });
-            }
+    // ============================================
+    // UTILITAIRES
+    // ============================================
+    function showError(message) {
+        Swal.fire({
+            icon: "error",
+            title: "{% trans 'Erreur' %}",
+            text: message || "{% trans 'Une erreur est survenue' %}",
+            confirmButtonColor: "#0d80be"
         });
     }
 
-});
+    function showSuccess(message) {
+        Swal.fire({
+            icon: "success",
+            title: "{% trans 'Succès' %}",
+            text: message,
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: "top-end"
+        });
+    }
 
+    function formatDate(dateStr) {
+        if (!dateStr) return "-";
+        return new Date(dateStr).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function getStatusClass(status) {
+        const classes = {
+            'nouvelle': 'nouvelle',
+            'en_cours': 'en_cours',
+            'rapport_soumis': 'rapport_soumis',
+            'rapport_valide': 'rapport_valide',
+            'envoye_client': 'envoye_client',
+            'terminee': 'terminee',
+            'annulee': 'annulee'
+        };
+        return `status-badge ${classes[status] || ''}`;
+    }
+
+    function getTimelineClass(type) {
+        const types = {
+            'CREATION': 'creation',
+            'AFFECTATION': 'affectation',
+            'SOUMISSION': 'soumission',
+            'VALIDATION': 'validation',
+            'CORRECTION': 'correction',
+            'ENVOI_CLIENT': 'envoi_client',
+            'CLOTURE': 'cloture',
+            'ANNULATION': 'annulation',
+            'UPDATE': 'update',
+            'SUPPRESSION': 'suppression',
+            'HISTORY': 'history'
+        };
+        return types[type] || 'history';
+    }
+
+    // ============================================
+    // API FETCH
+    // ============================================
+    async function apiFetch(url, options = {}) {
+        const headers = {
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+            ...(options.headers || {})
+        };
+
+        if (!(options.body instanceof FormData)) {
+            headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+        }
+
+        const response = await fetch(url, { ...options, headers });
+        let payload = {};
+
+        try {
+            payload = await response.json();
+        } catch (e) {
+            payload = {};
+        }
+
+        if (!response.ok) {
+            const message = payload.detail || payload.error || payload.message || "{% trans 'Erreur API' %}";
+            throw new Error(message);
+        }
+
+        return response.status === 204 ? null : payload;
+    }
+
+    // ============================================
+    // RENDU
+    // ============================================
+    function renderSummary(commande) {
+        document.getElementById('sumRef').textContent = commande.notre_ref || '-';
+        document.getElementById('sumCompany').textContent = commande.raison_sociale || '-';
+        document.getElementById('sumClient').textContent = (commande.client && commande.client.username) || '-';
+        document.getElementById('sumAcheteur').textContent = (commande.acheteur && commande.acheteur.nom) || '-';
+        
+        const statusEl = document.getElementById('sumStatus');
+        statusEl.textContent = commande.status || '-';
+        statusEl.className = getStatusClass(commande.status);
+        
+        document.getElementById('sumSentDate').textContent = commande.date_envoi_client || '-';
+        document.getElementById('sumEmailSent').textContent = commande.email_envoye ? 'Oui' : 'Non';
+    }
+
+    function renderTimeline(timeline) {
+        const container = document.getElementById('timelineContainer');
+        
+        if (!timeline || timeline.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-history"></i>
+                    <h6>{% trans "Aucun événement" %}</h6>
+                    <p>{% trans "Aucun événement n'a été enregistré pour cette commande" %}</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        timeline.forEach((ev, index) => {
+            const typeClass = getTimelineClass(ev.type);
+            const delay = index * 0.1;
+            
+            html += `
+                <div class="timeline-item" style="animation-delay: ${delay}s;">
+                    <span class="timeline-dot ${typeClass}"></span>
+                    <div class="timeline-card ${typeClass}">
+                        <div class="timeline-header">
+                            <span class="timeline-type">${ev.type_label || ev.type || '-'}</span>
+                            <span class="timeline-date">
+                                <i class="fas fa-clock me-1"></i>${formatDate(ev.date_action)}
+                            </span>
+                        </div>
+                        <div class="timeline-action">${ev.action || '-'}</div>
+                        ${ev.commentaire ? `
+                            <div class="timeline-comment">
+                                <i class="fas fa-quote-left me-1"></i>
+                                ${ev.commentaire}
+                            </div>
+                        ` : ''}
+                        <div class="timeline-user">
+                            <i class="fas fa-user-circle"></i>
+                            <span>${ev.user || 'Système'} (${ev.source || '-'})</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ============================================
+    // FILTRES
+    // ============================================
+    function getFilterParams() {
+        const params = new URLSearchParams();
+        
+        const type = document.getElementById('timelineTypeFilter').value;
+        const user = document.getElementById('timelineUserFilter').value;
+        const dateFrom = document.getElementById('timelineDateFrom').value;
+        const dateTo = document.getElementById('timelineDateTo').value;
+        
+        if (type) params.append('type', type);
+        if (user) params.append('user', user);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        
+        return params.toString();
+    }
+
+    function hydrateFilters(data) {
+        const typeSelect = document.getElementById('timelineTypeFilter');
+        const userSelect = document.getElementById('timelineUserFilter');
+        
+        const currentType = typeSelect.value;
+        const currentUser = userSelect.value;
+
+        if (!typeSelect.dataset.loaded) {
+            typeSelect.innerHTML = '<option value="">Tous types</option>';
+            (data.action_types || []).forEach(t => {
+                typeSelect.insertAdjacentHTML('beforeend', `<option value="${t.value}">${t.label}</option>`);
+            });
+            typeSelect.dataset.loaded = '1';
+        }
+        
+        if (!userSelect.dataset.loaded) {
+            userSelect.innerHTML = '<option value="">Tous utilisateurs</option>';
+            (data.timeline_users || []).forEach(u => {
+                userSelect.insertAdjacentHTML('beforeend', `<option value="${u.id}">${u.username}</option>`);
+            });
+            userSelect.dataset.loaded = '1';
+        }
+        
+        typeSelect.value = currentType;
+        userSelect.value = currentUser;
+    }
+
+    // ============================================
+    // CHARGEMENT DES DONNÉES
+    // ============================================
+    async function loadTimeline() {
+        try {
+            const query = getFilterParams();
+            const data = await apiFetch(`${BASE_URL}/timeline/${query ? `?${query}` : ''}`);
+            
+            hydrateFilters(data);
+            renderSummary(data.commande);
+            renderTimeline(data.timeline);
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    // ============================================
+    // EXPORT
+    // ============================================
+    async function exportTimeline(format) {
+        try {
+            const query = getFilterParams();
+            const url = `${BASE_URL}/timeline/export/?format=${format}${query ? `&${query}` : ''}`;
+            
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || "Erreur export");
+            }
+            
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `timeline_commande_${COMMANDE_ID}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(link.href);
+            
+            showSuccess("Export réussi");
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    // ============================================
+    // ÉVÉNEMENTS
+    // ============================================
+    document.getElementById('btnRefreshTimeline').addEventListener('click', loadTimeline);
+    
+    document.getElementById('btnApplyTimelineFilters').addEventListener('click', (e) => {
+        e.preventDefault();
+        loadTimeline();
+    });
+    
+    document.getElementById('btnResetTimelineFilters').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('timelineTypeFilter').value = '';
+        document.getElementById('timelineUserFilter').value = '';
+        document.getElementById('timelineDateFrom').value = '';
+        document.getElementById('timelineDateTo').value = '';
+        loadTimeline();
+    });
+    
+    document.getElementById('btnExportCsv').addEventListener('click', () => exportTimeline('csv'));
+    document.getElementById('btnExportPdf').addEventListener('click', () => exportTimeline('pdf'));
+
+    // Formulaire de mise à jour statut
+    document.getElementById('statusUpdateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const payload = {
+            status: document.getElementById('quickStatus').value,
+            commentaire: document.getElementById('quickComment').value.trim()
+        };
+        
+        try {
+            await apiFetch(`${BASE_URL}/status/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            showSuccess("Statut mis à jour");
+            document.getElementById('quickComment').value = '';
+            await loadTimeline();
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // Formulaire d'ajout au timeline
+    document.getElementById('timelineAddForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const payload = {
+            type: document.getElementById('tlType').value,
+            action: document.getElementById('tlAction').value.trim(),
+            commentaire: document.getElementById('tlComment').value.trim(),
+            validateur_id: document.getElementById('tlValidateur').value || null
+        };
+        
+        try {
+            await apiFetch(`${BASE_URL}/timeline/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            showSuccess("Événement ajouté");
+            document.getElementById('tlAction').value = '';
+            document.getElementById('tlComment').value = '';
+            document.getElementById('tlValidateur').value = '';
+            await loadTimeline();
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // ============================================
+    // INITIALISATION
+    // ============================================
+    loadTimeline();
+})();
 </script>
-
 {% endblock %}

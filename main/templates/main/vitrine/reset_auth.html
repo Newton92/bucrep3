@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
+
+{% load i18n %}
+{% load static %}
+
+<head>
+    <title>{% trans "BUCREP - Réinitialisation mot de passe" %}</title>
+
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="author" content="BUCREP - ACREMAC">
+    <meta name="description" content="BUCREP - Plateforme d'Administration">
+
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.min.css">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'assets/images/bucrep-image.PNG' %}">
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap">
+
+    <!-- Icons -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/vendor/font-awesome/css/all.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/style.css' %}">
+
+    <!-- Custom Styles -->
+    <style>
+        /* Variables CSS harmonisées */
+        :root {
+            --primary-light: #fcfefe;
+            --primary-blue: #0a95ca;
+            --primary-medium: #0d80be;
+            --primary-accent: #25add6;
+            --primary-dark: #106cb2;
+            --primary-color: #0d80be;
+            --primary-dark-color: #106cb2;
+            --secondary-color: #25add6;
+            --accent-color: #0a95ca;
+            --light-color: #fcfefe;
+            
+            --primary-gradient: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+            --secondary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+            --light-gradient: linear-gradient(135deg, var(--light-color) 0%, #e6f4ff 100%);
+            
+            --border-radius: 16px;
+            --border-radius-sm: 12px;
+            --shadow-light: 0 4px 20px rgba(10, 149, 202, 0.08);
+            --shadow-medium: 0 8px 30px rgba(13, 128, 190, 0.12);
+            --transition: all 0.3s ease;
+        }
+
+        /* Styles de base */
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e6f4ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            color: var(--primary-dark);
+        }
+
+        /* Suppression du bandeau Google Translate */
+        body { top: 0px !important; }
+
+        /* Container principal */
+        .container.h-100 {
+            min-height: 100vh;
+        }
+
+        /* Card principale */
+        .bg-mode {
+            background: white !important;
+            border-radius: var(--border-radius) !important;
+            box-shadow: var(--shadow-medium) !important;
+            border: 1px solid rgba(13, 128, 190, 0.1) !important;
+            overflow: hidden !important;
+        }
+
+        .bg-mode:hover {
+            box-shadow: 0 12px 40px rgba(13, 128, 190, 0.15) !important;
+            transition: var(--transition);
+        }
+
+        /* Logo */
+        .h-50px {
+            height: 50px;
+            transition: var(--transition);
+        }
+
+        .h-50px:hover {
+            transform: scale(1.05);
+        }
+
+        /* Titres */
+        h1.mb-2 {
+            color: var(--primary-color) !important;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mb-0 {
+            color: rgba(13, 128, 190, 0.8);
+        }
+
+        .mb-0 a {
+            color: var(--accent-color) !important;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .mb-0 a:hover {
+            color: var(--primary-dark) !important;
+            text-decoration: underline;
+        }
+
+        /* Formulaires */
+        .form-label {
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid rgba(13, 128, 190, 0.2);
+            border-radius: var(--border-radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(13, 128, 190, 0.1);
+            outline: none;
+        }
+
+        .form-control:hover {
+            border-color: var(--primary-color);
+        }
+
+        /* Password input wrapper */
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .form-control {
+            padding-right: 50px !important;
+        }
+
+        /* Bouton toggle password */
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary-medium);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: var(--transition);
+            z-index: 2;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-dark);
+            background: rgba(13, 128, 190, 0.1);
+        }
+
+        /* Indicateur de force du mot de passe */
+        .password-strength {
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 8px;
+            background: rgba(13, 128, 190, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .strength-weak {
+            background: linear-gradient(90deg, #dc3545, #e35d6a);
+            width: 25%;
+        }
+
+        .strength-medium {
+            background: linear-gradient(90deg, #ffc107, #ffda6a);
+            width: 50%;
+        }
+
+        .strength-good {
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 75%;
+        }
+
+        .strength-strong {
+            background: linear-gradient(90deg, #198754, #20c997);
+            width: 100%;
+        }
+
+        /* Exigences du mot de passe */
+        .requirement-item {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+        }
+
+        .requirement-valid {
+            color: #28a745;
+        }
+
+        .requirement-invalid {
+            color: rgba(13, 128, 190, 0.6);
+        }
+
+        .requirement-valid i {
+            color: #28a745 !important;
+        }
+
+        .requirement-invalid i {
+            color: rgba(13, 128, 190, 0.6) !important;
+        }
+
+        .requirement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(13, 128, 190, 0.05);
+            border-radius: var(--border-radius-sm);
+            border: 1px solid rgba(13, 128, 190, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .requirement-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Lien retour */
+        .mb-3.text-center p {
+            color: rgba(13, 128, 190, 0.8);
+        }
+
+        .mb-3.text-center a {
+            color: var(--accent-color) !important;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .mb-3.text-center a:hover {
+            color: var(--primary-dark) !important;
+            text-decoration: underline;
+        }
+
+        /* Bouton de réinitialisation */
+        .btn-primary {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+            border-radius: var(--border-radius-sm) !important;
+            padding: 0.875rem 2rem !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            transition: var(--transition) !important;
+            box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2) !important;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(13, 128, 190, 0.3) !important;
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0) !important;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Divider avec BUCREP 3.0 */
+        .position-relative hr {
+            border-color: rgba(13, 128, 190, 0.2);
+        }
+
+        .position-relative p.small {
+            background: white !important;
+            color: var(--primary-color) !important;
+            font-weight: 600;
+            padding: 0 1rem !important;
+            border: 2px solid rgba(13, 128, 190, 0.2);
+            border-radius: 20px;
+        }
+
+        /* Copyright */
+        .text-primary-hover {
+            color: rgba(13, 128, 190, 0.8) !important;
+        }
+
+        .text-primary-hover a {
+            color: var(--primary-dark) !important;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .text-primary-hover a:hover {
+            color: var(--accent-color) !important;
+            text-decoration: underline;
+        }
+
+        /* Drapeaux de langue */
+        .lang-flag {
+            display: inline-block;
+            transition: var(--transition);
+        }
+
+        .lang-flag img {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .lang-flag:hover img {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-color);
+        }
+
+        /* Drapeau actif */
+        .flag-active {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 3px rgba(13, 128, 190, 0.3) !important;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 128, 190, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(13, 128, 190, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 128, 190, 0); }
+        }
+
+        /* Vecteur image */
+        img[src*="reset"] {
+            max-width: 100%;
+            height: auto;
+            transition: var(--transition);
+        }
+
+        img[src*="reset"]:hover {
+            transform: scale(1.02);
+        }
+
+        /* Divider vertical */
+        .vr.opacity-1 {
+            background-color: rgba(13, 128, 190, 0.2);
+            width: 1px;
+        }
+
+        /* Animation de succès */
+        .success-animation {
+            animation: successPulse 2s infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 991.98px) {
+            .vr.opacity-1 {
+                display: none !important;
+            }
+            
+            .col-lg-6.d-flex {
+                padding: 2rem !important;
+            }
+            
+            .bg-mode {
+                margin: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+            
+            .p-4.p-sm-7 {
+                padding: 1.5rem !important;
+            }
+            
+            .btn-primary {
+                padding: 0.75rem 1.5rem !important;
+            }
+            
+            h1.mb-2.h3 {
+                font-size: 1.5rem !important;
+            }
+            
+            .form-control {
+                padding: 0.625rem 0.875rem !important;
+            }
+        }
+
+        /* Swal custom */
+        .swal2-popup {
+            border-radius: var(--border-radius-sm) !important;
+            border: 1px solid rgba(13, 128, 190, 0.1) !important;
+            box-shadow: var(--shadow-medium) !important;
+            font-family: 'DM Sans', sans-serif !important;
+        }
+
+        .swal2-title {
+            color: var(--primary-dark) !important;
+        }
+
+        .swal2-confirm {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+            border-radius: var(--border-radius-sm) !important;
+        }
+
+        .swal2-confirm:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)) !important;
+        }
+
+        /* Animation d'entrée */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bg-mode {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Amélioration de l'expérience utilisateur */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(13, 128, 190, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        }
+
+        /* Focus states améliorés */
+        *:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+
+        /* Placeholder styling */
+        ::placeholder {
+            color: rgba(13, 128, 190, 0.5);
+        }
+
+        /* Card hover effect */
+        .col-lg-6.order-1 {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .col-lg-6.order-1::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .col-lg-6.order-1:hover::before {
+            opacity: 1;
+        }
+
+        /* Password strength label */
+        .strength-label {
+            font-size: 0.8rem;
+            margin-top: 4px;
+            text-align: right;
+            color: rgba(13, 128, 190, 0.7);
+        }
+
+        /* Code secret icon */
+        .code-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-medium);
+            z-index: 2;
+        }
+
+        .code-secret-wrapper .form-control {
+            padding-left: 45px !important;
+        }
+
+        /* Password matching indicator */
+        .password-match {
+            margin-top: 5px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .match-valid {
+            color: #28a745;
+        }
+
+        .match-invalid {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- **************** MAIN CONTENT START **************** -->
+    <main>
+        <!-- =======================
+        Main Content START -->
+        <section class="vh-xxl-100">
+            <div class="container h-100 d-flex px-0 px-sm-4">
+                <div class="row justify-content-center align-items-center m-auto">
+                    <div class="col-12">
+                        <div class="bg-mode shadow rounded-3 overflow-hidden">
+                            <div class="row g-0">
+                                <!-- Vector Image -->
+                                <div class="col-lg-6 d-flex align-items-center order-2 order-lg-1">
+                                    <div class="p-3 p-lg-5">
+                                        <img src="{% static 'assets/images/reset.png' %}" alt="Réinitialisation du mot de passe">
+                                    </div>
+                                    <!-- Divider -->
+                                    <div class="vr opacity-1 d-none d-lg-block"></div>
+                                </div>
+
+                                <!-- Information -->
+                                <div class="col-lg-6 order-1">
+                                    <div class="p-4 p-sm-7">
+                                        <!-- Logo -->
+                                        <a href="{% url 'index' %}">
+                                            <img class="h-50px mb-4" src="{% static 'assets/images/bucrep-image.PNG' %}" alt="BUCREP Logo">
+                                        </a>
+                                        <!-- Title -->
+                                        <h1 class="mb-2 h3">{% trans "RÉINITIALISATION" %}</h1>
+                                        <p class="mb-0">{% trans "Accédez à votre" %} <a href="{% url 'index' %}" style="color: var(--accent-color);">{% trans "espace privé" %}</a> !</p>
+
+                                        <!-- Form START -->
+                                        <form id="resetPasswordForm" class="mt-4 text-start">
+                                            {% csrf_token %}
+                                            
+                                            <!-- Code Secret -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Code Secret</label>
+                                                <div class="password-input-wrapper code-secret-wrapper">
+                                                    <i class="bi bi-key code-icon"></i>
+                                                    <input type="password" class="form-control" id="code_secret" name="code_secret" 
+                                                           placeholder="Entrez le code reçu par email" required minlength="6">
+                                                    <button type="button" class="btn btn-link password-toggle" id="toggleCodeSecret">
+                                                        <i class="bi bi-eye-slash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Nouveau Mot de Passe -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Nouveau Mot de Passe</label>
+                                                <div class="password-input-wrapper">
+                                                    <input type="password" class="form-control" id="new_password" name="new_password" 
+                                                           placeholder="Créez un mot de passe sécurisé" required minlength="8">
+                                                    <button type="button" class="btn btn-link password-toggle" id="toggleNewPassword">
+                                                        <i class="bi bi-eye-slash"></i>
+                                                    </button>
+                                                </div>
+                                                <!-- Indicateur de force -->
+                                                <div class="password-strength" id="passwordStrength"></div>
+                                                <div class="strength-label" id="strengthLabel">Faible</div>
+                                            </div>
+
+                                            <!-- Exigences du mot de passe -->
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block mb-2">Le mot de passe doit contenir :</small>
+                                                <div class="requirement-grid">
+                                                    <div class="requirement-item" id="req-length">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>8 caractères minimum</span>
+                                                    </div>
+                                                    <div class="requirement-item" id="req-uppercase">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>Une majuscule (A-Z)</span>
+                                                    </div>
+                                                    <div class="requirement-item" id="req-lowercase">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>Une minuscule (a-z)</span>
+                                                    </div>
+                                                    <div class="requirement-item" id="req-number">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>Un chiffre (0-9)</span>
+                                                    </div>
+                                                    <div class="requirement-item" id="req-special">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>Un caractère spécial (@$!%*?&)</span>
+                                                    </div>
+                                                    <div class="requirement-item" id="req-match">
+                                                        <i class="bi bi-circle requirement-invalid"></i>
+                                                        <span>Les mots de passe correspondent</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Confirmer Mot de Passe -->
+                                            <div class="mb-3">
+                                                <label class="form-label">{% trans "Confirmer Mot de Passe" %}</label>
+                                                <div class="password-input-wrapper">
+                                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                                           placeholder="Confirmez votre mot de passe" required minlength="8">
+                                                    <button type="button" class="btn btn-link password-toggle" id="toggleConfirmPassword">
+                                                        <i class="bi bi-eye-slash"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="password-match" id="passwordMatch">
+                                                    <i class="bi bi-x-circle match-invalid"></i>
+                                                    <span>Les mots de passe ne correspondent pas</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Lien retour -->
+                                            <div class="mb-3 text-center">
+                                                <p>{% trans "Retour à la page de" %} <a href="{% url 'index' %}" style="color: var(--accent-color);">{% trans "connexion" %}</a></p>
+                                            </div>
+
+                                            <!-- Button -->
+                                            <div>
+                                                <button type="submit" class="btn btn-primary text-white w-100 mb-0" id="submitBtn" disabled>
+                                                    <i class="bi bi-shield-check me-2"></i>{% trans "RÉINITIALISER" %}
+                                                </button>
+                                            </div>
+
+                                            <br>
+
+                                            <!-- Divider -->
+                                            <div class="position-relative my-4">
+                                                <hr>
+                                                <p class="small bg-mode position-absolute top-50 start-50 translate-middle px-2">BUCREP 3.0</p>
+                                            </div>
+
+                                            <!-- Copyright -->
+                                            <div class="text-primary-hover text-body mt-3 text-center"> 
+                                                Copyrights ©{% now "Y" %}. {% trans "Conçu par" %} 
+                                                <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. 
+                                            </div>
+
+                                            <!-- Drapeaux de sélection de langue -->
+                                            <div class="text-primary-hover text-body mt-3 text-center">
+                                                <a href="#" class="lang-flag" data-lang="fr">
+                                                    <img height="30" width="25" src="{% static 'assets/images/french.png' %}" id="flag-fr" alt="Français">
+                                                </a>
+                                                &nbsp;
+                                                <a href="#" class="lang-flag" data-lang="en">
+                                                    <img height="30" width="27" src="{% static 'assets/images/english.png' %}" id="flag-en" alt="Anglais">
+                                                </a>
+                                            </div>
+                                        </form>
+                                        <!-- Form END -->
+                                        <!-- Formulaire de changement de langue -->
+                                        <form id="language-form" action="{% url 'set_language' %}" method="post" style="display: none;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            <input type="hidden" id="language-input" name="language">
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- =======================
+        Main Content END -->
+    </main>
+    <!-- **************** MAIN CONTENT END **************** -->
+    <!-- Bootstrap JS -->
+    <script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- ThemeFunctions -->
+    <script src="{% static 'assets/js/functions.js' %}"></script>
+
+    <!-- SweetAlert JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.all.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Scripts personnalisés -->
+    <script>
+        $(document).ready(function() {
+            // Fonction pour obtenir le token CSRF
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        cookie = cookie.trim();
+                        if (cookie.startsWith(name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Toggle password visibility
+            function togglePasswordVisibility(inputId, toggleButtonId) {
+                const passwordInput = document.getElementById(inputId);
+                const toggleButton = document.getElementById(toggleButtonId);
+                const icon = toggleButton.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.className = 'bi bi-eye';
+                    toggleButton.setAttribute('aria-label', 'Masquer le mot de passe');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.className = 'bi bi-eye-slash';
+                    toggleButton.setAttribute('aria-label', 'Afficher le mot de passe');
+                }
+            }
+
+            // Vérifier la force du mot de passe
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                const requirements = {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[@$!%*?&]/.test(password)
+                };
+
+                // Calcul du score
+                Object.values(requirements).forEach(req => {
+                    if (req) strength += 1;
+                });
+
+                // Mise à jour des indicateurs visuels
+                Object.keys(requirements).forEach(key => {
+                    const element = document.getElementById('req-' + key);
+                    if (element) {
+                        const icon = element.querySelector('i');
+                        if (requirements[key]) {
+                            element.className = 'requirement-item requirement-valid';
+                            if (icon) icon.className = 'bi bi-check-circle requirement-valid';
+                        } else {
+                            element.className = 'requirement-item requirement-invalid';
+                            if (icon) icon.className = 'bi bi-circle requirement-invalid';
+                        }
+                    }
+                });
+
+                // Mise à jour de l'indicateur de force
+                const strengthBar = document.getElementById('passwordStrength');
+                const strengthLabel = document.getElementById('strengthLabel');
+                
+                if (strengthBar && strengthLabel) {
+                    if (strength <= 2) {
+                        strengthBar.className = 'password-strength strength-weak';
+                        strengthLabel.textContent = 'Faible';
+                        strengthLabel.style.color = '#dc3545';
+                    } else if (strength === 3) {
+                        strengthBar.className = 'password-strength strength-medium';
+                        strengthLabel.textContent = 'Moyen';
+                        strengthLabel.style.color = '#ffc107';
+                    } else if (strength === 4) {
+                        strengthBar.className = 'password-strength strength-good';
+                        strengthLabel.textContent = 'Bon';
+                        strengthLabel.style.color = '#28a745';
+                    } else if (strength === 5) {
+                        strengthBar.className = 'password-strength strength-strong';
+                        strengthLabel.textContent = 'Fort';
+                        strengthLabel.style.color = '#198754';
+                    }
+                }
+
+                return strength;
+            }
+
+            // Vérifier si les mots de passe correspondent
+            function checkPasswordMatch() {
+                const password = $('#new_password').val() || '';
+                const confirmPassword = $('#confirm_password').val() || '';
+                const matchElement = $('#passwordMatch');
+                
+                if (password && confirmPassword) {
+                    if (password === confirmPassword) {
+                        matchElement.html('<i class="bi bi-check-circle match-valid"></i><span>Les mots de passe correspondent</span>');
+                        matchElement.find('i').addClass('match-valid').removeClass('match-invalid');
+                        matchElement.find('span').css('color', '#28a745');
+                        
+                        // Mettre à jour l'indicateur d'exigence
+                        const reqMatchElement = document.getElementById('req-match');
+                        if (reqMatchElement) {
+                            reqMatchElement.className = 'requirement-item requirement-valid';
+                            const icon = reqMatchElement.querySelector('i');
+                            if (icon) icon.className = 'bi bi-check-circle requirement-valid';
+                        }
+                        
+                        return true;
+                    } else {
+                        matchElement.html('<i class="bi bi-x-circle match-invalid"></i><span>Les mots de passe ne correspondent pas</span>');
+                        matchElement.find('i').addClass('match-invalid').removeClass('match-valid');
+                        matchElement.find('span').css('color', '#dc3545');
+                        
+                        // Mettre à jour l'indicateur d'exigence
+                        const reqMatchElement = document.getElementById('req-match');
+                        if (reqMatchElement) {
+                            reqMatchElement.className = 'requirement-item requirement-invalid';
+                            const icon = reqMatchElement.querySelector('i');
+                            if (icon) icon.className = 'bi bi-circle requirement-invalid';
+                        }
+                        
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            // Mettre à jour le bouton de soumission
+            function updateSubmitButton() {
+                const password = $('#new_password').val() || '';
+                const confirmPassword = $('#confirm_password').val() || '';
+                const codeSecret = $('#code_secret').val() || '';
+                
+                const strength = checkPasswordStrength(password);
+                const passwordsMatch = checkPasswordMatch();
+                const isCodeValid = codeSecret.length >= 6;
+                
+                const submitBtn = $('#submitBtn');
+                
+                if (strength === 5 && passwordsMatch && isCodeValid) {
+                    submitBtn.prop('disabled', false);
+                    submitBtn.addClass('success-animation');
+                } else {
+                    submitBtn.prop('disabled', true);
+                    submitBtn.removeClass('success-animation');
+                }
+            }
+
+            // Initialiser les événements
+            $('#toggleCodeSecret').click(function() {
+                togglePasswordVisibility('code_secret', 'toggleCodeSecret');
+            });
+
+            $('#toggleNewPassword').click(function() {
+                togglePasswordVisibility('new_password', 'toggleNewPassword');
+            });
+
+            $('#toggleConfirmPassword').click(function() {
+                togglePasswordVisibility('confirm_password', 'toggleConfirmPassword');
+            });
+
+            // Validation en temps réel
+            $('#new_password, #confirm_password, #code_secret').on('input', updateSubmitButton);
+
+            // Initialiser
+            updateSubmitButton();
+
+            // Gestion du formulaire de réinitialisation
+            $('#resetPasswordForm').on('submit', function(event) {
+                event.preventDefault();
+                
+                const $submitBtn = $(this).find('button[type="submit"]');
+                const codeSecret = $('#code_secret').val();
+                const newPassword = $('#new_password').val();
+                const token = new URLSearchParams(window.location.search).get('token');
+                
+                // Désactiver le bouton pendant le traitement
+                $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Traitement...');
+
+                // Validation
+                if (!codeSecret || !newPassword || !token) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Champs manquants',
+                        text: 'Veuillez remplir tous les champs.',
+                        confirmButtonColor: 'var(--primary-color)',
+                        background: 'var(--light-color)',
+                        color: 'var(--primary-dark)'
+                    });
+                    $submitBtn.prop('disabled', false).html('<i class="bi bi-shield-check me-2"></i>RÉINITIALISER');
+                    return;
+                }
+
+                // Vérifier la force du mot de passe
+                if (checkPasswordStrength(newPassword) < 5) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mot de passe insuffisant',
+                        text: 'Le mot de passe ne respecte pas toutes les exigences de sécurité.',
+                        confirmButtonColor: 'var(--primary-color)',
+                        background: 'var(--light-color)',
+                        color: 'var(--primary-dark)'
+                    });
+                    $submitBtn.prop('disabled', false).html('<i class="bi bi-shield-check me-2"></i>RÉINITIALISER');
+                    return;
+                }
+
+                // Appel AJAX
+                $.ajax({
+                    url: '/reset-password/',
+                    type: 'POST',
+                    data: JSON.stringify({ 
+                        code_secret: codeSecret, 
+                        new_password: newPassword, 
+                        token: token 
+                    }),
+                    contentType: 'application/json',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        $submitBtn.prop('disabled', false).html('<i class="bi bi-shield-check me-2"></i>RÉINITIALISER');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            html: '<div style="text-align: left;">' +
+                                  '<p><strong>Mot de passe réinitialisé avec succès !</strong></p>' +
+                                  '<p>Vous allez être redirigé vers la page de connexion.</p>' +
+                                  '<p><small>Utilisez votre nouveau mot de passe pour vous connecter.</small></p>' +
+                                  '</div>',
+                            showConfirmButton: true,
+                            confirmButtonText: 'Compris',
+                            confirmButtonColor: 'var(--primary-color)',
+                            background: 'var(--light-color)',
+                            color: 'var(--primary-dark)',
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = '/';
+                        });
+                    },
+                    error: function(response) {
+                        $submitBtn.prop('disabled', false).html('<i class="bi bi-shield-check me-2"></i>RÉINITIALISER');
+                        
+                        let errorMessage = 'Une erreur est survenue lors de la réinitialisation.';
+                        if (response.responseJSON && response.responseJSON.detail) {
+                            errorMessage = response.responseJSON.detail;
+                        } else if (response.responseJSON && response.responseJSON.error) {
+                            errorMessage = response.responseJSON.error;
+                        } else if (response.status === 400) {
+                            errorMessage = 'Token invalide ou expiré.';
+                        } else if (response.status === 403) {
+                            errorMessage = 'Code secret incorrect.';
+                        } else if (response.status === 422) {
+                            errorMessage = 'Le mot de passe ne respecte pas les exigences de sécurité.';
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: errorMessage,
+                            confirmButtonColor: 'var(--primary-color)',
+                            background: 'var(--light-color)',
+                            color: 'var(--primary-dark)'
+                        });
+                    }
+                });
+            });
+
+                        // Gestion du changement de langue via set_language
+            function updateActiveFlag(lang) {
+                const code = (lang || 'fr').toLowerCase().slice(0, 2);
+                ['fr', 'en'].forEach(function(item) {
+                    const el = document.getElementById('flag-' + item);
+                    if (el) {
+                        el.classList.toggle('flag-active', item === code);
+                    }
+                });
+            }
+
+            const htmlLang = (document.documentElement.getAttribute('lang') || 'fr').toLowerCase();
+            const initialLang = (localStorage.getItem('ui_lang') || htmlLang).slice(0, 2);
+            updateActiveFlag(initialLang);
+
+            $(".lang-flag").click(function(e) {
+                e.preventDefault();
+                var lang = ($(this).data("lang") || 'fr').toLowerCase();
+                var languageInput = document.getElementById('language-input');
+                var languageForm = document.getElementById('language-form');
+
+                if (!languageInput || !languageForm) {
+                    return;
+                }
+
+                languageInput.value = lang;
+                updateActiveFlag(lang);
+                localStorage.setItem('ui_lang', lang);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '{% trans "Langue changée" %}',
+                        text: '{% trans "Changement de langue en cours..." %}',
+                        timer: 800,
+                        showConfirmButton: false
+                    }).then(function() {
+                        languageForm.submit();
+                    });
+                } else {
+                    languageForm.submit();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

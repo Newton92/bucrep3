@@ -1,0 +1,978 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" />
+
+<style>
+:root {
+    --primary: #0d80be;
+    --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #106cb2);
+    --success-gradient: linear-gradient(135deg, #28a745, #20c997);
+    --danger: #dc3545;
+    --dark: #2c3e50;
+    --gray: #6c757d;
+    --border: rgba(13, 110, 178, 0.12);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow-card: 0 4px 20px rgba(0,0,0,0.06);
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+body { background: #f4f6f9; }
+
+/* ── Breadcrumb ── */
+.form-breadcrumb {
+    font-size: 0.82rem;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+}
+.form-breadcrumb a { color: var(--primary); text-decoration: none; }
+.form-breadcrumb a:hover { text-decoration: underline; }
+
+/* ── Hero header ── */
+.form-hero {
+    background: var(--primary-gradient);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.5rem;
+    box-shadow: 0 8px 24px rgba(13,110,178,0.18);
+    position: relative;
+    overflow: hidden;
+}
+.form-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: -40%;
+    width: 180%; height: 180%;
+    background: linear-gradient(45deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%);
+    animation: shimmer 4s infinite linear;
+}
+@keyframes shimmer { 0%{transform:translateX(-100%) rotate(45deg)} 100%{transform:translateX(100%) rotate(45deg)} }
+
+.form-hero h4 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; }
+
+/* ── Section cards ── */
+.form-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    border: none;
+    overflow: hidden;
+}
+
+.form-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,110,178,0.03);
+}
+
+.form-section-body { padding: 1.25rem; }
+
+/* ── Labels ── */
+.form-label {
+    font-weight: 600;
+    font-size: 0.84rem;
+    color: var(--dark);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.label-icon {
+    width: 22px; height: 22px;
+    background: var(--primary-gradient);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+}
+.label-required { color: var(--danger); margin-left: 2px; }
+
+/* ── Inputs ── */
+.form-control, .form-select {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.875rem;
+    transition: var(--transition);
+    background: white;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13,110,178,0.1);
+    outline: none;
+}
+
+/* ── Quill ── */
+.ql-toolbar.ql-snow {
+    border: 1.5px solid var(--border) !important;
+    border-bottom: none !important;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: #fafbfd;
+}
+.ql-container.ql-snow {
+    border: 1.5px solid var(--border) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    min-height: 260px;
+    font-size: 0.9rem;
+}
+.ql-editor { min-height: 260px; font-family: inherit; line-height: 1.65; }
+.ql-editor.ql-blank::before { color: #adb5bd; font-style: normal; }
+
+/* ── Select2 ── */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 42px !important;
+}
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(13,110,178,0.1) !important;
+}
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background: var(--primary-gradient) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 0.2rem 0.7rem !important;
+    font-size: 0.8rem !important;
+}
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+/* ── Tagify ── */
+.tagify {
+    --tag-bg: rgba(13,110,178,0.08) !important;
+    --tag-color: var(--primary) !important;
+    --tag-border-color: rgba(13,110,178,0.2) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 42px !important;
+    background: white !important;
+    font-size: 0.875rem !important;
+    padding: 0.2rem 0.5rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.tagify:focus-within {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(13,110,178,0.1) !important;
+}
+.tagify__tag { border-radius: 6px !important; margin: 2px !important; }
+.tagify__tag > div { padding: 0.18rem 0.5rem !important; }
+
+/* ── Dropzone ── */
+.dropzone {
+    border: 2px dashed rgba(13,110,178,0.2);
+    border-radius: var(--radius-sm);
+    background: rgba(13,110,178,0.02);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.dropzone:hover, .dropzone.drag-active {
+    border-color: var(--primary);
+    background: rgba(13,110,178,0.05);
+}
+.dropzone i { font-size: 2rem; color: rgba(13,110,178,0.4); }
+.dropzone-hint { font-size: 0.83rem; color: var(--gray); margin-top: 0.5rem; }
+.dropzone-hint strong { color: var(--primary); }
+
+.file-list { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.75rem; }
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.84rem;
+    gap: 0.75rem;
+}
+.file-item-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.file-item-name {
+    font-weight: 600;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+}
+.file-item-size { color: var(--gray); font-size: 0.76rem; }
+.file-item-remove {
+    background: rgba(220,53,69,0.1);
+    color: var(--danger);
+    border: none;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: var(--transition);
+}
+.file-item-remove:hover { background: rgba(220,53,69,0.2); }
+
+.existing-file-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.existing-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.84rem;
+}
+.existing-file-item a { color: var(--dark); text-decoration: none; font-weight: 500; font-size: 0.84rem; }
+.existing-file-item a:hover { color: var(--primary); }
+.existing-file-item .remove-existing {
+    background: transparent;
+    border: none;
+    color: var(--danger);
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+}
+.existing-file-item .remove-existing:hover { opacity: 1; background: rgba(220,53,69,0.08); }
+
+/* ── Email section ── */
+.email-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--gray);
+    margin: 0.25rem 0 1rem;
+}
+.email-divider::before, .email-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ── Footer bar (sticky) ── */
+.form-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    background: white;
+    border-top: 1.5px solid var(--border);
+    padding: 0.9rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    flex-wrap: wrap;
+}
+
+.btn-back {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--gray);
+    border-radius: 10px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: var(--transition);
+    text-decoration: none;
+}
+.btn-back:hover { border-color: var(--gray); color: var(--dark); background: #f8f9fa; }
+
+.btn-save {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: var(--transition);
+    box-shadow: 0 3px 10px rgba(13,110,178,0.25);
+    cursor: pointer;
+}
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(13,110,178,0.35); color: white; }
+.btn-save:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
+
+.btn-send {
+    background: var(--success-gradient);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: var(--transition);
+    box-shadow: 0 3px 10px rgba(40,167,69,0.25);
+    cursor: pointer;
+}
+.btn-send:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(40,167,69,0.35); color: white; }
+.btn-send:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
+
+/* ── Spinner ── */
+.spinner-sm {
+    display: inline-block;
+    width: 0.85rem; height: 0.85rem;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Character count ── */
+.char-count { font-size: 0.75rem; color: var(--gray); text-align: right; }
+
+/* ── Help text ── */
+.field-help { font-size: 0.78rem; color: var(--gray); margin-top: 0.3rem; }
+
+/* ── Toast / alert inline ── */
+.form-alert {
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 1rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% trans "Nouvelle alerte" as t_create %}
+{% trans "Modifier l'alerte" as t_edit %}
+{% trans "Retour à la liste" as t_back %}
+{% trans "Alertes" as t_alertes %}
+
+<div class="container-fluid px-2 px-md-3 pb-5">
+
+    <!-- Breadcrumb + Hero -->
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="form-breadcrumb">
+                <a href="{% url 'dash_root' %}"><i class="fas fa-home"></i></a>
+                <i class="fas fa-chevron-right" style="font-size:0.6rem"></i>
+                <a href="{% url 'dash_root_warning' %}">{{ t_alertes }}</a>
+                <i class="fas fa-chevron-right" style="font-size:0.6rem"></i>
+                <span>{% if form_mode == 'edit' %}{{ t_edit }}{% else %}{{ t_create }}{% endif %}</span>
+            </div>
+            <div class="form-hero">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h4 class="text-white mb-1">
+                            <i class="fas {% if form_mode == 'edit' %}fa-pencil-alt{% else %}fa-plus-circle{% endif %} me-2"></i>
+                            {% if form_mode == 'edit' %}{{ t_edit }}{% else %}{{ t_create }}{% endif %}
+                        </h4>
+                        <p class="text-white-50 small mb-0">
+                            {% trans "Rédigez votre alerte, sélectionnez les destinataires et envoyez-la par email." %}
+                        </p>
+                    </div>
+                    <a href="{% url 'dash_root_warning' %}" class="btn-back">
+                        <i class="fas fa-arrow-left"></i>{{ t_back }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire principal -->
+    <form id="warningForm" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row g-3">
+
+            <!-- ══ Colonne gauche : Contenu ══ -->
+            <div class="col-xl-7 col-lg-6">
+
+                <!-- Titre -->
+                <div class="form-card mb-3">
+                    <div class="form-section-title">
+                        <i class="fas fa-heading"></i>{% trans "Titre de l'alerte" %}
+                    </div>
+                    <div class="form-section-body">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fas fa-tag"></i></span>
+                            {% trans "Titre" %}<span class="label-required">*</span>
+                        </label>
+                        <input id="warningTitre" name="titre" type="text" class="form-control"
+                               placeholder="{% trans 'Ex: Alerte de sécurité importante...' %}" required maxlength="500">
+                        <div class="char-count mt-1"><span id="titreCount">0</span>/500</div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-card mb-3">
+                    <div class="form-section-title">
+                        <i class="fas fa-align-left"></i>{% trans "Description" %}
+                    </div>
+                    <div class="form-section-body">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fas fa-file-alt"></i></span>
+                            {% trans "Contenu de l'alerte" %}<span class="label-required">*</span>
+                        </label>
+                        <div id="warningDescriptionEditor"></div>
+                        <p class="field-help mt-2">
+                            <i class="fas fa-spell-check me-1"></i>
+                            {% trans "Le correcteur orthographique est activé selon votre langue." %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Acheteurs -->
+                <div class="form-card mb-3">
+                    <div class="form-section-title">
+                        <i class="fas fa-users"></i>{% trans "Acheteurs concernés" %}
+                    </div>
+                    <div class="form-section-body">
+                        <label class="form-label">
+                            <span class="label-icon"><i class="fas fa-user"></i></span>
+                            {% trans "Sélectionner les acheteurs" %}
+                        </label>
+                        <select id="warningAcheteurs" class="form-select" multiple></select>
+                        <p class="field-help mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% trans "Utilisez la recherche pour filtrer par nom ou code." %}
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ══ Colonne droite : Email + Fichiers ══ -->
+            <div class="col-xl-5 col-lg-6">
+
+                <!-- Options d'envoi email -->
+                <div class="form-card mb-3">
+                    <div class="form-section-title">
+                        <i class="fas fa-paper-plane"></i>{% trans "Envoi par email" %}
+                    </div>
+                    <div class="form-section-body">
+
+                        <!-- Objet -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <span class="label-icon"><i class="fas fa-tag"></i></span>
+                                {% trans "Objet de l'email" %}
+                            </label>
+                            <input id="emailSubject" name="email_subject" type="text" class="form-control"
+                                   placeholder="{% trans 'Laissez vide pour utiliser le titre de l\'alerte' %}">
+                        </div>
+
+                        <div class="email-divider">{% trans "Destinataires" %}</div>
+
+                        <!-- À -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <span class="label-icon"><i class="fas fa-at"></i></span>
+                                {% trans "À" %} <span class="label-required">*</span>
+                                <small class="text-muted fw-normal ms-1">{% trans "(pour envoyer)" %}</small>
+                            </label>
+                            <input id="emailTo" name="email_to" type="text"
+                                   placeholder="{% trans 'email@exemple.com — Entrée pour valider' %}">
+                            <p class="field-help">{% trans "Tapez une adresse et appuyez sur Entrée pour l'ajouter." %}</p>
+                        </div>
+
+                        <!-- CC -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <span class="label-icon"><i class="fas fa-copy"></i></span>
+                                {% trans "CC" %}
+                            </label>
+                            <input id="emailCc" name="email_cc" type="text"
+                                   placeholder="{% trans 'copie@exemple.com' %}">
+                        </div>
+
+                        <!-- CCI -->
+                        <div class="mb-0">
+                            <label class="form-label">
+                                <span class="label-icon"><i class="fas fa-user-secret"></i></span>
+                                {% trans "CCI (copie cachée)" %}
+                            </label>
+                            <input id="emailBcc" name="email_bcc" type="text"
+                                   placeholder="{% trans 'cci@exemple.com' %}">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Pièces jointes -->
+                <div class="form-card mb-3">
+                    <div class="form-section-title">
+                        <i class="fas fa-paperclip"></i>{% trans "Pièces jointes" %}
+                    </div>
+                    <div class="form-section-body">
+
+                        <!-- Dropzone -->
+                        <div class="dropzone" id="dropzone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <div class="dropzone-hint mt-2">
+                                <strong>{% trans "Cliquez" %}</strong> {% trans "ou glissez-déposez vos fichiers ici" %}
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size:0.76rem">
+                                {% trans "PDF, DOC, DOCX, XLS, XLSX, JPG, PNG — max 10 MB par fichier" %}
+                            </small>
+                        </div>
+                        <input id="warningAttachments" type="file" class="d-none" multiple>
+
+                        <!-- Nouveaux fichiers -->
+                        <div id="newFileList" class="file-list mt-2"></div>
+
+                        <!-- Fichiers existants (mode édition) -->
+                        <div id="existingFilesSection" class="d-none mt-3">
+                            <p class="field-help mb-2">
+                                <i class="fas fa-folder-open me-1 text-primary"></i>
+                                {% trans "Fichiers existants" %}
+                            </p>
+                            <div id="existingFileList" class="existing-file-list"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ══ Alerte d'erreur inline ══ -->
+        <div id="formErrorAlert" class="alert alert-danger d-none mt-2" role="alert" style="border-radius:10px;font-size:.875rem;"></div>
+
+    </form>
+
+</div>
+
+<!-- ══ Footer sticky ══ -->
+<div class="form-footer">
+    <a href="{% url 'dash_root_warning' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i>{{ t_back }}
+    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <button id="saveBtn" type="button" class="btn-save">
+            <i class="fas fa-save"></i>
+            <span id="saveBtnText">{% trans "Enregistrer" %}</span>
+            <span id="saveSpinner" class="spinner-sm d-none"></span>
+        </button>
+        <button id="sendBtn" type="button" class="btn-send">
+            <i class="fas fa-paper-plane"></i>
+            <span id="sendBtnText">{% trans "Enregistrer & Envoyer" %}</span>
+            <span id="sendSpinner" class="spinner-sm d-none"></span>
+        </button>
+    </div>
+</div>
+
+<!-- Tokens -->
+<input type="hidden" id="access_token" value="{{ access }}">
+<input type="hidden" id="form_mode" value="{{ form_mode }}">
+<input type="hidden" id="warning_id" value="{% if form_mode == 'edit' %}{{ warning_id }}{% endif %}">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.min.js"></script>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── Config ──────────────────────────────────────────────────
+    const ACCESS_TOKEN = document.getElementById('access_token').value;
+    const FORM_MODE    = document.getElementById('form_mode').value;
+    const WARNING_ID   = document.getElementById('warning_id').value;
+    const SPELL_LANG   = '{{ spell_lang }}';
+    const RETURN_URL   = "{% url 'dash_root_warning' %}";
+
+    // ── Traductions ──────────────────────────────────────────────
+    {% trans "La description est obligatoire." as t_desc_required %}
+    {% trans "Veuillez saisir au moins un destinataire (champ À)." as t_to_required %}
+    {% trans "Alerte enregistrée avec succès." as t_saved %}
+    {% trans "Alerte envoyée avec succès." as t_sent %}
+    {% trans "Une erreur est survenue." as t_error %}
+    {% trans "Chargement des acheteurs..." as t_loading_buyers %}
+    {% trans "Aucun acheteur pour ce pays" as t_no_buyer %}
+    {% trans "Fichier trop volumineux" as t_file_too_large %}
+    {% trans "La taille maximale est de 10MB" as t_max_size %}
+    {% trans "Type de fichier non autorisé" as t_invalid_type %}
+    {% trans "Types autorisés: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG" as t_allowed %}
+    {% trans "Fichier sans nom" as t_no_name %}
+    {% trans "Taille inconnue" as t_no_size %}
+
+    // ── Éléments DOM ────────────────────────────────────────────
+    const warningTitre   = document.getElementById('warningTitre');
+    const titreCount     = document.getElementById('titreCount');
+    const editorEl       = document.getElementById('warningDescriptionEditor');
+    const acheteursSel   = document.getElementById('warningAcheteurs');
+    const emailSubject   = document.getElementById('emailSubject');
+    const emailToInput   = document.getElementById('emailTo');
+    const emailCcInput   = document.getElementById('emailCc');
+    const emailBccInput  = document.getElementById('emailBcc');
+    const dropzone       = document.getElementById('dropzone');
+    const attachInput    = document.getElementById('warningAttachments');
+    const newFileList    = document.getElementById('newFileList');
+    const existingSection= document.getElementById('existingFilesSection');
+    const existingList   = document.getElementById('existingFileList');
+    const saveBtn        = document.getElementById('saveBtn');
+    const sendBtn        = document.getElementById('sendBtn');
+    const errorAlert     = document.getElementById('formErrorAlert');
+
+    // ── État ────────────────────────────────────────────────────
+    let quill         = null;
+    let tagifyTo      = null;
+    let tagifyCc      = null;
+    let tagifyBcc     = null;
+    let newFiles      = [];
+    let deletedAttIds = new Set();
+
+    // ── Quill ────────────────────────────────────────────────────
+    quill = new Quill(editorEl, {
+        theme: 'snow',
+        placeholder: '{{ t_desc_required|escapejs }}',
+        modules: {
+            toolbar: [
+                [{ header: [1,2,3,false] }],
+                ['bold','italic','underline','strike'],
+                [{ list:'ordered' },{ list:'bullet' }],
+                [{ color:[] },{ background:[] }],
+                [{ align:[] }],
+                ['link','blockquote'],
+                ['clean']
+            ]
+        }
+    });
+    if (quill.root) {
+        quill.root.setAttribute('spellcheck','true');
+        quill.root.setAttribute('lang', SPELL_LANG);
+    }
+
+    // ── Tagify ───────────────────────────────────────────────────
+    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const tagifyOpts = {
+        validate: t => emailRx.test(t.value),
+        pattern: emailRx,
+        editTags: 1,
+        dropdown: { enabled: 0 },
+    };
+    tagifyTo  = new Tagify(emailToInput,  tagifyOpts);
+    tagifyCc  = new Tagify(emailCcInput,  tagifyOpts);
+    tagifyBcc = new Tagify(emailBccInput, tagifyOpts);
+
+    function getEmails(tagifyInst) {
+        return (tagifyInst?.value || []).map(t => t.value).join(',');
+    }
+    function setEmails(tagifyInst, csv) {
+        if (!tagifyInst) return;
+        tagifyInst.removeAllTags();
+        const list = (csv || '').split(',').map(e => e.trim()).filter(Boolean);
+        if (list.length) tagifyInst.addTags(list);
+    }
+
+    // ── Compteur titre ───────────────────────────────────────────
+    warningTitre.addEventListener('input', () => {
+        titreCount.textContent = warningTitre.value.length;
+    });
+
+    // ── Select2 ─────────────────────────────────────────────────
+    function initSelect2(selectedIds = []) {
+        if (!window.jQuery) return;
+        if ($(acheteursSel).data('select2')) $(acheteursSel).select2('destroy');
+        $(acheteursSel).select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: '{{ t_loading_buyers|escapejs }}',
+            allowClear: true,
+            closeOnSelect: false,
+        });
+        if (selectedIds.length) $(acheteursSel).val(selectedIds).trigger('change');
+    }
+
+    function getSelectedPaysId() {
+        const sel = document.getElementById('country-select');
+        return (sel && sel.value) ? sel.value : localStorage.getItem('selected_pays_id');
+    }
+
+    async function loadAcheteurs(selectedIds = []) {
+        const paysId = getSelectedPaysId();
+        const params = paysId ? `?pays_id=${paysId}` : '';
+        try {
+            const data = await apiFetch(`/api/warnings/acheteurs/${params}`);
+            acheteursSel.innerHTML = '';
+            (data.results || []).forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.code ? `${a.nom} (${a.code})` : a.nom;
+                if (selectedIds.includes(a.id)) opt.selected = true;
+                acheteursSel.appendChild(opt);
+            });
+            initSelect2(selectedIds);
+        } catch {
+            acheteursSel.innerHTML = `<option value="">${'{{ t_no_buyer|escapejs }}'}</option>`;
+            initSelect2();
+        }
+    }
+
+    // ── Fichiers ─────────────────────────────────────────────────
+    function getFileIcon(name) {
+        const ext = name.split('.').pop().toLowerCase();
+        const map = { pdf:'fa-file-pdf', doc:'fa-file-word', docx:'fa-file-word',
+                      xls:'fa-file-excel', xlsx:'fa-file-excel',
+                      jpg:'fa-file-image', jpeg:'fa-file-image', png:'fa-file-image' };
+        return map[ext] || 'fa-file';
+    }
+    function formatSize(bytes) {
+        if (!bytes) return '—';
+        const k = 1024, s = ['B','KB','MB','GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${(bytes/Math.pow(k,i)).toFixed(1)} ${s[i]}`;
+    }
+
+    function renderNewFiles() {
+        newFileList.innerHTML = '';
+        newFiles.forEach((f, idx) => {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <div class="file-item-info">
+                    <i class="fas ${getFileIcon(f.name)} text-primary" style="font-size:.9rem"></i>
+                    <span class="file-item-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+                    <span class="file-item-size">${formatSize(f.size)}</span>
+                </div>
+                <button type="button" class="file-item-remove" data-idx="${idx}">
+                    <i class="fas fa-times"></i>
+                </button>`;
+            newFileList.appendChild(div);
+        });
+    }
+
+    newFileList.addEventListener('click', e => {
+        const btn = e.target.closest('[data-idx]');
+        if (!btn) return;
+        newFiles.splice(parseInt(btn.dataset.idx), 1);
+        renderNewFiles();
+    });
+
+    function addFiles(fileList) {
+        const allowed = ['pdf','doc','docx','xls','xlsx','jpg','jpeg','png'];
+        Array.from(fileList).forEach(f => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            if (!allowed.includes(ext)) { showError(`{{ t_invalid_type|escapejs }}: ${f.name}. {{ t_allowed|escapejs }}`); return; }
+            if (f.size > 10*1024*1024) { showError(`{{ t_file_too_large|escapejs }}: ${f.name}. {{ t_max_size|escapejs }}`); return; }
+            if (!newFiles.some(x => x.name===f.name && x.size===f.size)) newFiles.push(f);
+        });
+        renderNewFiles();
+    }
+
+    dropzone.addEventListener('click', () => { attachInput.value=''; attachInput.click(); });
+    attachInput.addEventListener('change', () => addFiles(attachInput.files));
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-active'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-active'));
+    dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-active'); addFiles(e.dataTransfer.files); });
+
+    function renderExistingFiles(items) {
+        if (!items || !items.length) { existingSection.classList.add('d-none'); return; }
+        existingSection.classList.remove('d-none');
+        existingList.innerHTML = '';
+        items.forEach(item => {
+            const name = item.filename || '{{ t_no_name|escapejs }}';
+            const size = item.file_size > 0 ? formatSize(item.file_size) : '{{ t_no_size|escapejs }}';
+            const url  = item.upload_url || '#';
+            const div  = document.createElement('div');
+            div.className = 'existing-file-item';
+            div.dataset.attId = item.id;
+            div.innerHTML = `
+                <div class="d-flex align-items-center gap-2 min-width-0">
+                    <i class="fas ${getFileIcon(name)} text-primary" style="font-size:.85rem;flex-shrink:0"></i>
+                    <div class="min-width-0">
+                        <a href="${url}" target="_blank">${escapeHtml(name)}</a>
+                        <small class="text-muted d-block">${size}</small>
+                    </div>
+                </div>
+                <button type="button" class="remove-existing" data-att-id="${item.id}">
+                    <i class="fas fa-times"></i>
+                </button>`;
+            existingList.appendChild(div);
+        });
+    }
+
+    existingList.addEventListener('click', e => {
+        const btn = e.target.closest('[data-att-id]');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.attId);
+        deletedAttIds.add(id);
+        btn.closest('.existing-file-item').remove();
+    });
+
+    // ── API helpers ───────────────────────────────────────────────
+    function escapeHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function apiFetch(url, opts = {}) {
+        const headers = opts.headers || {};
+        headers.Authorization = 'Bearer ' + ACCESS_TOKEN;
+        if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+        const res = await fetch(url, { ...opts, headers });
+        let data = {};
+        try { data = await res.json(); } catch {}
+        if (!res.ok) throw new Error(data.detail || data.error || data.message || '{{ t_error|escapejs }}');
+        return data;
+    }
+
+    // ── Feedback ─────────────────────────────────────────────────
+    function showError(msg) {
+        errorAlert.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${msg}`;
+        errorAlert.classList.remove('d-none');
+        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function clearError() { errorAlert.classList.add('d-none'); }
+
+    function showToast(msg, icon='success') {
+        Swal.fire({ icon, title: msg, timer: 2500, showConfirmButton: false,
+                    toast: true, position: 'top-end' });
+    }
+
+    function setLoading(btn, spinId, on) {
+        btn.disabled = on;
+        document.getElementById(spinId).classList.toggle('d-none', !on);
+    }
+
+    // ── Chargement données existantes (mode edit) ─────────────────
+    async function loadExistingWarning() {
+        if (FORM_MODE !== 'edit' || !WARNING_ID) return;
+        try {
+            const w = await apiFetch(`/api/warnings/${WARNING_ID}/`);
+            warningTitre.value = w.titre || '';
+            titreCount.textContent = warningTitre.value.length;
+            if (quill) quill.root.innerHTML = w.description || '';
+            if (w.email_subject) emailSubject.value = w.email_subject;
+            setEmails(tagifyTo,  w.email_to  || '');
+            setEmails(tagifyCc,  w.email_cc  || '');
+            setEmails(tagifyBcc, w.email_bcc || '');
+            const selIds = (w.acheteurs || []).map(a => a.id);
+            await loadAcheteurs(selIds);
+            renderExistingFiles(w.warning_attachments || []);
+        } catch (err) {
+            showError(err.message);
+        }
+    }
+
+    // ── Construction FormData ─────────────────────────────────────
+    function buildFormData(sendNow = false) {
+        const titre = warningTitre.value.trim();
+        if (!titre) { showError('{% trans "Le titre est obligatoire." %}'); return null; }
+
+        const descHtml  = quill ? quill.root.innerHTML.trim() : '';
+        const descText  = descHtml.replace(/<[^>]*>/g, '').trim();
+        if (!descText) { showError('{{ t_desc_required|escapejs }}'); return null; }
+
+        if (sendNow && !getEmails(tagifyTo)) {
+            showError('{{ t_to_required|escapejs }}'); return null;
+        }
+
+        const fd = new FormData();
+        fd.append('titre', titre);
+        fd.append('description', descHtml);
+        fd.append('email_subject', emailSubject?.value.trim() || '');
+        fd.append('email_to',  getEmails(tagifyTo));
+        fd.append('email_cc',  getEmails(tagifyCc));
+        fd.append('email_bcc', getEmails(tagifyBcc));
+        if (sendNow) fd.append('send_now', 'true');
+
+        Array.from(acheteursSel.selectedOptions).forEach(o => fd.append('acheteurs', o.value));
+
+        if (FORM_MODE === 'edit') {
+            deletedAttIds.forEach(id => fd.append('attachments_delete', id));
+            newFiles.forEach(f => fd.append('attachments_add', f));
+        } else {
+            newFiles.forEach(f => fd.append('attachments', f));
+        }
+
+        return fd;
+    }
+
+    // ── Sauvegarde ───────────────────────────────────────────────
+    async function doSubmit(sendNow = false) {
+        clearError();
+        const fd = buildFormData(sendNow);
+        if (!fd) return;
+
+        const endpoint = FORM_MODE === 'edit'
+            ? `/api/warnings/${WARNING_ID}/update/`
+            : '/api/warnings/create/';
+        const method = FORM_MODE === 'edit' ? 'PUT' : 'POST';
+        const btnEl   = sendNow ? sendBtn : saveBtn;
+        const spinId  = sendNow ? 'sendSpinner' : 'saveSpinner';
+
+        try {
+            setLoading(btnEl, spinId, true);
+            const saved = await apiFetch(endpoint, { method, body: fd });
+            setLoading(btnEl, spinId, false);
+
+            if (sendNow && saved.email_error) {
+                showError(saved.email_error);
+                return;
+            }
+
+            showToast(sendNow ? '{{ t_sent|escapejs }}' : '{{ t_saved|escapejs }}');
+            setTimeout(() => { window.location.href = RETURN_URL; }, 1200);
+        } catch (err) {
+            setLoading(btnEl, spinId, false);
+            showError(err.message);
+        }
+    }
+
+    saveBtn.addEventListener('click', () => doSubmit(false));
+    sendBtn.addEventListener('click', () => doSubmit(true));
+
+    // ── Changement pays ───────────────────────────────────────────
+    const countrySelect = document.getElementById('country-select');
+    if (countrySelect) {
+        countrySelect.addEventListener('change', () => loadAcheteurs([]));
+    }
+
+    // ── Init ─────────────────────────────────────────────────────
+    loadAcheteurs([]).then(() => loadExistingWarning());
+
+})();
+</script>
+{% endblock %}

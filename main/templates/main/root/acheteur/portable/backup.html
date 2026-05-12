@@ -1,0 +1,650 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .portable-card {
+        border-left: 4px solid #28a745;
+        border-radius: 0 5px 5px 0;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .portable-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .portable-number {
+        font-weight: 600;
+        color: #28a745;
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+    }
+    .portable-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+    .portable-actions {
+        display: flex;
+        gap: 8px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    .created-by {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    #noPortablesMessage {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    .call-btn {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .call-btn:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    .whatsapp-btn {
+        background-color: #25D366;
+        border-color: #25D366;
+        color: white;
+    }
+    .whatsapp-btn:hover {
+        background-color: #128C7E;
+        border-color: #075E54;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-phone-fill fa-fw me-1"></i> Numéros de Portable de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countPortable">Module de Gestion des Numéros de Portable</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les numéros de portable associés à l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Numéro : </strong><span style="color: #28a745;">NP</span><br>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Créé par : </strong><span style="color: #6c757d;">CB</span><br>
+                                <strong>Mis à jour : </strong><span style="color: #ffc107;">MA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Portables START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Numéros de Portable</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher un numéro..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #28a745; border-color: #28a745;" data-bs-toggle="modal" data-bs-target="#addPortableModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter un numéro
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Portables List START -->
+                <div id="portableList">
+                    <div id="portableContainer"></div>
+                    <div class="text-center my-4" id="noPortablesMessage" style="display: none;">
+                        <i class="bi bi-phone-x-fill fs-3 text-muted mb-2"></i>
+                        <p class="mb-0">Aucun numéro de portable enregistré pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Portables List END -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Portables END -->
+<!-- Add Portable Modal START -->
+<div class="modal fade" id="addPortableModal" tabindex="-1" aria-labelledby="addPortableModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPortableModalLabel">Ajouter un Numéro de Portable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPortableForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="portable" class="form-label">Numéro de portable <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="portable" name="portable" required>
+                        <div class="form-text">Format attendu: +241 XX XX XX XX ou 0X XX XX XX</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #28a745; border-color: #28a745;">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Portable Modal END -->
+<!-- Edit Portable Modal START -->
+<div class="modal fade" id="editPortableModal" tabindex="-1" aria-labelledby="editPortableModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPortableModalLabel">Éditer un Numéro de Portable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPortableForm">
+                    <input type="hidden" id="editPortableId" name="id" />
+                    <div class="mb-3">
+                        <label for="editPortable" class="form-label">Numéro de portable <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editPortable" name="portable" required>
+                        <div class="form-text">Format attendu: +241 XX XX XX XX ou 0X XX XX XX</div>
+                    </div>
+                    <div class="portable-meta mb-3">
+                        <div class="created-by">
+                            <i class="bi bi-person-fill me-1"></i>
+                            Créé par: <span id="createdByInfo"></span> |
+                            Le: <span id="createdAtInfo"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #28a745; border-color: #28a745;">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Portable Modal END -->
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deletePortableModal" tabindex="-1" aria-labelledby="deletePortableModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePortableModalLabel">Supprimer un Numéro de Portable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce numéro de portable ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                <div id="deletePortableNumber" class="fw-bold mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePortable">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Non spécifié";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Fonction pour formater un numéro de téléphone
+    function formatPhoneNumber(phoneNumber) {
+        if (!phoneNumber) return "";
+
+        // Supprimer tous les caractères non numériques
+        let cleaned = phoneNumber.replace(/\D/g, '');
+
+        // Format gabonais standard
+        if (cleaned.startsWith('241')) {
+            if (cleaned.length === 11) {
+                return `+${cleaned.substring(0, 3)} ${cleaned.substring(3, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7, 9)} ${cleaned.substring(9, 11)}`;
+            } else if (cleaned.length === 9) {
+                return `0${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
+            }
+        }
+        // Format local (0X...)
+        else if (cleaned.length === 8) {
+            return `0${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
+        }
+
+        // Retourner le numéro original si le format n'est pas reconnu
+        return phoneNumber;
+    }
+
+    // Variable pour stocker l'ID du portable à supprimer
+    var portableToDelete = null;
+
+    $(document).ready(function() {
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les numéros de portable
+        function loadPortables() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-portables/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    if (response.results.length === 0) {
+                        $('#portableContainer').html('');
+                        $('#noPortablesMessage').show();
+                    } else {
+                        $('#noPortablesMessage').hide();
+                        $('#portableContainer').html('');
+                        response.results.forEach(function(portable) {
+                            const formattedNumber = formatPhoneNumber(portable.portable);
+
+                            $('#portableContainer').append(`
+                                <div class="portable-card" data-id="${portable.id}">
+                                    <div class="portable-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-portable-btn" data-id="${portable.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-portable-btn" data-id="${portable.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="portable-number">${formattedNumber}</div>
+                                    <div class="mt-2">
+                                        <a href="tel:${portable.portable.replace(/\s+/g, '')}" class="btn btn-sm call-btn me-2">
+                                            <i class="bi bi-telephone-fill me-1"></i> Appeler
+                                        </a>
+                                        <a href="https://wa.me/${portable.portable.replace(/\D/g, '')}" class="btn btn-sm whatsapp-btn" target="_blank">
+                                            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                                        </a>
+                                    </div>
+                                    <div class="portable-meta">
+                                        <div>
+                                            <i class="bi bi-person-fill me-1"></i>
+                                            Créé par: ${portable.created_by ? portable.created_by : 'Inconnu'} |
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(portable.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(portable.updated_at)}
+                                        </div>
+                                    </div>
+                                    <br>
+                                </div>
+                                <br>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des numéros de portable.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout de portable
+        $('#addPortableForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-portable/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Numéro de portable ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addPortableModal').modal('hide');
+                        $('#addPortableForm')[0].reset();
+                        loadPortables();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de l\'ajout du numéro de portable.';
+                    if (response.responseJSON && response.responseJSON.portable) {
+                        errorMessage = response.responseJSON.portable[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale d'édition de portable
+        $(document).on('click', '.edit-portable-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-portable/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editPortableId').val(response.id);
+                    $('#editPortable').val(response.portable);
+                    $('#createdByInfo').text(response.created_by ? response.created_by : 'Inconnu');
+                    $('#createdAtInfo').text(formatDateTime(response.created_at));
+                    $('#editPortableModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails du numéro de portable.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition de portable
+        $('#editPortableForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editPortableId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-portable/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Numéro de portable mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editPortableModal').modal('hide');
+                        loadPortables();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de la mise à jour du numéro de portable.';
+                    if (response.responseJSON && response.responseJSON.portable) {
+                        errorMessage = response.responseJSON.portable[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-portable-btn', function() {
+            var id = $(this).data('id');
+            var portableNumber = $(this).closest('.portable-card').find('.portable-number').text();
+
+            portableToDelete = id;
+            $('#deletePortableNumber').text(portableNumber);
+            $('#deletePortableModal').modal('show');
+        });
+
+        // Confirmer la suppression du portable
+        $('#confirmDeletePortable').on('click', function() {
+            if (portableToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-portables/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [portableToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Numéro de portable supprimé avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deletePortableModal').modal('hide');
+                            loadPortables();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression du numéro de portable.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche de portables
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/recherche-portable/?search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    if (response.results.length === 0) {
+                        $('#portableContainer').html('');
+                        $('#noPortablesMessage').show();
+                    } else {
+                        $('#noPortablesMessage').hide();
+                        $('#portableContainer').html('');
+                        response.results.forEach(function(portable) {
+                            const formattedNumber = formatPhoneNumber(portable.portable);
+
+                            $('#portableContainer').append(`
+                                <div class="portable-card" data-id="${portable.id}">
+                                    <div class="portable-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-portable-btn" data-id="${portable.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-portable-btn" data-id="${portable.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="portable-number">${formattedNumber}</div>
+                                    <div class="mt-2">
+                                        <a href="tel:${portable.portable.replace(/\s+/g, '')}" class="btn btn-sm call-btn me-2">
+                                            <i class="bi bi-telephone-fill me-1"></i> Appeler
+                                        </a>
+                                        <a href="https://wa.me/${portable.portable.replace(/\D/g, '')}" class="btn btn-sm whatsapp-btn" target="_blank">
+                                            <i class="bi bi-whatsapp me-1"></i> WhatsApp
+                                        </a>
+                                    </div>
+                                    <div class="portable-meta">
+                                        <div>
+                                            <i class="bi bi-person-fill me-1"></i>
+                                            Créé par: ${portable.created_by ? portable.created_by : 'Inconnu'} |
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(portable.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(portable.updated_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la recherche des numéros de portable.',
+                    });
+                }
+            });
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadPortables();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1032 @@
+<!-- dash_root_adresse_acheteur.html -->
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --adresse-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    --adresse-light: rgba(32, 201, 151, 0.1);
+}
+
+/* Cartes d'adresses */
+.adresse-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #e3e6f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.adresse-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.15);
+    border-color: #20c997;
+}
+
+.adresse-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #20c997, #17a2b8);
+}
+
+.adresse-content {
+    color: #4a5568;
+    line-height: 1.6;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+}
+
+.adresse-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.85rem;
+}
+
+.adresse-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.adresse-actions .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+/* État vide (pas d'adresses) */
+.adresse-empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 16px;
+    border: 3px dashed #cbd5e0;
+    margin: 2rem 0;
+}
+
+.adresse-empty-icon {
+    font-size: 4rem;
+    color: #a0aec0;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.adresse-empty-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.adresse-empty-subtitle {
+    font-size: 1.1rem;
+    color: #718096;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+/* Compteur d'adresses */
+.adresse-count-badge {
+    background: var(--adresse-light);
+    color: #20c997;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid rgba(32, 201, 151, 0.3);
+}
+
+/* Formulaires */
+.adresse-form-modal .modal-dialog {
+    max-width: 600px;
+}
+
+.adresse-form-modal .modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+}
+
+.adresse-form-modal .modal-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
+
+.adresse-form-modal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.adresse-form-modal .modal-body {
+    padding: 2rem;
+}
+
+.adresse-form-modal .form-group {
+    margin-bottom: 1.75rem;
+}
+
+.adresse-form-modal .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.adresse-form-modal .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.adresse-form-modal .form-control:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.2);
+}
+
+.adresse-form-modal textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Boutons */
+.btn-adresse {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-adresse:hover {
+    background: linear-gradient(135deg, #1ab68d 0%, #148a9c 100%);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+.btn-adresse-outline {
+    background: transparent;
+    color: #20c997;
+    border: 2px solid #20c997;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-adresse-outline:hover {
+    background: #20c997;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+.btn-action {
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation de chargement */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.adresse-content-loaded {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Indicateur d'édition en temps réel */
+.editing-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #20c997;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.editing-indicator.show {
+    display: flex;
+    animation: fadeInUp 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .adresse-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .adresse-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .adresse-empty-state {
+        padding: 3rem 1.5rem;
+    }
+    
+    .adresse-empty-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .adresse-actions {
+        flex-direction: column;
+    }
+    
+    .adresse-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-map-marker-alt text-adresse me-2"></i>Adresses
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des adresses de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="adresse-count-badge">
+                <i class="fas fa-map-pin"></i>
+                {{ adresses_count }} adresse{{ adresses_count|pluralize }}
+            </span>
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Adresses -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Liste des adresses</h5>
+                <button class="btn btn-adresse" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une adresse
+                </button>
+            </div>
+            
+            {% if adresses %}
+                <div class="adresses-list" id="adressesList">
+                    {% for adresse in adresses %}
+                    <div class="adresse-card adresse-content-loaded" id="adresseCard{{ adresse.id }}" data-id="{{ adresse.id }}">
+                        <div class="adresse-content" id="adresseContent{{ adresse.id }}">
+                            {{ adresse.adresse|linebreaks }}
+                        </div>
+                        <div class="adresse-meta">
+                            <div class="text-muted small">
+                                <div>
+                                    <i class="fas fa-user-plus me-1"></i>
+                                    Créée par {{ adresse.created_by.get_full_name|default:"Système" }} le {{ adresse.created_at|date:"d/m/Y H:i" }}
+                                </div>
+                                {% if adresse.updated_by %}
+                                <div class="mt-1">
+                                    <i class="fas fa-user-edit me-1"></i>
+                                    Modifiée par {{ adresse.updated_by.get_full_name }} le {{ adresse.updated_at|date:"d/m/Y H:i" }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="adresse-actions">
+                                <button class="btn btn-outline-primary btn-sm edit-adresse-btn" data-id="{{ adresse.id }}">
+                                    <i class="fas fa-edit me-1"></i>Modifier
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm delete-adresse-btn" data-id="{{ adresse.id }}">
+                                    <i class="fas fa-trash me-1"></i>Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- État vide - Aucune adresse -->
+                <div class="adresse-empty-state">
+                    <div class="adresse-empty-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h2 class="adresse-empty-title">Aucune adresse enregistrée</h2>
+                    <p class="adresse-empty-subtitle">
+                        Cet acheteur ne possède pas encore d'adresse enregistrée.<br>
+                        Ajoutez des adresses pour compléter son profil.
+                    </p>
+                    <button class="btn btn-adresse btn-lg" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
+                        <i class="fas fa-plus-circle me-2"></i>Ajouter la première adresse
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Indicateur d'édition en temps réel -->
+<div class="editing-indicator" id="editingIndicator">
+    <div class="spinner-border spinner-border-sm" role="status"></div>
+    <span>Mise à jour en cours...</span>
+</div>
+
+<!-- Modal Création Adresse -->
+<div class="modal fade adresse-form-modal" id="addAdresseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Nouvelle Adresse
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addAdresseForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="adresse" class="form-label">
+                            <i class="fas fa-map-marker-alt text-adresse"></i>Adresse complète
+                        </label>
+                        <textarea class="form-control" id="adresse" 
+                                  name="adresse" 
+                                  rows="5"
+                                  placeholder="Saisissez l'adresse complète de l'acheteur..."
+                                  required></textarea>
+                        <div class="form-text">
+                            Saisissez l'adresse complète incluant rue, ville, code postal, etc.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-adresse" id="addSubmitBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Adresse -->
+<div class="modal fade adresse-form-modal" id="editAdresseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Adresse
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAdresseForm" class="enhanced-form">
+                <input type="hidden" id="editAdresseId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editAdresse" class="form-label">
+                            <i class="fas fa-map-marker-alt text-adresse"></i>Adresse complète
+                        </label>
+                        <textarea class="form-control" id="editAdresse" 
+                                  name="adresse" 
+                                  rows="5"
+                                  placeholder="Saisissez l'adresse complète de l'acheteur..."
+                                  required></textarea>
+                        <div class="form-text">
+                            Saisissez l'adresse complète incluant rue, ville, code postal, etc.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-adresse" id="editSubmitBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Modifier
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'adresse</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette adresse ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="fw-bold mt-3" id="deleteAdresseContent"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/adresses/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentAdresseId = null;
+    
+    // Mettre à jour l'affichage après modification
+    function updateAdresseDisplay(adresseData) {
+        // Trouver la carte existante ou créer une nouvelle
+        let $card = $(`#adresseCard${adresseData.id}`);
+        
+        // Formater l'adresse avec saut de ligne
+        const formattedAdresse = adresseData.adresse.replace(/\n/g, '<br>');
+        
+        if ($card.length > 0) {
+            // Mettre à jour la carte existante
+            $(`#adresseContent${adresseData.id}`).html(formattedAdresse);
+            
+            // Mettre à jour les métadonnées si disponibles
+            if (adresseData.updated_by_nom && adresseData.updated_at_formatted) {
+                const metaHtml = `
+                    <div class="text-muted small">
+                        <div>
+                            <i class="fas fa-user-plus me-1"></i>
+                            Créée par ${adresseData.created_by_nom || 'Système'} le ${adresseData.created_at_formatted}
+                        </div>
+                        <div class="mt-1">
+                            <i class="fas fa-user-edit me-1"></i>
+                            Modifiée par ${adresseData.updated_by_nom} le ${adresseData.updated_at_formatted}
+                        </div>
+                    </div>
+                `;
+                $card.find('.adresse-meta > .text-muted').html(metaHtml);
+            }
+            
+            // Animation de mise à jour
+            $card.addClass('adresse-content-loaded');
+        } else {
+            // Créer une nouvelle carte
+            const newCardHtml = `
+                <div class="adresse-card adresse-content-loaded" id="adresseCard${adresseData.id}" data-id="${adresseData.id}">
+                    <div class="adresse-content" id="adresseContent${adresseData.id}">
+                        ${formattedAdresse}
+                    </div>
+                    <div class="adresse-meta">
+                        <div class="text-muted small">
+                            <div>
+                                <i class="fas fa-user-plus me-1"></i>
+                                Créée par ${adresseData.created_by_nom || 'Système'} le ${adresseData.created_at_formatted}
+                            </div>
+                            ${adresseData.updated_by_nom ? `
+                            <div class="mt-1">
+                                <i class="fas fa-user-edit me-1"></i>
+                                Modifiée par ${adresseData.updated_by_nom} le ${adresseData.updated_at_formatted}
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="adresse-actions">
+                            <button class="btn btn-outline-primary btn-sm edit-adresse-btn" data-id="${adresseData.id}">
+                                <i class="fas fa-edit me-1"></i>Modifier
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm delete-adresse-btn" data-id="${adresseData.id}">
+                                <i class="fas fa-trash me-1"></i>Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Si c'était un état vide, le remplacer
+            if ($('#adressesList').find('.adresse-empty-state').length > 0) {
+                $('#adressesList').html(newCardHtml);
+            } else {
+                // Sinon, ajouter en haut de la liste
+                $('#adressesList').prepend(newCardHtml);
+            }
+            
+            // Mettre à jour le compteur
+            updateAdresseCount();
+        }
+    }
+    
+    // Mettre à jour le compteur d'adresses
+    function updateAdresseCount() {
+        const count = $('#adressesList').find('.adresse-card').length;
+        $('.adresse-count-badge').html(`<i class="fas fa-map-pin"></i> ${count} adresse${count !== 1 ? 's' : ''}`);
+    }
+    
+    // Afficher l'indicateur d'édition
+    function showEditingIndicator() {
+        $('#editingIndicator').addClass('show');
+    }
+    
+    // Cacher l'indicateur d'édition
+    function hideEditingIndicator() {
+        setTimeout(() => {
+            $('#editingIndicator').removeClass('show');
+        }, 500);
+    }
+    
+    // Formulaire d'ajout d'adresse
+    $('#addAdresseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $btn = $('#addSubmitBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Préparer les données
+        const formData = {
+            adresse: $('#adresse').val()
+        };
+        
+        // Validation
+        if (!formData.adresse || formData.adresse.trim().length < 5) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Adresse invalide',
+                text: 'Veuillez saisir une adresse valide (minimum 5 caractères).'
+            });
+            return;
+        }
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addAdresseModal').modal('hide');
+                $('#addAdresseForm')[0].reset();
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Mettre à jour l'affichage
+                updateAdresseDisplay(response.data);
+                
+                // Message de succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout de l\'adresse';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else if (xhr.responseJSON.adresse) {
+                        errorMessage = xhr.responseJSON.adresse.join('\n');
+                    } else {
+                        errorMessage = JSON.stringify(xhr.responseJSON);
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Bouton pour modifier une adresse
+    $(document).on('click', '.edit-adresse-btn', function() {
+        currentAdresseId = $(this).data('id');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentAdresseId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editAdresseId').val(response.id);
+                $('#editAdresse').val(response.adresse);
+                $('#editAdresseModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de l\'adresse.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification d'adresse
+    $('#editAdresseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $btn = $('#editSubmitBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Préparer les données
+        const formData = {
+            adresse: $('#editAdresse').val()
+        };
+        
+        // Validation
+        if (!formData.adresse || formData.adresse.trim().length < 5) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Adresse invalide',
+                text: 'Veuillez saisir une adresse valide (minimum 5 caractères).'
+            });
+            return;
+        }
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentAdresseId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editAdresseModal').modal('hide');
+                $('#editAdresseForm')[0].reset();
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Mettre à jour l'affichage
+                updateAdresseDisplay(response.data);
+                
+                // Message de succès
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de l\'adresse';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else if (xhr.responseJSON.adresse) {
+                        errorMessage = xhr.responseJSON.adresse.join('\n');
+                    } else {
+                        errorMessage = JSON.stringify(xhr.responseJSON);
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Bouton de suppression
+    $(document).on('click', '.delete-adresse-btn', function() {
+        currentAdresseId = $(this).data('id');
+        const adresseContent = $(this).closest('.adresse-card').find('.adresse-content').text().substring(0, 100);
+        
+        $('#deleteAdresseContent').text(adresseContent + (adresseContent.length >= 100 ? '...' : ''));
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentAdresseId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentAdresseId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                // Afficher l'indicateur d'édition
+                showEditingIndicator();
+                
+                // Supprimer la carte
+                $(`#adresseCard${currentAdresseId}`).remove();
+                
+                // Si plus d'adresses, afficher l'état vide
+                if ($('#adressesList').find('.adresse-card').length === 0) {
+                    const emptyStateHtml = `
+                        <div class="adresse-empty-state">
+                            <div class="adresse-empty-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <h2 class="adresse-empty-title">Aucune adresse enregistrée</h2>
+                            <p class="adresse-empty-subtitle">
+                                Cet acheteur ne possède pas encore d'adresse enregistrée.<br>
+                                Ajoutez des adresses pour compléter son profil.
+                            </p>
+                            <button class="btn btn-adresse btn-lg" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter la première adresse
+                            </button>
+                        </div>
+                    `;
+                    $('#adressesList').html(emptyStateHtml);
+                }
+                
+                // Mettre à jour le compteur
+                updateAdresseCount();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Cacher l'indicateur après un délai
+                    hideEditingIndicator();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'adresse'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

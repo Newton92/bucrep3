@@ -1,570 +1,1620 @@
 {% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-border: rgba(13, 128, 190, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
+    --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+    --banking-gradient: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-secondary) 100%);
+}
+
+/* Header Premium inspiré du template tendance */
+.page-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.page-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-title-premium {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-subtitle-premium {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Carte Acheteur Premium inspirée du template tendance */
+.acheteur-card-premium {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s ease-out 0.1s both;
+    position: relative;
+}
+
+.acheteur-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.acheteur-subtitle-premium {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.acheteur-badge-premium {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille d'informations acheteur inspirée des tendance-cards */
+.acheteur-info-grid {
+    padding: 2rem;
+}
+
+.acheteur-info-item {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.acheteur-info-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.acheteur-info-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+}
+
+.acheteur-info-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.acheteur-info-icon.code { background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent)); }
+.acheteur-info-icon.activity { background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)); }
+.acheteur-info-icon.banking { background: linear-gradient(135deg, var(--color-accent), var(--color-primary-dark)); }
+.acheteur-info-icon.status { background: var(--success-gradient); }
+
+.acheteur-info-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: block;
+}
+
+.acheteur-info-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    line-height: 1.3;
+}
+
+.acheteur-info-value.badge-value {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Carte Analyse Unique Premium améliorée */
+.analyse-unique-card-premium {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.analyse-unique-card-premium:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(10, 149, 202, 0.15);
+    border-color: transparent;
+}
+
+.analyse-unique-card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+    border-radius: 5px 0 0 5px;
+}
+
+/* En-tête de la carte premium */
+.analyse-header-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    position: relative;
+}
+
+.analyse-header-premium::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary), transparent);
+}
+
+.analyse-title-premium {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.analyse-title-premium i {
+    color: var(--color-primary);
+    font-size: 2rem;
+}
+
+.analyse-actions-premium {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Boutons premium inspirés du template tendance */
+.btn-action-premium {
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-action-premium::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action-premium:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-primary-premium {
+    background: var(--primary-gradient);
+    color: var(--color-background);
+}
+
+.btn-outline-primary-premium {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary-premium:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+.btn-success-premium {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-warning-premium {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-danger-premium {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+/* Sections de contenu premium */
+.content-section-premium {
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.content-label-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    font-size: 1.25rem;
+}
+
+.content-label-premium i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+.content-box-premium {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    border-radius: 12px;
+    padding: 1.75rem;
+    border-left: 4px solid var(--color-primary);
+    line-height: 1.8;
+    font-size: 1.05rem;
+    color: var(--color-text);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.content-box-premium::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    font-size: 5rem;
+    color: rgba(10, 149, 202, 0.1);
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+.content-box-premium p {
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.content-box-premium p:last-child {
+    margin-bottom: 0;
+}
+
+/* Badge de couleur premium inspiré du template tendance */
+.color-badge-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
+    border: 1px solid rgba(13, 128, 190, 0.2);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
+}
+
+.color-badge-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.15);
+    border-color: rgba(37, 173, 214, 0.3);
+}
+
+.color-preview-premium {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--color-background);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Informations temporelles premium */
+.info-temporelle-premium {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 2px solid rgba(13, 128, 190, 0.1);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.info-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.info-item-premium:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.info-item-premium i {
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+/* État vide premium */
+.empty-state-premium {
+    padding: 5rem 3rem;
+    text-align: center;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
+    border-radius: 20px;
+    border: 2px dashed rgba(13, 128, 190, 0.3);
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.empty-state-icon-premium {
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.empty-state-premium h4 {
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--color-primary-dark);
+    font-size: 1.75rem;
+}
+
+.empty-state-premium p {
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Formulaires premium */
+.enhanced-form-premium .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.enhanced-form-premium .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.1rem;
+}
+
+.enhanced-form-premium .form-label i {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
+}
+
+/* Styles améliorés pour Select2 premium */
+.select2-premium-container {
+    width: 100% !important;
+}
+
+.select2-premium-container .select2-selection {
+    border: 2px solid rgba(13, 128, 190, 0.15) !important;
+    border-radius: 12px !important;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)) !important;
+    min-height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 1rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.select2-premium-container.select2-container--focus .select2-selection {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15) !important;
+    background: var(--color-background) !important;
+}
+
+.select2-premium-dropdown {
+    border: 2px solid rgba(13, 128, 190, 0.15) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15) !important;
+    margin-top: 0.5rem !important;
+    background: var(--color-background) !important;
+    z-index: 1061 !important;
+}
+
+.select2-premium-dropdown .select2-results__option {
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+    border-bottom: 1px solid rgba(13, 128, 190, 0.05) !important;
+    color: var(--color-text) !important;
+    transition: all 0.3s ease !important;
+}
+
+.select2-premium-dropdown .select2-results__option--highlighted {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1)) !important;
+    color: var(--color-primary-dark) !important;
+    transform: translateX(5px) !important;
+}
+
+.select2-premium-dropdown .select2-results__option[aria-selected=true] {
+    background: var(--primary-gradient) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Form controls premium */
+.enhanced-form-premium .form-control,
+.enhanced-form-premium textarea {
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+    min-height: 56px;
+}
+
+.enhanced-form-premium .form-control:focus,
+.enhanced-form-premium textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background: var(--color-background);
+}
+
+.enhanced-form-premium textarea {
+    min-height: 180px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+/* Aperçu de couleur premium */
+.color-preview-form-premium {
+    width: 100%;
+    height: 60px;
+    border-radius: 12px;
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.color-preview-form-premium.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.15);
+}
+
+.color-preview-form-premium::before {
+    content: 'Aperçu de la couleur';
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.color-preview-form-premium.active::before {
+    content: 'Couleur sélectionnée';
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+/* Modales premium */
+.modal-header-premium {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    padding: 2rem !important;
+    border-bottom: none !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.modal-title-premium {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-body-premium {
+    padding: 2.5rem !important;
+    background: var(--color-background);
+}
+
+.modal-footer-premium {
+    padding: 2rem !important;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
+    border-top: 2px solid rgba(13, 128, 190, 0.1) !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+.modal-content-premium {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 70px rgba(10, 149, 202, 0.3) !important;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .page-title-premium {
+        font-size: 2rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.5rem;
+    }
+    
+    .analyse-title-premium {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-premium {
+        padding: 1.75rem;
+    }
+    
+    .acheteur-header-premium {
+        padding: 1.5rem;
+    }
+    
+    .analyse-header-premium {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    
+    .analyse-actions-premium {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .info-temporelle-premium {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .empty-state-premium {
+        padding: 3rem 1.5rem;
+    }
+    
+    .modal-body-premium,
+    .modal-footer-premium {
+        padding: 1.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title-premium {
+        font-size: 1.75rem;
+    }
+    
+    .acheteur-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .analyse-title-premium {
+        font-size: 1.25rem;
+    }
+    
+    .content-label-premium {
+        font-size: 1.1rem;
+    }
+    
+    .btn-action-premium {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    .page-header-premium::before,
+    .acheteur-header-premium::before,
+    .modal-header-premium::before,
+    .acheteur-info-item:hover,
+    .analyse-unique-card-premium:hover,
+    .color-badge-premium:hover,
+    .info-item-premium:hover,
+    .btn-action-premium:hover,
+    .select2-premium-dropdown .select2-results__option--highlighted {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Petits ajustements */
+.form-text-premium {
+    color: var(--color-text-muted) !important;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-graph-up-arrow fa-fw me-1"></i>Gestion des Analyses Sectorielles</h3>
+<div class="container-fluid">
+    <!-- Header Premium inspiré du template tendance -->
+    <div class="page-header-premium">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title-premium text-white">
+                    <i class="fas fa-chart-pie"></i>{% trans "Analyse Sectorielle" %}
+                </h1>
+                <p class="page-subtitle-premium">
+                    Évaluation approfondie du secteur d'activité et de la position concurrentielle de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action-premium">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
+                </a>
+                {% if not analyse %}
+                <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAnalyseModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Créer l'analyse" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countAnalyse">Module de Gestion des Analyses Sectorielles</h4>
-                    <span>Dans ce module, vous pouvez consulter, rechercher, ajouter, modifier et supprimer les analyses sectorielles associées à un acheteur.</span>
+    <!-- Carte Acheteur Premium inspirée du template tendance -->
+    <div class="acheteur-card-premium">
+        <div class="acheteur-header-premium">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="acheteur-title-premium text-white">{{ acheteur.nom }}</h2>
+                    <p class="acheteur-subtitle-premium mb-0">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge-premium">
+                        <i class="fas fa-hashtag"></i>
+                        {{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">{% trans "Code ACREMAC Unique" %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grille d'informations acheteur inspirée des tendance-cards -->
+        <div class="acheteur-info-grid">
+            <div class="row g-4">
+                <!-- Code ACREMAC -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.1s;">
+                        <div class="acheteur-info-icon code">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Identifiant Unique" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.code }}</div>
+                    </div>
+                </div>
+                
+                <!-- Activité Principale -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.2s;">
+                        <div class="acheteur-info-icon activity">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Activité Principale" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Date de création -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.3s;">
+                        <div class="acheteur-info-icon banking">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Date de Création" %}</span>
+                        <div class="acheteur-info-value">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</div>
+                    </div>
+                </div>
+                
+                <!-- Statut Entreprise -->
+                <div class="col-xl-3 col-lg-6">
+                    <div class="acheteur-info-item" style="animation-delay: 0.4s;">
+                        <div class="acheteur-info-icon status">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="acheteur-info-label">{% trans "Statut" %}</span>
+                        <div class="acheteur-info-value badge-value">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- Counter END -->
 
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-bar-chart-fill"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
+    <!-- Section Analyse Sectorielle -->
+    <div class="row">
+        <div class="col-12">
+            {% if analyse %}
+            <!-- Affichage de l'analyse existante -->
+            <div class="analyse-unique-card-premium">
+                <div class="analyse-header-premium">
+                    <div class="analyse-title-premium">
+                        <i class="fas fa-chart-pie"></i>
+                        Analyse Sectorielle Complète
+                    </div>
+                    <div class="analyse-actions-premium">
+                        <button class="btn btn-warning-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#editAnalyseModal">
+                            <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
+                        </button>
+                        <button class="btn btn-danger-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                        </button>
                     </div>
                 </div>
 
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Commentaire : </strong><span style="color: #FF5733;">Commentaire</span><br>
-                        <strong>Impact COVID-19 : </strong><span style="color: #33FF57;">Impact COVID-19</span><br>
-                        <strong>Couleur Commentaire : </strong><span style="color: #3357FF;">Couleur</span><br>
+                <!-- Commentaire -->
+                <div class="content-section-premium">
+                    <div class="content-label-premium">
+                        <i class="fas fa-comment-dots"></i>
+                        Analyse Sectorielle
+                    </div>
+                    <div class="content-box-premium">
+                        {{ analyse.commentaire|linebreaks }}
                     </div>
                 </div>
-                <br>
 
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="noteInfo">Cher agent, si vous souhaitez retourner consulter la page de gestion de l'acheteur, il vous suffit de cliquer sur le nom de l'acheteur !</span><br>
+                <!-- Impact COVID-19 -->
+                {% if analyse.impact_covid_19 %}
+                <div class="content-section-premium">
+                    <div class="content-label-premium">
+                        <i class="fas fa-virus"></i>
+                        Impact de la Pandémie COVID-19
+                    </div>
+                    <div class="content-box-premium">
+                        {{ analyse.impact_covid_19|linebreaks }}
                     </div>
                 </div>
-                <br>
+                {% endif %}
 
-            </div>
-        </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- ANALYSES SECTORIELLES START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Analyses Sectorielles</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
+                <!-- Étiquette de couleur -->
+                {% if analyse.couleur_commentaire %}
+                <div class="content-section-premium">
+                    <div class="content-label-premium">
+                        <i class="fas fa-palette"></i>
+                        Étiquette de Classification
                     </div>
+                    <div>
+                        <span class="color-badge-premium">
+                            <div class="color-preview-premium" style="background-color: {{ analyse.couleur_commentaire.code|default:'#5a6c7d' }}"></div>
+                            <span>{{ analyse.couleur_commentaire.couleur }}</span>
+                        </span>
+                        {% if analyse.couleur_commentaire.description %}
+                        <p class="text-muted mt-2 mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ analyse.couleur_commentaire.description }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
 
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+                <!-- Informations temporelles -->
+                <div class="info-temporelle-premium">
+                    <div class="info-item-premium">
+                        <i class="fas fa-calendar-plus"></i>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addAnalyseModal">
-                                Ajouter une Analyse Sectorielle
-                            </button>
+                            <div class="fw-medium">Créée le {{ analyse.created_at|date:"d/m/Y" }}</div>
+                            <small class="text-muted">à {{ analyse.created_at|date:"H:i" }}</small>
+                        </div>
+                    </div>
+                    <div class="info-item-premium">
+                        <i class="fas fa-sync-alt"></i>
+                        <div>
+                            <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
+                            <small class="text-muted">{{ analyse.updated_at|date:"d/m/Y H:i" }}</small>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Analyses list START -->
-                <div class="table-responsive border-0" id="analyseList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Commentaire</th>
-                                <th scope="col" class="border-0">Impact COVID-19</th>
-                                <th scope="col" class="border-0">Couleur Commentaire</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="analyseTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
-                </div>
-                <!-- Analyses list END -->
             </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
-                </div>
+            {% else %}
+            <!-- État vide premium -->
+            <div class="empty-state-premium">
+                <i class="fas fa-chart-pie empty-state-icon-premium"></i>
+                <h4 class="fw-bold mb-3">{% trans "Analyse Sectorielle Non Définie" %}</h4>
+                <p class="text-muted mb-4">
+                    L'acheteur ne possède pas encore d'analyse sectorielle complète.<br>
+                    Cette analyse permet d'évaluer la position stratégique, les opportunités<br>
+                    et les risques spécifiques au secteur d'activité.
+                </p>
+                <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAnalyseModal">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Démarrer l'Analyse Sectorielle" %}
+                </button>
             </div>
-            <!-- Card footer END -->
+            {% endif %}
         </div>
     </div>
 </div>
-<!-- ANALYSES SECTORIELLES END -->
 
-<!-- Add Analyse Modal START -->
-<div class="modal fade" id="addAnalyseModal" tabindex="-1" aria-labelledby="addAnalyseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAnalyseModalLabel">Ajouter une Analyse Sectorielle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Ajout Analyse Premium -->
+<div class="modal fade" id="addAnalyseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouvelle Analyse Sectorielle" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addAnalyseForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
+            <form id="addAnalyseForm" class="enhanced-form-premium">
+                <div class="modal-body modal-body-premium">
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Analyse Sectorielle" %}
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" rows="8"
+                                  placeholder="Analyse détaillée du secteur d'activité :
+• Contexte et dynamique du secteur
+• Tendances et évolutions récentes
+• Opportunités de croissance
+• Menaces et risques identifiés
+• Position concurrentielle
+• Perspectives à court et moyen terme..."></textarea>
+                        <small class="form-text form-text-premium">
+                            Analyse complète du secteur d'activité incluant les tendances, opportunités, 
+                            menaces et position concurrentielle de l'entreprise.
+                        </small>
                     </div>
-                    <div class="mb-3">
-                        <label for="impact_covid_19" class="form-label">Impact COVID-19</label>
-                        <textarea class="form-control" id="impact_covid_19" name="impact_covid_19" rows="3"></textarea>
+
+                    <div class="form-group">
+                        <label for="impact_covid_19" class="form-label">
+                            <i class="fas fa-virus"></i>Impact COVID-19 (Optionnel)
+                        </label>
+                        <textarea class="form-control" id="impact_covid_19" name="impact_covid_19" rows="5"
+                                  placeholder="Évaluation spécifique de l'impact de la pandémie sur le secteur :
+• Effets sur la demande et l'offre
+• Mesures d'adaptation mises en place
+• Changements structurels observés
+• Perspectives post-pandémie..."></textarea>
+                        <small class="form-text form-text-premium">
+                            Analyse spécifique des effets de la pandémie COVID-19 sur le secteur 
+                            et les stratégies d'adaptation mises en place.
+                        </small>
                     </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
+
+                    <div class="form-group">
+                        <label for="couleur_commentaire" class="form-label">
+                            <i class="fas fa-palette"></i>{% trans "Classification par Couleur" %}
+                        </label>
+                        <select class="form-select select2-premium" id="couleur_commentaire" name="couleur_commentaire">
+                            <option value="">{% trans "Sélectionnez une classification" %}</option>
                             {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#5a6c7d' }}">
+                                {{ coloration.couleur }}
+                            </option>
                             {% endfor %}
                         </select>
+                        <small class="form-text form-text-premium">
+                            Optionnel: Utilisez une couleur pour classer visuellement l'analyse 
+                            selon son niveau de risque ou d'opportunité.
+                        </small>
+                        <div class="color-preview-form-premium" id="colorPreview"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success-premium btn-action-premium" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-2"></i>{% trans "Créer l'analyse" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Analyse Modal END -->
 
-<!-- Edit Analyse Modal START -->
-<div class="modal fade" id="editAnalyseModal" tabindex="-1" aria-labelledby="editAnalyseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editAnalyseModalLabel">Éditer une Analyse Sectorielle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Modification Analyse Premium -->
+<div class="modal fade" id="editAnalyseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-premium">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title-premium text-white">
+                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Analyse Sectorielle" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editAnalyseForm">
-                    <input type="hidden" id="editAnalyseId" name="id">
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
+            <form id="editAnalyseForm" class="enhanced-form-premium">
+                <input type="hidden" id="editAnalyseId" name="id">
+                <div class="modal-body modal-body-premium">
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots"></i>{% trans "Analyse Sectorielle" %}
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="8"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="editImpactCovid" class="form-label">Impact COVID-19</label>
-                        <textarea class="form-control" id="editImpactCovid" name="impact_covid_19" rows="3"></textarea>
+
+                    <div class="form-group">
+                        <label for="editImpactCovid" class="form-label">
+                            <i class="fas fa-virus"></i>Impact COVID-19
+                        </label>
+                        <textarea class="form-control" id="editImpactCovid" name="impact_covid_19" rows="5"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaire" class="form-label">
+                            <i class="fas fa-palette"></i>{% trans "Classification par Couleur" %}
+                        </label>
+                        <select class="form-select select2-premium" id="editCouleurCommentaire" name="couleur_commentaire">
+                            <option value="">{% trans "Sélectionnez une classification" %}</option>
                             {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#5a6c7d' }}">
+                                {{ coloration.couleur }}
+                            </option>
                             {% endfor %}
                         </select>
+                        <div class="color-preview-form-premium" id="editColorPreview"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer modal-footer-premium">
+                    <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning-premium btn-action-premium" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-premium modal-danger-content-premium">
+            <div class="modal-header modal-header-premium modal-danger-header-premium">
+                <h5 class="modal-title-premium">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h6 class="fw-bold mb-3" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Supprimer l'analyse sectorielle
+                </h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Cette action supprimera définitivement l'analyse sectorielle.<br>
+                    Cette opération est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-outline-primary-premium btn-action-premium" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                </button>
+                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %}
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Analyse Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire, #editCommentaire, #impact_covid_19, #editImpactCovid',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = {{ acheteur.id }};
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/analyse-sectorielle/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Fonction pour formater les options avec couleur
+    function formatColorOption(option) {
+        if (!option.id) {
+            return option.text;
         }
+        
+        const $option = $(option.element);
+        const color = $option.data('color');
+        const text = option.text;
+        
+        if (color) {
+            return $(
+                `<div class="d-flex align-items-center gap-3">
+                    <span class="color-preview-small" style="background-color:${color}; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fcfefe; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span class="fw-medium">${text}</span>
+                </div>`
+            );
+        }
+        return text;
+    }
+    
+    // Fonction pour formater la sélection avec couleur
+    function formatColorSelection(option) {
+        if (!option.id) {
+            return option.text;
+        }
+        
+        const $option = $(option.element);
+        const color = $option.data('color');
+        const text = option.text;
+        
+        if (color) {
+            return $(
+                `<div class="d-flex align-items-center gap-3">
+                    <span class="color-preview-small" style="background-color:${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fcfefe; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></span>
+                    <span class="fw-medium">${text}</span>
+                </div>`
+            );
+        }
+        return text;
+    }
+    
+    // Initialiser Select2 premium
+    function initSelect2Premium() {
+        $('.select2-premium').each(function() {
+            const $select = $(this);
+            
+            $select.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $select.closest('.modal'),
+                language: 'fr',
+                allowClear: true,
+                minimumResultsForSearch: 10,
+                templateResult: formatColorOption,
+                templateSelection: formatColorSelection,
+                containerCssClass: 'select2-premium-container',
+                dropdownCssClass: 'select2-premium-dropdown'
+            });
+            
+            // Gérer l'aperçu des couleurs
+            $select.on('change', function() {
+                const selectedOption = $(this).find('option:selected');
+                const color = selectedOption.data('color');
+                const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
+                const $preview = $(previewId);
+                
+                if (color) {
+                    $preview.css({
+                        'background': color,
+                        'border-color': color,
+                        'color': getContrastColor(color)
+                    }).addClass('active');
+                } else {
+                    $preview.css({
+                        'background': 'linear-gradient(145deg, #fcfefe, rgba(10, 149, 202, 0.02))',
+                        'border-color': 'rgba(13, 128, 190, 0.15)',
+                        'color': '#5a6c7d'
+                    }).removeClass('active');
+                }
+            });
+        });
+    }
+    
+    // Fonction pour déterminer la couleur du texte selon le fond
+    function getContrastColor(hexColor) {
+        // Convertir la couleur hex en RGB
+        const r = parseInt(hexColor.substr(1, 2), 16);
+        const g = parseInt(hexColor.substr(3, 2), 16);
+        const b = parseInt(hexColor.substr(5, 2), 16);
+        
+        // Calculer la luminance relative
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Retourner blanc ou noir selon la luminance
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+    
+    // Initialisation
+    initSelect2Premium();
+    
+    // Gérer l'ouverture des modals
+    $('#addAnalyseModal').on('shown.bs.modal', function() {
+        $('#commentaire').focus();
+        initSelect2Premium();
+    });
 
+    $('#editAnalyseModal').on('shown.bs.modal', function() {
+        $('#editCommentaire').focus();
+        initSelect2Premium();
+        populateEditForm();
+    });
+    
+    // Gérer la fermeture des modals
+    $('#addAnalyseModal, #editAnalyseModal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+        $('.select2-premium').val(null).trigger('change');
+        $('#colorPreview, #editColorPreview').css({
+            'background': 'linear-gradient(145deg, #fcfefe, rgba(10, 149, 202, 0.02))',
+            'border-color': 'rgba(13, 128, 190, 0.15)',
+            'color': '#5a6c7d'
+        }).removeClass('active');
+    });
+    
+    // Si une analyse existe, pré-remplir le formulaire d'édition
+    {% if analyse %}
+    function populateEditForm() {
+        const analyseData = JSON.parse('{{ analyse_json|escapejs }}');
+        
+        $('#editAnalyseId').val(analyseData.id);
+        $('#editCommentaire').val(analyseData.commentaire || '');
+        $('#editImpactCovid').val(analyseData.impact_covid_19 || '');
+        
+        // Sélectionner la couleur
+        if (analyseData.couleur_commentaire?.id) {
+            $('#editCouleurCommentaire').val(analyseData.couleur_commentaire.id).trigger('change');
+            
+            // Aperçu de la couleur
+            if (analyseData.couleur_commentaire.code) {
+                $('#editColorPreview').css({
+                    'background': analyseData.couleur_commentaire.code,
+                    'border-color': analyseData.couleur_commentaire.code,
+                    'color': getContrastColor(analyseData.couleur_commentaire.code)
+                }).addClass('active');
+            }
+        } else {
+            $('#editCouleurCommentaire').val(null).trigger('change');
+        }
+    }
+    {% endif %}
+    
+    // Formulaire d'ajout
+    $('#addAnalyseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitAnalyseForm(data, '#submitAddBtn', 'addAnalyseModal');
+    });
+    
+    // Formulaire de modification
+    $('#editAnalyseForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Inclure l'ID dans les données
+        const analyseId = $('#editAnalyseId').val();
+        data['id'] = analyseId;
+        
+        submitAnalyseForm(data, '#submitEditBtn', 'editAnalyseModal');
+    });
+    
+    // Soumission du formulaire - POST pour création et modification
+    function submitAnalyseForm(data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                const modal = bootstrap.Modal.getInstance($('#' + modalId)[0]);
+                if (modal) modal.hide();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Opération réussie',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitAnalyseForm(data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>'),
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression de l'analyse
+    $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Analyse sectorielle supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.message || 'Impossible de supprimer l\'analyse sectorielle',
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler',
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load analyse data
-        function loadAnalyses(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-analyses-sectorielles/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update analyse table body
-                    $('#analyseTableBody').html('');
-                    response.results.forEach(function(analyse, index) {
-                        $('#analyseTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + analyse.commentaire + '</td>' +
-                            '<td>' + analyse.impact_covid_19 + '</td>' +
-                            '<td>' + analyse.couleur_commentaire.couleur + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + analyse.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + analyse.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadAnalyses();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadAnalyses(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadAnalyses(page, search);
-        });
-
-        // Add Analyse form submission
-        $('#addAnalyseForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-analyse-sectorielle/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Analyse sectorielle ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addAnalyseModal').modal('hide');
-                        loadAnalyses();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de l\'analyse sectorielle.',
-                    });
-                }
-            });
-        });
-
-        // Edit Analyse button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-analyse-sectorielle/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editAnalyseId').val(response.id);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editImpactCovidAnalyse').val(response.impact_covid_19);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                    $('#editAnalyseModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                    tinymce.get('editImpactCovid').setContent(response.impact_covid_19);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'analyse sectorielle.',
-                    });
-                }
-            });
-        });
-
-        // Edit Analyse form submission
-        $('#editAnalyseForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editAnalyseId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-analyse-sectorielle/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Analyse sectorielle mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editAnalyseModal').modal('hide');
-                        loadAnalyses();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de l\'analyse sectorielle.',
-                    });
-                }
-            });
-        });
-
-        // Delete Analyse button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-analyses-sectorielles/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'L\'analyse sectorielle a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadAnalyses();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de l\'analyse sectorielle.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
     });
+    
+    // Effet de ripple sur les boutons premium
+    $(document).on('click', '.btn-action-premium', function(e) {
+        const $btn = $(this);
+        const btnOffset = $btn.offset();
+        const x = e.pageX - btnOffset.left;
+        const y = e.pageY - btnOffset.top;
+        
+        const $ripple = $('<span class="ripple-effect"></span>');
+        $ripple.css({
+            left: x + 'px',
+            top: y + 'px',
+            position: 'absolute',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.7)',
+            transform: 'scale(0)',
+            animation: 'ripple 0.6s linear',
+            pointerEvents: 'none',
+            zIndex: 1
+        });
+        
+        $btn.css('position', 'relative').append($ripple);
+        
+        setTimeout(function() {
+            $ripple.remove();
+        }, 600);
+    });
+});
 </script>
-
 {% endblock %}
