@@ -62,33 +62,41 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[
-    "10.0.57.47", "10.0.194.193", "107.172.88.238", "3.236.213.114",
-    "localhost", "127.0.0.1",
+    # Production
+    "bucrep.net", "www.bucrep.net",
+    "application.bucrep.net",
+    # IP serveur
+    "107.172.88.238",
+    # Anciennes IP / preprod
+    "10.0.57.47", "10.0.194.193", "3.236.213.114",
     "preprod.bucrep3.bucrep.net",
-    # Espace privé en développement (port 8001)
-    "localhost:8001",
+    # Dev local
+    "localhost", "127.0.0.1", "localhost:8001",
 ])
 
 # ---------------------------------------------------------------------------
 # Ségrégation site public / espace privé
 # En développement : PUBLIC_HOST=localhost:8000, PRIVATE_HOST=localhost:8001
-# En production    : PUBLIC_HOST=www.bucrep.net,  PRIVATE_HOST=app.bucrep.net
+# En production    : PUBLIC_HOST=bucrep.net,     PRIVATE_HOST=application.bucrep.net
 # ---------------------------------------------------------------------------
 PUBLIC_HOST  = env("DJANGO_PUBLIC_HOST",  default="localhost:8000")
 PRIVATE_HOST = env("DJANGO_PRIVATE_HOST", default="localhost:8001")
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
-    "http://10.0.194.193",
-    "http://10.0.194.193:8004",
-    "https://10.0.194.193",
-    "https://10.0.194.193:8004",
+    # Production
+    "https://bucrep.net",
+    "https://www.bucrep.net",
+    "https://application.bucrep.net",
+    # Accès direct IP (test sans SSL)
+    "http://107.172.88.238",
+    # Anciennes / preprod
+    "http://10.0.194.193", "https://10.0.194.193",
     "http://10.0.57.47",
     "http://3.236.213.114",
-    "http://107.172.88.238",
-    "http://localhost",
-    "http://127.0.0.1",
     "http://preprod.bucrep3.bucrep.net",
+    # Dev local
+    "http://localhost", "http://127.0.0.1",
 ]
 
 # User autorisé
