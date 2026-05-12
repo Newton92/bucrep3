@@ -5,7 +5,7 @@
 # ===========================================================================
 set -e
 
-APP_DIR="/app/bucrep3"
+APP_DIR="/bucrep3"
 
 echo "→ Pull du code..."
 cd "$APP_DIR"

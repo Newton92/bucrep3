@@ -6,7 +6,7 @@
 # ===========================================================================
 set -e
 
-APP_DIR="/app/bucrep3"
+APP_DIR="/bucrep3"   # racine du serveur
 APP_USER="www-data"
 PYTHON="python3.12"
 
@@ -41,7 +41,6 @@ if [ -d "$APP_DIR" ]; then
     cd "$APP_DIR"
     git pull origin main
 else
-    mkdir -p /app
     git clone https://github.com/Newton92/bucrep3.git "$APP_DIR"
     cd "$APP_DIR"
 fi
