@@ -48,12 +48,12 @@ fi
 # 3. Environnement Python
 # ---------------------------------------------------------------------------
 echo "[3/8] Environnement Python..."
-if [ ! -d "$APP_DIR/venv" ]; then
-    $PYTHON -m venv "$APP_DIR/venv"
+if [ ! -d "$APP_DIR/.venv" ]; then
+    $PYTHON -m venv "$APP_DIR/.venv"
 fi
-"$APP_DIR/venv/bin/pip" install --upgrade pip -q
-"$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt" -q
-"$APP_DIR/venv/bin/pip" install gunicorn -q
+"$APP_DIR/.venv/bin/pip" install --upgrade pip -q
+"$APP_DIR/.venv/bin/pip" install -r "$APP_DIR/requirements.txt" -q
+"$APP_DIR/.venv/bin/pip" install gunicorn -q
 
 # ---------------------------------------------------------------------------
 # 4. Fichier .env (à créer manuellement si absent)
@@ -91,8 +91,8 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $LOCAL_DB_NAME TO $LO
 # ---------------------------------------------------------------------------
 echo "[6/8] Migrations et fichiers statiques..."
 cd "$APP_DIR"
-"$APP_DIR/venv/bin/python" manage.py migrate --noinput
-"$APP_DIR/venv/bin/python" manage.py collectstatic --noinput
+"$APP_DIR/.venv/bin/python" manage.py migrate --noinput
+"$APP_DIR/.venv/bin/python" manage.py collectstatic --noinput
 
 # Permissions
 mkdir -p /var/log/gunicorn

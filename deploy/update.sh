@@ -12,13 +12,13 @@ cd "$APP_DIR"
 git pull origin main
 
 echo "→ Dépendances Python..."
-"$APP_DIR/venv/bin/pip" install -r requirements.txt -q
+"$APP_DIR/.venv/bin/pip" install -r requirements.txt -q
 
 echo "→ Migrations..."
-"$APP_DIR/venv/bin/python" manage.py migrate --noinput
+"$APP_DIR/.venv/bin/python" manage.py migrate --noinput
 
 echo "→ Fichiers statiques..."
-"$APP_DIR/venv/bin/python" manage.py collectstatic --noinput
+"$APP_DIR/.venv/bin/python" manage.py collectstatic --noinput
 
 echo "→ Redémarrage Gunicorn..."
 systemctl restart gunicorn
