@@ -6,7 +6,7 @@
 # ===========================================================================
 set -e
 
-APP_DIR="/bucrep3"   # racine du serveur
+APP_DIR="/var/www/html/bucrep3"   # racine du serveur
 APP_USER="www-data"
 PYTHON="python3.12"
 
@@ -25,7 +25,6 @@ apt-get install -y -q \
     postgresql postgresql-client \
     redis-server \
     apache2 \
-    libapache2-mod-proxy-html \
     certbot python3-certbot-apache \
     gettext \
     libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
@@ -41,7 +40,7 @@ if [ -d "$APP_DIR" ]; then
     cd "$APP_DIR"
     git pull origin main
 else
-    git clone https://github.com/Newton92/bucrep3.git "$APP_DIR"
+    git clone https://github.com/Newton92/var/www/html/bucrep3.git "$APP_DIR"
     cd "$APP_DIR"
 fi
 
