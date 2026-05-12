@@ -1321,14 +1321,17 @@ def get_structured_passif_data(acheteur, years):
             {'label': "Dettes", 'key': 'dettes'},
             {'label': "Dettes fiscales et sociales", 'key': 'dettes_fiscales_sociales'},
             {'label': "Autres dettes", 'key': 'autres_dettes'},
+            {'label': "TOTAL III", 'key': 'total_III', 'is_total': True},
+        ],
+        "TRÉSORERIE PASSIF": [
             {'label': "Banques, crédits d'escompte", 'key': 'banques_credit_escompte'},
             {'label': "Banque, crédit caisse", 'key': 'banque_credit_caisse'},
             {'label': "Banques, découvert", 'key': 'banques_decouvert'},
-            {'label': "TOTAL III", 'key': 'total_III', 'is_total': True},
+            {'label': "TOTAL IV", 'key': 'total_IV', 'is_total': True},
         ],
         "COMPTES DE REGULARISATION": [
             {'label': "Écart de conversion passif", 'key': 'ecart_conversion_passif'},
-            {'label': "TOTAL IV", 'key': 'total_IV', 'is_total': True},
+            {'label': "TOTAL V", 'key': 'total_V', 'is_total': True},
         ],
         "TOTAL GENERAL": [
             {'label': "TOTAL GÉNÉRAL", 'key': 'total_general', 'is_final_total': True},

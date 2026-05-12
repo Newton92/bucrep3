@@ -80,19 +80,19 @@ class ScoreACREMACBilanClassiqueService:
                 'frais_financiers': float(resultat.frais_fin_charges_assi or 0),
                 'ebe': float(resultat.excedent_brut_ex or 0),
                 
-                # R2: (Créances + disponibilités) / Dettes CT
+                # R2: (Créances + disponibilités) / (Passif circulant + Trésorerie passif)
                 'creances_disponibilites': float(
-                    (actif.creances or 0) + 
+                    (actif.creances or 0) +
                     (actif.disponibilites_vmp or 0)
                 ),
-                'dettes_court_terme': float(passif.total_III or 0),
-                
-                # R3: Capitaux permanents / Passif
+                'dettes_court_terme': float((passif.total_III or 0) + (passif.total_IV or 0)),
+
+                # R3: Capitaux permanents / Total actif
                 'capitaux_permanents': float(
-                    (passif.total_I or 0) + 
+                    (passif.total_I or 0) +
                     (passif.total_II or 0)
                 ),
-                'total_passif': float(passif.total_general or 0),
+                'total_passif': float(actif.general_total or 0),
                 
                 # R4: VA / CA
                 'valeur_ajoutee': float(resultat.valeur_ajoutee or 0),
@@ -414,7 +414,9 @@ def get_details_bilan_classique(request, acheteur_id, annee):
             'passif': {
                 'capitaux_propres': float(passif.total_I or 0),
                 'dettes_financieres': float(passif.total_II or 0),
-                'dettes_court_terme': float(passif.total_III or 0),
+                'passif_circulant': float(passif.total_III or 0),
+                'tresorerie_passif': float(passif.total_IV or 0),
+                'ecart_conversion_passif': float(passif.total_V or 0),
                 'total_passif': float(passif.total_general or 0)
             },
             'resultat': {

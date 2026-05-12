@@ -78,7 +78,7 @@ class UserAdmin(BaseUserAdmin, SimpleHistoryAdmin):  # Retirer SafeDeleteAdmin
         'username', 'email', 'fullname', 'role', 'pays',
         'is_active', 'is_staff', 'password_changed_at'
     ]
-    
+
     list_filter = [
         'role', 'is_active', 'is_staff', 'pays',
         'auth_a2f', 'activation'
@@ -186,6 +186,17 @@ class UserAdmin(BaseUserAdmin, SimpleHistoryAdmin):  # Retirer SafeDeleteAdmin
         return qs   
 
 
+class VilleInline(admin.TabularInline):
+    """Inline : gérer les villes directement depuis la fiche d'un pays."""
+    model = Ville
+    extra = 1
+    fields = ['code', 'nom', 'is_active']
+    ordering = ['nom']
+    show_change_link = True
+    verbose_name = _("Ville")
+    verbose_name_plural = _("Villes du pays")
+
+
 @admin.register(Pays)
 class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportModelAdmin si non installé
     """Configuration admin: PaysAdmin."""
@@ -219,7 +230,8 @@ class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportMod
     )
     
     readonly_fields = ['date_creation', 'date_modification']
-    
+    inlines = [VilleInline]
+
     # Actions personnalisées
     actions = ['activate_countries', 'deactivate_countries', 'toggle_dashboard_display']
     
@@ -240,87 +252,35 @@ class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportMod
             country.save(update_fields=['afficher_au_dashboard'])
         self.message_user(request, f'{queryset.count()} pays mis à jour.', messages.SUCCESS)
 
-@admin.register(Province)
-class ProvinceAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
-    """Configuration admin: ProvinceAdmin."""
-    list_display = [
-        'code', 'nom', 'pays', 'is_active', 'deleted', 
-        'date_creation', 'date_modification'
-    ]
+
+@admin.register(Ville)
+class VilleAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Villes — liées directement à un pays."""
+    list_display = ['code', 'nom', 'pays', 'is_active', 'deleted', 'date_creation']
     list_display_links = ['code', 'nom']
     list_filter = [
         'is_active', 'pays',
         ('date_creation', admin.DateFieldListFilter),
-        ('date_modification', admin.DateFieldListFilter),
     ] + list(SafeDeleteAdmin.list_filter)
     search_fields = ['nom', 'code', 'pays__nom']
     list_select_related = ['pays']
     list_editable = ['is_active']
-    raw_id_fields = ['pays']
-    ordering = ['nom']
     autocomplete_fields = ['pays']
-    
+    ordering = ['pays__nom', 'nom']
+
     fieldsets = (
-        (_('Informations de base'), {
-            'fields': ('code', 'nom', 'pays')
-        }),
-        (_('Statut'), {
-            'fields': ('is_active',),
-            'classes': ('collapse',)
+        (_('Informations'), {
+            'fields': ('code', 'nom', 'pays', 'is_active')
         }),
         (_('Métadonnées'), {
             'fields': ('date_creation', 'date_modification'),
             'classes': ('collapse',)
         }),
     )
-    
     readonly_fields = ['date_creation', 'date_modification']
-    
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('pays')
-
-@admin.register(Ville)
-class VilleAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
-    """Configuration admin: VilleAdmin."""
-    list_display = [
-        'code', 'nom', 'province', 'get_country', 'is_active', 
-        'deleted', 'date_creation'
-    ]
-    list_display_links = ['code', 'nom']
-    list_filter = [
-        'is_active', 'province__pays', 'province',
-        ('date_creation', admin.DateFieldListFilter),
-    ] + list(SafeDeleteAdmin.list_filter)
-    search_fields = ['nom', 'code', 'province__nom', 'province__pays__nom']
-    list_select_related = ['province', 'province__pays']
-    list_editable = ['is_active']
-    raw_id_fields = ['province']
-    ordering = ['nom']
-    autocomplete_fields = ['province']
-    
-    fieldsets = (
-        (_('Informations de base'), {
-            'fields': ('code', 'nom', 'province')
-        }),
-        (_('Statut'), {
-            'fields': ('is_active',),
-            'classes': ('collapse',)
-        }),
-        (_('Métadonnées'), {
-            'fields': ('date_creation', 'date_modification'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    readonly_fields = ['date_creation', 'date_modification']
-    
-    def get_country(self, obj):
-        return obj.province.pays if obj.province and obj.province.pays else "-"
-    get_country.short_description = _('Pays')
-    get_country.admin_order_field = 'province__pays__nom'
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('province__pays')
 
 @admin.register(Annee)
 class AnneeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
@@ -2094,43 +2054,43 @@ class RapportTelechargerInline(admin.TabularInline):
 class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     """Configuration admin: AcheteurAdmin."""
     list_display = [
-        'code', 'nom', 'sigle', 'forme_juridique', 'categorie_entreprise',
+        'code', 'nom', 'sigle', 'forme_juridique',
         'statut_entreprise', 'pays', 'ville', 'created_at',
         'portefeuilles_count', 'alertes_recentes'
     ] + list(SafeDeleteAdmin.list_display)
-    
+
     list_display_links = ['code', 'nom']
     list_filter = [
-        'forme_juridique', 'categorie_entreprise', 'statut_entreprise',
-        'pays', 'province', 'ville',
+        'forme_juridique', 'statut_entreprise',
+        'pays', 'ville',
         'created_by', 'updated_by',
         ('date_creation', admin.DateFieldListFilter),
         ('created_at', admin.DateFieldListFilter),
     ] + list(SafeDeleteAdmin.list_filter)
-    
+
     search_fields = [
         'code', 'nom', 'sigle', 'email', 'site_internet',
         'activite_principale', 'description',
-        'pays__nom', 'ville__nom', 'province__nom',
-        'forme_juridique__libelle', 'categorie_entreprise__libelle'
+        'pays__nom', 'ville__nom',
+        'forme_juridique__libelle',
     ]
-    
+
     list_select_related = [
-        'forme_juridique', 'categorie_entreprise', 'statut_entreprise',
-        'pays', 'province', 'ville', 'couleur_commentaire',
+        'forme_juridique', 'statut_entreprise',
+        'pays', 'ville', 'couleur_commentaire',
         'created_by', 'updated_by'
     ]
-    
+
     list_editable = ['sigle']
     raw_id_fields = [
-        'forme_juridique', 'categorie_entreprise', 'statut_entreprise',
+        'forme_juridique', 'statut_entreprise',
         'pays', 'province', 'ville', 'couleur_commentaire',
         'created_by', 'updated_by'
     ]
-    
+
     autocomplete_fields = [
-        'forme_juridique', 'categorie_entreprise', 'statut_entreprise',
-        'pays', 'province', 'ville', 'couleur_commentaire'
+        'forme_juridique', 'statut_entreprise',
+        'pays', 'ville', 'couleur_commentaire'
     ]
     
     ordering = ['nom']
@@ -2144,7 +2104,7 @@ class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
             'classes': ('wide',)
         }),
         (_('Caractéristiques juridiques'), {
-            'fields': ('forme_juridique', 'categorie_entreprise', 'statut_entreprise', 'date_creation'),
+            'fields': ('forme_juridique', 'statut_entreprise', 'date_creation'),
             'classes': ('collapse',)
         }),
         (_('Activité'), {
@@ -2158,7 +2118,7 @@ class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
         (_('Adresse'), {
             'fields': (
                 'numero_adresse', 'rue_adresse', 'code_postal', 'boite_postale',
-                'pays', 'province', 'ville'
+                'pays', 'ville'
             ),
             'classes': ('collapse',)
         }),
@@ -2205,7 +2165,7 @@ class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            'forme_juridique', 'categorie_entreprise', 'statut_entreprise',
+            'forme_juridique', 'statut_entreprise',
             'pays', 'province', 'ville', 'couleur_commentaire',
             'created_by', 'updated_by'
         ).annotate(

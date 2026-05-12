@@ -400,6 +400,21 @@ body {
     box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
 }
 
+.action-btn-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.action-btn-success:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+.pdf-btn-no-acheteur {
+    opacity: 0.5;
+}
+
 /* Pagination */
 .pagination {
     gap: 0.3rem;
@@ -702,10 +717,10 @@ body {
                         {% trans "Suivi centralisé des commandes avec recherche, filtres avancés et actions rapides" %}
                     </p>
                 </div>
-                <button class="btn btn-add-order" id="btnOpenAddModal" type="button">
+                <a href="{% url 'dash_root_order_create' %}" class="btn btn-add-order">
                     <i class="fas fa-plus-circle"></i>
                     {% trans "Nouvelle commande" %}
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -851,23 +866,6 @@ body {
     </div>
 </div>
 
-<!-- Modal d'ajout de commande -->
-<div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-plus-circle"></i>
-                    {% trans "Nouvelle commande" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addOrderForm" class="row g-3"></form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal d'édition de commande -->
 <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
@@ -1076,45 +1074,57 @@ body {
     // PAGINATION
     // ============================================
     function renderPagination(data) {
-        const paginationInfo = document.getElementById('paginationInfo');
+        const paginationInfo    = document.getElementById('paginationInfo');
         const paginationControls = document.getElementById('paginationControls');
-        
-        const total = data.count || 0;
-        const start = total === 0 ? 0 : ((data.current_page - 1) * data.page_size) + 1;
-        const end = Math.min(data.current_page * data.page_size, total);
-        
+
+        const total   = data.count || 0;
+        const current = data.current_page || 1;
+        const pages   = data.total_pages || 1;
+        const size    = data.page_size   || 10;
+        const start   = total === 0 ? 0 : ((current - 1) * size) + 1;
+        const end     = Math.min(current * size, total);
+
         paginationInfo.innerHTML = `
             <i class="fas fa-info-circle me-1"></i>
-            {% trans "Affichage" %} ${start} {% trans "à" %} ${end} {% trans "sur" %} ${total} {% trans "commandes" %}
+            {% trans "Affichage" %} <strong>${start}</strong> {% trans "à" %} <strong>${end}</strong>
+            {% trans "sur" %} <strong>${total}</strong> {% trans "commandes" %}
         `;
 
         paginationControls.innerHTML = '';
-        if (data.total_pages <= 1) return;
+        if (pages <= 1) return;
 
-        const addPageItem = (label, page, active = false, disabled = false) => {
-            const li = document.createElement('li');
-            li.className = `page-item ${active ? 'active' : ''} ${disabled ? 'disabled' : ''}`;
-            
-            const btn = document.createElement('button');
-            btn.className = 'page-link';
-            btn.innerHTML = label;
-            btn.disabled = disabled;
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (!disabled) loadOrders(page);
-            });
-            
-            li.appendChild(btn);
+        const btn = (label, page, active = false, disabled = false, isEllipsis = false) => {
+            const li  = document.createElement('li');
+            li.className = `page-item${active ? ' active' : ''}${disabled ? ' disabled' : ''}`;
+            const el = document.createElement(isEllipsis ? 'span' : 'button');
+            el.className   = 'page-link';
+            el.innerHTML   = label;
+            if (!isEllipsis) {
+                el.disabled = disabled;
+                el.addEventListener('click', e => { e.preventDefault(); if (!disabled) loadOrders(page); });
+            }
+            li.appendChild(el);
             paginationControls.appendChild(li);
         };
 
-        addPageItem('«', data.current_page - 1, false, !data.previous);
-        
-        for (let i = 1; i <= data.total_pages; i++) {
-            addPageItem(i.toString(), i, i === data.current_page, false);
+        // Précédent
+        btn('<i class="fas fa-chevron-left"></i>', current - 1, false, current === 1);
+
+        // Pages avec ellipsis
+        const delta = 2;
+        const range = [];
+        for (let i = Math.max(2, current - delta); i <= Math.min(pages - 1, current + delta); i++) {
+            range.push(i);
         }
-        
-        addPageItem('»', data.current_page + 1, false, !data.next);
+
+        btn('1', 1, current === 1);
+        if (range[0] > 2) btn('…', null, false, true, true);
+        range.forEach(p => btn(p, p, p === current));
+        if (range[range.length - 1] < pages - 1) btn('…', null, false, true, true);
+        if (pages > 1) btn(pages, pages, current === pages);
+
+        // Suivant
+        btn('<i class="fas fa-chevron-right"></i>', current + 1, false, current === pages);
     }
 
     // ============================================
@@ -1145,10 +1155,10 @@ body {
                             <i class="fas fa-shopping-cart"></i>
                             <h6>{% trans "Aucune commande trouvée" %}</h6>
                             <p>{% trans "Aucune commande ne correspond à vos critères" %}</p>
-                            <button class="btn btn-add-order mt-3" onclick="document.getElementById('btnOpenAddModal').click()">
+                            <a href="{% url 'dash_root_order_create' %}" class="btn btn-add-order mt-3">
                                 <i class="fas fa-plus-circle me-2"></i>
                                 {% trans "Créer une commande" %}
-                            </button>
+                            </a>
                         </div>
                     </td>
                 </tr>
@@ -1181,6 +1191,14 @@ body {
                         </button>
                         <button class="action-btn action-btn-primary" data-action="edit" data-id="${order.id}" data-tooltip="{% trans 'Modifier' %}">
                             <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="action-btn action-btn-success pdf-btn${order.acheteur_id ? '' : ' pdf-btn-no-acheteur'}"
+                                data-id="${order.acheteur_id || ''}"
+                                data-order-id="${order.id}"
+                                data-nom="${order.acheteur_nom || order.raison_sociale || 'rapport'}"
+                                data-raison="${order.raison_sociale || ''}"
+                                data-tooltip="{% trans 'Imprimer le rapport PDF' %}">
+                            <i class="fas fa-file-pdf"></i>
                         </button>
                         <button class="action-btn action-btn-danger" data-action="delete" data-id="${order.id}" data-tooltip="{% trans 'Supprimer' %}">
                             <i class="fas fa-trash"></i>
@@ -1492,8 +1510,7 @@ body {
         `;
     }
 
-    // Initialisation des formulaires
-    document.getElementById('addOrderForm').innerHTML = generateFormFields('add_');
+    // Initialisation du formulaire d'édition
     document.getElementById('editOrderForm').innerHTML = generateFormFields('edit_');
 
     // ============================================
@@ -1580,30 +1597,6 @@ body {
     // ============================================
     // ÉVÉNEMENTS
     // ============================================
-    document.getElementById('btnOpenAddModal').addEventListener('click', () => {
-        document.getElementById('addOrderForm').reset();
-        new bootstrap.Modal(document.getElementById('addOrderModal')).show();
-    });
-
-    document.getElementById('addOrderForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        try {
-            const data = serializeForm(e.target, true);
-            await apiFetch(API_BASE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            bootstrap.Modal.getInstance(document.getElementById('addOrderModal')).hide();
-            showSuccess("{% trans 'Commande créée avec succès' %}");
-            loadOrders(1);
-        } catch (error) {
-            showError(error.message);
-        }
-    });
-
     document.getElementById('editOrderForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -1890,16 +1883,7 @@ body {
         }
 
         if (action === 'edit') {
-            try {
-                const data = await apiFetch(`${API_BASE}${id}/`);
-                const form = document.getElementById('editOrderForm');
-                form.reset();
-                hydrateForm(form, data, 'edit_');
-                document.getElementById('edit_id').value = data.id;
-                new bootstrap.Modal(document.getElementById('editOrderModal')).show();
-            } catch (error) {
-                showError(error.message);
-            }
+            window.location.href = `/root-dashboard/commandes/modifier-une-commande/${id}/`;
         }
 
         if (action === 'delete') {
@@ -1935,6 +1919,81 @@ body {
         document.getElementById('dateFromFilter').value = '';
         document.getElementById('dateToFilter').value = '';
         refreshList();
+    });
+
+    // ============================================
+    // BOUTON PDF — impression rapport solvabilité
+    // ============================================
+    document.getElementById('ordersTableBody').addEventListener('click', function(e) {
+        const btn = e.target.closest('.pdf-btn');
+        if (!btn) return;
+
+        const acheteurId  = btn.dataset.id;
+        const orderId     = btn.dataset.orderId || '';
+        const acheteurNom = btn.dataset.nom || btn.dataset.raison || 'rapport';
+
+        if (!acheteurId) {
+            const _noAcheteurTitle = "{% trans 'Acheteur non lié' %}";
+            const _noAcheteurMsg1  = "{% trans 'Cette commande na pas dacheteur lie.' %}";
+            const _noAcheteurMsg2  = "{% trans 'Modifiez la commande et selectionnez un acheteur pour generer le rapport PDF.' %}";
+            Swal.fire({
+                icon: 'warning',
+                title: _noAcheteurTitle,
+                html: "<p>" + _noAcheteurMsg1 + "</p><p class='text-muted small mt-2'>" + _noAcheteurMsg2 + "</p>",
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: "{% trans 'Génération du rapport PDF' %}",
+            html: '<div class="d-flex align-items-center justify-content-center gap-3 py-2">' +
+                  '<div class="spinner-border text-success"></div>' +
+                  '<span>{% trans "Préparation des données" %}…</span></div>',
+            showConfirmButton: false,
+            allowOutsideClick: false
+        });
+        btn.disabled = true;
+
+        fetch('/api/reporting/generer-rapport-solvabilite/', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ acheteur_id: acheteurId, inclure_commande: orderId ? 'oui' : 'non', commande_id: orderId || undefined, langue: 'fr', format_rapport: 'pdf' })
+        })
+        .then(r => r.json())
+        .then(response => {
+            if (!response.report_data) {
+                Swal.fire('{% trans "Erreur" %}', response.error || '{% trans "Données de rapport manquantes." %}', 'error');
+                btn.disabled = false;
+                return;
+            }
+            Swal.update({ html: '<div class="d-flex align-items-center justify-content-center gap-3 py-2"><div class="spinner-border text-success"></div><span>{% trans "Génération du PDF…" %}</span></div>' });
+
+            fetch('/api/reporting/exporter-rapport/', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_data: response.report_data, form_data: response.form_data, export_format: 'pdf', acheteur_id: acheteurId })
+            })
+            .then(r => {
+                const ct = r.headers.get('Content-Type') || '';
+                if (!ct.includes('pdf')) { Swal.fire('{% trans "Erreur" %}', '{% trans "Le fichier retourné n\'est pas un PDF." %}', 'error'); btn.disabled = false; return; }
+                return r.blob();
+            })
+            .then(blob => {
+                if (!blob) return;
+                Swal.close();
+                const url = URL.createObjectURL(blob);
+                const a   = document.createElement('a');
+                a.href     = url;
+                a.download = 'rapport_' + acheteurNom.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_' + new Date().getFullYear() + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+                btn.disabled = false;
+            })
+            .catch(() => { Swal.fire('{% trans "Erreur" %}', '{% trans "Impossible de générer le PDF." %}', 'error'); btn.disabled = false; });
+        })
+        .catch(() => { Swal.fire('{% trans "Erreur" %}', '{% trans "Erreur lors de la génération du rapport." %}', 'error'); btn.disabled = false; });
     });
 
     // ============================================

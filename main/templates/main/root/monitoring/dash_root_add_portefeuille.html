@@ -1,909 +1,618 @@
 {% extends 'main/root/base.html' %}
-
 {% load i18n static %}
 
-{% block css %}
-<!-- Leaflet CSS -->
-<!-- MapLibre GL JS -->
-<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+{% trans "Nouveau portefeuille" as t_page_title %}
+{% trans "Nom du portefeuille" as t_nom_label %}
+{% trans "Ex. Portefeuille Tchad 2025" as t_nom_placeholder %}
+{% trans "Client bénéficiaire" as t_client_label %}
+{% trans "Sélectionnez un client" as t_select_client %}
+{% trans "Fréquence des alertes" as t_freq_label %}
+{% trans "Sélectionnez une fréquence" as t_select_freq %}
+{% trans "Rechercher un acheteur..." as t_search_ph %}
+{% trans "Aucun acheteur trouvé pour cette recherche." as t_no_result %}
+{% trans "Chargement des acheteurs..." as t_loading %}
+{% trans "Veuillez renseigner le nom du portefeuille." as t_warn_nom %}
+{% trans "Veuillez sélectionner un client." as t_warn_client %}
+{% trans "Veuillez sélectionner au moins un acheteur." as t_warn_acheteur %}
+{% trans "Portfolio de surveillance créé avec succès." as t_success %}
+{% trans "Une erreur est survenue lors de la création." as t_error %}
+{% trans "Attention!" as t_warn_title %}
+{% trans "Succès!" as t_success_title %}
+{% trans "Erreur!" as t_error_title %}
+{% trans "OK" as t_ok %}
+{% trans "Réessayer" as t_retry %}
+{% trans "sélectionné(s)" as t_selected_label %}
+{% trans "Précédent" as t_prev %}
+{% trans "Suivant" as t_next %}
+{% trans "Nom" as t_col_nom %}
+{% trans "Code" as t_col_code %}
+{% trans "Sigle" as t_col_sigle %}
+{% trans "Sélectionner tout" as t_select_all %}
+{% trans "activé(s) sur" as t_actives_sur %}
+
+{% block styles %}
 <style>
-.map-container {
-    border-radius: 15px;  /* Bordures arrondies */
-    overflow: hidden; /* Empêche la carte de dépasser */
-    height: 400px; /* Hauteur fixe */
-    border: 2px solid #ddd; /* Bordure grise légère */
-}
-#map {
-    height: 100%;
-    width: 100%;
-    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
-}
-.color-circle {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: black;
-    margin-left: 5px;
-}
-.category-group {
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    padding: 10px;
-}
-.checkbox-item {
-    margin: 5px 0;
-}
-.checkbox-item label {
-    display: flex;
-    align-items: center;
-}
-.checkbox-item input[type="checkbox"] {
-    margin-right: 10px;
-}
+    :root {
+        --cp: #0a95ca;
+        --cp-dark: #0d80be;
+        --cp-light: rgba(10,149,202,.1);
+    }
+    .section-card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 1.5rem; }
+    .section-header { background: linear-gradient(135deg, rgba(10,149,202,.06), rgba(13,128,190,.04)); border-bottom: 2px solid rgba(10,149,202,.15); border-radius: 12px 12px 0 0 !important; padding: 1rem 1.5rem; display: flex; align-items: center; gap: .75rem; }
+    .section-number { width: 32px; height: 32px; border-radius: 50%; background: var(--cp); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .9rem; flex-shrink: 0; }
+    .section-body { padding: 1.5rem; }
+
+    /* Surveillance toggle cards */
+    .cat-block { margin-bottom: 1.25rem; }
+    .cat-header { display: flex; align-items: center; gap: .6rem; font-weight: 600; color: var(--cp-dark); font-size: .9rem; padding: .5rem 0; border-bottom: 1px solid rgba(10,149,202,.15); margin-bottom: .75rem; cursor: pointer; user-select: none; }
+    .cat-header .cat-count { margin-left: auto; font-size: .75rem; font-weight: 500; color: #6c757d; }
+    .cat-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--cp-light); display: flex; align-items: center; justify-content: center; color: var(--cp); font-size: .85rem; flex-shrink: 0; }
+    .cat-chevron { margin-left: .25rem; transition: transform .25s; font-size: .75rem; color: #6c757d; }
+    .cat-block.collapsed .cat-chevron { transform: rotate(-90deg); }
+    .elements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: .6rem; }
+    .el-card { border: 1.5px solid #e9ecef; border-radius: 10px; padding: .7rem .9rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; transition: all .2s; background: white; cursor: pointer; }
+    .el-card:hover { border-color: var(--cp); background: var(--cp-light); }
+    .el-card.active { border-color: var(--cp); background: rgba(10,149,202,.08); }
+    .el-name { font-size: .8rem; color: #344054; line-height: 1.3; flex: 1; }
+    .form-check-input:checked { background-color: var(--cp); border-color: var(--cp); }
+    .form-check-input { cursor: pointer; }
+    .surv-counter { font-size: .78rem; color: #6c757d; margin-left: auto; }
+
+    /* Acheteurs table */
+    .acheteur-table thead th { background: linear-gradient(135deg,rgba(10,149,202,.06),rgba(13,128,190,.04)); border-bottom: 2px solid rgba(10,149,202,.2); color: var(--cp-dark); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .4px; }
+    .acheteur-table tbody tr:hover { background: rgba(10,149,202,.04); }
+    .acheteur-table tbody tr.selected-row { background: rgba(10,149,202,.1); border-left: 3px solid var(--cp); }
+    .selection-badge { background: var(--cp); color: white; border-radius: 20px; padding: .25rem .75rem; font-size: .78rem; font-weight: 600; }
+    .search-wrap { position: relative; }
+    .search-wrap .search-icon { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: #adb5bd; }
+    .search-wrap input { padding-left: 2.5rem; border-radius: 8px; }
+    .page-link { color: var(--cp); }
+    .page-item.active .page-link { background: var(--cp); border-color: var(--cp); }
+    .skeleton { animation: sk 1.4s ease-in-out infinite; background: linear-gradient(90deg,#f4f4f4 25%,#ececec 50%,#f4f4f4 75%); background-size: 200% 100%; border-radius: 4px; height: 18px; }
+    @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Form controls */
+    .form-control:focus, .form-select:focus { border-color: var(--cp); box-shadow: 0 0 0 .2rem rgba(10,149,202,.15); }
+    .btn-primary { background: var(--cp); border-color: var(--cp); }
+    .btn-primary:hover { background: var(--cp-dark); border-color: var(--cp-dark); }
 </style>
-{% endblock %}
+{% endblock styles %}
 
 {% block body %}
-<!-- Title START -->
-<div class="row">
+<form id="portefeuilleForm" autocomplete="off">
+
+<!-- Header -->
+<div class="row g-4 mb-4">
     <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>{% trans "Portefeuilles" %}</h3>
+        <div class="card card-body border-0 shadow-sm" style="background:linear-gradient(135deg,#0a95ca 0%,#0d80be 100%);color:white;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 rounded-3" style="background:rgba(255,255,255,.15);">
+                        <i class="bi bi-wallet2 fs-2"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold">{% trans "Nouveau portfolio de surveillance" %}</h4>
+                        <p class="mb-0 opacity-75 small">{% trans "Configurez les acheteurs à surveiller et les événements déclencheurs d'alertes." %}</p>
+                    </div>
+                </div>
+                <a href="{% url 'dash_root_portefeuille' %}" class="btn btn-light fw-semibold">
+                    <i class="bi bi-arrow-left me-2"></i>{% trans "Retour à la liste" %}
+                </a>
+            </div>
+        </div>
     </div>
 </div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countPortefeuilles">{% trans "Module de Gestion des Portefeuilles" %}</h4>
-                    <span>{% trans "Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un portefeuille client notamment celle de consultation, recherche, ajout, modification et même de suppression." %}</span>
+<!-- Section 1 : Identification -->
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-number">1</div>
+        <div>
+            <div class="fw-semibold">{% trans "Identification" %}</div>
+            <div class="small text-muted">{% trans "Nom, client bénéficiaire et fréquence des alertes" %}</div>
+        </div>
+    </div>
+    <div class="section-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold small">{% trans "Nom du portefeuille" %} <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="f_nom" name="nom"
+                       placeholder="{% trans 'Ex. Portefeuille Tchad 2025' %}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">{% trans "Client bénéficiaire" %} <span class="text-danger">*</span></label>
+                <select class="form-select" id="f_client" name="client" required>
+                    <option value="">{% trans "Sélectionnez un client" %}</option>
+                    {% for client in client_list %}
+                        <option value="{{ client.id }}">{{ client.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">{% trans "Fréquence des alertes" %} <span class="text-danger">*</span></label>
+                <select class="form-select" id="f_frequence" name="frequence_alertes" required>
+                    <option value="">{% trans "Sélectionnez une fréquence" %}</option>
+                    {% for value, label in frequences %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2 : Éléments de surveillance -->
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-number">2</div>
+        <div class="flex-grow-1">
+            <div class="fw-semibold">{% trans "Événements de surveillance" %}</div>
+            <div class="small text-muted">{% trans "Cochez les changements qui doivent déclencher une alerte email." %}</div>
+        </div>
+        <div class="text-end small text-muted">
+            <span id="survActives" class="fw-bold" style="color:var(--cp);">0</span>
+            <span id="survTotal"></span>
+        </div>
+    </div>
+    <div class="section-body">
+        <div id="surveillancesContainer">
+            {% for categorie, elements in surveillances_by_category.items %}
+            <div class="cat-block" data-category="{{ categorie }}">
+                <div class="cat-header" onclick="toggleCategory(this.parentElement)">
+                    <div class="cat-icon">
+                        <i class="bi bi-shield cat-bi-icon"></i>
+                    </div>
+                    <span>{{ categorie }}</span>
+                    <span class="cat-count">
+                        <span class="cat-actives">0</span>/{{ elements|length }}
+                    </span>
+                    <i class="bi bi-chevron-down cat-chevron"></i>
+                </div>
+                <div class="elements-grid cat-body">
+                    {% for element in elements %}
+                    <label class="el-card{% if element.id in selected_elements %} active{% endif %}"
+                           for="surv_{{ element.id }}" title="{{ element.description|default:element.nom }}">
+                        <span class="el-name">{{ element.nom }}</span>
+                        <div class="form-check form-switch mb-0 ms-2">
+                            <input class="form-check-input surv-toggle" type="checkbox"
+                                   id="surv_{{ element.id }}"
+                                   name="elements_surveillance_actifs"
+                                   value="{{ element.id }}"
+                                   {% if element.id in selected_elements %}checked{% endif %}>
+                        </div>
+                    </label>
+                    {% endfor %}
                 </div>
             </div>
+            {% endfor %}
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- Portefeuilless client START -->
-<div class="row">
-    <div class="col-12">
-        <!-- Wishlist START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h4 class="card-header-title">{% trans "Ajout d'un Portefeuille" %}</h4>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body vstack gap-4">
-                <form id="addPortefeuilleForm">
-                    <input type="hidden" id="acheteursId" name="acheteursId[]" />
-
-                    <!-- Généralités item START -->
-                    <div class="card">
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Name  -->
-                            <div class="mb-3">
-                                <label class="form-label">{% trans "Nom du Portefeuille" %}</label>
-                                <input type="text" class="form-control" id="nom" name="nom" placeholder="{% trans 'Ex. P001' %}" required>
-                            </div>
-
-                            <br>
-
-                            <!-- Forme juridique -->
-                            <div class="mb-3">
-                                <label for="frequence_alertes" class="form-label">{% trans "Fréquence des alertes" %}</label>
-                                <select class="form-select" id="frequence_alertes" name="frequence_alertes" required>
-                                    <option value="">{% trans "Sélectionnez une fréquence" %}</option>
-                                    {% for value, label in frequences %}
-                                        <option value="{{ value }}" class="text-primary">{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Forme juridique -->
-                            <div class="mb-3">
-                                <!-- Afficher les éléments de surveillance groupés par catégorie -->
-                                <fieldset>
-                                    <label>{% trans "Événements générateurs d'alertes" %}</label><br><br>
-                                    <div class="row g-3">
-
-                                        {% for categorie, elements in surveillances_by_category.items %}
-                                        <div class="col-md-4">
-                                            <div class="category-group">
-                                                <label><strong>{{ categorie }}</strong></label>
-                                                {% for element in elements %}
-                                                    <div class="checkbox-item">
-                                                        <label>
-                                                            <input type="checkbox" name="elements_surveillance_actifs" value="{{ element.id }}" {% if element.id in selected_elements %}checked{% endif %}> {{ element.nom }}
-                                                        </label>
-                                                    </div>
-                                                {% endfor %}
-                                            </div>
-                                            <br>
-                                        </div>
-                                        {% endfor %}
-
-                                    </div>
-                                </fieldset>
-                            </div>
-
-                            <br>
-
-                            <!-- Forme juridique -->
-                            <div class="mb-3">
-                                <label for="client" class="form-label">{% trans "Client" %}</label>
-                                <select class="form-select" id="client" name="client" required>
-                                    <option value="">{% trans "Sélectionnez un client" %}</option>
-                                    {% for client in client_list %}
-                                        <option value="{{ client.id }}" class="text-primary">{{ client.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Search and select START -->
-                            <label for="client" class="form-label">{% trans "Choix des acheteurs associés au portefeuille" %}</label>
-
-                            <!-- Search and select START -->
-                            <div class="row g-3 align-items-center justify-content-between mb-3">
-                                <!-- Search -->
-                                <div class="col-md-7">
-                                    <div class="rounded position-relative" id="searchForm">
-                                        <input class="form-control pe-5" type="search" placeholder="{% trans 'Rechercher un acheteur...' %}" aria-label="Search" id="searchInput">
-                                        <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="button" id="searchButton">
-                                            <i class="bi bi-search fs-6"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Select option -->
-                                <div class="col-md-5">
-                                    <!-- Short by filter -->
-                                    <div>
-                                        <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addAcheteurModal">
-                                            Ajouter un Acheteur
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Search and select END -->
-
-                            <br>
-
-                            <!-- Acheteurs list START -->
-                            <div class="table-responsive border-0" id="acheteursList">
-                                <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                                    <!-- Table head -->
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col" class="border-0 rounded-start">
-                                                <input type="checkbox" id="allAcheteursId" />
-                                            </th>
-                                            <th scope="col" class="border-0">Code</th>
-                                            <th scope="col" class="border-0">Nom</th>
-                                            <th scope="col" class="border-0">Sigle</th>
-                                        </tr>
-                                    </thead>
-
-                                    <!-- Table body START -->
-                                    <tbody class="border-top-0" id="acheteursTableBody"></tbody>
-                                    <!-- Table body END -->
-                                </table>
-                            </div>
-                            <!-- Acheteurs list END -->
-
-                            <br>
-                        </div>
-                    </div>
-                    <!-- Généralités item END -->
-
-                    <br> <!-- Divider -->
-
-                    <!-- Button -->
-                    <div class="text-end">
-                        <button class="btn btn-primary mb-0" type="submit">
-                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <!-- Card body END -->
+<!-- Section 3 : Acheteurs -->
+<div class="section-card">
+    <div class="section-header">
+        <div class="section-number">3</div>
+        <div class="flex-grow-1">
+            <div class="fw-semibold">{% trans "Acheteurs à surveiller" %} <span class="text-danger">*</span></div>
+            <div class="small text-muted">{% trans "Sélectionnez les entreprises à inclure dans ce portefeuille." %}</div>
         </div>
-        <!-- Wishlist END -->
+        <span class="selection-badge" id="selectionBadge">0 {% trans "sélectionné(s)" %}</span>
     </div>
-</div>
-<!-- Portefeuilless client END -->
-
-<!-- Add Acheteur Modal START -->
-<div class="modal fade" id="addAcheteurModal" tabindex="-1" aria-labelledby="addAcheteurModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAcheteurModalLabel">{% trans "Ajouter un Acheteur" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="section-body">
+        <!-- Search + per-page -->
+        <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+            <div class="search-wrap flex-grow-1">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" class="form-control" id="searchAcheteur"
+                       placeholder="{% trans 'Rechercher un acheteur...' %}">
             </div>
-            <div class="modal-body">
-
-                <form id="addAcheteurForm">
-
-                    <!-- Généralités item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Généralités sur l'acheteur</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Name  -->
-                            <div class="mb-3">
-                                <label class="form-label">Nom de l'acheteur</label>
-                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex. BATI PLUS" required>
-                            </div>
-
-                            <br>
-
-                            <!-- Sigle -->
-                            <div class="mb-3">
-                                <label class="form-label">Sigle</label>
-                                <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex. BATI+">
-                            </div>
-
-                            <br>
-
-                            <!-- Date de Création -->
-                            <div>
-                                <label class="form-label">Date de Création</label>
-                                <input type="date" class="form-control flatpickr" id="date_creation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
-                            </div>
-
-                            <br>
-
-                            <!-- Activité principale -->
-                            <div>
-                                <label class="form-label">Activité principale</label>
-                                <input type="text" class="form-control" id="activite_principale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
-                            </div>
-
-                            <br>
-
-                            <!-- Statut -->
-                            <div class="mb-3">
-                                <label for="statut_entreprise" class="form-label">Statut actuel de l'acheteur</label>
-                                <select class="form-select" id="statut_entreprise" name="statut_entreprise" required>
-                                    <option value="">Sélectionnez un statut</option>
-                                    {% for statut in statut_list %}
-                                        <option value="{{ statut.id }}">{{ statut.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Catégorie -->
-                            <div class="mb-3">
-                                <label for="categorie_entreprise" class="form-label">Catégorie de l'acheteur</label>
-                                <select class="form-select" id="categorie_entreprise" name="categorie_entreprise">
-                                    <option value="">Sélectionnez une catégorie</option>
-                                    {% for categorie in categorie_list %}
-                                        <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Forme juridique -->
-                            <div class="mb-3">
-                                <label for="forme_juridique" class="form-label">Forme juridique de l'acheteur</label>
-                                <select class="form-select" id="forme_juridique" name="forme_juridique" required>
-                                    <option value="">Sélectionnez une forme juridique</option>
-                                    {% for juridique in juridique_list %}
-                                        <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Description -->
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" name="description"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Généralités item END -->
-
-                    <hr> <!-- Divider -->
-
-                    <!-- Contacts item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Contacts de l'acheteur</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Email principal & Fax -->
-                            <div class="mb-3">
-                                <label class="form-label">Email principal & Fax</label>
-                                <div class="input-group">
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="Ex. contact@batiplus.ga">
-                                    <input type="text" class="form-control" id="fax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
-                                </div>
-                            </div>
-
-                            <br>
-
-                            <!-- Boite postale & Code postal -->
-                            <div class="mb-3">
-                                <label class="form-label">Boite postale & Code postal</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
-                                    <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="Ex. 241">
-                                </div>
-                            </div>
-
-                            <br>
-
-                            <!-- Site internet -->
-                            <div class="mb-3">
-                                <label class="form-label">Site internet</label>
-                                <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
-                                <small><strong>Note : </strong>Ne pas oublier de mentionner le prefixe suivant pour tout lien : https://</small>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Contacts item END -->
-
-                    <hr> <!-- Divider -->
-
-                    <!-- Localisation item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Localisation de l'acheteur</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-                            <!-- Numero & Rue (adresse) -->
-                            <div class="mb-3">
-                                <label class="form-label">Numero & Rue (adresse)</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="Ex. 17345">
-                                    <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
-                                </div>
-                            </div>
-
-                            <br>
-
-                            <!-- Pays -->
-                            <div class="mb-3">
-                                <label for="pays" class="form-label">Pays</label>
-                                <select class="form-select" id="pays" name="pays" required>
-                                    <option value="">Sélectionnez un pays</option>
-                                    {% for pays in pays_list %}
-                                        <option value="{{ pays.id }}">{{ pays.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Province -->
-                            <div class="mb-3">
-                                <label for="province" class="form-label">Province</label>
-                                <select class="form-select" id="province" name="province" disabled required>
-                                    <option value="">Sélectionnez une province</option>
-                                </select>
-                            </div>
-
-                            <br>
-
-                            <!-- Ville -->
-                            <div class="mb-3">
-                                <label for="ville" class="form-label">Ville</label>
-                                <select class="form-select" id="ville" name="ville" disabled required>
-                                    <option value="">Sélectionnez une ville</option>
-                                </select>
-                            </div>
-
-                        </div>
-                    </div>
-                    <!-- Localisation item END -->
-
-                    <hr> <!-- Divider -->
-
-                    <!-- Opinion ACREMAC item START -->
-                    <div class="card">
-                        <!-- Card header -->
-                        <div class="card-header d-flex justify-content-between align-items-center p-0">
-                            <!-- Avatar -->
-                            <div class="d-flex">
-                                <!-- Info -->
-                                <div class="mb-3">
-                                    <h6 class="mb-0">Que pensez-vous de cet acheteur ?</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- card body -->
-                        <div class="card-body p-0 pt-3">
-
-                            <!-- Coloration -->
-                            <div class="mb-3">
-                                <label for="couleur_commentaire" class="form-label">Quelle coloration voulez-vous pour votre commentaire ?</label>
-                                <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                                    <option value="">Sélectionnez une couleur</option>
-                                    {% for coloration in coloration_list %}
-                                        <option value="{{ coloration.id }}">
-                                            {{ coloration.couleur }} - [{{ coloration.code }}]
-                                        </option>
-                                    {% endfor %}
-                                </select>
-
-                            </div>
-
-                            <br>
-
-                            <!-- Commentaire -->
-                            <div class="mb-3">
-                                <label for="commentaire" class="form-label">Votre Commentaire</label>
-                                <textarea class="form-control" id="commentaire" name="commentaire"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Opinion ACREMAC item END -->
-
-                    <br> <!-- Divider -->
-
-                    <!-- Button -->
-                    <div class="text-end">
-                        <button class="btn btn-primary mb-0" type="submit">
-                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
-                        </button>
-                    </div>
-
-                </form>
-
+            <div class="d-flex align-items-center gap-2">
+                <label class="small text-muted mb-0">{% trans "Afficher" %}</label>
+                <select class="form-select form-select-sm" id="perPage" style="width:80px;">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
             </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table acheteur-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:42px;">
+                            <input type="checkbox" id="selectAllChk" title="{% trans 'Sélectionner tout' %}">
+                        </th>
+                        <th>{% trans "Code" %}</th>
+                        <th>{% trans "Nom" %}</th>
+                        <th>{% trans "Sigle" %}</th>
+                        <th>{% trans "Pays" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="acheteurTbody">
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                            <span class="text-muted">{% trans "Chargement des acheteurs..." %}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+            <div class="small text-muted" id="paginationInfo"></div>
+            <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
         </div>
     </div>
 </div>
-<!-- Add Acheteur Modal END -->
 
+<!-- Action buttons -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'dash_root_portefeuille' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+    </a>
+    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+        <i class="bi bi-plus-lg me-2"></i>{% trans "Créer le portfolio" %}
+    </button>
+</div>
 
-
-{% endblock %}
+</form>
+{% endblock body %}
 
 {% block scripts %}
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    new nicEditor({
-        buttonList: [
-            'bold','italic','underline','left','center','right','justify',
-            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
-        ]
-    }).panelInstance('message');
-});
-</script>
+{% trans "Veuillez renseigner le nom du portefeuille." as t_warn_nom %}
+{% trans "Veuillez sélectionner un client." as t_warn_client %}
+{% trans "Veuillez sélectionner au moins un acheteur." as t_warn_acheteur %}
+{% trans "Portfolio de surveillance créé avec succès." as t_success %}
+{% trans "Une erreur est survenue lors de la création." as t_error %}
+{% trans "Attention!" as t_warn_title %}
+{% trans "Succès!" as t_success_title %}
+{% trans "Erreur!" as t_error_title %}
+{% trans "OK" as t_ok %}
+{% trans "Réessayer" as t_retry %}
+{% trans "sélectionné(s)" as t_selected_label %}
+{% trans "Aucun acheteur trouvé pour cette recherche." as t_no_result %}
+{% trans "Chargement des acheteurs..." as t_loading %}
+{% trans "Précédent" as t_prev %}
+{% trans "Suivant" as t_next %}
+{% trans "activé(s) sur" as t_actives_sur %}
 
+var T = {
+    warnNom:      '{{ t_warn_nom|escapejs }}',
+    warnClient:   '{{ t_warn_client|escapejs }}',
+    warnAcheteur: '{{ t_warn_acheteur|escapejs }}',
+    success:      '{{ t_success|escapejs }}',
+    error:        '{{ t_error|escapejs }}',
+    warnTitle:    '{{ t_warn_title|escapejs }}',
+    successTitle: '{{ t_success_title|escapejs }}',
+    errorTitle:   '{{ t_error_title|escapejs }}',
+    ok:           '{{ t_ok|escapejs }}',
+    retry:        '{{ t_retry|escapejs }}',
+    selected:     '{{ t_selected_label|escapejs }}',
+    noResult:     '{{ t_no_result|escapejs }}',
+    loading:      '{{ t_loading|escapejs }}',
+    prev:         '{{ t_prev|escapejs }}',
+    next:         '{{ t_next|escapejs }}',
+    activesSur:   '{{ t_actives_sur|escapejs }}'
+};
 
+var ACCESS = '{{ access }}';
 
+/* Category → icon mapping */
+var CAT_ICONS = {
+    'Sante Financiere':       'bi-heart-pulse',
+    'Sante':                  'bi-heart-pulse',
+    'Financ':                 'bi-graph-up-arrow',
+    'Identite':               'bi-building',
+    'Structure':              'bi-diagram-3',
+    'Procedures Collectives': 'bi-exclamation-octagon',
+    'Procedures':             'bi-exclamation-octagon',
+    'Obligations':            'bi-scale',
+    'Legal':                  'bi-scale',
+    'Dirigeants':             'bi-person-gear',
+    'Gouvernance':            'bi-person-gear',
+    'Activite Commerciale':   'bi-shop',
+    'Commerciale':            'bi-shop',
+    'Innovation':             'bi-lightbulb',
+    'Strategie':              'bi-bullseye',
+    'Conformite':             'bi-shield-check',
+    'Qualite':                'bi-star',
+    'Ressources Humaines':    'bi-people',
+    'Ressources':             'bi-people'
+};
 
-<script>
-$(document).ready(function() {
-    // Function to load acheteurs data
-    function loadAcheteurs(page = 1, search = '') {
+function normalizeCat(str) {
+    return str.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z ]/g,' ').trim();
+}
+
+function catIcon(catName) {
+    var n = normalizeCat(catName);
+    for (var key in CAT_ICONS) {
+        if (n.indexOf(key) !== -1) return CAT_ICONS[key];
+    }
+    return 'bi-shield';
+}
+
+/* Toggle category collapse */
+function toggleCategory(block) {
+    block.classList.toggle('collapsed');
+    var body = block.querySelector('.cat-body');
+    if (body) {
+        if (block.classList.contains('collapsed')) {
+            body.style.display = 'none';
+        } else {
+            body.style.display = 'grid';
+        }
+    }
+}
+
+$(document).ready(function () {
+    var ACCESS_HDR = { Authorization: 'Bearer ' + ACCESS };
+    var selectedAcheteurs = new Set();
+    var currentPage = 1;
+    var currentSearch = '';
+    var perPage = 10;
+    var searchTimer;
+
+    /* ── Category icons ── */
+    document.querySelectorAll('.cat-block').forEach(function (block) {
+        var cat = block.getAttribute('data-category') || '';
+        var icon = catIcon(cat);
+        var iconEl = block.querySelector('.cat-bi-icon');
+        if (iconEl) {
+            iconEl.className = 'bi ' + icon;
+        }
+    });
+
+    /* ── Surveillance counters ── */
+    function updateSurvCounters() {
+        var total = document.querySelectorAll('.surv-toggle').length;
+        var actives = document.querySelectorAll('.surv-toggle:checked').length;
+        document.getElementById('survActives').textContent = actives;
+        var totalEl = document.getElementById('survTotal');
+        if (totalEl) totalEl.textContent = ' ' + T.activesSur + ' ' + total;
+
+        document.querySelectorAll('.cat-block').forEach(function (block) {
+            var cat_total = block.querySelectorAll('.surv-toggle').length;
+            var cat_actives = block.querySelectorAll('.surv-toggle:checked').length;
+            var span = block.querySelector('.cat-actives');
+            if (span) span.textContent = cat_actives;
+            var countEl = block.querySelector('.cat-count');
+            if (countEl) countEl.querySelector('span').textContent = cat_actives;
+        });
+    }
+
+    updateSurvCounters();
+
+    /* toggle card active class */
+    $(document).on('change', '.surv-toggle', function () {
+        var card = $(this).closest('.el-card');
+        if (this.checked) card.addClass('active');
+        else card.removeClass('active');
+        updateSurvCounters();
+    });
+
+    /* click on card label already handled by <label for="..."> */
+
+    /* ── Selection badge ── */
+    function updateSelectionBadge() {
+        var n = selectedAcheteurs.size;
+        $('#selectionBadge').text(n + ' ' + T.selected);
+    }
+
+    /* ── Load acheteurs ── */
+    function loadAcheteurs(page, search) {
+        currentPage = page;
+        currentSearch = search;
+        var limit = parseInt($('#perPage').val()) || 10;
+
+        var tbody = $('#acheteurTbody');
+        tbody.html(
+            '<tr><td colspan="5" class="text-center py-4">' +
+            '<div class="spinner-border spinner-border-sm text-primary me-2"></div>' +
+            '<span class="text-muted">' + T.loading + '</span></td></tr>'
+        );
+
         $.ajax({
-            url: '/api/liste-des-acheteurs/?page=' + page + '&search=' + search,
+            url: '/api/liste-des-acheteurs/',
             type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+            headers: ACCESS_HDR,
+            data: { page: page, search: search, limit: limit },
+            success: function (resp) {
+                renderAcheteurs(resp, page, limit);
             },
-            success: function(response) {
-                console.log(response); // Vérifiez ce que l'API renvoie
-
-                if (!response.results || response.results.length === 0) {
-                    console.warn("Aucun acheteur trouvé.");
-                    return;
-                }
-
-                // Update pagination info
-                $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                // Update pagination controls
-                $('#paginationControls').html('');
-                if (response.previous) {
-                    $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                }
-                for (let i = 1; i <= response.total_pages; i++) {
-                    if (i === page) {
-                        $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                    } else {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                    }
-                }
-                if (response.next) {
-                    $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                }
-
-                // Update acheteurs table body
-                $('#acheteursTableBody').html('');
-                response.results.forEach(function(acheteur, index) {
-                    $('#acheteursTableBody').append('<tr>' +
-                        '<td><input type="checkbox" class="acheteur-checkbox" data-id="' + acheteur.id + '" /></td>' +
-                        '<td>' + acheteur.code + '</td>' +
-                        '<td title="' + acheteur.nom + '">' + (acheteur.nom.length > 20 ? acheteur.nom.substring(0, 20) + '...' : acheteur.nom) + '</td>' +
-                        '<td>' + acheteur.sigle + '</td>' +
-                    '</tr>');
-                });
-
-                // Update the hidden input with selected acheteurs
-                updateSelectedAcheteurs();
-            },
-            error: function(response) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données.',
-                });
+            error: function () {
+                tbody.html(
+                    '<tr><td colspan="5" class="text-center py-4 text-danger">' +
+                    '<i class="bi bi-exclamation-triangle me-2"></i>' + T.error + '</td></tr>'
+                );
             }
         });
     }
 
-    // Initial load
-    loadAcheteurs();
+    function renderAcheteurs(resp, page, limit) {
+        var results = resp.results || [];
+        var total = resp.count || 0;
+        var totalPages = Math.ceil(total / limit) || 1;
+        var tbody = $('#acheteurTbody');
 
-    // Search form submission
-    $('#searchButton').on('click', function(event) {
-        event.preventDefault();
-        var search = $('#searchInput').val();
-        loadAcheteurs(1, search);
-    });
-
-    // Pagination controls
-    $(document).on('click', '#paginationControls .page-link', function(event) {
-        event.preventDefault();
-        var page = $(this).data('page');
-        var search = $('#searchInput').val();
-        loadAcheteurs(page, search);
-    });
-
-    // Handle checkbox change event
-    $(document).on('change', '.acheteur-checkbox', function() {
-        updateSelectedAcheteurs();
-    });
-
-    // Handle select all checkbox
-    $('#allAcheteursId').on('change', function() {
-        var isChecked = $(this).is(':checked');
-        $('.acheteur-checkbox').prop('checked', isChecked);
-        updateSelectedAcheteurs();
-    });
-
-    // Function to update the hidden input with selected acheteurs
-    function updateSelectedAcheteurs() {
-        var selectedAcheteurs = [];
-        $('.acheteur-checkbox:checked').each(function() {
-            selectedAcheteurs.push($(this).data('id'));
-        });
-        $('#acheteursId').val(selectedAcheteurs.join(','));
-        console.log("Selected Acheteurs IDs:", selectedAcheteurs);
-    }
-
-
-
-    $('#addPortefeuilleForm').on('submit', function(event) {
-        event.preventDefault();
-
-        // Récupérer les valeurs du formulaire
-        var nom = $('#nom').val();
-        var client = $('#client').val();
-        var frequenceAlertes = $('#frequence_alertes').val();
-        var elementsSurveillanceActifs = [];
-
-        // Récupérer les éléments de surveillance sélectionnés
-        $('input[name="elements_surveillance_actifs"]:checked').each(function() {
-            elementsSurveillanceActifs.push(parseInt($(this).val()));
-        });
-
-        var acheteursIds = $('#acheteursId').val().split(',').map(Number); // Convertir en tableau d'entiers
-        if (!acheteursId) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Attention!',
-                text: 'Veuillez cocher au moins un acheteur.',
-                confirmButtonText: 'OK'
-            });
-            return; // Arrêter la soumission du formulaire
+        if (results.length === 0) {
+            tbody.html(
+                '<tr><td colspan="5" class="text-center py-5 text-muted">' +
+                '<i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>' + T.noResult + '</td></tr>'
+            );
+            $('#paginationInfo').text('');
+            $('#paginationControls').html('');
+            return;
         }
 
-        // Construire l'objet formData
-        var formData = {
-            client: client,
+        var html = '';
+        results.forEach(function (a) {
+            var checked = selectedAcheteurs.has(a.id) ? 'checked' : '';
+            var rowClass = selectedAcheteurs.has(a.id) ? ' class="selected-row"' : '';
+            var nom = a.nom || '';
+            var code = a.code || '—';
+            var sigle = a.sigle || '—';
+            var pays = (a.ville && a.ville.pays) ? a.ville.pays : (a.pays_nom || '—');
+            html += '<tr' + rowClass + '>' +
+                '<td><input type="checkbox" class="acheteur-chk form-check-input" data-id="' + a.id + '" ' + checked + '></td>' +
+                '<td><span class="badge rounded-pill" style="background:rgba(10,149,202,.1);color:#0d80be;font-weight:600;">' + code + '</span></td>' +
+                '<td class="fw-semibold small">' + nom + '</td>' +
+                '<td class="text-muted small">' + sigle + '</td>' +
+                '<td class="text-muted small">' + pays + '</td>' +
+                '</tr>';
+        });
+        tbody.html(html);
+
+        /* Select-all state */
+        var allChecked = results.every(function (a) { return selectedAcheteurs.has(a.id); });
+        $('#selectAllChk').prop('checked', allChecked).prop('indeterminate',
+            !allChecked && results.some(function (a) { return selectedAcheteurs.has(a.id); })
+        );
+
+        /* Pagination info */
+        var start = (page - 1) * limit + 1;
+        var end = Math.min(page * limit, total);
+        $('#paginationInfo').text(start + '–' + end + ' / ' + total);
+
+        /* Pagination controls */
+        var pag = '';
+        if (page > 1) pag += '<li class="page-item"><a class="page-link" href="#" data-p="' + (page-1) + '">' + T.prev + '</a></li>';
+        var from = Math.max(1, page - 2);
+        var to   = Math.min(totalPages, page + 2);
+        if (from > 1) pag += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+        for (var i = from; i <= to; i++) {
+            pag += '<li class="page-item' + (i === page ? ' active' : '') + '"><a class="page-link" href="#" data-p="' + i + '">' + i + '</a></li>';
+        }
+        if (to < totalPages) pag += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+        if (page < totalPages) pag += '<li class="page-item"><a class="page-link" href="#" data-p="' + (page+1) + '">' + T.next + '</a></li>';
+        $('#paginationControls').html(pag);
+    }
+
+    /* Check / uncheck individual row */
+    $(document).on('change', '.acheteur-chk', function () {
+        var id = parseInt($(this).data('id'));
+        if (this.checked) {
+            selectedAcheteurs.add(id);
+            $(this).closest('tr').addClass('selected-row');
+        } else {
+            selectedAcheteurs.delete(id);
+            $(this).closest('tr').removeClass('selected-row');
+        }
+        updateSelectionBadge();
+
+        /* sync select-all */
+        var allOnPage = $('#acheteurTbody .acheteur-chk').length;
+        var checkedOnPage = $('#acheteurTbody .acheteur-chk:checked').length;
+        $('#selectAllChk').prop('checked', allOnPage === checkedOnPage)
+            .prop('indeterminate', checkedOnPage > 0 && checkedOnPage < allOnPage);
+    });
+
+    /* Select-all checkbox */
+    $('#selectAllChk').on('change', function () {
+        var checked = this.checked;
+        $('#acheteurTbody .acheteur-chk').each(function () {
+            var id = parseInt($(this).data('id'));
+            this.checked = checked;
+            if (checked) {
+                selectedAcheteurs.add(id);
+                $(this).closest('tr').addClass('selected-row');
+            } else {
+                selectedAcheteurs.delete(id);
+                $(this).closest('tr').removeClass('selected-row');
+            }
+        });
+        updateSelectionBadge();
+    });
+
+    /* Pagination click */
+    $(document).on('click', '#paginationControls .page-link', function (e) {
+        e.preventDefault();
+        var p = parseInt($(this).data('p'));
+        if (p) loadAcheteurs(p, currentSearch);
+    });
+
+    /* Search with debounce */
+    $('#searchAcheteur').on('input', function () {
+        clearTimeout(searchTimer);
+        var val = $(this).val();
+        searchTimer = setTimeout(function () {
+            loadAcheteurs(1, val);
+        }, 350);
+    });
+
+    /* Per-page change */
+    $('#perPage').on('change', function () {
+        loadAcheteurs(1, currentSearch);
+    });
+
+    /* ── Form submission ── */
+    $('#portefeuilleForm').on('submit', function (e) {
+        e.preventDefault();
+
+        var nom = $('#f_nom').val().trim();
+        var client = $('#f_client').val();
+        var frequence = $('#f_frequence').val();
+
+        if (!nom) {
+            Swal.fire({ icon: 'warning', title: T.warnTitle, text: T.warnNom, confirmButtonText: T.ok });
+            return;
+        }
+        if (!client) {
+            Swal.fire({ icon: 'warning', title: T.warnTitle, text: T.warnClient, confirmButtonText: T.ok });
+            return;
+        }
+        if (selectedAcheteurs.size === 0) {
+            Swal.fire({ icon: 'warning', title: T.warnTitle, text: T.warnAcheteur, confirmButtonText: T.ok });
+            return;
+        }
+
+        var elements = [];
+        $('input[name="elements_surveillance_actifs"]:checked').each(function () {
+            elements.push(parseInt(this.value));
+        });
+
+        var payload = {
             nom: nom,
-            frequence_alertes: frequenceAlertes,
-            elements_surveillance_actifs: elementsSurveillanceActifs,
-            acheteurs: acheteursIds
+            client: parseInt(client),
+            frequence_alertes: frequence,
+            elements_surveillance_actifs: elements,
+            acheteurs: Array.from(selectedAcheteurs)
         };
 
-        console.log("Données du formulaire :", formData);
-
-        // Vérifier si acheteursId[] est vide
-        if (!nom || !client || acheteursIds.length === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Attention!',
-                text: 'Veuillez remplir tous les champs obligatoires.',
-                confirmButtonText: 'OK'
-            });
-            return; // Arrêter la soumission du formulaire
-        }
+        var btn = $('[type="submit"]');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>...');
 
         $.ajax({
             url: '/api/ajouter-un-portefeuille-avec-acheteurs/',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(formData),
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké
-            },
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès!',
-                    text: 'Portefeuille a été ajouté avec succès.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload(); // Rafraîchir la page après validation
-                });
-            },
-            error: function(xhr) {
-                console.error(xhr.responseText);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
-                    confirmButtonText: 'Réessayer'
-                });
-            }
-        });
-    });
-
-
-
-    // Ajouter un portefeuille
-    $('#addPortefeuilleForm2').on('submit', function(event) {
-        event.preventDefault();
-
-        // Vérifier si acheteursId[] est vide
-        var acheteursId = $('#acheteursId').val();
-        if (!acheteursId) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Attention!',
-                text: 'Veuillez cocher au moins un acheteur.',
-                confirmButtonText: 'OK'
-            });
-            return; // Arrêter la soumission du formulaire
-        }
-
-
-        var form = $(this);
-        var formData = form.serialize();
-        console.log("Données du formulaire :", formData);
-
-        $.ajax({
-            url: '/api/ajouter-un-portefeuille-avec-acheteurs/',
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}' // Stocke le token dans localStorage
-            },
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès!',
-                    text: 'Portefeuille a été ajouté avec succès.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload(); // Rafraîchir la page après validation
-                });
-            },
-            error: function(xhr) {
-                console.error(xhr.responseText);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
-                    confirmButtonText: 'Réessayer'
-                });
-            }
-        });
-    });
-
-
-    // Charger les provinces en fonction du pays sélectionné
-    $('#pays').on('change', function() {
-    const paysId = $(this).val();
-    const provinceSelect = $('#province');
-
-    if (paysId) {
-        provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
-
-        $.ajax({
-            url: `/api/provinces/${paysId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké
-            },
-            success: function(response) {
-                provinceSelect.prop('disabled', false).html('<option value="">Sélectionnez une province</option>');
-
-                if (response.results.length > 0) {
-                    response.results.forEach(function(province) {
-                        provinceSelect.append(new Option(province.nom, province.id));
+            data: JSON.stringify(payload),
+            headers: ACCESS_HDR,
+            success: function () {
+                Swal.fire({ icon: 'success', title: T.successTitle, text: T.success, confirmButtonText: T.ok })
+                    .then(function () {
+                        window.location.href = '{% url "dash_root_portefeuille" %}';
                     });
-                } else {
-                    provinceSelect.html('<option value="">Aucune province disponible</option>');
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-plus-lg me-2"></i>{% trans "Créer le portefeuille" %}');
+                var msg = T.error;
+                if (xhr.responseJSON) {
+                    msg = xhr.responseJSON.detail || xhr.responseJSON.message || JSON.stringify(xhr.responseJSON);
                 }
-            },
-            error: function() {
-                provinceSelect.html('<option value="">Erreur lors du chargement</option>');
-            }
-        });
-    } else {
-        provinceSelect.prop('disabled', true).html('<option value="">Sélectionnez un pays d\'abord</option>');
-    }
-});
-
-
-    // Charger les villes en fonction de la province sélectionnée
-    $('#province').on('change', function() {
-        var provinceId = $(this).val();
-        var villeSelect = $('#ville');
-
-        if (provinceId) {
-            villeSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
-
-            $.ajax({
-                url: `/api/villes/${provinceId}/`,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' +  '{{ access }}' // Utiliser le token stocké
-                },
-                success: function(response) {
-                    villeSelect.prop('disabled', false).html('<option value="">Sélectionnez une ville</option>');
-
-                    if (response.results.length > 0) {
-                        response.results.forEach(function(ville) {
-                            villeSelect.append(new Option(ville.nom, ville.id));
-                        });
-                    } else {
-                        villeSelect.html('<option value="">Aucune ville disponible</option>');
-                    }
-                },
-                error: function() {
-                    villeSelect.html('<option value="">Erreur lors du chargement</option>');
-                }
-            });
-        } else {
-            villeSelect.prop('disabled', true).html('<option value="">Sélectionnez une province d\'abord</option>');
-        }
-    });
-
-
-    // Ajouter un acheteur
-    $('#addAcheteurForm').on('submit', function(event) {
-        event.preventDefault();
-
-        // Activer les champs désactivés pour qu'ils soient envoyés avec le formulaire
-        $('#province, #ville').prop('disabled', false);
-
-        var formData = $(this).serialize();
-        console.log("Données du formulaire :", formData);
-
-        $.ajax({
-            url: '/api/ajouter-un-acheteur/',
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}' // Stocke le token dans localStorage
-            },
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès!',
-                    text: 'L’acheteur a été ajouté avec succès.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    // Recharger la liste des acheteurs
-                    loadAcheteurs();
-                });
-            },
-            error: function(xhr) {
-                console.error(xhr.responseText);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
-                    confirmButtonText: 'Réessayer'
-                });
+                Swal.fire({ icon: 'error', title: T.errorTitle, text: msg, confirmButtonText: T.retry });
             }
         });
     });
 
-
-    // Gestion de l'expiration du token
-    $.ajaxSetup({
-        statusCode: {
-            401: function() {
-                refreshToken();
-            }
-        }
-    });
-
-    // Rafraîchir le token si expiré
-    function refreshToken() {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
-            contentType: 'application/json',
-            success: function(response) {
-                localStorage.setItem('access_token', response.access);
-                $.ajax(this); // Réessayer la requête
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '/login/';
-                });
-            }
-        });
-    }
+    /* Initial load */
+    loadAcheteurs(1, '');
 });
 </script>
-{% endblock %}
-
-
-
+{% endblock scripts %}

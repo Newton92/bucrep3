@@ -13,9 +13,18 @@ class CustomUserCreationForm(UserCreationForm):
         model = User
         fields = (
             'username', 'email', 'first_name', 'last_name',
-            'telephone', 'profession', 'role', 'pays',
-            'is_active', 'is_staff'
+            'telephone', 'address', 'profession', 'email_cc',
+            'role', 'pays', 'activation', 'auth_a2f',
+            'is_active', 'is_staff', 'is_client',
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ces champs sont auto-gérés par Django ; l'admin les injecte dans le
+        # formulaire combiné mais ils ne doivent pas bloquer la validation.
+        for fname in ('password', 'date_joined', 'last_login', 'password_changed_at'):
+            if fname in self.fields:
+                self.fields[fname].required = False
 
 
 class CustomUserChangeForm(UserChangeForm):

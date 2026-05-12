@@ -1,9 +1,11 @@
 import json
+import re
 import random
 import threading
 from django.core.cache import cache
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -27,6 +29,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import login
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.cache import never_cache
 from main.utils import populate_database, create_fake_commands, create_fake_buyers
 from django.utils import timezone
 from faker import Faker
@@ -78,6 +81,41 @@ logger = logging.getLogger(__name__)
 
 
 User = get_user_model()
+
+
+def _resolve_pays_id(request, persist=True):
+    """
+    Résout le pays actif (même logique que views_acheteur._resolve_selected_pays_id).
+    Priorité : session → user.pays_actif → user.pays → None.
+    """
+    selected_pays_id = None
+
+    session_value = request.session.get("selected_pays_id")
+    if session_value:
+        try:
+            sid = int(session_value)
+        except (TypeError, ValueError):
+            sid = None
+        if sid and Pays.objects.filter(id=sid, afficher_au_dashboard=True).exists():
+            selected_pays_id = sid
+
+    if not selected_pays_id:
+        pays_actif_id = getattr(request.user, "pays_actif_id", None)
+        if pays_actif_id and Pays.objects.filter(id=pays_actif_id, afficher_au_dashboard=True).exists():
+            selected_pays_id = pays_actif_id
+
+    if not selected_pays_id:
+        user_pays = getattr(request.user, "pays", None)
+        if user_pays:
+            selected_pays_id = user_pays.id
+
+    if persist:
+        if selected_pays_id:
+            request.session["selected_pays_id"] = selected_pays_id
+        else:
+            request.session.pop("selected_pays_id", None)
+
+    return selected_pays_id
 
 elements = [
     {
@@ -252,7 +290,7 @@ def dash_root_profile_page(request):
     """
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
     
@@ -786,7 +824,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 def dash_root(request):
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
 
@@ -799,17 +837,7 @@ def dash_root(request):
         messages.error(request, "Erreur lors de la génération des tokens.")
         return redirect('index')
     
-    # Récupérer le pays sélectionné (session -> profil -> premier pays dashboard)
-    selected_pays_id = request.session.get("selected_pays_id")
-    if not selected_pays_id and request.user.pays:
-        selected_pays_id = request.user.pays.id
-        request.session["selected_pays_id"] = selected_pays_id
-
-    if not selected_pays_id:
-        default_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
-        selected_pays_id = default_pays.id if default_pays else None
-        if selected_pays_id:
-            request.session["selected_pays_id"] = selected_pays_id
+    selected_pays_id = _resolve_pays_id(request)
 
     # Recuperer les donnees filtrées par pays si disponible
     commandes = Commande.objects.all()
@@ -820,17 +848,43 @@ def dash_root(request):
         acheteurs = acheteurs.filter(pays_id=selected_pays_id)
         alertes = alertes.filter(acheteurs__pays_id=selected_pays_id).distinct()
 
+    # Données carte : pays actifs avec comptage d'acheteurs
+    pays_map_qs = (
+        Pays.objects
+        .filter(afficher_au_dashboard=True, is_active=True)
+        .annotate(nb_acheteurs=Count('acheteur'))
+        .values('id', 'nom', 'code', 'nb_acheteurs')
+    )
+    pays_map_data = json.dumps([
+        {
+            'id': p['id'],
+            'nom': p['nom'],
+            'code': p['code'],
+            'nb_acheteurs': p['nb_acheteurs'],
+        }
+        for p in pays_map_qs
+    ])
+
+    # Totaux pour les statistiques de la carte
+    total_pays = Pays.objects.filter(is_active=True).count()
+    actifs_count = pays_map_qs.count()
+    inactifs_count = max(0, total_pays - actifs_count)
+
     context = {
         "dash_active": "active",
         "user": user,
         "refresh": refresh_token,
         "access": access_token,
-        "access_token": access_token,  # Ajoutez cette ligne
+        "access_token": access_token,
         "commandes": commandes,
         "acheteurs": acheteurs,
         "alertes": alertes,
         "current_date": timezone.now().date(),
         "current_time": timezone.now().time(),
+        "pays_map_data": pays_map_data,
+        "total_pays": total_pays,
+        "actifs_count": actifs_count,
+        "inactifs_count": inactifs_count,
     }
 
     return render(
@@ -847,7 +901,7 @@ def dash_root_user(request):
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
 
@@ -881,12 +935,13 @@ def dash_root_user(request):
 
 
 
+@never_cache
 @login_required
 def dash_root_order(request):
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
 
@@ -899,7 +954,7 @@ def dash_root_order(request):
         messages.error(request, "Erreur lors de la génération des tokens.")
         return redirect('index')
 
-    selected_pays_id = request.session.get("selected_pays_id") or getattr(user, "pays_id", None)
+    selected_pays_id = _resolve_pays_id(request)
     ville_queryset = Ville.objects.all()
     acheteur_queryset = Acheteur.objects.all()
     if selected_pays_id:
@@ -914,8 +969,8 @@ def dash_root_order(request):
         "access": access_token,
         "devise_list": Devise.objects.all(),
         "acheteur_list": acheteur_queryset,
-        "client_list": User.objects.filter(is_client=True, is_active=True).order_by("id"),
-        "validateur_list": User.objects.filter(is_active=True, is_client=False).order_by("username"),
+        "client_list": User.objects.filter(role="Client", is_active=True).order_by("username"),
+        "validateur_list": User.objects.filter(is_active=True).exclude(role="Client").order_by("username"),
         "pays_list": Pays.objects.all(),
         "ville_list": ville_queryset,
         "selected_pays_id": selected_pays_id,
@@ -930,8 +985,89 @@ def dash_root_order(request):
         "main/root/orders/dash_root_order.html",
         context
     )
-    
-    
+
+
+@never_cache
+@login_required
+def dash_root_order_create(request):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+
+    user = request.user
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    selected_pays_id = _resolve_pays_id(request)
+    ville_queryset = Ville.objects.all()
+    acheteur_queryset = Acheteur.objects.all()
+    if selected_pays_id:
+        ville_queryset = ville_queryset.filter(pays_id=selected_pays_id)
+        acheteur_queryset = acheteur_queryset.filter(pays_id=selected_pays_id)
+
+    context = {
+        "requests_active": "active",
+        "orders_active": "active",
+        "user": user,
+        "refresh": refresh_token,
+        "access": access_token,
+        "devise_list": Devise.objects.all(),
+        "acheteur_list": acheteur_queryset,
+        "client_list": User.objects.filter(role="Client", is_active=True).order_by("username"),
+        "validateur_list": User.objects.filter(is_active=True).exclude(role="Client").order_by("username"),
+        "ville_list": ville_queryset,
+        "status_choices": Commande.STATUS_CHOICES,
+        "type_rapport_choices": [
+            choice for choice in Commande._meta.get_field("type_rapport").choices if choice[0] != "--------"
+        ],
+    }
+    return render(request, "main/root/orders/dash_root_order_create.html", context)
+
+
+@login_required
+def dash_root_order_edit(request, order_id):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+
+    user = request.user
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    selected_pays_id = _resolve_pays_id(request)
+    ville_queryset = Ville.objects.all()
+    acheteur_queryset = Acheteur.objects.all()
+    if selected_pays_id:
+        ville_queryset = ville_queryset.filter(pays_id=selected_pays_id)
+        acheteur_queryset = acheteur_queryset.filter(pays_id=selected_pays_id)
+
+    context = {
+        "requests_active": "active",
+        "orders_active": "active",
+        "user": user,
+        "refresh": refresh_token,
+        "access": access_token,
+        "order_id": order_id,
+        "devise_list": Devise.objects.all(),
+        "acheteur_list": acheteur_queryset,
+        "client_list": User.objects.filter(role="Client", is_active=True).order_by("username"),
+        "validateur_list": User.objects.filter(is_active=True).exclude(role="Client").order_by("username"),
+        "ville_list": ville_queryset,
+        "status_choices": Commande.STATUS_CHOICES,
+        "type_rapport_choices": [
+            choice for choice in Commande._meta.get_field("type_rapport").choices if choice[0] != "--------"
+        ],
+    }
+    return render(request, "main/root/orders/dash_root_order_edit.html", context)
+
 
 @login_required
 def dash_root_pays(request):
@@ -1537,21 +1673,12 @@ def dash_root_acheteur(request):
     # Vérifier les permissions
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
     
     # Récupérer le pays sélectionné (session -> profil -> premier pays dashboard)
-    selected_pays_id = request.session.get("selected_pays_id")
-    if not selected_pays_id and getattr(user, "pays", None):
-        selected_pays_id = user.pays.id
-        request.session["selected_pays_id"] = selected_pays_id
-
-    if not selected_pays_id:
-        default_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
-        selected_pays_id = default_pays.id if default_pays else None
-        if selected_pays_id:
-            request.session["selected_pays_id"] = selected_pays_id
+    selected_pays_id = _resolve_pays_id(request)
 
     # Le listing est chargé côté API (pagination server-side), on évite de charger toute la table ici.
     acheteurs = Acheteur.objects.none()
@@ -1564,7 +1691,7 @@ def dash_root_acheteur(request):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     context = {
         "acheteur_active": "active",
@@ -1582,6 +1709,46 @@ def dash_root_acheteur(request):
         "main/root/acheteur/dash_root_acheteur.html",
         context
     )
+
+
+_RE_PAREN_SUFFIX = re.compile(r'\s*\([^)]*\)\s*$')
+
+
+def _fj_to_english(code, libelle):
+    """Translate a FormeJuridique to English. Returns original libelle if unknown."""
+    # 1. Exact code match
+    code = (code or '').strip()
+    if code:
+        en = FORME_JURIDIQUE_EN.get(code)
+        if en:
+            return en
+    # 2. Exact libelle match
+    lib = (libelle or '').strip()
+    en = FORME_JURIDIQUE_LIBELLE_EN.get(lib)
+    if en:
+        return en
+    # 3. Libelle without trailing parenthetical suffix, e.g. "Société anonyme (SA)" → "Société anonyme"
+    lib_stripped = _RE_PAREN_SUFFIX.sub('', lib).strip()
+    if lib_stripped and lib_stripped != lib:
+        en = FORME_JURIDIQUE_LIBELLE_EN.get(lib_stripped)
+        if en:
+            return en
+    # 4. Libelle match ignoring case
+    lib_lower = lib.lower()
+    for key, val in FORME_JURIDIQUE_LIBELLE_EN.items():
+        if key.lower() == lib_lower:
+            return val
+    # Not found — keep original
+    return libelle
+
+
+def _translate_juridique_list(request):
+    """Return FormeJuridique list with libelle translated to the active language."""
+    lang = getattr(request, 'LANGUAGE_CODE', '') or ''
+    qs = FormeJuridique.objects.all().order_by('libelle')
+    if lang.startswith('en'):
+        return [{'id': j.id, 'libelle': _fj_to_english(j.code, j.libelle)} for j in qs]
+    return [{'id': j.id, 'libelle': j.libelle} for j in qs]
 
 
 @login_required
@@ -1603,39 +1770,29 @@ def dash_root_add_acheteur(request):
     FormeJuridique.objects.update(active=True)
     
     # Récupération des données de référence
-    categorie_list = CategorieEntreprise.objects.all()
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
     statut_list = StatutEntreprise.objects.all()
-    
-    # Convertir LISTE_NOUVEAUX_CODE_NACE en format utilisable par le template
-    code_nace_list = []
-    for value, label in LISTE_NOUVEAUX_CODE_NACE:
-        # Pour garder la compatibilité avec votre template actuel
-        # On crée un objet similaire à SubCategoryNaceCode
-        code_nace_list.append({
-            'id': value,  # La valeur du tuple (ex: "3161 FAB. MAT. ELEC. POUR MOTEURS ET VEHIC.")
-            'code': value.split(' ')[0] if ' ' in value else value,  # Extraire le code numérique
-            'libelle': str(label)  # Le libellé
-        })
-    
+
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
     province_list = Province.objects.all()
     ville_list = Ville.objects.all()
+
+    selected_pays_id = _resolve_pays_id(request)
 
     context = {
         "acheteur_active": "active",
         "user": user,
         "refresh": refresh_token,
         "access": access_token,
-        "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
-        "code_nace_list": code_nace_list,
         "coloration_list": coloration_list,
         "pays_list": pays_list,
         "province_list": province_list,
         "ville_list": ville_list,
+        "selected_pays_id": selected_pays_id,
+        "selected_pays_nom": Pays.objects.filter(pk=selected_pays_id).values_list("nom", flat=True).first() if selected_pays_id else "",
     }
 
     return render(
@@ -1664,21 +1821,9 @@ def dash_root_edit_acheteur(request, acheteur_id):
     FormeJuridique.objects.update(active=True)
     
     # Récupération des données de référence
-    categorie_list = CategorieEntreprise.objects.all()
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
     statut_list = StatutEntreprise.objects.all()
-    
-    # Convertir LISTE_NOUVEAUX_CODE_NACE en format utilisable par le template
-    code_nace_list = []
-    for value, label in LISTE_NOUVEAUX_CODE_NACE:
-        # Pour garder la compatibilité avec votre template actuel
-        # On crée un objet similaire à SubCategoryNaceCode
-        code_nace_list.append({
-            'id': value,  # La valeur du tuple (ex: "3161 FAB. MAT. ELEC. POUR MOTEURS ET VEHIC.")
-            'code': value.split(' ')[0] if ' ' in value else value,  # Extraire le code numérique
-            'libelle': str(label)  # Le libellé
-        })
-        
+
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
     province_list = Province.objects.all()
@@ -1690,10 +1835,8 @@ def dash_root_edit_acheteur(request, acheteur_id):
         "refresh": refresh_token,
         "access": access_token,
         "id_acheteur": acheteur_id,
-        "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
-        "code_nace_list": code_nace_list,
         "coloration_list": coloration_list,
         "pays_list": pays_list,
         "province_list": province_list,
@@ -1716,7 +1859,6 @@ def dash_root_manage_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -1727,7 +1869,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     user = request.user
 
@@ -1746,8 +1888,8 @@ def dash_root_manage_acheteur(request, acheteur_id):
     # Récupérer tous les categories d'entreprise
     categorie_list = CategorieEntreprise.objects.all()
 
-    # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    # Récupérer tous les formes juridiques (traduites selon la langue active)
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = StatutEntreprise.objects.all()
@@ -1763,7 +1905,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
 
     # Récupérer tous les villes
     ville_list = Ville.objects.all()
-    
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -1830,7 +1972,6 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -1845,7 +1986,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Génération des tokens JWT
     try:
@@ -1855,7 +1996,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupération des données avec les champs corrects
     devise_list = Devise.objects.all().values('id', 'nom', 'code', 'symbole')
@@ -1921,7 +2062,6 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -1939,7 +2079,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Génération des tokens JWT
     try:
@@ -1949,7 +2089,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -1999,7 +2139,6 @@ def dash_root_manage_acheteur_scoring(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2018,7 +2157,7 @@ def dash_root_manage_acheteur_scoring(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -2075,7 +2214,6 @@ def dash_root_manage_acheteur_scoring_manuel(request, acheteur_id):
             Acheteur.objects.select_related(
                 'statut_entreprise',
                 'forme_juridique',
-                'categorie_entreprise',
                 'pays',
                 'province',
                 'ville'
@@ -2140,7 +2278,7 @@ def dash_root_manage_acheteur_scoring_manuel(request, acheteur_id):
         except Exception as e:
             logger.error(f"Erreur lors de la génération des tokens: {e}")
             messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-            return redirect('login')
+            return redirect_to_login(request.get_full_path())
         
         # Récupérer les années actives pour le formulaire
         annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
@@ -2180,7 +2318,6 @@ def dash_root_manage_acheteur_scoring_with_bilan(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2199,7 +2336,7 @@ def dash_root_manage_acheteur_scoring_with_bilan(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -2254,7 +2391,6 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2267,7 +2403,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Génération des tokens JWT
     try:
@@ -2277,7 +2413,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -2342,7 +2478,6 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2368,7 +2503,7 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -2416,8 +2551,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         acheteur = get_object_or_404(
             Acheteur.objects.select_related(
                 'statut_entreprise',
-                'forme_juridique',
-                'categorie_entreprise'
+                'forme_juridique'
             ),
             id=acheteur_id
         )
@@ -2503,8 +2637,7 @@ def dash_root_manage_acheteur_antecedent(request, acheteur_id):
         acheteur = get_object_or_404(
             Acheteur.objects.select_related(
                 'statut_entreprise',
-                'forme_juridique',
-                'categorie_entreprise'
+                'forme_juridique'
             ),
             id=acheteur_id
         )
@@ -2599,7 +2732,6 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2621,7 +2753,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -2728,7 +2860,6 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -2767,7 +2898,7 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer les années actives pour le formulaire
     annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
@@ -2810,8 +2941,7 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
             'statut_entreprise',
-            'forme_juridique',
-            'categorie_entreprise'
+            'forme_juridique'
         ),
         id=acheteur_id
     )
@@ -2998,7 +3128,6 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3041,7 +3170,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3093,7 +3222,6 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3124,7 +3252,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3199,7 +3327,6 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
             Acheteur.objects.select_related(
                 'statut_entreprise',
                 'forme_juridique',
-                'categorie_entreprise',
                 'pays',
                 'province',
                 'ville'
@@ -3234,7 +3361,7 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
         except Exception as e:
             logger.error(f"Erreur lors de la génération des tokens: {e}")
             messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-            return redirect('login')
+            return redirect_to_login(request.get_full_path())
         
         # Préparer les données de l'acheteur pour le template
         acheteur_data = {
@@ -3287,7 +3414,6 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3309,7 +3435,7 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3377,7 +3503,6 @@ def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
             Acheteur.objects.select_related(
                 'statut_entreprise',
                 'forme_juridique',
-                'categorie_entreprise',
                 'pays',
                 'province',
                 'ville'
@@ -3431,7 +3556,7 @@ def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
         except Exception as e:
             logger.error(f"Erreur lors de la génération des tokens: {e}")
             messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-            return redirect('login')
+            return redirect_to_login(request.get_full_path())
         
         # Préparer les données de l'acheteur pour le template
         acheteur_data = {
@@ -3488,7 +3613,6 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3510,7 +3634,7 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3576,7 +3700,6 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3598,7 +3721,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3682,7 +3805,6 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3711,7 +3833,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens JWT : {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     # =========================
     # Importations
@@ -3796,7 +3918,6 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3817,7 +3938,7 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer tous les locaux disponibles
     locaux = Locaux.objects.all().order_by('nom')
@@ -3892,7 +4013,6 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -3913,7 +4033,7 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer toutes les conditions d'achat disponibles
     conditions_liste = ListeConditionAchat.objects.all().order_by('nom')
@@ -3988,7 +4108,6 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4009,7 +4128,7 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer toutes les conditions de vente disponibles
     conditions_liste = ListeConditionVente.objects.all().order_by('nom')
@@ -4094,7 +4213,6 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4116,7 +4234,7 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -4181,7 +4299,6 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4200,7 +4317,7 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -4263,7 +4380,6 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4282,7 +4398,7 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -4382,7 +4498,6 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
             Acheteur.objects.select_related(
                 'statut_entreprise',
                 'forme_juridique',
-                'categorie_entreprise',
                 'pays',
                 'province',
                 'ville'
@@ -4440,7 +4555,7 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
         except Exception as e:
             logger.error(f"Erreur lors de la génération des tokens: {e}")
             messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-            return redirect('login')
+            return redirect_to_login(request.get_full_path())
         
         context = {
             "acheteur_active": "active",
@@ -4482,7 +4597,6 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4512,7 +4626,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4551,7 +4665,6 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4581,7 +4694,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4620,7 +4733,6 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4650,7 +4762,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4695,7 +4807,6 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4725,7 +4836,7 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4768,7 +4879,6 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4798,7 +4908,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4841,7 +4951,6 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -4871,7 +4980,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -4912,7 +5021,7 @@ def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
     # 1. Récupération unique et optimisée de l'acheteur
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
-            'statut_entreprise', 'forme_juridique', 'categorie_entreprise', 
+            'statut_entreprise', 'forme_juridique',
             'pays', 'province', 'ville'
         ).prefetch_related('banquier_set'),
         id=acheteur_id
@@ -4925,7 +5034,7 @@ def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur JWT : {e}")
         messages.error(request, "Session expirée. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     # 3. Préparation des données JSON pour le frontend
     acheteur_data = {
@@ -5000,7 +5109,6 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5030,7 +5138,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5069,7 +5177,6 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5099,7 +5206,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5138,7 +5245,6 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5168,7 +5274,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5215,7 +5321,6 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5245,7 +5350,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5284,7 +5389,6 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5314,7 +5418,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5360,7 +5464,6 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5390,7 +5493,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5436,7 +5539,6 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5466,7 +5568,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -5512,7 +5614,6 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -5542,7 +5643,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
@@ -6296,42 +6397,29 @@ def dash_root_manage_alerte(request, alerte_id):
 
 @login_required
 def dash_root_client(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
 
     user = request.user
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    pays_list = Pays.objects.all().only('id', 'nom')
 
     context = {
         "clients_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "pays_list": pays_list,
+        "refresh": refresh_token,
+        "access": access_token,
     }
     return render(request, "main/root/monitoring/dash_root_client.html", context)
-
-
-@login_required
-def dash_root_carnet(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    context = {
-        "clients_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-    }
-    return render(request, "main/root/monitoring/dash_root_carnet.html", context)
 
 
 @login_required
@@ -6611,7 +6699,6 @@ def dash_root_certification_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -6632,7 +6719,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -6722,7 +6809,6 @@ def dash_root_innovation_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -6751,7 +6837,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -6836,7 +6922,6 @@ def dash_root_strategie_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -6865,7 +6950,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -6947,7 +7032,6 @@ def dash_root_conformite_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -6985,7 +7069,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -7306,7 +7390,6 @@ def dash_root_manage_acheteur_actif_ifrs_one(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -7336,7 +7419,7 @@ def dash_root_manage_acheteur_actif_ifrs_one(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer toutes les années
     annee_list = Annee.objects.all()
@@ -7384,7 +7467,6 @@ def dash_root_manage_acheteur_passif_ifrs_one(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -7414,7 +7496,7 @@ def dash_root_manage_acheteur_passif_ifrs_one(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer toutes les années
     annee_list = Annee.objects.all()
@@ -7463,7 +7545,6 @@ def dash_root_manage_acheteur_resultat_ifrs_one(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -7493,7 +7574,7 @@ def dash_root_manage_acheteur_resultat_ifrs_one(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Récupérer toutes les années
     annee_list = Annee.objects.all()
@@ -7811,7 +7892,6 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -7832,7 +7912,7 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -7905,7 +7985,6 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -7926,7 +8005,7 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -8003,7 +8082,6 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8024,7 +8102,7 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -8116,7 +8194,6 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8135,7 +8212,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -8223,7 +8300,6 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8244,7 +8320,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -8316,7 +8392,6 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8351,7 +8426,7 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     coloration_list = CouleurCommentaire.objects.all()
 
@@ -8473,7 +8548,6 @@ def dash_root_manage_document_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8507,7 +8581,7 @@ def dash_root_manage_document_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -8644,7 +8718,6 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8665,7 +8738,7 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -8733,7 +8806,6 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8752,7 +8824,7 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -8818,7 +8890,6 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8837,7 +8908,7 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -8904,7 +8975,6 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -8923,7 +8993,7 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -8992,7 +9062,6 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -9028,7 +9097,7 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -9148,7 +9217,6 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise',
             'pays',
             'province',
             'ville'
@@ -9184,7 +9252,7 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
+        return redirect_to_login(request.get_full_path())
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -9289,39 +9357,86 @@ def dash_root_manage_backup(request):
     
     
     
-@login_required
-def dash_root_warning(request):
-    """
-    Vue pour la gestion des warnings
-    """
-    
-    # Vérifier si l'utilisateur a les permissions nécessaires
-    # Vérifier si l'utilisateur est authentifié
-    if not request.user.is_authenticated:
-        return redirect('login')
-    
+def _warning_token_context(request):
+    """Helper : génère les tokens JWT et la langue pour les vues Warning."""
     user = request.user
-
-    # Génération des tokens d'accès
     try:
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
     except Exception:
+        return None, None, None
+    preferred_lang = getattr(user, 'preferred_language', None) or 'fr'
+    lang_map = {'fr': 'fr', 'en': 'en', 'en-us': 'en', 'fr-fr': 'fr'}
+    spell_lang = lang_map.get(str(preferred_lang).lower(), 'fr')
+    return access_token, refresh_token, spell_lang
+
+
+def dash_root_warning(request):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    access_token, refresh_token, spell_lang = _warning_token_context(request)
+    if access_token is None:
         messages.error(request, "Erreur lors de la génération des tokens.")
         return redirect('index')
-
-    context = {
+    return render(request, "main/root/alertes/dash_root_warning.html", {
         "warnings_active": "active",
         "user": request.user,
         "refresh": refresh_token,
         "access": access_token,
-    }
-    return render(
-        request,
-        "main/root/alertes/dash_root_warning.html",
-        context
-    )
+        "spell_lang": spell_lang,
+    })
+
+
+def dash_root_create_warning(request):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    access_token, refresh_token, spell_lang = _warning_token_context(request)
+    if access_token is None:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+    return render(request, "main/root/alertes/dash_root_warning_form.html", {
+        "warnings_active": "active",
+        "form_mode": "create",
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
+        "spell_lang": spell_lang,
+    })
+
+
+def dash_root_edit_warning(request, warning_id):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    access_token, refresh_token, spell_lang = _warning_token_context(request)
+    if access_token is None:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+    return render(request, "main/root/alertes/dash_root_warning_form.html", {
+        "warnings_active": "active",
+        "form_mode": "edit",
+        "warning_id": warning_id,
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
+        "spell_lang": spell_lang,
+    })
+
+
+def dash_root_view_warning(request, warning_id):
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    access_token, refresh_token, spell_lang = _warning_token_context(request)
+    if access_token is None:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+    return render(request, "main/root/alertes/dash_root_warning_detail.html", {
+        "warnings_active": "active",
+        "warning_id": warning_id,
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
+    })
 
 
 
@@ -12059,26 +12174,6 @@ def dash_validateur_client(request):
         "access": str(refresh.access_token),
     }
     return render(request, "main/validateur/monitoring/dash_root_client.html", context)
-
-
-@login_required
-def dash_validateur_carnet(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    context = {
-        "clients_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-    }
-    return render(request, "main/validateur/monitoring/dash_root_carnet.html", context)
 
 
 @login_required
@@ -15421,26 +15516,6 @@ def dash_analyste_client(request):
 
 
 @login_required
-def dash_analyste_carnet(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    context = {
-        "clients_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-    }
-    return render(request, "main/analyste/monitoring/dash_root_carnet.html", context)
-
-
-@login_required
 def dash_analyste_portefeuille(request):
     token = request.GET.get("token")
     if not token:
@@ -16085,6 +16160,53 @@ def dash_analyste_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
 @login_required
 def dash_client(request):
     return render(request, "main/client/dash_client.html")
+
+
+def verifier_rapport(request, acheteur_id):
+    """Page publique de vérification d'authenticité d'un rapport ACREMAC."""
+    from main.models import Acheteur
+    try:
+        acheteur = Acheteur.objects.select_related('ville', 'pays', 'statut_entreprise').get(pk=acheteur_id)
+    except Acheteur.DoesNotExist:
+        acheteur = None
+    return render(request, "main/rapport_verification.html", {"acheteur": acheteur})
+
+
+########################################################################################################################
+#  GESTION DES EXPORTATIONS
+########################################################################################################################
+
+@login_required
+def dash_root_export_listing(request):
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token  = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        access_token = refresh_token = ""
+    return render(request, "main/root/exports/dash_root_export_listing.html", {
+        "exports_listing_active": "active",
+        "access_token":  access_token,
+        "refresh_token": refresh_token,
+    })
+
+
+@login_required
+def dash_root_export_decompte(request):
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token  = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        access_token = refresh_token = ""
+    from main.models import User as _User
+    client_list = _User.objects.filter(role="Client", is_active=True).order_by("username")
+    return render(request, "main/root/exports/dash_root_export_decompte.html", {
+        "exports_decompte_active": "active",
+        "access_token":  access_token,
+        "refresh_token": refresh_token,
+        "client_list":   client_list,
+    })
 
 
 

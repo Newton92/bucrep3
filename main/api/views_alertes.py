@@ -1,9 +1,12 @@
 import json
 
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,6 +19,39 @@ from main.serializers import (
     WarningListSerializer,
     WarningUpsertSerializer,
 )
+
+
+def _send_warning_email(warning):
+    """Envoie l'alerte par email selon les champs email_to/cc/bcc/subject."""
+    to_list = warning.get_email_to_list()
+    if not to_list:
+        return False
+
+    subject = warning.email_subject or warning.titre
+    cc_list = warning.get_email_cc_list()
+    bcc_list = warning.get_email_bcc_list()
+
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'bucrepcontact@gmail.com')
+
+    # Corps texte brut (fallback)
+    import re
+    text_body = re.sub(r'<[^>]+>', ' ', warning.description or '').strip()
+
+    msg = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=from_email,
+        to=to_list,
+        cc=cc_list if cc_list else [],
+        bcc=bcc_list if bcc_list else [],
+    )
+    msg.attach_alternative(warning.description or '', 'text/html')
+    msg.send(fail_silently=False)
+
+    warning.email_sent = True
+    warning.email_sent_at = timezone.now()
+    warning.save(update_fields=['email_sent', 'email_sent_at'])
+    return True
 
 
 def _resolve_selected_pays_id(request):
@@ -73,6 +109,7 @@ class ListWarningView(APIView, WarningPaginationMixin):
 
     def get(self, request, *args, **kwargs):
         search_query = request.query_params.get("search", "").strip()
+        sent_only = request.query_params.get("sent_only", "").lower() in ("1", "true", "yes")
 
         warnings = (
             Warning.objects.select_related("created_by")
@@ -80,6 +117,9 @@ class ListWarningView(APIView, WarningPaginationMixin):
             .all()
             .order_by("-created_at")
         )
+
+        if sent_only:
+            warnings = warnings.filter(email_sent=True)
 
         if search_query:
             warnings = warnings.filter(
@@ -145,7 +185,17 @@ class AddWarningView(APIView):
         for file_obj in files:
             WarningAttachment.objects.create(warning=warning, upload=file_obj)
 
+        # Envoi email immédiat si demandé
+        email_error = None
+        if request.data.get("send_now") in (True, "true", "1", 1):
+            try:
+                _send_warning_email(warning)
+            except Exception as exc:
+                email_error = str(exc)
+
         data = WarningDetailSerializer(warning, context={"request": request}).data
+        if email_error:
+            data["email_error"] = email_error
         return Response(data, status=status.HTTP_201_CREATED)
 
 
@@ -221,7 +271,17 @@ class EditWarningView(APIView):
         for file_obj in files_to_add:
             WarningAttachment.objects.create(warning=warning, upload=file_obj)
 
+        # Envoi email immédiat si demandé
+        email_error = None
+        if request.data.get("send_now") in (True, "true", "1", 1):
+            try:
+                _send_warning_email(warning)
+            except Exception as exc:
+                email_error = str(exc)
+
         data = WarningDetailSerializer(warning, context={"request": request}).data
+        if email_error:
+            data["email_error"] = email_error
         return Response(data)
 
 
@@ -264,3 +324,30 @@ class DeleteWarningAttachmentView(APIView):
         attachment = get_object_or_404(WarningAttachment, id=id)
         attachment.delete()
         return Response({"message": "Pièce jointe supprimée avec succès."})
+
+
+class SendWarningEmailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id, *args, **kwargs):
+        warning = get_object_or_404(Warning, id=id)
+
+        # Mise à jour éventuelle des champs email avant envoi
+        for field in ("email_to", "email_cc", "email_bcc", "email_subject"):
+            if field in request.data:
+                setattr(warning, field, request.data[field])
+        warning.save(update_fields=["email_to", "email_cc", "email_bcc", "email_subject"])
+
+        if not warning.get_email_to_list():
+            return Response(
+                {"error": "Veuillez saisir au moins un destinataire (champ À)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            _send_warning_email(warning)
+        except Exception as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        data = WarningDetailSerializer(warning, context={"request": request}).data
+        return Response({"message": "Alerte envoyée avec succès.", "warning": data})

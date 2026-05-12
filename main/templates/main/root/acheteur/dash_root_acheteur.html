@@ -3,7 +3,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block css %}
+{% block styles %}
 <style>
     /* ========== THÈME DE COULEURS ========== */
     :root {
@@ -258,7 +258,7 @@
         }
     }
 </style>
-{% endblock %}
+{% endblock styles %}
 
 {% block body %}
 
@@ -406,8 +406,17 @@
                                 </ul>
                             </div>
                             
+                            <!-- Incomplete drafts notification -->
+                            <button class="btn btn-sm btn-outline-warning position-relative"
+                                    id="btnDraftsBadge" title="{% trans 'Créations incomplètes' %}"
+                                    data-bs-toggle="modal" data-bs-target="#modalDrafts" style="display:none;">
+                                <i class="bi bi-clock-history"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      id="draftsBadgeCount">0</span>
+                            </button>
+
                             <!-- Add Button -->
-                            <a href="{% url 'dash_root_add_acheteur' %}?token={{ user.reset_token }}" 
+                            <a href="{% url 'dash_root_add_acheteur' %}?token={{ user.reset_token }}"
                                class="btn btn-sm btn-primary" id="addAcheteurBtn">
                                 <i class="bi bi-plus-circle me-1"></i><span id="addAcheteurBtnLabel">{% trans "Ajouter" %}</span>
                             </a>
@@ -418,7 +427,7 @@
             <!-- Card header END -->
 
             <!-- Loading Spinner -->
-            <div id="loadingSpinner" class="text-center py-5">
+            <div id="loadingSpinner" class="text-center py-5" style="display:none;">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">{% trans "Chargement..." %}</span>
                 </div>
@@ -556,686 +565,545 @@
     </div>
 </div>
 
+<!-- Modal : Créations incomplètes -->
+<div class="modal fade" id="modalDrafts" tabindex="-1" aria-labelledby="modalDraftsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-bottom" style="background:linear-gradient(135deg,#fff7e6,#fff);">
+                <h5 class="modal-title fw-bold text-warning" id="modalDraftsLabel">
+                    <i class="bi bi-clock-history me-2"></i>{% trans "Créations d'acheteurs incomplètes" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="px-3 pt-3 pb-2 bg-warning bg-opacity-10 border-bottom">
+                    <p class="mb-0 small text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {% blocktrans %}Ces acheteurs ont été initiés mais leur fiche n'est pas complète. Cliquez sur <strong>Reprendre</strong> pour finaliser la saisie.{% endblocktrans %}
+                    </p>
+                </div>
+                <div id="draftsListContainer" class="p-3">
+                    <div class="text-center py-4 text-muted" id="draftsLoading">
+                        <div class="spinner-border spinner-border-sm me-2"></div>Chargement...
+                    </div>
+                    <div id="draftsList" style="display:none;"></div>
+                    <div id="draftsEmpty" class="text-center py-4 text-muted" style="display:none;">
+                        <i class="bi bi-check-circle-fill text-success fs-2 d-block mb-2"></i>
+                        {% trans "Aucun acheteur en attente de complétion." %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Fermer" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-
 <script>
-    $(document).ready(function() {
+{% trans "Tous pays" as t_all_countries %}
+{% trans "Non défini" as t_undefined %}
+{% trans "Session expirée — rechargez la page." as t_expired %}
+{% trans "Accès refusé (403)." as t_forbidden %}
+{% trans "Endpoint introuvable (404)." as t_notfound %}
+{% trans "Erreur serveur (500) — consultez les logs." as t_server_error %}
+{% trans "Impossible de joindre le serveur." as t_unreachable %}
+{% trans "Réessayer" as t_retry %}
+{% trans "Consulter" as t_view %}
+{% trans "Oui, consulter" as t_yes_view %}
+{% trans "Annuler" as t_cancel %}
+{% trans "Modifier" as t_edit %}
+{% trans "Oui, modifier" as t_yes_edit %}
+{% trans "Supprimé !" as t_deleted %}
+{% trans "Erreur" as t_error %}
+{% trans "Impossible de supprimer cet acheteur." as t_del_error %}
+{% trans "Génération du rapport PDF" as t_pdf_title %}
+{% trans "Préparation des données pour" as t_preparing %}
+{% trans "Données de rapport manquantes." as t_missing_data %}
+{% trans "Génération du PDF…" as t_generating %}
+{% trans "Le fichier retourné n'est pas un PDF." as t_not_pdf %}
+{% trans "Impossible de générer le PDF." as t_pdf_error %}
+{% trans "Erreur lors de la génération du rapport." as t_report_error %}
+{% trans "Impossible de charger les données." as t_load_error %}
+{% trans "Affichage de" as t_showing %}
+{% trans "à" as t_to %}
+{% trans "sur" as t_of %}
+{% trans "Reprendre" as t_resume %}
 
-        // Stockage des tokens
-        let accessToken = '{{ access }}';
-        let refreshToken = '{{ refresh }}';
+$(document).ready(function () {
 
-        // Traduction front sans librairie (fr/en)
-        const TRANSLATIONS = {
-            fr: {
-                module_title: "Module de Gestion des Acheteurs",
-                module_desc: "Gérez efficacement tous les acheteurs d'entreprise. Ajoutez, modifiez, consultez ou supprimez les acheteurs en quelques clics.",
-                stat_total: "Total Acheteurs",
-                stat_month: "Ce mois",
-                stat_week: "Cette semaine",
-                stat_country: "Pays actif",
-                loading: "Chargement...",
-                list_title: "Liste des Acheteurs",
-                search_placeholder: "Rechercher un acheteur...",
-                filter: "Filtrer",
-                add: "Ajouter",
-                all_buyers: "Tous les acheteurs",
-                active_recent: "Actifs récemment",
-                new_7d: "Nouveaux (7 jours)",
-                reset: "Réinitialiser",
-                loading_buyers: "Chargement des acheteurs...",
-                empty_title: "Aucun acheteur trouvé",
-                empty_desc: "Commencez par ajouter votre premier acheteur.",
-                add_buyer: "Ajouter un acheteur",
-                show: "Afficher",
-                pagination_info: "Affichage de <strong>{start}</strong> à <strong>{end}</strong> sur <strong>{total}</strong> acheteurs",
-                country_undefined: "Non défini",
-                country_error: "Erreur",
-                country_invalid_format: "Format invalide",
-                country_network_error: "Erreur réseau",
-                err_load_title: "Erreur",
-                err_load_buyers: "Impossible de charger les acheteurs. Veuillez réessayer.",
-                no_report_title: "Aucun rapport"
+    /* ── Tokens injectés par Django ── */
+    var TOKEN = '{{ access }}';
+
+    /* ── Chaînes traduites (escapejs évite les apostrophes en JS) ── */
+    var T = {
+        allCountries : '{{ t_all_countries|escapejs }}',
+        undefined    : '{{ t_undefined|escapejs }}',
+        expired      : '{{ t_expired|escapejs }}',
+        forbidden    : '{{ t_forbidden|escapejs }}',
+        notFound     : '{{ t_notfound|escapejs }}',
+        serverError  : '{{ t_server_error|escapejs }}',
+        unreachable  : '{{ t_unreachable|escapejs }}',
+        retry        : '{{ t_retry|escapejs }}',
+        view         : '{{ t_view|escapejs }}',
+        yesView      : '{{ t_yes_view|escapejs }}',
+        cancel       : '{{ t_cancel|escapejs }}',
+        edit         : '{{ t_edit|escapejs }}',
+        yesEdit      : '{{ t_yes_edit|escapejs }}',
+        deleted      : '{{ t_deleted|escapejs }}',
+        error        : '{{ t_error|escapejs }}',
+        delError     : '{{ t_del_error|escapejs }}',
+        pdfTitle     : '{{ t_pdf_title|escapejs }}',
+        preparing    : '{{ t_preparing|escapejs }}',
+        missingData  : '{{ t_missing_data|escapejs }}',
+        generating   : '{{ t_generating|escapejs }}',
+        notPdf       : '{{ t_not_pdf|escapejs }}',
+        pdfError     : '{{ t_pdf_error|escapejs }}',
+        reportError  : '{{ t_report_error|escapejs }}',
+        loadError    : '{{ t_load_error|escapejs }}',
+        showing      : '{{ t_showing|escapejs }}',
+        to           : '{{ t_to|escapejs }}',
+        of           : '{{ t_of|escapejs }}',
+        resume       : '{{ t_resume|escapejs }}'
+    };
+
+    /* ── État de la pagination ── */
+    var currentPage   = 1;
+    var currentSearch = '';
+    var pageSize      = 10;
+    var sortField     = 'nom';
+    var sortDir       = 'asc';
+    var currentFilter = 'all';
+    var totalCount    = 0;
+    var searchTimer;
+
+    /* ── Raccourcis DOM ── */
+    var $tbody      = $('#acheteursTableBody');
+    var $skeleton   = $('#skeletonLoader');
+    var $spinner    = $('#loadingSpinner');
+    var $emptyState = $('#emptyState');
+    var $pagInfo    = $('#paginationInfo');
+    var $pagCtrl    = $('#paginationControls');
+
+    /* ────────────────────────────────────────────
+       Utilitaires
+    ──────────────────────────────────────────── */
+    function authHeader() {
+        return { 'Authorization': 'Bearer ' + TOKEN };
+    }
+
+    function formatDate(d) {
+        if (!d) return '--';
+        var dt = new Date(d);
+        if (isNaN(dt)) return '--';
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function escHtml(s) {
+        return $('<span>').text(s || '').html();
+    }
+
+    function truncate(s, n) {
+        if (!s) return '--';
+        return s.length > n ? s.substring(0, n) + '…' : s;
+    }
+
+    /* ────────────────────────────────────────────
+       Loader
+    ──────────────────────────────────────────── */
+    function showLoading() {
+        $skeleton.show();
+        $spinner.show();
+        $tbody.hide();
+        $emptyState.hide();
+    }
+
+    function hideLoading() {
+        $skeleton.hide();
+        $spinner.hide();
+    }
+
+    /* ────────────────────────────────────────────
+       Stats
+    ──────────────────────────────────────────── */
+    function loadStats() {
+        $.ajax({
+            url: '/api/acheteurs/stats/',
+            type: 'GET',
+            headers: authHeader(),
+            success: function (r) {
+                $('#statTotal').text(r.total || 0);
+                $('#statThisMonth').text(r.thisMonth || 0);
+                $('#statThisWeek').text(r.thisWeek || 0);
+                var pays = r.allCountries ? T.allCountries : (r.activeCountry || '--');
+                $('#statActiveCountry').html('<span class="badge bg-info text-white">' + escHtml(pays) + '</span>');
+            }
+        });
+    }
+
+    /* ────────────────────────────────────────────
+       Rendu du tableau
+    ──────────────────────────────────────────── */
+    function renderRows(acheteurs) {
+        $tbody.empty();
+        var startIdx = (currentPage - 1) * pageSize;
+
+        $.each(acheteurs, function (i, a) {
+            var rowNum   = startIdx + i + 1;
+            var nom      = truncate(a.nom, 30);
+            var sigle    = a.sigle ? truncate(a.sigle, 15) : '';
+            var ville    = (a.ville && a.ville.nom) ? a.ville.nom : '--';
+            var pays     = (a.pays  && a.pays.nom)  ? a.pays.nom  : '';
+            var statut   = (a.statut_entreprise && a.statut_entreprise.libelle) ? a.statut_entreprise.libelle : T.undefined;
+            var actif    = a.statut_entreprise ? 'status-active' : 'status-inactive';
+            var sigleBadge = sigle
+                ? '<span class="badge bg-info" title="' + escHtml(a.sigle) + '">' + escHtml(sigle) + '</span>'
+                : '<span class="text-muted">--</span>';
+
+            var row = '<tr data-id="' + a.id + '" class="acheteur-row">'
+                + '<td class="ps-4 fw-medium text-muted">' + rowNum + '</td>'
+                + '<td><span class="badge bg-primary">' + escHtml(a.code || '--') + '</span></td>'
+                + '<td>'
+                +   '<div class="d-flex align-items-center">'
+                +     '<div class="bg-primary-soft p-2 rounded-circle me-2 flex-shrink-0"><i class="bi bi-building text-primary"></i></div>'
+                +     '<div><h6 class="mb-0">' + escHtml(nom) + '</h6></div>'
+                +   '</div>'
+                + '</td>'
+                + '<td>' + sigleBadge + '</td>'
+                + '<td>'
+                +   '<div><i class="bi bi-geo-alt me-1 text-primary"></i>' + escHtml(ville) + '</div>'
+                +   '<small class="text-muted">' + escHtml(pays) + '</small>'
+                + '</td>'
+                + '<td>'
+                +   '<span class="status-indicator ' + actif + '"></span>' + escHtml(statut)
+                + '</td>'
+                + '<td class="pe-4">'
+                +   '<div class="action-buttons justify-content-end">'
+                +     '<button class="btn btn-sm btn-outline-primary action-btn manage-btn" data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="' + T.view + '"><i class="bi bi-eye"></i></button>'
+                +     '<button class="btn btn-sm btn-outline-warning action-btn edit-btn"   data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="' + T.edit + '"><i class="bi bi-pencil"></i></button>'
+                +     '<button class="btn btn-sm btn-outline-success action-btn pdf-btn"    data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="' + T.pdfTitle + '"><i class="bi bi-file-earmark-pdf"></i></button>'
+                +     '<button class="btn btn-sm btn-outline-danger  action-btn delete-btn" data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="Supprimer"><i class="bi bi-trash"></i></button>'
+                +   '</div>'
+                + '</td>'
+                + '</tr>';
+
+            $tbody.append(row);
+        });
+    }
+
+    /* ────────────────────────────────────────────
+       Pagination
+    ──────────────────────────────────────────── */
+    function renderPagination(totalPages) {
+        var start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        var end   = Math.min(currentPage * pageSize, totalCount);
+        $pagInfo.html(T.showing + ' <strong>' + start + '</strong> ' + T.to + ' <strong>' + end + '</strong> ' + T.of + ' <strong>' + totalCount + '</strong>');
+
+        if (totalPages <= 1) { $pagCtrl.html(''); return; }
+
+        var delta = 2, range = [], withDots = [], l;
+        for (var i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) range.push(i);
+        }
+        for (var j = 0; j < range.length; j++) {
+            var p = range[j];
+            if (l) {
+                if (p - l === 2) withDots.push(l + 1);
+                else if (p - l > 2) withDots.push('…');
+            }
+            withDots.push(p);
+            l = p;
+        }
+
+        var html = '';
+        html += currentPage === 1
+            ? '<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>'
+            : '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '"><i class="bi bi-chevron-left"></i></a></li>';
+
+        for (var k = 0; k < withDots.length; k++) {
+            var pg = withDots[k];
+            if (pg === '…') {
+                html += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+            } else if (pg === currentPage) {
+                html += '<li class="page-item active"><span class="page-link">' + pg + '</span></li>';
+            } else {
+                html += '<li class="page-item"><a class="page-link" href="#" data-page="' + pg + '">' + pg + '</a></li>';
+            }
+        }
+
+        html += currentPage === totalPages
+            ? '<li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>'
+            : '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '"><i class="bi bi-chevron-right"></i></a></li>';
+
+        $pagCtrl.html(html);
+    }
+
+    /* ────────────────────────────────────────────
+       Chargement principal
+    ──────────────────────────────────────────── */
+    function loadAcheteurs() {
+        showLoading();
+
+        var url = '/api/liste-des-acheteurs/'
+            + '?page='     + currentPage
+            + '&page_size='+ pageSize
+            + '&search='   + encodeURIComponent(currentSearch)
+            + '&sort='     + sortField
+            + '&sort_dir=' + sortDir
+            + '&filter='   + currentFilter;
+
+        $.ajax({
+            url:     url,
+            type:    'GET',
+            timeout: 15000,
+            headers: authHeader(),
+            success: function (r) {
+                var acheteurs  = r.results    || [];
+                totalCount     = r.count      || 0;
+                var totalPages = r.total_pages || 1;
+
+                hideLoading();
+
+                if (acheteurs.length === 0) {
+                    $emptyState.show();
+                    $tbody.hide();
+                } else {
+                    renderRows(acheteurs);
+                    $tbody.show();
+                    $emptyState.hide();
+                }
+
+                renderPagination(totalPages);
+                $('#statTotal').text(totalCount);
             },
-            en: {
-                module_title: "Buyer Management Module",
-                module_desc: "Efficiently manage all company buyers. Add, edit, review, or delete buyers in just a few clicks.",
-                stat_total: "Total Buyers",
-                stat_month: "This month",
-                stat_week: "This week",
-                stat_country: "Active country",
-                loading: "Loading...",
-                list_title: "Buyers List",
-                search_placeholder: "Search a buyer...",
-                filter: "Filter",
-                add: "Add",
-                all_buyers: "All buyers",
-                active_recent: "Recently active",
-                new_7d: "New (7 days)",
-                reset: "Reset",
-                loading_buyers: "Loading buyers...",
-                empty_title: "No buyer found",
-                empty_desc: "Start by adding your first buyer.",
-                add_buyer: "Add a buyer",
-                show: "Show",
-                pagination_info: "Showing <strong>{start}</strong> to <strong>{end}</strong> of <strong>{total}</strong> buyers",
-                country_undefined: "Undefined",
-                country_error: "Error",
-                country_invalid_format: "Invalid format",
-                country_network_error: "Network error",
-                err_load_title: "Error",
-                err_load_buyers: "Unable to load buyers. Please try again.",
-                no_report_title: "No report"
-            }
-        };
-
-        function getUILanguage() {
-            const fromStorage = (localStorage.getItem('ui_lang') || '').toLowerCase().slice(0, 2);
-            const fromHtml = (document.documentElement.getAttribute('lang') || 'fr').toLowerCase().slice(0, 2);
-            return (fromStorage || fromHtml || 'fr') === 'en' ? 'en' : 'fr';
-        }
-
-        let currentLang = getUILanguage();
-
-        function t(key) {
-            return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.fr[key] || key;
-        }
-
-        function tFormat(key, params) {
-            let text = t(key);
-            Object.keys(params || {}).forEach((paramKey) => {
-                text = text.replace(`{${paramKey}}`, params[paramKey]);
-            });
-            return text;
-        }
-
-        function applyTranslations() {
-            $('#countAcheteurs').text(t('module_title'));
-            $('#moduleAcheteurDescription').text(t('module_desc'));
-            $('#statTotalLabel').text(t('stat_total'));
-            $('#statThisMonthLabel').text(t('stat_month'));
-            $('#statThisWeekLabel').text(t('stat_week'));
-            $('#statActiveCountryLabel').text(t('stat_country'));
-            $('#statActiveCountryLoading').text(t('loading'));
-            $('#listeAcheteursTitle').text(t('list_title'));
-            $('#searchInput').attr('placeholder', t('search_placeholder'));
-            $('#filterBtnLabel').text(t('filter'));
-            $('#addAcheteurBtnLabel').text(t('add'));
-            $('[data-filter="all"]').text(t('all_buyers'));
-            $('[data-filter="active"]').text(t('active_recent'));
-            $('[data-filter="new"]').text(t('new_7d'));
-            $('[data-filter="reset"]').text(t('reset'));
-            $('#loadingAcheteursText').text(t('loading_buyers'));
-            $('#emptyAcheteurTitle').text(t('empty_title'));
-            $('#emptyAcheteurDescription').text(t('empty_desc'));
-            $('#emptyAddAcheteurBtnLabel').text(t('add_buyer'));
-            $('#afficherLabel').text(t('show'));
-        }
-        
-        // Configuration
-        let currentPage = 1;
-        let currentSearch = '';
-        let itemsPerPage = 10;
-        let currentSort = 'nom';
-        let currentSortDir = 'asc';
-        let currentFilter = 'all';
-        let allAcheteurs = [];
-        let totalAcheteurs = 0;
-        let stats = {
-            total: 0,
-            thisMonth: 0,
-            thisWeek: 0,
-            activeCountry: '--'
-        };
-
-        // Éléments du DOM
-        const elements = {
-            tableBody: $('#acheteursTableBody'),
-            skeleton: $('#skeletonLoader'),
-            emptyState: $('#emptyState'),
-            loadingSpinner: $('#loadingSpinner'),
-            paginationInfo: $('#paginationInfo'),
-            paginationControls: $('#paginationControls'),
-            searchInput: $('#searchInput'),
-            itemsPerPage: $('#itemsPerPage'),
-            totalAcheteurs: $('#totalAcheteurs'),
-            statTotal: $('#statTotal'),
-            statThisMonth: $('#statThisMonth'),
-            statThisWeek: $('#statThisWeek'),
-            statActiveCountry: $('#statActiveCountry')
-        };
-
-        applyTranslations();
-
-        // Fonction pour afficher le loader
-        function showLoader(show) {
-            if (show) {
-                elements.skeleton.show();
-                elements.tableBody.hide();
-                elements.loadingSpinner.show();
-            } else {
-                elements.skeleton.hide();
-                elements.tableBody.show();
-                elements.loadingSpinner.hide();
-            }
-        }
-
-        // Fonction pour formater la date
-        function formatDate(dateString) {
-            if (!dateString) return '--';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
-
-        // Fonction pour mettre à jour l'affichage des stats
-        function updateStatsDisplay() {
-            console.log('Stats reçues pour affichage:', stats); // Pour le débogage
-            
-            // Vérifier que stats existe et a la bonne structure
-            if (!stats || typeof stats !== 'object') {
-                console.error('Stats invalides:', stats);
-                stats = {
-                    total: 0,
-                    thisMonth: 0,
-                    thisWeek: 0,
-                    activeCountry: t('country_error')
-                };
-            }
-            
-            // S'assurer que les valeurs sont des nombres
-            const total = Number(stats.total) || 0;
-            const thisMonth = Number(stats.thisMonth) || 0;
-            const thisWeek = Number(stats.thisWeek) || 0;
-            const activeCountry = stats.activeCountry || t('country_undefined');
-            
-            // Mettre à jour l'affichage
-            elements.totalAcheteurs.text(total.toLocaleString());
-            elements.statTotal.text(total.toLocaleString());
-            elements.statThisMonth.text(thisMonth.toLocaleString());
-            elements.statThisWeek.text(thisWeek.toLocaleString());
-            
-            elements.statActiveCountry.html(`
-                <span class="badge bg-info text-white">
-                    ${activeCountry}
-                </span>
-            `);
-        }
-
-        // Fonction pour charger les statistiques
-        function loadStats() {
-            console.log('Chargement des statistiques...');
-            
-            $.ajax({
-                url: '/api/acheteurs/stats/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                success: function(response) {
-                    console.log('Réponse API stats:', response);
-                    
-                    // Vérifier la structure de la réponse
-                    if (response.success && response.stats) {
-                        // Si la réponse a la structure {success: true, stats: {...}}
-                        stats = response.stats;
-                    } else if (response.total !== undefined) {
-                        // Si la réponse a directement les stats
-                        stats = response;
-                    } else {
-                        console.error('Structure de réponse inattendue:', response);
-                        stats = {
-                            total: 0,
-                            thisMonth: 0,
-                            thisWeek: 0,
-                            activeCountry: t('country_invalid_format')
-                        };
-                    }
-                    
-                    updateStatsDisplay();
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erreur lors du chargement des stats:', error);
-                    
-                    stats = {
-                        total: 0,
-                        thisMonth: 0,
-                        thisWeek: 0,
-                        activeCountry: t('country_network_error')
-                    };
-                    updateStatsDisplay();
-                }
-            });
-        }
-
-        // Fonction pour charger les acheteurs
-        function loadAcheteurs() {
-            showLoader(true);
-            
-            const params = new URLSearchParams({
-                page: currentPage,
-                search: currentSearch,
-                page_size: itemsPerPage,
-                sort: currentSort,
-                sort_dir: currentSortDir,
-                filter: currentFilter
-            });
-
-            $.ajax({
-                url: '/api/liste-des-acheteurs/?' + params.toString(),
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                success: function(response) {
-                    console.log(response);
-                    allAcheteurs = response.results;
-                    totalAcheteurs = response.count;
-                    
-                    updateAcheteursTable();
-                    updatePagination(response);
-                    updateStatsDisplay();
-                    
-                    if (response.count === 0) {
-                        elements.emptyState.show();
-                        elements.tableBody.hide();
-                    } else {
-                        elements.emptyState.hide();
-                        elements.tableBody.show();
-                    }
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: t('err_load_title'),
-                        text: t('err_load_buyers'),
-                        confirmButtonColor: '#0A95CA'
-                    });
-                },
-                complete: function() {
-                    showLoader(false);
-                }
-            });
-        }
-
-        // Fonction pour mettre à jour le tableau
-        function updateAcheteursTable() {
-            elements.tableBody.empty();
-            
-            allAcheteurs.forEach(function(acheteur, index) {
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const rowNumber = startIndex + index + 1;
-                
-                // Limiter le nom à 10 caractères
-                const nomAffiche = acheteur.nom ? 
-                    (acheteur.nom.length > 10 ? acheteur.nom.substring(0, 15) + '...' : acheteur.nom) : 
-                    '--';
-                
-                // Limiter le sigle à 10 caractères
-                const sigleAffiche = acheteur.sigle ? 
-                    (acheteur.sigle.length > 10 ? acheteur.sigle.substring(0, 10) + '...' : acheteur.sigle) : 
-                    null;
-                
-                const row = `
-                    <tr data-id="${acheteur.id}" class="acheteur-row">
-                        <td class="ps-4 fw-medium text-muted">${rowNumber}</td>
-                        <td>
-                            <span class="badge bg-primary">${acheteur.code || '--'}</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 me-2">
-                                    <div class="bg-primary-soft p-2 rounded-circle">
-                                        <i class="bi bi-building text-primary"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">${nomAffiche}</h6>
-                                    <small class="text-muted">${acheteur.categorie_entreprise?.libelle || "{% trans 'Non catégorisé' %}"}</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            ${sigleAffiche ? 
-                                `<span class="badge bg-info" title="${acheteur.sigle}">${sigleAffiche}</span>` : 
-                                '<span class="text-muted">--</span>'
-                            }
-                        </td>
-                        <td>
-                            <div>
-                                <div class="mb-1">
-                                    <i class="bi bi-geo-alt me-1 text-primary"></i>
-                                    <span>${acheteur.ville?.nom || '--'}</span>
-                                </div>
-                                <small class="text-muted">${acheteur.pays?.nom || ''}</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator ${acheteur.statut_entreprise ? 'status-active' : 'status-inactive'}"></span>
-                                <span>${acheteur.statut_entreprise?.libelle || "{% trans 'Non défini' %}"}</span>
-                            </div>
-                        </td>
-                        <td class="pe-4">
-                            <div class="action-buttons justify-content-end">
-                                <button class="btn btn-sm btn-outline-primary action-btn manage-btn" 
-                                        data-id="${acheteur.id}"
-                                        data-nom="${acheteur.nom}"
-                                        title="{% trans 'Consulter' %}">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-warning action-btn edit-btn" 
-                                        data-id="${acheteur.id}"
-                                        data-nom="${acheteur.nom}"
-                                        title="{% trans 'Modifier' %}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger action-btn delete-btn" 
-                                        data-id="${acheteur.id}"
-                                        data-nom="${acheteur.nom}"
-                                        title="{% trans 'Supprimer' %}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                
-                elements.tableBody.append(row);
-            });
-        }
-
-        // Fonction pour mettre à jour la pagination
-        function updatePagination(response) {
-            const start = totalAcheteurs === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1;
-            const end = totalAcheteurs === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalAcheteurs);
-            elements.paginationInfo.html(`
-                ${tFormat('pagination_info', {
-                    start: start,
-                    end: end,
-                    total: totalAcheteurs
-                })}
-            `);
-            
-            let paginationHTML = '';
-            const totalPages = Math.ceil(totalAcheteurs / itemsPerPage);
-            
-            // Bouton Précédent
-            if (currentPage > 1) {
-                paginationHTML += `
-                    <li class="page-item">
-                        <a class="page-link" href="#" data-page="${currentPage - 1}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
-                `;
-            } else {
-                paginationHTML += `
-                    <li class="page-item disabled">
-                        <span class="page-link"><i class="bi bi-chevron-left"></i></span>
-                    </li>
-                `;
-            }
-            
-            // Pages
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                if (i === currentPage) {
-                    paginationHTML += `
-                        <li class="page-item active">
-                            <span class="page-link">${i}</span>
-                        </li>
-                    `;
-                } else {
-                    paginationHTML += `
-                        <li class="page-item">
-                            <a class="page-link" href="#" data-page="${i}">${i}</a>
-                        </li>
-                    `;
-                }
-            }
-            
-            // Bouton Suivant
-            if (currentPage < totalPages) {
-                paginationHTML += `
-                    <li class="page-item">
-                        <a class="page-link" href="#" data-page="${currentPage + 1}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-                `;
-            } else {
-                paginationHTML += `
-                    <li class="page-item disabled">
-                        <span class="page-link"><i class="bi bi-chevron-right"></i></span>
-                    </li>
-                `;
-            }
-            
-            elements.paginationControls.html(paginationHTML);
-        }
-
-        // Événements
-
-        // Recherche avec debounce
-        let searchTimeout;
-        elements.searchInput.on('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                currentSearch = $(this).val();
-                currentPage = 1;
-                loadAcheteurs();
-            }, 500);
-        });
-
-        // Changement du nombre d'éléments par page
-        elements.itemsPerPage.on('change', function() {
-            itemsPerPage = parseInt($(this).val());
-            currentPage = 1;
-            loadAcheteurs();
-        });
-
-        // Tri des colonnes
-        $('.sort-btn').on('click', function() {
-            const sortField = $(this).data('sort');
-            if (currentSort === sortField) {
-                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort = sortField;
-                currentSortDir = 'asc';
-            }
-            loadAcheteurs();
-        });
-
-        // Filtres
-        $('[data-filter]').on('click', function(e) {
-            e.preventDefault();
-            currentFilter = $(this).data('filter');
-            currentPage = 1;
-            loadAcheteurs();
-        });
-
-        // Pagination
-        $(document).on('click', '#paginationControls .page-link', function(e) {
-            e.preventDefault();
-            if (!$(this).parent().hasClass('disabled')) {
-                currentPage = parseInt($(this).data('page'));
-                loadAcheteurs();
-                $('html, body').animate({
-                    scrollTop: $('.card').offset().top - 20
-                }, 300);
+            error: function (xhr) {
+                hideLoading();
+                var code = xhr.status;
+                var msg = code === 401 ? T.expired
+                        : code === 403 ? T.forbidden
+                        : code === 404 ? T.notFound
+                        : code === 500 ? T.serverError
+                        : code === 0   ? T.unreachable
+                        : 'Erreur HTTP ' + code;
+                $tbody.html(
+                    '<tr><td colspan="7" class="text-center py-5 text-danger">'
+                    + '<i class="bi bi-exclamation-triangle fs-1 d-block mb-3"></i>'
+                    + '<strong>' + msg + '</strong><br>'
+                    + '<button class="btn btn-sm btn-outline-primary mt-3" id="retryBtn">'
+                    + '<i class="bi bi-arrow-clockwise me-1"></i>' + T.retry + '</button>'
+                    + '</td></tr>'
+                ).show();
+                if (code === 401) { setTimeout(function () { window.location.reload(); }, 2000); }
             }
         });
+    }
 
-        // Gestion des boutons d'action
-        $(document).on('click', '.edit-btn', function() {
-            const acheteurId = $(this).data('id');
-            const acheteurNom = $(this).data('nom');
-            
-            Swal.fire({
-                title: "{% trans 'Modifier cet acheteur' %}",
-                html: `{% trans 'Souhaitez-vous modifier' %} <strong>${acheteurNom}</strong> ?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#0A95CA',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: "{% trans 'Oui, modifier' %}",
-                cancelButtonText: "{% trans 'Annuler' %}"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `/root-dashboard/acheteurs/editer-un-acheteur/${acheteurId}/?token=${'{{ user.reset_token }}'}`;
-                }
-            });
-        });
+    /* ────────────────────────────────────────────
+       Boutons d'action
+    ──────────────────────────────────────────── */
+    var TOKEN_RESET = '{{ user.reset_token }}';
 
-        $(document).on('click', '.manage-btn', function() {
-            const acheteurId = $(this).data('id');
-            const acheteurNom = $(this).data('nom');
-            
-            Swal.fire({
-                title: "{% trans 'Consulter cet acheteur' %}",
-                html: `{% trans 'Souhaitez-vous consulter' %} <strong>${acheteurNom}</strong> ?`,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#0A95CA',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: "{% trans 'Oui, consulter' %}",
-                cancelButtonText: "{% trans 'Annuler' %}"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `/root-dashboard/acheteurs/manager-un-acheteur/${acheteurId}/?token=${'{{ user.reset_token }}'}`;
-                }
-            });
-        });
-
-        // Suppression avec modal Bootstrap
-        $(document).on('click', '.delete-btn', function() {
-            const acheteurId = $(this).data('id');
-            const acheteurNom = $(this).data('nom');
-            
-            $('#acheteurName').text(acheteurNom);
-            $('#deleteModal').data('acheteur-id', acheteurId);
-            $('#deleteModal').modal('show');
-        });
-
-        $('#confirmDelete').on('click', function() {
-            const acheteurId = $('#deleteModal').data('acheteur-id');
-            
-            $.ajax({
-                url: '/api/supprimer-des-acheteurs/',
-                type: 'DELETE',
-                data: JSON.stringify({ ids: [acheteurId] }),
-                contentType: 'application/json',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken
-                },
-                success: function(response) {
-                    $('#deleteModal').modal('hide');
-                    Swal.fire({
-                        icon: 'success',
-                        title: "{% trans 'Supprimé !' %}",
-                        text: "{% trans 'Acheteur supprimé avec succès.' %}",
-                        confirmButtonColor: '#0A95CA',
-                        timer: 2000
-                    });
-                    loadAcheteurs();
-                    loadStats();
-                },
-                error: function(response) {
-                    $('#deleteModal').modal('hide');
-                    Swal.fire({
-                        icon: 'error',
-                        title: "{% trans 'Erreur' %}",
-                        text: "{% trans 'Impossible de supprimer cet acheteur. Veuillez réessayer.' %}",
-                        confirmButtonColor: '#0A95CA'
-                    });
-                }
-            });
-        });
-
-        // Double-clic sur une ligne pour consulter
-        $(document).on('dblclick', '.acheteur-row', function() {
-            const acheteurId = $(this).data('id');
-            window.location.href = `/root-dashboard/acheteurs/manager-un-acheteur/${acheteurId}/?token=${'{{ user.reset_token }}'}`;
-        });
-
-        // Configuration AJAX globale avec intercepteur
-        $.ajaxSetup({
-            beforeSend: function(xhr) {
-                if (accessToken) {
-                    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-                }
-            }
-        });
-
-        // Intercepteur pour les erreurs d'authentification
-        $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
-            if (jqxhr.status === 401) {
-                // Token expiré, tenter de le rafraîchir
-                refreshAccessToken();
-                return false; // Empêcher d'autres gestionnaires d'erreurs
-            }
-        });
-
-        // Fonction pour rafraîchir le token
-        function refreshAccessToken() {
-            Swal.fire({
-                title: "{% trans 'Session expirée' %}",
-                text: "{% trans 'Votre session a expiré. Voulez-vous rafraîchir votre token?' %}",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: "{% trans 'Rafraîchir' %}",
-                cancelButtonText: "{% trans 'Recharger la page' %}",
-                showLoaderOnConfirm: true,
-                preConfirm: () => {
-                    return $.ajax({
-                        url: '/api/token/refresh/',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ refresh: refreshToken }),
-                        success: function(response) {
-                            accessToken = response.access;
-                            localStorage.setItem('access_token', accessToken);
-                            localStorage.setItem('refresh_token', refreshToken);
-                            
-                            // Recharger les données
-                            loadAcheteurs();
-                            
-                            return true;
-                        },
-                        error: function() {
-                            return false;
-                        }
-                    });
-                }
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.cancel) {
-                    window.location.reload();
-                } else if (result.isConfirmed) {
-                    Swal.fire("{% trans 'Succès!' %}", "{% trans 'Token rafraîchi avec succès.' %}", 'success');
-                } else {
-                    Swal.fire("{% trans 'Erreur' %}", "{% trans 'Impossible de rafraîchir le token.' %}", 'error');
-                }
-            });
-        }
-
-        // Initialisation
-        loadStats();
-        loadAcheteurs();
-        
-        // Rafraîchir automatiquement toutes les 5 minutes
-        setInterval(loadAcheteurs, 300000);
+    $(document).on('click', '.manage-btn', function () {
+        var id = $(this).data('id');
+        window.location.href = '/root-dashboard/acheteurs/manager-un-acheteur/' + id + '/?token=' + TOKEN_RESET;
     });
+
+    $(document).on('click', '.edit-btn', function () {
+        var id = $(this).data('id');
+        window.location.href = '/root-dashboard/acheteurs/editer-un-acheteur/' + id + '/?token=' + TOKEN_RESET;
+    });
+
+    $(document).on('click', '.delete-btn', function () {
+        var nom = $(this).data('nom');
+        var id  = $(this).data('id');
+        $('#acheteurName').text(nom);
+        $('#deleteModal').data('acheteur-id', id);
+        $('#deleteModal').modal('show');
+    });
+
+    $('#confirmDelete').on('click', function () {
+        var id = $('#deleteModal').data('acheteur-id');
+        $.ajax({
+            url: '/api/supprimer-des-acheteurs/',
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ ids: [id] }),
+            headers: authHeader(),
+            success: function () {
+                $('#deleteModal').modal('hide');
+                Swal.fire({ icon: 'success', title: T.deleted, timer: 1500, showConfirmButton: false });
+                loadAcheteurs();
+                loadStats();
+            },
+            error: function () {
+                $('#deleteModal').modal('hide');
+                Swal.fire({ icon: 'error', title: T.error, text: T.delError });
+            }
+        });
+    });
+
+    /* ────────────────────────────────────────────
+       PDF
+    ──────────────────────────────────────────── */
+    $(document).on('click', '.pdf-btn', function () {
+        var id  = $(this).data('id');
+        var nom = $(this).data('nom');
+        var $b  = $(this).prop('disabled', true);
+
+        Swal.fire({
+            title: T.pdfTitle,
+            html: '<div class="spinner-border text-success me-2"></div>' + T.preparing + ' <strong>' + escHtml(nom) + '</strong>…',
+            showConfirmButton: false, allowOutsideClick: false
+        });
+
+        $.ajax({
+            url: '/api/reporting/generer-rapport-solvabilite/',
+            type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ acheteur_id: id, inclure_commande: 'non', langue: 'fr', format_rapport: 'pdf' }),
+            headers: authHeader(),
+            success: function (r) {
+                if (!r.report_data) {
+                    Swal.fire(T.error, r.error || T.missingData, 'error');
+                    $b.prop('disabled', false); return;
+                }
+                Swal.update({ html: '<div class="spinner-border text-success me-2"></div>' + T.generating });
+                $.ajax({
+                    url: '/api/reporting/exporter-rapport/',
+                    type: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({ report_data: r.report_data, form_data: r.form_data, export_format: 'pdf', acheteur_id: id }),
+                    headers: authHeader(),
+                    xhrFields: { responseType: 'blob' },
+                    success: function (blob, st, xhr) {
+                        Swal.close();
+                        if (!(xhr.getResponseHeader('Content-Type') || '').includes('pdf')) {
+                            Swal.fire(T.error, T.notPdf, 'error');
+                            $b.prop('disabled', false); return;
+                        }
+                        var objUrl = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = objUrl;
+                        a.download = 'rapport_' + nom.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_' + new Date().getFullYear() + '.pdf';
+                        document.body.appendChild(a); a.click();
+                        setTimeout(function () { URL.revokeObjectURL(objUrl); a.remove(); }, 1000);
+                        $b.prop('disabled', false);
+                    },
+                    error: function () { Swal.fire(T.error, T.pdfError, 'error'); $b.prop('disabled', false); }
+                });
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message)) || T.reportError;
+                Swal.fire(T.error, msg, 'error'); $b.prop('disabled', false);
+            }
+        });
+    });
+
+    /* ────────────────────────────────────────────
+       Événements divers
+    ──────────────────────────────────────────── */
+    $(document).on('click', '#retryBtn', function () { loadAcheteurs(); });
+
+    $(document).on('dblclick', '.acheteur-row', function () {
+        window.location.href = '/root-dashboard/acheteurs/manager-un-acheteur/' + $(this).data('id') + '/?token=' + TOKEN_RESET;
+    });
+
+    $('#searchInput').on('input', function () {
+        clearTimeout(searchTimer);
+        var val = $(this).val();
+        searchTimer = setTimeout(function () {
+            currentSearch = val;
+            currentPage = 1;
+            loadAcheteurs();
+        }, 400);
+    });
+
+    $('#itemsPerPage').on('change', function () {
+        pageSize = parseInt($(this).val(), 10);
+        currentPage = 1;
+        loadAcheteurs();
+    });
+
+    $('.sort-btn').on('click', function () {
+        var f = $(this).data('sort');
+        if (sortField === f) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+        else { sortField = f; sortDir = 'asc'; }
+        loadAcheteurs();
+    });
+
+    $('[data-filter]').on('click', function (e) {
+        e.preventDefault();
+        currentFilter = $(this).data('filter') || 'all';
+        currentPage = 1;
+        loadAcheteurs();
+    });
+
+    $(document).on('click', '#paginationControls .page-link', function (e) {
+        e.preventDefault();
+        var p = parseInt($(this).data('page'), 10);
+        if (p && !$(this).parent().hasClass('disabled') && !$(this).parent().hasClass('active')) {
+            currentPage = p;
+            loadAcheteurs();
+        }
+    });
+
+    /* ────────────────────────────────────────────
+       Créations incomplètes (brouillons)
+    ──────────────────────────────────────────── */
+    function loadDrafts() {
+        $.ajax({
+            url: '/api/acheteurs-incomplets/',
+            type: 'GET',
+            headers: authHeader(),
+            success: function (r) {
+                var n = r.count || 0;
+                if (n > 0) { $('#draftsBadgeCount').text(n); $('#btnDraftsBadge').show(); }
+                else        { $('#btnDraftsBadge').hide(); }
+            }
+        });
+    }
+
+    $('#modalDrafts').on('show.bs.modal', function () {
+        $('#draftsLoading').show(); $('#draftsList').hide().empty(); $('#draftsEmpty').hide();
+        $.ajax({
+            url: '/api/acheteurs-incomplets/',
+            type: 'GET',
+            headers: authHeader(),
+            success: function (r) {
+                var list = r.acheteurs || [];
+                if (!list.length) { $('#draftsLoading').hide(); $('#draftsEmpty').show(); return; }
+                var html = '<div class="list-group list-group-flush">';
+                $.each(list, function (i, a) {
+                    var date = a.created_at ? new Date(a.created_at).toLocaleDateString('fr-FR') : '—';
+                    var url  = '{% url "dash_root_add_acheteur" %}?token={{ user.reset_token }}&resume=' + a.id;
+                    html += '<div class="list-group-item d-flex align-items-center gap-3 py-3">'
+                          + '<span class="badge bg-warning text-dark rounded-circle p-2"><i class="bi bi-building"></i></span>'
+                          + '<div class="flex-grow-1">'
+                          + '<div class="fw-semibold">' + escHtml(a.nom) + '</div>'
+                          + '<small class="text-muted"><i class="bi bi-clock me-1"></i>' + date + '</small>'
+                          + '</div>'
+                          + '<a href="' + url + '" class="btn btn-sm btn-warning"><i class="bi bi-play-fill me-1"></i>' + T.resume + '</a>'
+                          + '</div>';
+                });
+                html += '</div>';
+                $('#draftsList').html(html).show(); $('#draftsLoading').hide();
+            },
+            error: function () {
+                $('#draftsLoading').hide();
+                $('#draftsList').html('<p class="text-danger p-3">' + T.loadError + '</p>').show();
+            }
+        });
+    });
+
+    /* ────────────────────────────────────────────
+       Démarrage
+    ──────────────────────────────────────────── */
+    loadStats();
+    loadAcheteurs();
+    loadDrafts();
+    setInterval(loadAcheteurs, 300000);
+    setInterval(loadDrafts,    120000);
+});
 </script>
 {% endblock %}

@@ -481,11 +481,6 @@ urlpatterns = [
         name="dash_analyste_client",
     ),
     path(
-        "analyste-dashboard/monitoring/carnet-adresses/",
-        dash_analyste_carnet,
-        name="dash_analyste_carnet",
-    ),
-    path(
         "analyste-dashboard/monitoring/liste-des-portefeuilles/",
         dash_analyste_portefeuille,
         name="dash_analyste_portefeuille",

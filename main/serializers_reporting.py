@@ -52,9 +52,9 @@ class CommandeSerializer(serializers.ModelSerializer):
     
 
 class RapportSolvabiliteSerializer(serializers.Serializer):
-    annee_n = serializers.IntegerField(required=True)
-    annee_n1 = serializers.IntegerField(required=True)
-    annee_n2 = serializers.IntegerField(required=True)
+    annee_n = serializers.IntegerField(required=False, allow_null=True)
+    annee_n1 = serializers.IntegerField(required=False, allow_null=True)
+    annee_n2 = serializers.IntegerField(required=False, allow_null=True)
     inclure_commande = serializers.ChoiceField(
         choices=[('oui', 'Oui'), ('non', 'Non')],
         required=True
@@ -97,9 +97,9 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
         return value
 
     def validate(self, data):
-        # Validation des années
-        annees = [data['annee_n'], data['annee_n1'], data['annee_n2']]
-        if len(set(annees)) != 3:
+        # Validation des années — uniquement si explicitement fournies
+        annees = [v for v in [data.get('annee_n'), data.get('annee_n1'), data.get('annee_n2')] if v is not None]
+        if len(annees) > 1 and len(set(annees)) != len(annees):
             raise serializers.ValidationError("Les années doivent être distinctes.")
         
         # Validation de la commande si inclure_commande est 'oui'

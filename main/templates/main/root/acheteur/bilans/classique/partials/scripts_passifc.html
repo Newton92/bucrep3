@@ -1,3 +1,4 @@
+{% load i18n %}
 <script>
 $(document).ready(function() {
     let accessToken = '{{ access }}';
@@ -26,14 +27,16 @@ $(document).ready(function() {
             const p = (val) => parseFloat(val) || 0;
             const totalI = p($(`input[name="capital_social_${suffix}"]`).val()) + p($(`input[name="primes_${suffix}"]`).val()) + p($(`input[name="ecarts_de_reevaluation_${suffix}"]`).val()) + p($(`input[name="reserve_${suffix}"]`).val()) + p($(`input[name="report_a_nouveau_${suffix}"]`).val()) + p($(`input[name="resultat_exercice_${suffix}"]`).val()) + p($(`input[name="subv_invest_${suffix}"]`).val()) + p($(`input[name="provision_regl_${suffix}"]`).val());
             const totalII = p($(`input[name="emprunts_${suffix}"]`).val()) + p($(`input[name="dette_credit_bail_contrat_assimile_${suffix}"]`).val()) + p($(`input[name="dettes_financiere_diverses_${suffix}"]`).val()) + p($(`input[name="provision_financiere_risque_charge_${suffix}"]`).val());
-            const totalIII = p($(`input[name="dettes_fournisseurs_divers_${suffix}"]`).val()) + p($(`input[name="avance_et_acomptes_recu_${suffix}"]`).val()) + p($(`input[name="dettes_${suffix}"]`).val()) + p($(`input[name="dettes_fiscales_sociales_${suffix}"]`).val()) + p($(`input[name="autres_dettes_${suffix}"]`).val()) + p($(`input[name="banques_credit_escompte_${suffix}"]`).val()) + p($(`input[name="banque_credit_caisse_${suffix}"]`).val()) + p($(`input[name="banques_decouvert_${suffix}"]`).val());
-            const totalIV = p($(`input[name="ecart_conversion_passif_${suffix}"]`).val());
-            const generalTotal = totalI + totalII + totalIII + totalIV;
-            
+            const totalIII = p($(`input[name="dettes_fournisseurs_divers_${suffix}"]`).val()) + p($(`input[name="avance_et_acomptes_recu_${suffix}"]`).val()) + p($(`input[name="dettes_${suffix}"]`).val()) + p($(`input[name="dettes_fiscales_sociales_${suffix}"]`).val()) + p($(`input[name="autres_dettes_${suffix}"]`).val());
+            const totalIV = p($(`input[name="banques_credit_escompte_${suffix}"]`).val()) + p($(`input[name="banque_credit_caisse_${suffix}"]`).val()) + p($(`input[name="banques_decouvert_${suffix}"]`).val());
+            const totalV = p($(`input[name="ecart_conversion_passif_${suffix}"]`).val());
+            const generalTotal = totalI + totalII + totalIII + totalIV + totalV;
+
             $(`#total_I_${suffix}`).val(formatCurrency(totalI));
             $(`#total_II_${suffix}`).val(formatCurrency(totalII));
             $(`#total_III_${suffix}`).val(formatCurrency(totalIII));
             $(`#total_IV_${suffix}`).val(formatCurrency(totalIV));
+            $(`#total_V_${suffix}`).val(formatCurrency(totalV));
             $(`#general_total_${suffix}`).val(formatCurrency(generalTotal));
         }
         $(`#collapsePassifC${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
@@ -89,11 +92,13 @@ $(document).ready(function() {
                 $('#modal-passifc-dettes').text(formatCurrency(data.dettes));
                 $('#modal-passifc-dettes_fiscales_sociales').text(formatCurrency(data.dettes_fiscales_sociales));
                 $('#modal-passifc-autres_dettes').text(formatCurrency(data.autres_dettes));
+
+                $('#total-passifc-IV').text(formatCurrency(data.total_IV));
                 $('#modal-passifc-banques_credit_escompte').text(formatCurrency(data.banques_credit_escompte));
                 $('#modal-passifc-banque_credit_caisse').text(formatCurrency(data.banque_credit_caisse));
                 $('#modal-passifc-banques_decouvert').text(formatCurrency(data.banques_decouvert));
 
-                $('#total-passifc-IV').text(formatCurrency(data.total_IV));
+                $('#total-passifc-V').text(formatCurrency(data.total_V));
                 $('#modal-passifc-ecart_conversion_passif').text(formatCurrency(data.ecart_conversion_passif));
 
                 $('#total-general-passifc').text(formatCurrency(data.total_general));
@@ -117,15 +122,17 @@ $(document).ready(function() {
             const p = (val) => parseFloat(val) || 0;
             const totalI = p($('#edit_capital_social').val()) + p($('#edit_primes').val()) + p($('#edit_ecarts_de_reevaluation').val()) + p($('#edit_reserve').val()) + p($('#edit_report_a_nouveau').val()) + p($('#edit_resultat_exercice').val()) + p($('#edit_subv_invest').val()) + p($('#edit_provision_regl').val());
             const totalII = p($('#edit_emprunts').val()) + p($('#edit_dette_credit_bail_contrat_assimile').val()) + p($('#edit_dettes_financiere_diverses').val()) + p($('#edit_provision_financiere_risque_charge').val());
-            const totalIII = p($('#edit_dettes_fournisseurs_divers').val()) + p($('#edit_avance_et_acomptes_recu').val()) + p($('#edit_dettes').val()) + p($('#edit_dettes_fiscales_sociales').val()) + p($('#edit_autres_dettes').val()) + p($('#edit_banques_credit_escompte').val()) + p($('#edit_banque_credit_caisse').val()) + p($('#edit_banques_decouvert').val());
-            const totalIV = p($('#edit_ecart_conversion_passif').val());
+            const totalIII = p($('#edit_dettes_fournisseurs_divers').val()) + p($('#edit_avance_et_acomptes_recu').val()) + p($('#edit_dettes').val()) + p($('#edit_dettes_fiscales_sociales').val()) + p($('#edit_autres_dettes').val());
+            const totalIV = p($('#edit_banques_credit_escompte').val()) + p($('#edit_banque_credit_caisse').val()) + p($('#edit_banques_decouvert').val());
+            const totalV = p($('#edit_ecart_conversion_passif').val());
 
-            const generalTotal = totalI + totalII + totalIII + totalIV;
+            const generalTotal = totalI + totalII + totalIII + totalIV + totalV;
 
             $('#edit_total_I').val(formatCurrency(totalI));
             $('#edit_total_II').val(formatCurrency(totalII));
             $('#edit_total_III').val(formatCurrency(totalIII));
             $('#edit_total_IV').val(formatCurrency(totalIV));
+            $('#edit_total_V').val(formatCurrency(totalV));
             $('#edit_general_total').val(formatCurrency(generalTotal));
         }
         
@@ -168,13 +175,15 @@ $(document).ready(function() {
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_dettes" class="form-label mb-0">Dettes</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="dettes" id="edit_dettes" value="${data.dettes || 0}"></div></div>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_dettes_fiscales_sociales" class="form-label mb-0">Dettes fiscales & sociales</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="dettes_fiscales_sociales" id="edit_dettes_fiscales_sociales" value="${data.dettes_fiscales_sociales || 0}"></div></div>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres_dettes" class="form-label mb-0">Autres dettes</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres_dettes" id="edit_autres_dettes" value="${data.autres_dettes || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_III" class="form-label fw-bold mb-0">TOTAL PASSIF CIRCULANT</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_III" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">TRÉSORERIE PASSIF</h4>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banques_credit_escompte" class="form-label mb-0">Banques (crédit d'escompte)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banques_credit_escompte" id="edit_banques_credit_escompte" value="${data.banques_credit_escompte || 0}"></div></div>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banque_credit_caisse" class="form-label mb-0">Banques (crédit de caisse)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banque_credit_caisse" id="edit_banque_credit_caisse" value="${data.banque_credit_caisse || 0}"></div></div>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banques_decouvert" class="form-label mb-0">Banques (découvert)</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banques_decouvert" id="edit_banques_decouvert" value="${data.banques_decouvert || 0}"></div></div>
-                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_III" class="form-label fw-bold mb-0">TOTAL PASSIF CIRCULANT</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_III" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_IV" class="form-label fw-bold mb-0">TOTAL TRÉSORERIE PASSIF</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_IV" readonly style="background-color: #e9ecef;"></div></div>
                     <h4 class="text-primary mt-4">COMPTES DE RÉGULARISATION</h4>
                     <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_ecart_conversion_passif" class="form-label mb-0">Écarts de conversion</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="ecart_conversion_passif" id="edit_ecart_conversion_passif" value="${data.ecart_conversion_passif || 0}"></div></div>
-                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_IV" class="form-label fw-bold mb-0">TOTAL COMPTES DE RÉGULARISATION</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_IV" readonly style="background-color: #e9ecef;"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_V" class="form-label fw-bold mb-0">TOTAL COMPTES DE RÉGULARISATION</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_V" readonly style="background-color: #e9ecef;"></div></div>
                     <hr class="my-4">
                     <div class="row align-items-center bg-light p-3 rounded"><div class="col-md-6"><h5 class="mb-0">TOTAL GÉNÉRAL PASSIF</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_general_total" readonly></div></div>
                 `;

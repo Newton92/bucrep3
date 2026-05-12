@@ -61,7 +61,21 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "10.0.194.193", "107.172.88.238", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[
+    "10.0.57.47", "10.0.194.193", "107.172.88.238", "3.236.213.114",
+    "localhost", "127.0.0.1",
+    "preprod.bucrep3.bucrep.net",
+    # Espace privé en développement (port 8001)
+    "localhost:8001",
+])
+
+# ---------------------------------------------------------------------------
+# Ségrégation site public / espace privé
+# En développement : PUBLIC_HOST=localhost:8000, PRIVATE_HOST=localhost:8001
+# En production    : PUBLIC_HOST=www.bucrep.net,  PRIVATE_HOST=app.bucrep.net
+# ---------------------------------------------------------------------------
+PUBLIC_HOST  = env("DJANGO_PUBLIC_HOST",  default="localhost:8000")
+PRIVATE_HOST = env("DJANGO_PRIVATE_HOST", default="localhost:8001")
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
@@ -183,10 +197,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
-    
+
+    # Ségrégation vitrine / espace privé (activer quand deux domaines distincts)
+    # "main.middleware.SiteSegregationMiddleware",
+
     # "django.middleware.cache.UpdateCacheMiddleware",
     # "django.middleware.cache.FetchFromCacheMiddleware",
-    
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -210,9 +227,10 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                
+
                 # Gestion des auth tokens
                 "main.context_processors.auth_tokens",
             ],
@@ -485,7 +503,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-LOGIN_URL = '/'
+LOGIN_URL = '/login/'
 
 DEFAULT_CHARSET = 'utf-8'
 DEFAULT_COUNTRY_CODE = "GA"

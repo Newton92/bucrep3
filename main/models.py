@@ -304,8 +304,25 @@ class User(AbstractUser):
         blank=True,
         help_text=_("Date de la dernière modification du mot de passe.")
     )
-    
-    
+
+    pays_actif = models.ForeignKey(
+        "Pays",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="utilisateurs_pays_actif",
+        verbose_name=_("Pays actif (toolbar)"),
+        help_text=_("Dernier pays sélectionné dans la toolbar — persisté entre les sessions."),
+    )
+
+    preferred_language = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        verbose_name=_("Langue préférée"),
+        help_text=_("Langue de l'interface sélectionnée — persistée entre les sessions."),
+    )
+
     history = HistoricalRecords()
     
 
@@ -496,8 +513,8 @@ class Ville(Model):
     class Meta:
         verbose_name = _("Ville")
         verbose_name_plural = _("Villes")
-        ordering = ["nom"]  # Trie les villes par nom dans l'ordre alphabétique.
-        unique_together = ("nom", "province")
+        ordering = ["nom"]
+        unique_together = ("nom", "pays")
 
     def __str__(self):
         return f"{self.nom} ({self.code})"
@@ -693,6 +710,29 @@ class SubCategoryNaceCode(Model):
         verbose_name = _("Sous-Catégorie Code NACE")
         verbose_name_plural = _("Sous-Catégories Code NACE")
         ordering = ["code"]
+
+
+class NaceSpecifique(Model):
+    """NACE codes with 3-level classification: Activity → Type → Code."""
+
+    activity    = models.CharField(max_length=255, db_index=True)
+    type        = models.CharField(max_length=255, db_index=True)
+    code        = models.CharField(max_length=50, unique=True)
+    denomination = models.CharField(max_length=500)
+    active      = models.BooleanField(default=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.denomination}"
+
+    class Meta:
+        verbose_name = "NACE Code (Specific)"
+        verbose_name_plural = "NACE Codes (Specific)"
+        ordering = ["activity", "type", "code"]
+        indexes = [
+            models.Index(fields=["activity", "type"]),
+        ]
 
 
 class CategoryNafCode(Model):
@@ -1723,15 +1763,6 @@ class Acheteur(Model):
         help_text=_("Code unique de l'acheteur"),
     )
 
-    categorie_entreprise = models.ForeignKey(
-        "CategorieEntreprise",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name=_("Catégorie d'Entreprise"),
-        help_text=_("Catégorie à laquelle appartient l'entreprise"),
-    )
-
     forme_juridique = models.ForeignKey(
         "FormeJuridique",
         on_delete=models.SET_NULL,
@@ -1742,6 +1773,15 @@ class Acheteur(Model):
     )
     
     code_nace = models.CharField(_("Code Nace"), max_length=100, choices=LISTE_NOUVEAUX_CODE_NACE, blank=True)
+
+    nace_specifique = models.ForeignKey(
+        "NaceSpecifique",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="NACE Code (Specific)",
+        related_name="acheteurs",
+    )
 
     activite_principale = models.CharField(
         _("Activité Principale"),
@@ -1881,7 +1921,13 @@ class Acheteur(Model):
         related_name='user_update',
         verbose_name=_("Mis à jour par")
     )
-    
+
+    creation_complete = models.BooleanField(
+        default=False,
+        verbose_name=_("Création complète"),
+        help_text=_("Indique si le wizard de création a été complété (4 étapes)"),
+    )
+
     history = HistoricalRecords()
     
 
@@ -8560,13 +8606,20 @@ class PassifC(Model):
 
     @property
     def total_III(self):
-        """Calcule le total des dettes du passif circulant (III)."""
+        """Calcule le total du passif circulant (III)."""
         fields = [
             self.dettes_fournisseurs_divers,
             self.avance_et_acomptes_recu,
             self.dettes,
             self.dettes_fiscales_sociales,
             self.autres_dettes,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_IV(self):
+        """Calcule le total de la trésorerie passif (IV)."""
+        fields = [
             self.banques_credit_escompte,
             self.banque_credit_caisse,
             self.banques_decouvert,
@@ -8574,14 +8627,14 @@ class PassifC(Model):
         return sum(f or 0 for f in fields)
 
     @property
-    def total_IV(self):
-        """Calcule le total des comptes de régularisation (IV)."""
+    def total_V(self):
+        """Calcule l'écart de conversion passif (V)."""
         return self.ecart_conversion_passif or 0
 
     @property
     def total_general(self):
         """Calcule le total général du passif."""
-        return self.total_I + self.total_II + self.total_III + self.total_IV
+        return self.total_I + self.total_II + self.total_III + self.total_IV + self.total_V
 
 
 # Compte de Résultat
@@ -13192,14 +13245,31 @@ class DocumentAlerte(Model):
 class Warning(Model):
     """Modele metier: Warning."""
     _safedelete_policy = SOFT_DELETE_CASCADE
-    titre = models.CharField(max_length=500,verbose_name=_("Titre"), null=False, blank=False)
+    titre = models.CharField(max_length=500, verbose_name=_("Titre"), null=False, blank=False)
     description = models.TextField()
     acheteurs = models.ManyToManyField(Acheteur)
     created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Champs email
+    email_subject = models.CharField(max_length=500, blank=True, default='', verbose_name=_("Objet de l'email"))
+    email_to = models.TextField(blank=True, default='', verbose_name=_("Destinataires (À)"))
+    email_cc = models.TextField(blank=True, default='', verbose_name=_("Copie (CC)"))
+    email_bcc = models.TextField(blank=True, default='', verbose_name=_("Copie cachée (BCC)"))
+    email_sent = models.BooleanField(default=False, verbose_name=_("Email envoyé"), db_index=True)
+    email_sent_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'envoi"))
+
     def __str__(self):
         return self.titre
+
+    def get_email_to_list(self):
+        return [e.strip() for e in self.email_to.split(',') if e.strip()]
+
+    def get_email_cc_list(self):
+        return [e.strip() for e in self.email_cc.split(',') if e.strip()]
+
+    def get_email_bcc_list(self):
+        return [e.strip() for e in self.email_bcc.split(',') if e.strip()]
 
 
 def warning_upload_path(instance, filename):

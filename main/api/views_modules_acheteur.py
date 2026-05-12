@@ -8253,24 +8253,22 @@ class AddAcheteurActifClassiqueView(APIView):
 class EditAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
-        # Verify the passif belongs to the specified acheteur
-        passif = ActifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
-        if not passif:
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifC.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
+        if not actif:
             return Response(
-                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                {"detail": "Actif non trouvé pour cet acheteur."},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = GetActifCSerializer(actif)
         return Response(serializer.data)
 
-    def put(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
-        # Verify the passif belongs to the specified acheteur
-        passif = ActifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
-        if not passif:
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifC.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
+        if not actif:
             return Response(
-                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                {"detail": "Actif non trouvé pour cet acheteur."},
                 status=status.HTTP_404_NOT_FOUND
             )
 

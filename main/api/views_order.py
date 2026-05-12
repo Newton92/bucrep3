@@ -182,8 +182,17 @@ class OrderModuleListCreateView(APIView):
                 obj.pays_id = active_country_id
             elif getattr(obj, "ville_id", None) and getattr(obj.ville, "pays_id", None):
                 obj.pays_id = obj.ville.pays_id
+            update_fields = []
             if obj.pays_id:
-                obj.save(update_fields=["pays"])
+                update_fields.append("pays")
+            # Auto-génération notre_ref : {id}/{code_pays}
+            pays_code = ""
+            if obj.pays_id:
+                from main.models import Pays as _Pays
+                pays_code = _Pays.objects.filter(pk=obj.pays_id).values_list("code", flat=True).first() or ""
+            obj.notre_ref = f"{obj.id}/{pays_code}" if pays_code else str(obj.id)
+            update_fields.append("notre_ref")
+            obj.save(update_fields=update_fields)
             return Response(CheckCommandeSerializer(obj).data, status=status.HTTP_201_CREATED)
         logger.warning("Validation creation commande échouée: %s", serializer.errors)
         return Response(

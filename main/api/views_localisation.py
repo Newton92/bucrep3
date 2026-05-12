@@ -479,6 +479,19 @@ class ListVillesByProvinceView(APIView):
         return Response({"results": serializer.data})
 
 
+class ListVillesByPaysView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        pays_id = self.kwargs.get("pays_id")
+        search = request.query_params.get("q", "")
+        qs = Ville.objects.filter(pays_id=pays_id).order_by("nom")
+        if search:
+            qs = qs.filter(nom__icontains=search)
+        serializer = VilleProvinceSerializer(qs, many=True)
+        return Response({"results": serializer.data, "count": qs.count()})
+
+
 class AddVilleView(APIView):
     permission_classes = [IsAuthenticated]
 

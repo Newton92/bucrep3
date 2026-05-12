@@ -29,12 +29,17 @@ User = get_user_model()
 class ListUtilisateurView(APIView):
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self, search_query=''):
-        """Retourne le queryset filtré selon la recherche"""
+    def get_queryset(self, search_query='', user_type=''):
+        """Retourne le queryset filtré selon la recherche et le type"""
         queryset = User.objects.select_related('pays').prefetch_related(
             'groups', 'affectation', 'affectation_possible'
         )
-        
+
+        if user_type == 'client':
+            queryset = queryset.filter(Q(role='Client') | Q(is_client=True))
+        elif user_type == 'staff':
+            queryset = queryset.exclude(Q(role='Client') | Q(is_client=True))
+
         if search_query:
             queryset = queryset.filter(
                 Q(username__icontains=search_query) |
@@ -44,11 +49,12 @@ class ListUtilisateurView(APIView):
                 Q(first_name__icontains=search_query) |
                 Q(last_name__icontains=search_query)
             )
-        
+
         return queryset.order_by("-date_joined")
-    
+
     def get(self, request, *args, **kwargs):
         search_query = request.query_params.get("search", "").strip()
+        user_type = request.query_params.get("user_type", "").strip()
         page_number = request.query_params.get("page", 1)
         
         try:
@@ -57,7 +63,7 @@ class ListUtilisateurView(APIView):
             page_number = 1
         
         # Obtenir le queryset
-        users_query = self.get_queryset(search_query)
+        users_query = self.get_queryset(search_query, user_type)
         
         # Pagination
         paginator = Paginator(users_query, 10)

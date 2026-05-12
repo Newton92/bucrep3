@@ -50,6 +50,17 @@ from main.api.views_api_emailling import *
 from main.api.views_mailing_v2 import *
 from main.api.views_api_mailling_v3 import *
 from main.api.views_bucrep3 import *
+from main.api.views_export import (
+    ExportListingDataAPIView,
+    ExportListingFileAPIView,
+    ExportDecompteDataAPIView,
+    ExportDecompteFileAPIView,
+)
+from main.api.views_nace import (
+    NaceActivitiesAPIView,
+    NaceTypesAPIView,
+    NaceCodesAPIView,
+)
 from main.api.views_api_mailling_v3 import (
     TestMailingAPIView,
     DiagnostiqueCommandesAPIView,
@@ -171,6 +182,7 @@ urlpatterns = [
     path("generate-admin/", new_admin, name="new_admin"),
     path("report-modele/", report_modele, name="report_modele"),
     path("report-template/", report, name="report"),
+    path("rapport/verifier/<int:acheteur_id>/", verifier_rapport, name="verifier_rapport"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR AUTH                                                                                             #
@@ -218,6 +230,16 @@ urlpatterns = [
         "root-dashboard/commandes/gestion-des-commandes",
         dash_root_order,
         name="dash_root_order",
+    ),
+    path(
+        "root-dashboard/commandes/nouvelle-commande",
+        dash_root_order_create,
+        name="dash_root_order_create",
+    ),
+    path(
+        "root-dashboard/commandes/modifier-une-commande/<int:order_id>/",
+        dash_root_order_edit,
+        name="dash_root_order_edit",
     ),
     path(
         "root-dashboard/standard/liste-des-devises",
@@ -670,11 +692,6 @@ urlpatterns = [
         name="dash_root_client",
     ),
     path(
-        "root-dashboard/monitoring/carnet-adresses/",
-        dash_root_carnet,
-        name="dash_root_carnet",
-    ),
-    path(
         "root-dashboard/monitoring/liste-des-portefeuilles/",
         dash_root_portefeuille,
         name="dash_root_portefeuille",
@@ -825,6 +842,41 @@ urlpatterns = [
         dash_root_warning,
         name="dash_root_warning",
     ),
+    path(
+        "root-dashboard/gestion-des-warnings/nouvelle-alerte/",
+        dash_root_create_warning,
+        name="dash_root_create_warning",
+    ),
+    path(
+        "root-dashboard/gestion-des-warnings/modifier/<int:warning_id>/",
+        dash_root_edit_warning,
+        name="dash_root_edit_warning",
+    ),
+    path(
+        "root-dashboard/gestion-des-warnings/detail/<int:warning_id>/",
+        dash_root_view_warning,
+        name="dash_root_view_warning",
+    ),
+    # ── Exportations ──────────────────────────────────────────
+    path(
+        "root-dashboard/exportations/listing/",
+        dash_root_export_listing,
+        name="dash_root_export_listing",
+    ),
+    path(
+        "root-dashboard/exportations/decompte/",
+        dash_root_export_decompte,
+        name="dash_root_export_decompte",
+    ),
+    # API Exportations
+    path("api/exports/listing/",        ExportListingDataAPIView.as_view(),  name="api_export_listing_data"),
+    path("api/exports/listing/export/", ExportListingFileAPIView.as_view(),  name="api_export_listing_file"),
+    path("api/exports/decompte/",       ExportDecompteDataAPIView.as_view(), name="api_export_decompte_data"),
+    path("api/exports/decompte/export/",ExportDecompteFileAPIView.as_view(), name="api_export_decompte_file"),
+    # API NACE Specifique (cascading selects)
+    path("api/nace/activities/", NaceActivitiesAPIView.as_view(), name="api_nace_activities"),
+    path("api/nace/types/",      NaceTypesAPIView.as_view(),      name="api_nace_types"),
+    path("api/nace/codes/",      NaceCodesAPIView.as_view(),      name="api_nace_codes"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -1006,6 +1058,7 @@ urlpatterns = [
         ListVillesByProvinceView.as_view(),
         name="list-villes-provinces",
     ),
+    path("api/villes-par-pays/<int:pays_id>/", ListVillesByPaysView.as_view(), name="list-villes-pays"),
     path("api/ajouter-une-ville/", AddVilleView.as_view(), name="add_ville"),
     path("api/editer-une-ville/<int:id>/", EditVilleView.as_view(), name="edit_ville"),
     path("api/supprimer-des-villes/", DeleteVillesView.as_view(), name="delete_villes"),
@@ -1511,6 +1564,8 @@ urlpatterns = [
         "api/recherche-acheteur/", SearchAcheteurView.as_view(), name="search-acheteur"
     ),
     path("api/ajouter-un-acheteur/", AddAcheteurView.as_view(), name="add-acheteur"),
+    path("api/initier-acheteur/", InitierAcheteurView.as_view(), name="initier-acheteur"),
+    path("api/acheteurs-incomplets/", AcheteursIncompletView.as_view(), name="acheteurs-incomplets"),
     path(
         "api/editer-un-acheteur/<int:id>/",
         EditAcheteurView.as_view(),
@@ -2809,6 +2864,7 @@ urlpatterns = [
     path("api/warnings/<int:id>/update/", EditWarningView.as_view(), name="api-warning-update"),
     path("api/warnings/delete/", DeleteWarningView.as_view(), name="api-warning-delete"),
     path("api/warnings/attachments/<int:id>/delete/", DeleteWarningAttachmentView.as_view(), name="api-warning-attachment-delete"),
+    path("api/warnings/<int:id>/send/", SendWarningEmailView.as_view(), name="api-warning-send"),
     
     
     

@@ -1,0 +1,378 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+:root {
+    --primary: #0d80be;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #0a6ca0);
+    --border-radius: 14px;
+    --box-shadow: 0 4px 20px rgba(13,110,178,.08);
+}
+body { background: linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-apple-system,sans-serif; }
+
+.page-hero {
+    background: var(--primary-gradient);
+    border-radius: var(--border-radius);
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(13,110,178,.2);
+    color: #fff;
+    margin-bottom: 24px;
+}
+.page-hero::before {
+    content:''; position:absolute; top:-40%; right:-10%;
+    width:340px; height:340px; border-radius:50%;
+    background:rgba(255,255,255,.06); pointer-events:none;
+}
+
+.filter-card {
+    background: #fff; border-radius: var(--border-radius);
+    padding: 20px 24px; box-shadow: var(--box-shadow); margin-bottom: 20px;
+}
+.filter-card .form-label { font-size:.78rem; font-weight:600; color:#475569; margin-bottom:5px; }
+.filter-card .form-control,
+.filter-card .form-select {
+    border-radius:8px; border:1.5px solid #e2e8f0; font-size:.85rem;
+    transition: border-color .18s, box-shadow .18s;
+}
+.filter-card .form-control:focus,
+.filter-card .form-select:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,128,190,.1);
+}
+
+/* Date range — deux champs côte à côte */
+.date-range-wrap {
+    display: flex; align-items: center; gap: 6px;
+}
+.date-range-wrap input { flex: 1; min-width: 0; }
+.date-range-sep { color: #94a3b8; font-size: .8rem; white-space: nowrap; }
+
+.table-card { background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); overflow:hidden; }
+.table-card .card-header {
+    background: var(--primary-gradient); color:#fff;
+    padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+}
+.table-card .card-header h6 { margin:0; font-weight:700; font-size:.9rem; }
+
+.table thead th {
+    background:#f1f5f9; color:#475569; font-size:.72rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em; border-bottom:2px solid #e2e8f0;
+    padding:10px 14px; white-space:nowrap;
+}
+.table tbody td { font-size:.82rem; padding:10px 14px; vertical-align:middle; border-bottom:1px solid #f1f5f9; }
+.table tbody tr:last-child td { border-bottom:none; }
+.table tbody tr:hover { background:#f8fafc; }
+
+.btn-export { font-size:.78rem; font-weight:600; border-radius:8px; padding:7px 14px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; }
+.btn-excel  { background:#1d7745; color:#fff; border:none; }
+.btn-excel:hover  { background:#166036; color:#fff; }
+.btn-csv    { background:#2563eb; color:#fff; border:none; }
+.btn-csv:hover    { background:#1d4ed8; color:#fff; }
+.btn-export:disabled { opacity:.5; cursor:not-allowed; }
+
+.pagination .page-link { border-radius:8px !important; font-size:.8rem; color:var(--primary); border:1.5px solid #e2e8f0; margin:0 2px; }
+.pagination .page-item.active .page-link { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+.empty-state { text-align:center; padding:48px 24px; color:#94a3b8; }
+.empty-state i { font-size:2.5rem; margin-bottom:12px; display:block; }
+.table-loading { text-align:center; padding:40px; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+
+    <!-- Hero -->
+    <div class="page-hero">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:46px;height:46px;background:rgba(255,255,255,.15)">
+                <i class="bi bi-receipt fs-5"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold">{% trans "Décompte des Commandes" %}</h4>
+                <p class="mb-0 opacity-75" style="font-size:.83rem">{% trans "Export et consultation des commandes par acheteur, client ou période" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+        <div class="row g-3 align-items-end">
+
+            <!-- Nom acheteur -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">{% trans "Nom de l'acheteur" %}</label>
+                <input type="text" id="filterAcheteur" class="form-control" placeholder="{% trans 'Rechercher...' %}">
+            </div>
+
+            <!-- Acronyme -->
+            <div class="col-md-2 col-sm-6">
+                <label class="form-label">{% trans "Acronyme" %}</label>
+                <input type="text" id="filterSigle" class="form-control" placeholder="{% trans 'Ex: SGBG' %}">
+            </div>
+
+            <!-- Client -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">{% trans "Client" %}</label>
+                <select id="filterClient" class="form-select">
+                    <option value="">— {% trans "Tous les clients" %} —</option>
+                    {% for client in client_list %}
+                    <option value="{{ client.id }}">{{ client.username }}{% if client.get_full_name %} — {{ client.get_full_name }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Intervalle dates -->
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label">{% trans "Période (date reçue)" %}</label>
+                <div class="date-range-wrap">
+                    <input type="text" id="filterDateDebut" class="form-control flatpickr-input"
+                           placeholder="{% trans 'Début' %}" readonly>
+                    <span class="date-range-sep">→</span>
+                    <input type="text" id="filterDateFin" class="form-control flatpickr-input"
+                           placeholder="{% trans 'Fin' %}" readonly>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-md-1 col-sm-6 d-flex gap-2">
+                <button class="btn btn-primary flex-grow-1" id="btnFilter" style="border-radius:8px;font-size:.83rem;font-weight:600" title="{% trans 'Filtrer' %}">
+                    <i class="bi bi-funnel"></i>
+                </button>
+                <button class="btn btn-outline-secondary" id="btnReset" style="border-radius:8px" title="{% trans 'Réinitialiser' %}">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="card-header">
+            <h6><i class="bi bi-table me-2"></i><span id="totalLabel">{% trans "Chargement..." %}</span></h6>
+            <div class="d-flex gap-2">
+                <button class="btn-export btn-excel" id="btnExcel" disabled>
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </button>
+                <button class="btn-export btn-csv" id="btnCsv" disabled>
+                    <i class="bi bi-filetype-csv"></i> CSV
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>{% trans "BUYER" %}</th>
+                        <th>{% trans "CUSTOMER" %}</th>
+                        <th>{% trans "DATE RECEIVED" %}</th>
+                        <th>{% trans "REPORT DATE" %}</th>
+                        <th>{% trans "CLIENT REF." %}</th>
+                        <th>{% trans "OUR REF." %}</th>
+                        <th>{% trans "REPORT TYPE" %}</th>
+                        <th>{% trans "COUNTRY" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="decompteBody">
+                    <tr><td colspan="8" class="table-loading">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>{% trans "Chargement..." %}
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <small class="text-muted" id="pageInfo"></small>
+            <nav><ul class="pagination pagination-sm mb-0" id="pagination"></ul></nav>
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    var ACCESS_TOKEN  = '{{ access_token|escapejs }}';
+    var currentPage   = 1;
+    var currentParams = {};
+    var totalPages    = 1;
+
+    /* ── Flatpickr date pickers ── */
+    var fpDebut = flatpickr('#filterDateDebut', {
+        dateFormat: 'Y-m-d',
+        locale: '{{ LANGUAGE_CODE|default:"fr"|slice:":2" }}' === 'fr' ? 'fr' : 'default',
+        allowInput: false,
+        onChange: function(sel, str) {
+            if (fpFin && sel[0] && fpFin.selectedDates[0] && sel[0] > fpFin.selectedDates[0]) {
+                fpFin.setDate(sel[0]);
+            }
+        }
+    });
+    var fpFin = flatpickr('#filterDateFin', {
+        dateFormat: 'Y-m-d',
+        locale: '{{ LANGUAGE_CODE|default:"fr"|slice:":2" }}' === 'fr' ? 'fr' : 'default',
+        allowInput: false,
+    });
+
+    function authHeaders() {
+        return { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json' };
+    }
+
+    function buildParams(page) {
+        var p = Object.assign({}, currentParams, { page: page, per_page: 50 });
+        return Object.entries(p)
+            .filter(function(e){ return e[1] !== '' && e[1] !== null; })
+            .map(function(e){ return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]); })
+            .join('&');
+    }
+
+    function load(page) {
+        currentPage = page;
+        var body = document.getElementById('decompteBody');
+        body.innerHTML = '<tr><td colspan="8" class="table-loading">'
+            + '<div class="spinner-border spinner-border-sm text-primary me-2"></div>'
+            + '{% trans "Chargement..." %}</td></tr>';
+
+        fetch('/api/exports/decompte/?' + buildParams(page), { headers: authHeaders() })
+        .then(function(r){
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function(data){
+            totalPages = data.pages;
+            renderTable(data);
+            renderPagination(data);
+            document.getElementById('totalLabel').textContent =
+                data.total + ' {% trans "commande(s)" %}';
+            var ok = data.total > 0;
+            document.getElementById('btnExcel').disabled = !ok;
+            document.getElementById('btnCsv').disabled   = !ok;
+        })
+        .catch(function(err){
+            body.innerHTML = '<tr><td colspan="8" class="empty-state">'
+                + '<i class="bi bi-exclamation-circle"></i><br>{% trans "Erreur de chargement." %} ('
+                + err.message + ')</td></tr>';
+        });
+    }
+
+    function renderTable(data) {
+        var body = document.getElementById('decompteBody');
+        if (!data.rows || data.rows.length === 0) {
+            body.innerHTML = '<tr><td colspan="8" class="empty-state">'
+                + '<i class="bi bi-inbox"></i><br>{% trans "Aucun résultat pour ces filtres." %}'
+                + '</td></tr>';
+            return;
+        }
+        body.innerHTML = data.rows.map(function(row){
+            return '<tr>' + row.map(function(cell){
+                var val = (cell !== null && cell !== undefined && cell !== '')
+                    ? esc(String(cell)) : '<span class="text-muted">—</span>';
+                return '<td>' + val + '</td>';
+            }).join('') + '</tr>';
+        }).join('');
+    }
+
+    function renderPagination(data) {
+        var pg   = document.getElementById('pagination');
+        var info = document.getElementById('pageInfo');
+        var start = (data.page - 1) * data.per_page + 1;
+        var end   = Math.min(data.page * data.per_page, data.total);
+        info.textContent = data.total > 0 ? (start + '–' + end + ' / ' + data.total) : '';
+        if (data.pages <= 1) { pg.innerHTML = ''; return; }
+        var p = data.page, html = '';
+        html += btn(p - 1, '‹', p <= 1);
+        for (var i = Math.max(1, p-2); i <= Math.min(data.pages, p+2); i++)
+            html += btn(i, i, false, i === p);
+        html += btn(p + 1, '›', p >= data.pages);
+        pg.innerHTML = html;
+        pg.querySelectorAll('[data-page]').forEach(function(el){
+            el.addEventListener('click', function(e){
+                e.preventDefault();
+                var n = parseInt(this.dataset.page);
+                if (n >= 1 && n <= data.pages) load(n);
+            });
+        });
+    }
+
+    function btn(page, label, disabled, active) {
+        return '<li class="page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '') + '">'
+             + '<a class="page-link" data-page="' + page + '">' + label + '</a></li>';
+    }
+
+    function esc(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ── Export (fetch → blob → lien download) ── */
+    function exportFile(format) {
+        var btnEl = document.getElementById(format === 'excel' ? 'btnExcel' : 'btnCsv');
+        var orig  = btnEl.innerHTML;
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<div class="spinner-border spinner-border-sm me-1" style="width:12px;height:12px"></div>…';
+
+        var url = '/api/exports/decompte/export/?' + buildParams(1) + '&format=' + format;
+        fetch(url, { headers: authHeaders() })
+        .then(function(r){
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.blob();
+        })
+        .then(function(blob){
+            var ext  = format === 'csv' ? 'csv' : 'xlsx';
+            var ts   = new Date().toISOString().slice(0,10);
+            var u    = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href   = u;
+            a.download = 'decompte_' + ts + '.' + ext;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); }, 2000);
+        })
+        .catch(function(err){ alert('{% trans "Erreur export" %}: ' + err.message); })
+        .finally(function(){ btnEl.disabled = false; btnEl.innerHTML = orig; });
+    }
+
+    /* ── Événements filtres ── */
+    document.getElementById('btnFilter').addEventListener('click', function(){
+        currentParams = {
+            acheteur:    document.getElementById('filterAcheteur').value.trim(),
+            sigle:       document.getElementById('filterSigle').value.trim(),
+            client_id:   document.getElementById('filterClient').value,
+            date_debut:  document.getElementById('filterDateDebut').value,
+            date_fin:    document.getElementById('filterDateFin').value,
+        };
+        load(1);
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function(){
+        document.getElementById('filterAcheteur').value = '';
+        document.getElementById('filterSigle').value    = '';
+        document.getElementById('filterClient').value   = '';
+        fpDebut.clear();
+        fpFin.clear();
+        currentParams = {};
+        load(1);
+    });
+
+    ['filterAcheteur','filterSigle'].forEach(function(id){
+        document.getElementById(id).addEventListener('keydown', function(e){
+            if (e.key === 'Enter') document.getElementById('btnFilter').click();
+        });
+    });
+
+    document.getElementById('btnExcel').addEventListener('click', function(){ exportFile('excel'); });
+    document.getElementById('btnCsv').addEventListener('click',   function(){ exportFile('csv'); });
+
+    load(1);
+}());
+</script>
+{% endblock %}

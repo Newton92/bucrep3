@@ -481,11 +481,6 @@ urlpatterns = [
         name="dash_validateur_client",
     ),
     path(
-        "validateur-dashboard/monitoring/carnet-adresses/",
-        dash_validateur_carnet,
-        name="dash_validateur_carnet",
-    ),
-    path(
         "validateur-dashboard/monitoring/liste-des-portefeuilles/",
         dash_validateur_portefeuille,
         name="dash_validateur_portefeuille",

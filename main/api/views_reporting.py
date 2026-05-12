@@ -2,7 +2,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from main.models import Annee, Devise, Commande, Resume, CodeNafAcheteur, CodeNafAcheteur
+from main.models import Annee, Devise, Commande, Resume, CodeNafAcheteur, CodeNafAcheteur, Assets, Pays
 from main.models import Resume, RiskRating, RiskManagment, OpinionCreditAcremac, DonneesEnregistrement, AntecedantsJuridique
 from main.models import ResponsableAcheteur, ConseilAdministration, CompositionCapitalSocial, CompositionAction, Structure
 from main.models import Annee, AnalyseSectorielle, Tendance, Geopolitics, Advice, Banquier
@@ -64,9 +64,25 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 import html
 import base64
+import io
 import os
 from django.conf import settings
 from django.contrib.staticfiles import finders
+
+
+def _generate_qr_base64(url: str) -> str:
+    """Génère un QR code pointant vers url et retourne une data URI base64 PNG."""
+    try:
+        import qrcode
+        qr = qrcode.QRCode(version=2, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=6, border=2)
+        qr.add_data(url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#003366", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return ""
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -174,7 +190,7 @@ def _to_json_safe(value):
     return str(value)
 
 
-def _safe_nested_attr(obj, attrs, default="Non spécifié"):
+def _safe_nested_attr(obj, attrs, default=""):
     """Lit un attribut imbriqué de manière sûre (None-safe)."""
     current = obj
     for attr in attrs:
@@ -423,7 +439,7 @@ def get_logo_path():
 def format_currency(value):
     """Formate un nombre décimal en chaîne avec des séparateurs de milliers."""
     if value is None:
-        return "Non spécifié"
+        return ""
     return f"{value:,.2f}".replace(",", " ").replace(".", ",") # Exemple de formatage français
 
 
@@ -496,7 +512,7 @@ def get_static_image_base64(image_path):
 
 def get_risk_rating_base64(score):
     """Convertit le score de risque en image Base64"""
-    if score is None or score == "Non spécifié":
+    if score is None or score == "":
         score = 0
     try:
         score = int(score)
@@ -600,7 +616,7 @@ def _format_value_as_percent(value):
         return value
     if isinstance(value, str):
         raw = value.strip()
-        if not raw or raw in {"-", "--", "N/A", "Non spécifié", "None"}:
+        if not raw or raw in {"-", "--", "N/A", "", "None"}:
             return value
         if "%" in raw:
             return value
@@ -779,11 +795,40 @@ def generer_rapport_solvabilite(request):
         
         
         # 2. Définir les années et récupérer la devise
-        # build the list of years and immediately sort it so that
-        # downstream code always sees them in chronological order
-        # (oldest first). The original payload sends [N, N-1, N-2].
-        years_to_retrieve = [data['annee_n'], data['annee_n1'], data['annee_n2']]
-        years_to_retrieve = sorted(y for y in years_to_retrieve if y is not None)
+        annee_n = data.get('annee_n')
+        annee_n1 = data.get('annee_n1')
+        annee_n2 = data.get('annee_n2')
+
+        if annee_n is None and annee_n1 is None and annee_n2 is None:
+            # Auto-détection: chercher les 3 derniers exercices disponibles tous types de bilan confondus
+            type_bilan = (data.get('type_bilan') or 'classique').lower().replace('irfs_cobac', 'ifrs')
+            bilan_model_map = {
+                'classique': ActifC,
+                'anglais': ActifA,
+                'bancaire': Assets,
+                'syscohada': ActifS,
+                'ifrs': ActifIFRS,
+            }
+            ActifModel = bilan_model_map.get(type_bilan, ActifC)
+            available_years = list(
+                ActifModel.objects.filter(acheteur=acheteur, annee__isnull=False)
+                .values_list('annee__annee', flat=True)
+                .distinct()
+                .order_by('-annee__annee')[:3]
+            )
+            # Fallback sur classique si aucun résultat avec le type choisi
+            if not available_years and ActifModel is not ActifC:
+                available_years = list(
+                    ActifC.objects.filter(acheteur=acheteur, annee__isnull=False)
+                    .values_list('annee__annee', flat=True)
+                    .distinct()
+                    .order_by('-annee__annee')[:3]
+                )
+            years_to_retrieve = sorted(available_years)
+        else:
+            years_to_retrieve = [annee_n, annee_n1, annee_n2]
+            years_to_retrieve = sorted(y for y in years_to_retrieve if y is not None)
+
         print("years_to_retrieve (sorted):", years_to_retrieve)
         
         # Récupération de la commande si spécifiée
@@ -958,8 +1003,8 @@ def generer_rapport_solvabilite(request):
                     })
 
         # Formatez la liste en une chaîne séparée par des virgules
-        notes_str = ", ".join(note_values) if note_values else "Non spécifié"
-        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else "Non spécifié"
+        notes_str = ", ".join(note_values) if note_values else ""
+        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else ""
         
         # Récupération Donnees Enregistrement
         donnees_enregistrement = None
@@ -981,11 +1026,11 @@ def generer_rapport_solvabilite(request):
         list_antecedants_data = []
         for antecedant in antecedants_juridiques:
             list_antecedants_data.append({
-                "dossier_faillite": antecedant.dossier_faillite if antecedant.dossier_faillite else "Non spécifié",
-                "jugement_cour": antecedant.jugement_cour if antecedant.jugement_cour else "Non spécifié",
-                "antecedant_redressement": antecedant.antecedant_redressement if antecedant.antecedant_redressement else "Non spécifié",
-                "autre": antecedant.Autre if antecedant.Autre else "Non spécifié",
-                "commentaire": antecedant.commentaire if antecedant.commentaire else "Non spécifié",
+                "dossier_faillite": antecedant.dossier_faillite if antecedant.dossier_faillite else "",
+                "jugement_cour": antecedant.jugement_cour if antecedant.jugement_cour else "",
+                "antecedant_redressement": antecedant.antecedant_redressement if antecedant.antecedant_redressement else "",
+                "autre": antecedant.Autre if antecedant.Autre else "",
+                "commentaire": antecedant.commentaire if antecedant.commentaire else "",
             })
           
         # Récupération Management et Staff
@@ -1002,12 +1047,12 @@ def generer_rapport_solvabilite(request):
         list_responsables_data = []
         for responsable in responsables:
             list_responsables_data.append({
-                "nom": responsable.nom if responsable.nom else "Non spécifié",
-                "prenom": responsable.prenom if responsable.prenom else "Non spécifié",
-                "sexe": responsable.Sexe if responsable.Sexe else "Non spécifié",
-                "poste": responsable.poste if responsable.poste else "Non spécifié",
-                "nationalite": responsable.nationalite if responsable.nationalite else "Non spécifié",
-                "commentaire": responsable.commentaire if responsable.commentaire else "Non spécifié",
+                "nom": responsable.nom if responsable.nom else "",
+                "prenom": responsable.prenom if responsable.prenom else "",
+                "sexe": responsable.Sexe if responsable.Sexe else "",
+                "poste": responsable.poste if responsable.poste else "",
+                "nationalite": responsable.nationalite if responsable.nationalite else "",
+                "commentaire": responsable.commentaire if responsable.commentaire else "",
             })
 
         # Recuperation des membres du conseil d'administration de l'acheteur 
@@ -1015,12 +1060,12 @@ def generer_rapport_solvabilite(request):
         list_ca_membres_data = []
         for membre in conseil_administration_membres:
             list_ca_membres_data.append({
-                "nom": membre.nom if membre.nom else "Non spécifié",
-                "fonction_dans_le_conseil": membre.fonction_dans_le_conseil if membre.fonction_dans_le_conseil else "Non spécifié",
-                "numero_adresse": membre.numero_adresse if membre.numero_adresse else "Non spécifié",
-                "rue_adresse": membre.rue_adresse if membre.rue_adresse else "Non spécifié",
-                "code_postale_adresse": membre.code_postale_adresse if membre.code_postale_adresse else "Non spécifié",
-                "commentaire": membre.commentaire if membre.commentaire else "Non spécifié",
+                "nom": membre.nom if membre.nom else "",
+                "fonction_dans_le_conseil": membre.fonction_dans_le_conseil if membre.fonction_dans_le_conseil else "",
+                "numero_adresse": membre.numero_adresse if membre.numero_adresse else "",
+                "rue_adresse": membre.rue_adresse if membre.rue_adresse else "",
+                "code_postale_adresse": membre.code_postale_adresse if membre.code_postale_adresse else "",
+                "commentaire": membre.commentaire if membre.commentaire else "",
             })
           
         
@@ -1039,10 +1084,10 @@ def generer_rapport_solvabilite(request):
         list_shareholders_data = []
         for shareholder in shareholders:
             list_shareholders_data.append({
-                "nom": shareholder.nom if shareholder.nom else "Non spécifié",
-                "prenom": shareholder.prenom if shareholder.prenom else "Non spécifié",
-                "pourcentage": shareholder.pourcentage if shareholder.pourcentage else "Non spécifié",
-                "commentaire": shareholder.commentaire if shareholder.commentaire else "Non spécifié",
+                "nom": shareholder.nom if shareholder.nom else "",
+                "prenom": shareholder.prenom if shareholder.prenom else "",
+                "pourcentage": shareholder.pourcentage if shareholder.pourcentage else "",
+                "commentaire": shareholder.commentaire if shareholder.commentaire else "",
             })
         
         # Récupération Affiliations
@@ -1051,12 +1096,12 @@ def generer_rapport_solvabilite(request):
         list_affiliations_data = []
         for affiliation in affiliations:
             list_affiliations_data.append({
-                "nom": affiliation.nom if affiliation.nom else "Non spécifié",
-                "type_affiliation": affiliation.type_affiliation if affiliation.type_affiliation else "Non spécifié",
-                "numero_adresse": affiliation.numero_adresse if affiliation.numero_adresse else "Non spécifié",
-                "rue_adresse": affiliation.rue_adresse if affiliation.rue_adresse else "Non spécifié",
-                "code_postale_adresse": affiliation.code_postale_adresse if affiliation.code_postale_adresse else "Non spécifié",
-                "commentaire": affiliation.commentaire if affiliation.commentaire else "Non spécifié",
+                "nom": affiliation.nom if affiliation.nom else "",
+                "type_affiliation": affiliation.type_affiliation if affiliation.type_affiliation else "",
+                "numero_adresse": affiliation.numero_adresse if affiliation.numero_adresse else "",
+                "rue_adresse": affiliation.rue_adresse if affiliation.rue_adresse else "",
+                "code_postale_adresse": affiliation.code_postale_adresse if affiliation.code_postale_adresse else "",
+                "commentaire": affiliation.commentaire if affiliation.commentaire else "",
             })
         
             
@@ -1101,10 +1146,10 @@ def generer_rapport_solvabilite(request):
         list_registres_data = []
         for registre in registres:
             list_registres_data.append({
-                "numero": registre.numero if registre.numero else "Non spécifié",
-                "date_inscription": registre.date_inscription if registre.date_inscription else "Non spécifié",
+                "numero": registre.numero if registre.numero else "",
+                "date_inscription": registre.date_inscription if registre.date_inscription else "",
                 "est_actif": registre.est_actif if registre.est_actif else False,
-                "commentaires": registre.commentaire if getattr(registre, "commentaire", None) else "Non spécifié",
+                "commentaires": registre.commentaire if getattr(registre, "commentaire", None) else "",
             })
             
             
@@ -1113,14 +1158,14 @@ def generer_rapport_solvabilite(request):
         list_banking_data = []
         for banker in bankers:
             list_banking_data.append({
-                "nom_banque": banker.nom_banque if banker.nom_banque else "Non spécifié",
-                "numero_compte": banker.numero_compte if banker.numero_compte else "Non spécifié",
-                "type_relation": banker.type_relation if banker.type_relation else "Non spécifié",
-                "numero": banker.numero if banker.numero else "Non spécifié",
-                "rue": banker.rue if banker.rue else "Non spécifié",
+                "nom_banque": banker.nom_banque if banker.nom_banque else "",
+                "numero_compte": banker.numero_compte if banker.numero_compte else "",
+                "type_relation": banker.type_relation if banker.type_relation else "",
+                "numero": banker.numero if banker.numero else "",
+                "rue": banker.rue if banker.rue else "",
                 "ville": banker.ville.nom if banker.ville else None,
-                "code_postal": banker.code_postal if banker.code_postal else "Non spécifié",
-                "commentaire": banker.commentaire if banker.commentaire else "Non spécifié",
+                "code_postal": banker.code_postal if banker.code_postal else "",
+                "commentaire": banker.commentaire if banker.commentaire else "",
             })
             
             
@@ -1131,17 +1176,17 @@ def generer_rapport_solvabilite(request):
             list_procedures_data.append({
                 "type_procedure": (
                     getattr(procedure, "get_type_procedure_display", lambda: procedure.type_procedure)()
-                    if procedure.type_procedure else "Non spécifié"
+                    if procedure.type_procedure else ""
                 ),
-                "date_ouverture": procedure.date_ouverture if procedure.date_ouverture else "Non spécifié",
-                "date_cloture": procedure.date_cloture if procedure.date_cloture else "Non spécifié",
-                "tribunal": procedure.tribunal if procedure.tribunal else "Non spécifié",
-                "numero_dossier": procedure.numero_dossier if procedure.numero_dossier else "Non spécifié",
-                "secteur_activite": procedure.secteur_activite if procedure.secteur_activite else "Non spécifié",
-                "description": procedure.description if procedure.description else "Non spécifié",
-                "montant_creance": procedure.montant_creance if procedure.montant_creance else "Non spécifié",
-                "impact_assureur": procedure.impact_assureur if procedure.impact_assureur else "Non spécifié",
-                "commentaires": procedure.commentaire if getattr(procedure, "commentaire", None) else "Non spécifié",
+                "date_ouverture": procedure.date_ouverture if procedure.date_ouverture else "",
+                "date_cloture": procedure.date_cloture if procedure.date_cloture else "",
+                "tribunal": procedure.tribunal if procedure.tribunal else "",
+                "numero_dossier": procedure.numero_dossier if procedure.numero_dossier else "",
+                "secteur_activite": procedure.secteur_activite if procedure.secteur_activite else "",
+                "description": procedure.description if procedure.description else "",
+                "montant_creance": procedure.montant_creance if procedure.montant_creance else "",
+                "impact_assureur": procedure.impact_assureur if procedure.impact_assureur else "",
+                "commentaires": procedure.commentaire if getattr(procedure, "commentaire", None) else "",
             })
             
             
@@ -1150,9 +1195,9 @@ def generer_rapport_solvabilite(request):
         list_cotisations_data = []
         for cotisation in cotisations:
             list_cotisations_data.append({
-                "numero": cotisation.numero if cotisation.numero else "Non spécifié",
-                "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "Non spécifié",
-                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "Non spécifié",
+                "numero": cotisation.numero if cotisation.numero else "",
+                "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "",
+                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "",
             })
             
             
@@ -1161,9 +1206,9 @@ def generer_rapport_solvabilite(request):
         list_produits_services_data = []
         for produit_service in produits_services:
             list_produits_services_data.append({
-                "produits": produit_service.produits if produit_service.produits else "Non spécifié",
-                "services": produit_service.services if produit_service.services else "Non spécifié",
-                "commentaires": produit_service.commentaire if getattr(produit_service, "commentaire", None) else "Non spécifié",
+                "produits": produit_service.produits if produit_service.produits else "",
+                "services": produit_service.services if produit_service.services else "",
+                "commentaires": produit_service.commentaire if getattr(produit_service, "commentaire", None) else "",
             })
             
             
@@ -1172,8 +1217,8 @@ def generer_rapport_solvabilite(request):
         list_marques_data = []
         for marque in marques:
             list_marques_data.append({
-                "marques": marque.marques if marque.marques else "Non spécifié",
-                "commentaires": marque.commentaire if getattr(marque, "commentaire", None) else "Non spécifié",
+                "marques": marque.marques if marque.marques else "",
+                "commentaires": marque.commentaire if getattr(marque, "commentaire", None) else "",
             })
             
             
@@ -1184,13 +1229,13 @@ def generer_rapport_solvabilite(request):
             list_certifications_data.append({
                 "type_certification": (
                     getattr(certification, "get_type_certification_display", lambda: certification.type_certification)()
-                    if certification.type_certification else "Non spécifié"
+                    if certification.type_certification else ""
                 ),
-                "nom_certification": certification.nom_certification if certification.nom_certification else "Non spécifié",
-                "date_obtention": certification.date_obtention if certification.date_obtention else "Non spécifié",
-                "organisme_delivreur": certification.organisme_delivreur if certification.organisme_delivreur else "Non spécifié",
-                "description": certification.description if certification.description else "Non spécifié",
-                "commentaires": certification.commentaire if getattr(certification, "commentaire", None) else "Non spécifié",
+                "nom_certification": certification.nom_certification if certification.nom_certification else "",
+                "date_obtention": certification.date_obtention if certification.date_obtention else "",
+                "organisme_delivreur": certification.organisme_delivreur if certification.organisme_delivreur else "",
+                "description": certification.description if certification.description else "",
+                "commentaires": certification.commentaire if getattr(certification, "commentaire", None) else "",
             })
             
             
@@ -1201,13 +1246,13 @@ def generer_rapport_solvabilite(request):
             list_innovations_developpements_data.append({
                 "type_innovation": (
                     getattr(innovation_developpement, "get_type_innovation_display", lambda: innovation_developpement.type_innovation)()
-                    if innovation_developpement.type_innovation else "Non spécifié"
+                    if innovation_developpement.type_innovation else ""
                 ),
-                "titre": innovation_developpement.titre if innovation_developpement.titre else "Non spécifié",
-                "description": innovation_developpement.description if innovation_developpement.description else "Non spécifié",
-                "date_debut": innovation_developpement.date_debut if innovation_developpement.date_debut else "Non spécifié",
-                "date_fin": innovation_developpement.date_fin if innovation_developpement.date_fin else "Non spécifié",
-                "commentaires": innovation_developpement.commentaire if getattr(innovation_developpement, "commentaire", None) else "Non spécifié",
+                "titre": innovation_developpement.titre if innovation_developpement.titre else "",
+                "description": innovation_developpement.description if innovation_developpement.description else "",
+                "date_debut": innovation_developpement.date_debut if innovation_developpement.date_debut else "",
+                "date_fin": innovation_developpement.date_fin if innovation_developpement.date_fin else "",
+                "commentaires": innovation_developpement.commentaire if getattr(innovation_developpement, "commentaire", None) else "",
             })
             
             
@@ -1218,11 +1263,11 @@ def generer_rapport_solvabilite(request):
             list_strategies_planifications_data.append({
                 "type_strategie": (
                     getattr(strategie_planification, "get_type_strategie_display", lambda: strategie_planification.type_strategie)()
-                    if strategie_planification.type_strategie else "Non spécifié"
+                    if strategie_planification.type_strategie else ""
                 ),
-                "description": strategie_planification.description if strategie_planification.description else "Non spécifié",
-                "date_mise_en_place": strategie_planification.date_mise_en_place if strategie_planification.date_mise_en_place else "Non spécifié",
-                "commentaires": strategie_planification.commentaire if getattr(strategie_planification, "commentaire", None) else "Non spécifié",
+                "description": strategie_planification.description if strategie_planification.description else "",
+                "date_mise_en_place": strategie_planification.date_mise_en_place if strategie_planification.date_mise_en_place else "",
+                "commentaires": strategie_planification.commentaire if getattr(strategie_planification, "commentaire", None) else "",
             })
             
             
@@ -1233,13 +1278,13 @@ def generer_rapport_solvabilite(request):
             list_conformites_reglementations_data.append({
                 "type_conformite": (
                     getattr(conformite_reglementation, "get_type_conformite_display", lambda: conformite_reglementation.type_conformite)()
-                    if conformite_reglementation.type_conformite else "Non spécifié"
+                    if conformite_reglementation.type_conformite else ""
                 ),
-                "statut": conformite_reglementation.statut if conformite_reglementation.statut else "Non spécifié",
-                "details_non_conformite": conformite_reglementation.details_non_conformite if conformite_reglementation.details_non_conformite else "Non spécifié",
-                "date_verification": conformite_reglementation.date_verification if conformite_reglementation.date_verification else "Non spécifié",
-                "organisme_controle": conformite_reglementation.organisme_controle if conformite_reglementation.organisme_controle else "Non spécifié",
-                "commentaires": conformite_reglementation.commentaires if conformite_reglementation.commentaires else "Non spécifié",
+                "statut": conformite_reglementation.statut if conformite_reglementation.statut else "",
+                "details_non_conformite": conformite_reglementation.details_non_conformite if conformite_reglementation.details_non_conformite else "",
+                "date_verification": conformite_reglementation.date_verification if conformite_reglementation.date_verification else "",
+                "organisme_controle": conformite_reglementation.organisme_controle if conformite_reglementation.organisme_controle else "",
+                "commentaires": conformite_reglementation.commentaires if conformite_reglementation.commentaires else "",
             })
             
             
@@ -1249,6 +1294,10 @@ def generer_rapport_solvabilite(request):
             compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
         except CompteFinancier.DoesNotExist:
             pass
+
+        # Un acheteur a des états financiers seulement si CompteFinancier existe ET
+        # qu'au moins une année de données est disponible dans les tables de bilan.
+        has_financial_data = compte_financier is not None and bool(years_to_retrieve)
 
         # Résolution métier: devise/type_bilan viennent d'abord de la requête, sinon de CompteFinancier.
         requested_devise = (data.get("devise") or "").strip().upper()
@@ -1324,8 +1373,8 @@ def generer_rapport_solvabilite(request):
                     })
 
         # Formatez la liste en une chaîne séparée par des virgules
-        notes_str = ", ".join(note_values) if note_values else "Non spécifié"
-        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else "Non spécifié"
+        notes_str = ", ".join(note_values) if note_values else ""
+        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else ""
         
         # Calculer le score
         risk_score = risk_rating.calculate_risk_score() if risk_rating else 1
@@ -1520,7 +1569,7 @@ def generer_rapport_solvabilite(request):
             locaux_labels = [str(local) for local in prop_asset.locaux.all()]
             list_properties_and_assets_data.append({
                 "locaux": locaux_labels if locaux_labels else [],
-                "branche": prop_asset.branche if prop_asset.branche else "Non spécifié",
+                "branche": prop_asset.branche if prop_asset.branche else "",
             })  
         
         
@@ -1538,8 +1587,8 @@ def generer_rapport_solvabilite(request):
             pass
 
         # Valeurs robustes pour couvrir les modèles avec/sans champs *_ref
-        condition_vente_recouvrement = "Non spécifié"
-        condition_vente_comportement = "Non spécifié"
+        condition_vente_recouvrement = ""
+        condition_vente_comportement = ""
         if condition_vente:
             recouvrement_ref = getattr(condition_vente, "recouvrement_de_dette_jugement_ref", None)
             comportement_ref = getattr(condition_vente, "comportement_de_paiement_ref", None)
@@ -1547,12 +1596,12 @@ def generer_rapport_solvabilite(request):
             condition_vente_recouvrement = (
                 getattr(recouvrement_ref, "libelle", None)
                 or getattr(condition_vente, "recouvrement_de_dette_jugement", None)
-                or "Non spécifié"
+                or ""
             )
             condition_vente_comportement = (
                 getattr(comportement_ref, "libelle", None)
                 or getattr(condition_vente, "comportement_de_paiement", None)
-                or "Non spécifié"
+                or ""
             )
             
         
@@ -1563,28 +1612,20 @@ def generer_rapport_solvabilite(request):
         except SommaireEtAvis.DoesNotExist:
             pass
 
-        # DEBUG: Diagnostic détaillé des données classiques
-        classic_actif_table = get_simple_actifs_data(acheteur, years_to_retrieve)
-        classic_actif_data = get_structured_actif_data(acheteur, years_to_retrieve)
-        classic_passif_data = get_structured_passif_data(acheteur, years_to_retrieve)
-        classic_resultat_data = get_structured_resultat_data(acheteur, years_to_retrieve)
-        classic_ratios_data = get_structured_ratios_data(acheteur, years_to_retrieve)
-        classic_chart_structure = get_charts_structure_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
-        classic_chart_rentabilite = get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
-        classic_chart_delais = get_charts_delais_data(acheteur, years_to_retrieve, chart_type='bar')
-
-        print(
-            "[DEBUG][REPORTING][CLASSIQUE] "
-            f"acheteur_id={getattr(acheteur, 'id', None)} years={years_to_retrieve} "
-            f"actif_table_rows={len(classic_actif_table) if isinstance(classic_actif_table, list) else 'N/A'} "
-            f"actif_sections={len(classic_actif_data.keys()) if isinstance(classic_actif_data, dict) else 'N/A'} "
-            f"passif_sections={len(classic_passif_data.keys()) if isinstance(classic_passif_data, dict) else 'N/A'} "
-            f"resultat_sections={len(classic_resultat_data.keys()) if isinstance(classic_resultat_data, dict) else 'N/A'} "
-            f"ratios_sections={len(classic_ratios_data.keys()) if isinstance(classic_ratios_data, dict) else 'N/A'} "
-            f"chart_structure={'OK' if classic_chart_structure else 'None'} "
-            f"chart_rentabilite={'OK' if classic_chart_rentabilite else 'None'} "
-            f"chart_delais={'OK' if classic_chart_delais else 'None'}"
-        )
+        # Extraction des données financières — uniquement si has_financial_data
+        if has_financial_data:
+            classic_actif_table    = get_simple_actifs_data(acheteur, years_to_retrieve)
+            classic_actif_data     = get_structured_actif_data(acheteur, years_to_retrieve)
+            classic_passif_data    = get_structured_passif_data(acheteur, years_to_retrieve)
+            classic_resultat_data  = get_structured_resultat_data(acheteur, years_to_retrieve)
+            classic_ratios_data    = get_structured_ratios_data(acheteur, years_to_retrieve)
+            classic_chart_structure    = get_charts_structure_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
+            classic_chart_rentabilite  = get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
+            classic_chart_delais       = get_charts_delais_data(acheteur, years_to_retrieve, chart_type='bar')
+        else:
+            classic_actif_table = []
+            classic_actif_data = classic_passif_data = classic_resultat_data = classic_ratios_data = {}
+            classic_chart_structure = classic_chart_rentabilite = classic_chart_delais = {}
            
         
         
@@ -1604,85 +1645,102 @@ def generer_rapport_solvabilite(request):
         riskrating_base_url = _get_static_base_url(request, 'riskrating/')
         scoring_manuel_context["url_site"] = static_base_url
 
+        # QR code de vérification d'authenticité
+        verif_url = request.build_absolute_uri(f"/rapport/verifier/{acheteur.id}/")
+        qr_code_base64 = _generate_qr_base64(verif_url)
+
+        # Nom du pays actif pour l'en-tête du rapport
+        _pays_actif_nom = (
+            Pays.objects.filter(pk=request.session.get("selected_pays_id")).values_list("nom", flat=True).first()
+            or (request.user.pays_actif.nom if getattr(request.user, "pays_actif_id", None) else None)
+            or (request.user.pays.nom if getattr(request.user, "pays_id", None) else None)
+            or "ACREMAC"
+        )
+
+        # Années effectives pour les sections de scoring (None si non disponibles)
+        annee_N  = years_to_retrieve[-1] if len(years_to_retrieve) >= 1 else None
+        annee_N1 = years_to_retrieve[-2] if len(years_to_retrieve) >= 2 else None
+        annee_N2 = years_to_retrieve[-3] if len(years_to_retrieve) >= 3 else None
+
         # Préparation des données pour le template
         report_data = {
             "logo_data": get_logo_data(),
             "logo_path": get_logo_path(),
+            "qr_code_base64": qr_code_base64,
             "url_site": riskrating_base_url,
             "header_report": {
-                "acremac_services": "Services ACREMAC Gabon",
+                "acremac_services": f"Services ACREMAC — {_pays_actif_nom}",
                 "acremac_mail": "credit.report@acremac.com",
-                "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                "bilan_report": data['type_bilan'].upper() if 'type_bilan' in data else "",
+                "date_today": datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                "bilan_report": data.get('type_bilan', '').upper() if data.get('type_bilan') else "",
             },
             "commande": {
                 "title_1": "DETAILS COMMANDE",
-                "client": commande.client.username if commande and commande.client else "Non spécifié",
-                "ref_client": commande.reference_client if commande else "Non spécifié",
-                "notre_ref": commande.notre_ref if commande else "Non spécifié",
-                "date_recept_commande": commande.date_recept_commande.strftime("%d/%m/%Y") if commande and commande.date_recept_commande else "Non spécifié",
-                "date_rapport": commande.date_rapport.strftime("%d/%m/%Y") if commande and commande.date_rapport else "Non spécifié",
-                "delais": commande.delais if commande else "Non spécifié",
-                "priorite": commande.priorite if commande else "Non spécifié",
-                "type_rapport": commande.type_rapport if commande else "Non spécifié"
+                "client": commande.client.username if commande and commande.client else "",
+                "ref_client": commande.reference_client if commande else "",
+                "notre_ref": commande.notre_ref if commande else "",
+                "date_recept_commande": commande.date_recept_commande.strftime("%d/%m/%Y") if commande and commande.date_recept_commande else "",
+                "date_rapport": commande.date_rapport.strftime("%d/%m/%Y") if commande and commande.date_rapport else "",
+                "delais": commande.delais if commande else "",
+                "priorite": commande.priorite if commande else "",
+                "type_rapport": commande.type_rapport if commande else ""
             },
             "identification": {
                 "title_2": "IDENTIFICATION",
                 "client_info": {
-                    "nom": commande.raison_sociale if hasattr(commande, 'raison_sociale') else "Non spécifié",
-                    "numero_adresse": commande.numero_adresse if hasattr(commande, 'numero_adresse') else "Non spécifié",
-                    "rue_adresse": commande.rue_adresse if hasattr(commande, 'rue_adresse') else "Non spécifié",
-                    "code_postale_adresse": commande.code_postale_adresse if hasattr(commande, 'code_postale_adresse') else "Non spécifié",
-                    "telephone": commande.telephone if hasattr(commande, 'telephone') else "Non spécifié",
-                    "email": commande.email if hasattr(commande, 'email') else "Non spécifié",
-                    "pays": _safe_nested_attr(commande, ["pays", "nom"]),
-                    "ville": _safe_nested_attr(commande, ["ville", "nom"]),
-                },
+                    "nom": commande.raison_sociale if commande and hasattr(commande, 'raison_sociale') else None,
+                    "numero_adresse": commande.numero_adresse if commande and hasattr(commande, 'numero_adresse') else None,
+                    "rue_adresse": commande.rue_adresse if commande and hasattr(commande, 'rue_adresse') else None,
+                    "code_postale_adresse": commande.code_postale_adresse if commande and hasattr(commande, 'code_postale_adresse') else None,
+                    "telephone": commande.telephone if commande and hasattr(commande, 'telephone') else None,
+                    "email": commande.email if commande and hasattr(commande, 'email') else None,
+                    "pays": _safe_nested_attr(commande, ["pays", "nom"]) if commande else None,
+                    "ville": _safe_nested_attr(commande, ["ville", "nom"]) if commande else None,
+                } if commande else None,
                 "acremac_info": {
-                    "nom": acheteur.nom if hasattr(acheteur, 'nom') else "Non spécifié",
-                    "sigle": acheteur.sigle if hasattr(acheteur, 'sigle') else "Non spécifié",
-                    "email": acheteur.email if hasattr(acheteur, 'email') else "Non spécifié",
-                    "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "Non spécifié",
+                    "nom": acheteur.nom if hasattr(acheteur, 'nom') else "",
+                    "sigle": acheteur.sigle if hasattr(acheteur, 'sigle') else "",
+                    "email": acheteur.email if hasattr(acheteur, 'email') else "",
+                    "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
                     "pays": _safe_nested_attr(acheteur, ["pays", "nom"]),
                     "province": _safe_nested_attr(acheteur, ["province", "nom"]),
                     "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
-                    "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
-                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "fax": acheteur.fax if hasattr(acheteur, 'fax') else "",
+                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else ""),
                     "telephones": telephones_acheteur,
                     "portables": portables_acheteur,
                     "emails_secondaires": emails_acheteur,
                     "adresses_secondaires": adresses_acheteur,
-                    "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
-                    "rue_adresse": acheteur.rue_adresse if hasattr(acheteur, 'rue_adresse') else "Non spécifié",
-                    "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
-                    "code_postal": acheteur.code_postal if hasattr(acheteur, 'code_postal') else "Non spécifié",
-                    "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
+                    "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "",
+                    "rue_adresse": acheteur.rue_adresse if hasattr(acheteur, 'rue_adresse') else "",
+                    "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "",
+                    "code_postal": acheteur.code_postal if hasattr(acheteur, 'code_postal') else "",
+                    "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "",
                 }
             },
             "additional_information": {
                 "title_3": "INFORMATIONS SUPPLEMENTAIRES",
-                "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "Non spécifié",
+                "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
-                "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "Non spécifié",
-                "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "Non spécifié",
-                "description": acheteur.description if hasattr(acheteur, 'description') else "Non spécifié",
-                "commentaire": acheteur.commentaire if hasattr(acheteur, 'commentaire') else "Non spécifié",
-                "categorie_entreprise": _safe_nested_attr(acheteur, ["categorie_entreprise", "libelle"]),
+                "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
+                "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "",
+                "description": acheteur.description if hasattr(acheteur, 'description') else "",
+                "commentaire": acheteur.commentaire if hasattr(acheteur, 'commentaire') else "",
                 "statut_entreprise": _safe_nested_attr(acheteur, ["statut_entreprise", "libelle"]),
                 "forme_juridique": _safe_nested_attr(acheteur, ["forme_juridique", "libelle"]),
-                "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
-                "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
+                "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "",
+                "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "",
             },
             "executive_summary": {
                 "title_4": "RESUME EXECUTIF",
-                "capital_social": resume.capital_social if resume and resume.capital_social else "Non spécifié",
-                "devise": resume.devise.code if resume and hasattr(resume, 'devise') and resume.devise else "Non spécifié",
-                "chiffre_affaire": resume.chiffre_affaire if resume and resume.chiffre_affaire else "Non spécifié",
-                "resultat_net": resume.resultat_net if resume and resume.resultat_net else "Non spécifié",
-                "capitaux_propre": resume.capitaux_propre if resume and resume.capitaux_propre else "Non spécifié",
-                "nombre_employe": resume.nombre_employe if resume and resume.nombre_employe else "Non spécifié",
-                "date_creation": resume.date_creation.strftime("%d/%m/%Y") if resume and resume.date_creation else "Non spécifié",
+                "capital_social": resume.capital_social if resume and resume.capital_social else "",
+                "devise": resume.devise.code if resume and hasattr(resume, 'devise') and resume.devise else "",
+                "chiffre_affaire": resume.chiffre_affaire if resume and resume.chiffre_affaire else "",
+                "resultat_net": resume.resultat_net if resume and resume.resultat_net else "",
+                "capitaux_propre": resume.capitaux_propre if resume and resume.capitaux_propre else "",
+                "nombre_employe": resume.nombre_employe if resume and resume.nombre_employe else "",
+                "date_creation": resume.date_creation.strftime("%d/%m/%Y") if resume and resume.date_creation else "",
                 "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible",
             },
             "summary_and_opinion": {
@@ -1702,8 +1760,8 @@ def generer_rapport_solvabilite(request):
                 "existence_garantie": "Oui" if risk_rating and risk_rating.existence_garantie else "Non",
                 "terme_financier_duree_pret": "Oui" if risk_rating and risk_rating.terme_financier_duree_pret else "Non",
                 "mesure_propre_soutenir_credit": "Oui" if risk_rating and risk_rating.mesure_propre_soutenir_credit else "Non",
-                "cotation_du_risque": risk_rating.get_cotation_explication() if risk_rating else "Non spécifié",
-                "indice_du_risque": risk_rating.get_indice_explication() if risk_rating else "Non spécifié",
+                "cotation_du_risque": risk_rating.get_cotation_explication() if risk_rating else "",
+                "indice_du_risque": risk_rating.get_indice_explication() if risk_rating else "",
                 "interpretation": risk_rating.interpretation if risk_rating and risk_rating.interpretation else "Aucune interprétation disponible",
                 "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else "Aucune analyse détaillée disponible",
             },
@@ -1735,25 +1793,25 @@ def generer_rapport_solvabilite(request):
                     ],
                     "lecture_notes": "La section Notes liste les facteurs de risque actifs avec leur note respective.",
                 },
-                "montant_credit_maximum": acremac_opinion.montant_credit_maximum if acremac_opinion else "Non spécifié",
+                "montant_credit_maximum": acremac_opinion.montant_credit_maximum if acremac_opinion else "",
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
             },
             "registered_data": {
                 "title_7": "DONNEES D'ENREGISTREMENT",
-                "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "Non spécifié",
-                "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "Non spécifié",
+                "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "",
+                "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "",
                 "forme_juridique": (
                     donnees_enregistrement.forme_juridique
                     if donnees_enregistrement and donnees_enregistrement.forme_juridique
-                    else donnees_enregistrement.forme_juridique if donnees_enregistrement else "Non spécifié"
+                    else donnees_enregistrement.forme_juridique if donnees_enregistrement else ""
                 ),
                 "acheteur": _safe_nested_attr(donnees_enregistrement, ["acheteur", "nom"]),
-                "numero_registre_commerce": donnees_enregistrement.numero_registre_commerce if donnees_enregistrement and donnees_enregistrement.numero_registre_commerce else "Non spécifié",
-                "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "Non spécifié",
+                "numero_registre_commerce": donnees_enregistrement.numero_registre_commerce if donnees_enregistrement and donnees_enregistrement.numero_registre_commerce else "",
+                "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "",
                 "statut_registre": (
                     donnees_enregistrement.statut_registre
                     if donnees_enregistrement and donnees_enregistrement.statut_registre
-                    else donnees_enregistrement.statut_registre if donnees_enregistrement else "Non spécifié"
+                    else donnees_enregistrement.statut_registre if donnees_enregistrement else ""
                 ),
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else "Aucun commentaire disponible",
             },
@@ -1764,12 +1822,12 @@ def generer_rapport_solvabilite(request):
             "management": {
                 "title_9": "MANAGEMENT DU RISQUE",
                 "risk_management": {
-                    "professionalisme": risk_management.professionalisme if risk_management and risk_management.professionalisme else "Non spécifié",
-                    "organisation": risk_management.organisation if risk_management and risk_management.organisation else "Non spécifié",
-                    "turn_over": risk_management.turn_over if risk_management and risk_management.turn_over else "Non spécifié",
-                    "greve": risk_management.greve if risk_management and risk_management.greve else "Non spécifié",
-                    "degradation_qualite": risk_management.degradation_qualite if risk_management and risk_management.degradation_qualite else "Non spécifié",
-                    "non_respect_condition": risk_management.non_respect_condition if risk_management and risk_management.non_respect_condition else "Non spécifié",
+                    "professionalisme": risk_management.professionalisme if risk_management and risk_management.professionalisme else "",
+                    "organisation": risk_management.organisation if risk_management and risk_management.organisation else "",
+                    "turn_over": risk_management.turn_over if risk_management and risk_management.turn_over else "",
+                    "greve": risk_management.greve if risk_management and risk_management.greve else "",
+                    "degradation_qualite": risk_management.degradation_qualite if risk_management and risk_management.degradation_qualite else "",
+                    "non_respect_condition": risk_management.non_respect_condition if risk_management and risk_management.non_respect_condition else "",
                     "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else "Aucun commentaire disponible",
                     "score": risk_management.get_management_score()['oui_count'] if risk_management else 0,
                     "image": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
@@ -1781,10 +1839,10 @@ def generer_rapport_solvabilite(request):
             },
             "capital_composition": {
                 "title_10": "COMPOSITION DU CAPITAL",
-                "emis": format_currency(composition_capital_social.emis) if composition_capital_social else "Non spécifié",
-                "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "Non spécifié",
-                "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "Non spécifié",
-                "devise": composition_capital_social.devise.code if composition_capital_social and composition_capital_social.devise else "Non spécifié",
+                "emis": format_currency(composition_capital_social.emis) if composition_capital_social else "",
+                "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "",
+                "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "",
+                "devise": composition_capital_social.devise.code if composition_capital_social and composition_capital_social.devise else "",
                 "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else "Aucun commentaire disponible",
             },
             "shareholders": {
@@ -1839,35 +1897,35 @@ def generer_rapport_solvabilite(request):
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
                 "sectorielle": {
                     "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else "Aucun commentaire disponible",
-                    "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "Non spécifié",
+                    "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "",
                 },
                 "tendance": {
                     "avis_commercial": (
                         getattr(tendance.avis_commercial, "libelle", str(tendance.avis_commercial))
                         if tendance and tendance.avis_commercial
-                        else "Non spécifié"
+                        else ""
                     ),
-                    "plus_informations": tendance.plus_informations if tendance and tendance.plus_informations else "Non spécifié",
-                    "presse_media": tendance.presse_media if tendance and tendance.presse_media else "Non spécifié",
-                    "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "Non spécifié",
+                    "plus_informations": tendance.plus_informations if tendance and tendance.plus_informations else "",
+                    "presse_media": tendance.presse_media if tendance and tendance.presse_media else "",
+                    "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "",
                     "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
                 },
                 "advice": {
-                    "points_forts": advice.points_forts if advice and advice.points_forts else "Non spécifié",
-                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "Non spécifié",
-                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "Non spécifié",
-                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "Non spécifié",
+                    "points_forts": advice.points_forts if advice and advice.points_forts else "",
+                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
+                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
                 },
                 "geopolitics": {
-                    "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
-                    "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "Non spécifié",
+                    "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "",
+                    "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "",
                 },
                 # Nouveaux elements
                 "swot": {
-                    "forces": swot_analysis.forces if swot_analysis and swot_analysis.forces else "Non spécifié",
-                    "faiblesses": swot_analysis.faiblesses if swot_analysis and swot_analysis.faiblesses else "Non spécifié",
-                    "opportunites": swot_analysis.opportunites if swot_analysis and swot_analysis.opportunites else "Non spécifié",
-                    "menaces": swot_analysis.menaces if swot_analysis and swot_analysis.menaces else "Non spécifié",
+                    "forces": swot_analysis.forces if swot_analysis and swot_analysis.forces else "",
+                    "faiblesses": swot_analysis.faiblesses if swot_analysis and swot_analysis.faiblesses else "",
+                    "opportunites": swot_analysis.opportunites if swot_analysis and swot_analysis.opportunites else "",
+                    "menaces": swot_analysis.menaces if swot_analysis and swot_analysis.menaces else "",
                 },
             },
             "banking_data": {
@@ -1876,89 +1934,88 @@ def generer_rapport_solvabilite(request):
             },
             "financial_accounts": {
                 "title_15": "COMPTES FINANCIERS",
-                "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
-                "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "Non spécifié",
-                "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "Non spécifié",
-                "source": compte_financier.source if compte_financier and compte_financier.source else "Non spécifié",
-                "presentation": compte_financier.presentation if compte_financier and compte_financier.presentation else "Non spécifié",
-                "date_compte": compte_financier.date_compte.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte else "Non spécifié",
-                "date_fin": compte_financier.date_fin.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin else "Non spécifié",
-                "date_compte_n_moins_un": compte_financier.date_compte_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_un else "Non spécifié",
-                "date_fin_n_moins_un": compte_financier.date_fin_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_un else "Non spécifié",
-                "date_compte_n_moins_deux": compte_financier.date_compte_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_deux else "Non spécifié",
-                "date_fin_n_moins_deux": compte_financier.date_fin_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_deux else "Non spécifié",
-                "type_compte": compte_financier.type_compte if compte_financier and compte_financier.type_compte else "Non spécifié",
-                "devise": compte_financier.devise if compte_financier and compte_financier.devise else "Non spécifié",
-                "type_bilan": compte_financier.type_bilan if compte_financier and compte_financier.type_bilan else compte_financier.type_bilan if compte_financier else "Non spécifié",
+                "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "",
+                "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "",
+                "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "",
+                "source": compte_financier.source if compte_financier and compte_financier.source else "",
+                "presentation": compte_financier.presentation if compte_financier and compte_financier.presentation else "",
+                "date_compte": compte_financier.date_compte.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte else "",
+                "date_fin": compte_financier.date_fin.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin else "",
+                "date_compte_n_moins_un": compte_financier.date_compte_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_un else "",
+                "date_fin_n_moins_un": compte_financier.date_fin_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_un else "",
+                "date_compte_n_moins_deux": compte_financier.date_compte_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_deux else "",
+                "date_fin_n_moins_deux": compte_financier.date_fin_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_deux else "",
+                "type_compte": compte_financier.type_compte if compte_financier and compte_financier.type_compte else "",
+                "devise": compte_financier.devise if compte_financier and compte_financier.devise else "",
+                "type_bilan": compte_financier.type_bilan if compte_financier and compte_financier.type_bilan else compte_financier.type_bilan if compte_financier else "",
                 "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else "Aucun commentaire disponible",
             },
             
             
             "financial_statements": {
-                "years": [data['annee_n'], data['annee_n1'], data['annee_n2']],
-                "bilan_type": data['type_bilan'],
+                "years": years_to_retrieve,
+                "bilan_type": data.get('type_bilan'),
                 "etats_financiers_classiques": {
-                    "annee_N": data['annee_n'],
-                    "annee_N1": data['annee_n1'],
-                    "annee_N2": data['annee_n2'],
+                    "annee_N":  years_to_retrieve[-1] if len(years_to_retrieve) >= 1 else None,
+                    "annee_N1": years_to_retrieve[-2] if len(years_to_retrieve) >= 2 else None,
+                    "annee_N2": years_to_retrieve[-3] if len(years_to_retrieve) >= 3 else None,
                     "actif_table": classic_actif_table,
-                    "actif_data": classic_actif_data,
+                    "actif_data":  classic_actif_data,
                     "passif_data": classic_passif_data,
                     "resultat_data": classic_resultat_data,
-                    "ratios_data": classic_ratios_data,
+                    "ratios_data":   classic_ratios_data,
                     "charts_data": {
-                        "charts_structure_financiere": classic_chart_structure,
+                        "charts_structure_financiere":   classic_chart_structure,
                         "charts_rentabilite_financiere": classic_chart_rentabilite,
-                        "charts_delais": classic_chart_delais,
+                        "charts_delais":                 classic_chart_delais,
                     },
-                },
+                } if has_financial_data else {},
                 "etats_financiers_anglais": {
-                    "actif_data": get_structured_actif_anglais_data(acheteur, years_to_retrieve),
-                    "passif_data": get_structured_passif_anglais_data(acheteur, years_to_retrieve),
+                    "actif_data":    get_structured_actif_anglais_data(acheteur, years_to_retrieve),
+                    "passif_data":   get_structured_passif_anglais_data(acheteur, years_to_retrieve),
                     "resultat_data": get_structured_resultat_anglais_data(acheteur, years_to_retrieve),
-                    "ratios_data": get_structured_ratios_anglais_data(acheteur, years_to_retrieve),
+                    "ratios_data":   get_structured_ratios_anglais_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_anglais_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere":   get_charts_structure_financiere_anglais_data(acheteur, years_to_retrieve),
                         "charts_rentabilite_financiere": get_charts_rentabilite_financiere_anglais_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_anglais_data(acheteur, years_to_retrieve),
+                        "charts_delais":                 get_charts_delais_anglais_data(acheteur, years_to_retrieve),
                     },
-                },
+                } if has_financial_data else {},
                 "etats_financiers_bancaires": {
-                    "actif_data": get_structured_actif_bancaire_data(acheteur, years_to_retrieve),
-                    "passif_data": get_structured_passif_bancaire_data(acheteur, years_to_retrieve),
-                    "produit_data": get_structured_produit_bancaire_data(acheteur, years_to_retrieve),
-                    "depense_data": get_structured_depense_bancaire_data(acheteur, years_to_retrieve),
+                    "actif_data":      get_structured_actif_bancaire_data(acheteur, years_to_retrieve),
+                    "passif_data":     get_structured_passif_bancaire_data(acheteur, years_to_retrieve),
+                    "produit_data":    get_structured_produit_bancaire_data(acheteur, years_to_retrieve),
+                    "depense_data":    get_structured_depense_bancaire_data(acheteur, years_to_retrieve),
                     "hors_bilan_data": get_structured_hors_bilan_bancaire_data(acheteur, years_to_retrieve),
-                    "ratios_data": get_structured_ratios_bancaire_data(acheteur, years_to_retrieve),
+                    "ratios_data":     get_structured_ratios_bancaire_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_bancaire_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere":   get_charts_structure_financiere_bancaire_data(acheteur, years_to_retrieve),
                         "charts_rentabilite_financiere": get_charts_rentabilite_bancaire_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_ratios_bancaire_data(acheteur, years_to_retrieve),
+                        "charts_delais":                 get_charts_ratios_bancaire_data(acheteur, years_to_retrieve),
                     },
-                },
+                } if has_financial_data else {},
                 "etats_financiers_syscohada": {
-                    "actif_data": get_structured_actif_syscohada_data(acheteur, years_to_retrieve),
-                    "passif_data": get_structured_passif_syscohada_data(acheteur, years_to_retrieve),
+                    "actif_data":    get_structured_actif_syscohada_data(acheteur, years_to_retrieve),
+                    "passif_data":   get_structured_passif_syscohada_data(acheteur, years_to_retrieve),
                     "resultat_data": get_structured_resultat_syscohada_data(acheteur, years_to_retrieve),
-                    "ratios_data": get_structured_ratios_syscohada_data(acheteur, years_to_retrieve),
+                    "ratios_data":   get_structured_ratios_syscohada_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_syscohada_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere":   get_charts_structure_financiere_syscohada_data(acheteur, years_to_retrieve),
                         "charts_rentabilite_financiere": get_charts_rentabilite_financiere_syscohada_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_syscohada_data(acheteur, years_to_retrieve),
+                        "charts_delais":                 get_charts_delais_syscohada_data(acheteur, years_to_retrieve),
                     },
-                },
+                } if has_financial_data else {},
                 "etats_financiers_irfs_cobac": {
-                    "actif_data": get_structured_actif_ifrs_data(acheteur, years_to_retrieve),
-                    "passif_data": get_structured_passif_ifrs_data(acheteur, years_to_retrieve),
+                    "actif_data":    get_structured_actif_ifrs_data(acheteur, years_to_retrieve),
+                    "passif_data":   get_structured_passif_ifrs_data(acheteur, years_to_retrieve),
                     "resultat_data": get_structured_resultat_ifrs_data(acheteur, years_to_retrieve),
-                    "ratios_data": get_structured_ratios_ifrs_data(acheteur, years_to_retrieve),
+                    "ratios_data":   get_structured_ratios_ifrs_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_ifrs_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere":   get_charts_structure_financiere_ifrs_data(acheteur, years_to_retrieve),
                         "charts_rentabilite_financiere": get_charts_rentabilite_financiere_ifrs_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_ifrs_data(acheteur, years_to_retrieve),
+                        "charts_delais":                 get_charts_delais_ifrs_data(acheteur, years_to_retrieve),
                     },
-                },
-
+                } if has_financial_data else {},
             },
             
             "charts": {
@@ -1973,7 +2030,7 @@ def generer_rapport_solvabilite(request):
                 "score_png": f"scoring/{score_indexe}.png",
                 "score_image_base64": get_static_image_base64(f"scoring/{score_indexe}.png"),
                 "score_value": f"{raw_score_sans_bilan:.2f}",  # <- toujours 2 décimales
-                "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "Non spécifié",
+                "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "",
                 "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else "Aucun commentaire disponible",
                 "score_type": "Scoring sans bilan",
                 "url_site": static_base_url,
@@ -1981,9 +2038,9 @@ def generer_rapport_solvabilite(request):
             "scoring_manuel": scoring_manuel_context,
             "scoring_classique": {
                 "title_16": "SCORING CLASSIQUE - AVEC BILAN",
-                "annee_N": data['annee_n'],
-                "annee_N1": data['annee_n1'],
-                "annee_N2": data['annee_n2'],
+                "annee_N": annee_N,
+                "annee_N1": annee_N1,
+                "annee_N2": annee_N2,
                 
                 "score_image_annee_N": _score_image_path(score_value_annee_N),
                 "score_image_annee_N_base64": _score_image_base64(score_value_annee_N),
@@ -2007,9 +2064,9 @@ def generer_rapport_solvabilite(request):
             },
             "scoring_anglais": {
                 "title_16": "SCORING ANGLAIS - AVEC BILAN",
-                "annee_N": data['annee_n'],
-                "annee_N1": data['annee_n1'],
-                "annee_N2": data['annee_n2'],
+                "annee_N": annee_N,
+                "annee_N1": annee_N1,
+                "annee_N2": annee_N2,
                 
                 "score_image_annee_N": _score_image_path(score_value_anglais_annee_N),
                 "score_image_annee_N_base64": _score_image_base64(score_value_anglais_annee_N),
@@ -2033,9 +2090,9 @@ def generer_rapport_solvabilite(request):
             },
             "scoring_bancaire": {
                 "title_16": "SCORING BANCAIRE - AVEC BILAN",
-                "annee_N": data['annee_n'],
-                "annee_N1": data['annee_n1'],
-                "annee_N2": data['annee_n2'],
+                "annee_N": annee_N,
+                "annee_N1": annee_N1,
+                "annee_N2": annee_N2,
                 
                 "score_image_annee_N": _score_image_path(score_value_bancaire_annee_N),
                 "score_image_annee_N_base64": _score_image_base64(score_value_bancaire_annee_N),
@@ -2059,9 +2116,9 @@ def generer_rapport_solvabilite(request):
             },
             "scoring_syscohada": {
                 "title_16": "SCORING SYSCOHADA - AVEC BILAN",
-                "annee_N": data['annee_n'],
-                "annee_N1": data['annee_n1'],
-                "annee_N2": data['annee_n2'],
+                "annee_N": annee_N,
+                "annee_N1": annee_N1,
+                "annee_N2": annee_N2,
                 
                 "score_image_annee_N": _score_image_path(score_value_syscohada_annee_N),
                 "score_image_annee_N_base64": _score_image_base64(score_value_syscohada_annee_N),
@@ -2085,9 +2142,9 @@ def generer_rapport_solvabilite(request):
             },
             "scoring_ifrs": {
                 "title_16": "SCORING IFRS COBAC - AVEC BILAN",
-                "annee_N": data['annee_n'],
-                "annee_N1": data['annee_n1'],
-                "annee_N2": data['annee_n2'],
+                "annee_N": annee_N,
+                "annee_N1": annee_N1,
+                "annee_N2": annee_N2,
                 
                 "score_image_annee_N": _score_image_path(score_value_ifrs_annee_N),
                 "score_image_annee_N_base64": _score_image_base64(score_value_ifrs_annee_N),
@@ -2114,7 +2171,7 @@ def generer_rapport_solvabilite(request):
                 "title_17": "HISTORIQUE DES OPERATIONS",
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
                 "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else "Aucune description disponible",
-                "importation": operation_history.importation if operation_history and operation_history.importation else "Non spécifié",
+                "importation": operation_history.importation if operation_history and operation_history.importation else "",
                 "historique": operation_history.historique if operation_history and operation_history.historique else "Aucun historique disponible",
             },
             "properties_and_assets": {
@@ -2124,20 +2181,20 @@ def generer_rapport_solvabilite(request):
             "terms_of_purchase_and_sale": {
                 "title_19": "CONDITION D'ACHAT ET DE VENTE",
                 "conditions_achat": {
-                    "local": condition_achat.local if condition_achat and condition_achat.local else "Non spécifié",
-                    "importation": condition_achat.importation if condition_achat and condition_achat.importation else "Non spécifié",
-                    "les_clients": condition_achat.les_clients if condition_achat and condition_achat.les_clients else "Non spécifié",
-                    "fournisseur": condition_achat.fournisseur if condition_achat and condition_achat.fournisseur else "Non spécifié",
+                    "local": condition_achat.local if condition_achat and condition_achat.local else "",
+                    "importation": condition_achat.importation if condition_achat and condition_achat.importation else "",
+                    "les_clients": condition_achat.les_clients if condition_achat and condition_achat.les_clients else "",
+                    "fournisseur": condition_achat.fournisseur if condition_achat and condition_achat.fournisseur else "",
                 },
                 "conditions_vente": {
-                    "local": condition_vente.local if condition_vente and condition_vente.local else "Non spécifié",
+                    "local": condition_vente.local if condition_vente and condition_vente.local else "",
                     "recouvrement_dette_jugement": condition_vente_recouvrement,
                     "comportement_de_paiement": condition_vente_comportement,
                 }
             },
             "conclusion_generale": {
                 "title": "CONCLUSION GENERALE",
-                "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "Non spécifié",
+                "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "",
                 "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else "Aucun commentaire disponible",
             }
         }
@@ -2816,7 +2873,7 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
         data_complete['header_report'] = {
             "acremac_services": "Services ACREMAC",
             "acremac_mail": "credit.report@acremac.com",
-            "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "date_today": datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
             "bilan_report": form_data.get('type_bilan', 'Classique').upper(),
             "format_report": export_format.upper(),
             "language_report": "français" if form_data.get('langue', 'fr') == 'fr' else "english"
@@ -2829,7 +2886,7 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
         if 'acremac_mail' not in header:
             header['acremac_mail'] = "credit.report@acremac.com"
         if 'date_today' not in header:
-            header['date_today'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            header['date_today'] = datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")
         if 'bilan_report' not in header:
             header['bilan_report'] = form_data.get('type_bilan', 'Classique').upper()
     
@@ -2853,7 +2910,7 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
         if 'email' not in acremac_info:
             acremac_info['email'] = "email@inconnu.com"
         if 'telephone' not in acremac_info:
-            acremac_info['telephone'] = "Non spécifié"
+            acremac_info['telephone'] = ""
         if 'telephones' not in acremac_info:
             acremac_info['telephones'] = []
         if 'portables' not in acremac_info:
@@ -2867,7 +2924,7 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
             "acremac_info": {
                 "nom": "Nom inconnu",
                 "email": "email@inconnu.com",
-                "telephone": "Non spécifié",
+                "telephone": "",
                 "telephones": [],
                 "portables": [],
                 "emails_secondaires": [],

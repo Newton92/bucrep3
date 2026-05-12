@@ -1,0 +1,875 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<style>
+:root {
+    --primary: #0d80be;
+    --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #106cb2);
+    --success-gradient: linear-gradient(135deg, #28a745, #20c997);
+    --danger: #dc3545;
+    --dark: #2c3e50;
+    --gray: #6c757d;
+    --border: rgba(13, 110, 178, 0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.06);
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+body { background: #f4f6f9; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+/* ── Breadcrumb ── */
+.detail-breadcrumb {
+    font-size: 0.82rem;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+.detail-breadcrumb a { color: var(--primary); text-decoration: none; font-weight: 500; }
+.detail-breadcrumb a:hover { text-decoration: underline; }
+.detail-breadcrumb .sep { opacity: 0.4; }
+
+/* ── Hero header ── */
+.detail-hero {
+    background: var(--primary-gradient);
+    border-radius: var(--radius);
+    padding: 1.5rem 2rem;
+    box-shadow: 0 10px 30px rgba(13,110,178,0.2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.detail-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: -40%;
+    width: 180%; height: 180%;
+    background: linear-gradient(45deg, transparent 35%, rgba(255,255,255,0.08) 50%, transparent 65%);
+    animation: shimmer 4s infinite linear;
+}
+@keyframes shimmer { 0%{transform:translateX(-100%) rotate(45deg)} 100%{transform:translateX(100%) rotate(45deg)} }
+
+.detail-hero-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+    word-break: break-word;
+}
+.detail-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.82);
+}
+.detail-hero-meta span { display: flex; align-items: center; gap: 0.35rem; }
+
+/* ── Status badge ── */
+.badge-sent {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 0.3rem 0.9rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+.badge-draft {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 0.3rem 0.9rem;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+/* ── Section cards ── */
+.detail-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    border: none;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    transition: var(--transition);
+}
+.detail-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.09); }
+
+.detail-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1.5px solid var(--border);
+    background: rgba(13,110,178,0.03);
+}
+.detail-section-icon {
+    width: 32px; height: 32px;
+    background: var(--primary-gradient);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+.detail-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--primary);
+    margin: 0;
+}
+.detail-section-body { padding: 1.5rem; }
+
+/* ── Description content (Quill HTML) ── */
+.description-content {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--dark);
+    word-break: break-word;
+}
+.description-content h1,.description-content h2,.description-content h3 {
+    font-weight: 700; margin-top: 1.25rem; margin-bottom: 0.5rem;
+}
+.description-content p { margin-bottom: 0.75rem; }
+.description-content ul,.description-content ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.description-content blockquote {
+    border-left: 3px solid var(--primary);
+    padding-left: 1rem;
+    color: var(--gray);
+    font-style: italic;
+    margin: 1rem 0;
+}
+.description-content strong { font-weight: 700; }
+.description-content a { color: var(--primary); }
+
+/* ── Acheteur badges ── */
+.acheteur-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(13,110,178,0.07);
+    border: 1px solid rgba(13,110,178,0.15);
+    color: var(--primary);
+    border-radius: 50px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin: 0.2rem;
+}
+.acheteur-chip i { font-size: 0.72rem; opacity: 0.7; }
+
+/* ── Email info ── */
+.email-field {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.email-field:last-child { border-bottom: none; padding-bottom: 0; }
+.email-field-label {
+    min-width: 80px;
+    font-weight: 600;
+    color: var(--gray);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-top: 0.1rem;
+    flex-shrink: 0;
+}
+.email-field-value { color: var(--dark); word-break: break-all; }
+.email-tag {
+    display: inline-block;
+    background: rgba(13,110,178,0.07);
+    color: var(--primary);
+    border: 1px solid rgba(13,110,178,0.15);
+    border-radius: 50px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.8rem;
+    margin: 0.1rem;
+}
+.email-sent-at {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(40,167,69,0.08);
+    color: #28a745;
+    border: 1px solid rgba(40,167,69,0.2);
+    border-radius: 50px;
+    padding: 0.25rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ── Attachments ── */
+.attachment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: white;
+    transition: var(--transition);
+}
+.attachment-item:hover {
+    border-color: var(--primary);
+    background: rgba(13,110,178,0.02);
+}
+.attachment-item + .attachment-item { margin-top: 0.6rem; }
+.attachment-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.attachment-icon.pdf    { background: rgba(220,53,69,0.1);  color: #dc3545; }
+.attachment-icon.word   { background: rgba(13,110,178,0.1); color: #0d80be; }
+.attachment-icon.excel  { background: rgba(40,167,69,0.1);  color: #28a745; }
+.attachment-icon.image  { background: rgba(255,193,7,0.1);  color: #d9a000; }
+.attachment-icon.file   { background: rgba(108,117,125,0.1);color: #6c757d; }
+.attachment-name { font-weight: 600; color: var(--dark); font-size: 0.875rem; }
+.attachment-size { font-size: 0.78rem; color: var(--gray); }
+.attachment-download {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(13,110,178,0.08);
+    border: 1px solid rgba(13,110,178,0.15);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+.attachment-download:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+/* ── Meta info block (sidebar card) ── */
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.meta-item:last-child { border-bottom: none; padding-bottom: 0; }
+.meta-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--gray);
+}
+.meta-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.meta-value i { color: var(--primary); font-size: 0.78rem; }
+
+/* ── Footer actions ── */
+.detail-footer {
+    background: white;
+    border-top: 1.5px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.05);
+}
+.btn-back {
+    background: #f1f3f5;
+    color: var(--gray);
+    border: none;
+    border-radius: 50px;
+    padding: 0.55rem 1.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+.btn-back:hover { background: #e2e6ea; color: var(--dark); }
+.btn-edit-action {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.55rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(13,110,178,0.25);
+}
+.btn-edit-action:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13,110,178,0.3); color: white; }
+.btn-send-action {
+    background: var(--success-gradient);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.55rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(40,167,69,0.25);
+}
+.btn-send-action:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(40,167,69,0.3); }
+.btn-delete-action {
+    background: rgba(220,53,69,0.08);
+    color: var(--danger);
+    border: 1.5px solid rgba(220,53,69,0.2);
+    border-radius: 50px;
+    padding: 0.55rem 1.3rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-delete-action:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+/* ── Empty / loading ── */
+.skeleton-line {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.4s infinite;
+    border-radius: 6px;
+    height: 1rem;
+    margin-bottom: 0.6rem;
+}
+@keyframes skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+.empty-attach {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+.empty-attach i { font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem; }
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.1rem; height: 1.1rem;
+    border: 2px solid rgba(13,110,178,0.25);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+    .detail-hero { padding: 1.1rem 1.25rem; }
+    .detail-hero-title { font-size: 1.25rem; }
+    .detail-footer { flex-direction: column; align-items: stretch; }
+    .detail-footer > * { justify-content: center; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-2 px-md-3 pb-5">
+
+    <!-- Breadcrumb -->
+    <nav class="detail-breadcrumb animate__animated animate__fadeIn">
+        <a href="{% url 'dash_root_warning' %}">
+            <i class="fas fa-shield-alt me-1"></i>{% trans "Alertes" %}
+        </a>
+        <span class="sep"><i class="fas fa-chevron-right" style="font-size:.65rem"></i></span>
+        <span id="bcTitle">{% trans "Détail de l'alerte" %}</span>
+    </nav>
+
+    <!-- Skeleton / hero (rempli par JS) -->
+    <div id="heroContainer" class="detail-hero animate__animated animate__fadeInDown">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div style="flex:1;min-width:0">
+                <div id="heroTitle" class="detail-hero-title">
+                    <div class="skeleton-line" style="width:55%;height:1.4rem;"></div>
+                </div>
+                <div class="detail-hero-meta" id="heroMeta">
+                    <span><div class="skeleton-line" style="width:120px;height:.85rem;background:rgba(255,255,255,.2)"></div></span>
+                </div>
+            </div>
+            <div id="heroStatus"></div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Colonne principale -->
+        <div class="col-xl-8">
+
+            <!-- Description -->
+            <div class="detail-card animate__animated animate__fadeInUp" style="animation-delay:.05s">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-align-left"></i></div>
+                    <p class="detail-section-title">{% trans "Description" %}</p>
+                </div>
+                <div class="detail-section-body">
+                    <div id="descriptionContent" class="description-content">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line" style="width:80%"></div>
+                        <div class="skeleton-line" style="width:65%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acheteurs -->
+            <div class="detail-card animate__animated animate__fadeInUp" style="animation-delay:.10s">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-users"></i></div>
+                    <p class="detail-section-title">{% trans "Acheteurs concernés" %}</p>
+                    <span id="acheteursCount" class="ms-auto badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem"></span>
+                </div>
+                <div class="detail-section-body" id="acheteursContent">
+                    <div class="skeleton-line" style="width:40%"></div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="detail-card animate__animated animate__fadeInUp" id="emailCard" style="animation-delay:.15s;display:none">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-paper-plane"></i></div>
+                    <p class="detail-section-title">{% trans "Informations d'envoi email" %}</p>
+                    <span id="emailSentBadge" class="ms-auto"></span>
+                </div>
+                <div class="detail-section-body" id="emailContent"></div>
+            </div>
+
+            <!-- Pièces jointes -->
+            <div class="detail-card animate__animated animate__fadeInUp" style="animation-delay:.20s">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-paperclip"></i></div>
+                    <p class="detail-section-title">{% trans "Pièces jointes" %}</p>
+                    <span id="attachCount" class="ms-auto badge bg-primary bg-opacity-10 text-primary fw-semibold" style="font-size:.78rem"></span>
+                </div>
+                <div class="detail-section-body" id="attachContent">
+                    <div class="skeleton-line" style="width:50%"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-xl-4">
+            <div class="detail-card animate__animated animate__fadeInUp" style="animation-delay:.08s">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-info-circle"></i></div>
+                    <p class="detail-section-title">{% trans "Informations" %}</p>
+                </div>
+                <div class="detail-section-body" id="metaContent">
+                    <div class="meta-item">
+                        <span class="meta-label">{% trans "Statut" %}</span>
+                        <span class="meta-value skeleton-line" style="width:80px;height:.9rem"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">{% trans "Auteur" %}</span>
+                        <span class="meta-value skeleton-line" style="width:100px;height:.9rem"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">{% trans "Créée le" %}</span>
+                        <span class="meta-value skeleton-line" style="width:130px;height:.9rem"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="detail-card animate__animated animate__fadeInUp" style="animation-delay:.12s">
+                <div class="detail-section-header">
+                    <div class="detail-section-icon"><i class="fas fa-bolt"></i></div>
+                    <p class="detail-section-title">{% trans "Actions" %}</p>
+                </div>
+                <div class="detail-section-body d-flex flex-column gap-2" id="actionsContent">
+                    <div class="skeleton-line" style="height:2rem"></div>
+                    <div class="skeleton-line" style="height:2rem"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer sticky -->
+<div class="detail-footer animate__animated animate__fadeInUp" style="animation-delay:.25s">
+    <a href="{% url 'dash_root_warning' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i>{% trans "Retour à la liste" %}
+    </a>
+    <div class="d-flex gap-2 flex-wrap" id="footerActions">
+        <div class="loading-spinner"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function() {
+    const ACCESS_TOKEN = "{{ access }}";
+    const WARNING_ID   = {{ warning_id }};
+    const EDIT_URL     = `/root-dashboard/gestion-des-warnings/modifier/${WARNING_ID}/`;
+    const LIST_URL     = '{% url "dash_root_warning" %}';
+    const SEND_API     = `/api/warnings/${WARNING_ID}/send/`;
+    const DELETE_API   = '/api/warnings/delete/';
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleString('fr-FR', {
+            day:'2-digit', month:'2-digit', year:'numeric',
+            hour:'2-digit', minute:'2-digit'
+        });
+    }
+
+    function fmtSize(bytes) {
+        if (!bytes || bytes === 0) return '—';
+        const k = 1024, s = ['B','KB','MB','GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${(bytes/Math.pow(k,i)).toFixed(1)} ${s[i]}`;
+    }
+
+    function fileIconClass(name) {
+        const ext = (name||'').split('.').pop().toLowerCase();
+        if (['pdf'].includes(ext))                    return ['fa-file-pdf','pdf'];
+        if (['doc','docx'].includes(ext))             return ['fa-file-word','word'];
+        if (['xls','xlsx'].includes(ext))             return ['fa-file-excel','excel'];
+        if (['jpg','jpeg','png','gif'].includes(ext)) return ['fa-file-image','image'];
+        return ['fa-file','file'];
+    }
+
+    function emailTags(csv) {
+        if (!csv) return '<span class="text-muted fst-italic">—</span>';
+        return csv.split(',').map(e => e.trim()).filter(Boolean)
+                 .map(e => `<span class="email-tag">${esc(e)}</span>`).join(' ');
+    }
+
+    async function apiFetch(url, opts = {}) {
+        const headers = opts.headers || {};
+        headers.Authorization = 'Bearer ' + ACCESS_TOKEN;
+        if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+        const res = await fetch(url, { ...opts, headers });
+        let data = {};
+        try { data = await res.json(); } catch {}
+        if (!res.ok) throw new Error(data.detail || data.error || data.message || "{% trans 'Une erreur est survenue' %}");
+        return data;
+    }
+
+    function showError(msg) {
+        Swal.fire({ icon:'error', title:"{% trans 'Erreur' %}", text:msg, confirmButtonColor:'#0d80be' });
+    }
+
+    async function confirmAction(msg) {
+        const r = await Swal.fire({
+            icon:'warning', title:"{% trans 'Confirmation' %}", text:msg,
+            showCancelButton:true, confirmButtonColor:'#0d80be', cancelButtonColor:'#dc3545',
+            confirmButtonText:"{% trans 'Oui' %}", cancelButtonText:"{% trans 'Annuler' %}"
+        });
+        return r.isConfirmed;
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────
+    function renderHero(w) {
+        // Title
+        document.getElementById('heroTitle').textContent = w.titre || '—';
+        document.getElementById('bcTitle').textContent   = w.titre || "{% trans 'Détail' %}";
+        document.title = (w.titre || "{% trans 'Alerte' %}") + " — BUCREP";
+
+        // Meta row
+        document.getElementById('heroMeta').innerHTML = `
+            <span><i class="fas fa-user-circle"></i>${esc(w.created_by_username || '—')}</span>
+            <span><i class="fas fa-calendar-alt"></i>${fmtDate(w.created_at)}</span>
+            <span><i class="fas fa-users"></i>${w.acheteurs_count ?? 0} {% trans "acheteur(s)" %}</span>
+            <span><i class="fas fa-paperclip"></i>${w.attachments_count ?? 0} {% trans "fichier(s)" %}</span>
+        `;
+
+        // Status badge
+        const statusEl = document.getElementById('heroStatus');
+        statusEl.innerHTML = w.email_sent
+            ? `<span class="badge-sent"><i class="fas fa-check-circle"></i>{% trans "Email envoyé" %}</span>`
+            : `<span class="badge-draft"><i class="fas fa-file-alt"></i>{% trans "Brouillon" %}</span>`;
+    }
+
+    function renderDescription(w) {
+        const el = document.getElementById('descriptionContent');
+        if (w.description && w.description.replace(/<[^>]*>/g,'').trim()) {
+            el.innerHTML = w.description;
+        } else {
+            el.innerHTML = `<p class="text-muted fst-italic">{% trans "Aucune description renseignée." %}</p>`;
+        }
+    }
+
+    function renderAcheteurs(w) {
+        const acheteurs = w.acheteurs || [];
+        document.getElementById('acheteursCount').textContent = acheteurs.length;
+        const el = document.getElementById('acheteursContent');
+        if (!acheteurs.length) {
+            el.innerHTML = `<p class="text-muted fst-italic mb-0">{% trans "Aucun acheteur sélectionné." %}</p>`;
+            return;
+        }
+        el.innerHTML = acheteurs.map(a =>
+            `<span class="acheteur-chip">
+                <i class="fas fa-building"></i>${esc(a.code ? `${a.nom} (${a.code})` : a.nom)}
+            </span>`
+        ).join('');
+    }
+
+    function renderEmail(w) {
+        const card = document.getElementById('emailCard');
+        const hasEmail = w.email_to || w.email_cc || w.email_bcc || w.email_subject;
+        if (!hasEmail) { card.style.display = 'none'; return; }
+        card.style.display = '';
+
+        // Badge envoi
+        const sentBadge = document.getElementById('emailSentBadge');
+        sentBadge.innerHTML = w.email_sent && w.email_sent_at
+            ? `<span class="email-sent-at"><i class="fas fa-check-circle"></i>{% trans "Envoyé le" %} ${fmtDate(w.email_sent_at)}</span>`
+            : '';
+
+        document.getElementById('emailContent').innerHTML = `
+            ${w.email_subject ? `
+            <div class="email-field">
+                <span class="email-field-label">{% trans "Objet" %}</span>
+                <span class="email-field-value fw-semibold">${esc(w.email_subject)}</span>
+            </div>` : ''}
+            <div class="email-field">
+                <span class="email-field-label">{% trans "À" %}</span>
+                <div class="email-field-value">${emailTags(w.email_to)}</div>
+            </div>
+            ${w.email_cc ? `
+            <div class="email-field">
+                <span class="email-field-label">{% trans "CC" %}</span>
+                <div class="email-field-value">${emailTags(w.email_cc)}</div>
+            </div>` : ''}
+            ${w.email_bcc ? `
+            <div class="email-field">
+                <span class="email-field-label">{% trans "CCI" %}</span>
+                <div class="email-field-value">${emailTags(w.email_bcc)}</div>
+            </div>` : ''}
+        `;
+    }
+
+    function renderAttachments(w) {
+        const items = w.warning_attachments || [];
+        document.getElementById('attachCount').textContent = items.length;
+        const el = document.getElementById('attachContent');
+        if (!items.length) {
+            el.innerHTML = `<div class="empty-attach"><i class="fas fa-paperclip"></i>{% trans "Aucune pièce jointe." %}</div>`;
+            return;
+        }
+        el.innerHTML = items.map(item => {
+            const name = item.filename || '{% trans "Fichier" %}';
+            const [iconClass, colorClass] = fileIconClass(name);
+            const size = fmtSize(item.file_size);
+            const url  = item.upload_url || '#';
+            return `
+            <div class="attachment-item">
+                <div class="d-flex align-items-center gap-3 min-width-0">
+                    <div class="attachment-icon ${colorClass}">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="min-width-0">
+                        <div class="attachment-name text-truncate" title="${esc(name)}">${esc(name)}</div>
+                        <div class="attachment-size">${size}</div>
+                    </div>
+                </div>
+                <a href="${esc(url)}" target="_blank" class="attachment-download"
+                   title="{% trans 'Télécharger' %}" ${url==='#'?'aria-disabled="true"':''}>
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>`;
+        }).join('');
+    }
+
+    function renderMeta(w) {
+        document.getElementById('metaContent').innerHTML = `
+            <div class="meta-item">
+                <span class="meta-label">{% trans "Statut" %}</span>
+                <span class="meta-value">
+                    ${w.email_sent
+                        ? '<i class="fas fa-check-circle text-success"></i><span class="text-success fw-semibold">{% trans "Envoyée" %}</span>'
+                        : '<i class="fas fa-file-alt"></i><span>{% trans "Brouillon" %}</span>'}
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">{% trans "Auteur" %}</span>
+                <span class="meta-value">
+                    <i class="fas fa-user-circle"></i>${esc(w.created_by_username || '—')}
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">{% trans "Créée le" %}</span>
+                <span class="meta-value">
+                    <i class="fas fa-calendar-plus"></i>${fmtDate(w.created_at)}
+                </span>
+            </div>
+            ${w.email_sent && w.email_sent_at ? `
+            <div class="meta-item">
+                <span class="meta-label">{% trans "Email envoyé le" %}</span>
+                <span class="meta-value text-success">
+                    <i class="fas fa-paper-plane"></i>${fmtDate(w.email_sent_at)}
+                </span>
+            </div>` : ''}
+        `;
+    }
+
+    function renderActions(w) {
+        const canSend = !w.email_sent && w.email_to;
+        document.getElementById('actionsContent').innerHTML = `
+            <a href="${EDIT_URL}" class="btn-edit-action w-100 justify-content-center text-decoration-none"
+               style="border-radius:10px;padding:.55rem 1rem">
+                <i class="fas fa-pencil-alt"></i>{% trans "Modifier cette alerte" %}
+            </a>
+            ${canSend ? `
+            <button id="sidebarSendBtn" class="btn-send-action w-100 justify-content-center"
+                    style="border-radius:10px;padding:.55rem 1rem">
+                <i class="fas fa-paper-plane"></i>{% trans "Envoyer par email" %}
+            </button>` : ''}
+            <button id="sidebarDeleteBtn" class="btn-delete-action w-100 justify-content-center"
+                    style="border-radius:10px;padding:.55rem 1rem">
+                <i class="fas fa-trash-alt"></i>{% trans "Supprimer" %}
+            </button>
+        `;
+
+        document.getElementById('sidebarDeleteBtn')?.addEventListener('click', doDelete);
+        document.getElementById('sidebarSendBtn')?.addEventListener('click', doSend);
+    }
+
+    function renderFooterActions(w) {
+        const canSend = !w.email_sent && w.email_to;
+        document.getElementById('footerActions').innerHTML = `
+            <a href="${EDIT_URL}" class="btn-edit-action text-decoration-none">
+                <i class="fas fa-pencil-alt"></i>{% trans "Modifier" %}
+            </a>
+            ${canSend ? `
+            <button id="footerSendBtn" class="btn-send-action">
+                <i class="fas fa-paper-plane"></i>{% trans "Envoyer" %}
+            </button>` : ''}
+            <button id="footerDeleteBtn" class="btn-delete-action">
+                <i class="fas fa-trash-alt"></i>{% trans "Supprimer" %}
+            </button>
+        `;
+        document.getElementById('footerDeleteBtn')?.addEventListener('click', doDelete);
+        document.getElementById('footerSendBtn')?.addEventListener('click', doSend);
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────
+    async function doSend() {
+        const confirmed = await confirmAction("{% trans 'Confirmer l\'envoi de cet email ?' %}");
+        if (!confirmed) return;
+        try {
+            await apiFetch(SEND_API, { method:'POST', body: JSON.stringify({}) });
+            Swal.fire({
+                icon:'success',
+                title:"{% trans 'Email envoyé !' %}",
+                text:"{% trans 'L\'alerte a été envoyée avec succès.' %}",
+                confirmButtonColor:'#0d80be'
+            }).then(() => location.reload());
+        } catch(err) { showError(err.message); }
+    }
+
+    async function doDelete() {
+        const confirmed = await confirmAction("{% trans 'Confirmer la suppression de cette alerte ?' %}");
+        if (!confirmed) return;
+        try {
+            await apiFetch(DELETE_API, { method:'DELETE', body: JSON.stringify({ ids:[parseInt(WARNING_ID)] }) });
+            Swal.fire({
+                icon:'success', title:"{% trans 'Supprimée' %}", timer:1500, showConfirmButton:false
+            }).then(() => { window.location.href = LIST_URL; });
+        } catch(err) { showError(err.message); }
+    }
+
+    function showPageError(msg) {
+        document.getElementById('heroTitle').textContent = "{% trans 'Erreur de chargement' %}";
+        document.getElementById('heroMeta').innerHTML = '';
+        document.getElementById('heroStatus').innerHTML = '';
+        const errHtml = `
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-2 mb-0" role="alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div><strong>{% trans 'Erreur' %}</strong> — ${msg}</div>
+            </div>`;
+        document.getElementById('descriptionContent').innerHTML = errHtml;
+        document.getElementById('acheteursContent').innerHTML  = '';
+        document.getElementById('attachContent').innerHTML     = '';
+        document.getElementById('metaContent').innerHTML       = '';
+        document.getElementById('actionsContent').innerHTML    = '';
+        document.getElementById('footerActions').innerHTML     = '';
+        console.error('[WarningDetail] API error:', msg);
+    }
+
+    // ── Chargement principal ────────────────────────────────────────────────
+    async function loadWarning() {
+        try {
+            const w = await apiFetch(`/api/warnings/${WARNING_ID}/`);
+            renderHero(w);
+            renderDescription(w);
+            renderAcheteurs(w);
+            renderEmail(w);
+            renderAttachments(w);
+            renderMeta(w);
+            renderActions(w);
+            renderFooterActions(w);
+        } catch(err) {
+            showPageError(err.message);
+        }
+    }
+
+    loadWarning();
+})();
+</script>
+{% endblock %}

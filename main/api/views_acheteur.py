@@ -10,7 +10,7 @@ from django.db.models import Count
 from datetime import timedelta
 
 from main.serializers import *
-from main.models import Acheteur, Pays
+from main.models import Acheteur, Pays, NaceSpecifique
 
 import traceback
 import logging
@@ -19,30 +19,42 @@ logger = logging.getLogger(__name__)
 
 def _resolve_selected_pays_id(request, persist=True):
     """
-    Résout le pays actif avec fallback robuste:
-    session -> user.pays -> premier pays en base.
+    Résout le pays actif avec la priorité suivante :
+      1. session['selected_pays_id']  — changement en cours via la toolbar
+      2. user.pays_actif_id           — dernier pays persisté en DB (survit aux reconnexions)
+      3. user.pays                    — affectation statique de l'employé
+      4. None                         — aucun filtre (superadmin, etc.)
     """
-    session_value = request.session.get("selected_pays_id")
     selected_pays_id = None
 
+    # 1. Session (priorité maximale : changement toolbar en cours de session)
+    session_value = request.session.get("selected_pays_id")
     if session_value:
         try:
-            selected_pays_id = int(session_value)
+            sid = int(session_value)
         except (TypeError, ValueError):
-            selected_pays_id = None
+            sid = None
+        if sid and Pays.objects.filter(id=sid, afficher_au_dashboard=True).exists():
+            selected_pays_id = sid
 
-        if selected_pays_id and not Pays.objects.filter(id=selected_pays_id).exists():
-            selected_pays_id = None
-
-    if not selected_pays_id and getattr(request.user, "pays", None):
-        selected_pays_id = request.user.pays.id
-
+    # 2. pays_actif persisté en DB
     if not selected_pays_id:
-        default_pays = Pays.objects.order_by("nom").first()
-        selected_pays_id = default_pays.id if default_pays else None
+        pays_actif_id = getattr(request.user, "pays_actif_id", None)
+        if pays_actif_id and Pays.objects.filter(id=pays_actif_id, afficher_au_dashboard=True).exists():
+            selected_pays_id = pays_actif_id
 
-    if persist and selected_pays_id:
-        request.session["selected_pays_id"] = selected_pays_id
+    # 3. Affectation statique de l'employé
+    if not selected_pays_id:
+        user_pays = getattr(request.user, "pays", None)
+        if user_pays:
+            selected_pays_id = user_pays.id
+
+    # Synchroniser la session
+    if persist:
+        if selected_pays_id:
+            request.session["selected_pays_id"] = selected_pays_id
+        else:
+            request.session.pop("selected_pays_id", None)
 
     return selected_pays_id
 
@@ -127,7 +139,7 @@ class ListAcheteurView(APIView):
         selected_pays_id = _resolve_selected_pays_id(request)
 
         acheteur_list = Acheteur.objects.select_related(
-            "pays", "ville", "province", "categorie_entreprise", "forme_juridique", "statut_entreprise"
+            "pays", "ville", "province", "forme_juridique", "statut_entreprise"
         )
         if selected_pays_id:
             acheteur_list = acheteur_list.filter(pays_id=selected_pays_id)
@@ -171,8 +183,7 @@ class ListAcheteurView(APIView):
                 | Q(site_internet__icontains=search_query)
                 | Q(rue_adresse__icontains=search_query)
                 | Q(activite_principale__icontains=search_query)
-                | Q(categorie_entreprise__libelle__icontains=search_query)
-                | Q(forme_juridique__libelle__icontains=search_query)
+                                | Q(forme_juridique__libelle__icontains=search_query)
                 | Q(statut_entreprise__libelle__icontains=search_query)
                 | Q(pays__nom__icontains=search_query)
                 | Q(province__nom__icontains=search_query)
@@ -197,7 +208,7 @@ class ListAcheteurView(APIView):
         acheteur_page = paginator.get_page(page_number)
         
         # Sérialisation
-        serializer = AcheteurSerializer(acheteur_page, many=True)
+        serializer = AcheteurSerializer(acheteur_page, many=True, context={"request": request})
         
         return Response({
             "results": serializer.data,
@@ -231,8 +242,8 @@ class SearchAcheteurView(APIView):
         
         # Construction de la requête optimisée
         acheteur_query = Acheteur.objects.select_related(
-            'pays', 'ville', 'province', 
-            'categorie_entreprise', 'forme_juridique', 'statut_entreprise'
+            'pays', 'ville', 'province',
+            'forme_juridique', 'statut_entreprise'
         )
         
         # Filtrer par pays si spécifié
@@ -249,7 +260,6 @@ class SearchAcheteurView(APIView):
             Q(pays__nom__icontains=search_term) |
             Q(ville__nom__icontains=search_term) |
             Q(province__nom__icontains=search_term) |
-            Q(categorie_entreprise__libelle__icontains=search_term) |
             Q(forme_juridique__libelle__icontains=search_term) |
             Q(statut_entreprise__libelle__icontains=search_term) |
             Q(description__icontains=search_term) |
@@ -270,7 +280,7 @@ class SearchAcheteurView(APIView):
             page_number = paginator.num_pages
         
         # Sérialiser les données
-        serializer = AcheteurSerializer(acheteur_page, many=True)
+        serializer = AcheteurSerializer(acheteur_page, many=True, context={"request": request})
         
         # Calculer les indices
         total_items = paginator.count
@@ -476,6 +486,80 @@ class AddAcheteurView(APIView):
 
 
 
+class InitierAcheteurView(APIView):
+    """Crée un acheteur minimal (étape 1) — seul le nom est requis.
+    Les étapes suivantes utilisent PUT /api/editer-un-acheteur/{id}/ pour compléter."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        from main.models import (
+            CategorieEntreprise, FormeJuridique, StatutEntreprise
+        )
+
+        nom = (request.data.get('nom') or '').strip()
+        if len(nom) < 2:
+            return Response({
+                "success": False,
+                "message": "Le nom doit contenir au moins 2 caractères.",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Vérifier unicité du nom
+        if Acheteur.objects.filter(nom__iexact=nom).exists():
+            return Response({
+                "success": False,
+                "message": f"Un acheteur avec le nom « {nom} » existe déjà.",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Résoudre les FK optionnelles
+        def resolve_fk(model, pk_val):
+            if pk_val:
+                try:
+                    return model.objects.get(pk=int(pk_val))
+                except (model.DoesNotExist, ValueError, TypeError):
+                    pass
+            return None
+
+        try:
+            acheteur = Acheteur.objects.create(
+                nom=nom,
+                sigle=(request.data.get('sigle') or '').strip(),
+                description=(request.data.get('description') or '').strip(),
+                activite_principale=(request.data.get('activite_principale') or '').strip(),
+                date_creation=request.data.get('date_creation') or None,
+                code_nace=(request.data.get('code_nace') or ''),
+                nace_specifique=resolve_fk(NaceSpecifique, request.data.get('nace_specifique')),
+                forme_juridique=resolve_fk(FormeJuridique, request.data.get('forme_juridique')),
+                statut_entreprise=resolve_fk(StatutEntreprise, request.data.get('statut_entreprise')),
+                created_by=request.user,
+            )
+            try:
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action_type='ACHETEUR_CREATED',
+                    object_id=acheteur.id,
+                    object_type='Acheteur',
+                    details=f"Acheteur '{acheteur.nom}' initié par {request.user.username}",
+                    ip_address=request.META.get('REMOTE_ADDR', '')
+                )
+            except Exception:
+                pass  # log failure must not block creation
+
+            return Response({
+                "success": True,
+                "message": "Acheteur créé. Complétez les étapes suivantes.",
+                "acheteur_id": acheteur.id,
+                "code": acheteur.code or '',
+                "nom": acheteur.nom,
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"InitierAcheteurView error: {e}", exc_info=True)
+            return Response({
+                "success": False,
+                "message": f"Erreur lors de la création : {str(e)}",
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class EditAcheteurView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -484,7 +568,7 @@ class EditAcheteurView(APIView):
         try:
             return Acheteur.objects.select_related(
                 'pays', 'ville', 'province', 
-                'categorie_entreprise', 'forme_juridique', 'statut_entreprise'
+                'forme_juridique', 'statut_entreprise'
             ).get(id=id)
         except Acheteur.DoesNotExist:
             return None
@@ -497,12 +581,12 @@ class EditAcheteurView(APIView):
                 "detail": "Acheteur non trouvé."
             }, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = GetAcheteurSerializer(acheteur)
+        serializer = GetAcheteurSerializer(acheteur, context={"request": request})
         return Response({
             "success": True,
             "acheteur": serializer.data
         })
-    
+
     def put(self, request, id, *args, **kwargs):
         print("=== DEBUG PUT REQUEST ===")
         print("Données reçues:", request.data)
@@ -523,9 +607,13 @@ class EditAcheteurView(APIView):
             try:
                 instance = serializer.save()
                 print("Instance sauvegardée avec succès")
-                
+
+                if request.data.get('creation_complete') is True or str(request.data.get('creation_complete')).lower() == 'true':
+                    Acheteur.objects.filter(pk=instance.pk).update(creation_complete=True)
+                    instance.refresh_from_db()
+
                 # Serializer pour la réponse
-                response_serializer = GetAcheteurSerializer(instance)
+                response_serializer = GetAcheteurSerializer(instance, context={"request": request})
                 return Response({
                     "success": True,
                     "message": "Acheteur mis à jour avec succès.",
@@ -544,6 +632,29 @@ class EditAcheteurView(APIView):
             "errors": serializer.errors,
             "message": "Erreurs de validation."
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AcheteursIncompletView(APIView):
+    """Retourne les acheteurs créés par l'utilisateur courant dont le wizard n'est pas terminé."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        qs = Acheteur.objects.filter(
+            created_by=request.user,
+            creation_complete=False,
+            ville__isnull=True,
+        ).select_related('statut_entreprise').order_by('-created_at')[:50]
+
+        data = []
+        for a in qs:
+            data.append({
+                "id": a.id,
+                "nom": a.nom,
+                "code": a.code or '',
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+
+        return Response({"count": len(data), "acheteurs": data})
 
 
 class DeleteAcheteurView(APIView):
@@ -596,10 +707,10 @@ class GetAcheteurView(APIView):
         try:
             acheteur = Acheteur.objects.select_related(
                 'pays', 'ville', 'province', 
-                'categorie_entreprise', 'forme_juridique', 'statut_entreprise'
+                'forme_juridique', 'statut_entreprise'
             ).get(id=id)
             
-            serializer = GetAcheteurSerializer(acheteur)
+            serializer = GetAcheteurSerializer(acheteur, context={"request": request})
             return Response({
                 "success": True,
                 "acheteur": serializer.data
@@ -637,8 +748,8 @@ class AcheteurStatsView(APIView):
             start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
             this_week = acheteurs.filter(created_at__gte=start_of_week).count()
             
-            # Nom du pays actif
-            active_country = "Tous pays"
+            # Nom du pays actif (None = tous pays, le JS traduit via t('all_countries'))
+            active_country = None
             if selected_pays_id:
                 pays = Pays.objects.filter(id=selected_pays_id).first()
                 if pays:
@@ -648,7 +759,8 @@ class AcheteurStatsView(APIView):
                 'total': total_count,
                 'thisMonth': this_month,
                 'thisWeek': this_week,
-                'activeCountry': active_country
+                'activeCountry': active_country,
+                'allCountries': active_country is None,
             }
 
             return Response(stats)

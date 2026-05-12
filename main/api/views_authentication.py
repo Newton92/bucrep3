@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils import translation
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -296,33 +297,35 @@ class CustomLoginView(APIView):
 
             # Détection du pays selon le rôle
             if user.role == "Root":
-                logger.debug("Utilisateur ROOT détecté, géolocalisation via IP")
+                logger.debug("Utilisateur ROOT détecté")
 
-                client_ip = request.META.get("REMOTE_ADDR")
-                logger.debug(f"IP client détectée : {client_ip}")
+                # Priorité 1 : dernier pays persisté en DB
+                if user.pays_actif_id:
+                    selected_pays = user.pays_actif
+                    selected_pays_id = user.pays_actif_id
+                    logger.debug(f"Root: pays_actif restauré depuis DB : {selected_pays_id}")
+                else:
+                    # Fallback : géolocalisation IP
+                    client_ip = request.META.get("REMOTE_ADDR")
+                    logger.debug(f"Root: IP client détectée : {client_ip}")
+                    selected_pays = get_country_from_ip(client_ip)
 
-                selected_pays = get_country_from_ip(client_ip)
+                    if not selected_pays:
+                        logger.warning("Root: géolocalisation échouée, pays par défaut appliqué")
+                        selected_pays = Pays.objects.filter(is_active=True).first()
 
-                if not selected_pays:
-                    logger.warning(
-                        "Géolocalisation échouée, utilisation du pays par défaut"
-                    )
-                    selected_pays = Pays.objects.filter(is_active=True).first()
-
-                selected_pays_id = selected_pays.id if selected_pays else None
+                    selected_pays_id = selected_pays.id if selected_pays else None
 
             else:
                 logger.debug(
                     f"Utilisateur standard ({user.role}), récupération du pays"
                 )
 
-                selected_pays_id = request.session.get("selected_pays_id")
-
-                if selected_pays_id:
-                    selected_pays = Pays.objects.get(id=selected_pays_id)
-                    logger.debug(
-                        f"Pays récupéré depuis la session : {selected_pays_id}"
-                    )
+                # Priorité 1 : dernier pays persisté en DB
+                if user.pays_actif_id:
+                    selected_pays = user.pays_actif
+                    selected_pays_id = user.pays_actif_id
+                    logger.debug(f"Pays restauré depuis DB (pays_actif) : {selected_pays_id}")
 
                 elif user.pays:
                     selected_pays = user.pays
@@ -333,7 +336,7 @@ class CustomLoginView(APIView):
 
                 else:
                     logger.warning(
-                        "Aucun pays trouvé (session/profil), pays par défaut appliqué"
+                        "Aucun pays trouvé (profil), pays par défaut appliqué"
                     )
                     selected_pays = Pays.objects.filter(is_active=True).first()
                     selected_pays_id = selected_pays.id if selected_pays else None
@@ -344,6 +347,12 @@ class CustomLoginView(APIView):
 
             if selected_pays_id:
                 request.session["selected_pays_id"] = selected_pays_id
+
+            # Restaurer la langue préférée depuis la DB
+            if user.preferred_language:
+                translation.activate(user.preferred_language)
+                request.session['_language'] = user.preferred_language
+                logger.debug(f"Langue restaurée depuis DB : {user.preferred_language}")
 
             # Cookies sécurisés
             response = Response({"message": _("Authentification réussie.")})
@@ -709,8 +718,15 @@ class CustomLogoutView(APIView):
     permission_classes = []      # No permissions required
 
     def post(self, request, *args, **kwargs):
-        # We don't need to call Django's logout() since we're not using sessions
-        # but it doesn't hurt to keep it.
+        # Persister la langue préférée en DB avant que la session soit détruite
+        if request.user.is_authenticated:
+            current_lang = request.session.get('_language') or translation.get_language()
+            if current_lang:
+                request.user.__class__.objects.filter(pk=request.user.pk).update(
+                    preferred_language=current_lang
+                )
+                logger.debug(f"Langue préférée sauvegardée pour user_id={request.user.id} : {current_lang}")
+
         logout(request)
         response = Response(
             {"detail": _("Déconnecté avec succès.")},
@@ -747,7 +763,9 @@ class UpdateSelectedPaysView(APIView):
 
         try:
             pays = Pays.objects.get(id=pays_id, afficher_au_dashboard=True)
+            # Persister en session ET en base (survit à la déconnexion)
             request.session['selected_pays_id'] = pays.id
+            request.user.__class__.objects.filter(pk=request.user.pk).update(pays_actif_id=pays.id)
             return Response(
                 {
                     "message": _("Pays sélectionné mis à jour."),
@@ -762,20 +780,30 @@ class UpdateSelectedPaysView(APIView):
             )
             
     def get(self, request, *args, **kwargs):
+        # Priorité : session en cours → pays_actif en DB → user.pays → premier pays dashboard
         selected_pays_id = request.session.get("selected_pays_id")
 
-        if not selected_pays_id and request.user.pays:
-            selected_pays_id = request.user.pays.id
-            request.session["selected_pays_id"] = selected_pays_id
+        if not selected_pays_id:
+            # Restaurer depuis la DB (persisté entre sessions)
+            db_pays_actif = getattr(request.user, 'pays_actif_id', None)
+            if db_pays_actif:
+                selected_pays_id = db_pays_actif
+            elif request.user.pays:
+                selected_pays_id = request.user.pays.id
 
+        if not selected_pays_id:
+            first_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by('nom').first()
+            if first_pays:
+                selected_pays_id = first_pays.id
+
+        # Vérifier que ce pays est toujours valide
         if selected_pays_id:
-            exists = Pays.objects.filter(
-                id=selected_pays_id, afficher_au_dashboard=True
-            ).exists()
-            if not exists:
+            if not Pays.objects.filter(id=selected_pays_id, afficher_au_dashboard=True).exists():
                 selected_pays_id = request.user.pays.id if request.user.pays else None
-                if selected_pays_id:
-                    request.session["selected_pays_id"] = selected_pays_id
+
+        # Toujours synchroniser la session
+        if selected_pays_id:
+            request.session["selected_pays_id"] = selected_pays_id
 
         return Response(
             {"selected_pays_id": selected_pays_id},

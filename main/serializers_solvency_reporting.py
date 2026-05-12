@@ -31,16 +31,14 @@ class ReportAcheteurSerializer(serializers.ModelSerializer):
     ville_nom = serializers.CharField(source='ville.nom', read_only=True)
     forme_juridique_libelle = serializers.CharField(source='forme_juridique.libelle', read_only=True)
     statut_entreprise_libelle = serializers.CharField(source='statut_entreprise.libelle', read_only=True)
-    categorie_entreprise_libelle = serializers.CharField(source='categorie_entreprise.libelle', read_only=True)
-
     class Meta:
         model = Acheteur
         fields = [
             'id', 'code', 'nom', 'sigle', 'description', 'date_creation',
             'activite_principale', 'email', 'site_internet', 'fax', 'boite_postale',
-            'numero_adresse', 'rue_adresse', 'code_postal', 'pays_nom', 'province_nom', 
-            'ville_nom', 'forme_juridique_libelle', 'statut_entreprise_libelle', 
-            'categorie_entreprise_libelle', 'commentaire'
+            'numero_adresse', 'rue_adresse', 'code_postal', 'pays_nom', 'province_nom',
+            'ville_nom', 'forme_juridique_libelle', 'statut_entreprise_libelle',
+            'commentaire'
         ]
 
 class ReportResumeSerializer(serializers.ModelSerializer):

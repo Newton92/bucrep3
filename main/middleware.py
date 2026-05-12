@@ -3,11 +3,79 @@ import json
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
 from django.core.cache import cache
+from django.http import Http404
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Chemins réservés à l'espace privé (inaccessibles depuis le site public)
+# ---------------------------------------------------------------------------
+_PRIVATE_PREFIXES = (
+    '/espace-prive/',
+    '/root-dashboard/',
+    '/api/',
+    '/login/',
+    '/verification/',
+    '/mot-de-passe-oublie/',
+    '/reinitialisation-mot-de-passe-oublie/',
+    '/generate-admin/',
+    '/report-modele/',
+    '/report-template/',
+    '/admin/',
+    '/swagger/',
+    '/redoc/',
+)
+
+
+class SiteSegregationMiddleware:
+    """
+    Sépare le site public (vitrine) de l'espace privé (dashboard / API).
+
+    En développement :
+      - localhost:8000  → vitrine uniquement  (DJANGO_PUBLIC_HOST)
+      - localhost:8001  → espace privé complet (DJANGO_PRIVATE_HOST)
+
+    En production :
+      - www.bucrep.net  → vitrine uniquement
+      - app.bucrep.net  → espace privé
+
+    Les chemins privés retournent 404 quand ils sont accédés depuis le
+    domaine public — sans révéler qu'ils existent.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        host = request.get_host()          # ex. "localhost:8000"
+        path = request.path_info           # ex. "/espace-prive/se-connecter/"
+
+        public_host  = getattr(settings, 'PUBLIC_HOST',  'localhost:8000')
+        private_host = getattr(settings, 'PRIVATE_HOST', 'localhost:8001')
+
+        is_on_public_host  = host == public_host
+        is_on_private_host = host == private_host
+
+        # En mode DEBUG avec un seul hôte on n'applique la règle
+        # que si les deux hôtes sont effectivement distincts.
+        if public_host == private_host:
+            return self.get_response(request)
+
+        is_private_path = path.startswith(_PRIVATE_PREFIXES)
+
+        if is_on_public_host and is_private_path:
+            raise Http404   # Ne pas révéler l'existence de la ressource
+
+        if is_on_private_host and not is_private_path:
+            # Sur le domaine privé, les pages vitrine restent accessibles
+            # (pas de blocage, juste une séparation sémantique).
+            pass
+
+        return self.get_response(request)
 
 class JWTRefreshMiddleware(MiddlewareMixin):
     """

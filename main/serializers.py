@@ -525,7 +525,82 @@ class EditSubCategoryNafCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
+# ── Traduction par code DB (source: requête SELECT code, libelle FROM main_formejuridique) ──
+FORME_JURIDIQUE_EN = {
+    "ASSOC":    "Association",
+    "COOP":     "Cooperative",
+    "EI":       "Sole proprietorship (EI)",
+    "EIRL":     "Single-member limited liability sole proprietorship (EIRL)",
+    "FIDUCIE":  "Trust operating a commercial enterprise",
+    "GIE":      "Economic interest grouping (GIE)",
+    "GP":       "Group of persons",
+    "LLP":      "Limited liability partnership (LLP)",
+    "LTD":      "Private Limited Company (Ltd)",
+    "PARTNER":  "Partnership",
+    "PLC":      "Public Limited Company (PLC)",
+    "PMSBL":    "Non-profit legal entity",
+    "SA":       "Public limited company (SA)",
+    "SA-AG":    "Public limited company – general management (SA)",
+    "SA-CA":    "Public limited company – board of directors (SA)",
+    "SA-PLURI": "Multi-member public limited company (SA)",
+    "SARL":     "Multi-member limited liability company (SARL)",
+    "SARL-U":   "Single-member limited liability company (SARL-U)",
+    "SAS":      "Multi-member simplified joint-stock company (SAS)",
+    "SASU":     "Single-member simplified joint-stock company (SASU)",
+    "SAU":      "Single-member public limited company (SAU)",
+    "SC":       "Civil companies (SC)",
+    "SCI":      "Real estate civil company (SCI)",
+    "SCP":      "Professional civil company (SCP)",
+    "SCS":      "Simple limited partnership (SCS)",
+    "SDF":      "De facto company",
+    "SE":       "State-owned company (SE)",
+    "SEP":      "Joint venture (SEP)",
+    "SNC":      "General partnership (SNC)",
+    "SPRL":     "Private limited liability company (SPRL)",
+    "SSPJ":     "Company without legal personality",
+    "SYNDIC":   "Condominium association",
+}
+
+# ── Traduction par libelle exact DB (fallback si code absent ou inconnu) ──
+FORME_JURIDIQUE_LIBELLE_EN = {
+    "Association":                                                          "Association",
+    "Coopérative":                                                          "Cooperative",
+    "Entreprise individuelle (EI)":                                         "Sole proprietorship (EI)",
+    "Entreprise individuelle à responsabilité limitée (EIRL)":              "Single-member limited liability sole proprietorship (EIRL)",
+    "Fiducie exploitant une entreprise à caractère commercial":             "Trust operating a commercial enterprise",
+    "Groupement d'intérêt économique (GIE)":                               "Economic interest grouping (GIE)",
+    "Groupement de personnes":                                              "Group of persons",
+    "Partnership / Partenariat":                                            "Partnership",
+    "Partnership à responsabilité limitée (LLP)":                          "Limited liability partnership (LLP)",
+    "Personne morale sans but lucratif":                                    "Non-profit legal entity",
+    "Private Limited Company (Ltd)":                                        "Private Limited Company (Ltd)",
+    "Public Limited Company (PLC)":                                         "Public Limited Company (PLC)",
+    "Société à responsabilité limitée pluripersonnelle (SARL)":            "Multi-member limited liability company (SARL)",
+    "Société à responsabilité limitée unipersonnelle (SARL U)":            "Single-member limited liability company (SARL-U)",
+    "Société anonyme (SA)":                                                 "Public limited company (SA)",
+    "Société anonyme avec administration générale (SA)":                   "Public limited company – general management (SA)",
+    "Société anonyme avec conseil d'administration (SA)":                  "Public limited company – board of directors (SA)",
+    "Société anonyme pluripersonnelle (SA)":                               "Multi-member public limited company (SA)",
+    "Société anonyme unipersonnelle (SAU)":                                "Single-member public limited company (SAU)",
+    "Société civile immobilière (SCI)":                                    "Real estate civil company (SCI)",
+    "Société civile professionnelle (SCP)":                                "Professional civil company (SCP)",
+    "Société créée de fait / Société de fait":                             "De facto company",
+    "Société d'état (SE)":                                                  "State-owned company (SE)",
+    "Société en commandite simple (SCS)":                                  "Simple limited partnership (SCS)",
+    "Société en nom collectif (SNC)":                                      "General partnership (SNC)",
+    "Société en participation (SEP)":                                      "Joint venture (SEP)",
+    "Société par action simplifiée pluripersonnelle (SAS)":               "Multi-member simplified joint-stock company (SAS)",
+    "Société par action simplifiée unipersonnelle (SASU)":                "Single-member simplified joint-stock company (SASU)",
+    "Société privée à responsabilité limitée (SPRL)":                     "Private limited liability company (SPRL)",
+    "Sociétés civiles (SC)":                                               "Civil companies (SC)",
+    "Sociétés sans personnalité juridique":                                "Company without legal personality",
+    "Syndicat de copropriété":                                             "Condominium association",
+}
+
+
 class FormeJuridiqueSerializer(serializers.ModelSerializer):
+    libelle = serializers.SerializerMethodField()
+
     class Meta:
         model = FormeJuridique
         fields = [
@@ -539,6 +614,33 @@ class FormeJuridiqueSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def _get_lang(self):
+        from django.utils.translation import get_language
+        request = self.context.get("request")
+        # 1. Session (most reliable for web clients)
+        if request and hasattr(request, "session"):
+            lang = request.session.get("django_language", "")
+            if lang:
+                return lang
+        # 2. Cookie
+        if request and hasattr(request, "COOKIES"):
+            lang = request.COOKIES.get("django_language", "")
+            if lang:
+                return lang
+        # 3. LANGUAGE_CODE set by LocaleMiddleware on the Django request
+        if request:
+            lang = getattr(request, "LANGUAGE_CODE", "") or getattr(getattr(request, "_request", None), "LANGUAGE_CODE", "")
+            if lang:
+                return lang
+        # 4. Thread-local activated language
+        return get_language() or "fr"
+
+    def get_libelle(self, obj):
+        lang = self._get_lang()
+        if lang.startswith("en") and obj.code:
+            return FORME_JURIDIQUE_EN.get(obj.code.strip(), obj.libelle)
+        return obj.libelle
 
 
 
@@ -877,7 +979,6 @@ class StatutEntrepriseSerializer(serializers.ModelSerializer):
 
 
 class AcheteurSerializerTwo(serializers.ModelSerializer):
-    categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
 
@@ -890,7 +991,6 @@ class AcheteurSerializerTwo(serializers.ModelSerializer):
         fields = [
             "id",
             "code",
-            "categorie_entreprise",
             "forme_juridique",
             "activite_principale",
             "nom",
@@ -916,20 +1016,18 @@ class AcheteurSerializerTwo(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
         
 class AcheteurSerializer(serializers.ModelSerializer):
-    categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
     pays = PaysSerializer()
     province = ProvinceSerializer()
     ville = VilleSerializer()
-    
-    # Ajouter pour le code NACE
+
     code_nace_display = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique",
+            "id", "code", "forme_juridique",
             "code_nace", "code_nace_display", "activite_principale",
             "nom", "sigle", "description", "date_creation",
             "statut_entreprise", "code_postal", "fax", "boite_postale",
@@ -983,16 +1081,16 @@ class AddAcheteurSerializerTwo(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", 
-            "activite_principale", "nom", "sigle", "description", 
-            "date_creation", "statut_entreprise", "code_postal", 
-            "fax", "boite_postale", "email", "site_internet", 
-            "numero_adresse", "rue_adresse", "ville", "province", 
+            "id", "forme_juridique",
+            "activite_principale", "nom", "sigle", "description",
+            "date_creation", "statut_entreprise", "code_postal",
+            "fax", "boite_postale", "email", "site_internet",
+            "numero_adresse", "rue_adresse", "ville", "province",
             "pays", "couleur_commentaire", "commentaire",
             "code"
         ]
         read_only_fields = ["created_at", "updated_at", "code"]
-    
+
     def validate_site_internet(self, value):
         """Validation simple du site internet"""
         if value:
@@ -1130,13 +1228,13 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", 
-            "code_nace", "activite_principale", "nom", "sigle", 
-            "description", "date_creation", "statut_entreprise", 
-            "code_postal", "fax", "boite_postale", "email", 
-            "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", 
-            "commentaire", "code", "created_by"  # Ajoutez created_by
+            "id", "forme_juridique",
+            "code_nace", "activite_principale", "nom", "sigle",
+            "description", "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email",
+            "site_internet", "numero_adresse", "rue_adresse",
+            "ville", "province", "pays", "couleur_commentaire",
+            "commentaire", "code", "created_by"
         ]
         read_only_fields = ["created_at", "updated_at", "code"]
     
@@ -1336,11 +1434,11 @@ class EditAcheteurSerializerTwo(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", 
-            "activite_principale", "nom", "sigle", "description", 
-            "date_creation", "statut_entreprise", "code_postal", 
-            "fax", "boite_postale", "email", "site_internet", 
-            "numero_adresse", "rue_adresse", "ville", "province", 
+            "id", "forme_juridique",
+            "activite_principale", "nom", "sigle", "description",
+            "date_creation", "statut_entreprise", "code_postal",
+            "fax", "boite_postale", "email", "site_internet",
+            "numero_adresse", "rue_adresse", "ville", "province",
             "pays", "couleur_commentaire", "commentaire"
         ]
     
@@ -1424,15 +1522,15 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", 
-            "code_nace", "activite_principale", "nom", "sigle", 
-            "description", "date_creation", "statut_entreprise", 
-            "code_postal", "fax", "boite_postale", "email", 
-            "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", 
+            "id", "forme_juridique",
+            "code_nace", "nace_specifique", "activite_principale", "nom", "sigle",
+            "description", "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email",
+            "site_internet", "numero_adresse", "rue_adresse",
+            "ville", "province", "pays", "couleur_commentaire",
             "commentaire"
         ]
-    
+
     def validate_code_nace(self, value):
         """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
         if not value or value == "":
@@ -1551,21 +1649,19 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
 
 
 class GetAcheteurSerializerTwo(serializers.ModelSerializer):
-    categorie_entreprise = CategorieEntrepriseSerializer(read_only=True)
     forme_juridique = FormeJuridiqueSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseSerializer(read_only=True)
     pays = PaysSerializer(read_only=True)
     province = ProvinceSerializer(read_only=True)
     ville = VilleSerializer(read_only=True)
     couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
-    
-    # Formater le site_internet pour l'affichage
+
     site_internet_formatted = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique",
+            "id", "code", "forme_juridique",
             "activite_principale", "nom", "sigle", "description",
             "date_creation", "statut_entreprise", "code_postal",
             "fax", "boite_postale", "email", "site_internet",
@@ -1582,7 +1678,6 @@ class GetAcheteurSerializerTwo(serializers.ModelSerializer):
         return None
     
 class GetAcheteurSerializer(serializers.ModelSerializer):
-    categorie_entreprise = CategorieEntrepriseSerializer(read_only=True)
     forme_juridique = FormeJuridiqueSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseSerializer(read_only=True)
     pays = PaysSerializer(read_only=True)
@@ -1592,12 +1687,15 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
     
     site_internet_formatted = serializers.SerializerMethodField()
     code_nace_info = serializers.SerializerMethodField()
-    
+    nace_specifique_info = serializers.SerializerMethodField()
+
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique",
-            "code_nace", "code_nace_info", "activite_principale", "nom", 
+            "id", "code", "forme_juridique",
+            "code_nace", "code_nace_info",
+            "nace_specifique", "nace_specifique_info",
+            "activite_principale", "nom",
             "sigle", "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email", "site_internet",
             "site_internet_formatted", "numero_adresse", "rue_adresse",
@@ -1605,19 +1703,17 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
             "commentaire", "created_at", "updated_at"
         ]
         read_only_fields = fields
-    
+
     def get_site_internet_formatted(self, obj):
-        """Retourne l'URL formatée avec https://"""
         if obj.site_internet:
             return f"https://{obj.site_internet}"
         return None
-    
+
     def get_code_nace_info(self, obj):
-        """Retourne les informations détaillées du code NACE"""
         if obj.code_nace:
             try:
                 subcat = SubCategoryNaceCode.objects.select_related('category').get(
-                    code=obj.code_nace, 
+                    code=obj.code_nace,
                     active=True
                 )
                 return {
@@ -1629,6 +1725,19 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
             except SubCategoryNaceCode.DoesNotExist:
                 return None
         return None
+
+    def get_nace_specifique_info(self, obj):
+        n = obj.nace_specifique
+        if not n:
+            return None
+        return {
+            "id": n.id,
+            "code": n.code,
+            "denomination": n.denomination,
+            "activity": n.activity,
+            "type": n.type,
+            "label": f"{n.code} — {n.denomination}",
+        }
 
 
 
@@ -2116,7 +2225,6 @@ class AcheteurMinimalSerializer(serializers.ModelSerializer):
     Serializer minimal pour les acheteurs
     Utilisé dans les listes et relations
     """
-    categorie_entreprise = CategorieEntrepriseMinimalSerializer(read_only=True)
     forme_juridique = FormeJuridiqueMinimalSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseMinimalSerializer(read_only=True)
     pays = PaysMinimalSerializer(read_only=True)
@@ -2139,7 +2247,6 @@ class AcheteurMinimalSerializer(serializers.ModelSerializer):
             'activite_principale',
             'date_creation',
             'date_creation_formatted',
-            'categorie_entreprise',
             'forme_juridique',
             'statut_entreprise',
             'email',
@@ -2176,22 +2283,13 @@ class AcheteurDetailSerializer(serializers.ModelSerializer):
     Serializer détaillé pour les acheteurs
     Inclut toutes les informations
     """
-    categorie_entreprise = CategorieEntrepriseMinimalSerializer(read_only=True)
     forme_juridique = FormeJuridiqueMinimalSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseMinimalSerializer(read_only=True)
     pays = PaysMinimalSerializer(read_only=True)
     province = ProvinceMinimalSerializer(read_only=True)
     ville = VilleMinimalSerializer(read_only=True)
     couleur_commentaire = CouleurCommentaireMinimalSerializer(read_only=True)
-    
-    # Pour l'édition, on peut aussi permettre l'écriture via PrimaryKeyRelatedField
-    categorie_entreprise_id = serializers.PrimaryKeyRelatedField(
-        queryset=CategorieEntreprise.objects.all(),
-        source='categorie_entreprise',
-        write_only=True,
-        required=False,
-        allow_null=True
-    )
+
     forme_juridique_id = serializers.PrimaryKeyRelatedField(
         queryset=FormeJuridique.objects.all(),
         source='forme_juridique',
@@ -2245,8 +2343,6 @@ class AcheteurDetailSerializer(serializers.ModelSerializer):
             'activite_principale',
             'description',
             'date_creation',
-            'categorie_entreprise',
-            'categorie_entreprise_id',
             'forme_juridique',
             'forme_juridique_id',
             'statut_entreprise',
@@ -2275,8 +2371,6 @@ class AcheteurDetailSerializer(serializers.ModelSerializer):
         """
         Convertit les IDs en entiers pour les relations
         """
-        if 'categorie_entreprise' in data and isinstance(data['categorie_entreprise'], str):
-            data['categorie_entreprise'] = int(data['categorie_entreprise']) if data['categorie_entreprise'] else None
         if 'forme_juridique' in data and isinstance(data['forme_juridique'], str):
             data['forme_juridique'] = int(data['forme_juridique']) if data['forme_juridique'] else None
         if 'statut_entreprise' in data and isinstance(data['statut_entreprise'], str):
@@ -2322,9 +2416,8 @@ class AcheteurListSerializer(serializers.ModelSerializer):
     Optimisé pour les performances
     """
     statut_entreprise = serializers.StringRelatedField()
-    categorie_entreprise = serializers.StringRelatedField()
     pays = serializers.StringRelatedField()
-    
+
     class Meta:
         model = Acheteur
         fields = [
@@ -2334,7 +2427,6 @@ class AcheteurListSerializer(serializers.ModelSerializer):
             'sigle',
             'activite_principale',
             'statut_entreprise',
-            'categorie_entreprise',
             'pays',
             'created_at'
         ]
@@ -6760,6 +6852,10 @@ class WarningListSerializer(serializers.ModelSerializer):
             "acheteurs_count",
             "attachments_count",
             "created_at",
+            "email_sent",
+            "email_sent_at",
+            "email_to",
+            "email_subject",
         ]
 
     def get_acheteurs_count(self, obj):
@@ -6773,6 +6869,8 @@ class WarningDetailSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source="created_by.username", read_only=True)
     acheteurs = AcheteurSimpleSerializer(many=True, read_only=True)
     warning_attachments = WarningAttachmentSerializer(many=True, read_only=True)
+    acheteurs_count = serializers.SerializerMethodField()
+    attachments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Warning
@@ -6781,11 +6879,25 @@ class WarningDetailSerializer(serializers.ModelSerializer):
             "titre",
             "description",
             "acheteurs",
+            "acheteurs_count",
+            "attachments_count",
             "created_by",
             "created_by_username",
             "created_at",
             "warning_attachments",
+            "email_subject",
+            "email_to",
+            "email_cc",
+            "email_bcc",
+            "email_sent",
+            "email_sent_at",
         ]
+
+    def get_acheteurs_count(self, obj):
+        return obj.acheteurs.count()
+
+    def get_attachments_count(self, obj):
+        return obj.warning_attachments.count()
 
 
 class WarningUpsertSerializer(serializers.ModelSerializer):
@@ -6795,7 +6907,10 @@ class WarningUpsertSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Warning
-        fields = ["titre", "description", "acheteurs"]
+        fields = [
+            "titre", "description", "acheteurs",
+            "email_subject", "email_to", "email_cc", "email_bcc",
+        ]
 
     def validate_titre(self, value):
         if not value or not value.strip():
@@ -6928,10 +7043,18 @@ class EditContactSerializer(serializers.ModelSerializer):
 
 class PortefeuilleSerializer(serializers.ModelSerializer):
     client = ClientSerializer()
+    nb_acheteurs = serializers.SerializerMethodField()
+    nb_elements = serializers.SerializerMethodField()
 
     class Meta:
         model = Portefeuille
         fields = "__all__"
+
+    def get_nb_acheteurs(self, obj):
+        return obj.portefeuilleclient_set.count()
+
+    def get_nb_elements(self, obj):
+        return obj.elements_surveillance_actifs.count()
 
 
 class AddPortefeuilleSerializer(serializers.ModelSerializer):
@@ -6944,37 +7067,46 @@ class AddPortefeuilleWithAcheteursSerializer(serializers.ModelSerializer):
     elements_surveillance_actifs = serializers.PrimaryKeyRelatedField(
         many=True, queryset=ElementSurveillance.objects.all(), required=False
     )
+    acheteurs = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False, default=list
+    )
 
     class Meta:
         model = Portefeuille
         fields = [
-            "id",
-            "client",
-            "frequence_alertes",
-            "nom",
-            "elements_surveillance_actifs",
-            "created_at",
-            "updated_at",
+            "id", "client", "nom", "frequence_alertes",
+            "elements_surveillance_actifs", "acheteurs",
+            "created_at", "updated_at",
         ]
 
-
-class AddPortefeuilleWithAcheteursSerializer(serializers.ModelSerializer):
-    acheteurs = serializers.ListField(child=serializers.IntegerField(), write_only=True)
-
-    class Meta:
-        model = Portefeuille
-        fields = ["client", "nom", "acheteurs"]
-
     def create(self, validated_data):
-        acheteurs_data = validated_data.pop("acheteurs")
+        acheteurs_ids = validated_data.pop("acheteurs", [])
+        elements = validated_data.pop("elements_surveillance_actifs", [])
         portefeuille = Portefeuille.objects.create(**validated_data)
-
-        for acheteur_id in acheteurs_data:
-            PortefeuilleClient.objects.create(
-                portefeuille=portefeuille, acheteur_id=acheteur_id
+        if elements:
+            portefeuille.elements_surveillance_actifs.set(elements)
+        for acheteur_id in acheteurs_ids:
+            PortefeuilleClient.objects.get_or_create(
+                portefeuille=portefeuille, acheteur_id=acheteur_id,
+                defaults={"categorie": "autre"}
             )
-
         return portefeuille
+
+    def update(self, instance, validated_data):
+        acheteurs_ids = validated_data.pop("acheteurs", None)
+        elements = validated_data.pop("elements_surveillance_actifs", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if elements is not None:
+            instance.elements_surveillance_actifs.set(elements)
+        if acheteurs_ids is not None:
+            PortefeuilleClient.objects.filter(portefeuille=instance).delete()
+            for acheteur_id in acheteurs_ids:
+                PortefeuilleClient.objects.create(
+                    portefeuille=instance, acheteur_id=acheteur_id, categorie="autre"
+                )
+        return instance
 
 
 class GetPortefeuilleSerializer(serializers.ModelSerializer):
@@ -12181,15 +12313,17 @@ class CommandeSerializer(serializers.ModelSerializer):
     client_username = serializers.CharField(source='client.username', read_only=True)
     pays_nom = serializers.CharField(source='pays.nom', read_only=True)
     validateur_username = serializers.CharField(source='validateur.username', read_only=True)
-    
+    acheteur_id = serializers.IntegerField(source='acheteur.id', read_only=True, allow_null=True)
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True, allow_null=True)
+
     class Meta:
         model = Commande
-        # Add the new fields here
         fields = [
-            'id', 'notre_ref', 'reference_client', 'type_rapport', 'raison_sociale', 
+            'id', 'notre_ref', 'reference_client', 'type_rapport', 'raison_sociale',
             'date_recept_commande', 'date_rapport', 'priorite', 'status',
             'client', 'client_username', 'pays', 'pays_nom', 'validateur',
             'validateur_username', 'date_envoi_client', 'email_envoye',
+            'acheteur_id', 'acheteur_nom',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['validateur', 'date_envoi_client', 'email_envoye']
@@ -12313,6 +12447,7 @@ class PassifClassiqueSerializer(serializers.ModelSerializer):
     total_II = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     total_III = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     total_IV = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_V = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     total_general = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
 
     class Meta:
@@ -13551,7 +13686,7 @@ class AcheteurDetailView(APIView):
     def get(self, request, acheteur_id):
         try:
             acheteur = Acheteur.objects.select_related(
-                'statut_entreprise', 'forme_juridique', 'categorie_entreprise',
+                'statut_entreprise', 'forme_juridique',
                 'pays', 'province', 'ville'
             ).get(id=acheteur_id)
             

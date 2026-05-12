@@ -1,317 +1,405 @@
 {% extends 'main/root/base.html' %}
-
 {% load i18n static %}
 
 {% block styles %}
-<!-- Include Select2 CSS --><!-- Latest compiled and minified JavaScript --><!-- Latest compiled and minified CSS -->
-{% endblock %}
+<style>
+    :root {
+        --color-primary: #0a95ca;
+        --color-primary-dark: #0d80be;
+        --color-primary-light: #25add6;
+    }
+    .stat-card { border-left: 4px solid var(--color-primary); transition: transform .2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(10,149,202,.15); }
+    .freq-badge-quotidienne  { background: rgba(10,149,202,.12); color: #0d80be; border: 1px solid rgba(10,149,202,.3); }
+    .freq-badge-hebdomadaire { background: rgba(255,193,7,.12); color: #997a00; border: 1px solid rgba(255,193,7,.3); }
+    .freq-badge-mensuelle    { background: rgba(108,117,125,.12); color: #495057; border: 1px solid rgba(108,117,125,.3); }
+    .freq-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
+    .table thead th { background: linear-gradient(135deg,rgba(10,149,202,.05),rgba(16,108,178,.05)); border-bottom: 2px solid var(--color-primary-light); color: var(--color-primary-dark); font-weight:600; }
+    .table-hover tbody tr:hover { background: rgba(10,149,202,.05); }
+    .action-btn { width:34px; height:34px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; transition:all .2s; }
+    .action-btn:hover { transform:translateY(-2px); box-shadow:0 4px 10px rgba(10,149,202,.2); }
+    .client-avatar { width:38px; height:38px; border-radius:50%; background:rgba(10,149,202,.1); display:flex; align-items:center; justify-content:center; color:var(--color-primary); font-weight:700; font-size:.9rem; flex-shrink:0; }
+    .page-link { color: var(--color-primary); }
+    .page-item.active .page-link { background:var(--color-primary); border-color:var(--color-primary); }
+    .skeleton { animation: sk 1.4s ease-in-out infinite; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; border-radius:4px; }
+    @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    #loadingSpinner { display:none; }
+</style>
+{% endblock styles %}
 
 {% block body %}
 
-<!-- Title START -->
-<div class="row">
+<!-- En-tête -->
+<div class="row g-4 mb-4">
     <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-wallet2 fa-fw me-1"></i> Portefeuilles</h3>
+        <div class="card card-body border-0 shadow-sm" style="background:linear-gradient(135deg,#0a95ca 0%,#0d80be 100%);color:white;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-3 rounded-3" style="background:rgba(255,255,255,.15);">
+                        <i class="bi bi-wallet2 fs-2"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold">{% trans "Portfolios de surveillance" %}</h4>
+                        <p class="mb-0 opacity-75 small">{% trans "Surveillance automatique des acheteurs — alertes email en temps réel sur chaque changement détecté." %}</p>
+                    </div>
+                </div>
+                <a href="{% url 'dash_root_add_portefeuille' %}?token={{ user.reset_token }}"
+                   class="btn btn-light fw-semibold px-4">
+                    <i class="bi bi-plus-lg me-2"></i>{% trans "Nouveau portfolio" %}
+                </a>
+            </div>
+        </div>
     </div>
 </div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="countPortefeuille">Module de Gestion des Portefeuilles</h4>
-                    <span>Dans ce module, vous pouvez gérer les portefeuilles et leurs liaisons avec les acheteurs.</span>
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100 border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3" style="background:rgba(10,149,202,.1);">
+                    <i class="bi bi-wallet2 text-primary fs-4"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">{% trans "Portfolios de surveillance" %}</div>
+                    <div class="fs-4 fw-bold" id="statTotal">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100 border-0 shadow-sm" style="border-left-color:#198754!important;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3" style="background:rgba(25,135,84,.1);">
+                    <i class="bi bi-briefcase text-success fs-4"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">{% trans "Clients abonnés" %}</div>
+                    <div class="fs-4 fw-bold" id="statClients">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100 border-0 shadow-sm" style="border-left-color:#fd7e14!important;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3" style="background:rgba(253,126,20,.1);">
+                    <i class="bi bi-building text-warning fs-4"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">{% trans "Acheteurs surveillés" %}</div>
+                    <div class="fs-4 fw-bold" id="statAcheteurs">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card h-100 border-0 shadow-sm" style="border-left-color:#6f42c1!important;">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-circle p-3" style="background:rgba(111,66,193,.1);">
+                    <i class="bi bi-bell text-purple fs-4" style="color:#6f42c1!important;"></i>
+                </div>
+                <div>
+                    <div class="small text-muted">{% trans "Alertes envoyées" %}</div>
+                    <div class="fs-4 fw-bold" id="statAlertes">—</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- PORTEFEUILLE START -->
+<!-- Table -->
 <div class="row">
     <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Portefeuilles</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="{% trans 'Recherche...' %}" aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2 py-3">
+                <h5 class="mb-0 fw-semibold" style="color:var(--color-primary-dark);">
+                    <i class="bi bi-list-ul me-2"></i>{% trans "Liste des portfolios de surveillance" %}
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="input-group input-group-sm" style="width:240px;">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="bi bi-search text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="searchInput"
+                               placeholder="{% trans 'Rechercher...' %}">
                     </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-4">
-                        <a href="{% url 'dash_root_add_portefeuille' %}?token={{ user.reset_token }}" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
-                            Ajouter un Portefeuille
-                        </a>
-                    </div>
+                    <select class="form-select form-select-sm w-auto" id="itemsPerPage">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
                 </div>
-                <!-- Search and select END -->
+            </div>
 
-                <!-- Portefeuille list START -->
-                <div class="table-responsive border-0" id="portefeuilleList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
+            <div class="card-body p-0">
+                <!-- Skeleton -->
+                <div id="skeletonLoader" class="p-4" style="display:none;">
+                    {% for i in "12345" %}
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="skeleton" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;"></div>
+                        <div class="flex-grow-1">
+                            <div class="skeleton mb-2" style="height:14px;width:40%;"></div>
+                            <div class="skeleton" style="height:12px;width:25%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
                             <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Nom</th>
-                                <th scope="col" class="border-0">Fréquence des alertes</th>
-                                <th scope="col" class="border-0">Client</th>
-                                <th scope="col" class="border-0 rounded-end">{% trans "Action" %}</th>
+                                <th class="ps-4">#</th>
+                                <th>{% trans "Client" %}</th>
+                                <th>{% trans "Portfolio de surveillance" %}</th>
+                                <th class="text-center">{% trans "Acheteurs" %}</th>
+                                <th class="text-center">{% trans "Éléments" %}</th>
+                                <th>{% trans "Fréquence" %}</th>
+                                <th>{% trans "Dernière vérif." %}</th>
+                                <th class="pe-4 text-end">{% trans "Actions" %}</th>
                             </tr>
                         </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="portefeuilleTableBody"></tbody>
-                        <!-- Table body END -->
+                        <tbody id="portefeuilleTableBody"></tbody>
                     </table>
                 </div>
-                <!-- Portefeuille list END -->
-            </div>
-            <!-- Card body END -->
 
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div id="emptyState" class="text-center py-5" style="display:none;">
+                    <i class="bi bi-wallet2 fs-1 text-muted d-block mb-3 opacity-25"></i>
+                    <p class="text-muted mb-3">{% trans "Aucun portfolio de surveillance trouvé." %}</p>
+                    <a href="{% url 'dash_root_add_portefeuille' %}?token={{ user.reset_token }}"
+                       class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i>{% trans "Créer un portfolio" %}
+                    </a>
+                </div>
+                <div id="loadingSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div>
                 </div>
             </div>
-            <!-- Card footer END -->
+
+            <div class="card-footer bg-white border-top">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <small class="text-muted" id="paginationInfo"></small>
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<!-- PORTEFEUILLE END -->
 
+<!-- Modal suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>{% trans "Confirmer la suppression" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Voulez-vous supprimer le portfolio de surveillance" %} <strong id="deletePortefeuilleName"></strong> ?</p>
+                <div class="alert alert-warning border-0 small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {% trans "Les liaisons avec les acheteurs et l'historique de surveillance seront également supprimés." %}
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-1"></i>{% trans "Supprimer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-
-{% endblock %}
+{% endblock body %}
 
 {% block scripts %}
-
-<!-- Include Select2 JS --><!-- (Optional) Latest compiled and minified JavaScript translation files -->
-
-
-
 <script>
-    $(document).ready(function() {
+$(document).ready(function () {
+    var TOKEN = '{{ access }}';
+    var TOKEN_RESET = '{{ user.reset_token }}';
+    var currentPage = 1, pageSize = 10, currentSearch = '', totalCount = 0, searchTimer;
 
+    function auth() { return { 'Authorization': 'Bearer ' + TOKEN }; }
+    function escHtml(s) { return $('<span>').text(s || '').html(); }
 
-        // Function to load portefeuilles data
-        function loadPortefeuilles(page = 1, search = '') {
-            $.ajax({
-                url: '/api/liste-des-portefeuilles/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' de ' + response.total + ' portefeuilles');
+    function showLoading() { $('#skeletonLoader,#loadingSpinner').show(); $('#portefeuilleTableBody').hide(); $('#emptyState').hide(); }
+    function hideLoading() { $('#skeletonLoader,#loadingSpinner').hide(); }
 
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
+    /* ── Stats ── */
+    function loadStats() {
+        $.ajax({
+            url: '/api/liste-des-portefeuilles/?page=1&page_size=1000',
+            headers: auth(),
+            success: function(r) {
+                var items = r.results || [];
+                var clients = {};
+                var totalAcheteurs = 0;
+                $.each(items, function(i, p) {
+                    if (p.client && p.client.id) clients[p.client.id] = 1;
+                    totalAcheteurs += (p.nb_acheteurs || 0);
+                });
+                $('#statTotal').text(r.count || 0);
+                $('#statClients').text(Object.keys(clients).length);
+                $('#statAcheteurs').text(totalAcheteurs);
+            }
+        });
+        $.ajax({
+            url: '/api/liste-alertes-log/?page_size=1',
+            headers: auth(),
+            success: function(r) { $('#statAlertes').text(r.count || 0); },
+            error: function() { $('#statAlertes').text('—'); }
+        });
+    }
 
-                    $('#portefeuilleTableBody').html('');
-                    response.results.forEach(function(portefeuille, index) {
-                        $('#portefeuilleTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + portefeuille.nom + '</td>' +
-                            '<td>' + portefeuille.frequence_alertes + '</td>' +
-                            '<td>' + portefeuille.client.nom + '</td>' +
-                            '<td><button class="btn btn-primary btn-round mb-0 edit-btn" data-id="' + portefeuille.id + '" data-nom="' + portefeuille.nom + '"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + portefeuille.id + '"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                }
-            });
+    /* ── Fréquence badge ── */
+    function freqBadge(f) {
+        var labels = { quotidienne: "{% trans 'Quotidienne' %}", hebdomadaire: "{% trans 'Hebdomadaire' %}", mensuelle: "{% trans 'Mensuelle' %}" };
+        return '<span class="freq-badge freq-badge-' + escHtml(f) + '">' + escHtml(labels[f] || f) + '</span>';
+    }
+
+    /* ── Rendu tableau ── */
+    function renderRows(items) {
+        var $tbody = $('#portefeuilleTableBody');
+        $tbody.empty();
+        var start = (currentPage - 1) * pageSize;
+        $.each(items, function (i, p) {
+            var clientNom = p.client ? p.client.nom : '—';
+            var initiale = clientNom.charAt(0).toUpperCase();
+            var lastVerif = p.derniere_verification
+                ? new Date(p.derniere_verification).toLocaleDateString('fr-FR')
+                : '<span class="text-muted small">{% trans "Jamais" %}</span>';
+
+            $tbody.append(
+                '<tr>' +
+                '<td class="ps-4 text-muted small">' + (start + i + 1) + '</td>' +
+                '<td>' +
+                  '<div class="d-flex align-items-center gap-2">' +
+                    '<div class="client-avatar">' + escHtml(initiale) + '</div>' +
+                    '<div>' +
+                      '<div class="fw-semibold small">' + escHtml(clientNom) + '</div>' +
+                      '<div class="text-muted" style="font-size:.75rem;">' + escHtml(p.client ? (p.client.email || '') : '') + '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</td>' +
+                '<td><span class="fw-semibold">' + escHtml(p.nom) + '</span></td>' +
+                '<td class="text-center"><span class="badge rounded-pill" style="background:rgba(10,149,202,.1);color:#0d80be;">' + (p.nb_acheteurs || 0) + '</span></td>' +
+                '<td class="text-center"><span class="badge rounded-pill" style="background:rgba(111,66,193,.1);color:#6f42c1;">' + (p.nb_elements || 0) + '</span></td>' +
+                '<td>' + freqBadge(p.frequence_alertes) + '</td>' +
+                '<td class="small text-muted">' + lastVerif + '</td>' +
+                '<td class="pe-4">' +
+                  '<div class="d-flex gap-1 justify-content-end">' +
+                    '<a href="{% url "dash_root_edit_portefeuille" 0 %}?token=' + TOKEN_RESET + '" data-id="' + p.id + '"' +
+                       ' class="btn btn-sm btn-outline-primary action-btn edit-btn" title="{% trans "Modifier" %}">' +
+                      '<i class="bi bi-pencil"></i></a>' +
+                    '<button class="btn btn-sm btn-outline-danger action-btn delete-btn"' +
+                            ' data-id="' + p.id + '" data-nom="' + escHtml(p.nom) + '"' +
+                            ' title="{% trans "Supprimer" %}"><i class="bi bi-trash"></i></button>' +
+                  '</div>' +
+                '</td>' +
+                '</tr>'
+            );
+        });
+        $tbody.show();
+    }
+
+    /* ── Pagination ── */
+    function renderPagination(totalPages) {
+        var s = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+        var e = Math.min(currentPage * pageSize, totalCount);
+        $('#paginationInfo').html('{% trans "Affichage de" %} <strong>' + s + '</strong> {% trans "à" %} <strong>' + e + '</strong> {% trans "sur" %} <strong>' + totalCount + '</strong>');
+
+        if (totalPages <= 1) { $('#paginationControls').html(''); return; }
+        var html = '';
+        if (currentPage > 1) html += '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '"><i class="bi bi-chevron-left"></i></a></li>';
+        for (var p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
+            html += '<li class="page-item' + (p === currentPage ? ' active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>';
         }
+        if (currentPage < totalPages) html += '<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '"><i class="bi bi-chevron-right"></i></a></li>';
+        $('#paginationControls').html(html);
+    }
 
-        // Load data on page load
-        loadPortefeuilles();
-
-        // Handle page change
-        $(document).on('click', '.pagination .page-link', function(e) {
-            e.preventDefault();
-            var page = $(this).data('page');
-            loadPortefeuilles(page);
+    /* ── Chargement ── */
+    function loadPortefeuilles() {
+        showLoading();
+        $.ajax({
+            url: '/api/liste-des-portefeuilles/?page=' + currentPage + '&page_size=' + pageSize + '&search=' + encodeURIComponent(currentSearch),
+            headers: auth(),
+            success: function (r) {
+                var items = r.results || [];
+                totalCount = r.count || 0;
+                var totalPages = r.total_pages || 1;
+                hideLoading();
+                if (!items.length) { $('#emptyState').show(); $('#portefeuilleTableBody').hide(); }
+                else { renderRows(items); }
+                renderPagination(totalPages);
+            },
+            error: function (xhr) {
+                hideLoading();
+                var msg = xhr.status === 401 ? '{% trans "Session expirée." %}' : 'Erreur HTTP ' + xhr.status;
+                $('#portefeuilleTableBody').html('<tr><td colspan="8" class="text-center text-danger py-4">' + escHtml(msg) + '</td></tr>').show();
+            }
         });
+    }
 
-        // Handle search
-        $('#searchForm').submit(function(e) {
-            e.preventDefault();
-            var search = $('#searchInput').val();
-            loadPortefeuilles(1, search);
-        });
+    /* ── Lien édition (URL dynamique) ── */
+    $(document).on('click', '.edit-btn', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        window.location.href = '/root-dashboard/monitoring/editer-une-portefeuille/' + id + '/?token=' + TOKEN_RESET;
+    });
 
-        // Handle Add Portefeuille Form
-        $('#addPortefeuilleForm').submit(function(e) {
-            e.preventDefault();
-            var formData = {
-                portefeuille: {
-                    nom: $('#nom').val(),
-                    client: $('#client').val()
-                },
-                clients: $('#acheteurs').val().map(function(id) {
-                    return { acheteur: id, categorie: 'pme' };
-                })
-            };
+    /* ── Suppression ── */
+    $(document).on('click', '.delete-btn', function () {
+        var id = $(this).data('id'), nom = $(this).data('nom');
+        $('#deletePortefeuilleName').text(nom);
+        $('#deleteModal').data('id', id).modal('show');
+    });
 
-            $.ajax({
-                url: '/api/ajouter-portefeuille-avec-clients/',
-                type: 'POST',
-                data: JSON.stringify(formData),
-                contentType: 'application/json',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Le portefeuille a été ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addPortefeuilleModal').modal('hide');
-                        loadPortefeuilles();
-                    });
-                },
-                error: function() {
-                    Swal.fire({
-                        title: 'Erreur!',
-                        text: 'Une erreur s\'est produite lors de l\'ajout du portefeuille.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            });
-        });
-
-        // Edit Portefeuille button click
-        $(document).on('click', '.edit-btn', function() {
-            const id = $(this).data('id');
-            $.ajax({
-                url: '/api/consulter-un-portefeuille/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#editPortefeuilleId').val(response.id);
-                    $('#editNom').val(response.nom);
-                    $('#editClient').val(response.client.id).trigger('change');
-                    $('#editAcheteurs').val(response.portefeuille_clients.map(function(pc) { return pc.acheteur.id; })).trigger('change');
-                    $('#editPortefeuilleModal').modal('show');
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données du portefeuille.',
-                    });
-                }
-            });
-        });
-
-        // Handle Edit Portefeuille Form
-
-
-        // Editer portefeuille button click (avec SweetAlert)
-        $(document).on('click', '.edit-btn', function() {
-            var portefeuilleId = $(this).data('id');
-            var portefeuilleNom = $(this).data('nom');
-
-            Swal.fire({
-                title: 'Editer un Portefeuille',
-                html: 'Voulez-vous éditer le portefeuille <b>"' + portefeuilleNom + '"</b> ?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, éditer',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '/root-dashboard/monitoring/editer-une-portefeuille/' + portefeuilleId + '/?token=' + '{{ user.reset_token }}';
-                }
-            });
-        });
-
-
-        // Handle Delete Portefeuille
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: "Ce portefeuille sera définitivement supprimé!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Supprimer',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/supprimer-des-portefeuilles/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'
-                        },
-                        success: function(response) {
-                            loadPortefeuilles();
-                            Swal.fire({
-                                title: 'Supprimé!',
-                                text: 'Le portefeuille a été supprimé.',
-                                icon: 'success',
-                                confirmButtonText: 'OK'
-                            });
-                        },
-                        error: function() {
-                            Swal.fire({
-                                title: 'Erreur!',
-                                text: 'Une erreur s\'est produite lors de la suppression du portefeuille.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    });
-                }
-            });
+    $('#confirmDelete').on('click', function () {
+        var id = $('#deleteModal').data('id');
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>');
+        $.ajax({
+            url: '/api/supprimer-des-portefeuilles/',
+            type: 'DELETE',
+            contentType: 'application/json',
+            data: JSON.stringify({ ids: [id] }),
+            headers: auth(),
+            success: function () {
+                $('#deleteModal').modal('hide');
+                Swal.fire({ icon: 'success', title: '{% trans "Supprimé !" %}', timer: 1500, showConfirmButton: false });
+                loadPortefeuilles();
+                loadStats();
+            },
+            error: function () {
+                $('#deleteModal').modal('hide');
+                Swal.fire('{% trans "Erreur" %}', '{% trans "Impossible de supprimer ce portefeuille." %}', 'error');
+            },
+            complete: function () {
+                $('#confirmDelete').prop('disabled', false).html('<i class="bi bi-trash me-1"></i>{% trans "Supprimer" %}');
+            }
         });
     });
+
+    /* ── Recherche ── */
+    $('#searchInput').on('input', function () {
+        clearTimeout(searchTimer);
+        var val = $(this).val();
+        searchTimer = setTimeout(function () { currentSearch = val; currentPage = 1; loadPortefeuilles(); }, 400);
+    });
+
+    $('#itemsPerPage').on('change', function () { pageSize = parseInt($(this).val()); currentPage = 1; loadPortefeuilles(); });
+
+    $(document).on('click', '#paginationControls .page-link', function (e) {
+        e.preventDefault();
+        var p = parseInt($(this).data('page'));
+        if (p && p !== currentPage) { currentPage = p; loadPortefeuilles(); }
+    });
+
+    loadStats();
+    loadPortefeuilles();
+    setInterval(loadPortefeuilles, 300000);
+});
 </script>
-
-{% endblock %}
-
-
+{% endblock scripts %}
