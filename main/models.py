@@ -52,10 +52,6 @@ def generate_unique_code():
     return unique_code
 
 
-# Exemple d'utilisation
-unique_code = generate_unique_code()
-print(unique_code)
-
 
 # === Models User === #
 
