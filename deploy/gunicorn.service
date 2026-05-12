@@ -1,0 +1,23 @@
+[Unit]
+Description=Gunicorn — BUCREP Django
+After=network.target postgresql.service redis.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/app/bucrep3
+EnvironmentFile=/app/bucrep3/.env
+ExecStart=/app/bucrep3/venv/bin/gunicorn \
+    bucrep.wsgi \
+    --bind 127.0.0.1:8000 \
+    --workers 4 \
+    --timeout 300 \
+    --access-logfile /var/log/gunicorn/access.log \
+    --error-logfile  /var/log/gunicorn/error.log \
+    --log-level info
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
