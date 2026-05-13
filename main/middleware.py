@@ -3,7 +3,7 @@ import json
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
 from django.core.cache import cache
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 import logging
@@ -68,12 +68,10 @@ class SiteSegregationMiddleware:
         is_private_path = path.startswith(_PRIVATE_PREFIXES)
 
         if is_on_public_host and is_private_path:
-            raise Http404   # Ne pas révéler l'existence de la ressource
+            raise Http404
 
-        if is_on_private_host and not is_private_path:
-            # Sur le domaine privé, les pages vitrine restent accessibles
-            # (pas de blocage, juste une séparation sémantique).
-            pass
+        if is_on_private_host and path == '/':
+            return HttpResponseRedirect('/login/')
 
         return self.get_response(request)
 
