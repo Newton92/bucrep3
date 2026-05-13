@@ -207,7 +207,7 @@ MIDDLEWARE = [
     "simple_history.middleware.HistoryRequestMiddleware",
 
     # Ségrégation vitrine / espace privé (activer quand deux domaines distincts)
-    # "main.middleware.SiteSegregationMiddleware",
+    "main.middleware.SiteSegregationMiddleware",
 
     # "django.middleware.cache.UpdateCacheMiddleware",
     # "django.middleware.cache.FetchFromCacheMiddleware",
