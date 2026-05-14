@@ -497,42 +497,28 @@
                      {{ additional_information.activite_principale }}
                   </td>
                </tr>
+               {% if additional_information.nace_specifique or additional_information.nace_codes %}
                <tr>
                   <th>{% trans "Code(s) NACE" %}</th>
                   <td>
-                     {% if additional_information.nace_specifique %}
-                        {{ additional_information.nace_specifique }}
-                     {% elif additional_information.nace_codes and additional_information.nace_codes.0 != "Aucun code NACE disponible" %}
-                        <ul style="margin: 0; padding-left: 20px;">
-                           {% for code in additional_information.nace_codes %}
-                              <li>{{ code }}</li>
-                           {% endfor %}
-                        </ul>
-                     {% else %}
-                        {% trans "Aucun code NACE disponible" %}
-                     {% endif %}
+                     {% if additional_information.nace_specifique %}{{ additional_information.nace_specifique }}{% else %}{{ additional_information.nace_codes }}{% endif %}
                   </td>
                </tr>
+               {% endif %}
+               {% if additional_information.naf_codes %}
                <tr>
                   <th>Code(s) NAF</th>
-                  <td>
-                     {% if additional_information.naf_codes and additional_information.naf_codes.0 != "Aucun code NAF disponible" %}
-                           <ul style="margin: 0; padding-left: 20px;">
-                              {% for code in additional_information.naf_codes %}
-                                 <li>{{ code }}</li>
-                              {% endfor %}
-                           </ul>
-                     {% else %}
-                           Aucun code NAF disponible
-                     {% endif %}
-                  </td>
+                  <td>{{ additional_information.naf_codes }}</td>
                </tr>
+               {% endif %}
+               {% if additional_information.commentaire %}
                <tr>
                   <th>Commentaire</th>
                   <td style="color: {{ additional_information.couleur_commentaire_code }}; font-weight: bold;">
                      {{ additional_information.commentaire|striptags|safe }}
                   </td>
                </tr>
+               {% endif %}
             </table>
          </div>
          <!-- Résumé exécutif -->
@@ -557,12 +543,14 @@
                   <th>Nombre d'employés</th>
                   <td>{{ executive_summary.nombre_employe }}</td>
                </tr>
+               {% if executive_summary.commentaire %}
                <tr>
                   <th>Commentaire</th>
-                  <td colspan="3" class="warning">
+                  <td colspan="3" {% if executive_summary.couleur_commentaire_code %}style="color: {{ executive_summary.couleur_commentaire_code }}; font-weight: bold;"{% else %}class="warning"{% endif %}>
                      {{ executive_summary.commentaire|striptags|safe }}
                   </td>
                </tr>
+               {% endif %}
             </table>
          </div>
          <!-- Analyse et interprétation -->

@@ -1733,8 +1733,8 @@ def generer_rapport_solvabilite(request):
             "additional_information": {
                 "title_3": "INFORMATIONS SUPPLEMENTAIRES",
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
-                "nace_codes": nace_codes_formatted if nace_codes_formatted else [_t("Aucun code NACE disponible")],
-                "naf_codes": naf_codes_formatted if naf_codes_formatted else [_t("Aucun code NAF disponible")],
+                "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
+                "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
                 "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
                 "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
@@ -1755,7 +1755,8 @@ def generer_rapport_solvabilite(request):
                 "capitaux_propre": resume.capitaux_propre if resume and resume.capitaux_propre else "",
                 "nombre_employe": resume.nombre_employe if resume and resume.nombre_employe else "",
                 "date_creation": resume.date_creation.strftime("%d/%m/%Y") if resume and resume.date_creation else "",
-                "commentaire": resume.commentaire if resume and resume.commentaire else _t("Aucun commentaire disponible"),
+                "commentaire": resume.commentaire if resume and resume.commentaire else "",
+                "couleur_commentaire_code": (resume.couleur_commentaire.code if resume and resume.couleur_commentaire else None) or "",
             },
             "summary_and_opinion": {
                 "title_5": "EVALUATION DU RISQUE",
@@ -1907,8 +1908,8 @@ def generer_rapport_solvabilite(request):
             },
             "sector_analysis": {
                 "title_13": "ANALYSE ECONOMIQUE",
-                "nace_codes": nace_codes_formatted if nace_codes_formatted else [_t("Aucun code NACE disponible")],
-                "naf_codes": naf_codes_formatted if naf_codes_formatted else [_t("Aucun code NAF disponible")],
+                "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
+                "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
                 "sectorielle": {
                     "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else _t("Aucun commentaire disponible"),
                     "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "",
