@@ -1656,8 +1656,10 @@ def generer_rapport_solvabilite(request):
         riskrating_base_url = _get_static_base_url(request, 'riskrating/')
         scoring_manuel_context["url_site"] = static_base_url
 
-        # QR code de vérification d'authenticité
-        verif_url = request.build_absolute_uri(f"/rapport/verifier/{acheteur.id}/")
+        # QR code de vérification d'authenticité — token signé (SECRET_KEY)
+        from django.core import signing
+        token = signing.dumps(acheteur.id, salt='rapport-verif-acremac')
+        verif_url = request.build_absolute_uri(f"/rapport/verifier/{token}/")
         qr_code_base64 = _generate_qr_base64(verif_url)
 
         # Nom du pays actif pour l'en-tête du rapport

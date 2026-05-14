@@ -16189,12 +16189,15 @@ def dash_client(request):
     return render(request, "main/client/dash_client.html")
 
 
-def verifier_rapport(request, acheteur_id):
+def verifier_rapport(request, token):
     """Page publique de vérification d'authenticité d'un rapport ACREMAC."""
     from main.models import Acheteur
+    from django.core import signing
+    acheteur = None
     try:
+        acheteur_id = signing.loads(token, salt='rapport-verif-acremac')
         acheteur = Acheteur.objects.select_related('ville', 'pays', 'statut_entreprise').get(pk=acheteur_id)
-    except Acheteur.DoesNotExist:
+    except (signing.BadSignature, signing.SignatureExpired, Acheteur.DoesNotExist, Exception):
         acheteur = None
     return render(request, "main/rapport_verification.html", {"acheteur": acheteur})
 

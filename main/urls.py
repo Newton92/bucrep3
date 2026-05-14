@@ -182,7 +182,7 @@ urlpatterns = [
     path("generate-admin/", new_admin, name="new_admin"),
     path("report-modele/", report_modele, name="report_modele"),
     path("report-template/", report, name="report"),
-    path("rapport/verifier/<int:acheteur_id>/", verifier_rapport, name="verifier_rapport"),
+    path("rapport/verifier/<str:token>/", verifier_rapport, name="verifier_rapport"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR AUTH                                                                                             #
