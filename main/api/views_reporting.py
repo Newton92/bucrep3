@@ -71,7 +71,18 @@ from django.contrib.staticfiles import finders
 
 
 def _generate_qr_base64(url: str) -> str:
-    """Génère un QR code pointant vers url et retourne une data URI base64 PNG."""
+    """Génère un QR code pointant vers url et retourne une data URI base64 PNG.
+    Utilise segno (dep de django-qr-code) en priorité, qrcode en fallback."""
+    # --- segno (installé comme dépendance de django-qr-code) ---
+    try:
+        import segno
+        qr = segno.make(url, error='m')
+        buf = io.BytesIO()
+        qr.save(buf, kind='png', scale=6, border=2, dark='#003366', light='white')
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        pass
+    # --- fallback : qrcode + Pillow ---
     try:
         import qrcode
         qr = qrcode.QRCode(version=2, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=6, border=2)
