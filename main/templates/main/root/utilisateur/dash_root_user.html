@@ -1142,19 +1142,12 @@ body {
             return null;
         }
 
+        const DEFAULT_AVATAR = "{% static 'assets/images/default_avatar.svg' %}";
+
         // Fonction de secours pour les images
         function setupAvatarFallback() {
-            $(document).on('error', 'img[src*="avatar"]', function() {
-                const $img = $(this);
-                const username = $img.attr('alt') || '';
-                const firstLetter = username ? username.charAt(0).toUpperCase() : '?';
-                
-                // Remplacer l'image par une div avec l'initiale
-                $img.replaceWith(`
-                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                        <span class="text-white">${firstLetter}</span>
-                    </div>
-                `);
+            $(document).on('error', 'img.avatar-sm', function() {
+                $(this).attr('src', DEFAULT_AVATAR);
             });
         }
 
@@ -1287,34 +1280,19 @@ body {
                     }
                 }
                 
-                // **GESTION CORRIGÉE DES AVATARS**
-                const firstLetter = user.username ? user.username.charAt(0).toUpperCase() : '?';
-                let avatarHtml = '';
-                
+                // Résolution de l'URL d'avatar (photo ou image par défaut)
+                let resolvedAvatarSrc = DEFAULT_AVATAR;
                 if (user.avatar_url) {
-                    // Utiliser l'URL absolue
-                    avatarHtml = `<img src="${user.avatar_url}" 
-                                    class="avatar-sm rounded-circle me-2" 
-                                    alt="${user.username}"
-                                    onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\'avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2\'><span class=\'text-white\'>${firstLetter}</span></div>';">`;
+                    resolvedAvatarSrc = user.avatar_url;
                 } else if (user.avatar_url_relative) {
-                    // Utiliser l'URL relative et la convertir en absolue si nécessaire
-                    const baseUrl = window.location.origin;
-                    const relativeUrl = user.avatar_url_relative;
-                    
-                    // S'assurer que l'URL commence par /
-                    const avatarUrl = relativeUrl.startsWith('/') ? relativeUrl : '/' + relativeUrl;
-                    
-                    avatarHtml = `<img src="${baseUrl}${avatarUrl}" 
-                                    class="avatar-sm rounded-circle me-2" 
-                                    alt="${user.username}"
-                                    onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\'avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2\'><span class=\'text-white\'>${firstLetter}</span></div>';">`;
-                } else {
-                    // Afficher l'initiale
-                    avatarHtml = `<div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                    <span class="text-white">${firstLetter}</span>
-                                </div>`;
+                    const rel = user.avatar_url_relative;
+                    resolvedAvatarSrc = rel.startsWith('http') ? rel
+                        : window.location.origin + (rel.startsWith('/') ? rel : '/' + rel);
                 }
+                const avatarHtml = `<img src="${resolvedAvatarSrc}"
+                                    class="avatar-sm rounded-circle me-2"
+                                    alt="${user.username}"
+                                    onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}';">`;
                 
                 // Créer la ligne
                 userTableBody.append(`

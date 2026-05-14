@@ -110,10 +110,8 @@ class ProfileUserSerializer(serializers.ModelSerializer):
     def get_avatar_url(self, obj):
         """Retourne le chemin relatif de l'avatar"""
         if obj.avatar and hasattr(obj.avatar, 'url'):
-            # Retourne le chemin relatif
-            return obj.avatar.url  # Retourne '/media/avatars/filename.webp'
-        # Avatar par défaut avec initiales
-        return '/static/images/default-avatar.png'
+            return obj.avatar.url
+        return None
     
     def get_avatar_absolute_url(self, obj):
         """Retourne l'URL absolue de l'avatar"""
