@@ -92,44 +92,90 @@ AVIS_COMMERCIAL_DATA = [
     },
 ]
 
+# Mapping libelle ancien → code_ac pour migrer les enregistrements existants
+LEGACY_LIBELLE_TO_CODE = {
+    "Développement commercial ne peut être déterminé par un tiers": 0,
+    "Le développement ne peut pas être déterminé par des tiers.": 0,
+    "Développement commercial très positif": 100,
+    "Fort développement commercial": 150,
+    "Développement commercial fort": 150,
+    "Développement commercial positif": 200,
+    "Bon développement commercial": 300,
+    "Développement commercial passable": 350,
+    "Développement commercial satisfaisant": 350,
+    "Développement commercial acceptable": 400,
+    "Développement commercial moyennement en déclin": 500,
+    "Développement commercial légèrement en déclin": 500,
+    "Développement commercial en déclin": 600,
+    "Développement commercial en déclin rapide": 700,
+    "Développement commercial fortement en déclin": 800,
+    "Développement commercial inconnu": 900,
+}
+
 
 class Command(BaseCommand):
     help = "Importer / mettre à jour les avis de développement commercial (bilingues FR/EN)"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--clear',
-            action='store_true',
-            help="Supprime tous les enregistrements existants avant l'importation",
-        )
-
     def handle(self, *args, **options):
-        if options['clear']:
-            deleted, _ = ListeInformationsAvisCommercial.objects.all().delete()
-            self.stdout.write(self.style.WARNING(f"Supprimé {deleted} enregistrement(s) existant(s)"))
-
-        created_count = 0
-        updated_count = 0
-
         with transaction.atomic():
-            for item in AVIS_COMMERCIAL_DATA:
-                obj, created = ListeInformationsAvisCommercial.objects.update_or_create(
-                    code_ac=item['code'],
-                    defaults={
-                        'libelle': item['libelle'],
-                        'libelle_en': item['libelle_en'],
-                        'couleur': item['couleur'],
-                    },
+            self._migrate_existing()
+            self._upsert_all()
+
+    def _migrate_existing(self):
+        """Assigne code_ac aux anciens enregistrements via leur libellé."""
+        unmapped = 0
+        for obj in ListeInformationsAvisCommercial.objects.all():
+            code = LEGACY_LIBELLE_TO_CODE.get(obj.libelle.strip())
+            if code is not None and obj.code_ac != code:
+                obj.code_ac = code
+                obj.save(update_fields=['code_ac'])
+                self.stdout.write(f"  ↺ Migration [{code}] ← \"{obj.libelle[:50]}\"")
+            elif code is None:
+                unmapped += 1
+                self.stdout.write(
+                    self.style.WARNING(f"  ? Non mappé (code_ac=-1) : \"{obj.libelle[:60]}\"")
                 )
-                if created:
-                    created_count += 1
-                    self.stdout.write(self.style.SUCCESS(f"✔ Créé [{item['code']}] : {item['libelle_en']}"))
-                else:
-                    updated_count += 1
-                    self.stdout.write(f"↺ Mis à jour [{item['code']}] : {item['libelle_en']}")
+                obj.code_ac = -1
+                obj.save(update_fields=['code_ac'])
+        if unmapped:
+            self.stdout.write(
+                self.style.WARNING(f"  {unmapped} enregistrement(s) non mappés → code_ac=-1")
+            )
+
+    def _upsert_all(self):
+        """Crée ou met à jour les 13 entrées standardisées."""
+        created_count = updated_count = 0
+        for item in AVIS_COMMERCIAL_DATA:
+            # Si plusieurs enregistrements ont le même code_ac après migration,
+            # on prend le premier et on supprime les doublons (sans FK active).
+            qs = ListeInformationsAvisCommercial.objects.filter(code_ac=item['code'])
+            if qs.count() > 1:
+                # Garder le premier, supprimer les autres non référencés
+                keep = qs.first()
+                for duplicate in qs.exclude(pk=keep.pk):
+                    try:
+                        duplicate.delete()
+                        self.stdout.write(self.style.WARNING(f"  🗑 Doublon supprimé id={duplicate.pk}"))
+                    except Exception:
+                        pass  # référencé par FK, on laisse
+
+            obj, created = ListeInformationsAvisCommercial.objects.update_or_create(
+                code_ac=item['code'],
+                defaults={
+                    'libelle': item['libelle'],
+                    'libelle_en': item['libelle_en'],
+                    'couleur': item['couleur'],
+                },
+            )
+            if created:
+                created_count += 1
+                self.stdout.write(self.style.SUCCESS(f"  ✔ Créé  [{item['code']}] {item['libelle_en']}"))
+            else:
+                updated_count += 1
+                self.stdout.write(f"  ↺ MàJ   [{item['code']}] {item['libelle_en']}")
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"\n✅ Import terminé — {created_count} créé(s), {updated_count} mis à jour"
+                f"\n✅ Terminé — {created_count} créé(s), {updated_count} mis à jour"
             )
         )
