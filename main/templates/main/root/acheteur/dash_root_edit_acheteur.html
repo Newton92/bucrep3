@@ -485,7 +485,7 @@
                             <button type="button" class="btn btn-outline-secondary" id="btn-prev" disabled>
                                 <i class="bi bi-chevron-left me-1"></i>{% trans "Précédent" %}
                             </button>
-                            <button type="button" class="btn btn-outline-primarying" id="btn-next">
+                            <button type="button" class="btn btn-outline-primary" id="btn-next">
                                 {% trans "Suivant" %}<i class="bi bi-chevron-right ms-1"></i>
                             </button>
                         </div>
@@ -666,11 +666,88 @@ $(document).ready(function() {
         $(document).trigger('stepChanged');
     }
 
+    // ── Collecte des champs par étape ──
+    function collectStepData(step) {
+        var d = {};
+        if (step === 1) {
+            d.nom               = $('#nom').val().trim();
+            d.sigle             = $('#sigle').val().trim() || null;
+            d.date_creation     = $('#date_creation').val() || null;
+            d.activite_principale = $('#activite_principale').val().trim() || null;
+            d.description       = $('#description').val().trim() || null;
+            var se = $('#statut_entreprise').val();
+            d.statut_entreprise = se ? parseInt(se) : null;
+            var fj = $('#forme_juridique').val();
+            d.forme_juridique   = fj ? parseInt(fj) : null;
+            var nace = $('#nace_code').val();
+            d.nace_specifique   = nace ? parseInt(nace) : null;
+        } else if (step === 2) {
+            d.email         = $('#email').val().trim() || null;
+            d.fax           = $('#fax').val().trim() || null;
+            d.boite_postale = $('#boite_postale').val().trim() || null;
+            d.code_postal   = $('#code_postal').val().trim() || null;
+            var url = ($('#site_internet').val() || '').trim();
+            if (url) url = url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+            d.site_internet  = url || null;
+            d.numero_adresse = $('#numero_adresse').val().trim() || null;
+            d.rue_adresse    = $('#rue_adresse').val().trim() || null;
+        } else if (step === 3) {
+            var pays = $('#pays').val();
+            d.pays  = pays ? parseInt(pays) : null;
+            var ville = $('#ville').val();
+            d.ville = ville ? parseInt(ville) : null;
+            var lat = $('#latitude').val(), lng = $('#longitude').val();
+            d.latitude  = lat  ? parseFloat(lat)  : null;
+            d.longitude = lng  ? parseFloat(lng)  : null;
+        }
+        return d;
+    }
+
+    // ── Sauvegarde partielle (PUT partial=True) ──
+    function saveStepData(stepData, callback) {
+        var $btn = $('#btn-next');
+        var nextLabel = "{% trans 'Suivant' %} <i class='bi bi-chevron-right ms-1'></i>";
+        var savingLabel = "<span class='spinner-border spinner-border-sm me-1'></span>{% trans 'Sauvegarde...' %}";
+        $btn.prop('disabled', true).html(savingLabel);
+
+        $.ajax({
+            url: '/api/editer-un-acheteur/' + acheteurId + '/',
+            type: 'PUT',
+            data: JSON.stringify(stepData),
+            contentType: 'application/json',
+            headers: getHeaders(),
+            success: function(response) {
+                if (response.success) {
+                    if (response.acheteur) originalData = Object.assign({}, response.acheteur);
+                    callback(true);
+                } else {
+                    showError(response.message || i18n.genericErr);
+                    callback(false);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) { refreshAccessToken(); callback(false); return; }
+                var errs = xhr.responseJSON;
+                var msg = (errs && errs.message) ? errs.message
+                    : (errs && errs.errors ? JSON.stringify(errs.errors) : i18n.genericErr);
+                showError(msg);
+                callback(false);
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html(nextLabel);
+            }
+        });
+    }
+
     $('#btn-next').on('click', function() {
         if (!validateStep(currentStep)) return;
-        currentStep++;
-        updateSteps();
-        window.scrollTo(0, 0);
+        var stepData = collectStepData(currentStep);
+        saveStepData(stepData, function(ok) {
+            if (!ok) return;
+            currentStep++;
+            updateSteps();
+            window.scrollTo(0, 0);
+        });
     });
 
     $('#btn-prev').on('click', function() {
@@ -942,7 +1019,7 @@ $(document).ready(function() {
                     }
                     Swal.fire({
                         icon: 'success', title: i18n.success, text: i18n.updated,
-                        confirmButtonColor: '#e6a817', timer: 1800, showConfirmButton: false
+                        confirmButtonColor: '#0a95ca', timer: 1800, showConfirmButton: false
                     }).then(function() {
                         window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
                     });
@@ -965,7 +1042,7 @@ $(document).ready(function() {
     $('#btn-cancel').on('click', function() {
         Swal.fire({
             title: i18n.leaveTitle, text: i18n.leaveText, icon: 'warning',
-            showCancelButton: true, confirmButtonColor: '#e6a817', cancelButtonColor: '#6c757d',
+            showCancelButton: true, confirmButtonColor: '#0a95ca', cancelButtonColor: '#6c757d',
             confirmButtonText: i18n.yesLeave, cancelButtonText: i18n.stay
         }).then(function(result) {
             if (result.isConfirmed) window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
@@ -987,7 +1064,7 @@ $(document).ready(function() {
         $('body').css('overflow', 'hidden');
     }
     function hideLoading() { $('#loadingOverlay').removeClass('active'); $('body').css('overflow', ''); }
-    function showError(msg) { Swal.fire({ icon: 'error', title: i18n.error, text: msg, confirmButtonColor: '#e6a817' }); }
+    function showError(msg) { Swal.fire({ icon: 'error', title: i18n.error, text: msg, confirmButtonColor: '#0a95ca' }); }
 
     function refreshAccessToken() {
         Swal.fire({
@@ -1015,5 +1092,6 @@ $(document).ready(function() {
 });
 </script>
 {% endblock %}
+
 
 
