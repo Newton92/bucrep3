@@ -1703,7 +1703,6 @@ def generer_rapport_solvabilite(request):
                     "email": acheteur.email if hasattr(acheteur, 'email') else "",
                     "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
                     "pays": _safe_nested_attr(acheteur, ["pays", "nom"]),
-                    "province": _safe_nested_attr(acheteur, ["province", "nom"]),
                     "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "",
                     "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else ""),
@@ -1723,6 +1722,8 @@ def generer_rapport_solvabilite(request):
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
+                "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
+                "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "",
                 "description": acheteur.description if hasattr(acheteur, 'description') else "",
@@ -2195,6 +2196,7 @@ def generer_rapport_solvabilite(request):
             "conclusion_generale": {
                 "title": "CONCLUSION GENERALE",
                 "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "",
+                "couleur_commentaire_code": (conclusion_generale.couleur_commentaire.code if conclusion_generale and conclusion_generale.couleur_commentaire else None) or "#ff0000",
                 "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else "Aucun commentaire disponible",
             }
         }
@@ -2274,16 +2276,8 @@ def _activate_language(lang_code):
 
 
 def _choose_template(base_name, lang_code):
-    """Return a template name adjusted for language.
-
-    If an English version is available (base_name_en.html) and
-    ``lang_code`` is ``'en'`` we return that variant, otherwise the
-    original.
-    """
-    if lang_code and lang_code.lower().startswith('en'):
-        parts = base_name.rsplit('.', 1)
-        if len(parts) == 2:
-            return f"{parts[0]}_en.{parts[1]}"
+    """Return the base template — language is handled by _activate_language + {% trans %}.
+    The _en stub templates are no longer used."""
     return base_name
 
 
