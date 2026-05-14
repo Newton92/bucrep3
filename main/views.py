@@ -1751,6 +1751,33 @@ def _translate_juridique_list(request):
     return [{'id': j.id, 'libelle': j.libelle} for j in qs]
 
 
+def _se_to_english(code, libelle):
+    """Translate a StatutEntreprise to English. Returns original libelle if unknown."""
+    code = (code or '').strip()
+    if code:
+        en = STATUT_ENTREPRISE_EN.get(code)
+        if en:
+            return en
+    lib = (libelle or '').strip()
+    en = STATUT_ENTREPRISE_LIBELLE_EN.get(lib)
+    if en:
+        return en
+    lib_lower = lib.lower()
+    for key, val in STATUT_ENTREPRISE_LIBELLE_EN.items():
+        if key.lower() == lib_lower:
+            return val
+    return libelle
+
+
+def _translate_statut_list(request):
+    """Return StatutEntreprise list with libelle translated to the active language."""
+    lang = getattr(request, 'LANGUAGE_CODE', '') or ''
+    qs = StatutEntreprise.objects.all().order_by('libelle')
+    if lang.startswith('en'):
+        return [{'id': s.id, 'libelle': _se_to_english(s.code, s.libelle)} for s in qs]
+    return [{'id': s.id, 'libelle': s.libelle} for s in qs]
+
+
 @login_required
 def dash_root_add_acheteur(request):
     user = request.user
@@ -1771,7 +1798,7 @@ def dash_root_add_acheteur(request):
     
     # Récupération des données de référence
     juridique_list = _translate_juridique_list(request)
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
@@ -1822,7 +1849,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
     
     # Récupération des données de référence
     juridique_list = _translate_juridique_list(request)
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
@@ -1892,7 +1919,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
     juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -10231,7 +10258,7 @@ def dash_validateur_add_acheteur(request):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -10282,7 +10309,7 @@ def dash_validateur_edit_acheteur(request, acheteur_id):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -10334,7 +10361,7 @@ def dash_validateur_manage_acheteur(request, acheteur_id):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -10448,7 +10475,7 @@ def dash_validateur_manage_acheteur_data_save(request, acheteur_id):
     id_acheteur = acheteur_id
 
     # Récupérer tous les statuts d'entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les formes juridiques
     juridique_list = FormeJuridique.objects.all()
@@ -13570,7 +13597,7 @@ def dash_analyste_add_acheteur(request):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -13621,7 +13648,7 @@ def dash_analyste_edit_acheteur(request, acheteur_id):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -13673,7 +13700,7 @@ def dash_analyste_manage_acheteur(request, acheteur_id):
     juridique_list = FormeJuridique.objects.all()
 
     # Récupérer tous les statuts entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -13787,7 +13814,7 @@ def dash_analyste_manage_acheteur_data_save(request, acheteur_id):
     id_acheteur = acheteur_id
 
     # Récupérer tous les statuts d'entreprise
-    statut_list = StatutEntreprise.objects.all()
+    statut_list = _translate_statut_list(request)
 
     # Récupérer tous les formes juridiques
     juridique_list = FormeJuridique.objects.all()

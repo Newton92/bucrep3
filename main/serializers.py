@@ -596,6 +596,57 @@ FORME_JURIDIQUE_LIBELLE_EN = {
 }
 
 
+# ── Traduction StatutEntreprise : code DB → EN ──
+STATUT_ENTREPRISE_EN = {
+    "ACTIVE":          "Active Business",
+    "INACTIVE":        "Inactive Business",
+    "MERGING":         "Companies in merger",
+    "MERGED":          "Merged company",
+    "NOT_EXIST":       "The company does not exist",
+    "NOT_IDENTIFIED":  "The company could not be identified",
+    "DORMANT":         "Business is dormant",
+    "NOT_LOCATED":     "Unable to locate the company",
+    "CEASED":          "Ceased activity",
+    "NOT_REGISTERED":  "The company is not registered",
+    "NOT_LOCAL_REG":   "The company is not locally registered",
+    "LIMITED":         "Limited business activity",
+    "NO_VISIBLE_ACT":  "No Business activity visible locally",
+    "WINDING_VOL":     "Voluntarily winding up",
+    "WINDING_CRED":    "Creditor's voluntarily winding up",
+    "WINDING_COMP":    "Compulsorily winding up",
+    "RADIATION":       "Radiation",
+    "DEREGISTRATION":  "Company in the process of de-registration",
+    "DISSOLVED":       "Dissolved",
+    "FOLLOW_UP":       "Will follow up",
+    "NOT_FOUND":       "Company Not Found",
+}
+
+# ── Traduction StatutEntreprise : libelle FR → EN (fallback) ──
+STATUT_ENTREPRISE_LIBELLE_EN = {
+    "Entreprise active":                                  "Active Business",
+    "Entreprise inactive":                                "Inactive Business",
+    "Entreprises en fusion":                              "Companies in merger",
+    "Entreprise fusionnée":                               "Merged company",
+    "L'entreprise n'existe pas":                          "The company does not exist",
+    "L'entreprise n'a pas pu être identifiée":            "The company could not be identified",
+    "Entreprise en sommeil":                              "Business is dormant",
+    "Impossible de localiser l'entreprise":               "Unable to locate the company",
+    "Activité cessée":                                    "Ceased activity",
+    "L'entreprise n'est pas immatriculée":                "The company is not registered",
+    "L'entreprise n'est pas immatriculée localement":     "The company is not locally registered",
+    "Activité commerciale limitée":                       "Limited business activity",
+    "Aucune activité commerciale visible localement":     "No Business activity visible locally",
+    "Dissolution volontaire":                             "Voluntarily winding up",
+    "Dissolution volontaire des créanciers":              "Creditor's voluntarily winding up",
+    "Liquidation judiciaire obligatoire":                 "Compulsorily winding up",
+    "Radiation":                                          "Radiation",
+    "Entreprise en cours de radiation":                   "Company in the process of de-registration",
+    "Dissoute":                                           "Dissolved",
+    "À suivre":                                           "Will follow up",
+    "Entreprise introuvable":                             "Company Not Found",
+}
+
+
 class FormeJuridiqueSerializer(serializers.ModelSerializer):
     libelle = serializers.SerializerMethodField()
 
