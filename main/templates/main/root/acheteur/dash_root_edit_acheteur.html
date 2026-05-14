@@ -1,402 +1,207 @@
 {% extends 'main/root/base.html' %}
 
-{% load static i18n %}
+{% load i18n %}
+{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <meta charset="UTF-8">
+{% endblock %}
 
 {% block styles %}
-<!-- Leaflet CSS -->
-<!-- MapLibre GL JS -->
-<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-    /* ========== THÈME DE COULEURS ========== */
     :root {
-        --color-light: #fcfefe;      /* Fond clair, texte sur fond foncé */
-        --color-primary: #0a95ca;    /* Primaire principal */
-        --color-primary-dark: #0d80be; /* Primaire foncé (hover, états actifs) */
-        --color-primary-light: #25add6; /* Primaire clair (bordures, accents) */
-        --color-secondary: #106cb2;   /* Secondaire (boutons secondaires, fonds) */
-        --color-warning: #ffc107;    /* Pour le mode édition */
-        --color-warning-dark: #e0a800; /* Warning foncé */
+        --color-light: #fffdf5;
+        --color-primary: #0a95ca;
+        --color-primary-dark: #0d80be;
+        --color-warn: #e6a817;
+        --color-warn-dark: #c78f0d;
+        --color-warn-light: #ffc107;
     }
 
-    /* ========== STYLES GÉNÉRAUX ========== */
-    body {
-        background-color: #f8f9fa;
-    }
+    body { background-color: #f8f9fa; }
 
-    /* ========== SECTIONS DU FORMULAIRE ========== */
+    /* NACE */
+    .select2-container--bootstrap-5.select2-container--focus,
+    .select2-container--bootstrap-5 { width: 100% !important; }
+
+    #nace_activity + .select2-container,
+    #nace_type + .select2-container,
+    #nace_code + .select2-container { width: 100% !important; margin-top: 4px; }
+
+    #nace_activity + .select2-container .select2-selection,
+    #nace_type + .select2-container .select2-selection,
+    #nace_code + .select2-container .select2-selection {
+        min-height: 46px; border-radius: 8px;
+        border: 1px solid rgba(230, 168, 23, 0.4);
+    }
+    #nace_activity + .select2-container .select2-selection--single,
+    #nace_type + .select2-container .select2-selection--single { height: 46px; }
+
+    #nace_activity + .select2-container .select2-selection__rendered,
+    #nace_type + .select2-container .select2-selection__rendered { line-height: 44px !important; padding-left: 15px !important; }
+    #nace_code + .select2-container .select2-selection__rendered { line-height: 18px !important; padding: 6px 15px !important; white-space: normal !important; }
+
+    .nace-step-label { font-size: .72rem; font-weight: 600; color: var(--color-warn); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px; display: block; }
+    .select2-dropdown { min-width: 500px !important; max-width: 800px !important; }
+    .select2-results__option { white-space: normal !important; padding: 8px 15px !important; line-height: 1.4 !important; }
+
+    /* Sections */
     .form-section {
-        background: rgba(10, 149, 202, 0.03);
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 25px;
-        border-left: 4px solid var(--color-warning);
-        border: 1px solid rgba(37, 173, 214, 0.15);
-        transition: all 0.3s ease;
+        background: rgba(230, 168, 23, 0.03);
+        border-radius: 12px; padding: 25px; margin-bottom: 25px;
+        border: 1px solid rgba(230, 168, 23, 0.2);
+        transition: all .3s ease;
     }
-    
-    .form-section:hover {
-        box-shadow: 0 5px 20px rgba(10, 149, 202, 0.1);
-        border-color: rgba(37, 173, 214, 0.3);
-    }
-    
+    .form-section:hover { box-shadow: 0 5px 20px rgba(230, 168, 23, 0.12); border-color: rgba(230, 168, 23, 0.35); }
+
     .section-title {
-        color: var(--color-warning-dark);
-        font-weight: 600;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid rgba(255, 193, 7, 0.2);
+        color: var(--color-warn-dark); font-weight: 600; margin-bottom: 20px;
+        display: flex; align-items: center; gap: 10px;
+        padding-bottom: 10px; border-bottom: 2px solid rgba(230, 168, 23, 0.15);
     }
-    
     .section-title i {
-        font-size: 1.2rem;
-        background: rgba(255, 193, 7, 0.1);
-        padding: 8px;
-        border-radius: 8px;
-        color: var(--color-warning);
+        font-size: 1.2rem; background: rgba(230, 168, 23, 0.12);
+        padding: 8px; border-radius: 8px; color: var(--color-warn);
     }
-    
-    /* ========== CHAMPS DE FORMULAIRE ========== */
-    .form-label {
-        font-weight: 500;
-        color: var(--color-primary-dark);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
+
+    /* Fields */
+    .form-label { font-weight: 500; color: #5a4a00; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    .required-field:after { content: " *"; color: #dc3545; font-weight: bold; }
     .form-control, .form-select {
-        border-radius: 8px;
-        border: 1px solid rgba(37, 173, 214, 0.3);
-        padding: 12px 15px;
-        transition: all 0.3s ease;
-        background-color: white;
+        border-radius: 8px; border: 1px solid rgba(230, 168, 23, 0.35);
+        padding: 12px 15px; transition: all .3s ease; background-color: white;
     }
-    
     .form-control:focus, .form-select:focus {
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-        background-color: white;
-    }
-    
-    /* ========== CARTE DE LOCALISATION ========== */
-    .map-container {
-        border-radius: 12px;
-        overflow: hidden;
-        height: 300px;
-        border: 2px solid rgba(37, 173, 214, 0.3);
-        margin-top: 20px;
-        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.1);
-        position: relative;
+        border-color: var(--color-warn); box-shadow: 0 0 0 .25rem rgba(230, 168, 23, 0.18); background-color: white;
     }
 
-    #editMap {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
+    /* Step indicator */
+    .step-indicator {
+        display: flex; justify-content: space-between; margin-bottom: 30px;
+        counter-reset: step; padding: 20px; background: white;
+        border-radius: 12px; border: 1px solid rgba(230, 168, 23, 0.2);
+        box-shadow: 0 2px 10px rgba(230, 168, 23, 0.06);
     }
-    
-    /* ========== BOUTONS ========== */
-    .btn-edit {
-        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
-        border: none;
-        padding: 12px 35px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        color: #212529;
+    .step { text-align: center; position: relative; flex: 1; }
+    .step:before {
+        counter-increment: step; content: counter(step);
+        width: 45px; height: 45px; line-height: 45px; border-radius: 50%;
+        background: rgba(230, 168, 23, 0.12); color: var(--color-warn);
+        display: block; margin: 0 auto 10px; font-weight: 600; font-size: 1.1rem;
+        transition: all .3s ease; border: 2px solid transparent;
     }
-    
-    .btn-edit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
-        background: linear-gradient(135deg, var(--color-warning-dark) 0%, #d39e00 100%);
-        color: #212529;
+    .step.active:before {
+        background: var(--color-warn); color: white; border-color: var(--color-warn);
+        box-shadow: 0 0 0 5px rgba(230, 168, 23, 0.22);
     }
-    
-    .btn-edit:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
-    }
-    
-    .btn-outline-warning {
-        color: var(--color-warning);
-        border-color: var(--color-warning);
-    }
-    
-    .btn-outline-warning:hover {
-        background-color: var(--color-warning);
-        border-color: var(--color-warning);
-        color: #212529;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
-    }
-    
-    /* ========== BADGE DE MODIFICATION ========== */
-    .edit-badge {
-        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
-        color: #212529;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border: 1px solid rgba(255, 193, 7, 0.3);
-        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
-    }
-    
-    /* ========== VALIDATION ========== */
-    .is-valid {
-        border-color: #28a745 !important;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-    }
-    
-    .is-invalid {
-        border-color: #dc3545 !important;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-    }
-    
-    .invalid-feedback {
-        color: #dc3545;
-        font-size: 0.85rem;
-        margin-top: 5px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .invalid-feedback:before {
-        content: "⚠";
-    }
-    
-    /* ========== LOADING ANIMATION ========== */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(10, 149, 202, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
-        backdrop-filter: blur(3px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
+    .step.completed:before { background: var(--color-warn-dark); color: white; border-color: var(--color-warn-dark); }
+    .step-label { font-size: .85rem; color: var(--color-warn-dark); font-weight: 500; }
+    .step.active .step-label { color: var(--color-warn); font-weight: 600; }
 
-    .loading-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .loading-content {
-        text-align: center;
-        background: white;
-        padding: 40px 50px;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(10, 149, 202, 0.15);
-        border: 2px solid rgba(37, 173, 214, 0.2);
-        animation: fadeInUp 0.4s ease;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .spinner {
-        width: 60px;
-        height: 60px;
-        border: 4px solid rgba(10, 149, 202, 0.1);
-        border-top: 4px solid var(--color-warning);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .loading-text {
-        color: var(--color-warning);
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-top: 15px;
-    }
-    
-    /* ========== INFORMATIONS DE L'ACHETEUR ========== */
-    .acheteur-info {
-        background: rgba(255, 193, 7, 0.08);
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 25px;
-        border-left: 4px solid var(--color-warning);
-        border: 1px solid rgba(255, 193, 7, 0.2);
-    }
-    
-    .acheteur-info-item {
-        display: flex;
-        margin-bottom: 12px;
-        align-items: center;
-    }
-    
-    .acheteur-info-label {
-        font-weight: 600;
-        min-width: 150px;
-        color: var(--color-warning-dark);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .acheteur-info-label:before {
-        content: "•";
-        color: var(--color-warning);
-        font-size: 1.5rem;
-    }
-    
-    .acheteur-info-value {
-        color: var(--color-primary-dark);
-        font-weight: 500;
-    }
-    
-    /* ========== INPUT GROUPS ========== */
-    .input-group-text {
-        background-color: rgba(10, 149, 202, 0.1);
-        border-color: rgba(37, 173, 214, 0.3);
-        color: var(--color-primary-dark);
-        border-radius: 8px 0 0 8px;
-    }
-    
-    .input-group .form-control:last-child {
-        border-radius: 0 8px 8px 0;
-    }
-    
-    /* ========== SELECT2 PERSONNALISÉ ========== */
-    .select2-container--bootstrap-5 .select2-selection {
-        border: 1px solid rgba(37, 173, 214, 0.3);
-        border-radius: 8px;
-        min-height: 46px;
-    }
-    
-    .select2-container--bootstrap-5 .select2-selection:focus {
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-    }
-    
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-        line-height: 44px;
-        padding-left: 15px;
-        color: var(--color-primary-dark);
-    }
-    
-    .select2-container--bootstrap-5 .select2-dropdown {
-        border: 1px solid rgba(37, 173, 214, 0.3);
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(10, 149, 202, 0.1);
-    }
-    
-    /* ========== PRÉVISUALISATION COULEUR ========== */
-    .color-preview {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 15px;
-        border-radius: 20px;
-        background: rgba(10, 149, 202, 0.1);
-        margin-top: 10px;
-        border: 1px solid rgba(10, 149, 202, 0.2);
-    }
-    
-    .color-circle {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    /* ========== CARTES ========== */
+    /* Cards */
     .card-form {
-        border: 1px solid rgba(37, 173, 214, 0.2);
-        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.08);
-        border-radius: 12px;
-        overflow: hidden;
-        background: white;
+        border: 1px solid rgba(230, 168, 23, 0.25);
+        box-shadow: 0 4px 15px rgba(230, 168, 23, 0.08);
+        border-radius: 12px; overflow: hidden; background: white;
     }
-    
     .card-header {
-        background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-dark) 100%);
-        color: #212529;
-        border: none;
-        padding: 20px 30px;
+        background: linear-gradient(135deg, var(--color-warn) 0%, var(--color-warn-dark) 100%);
+        color: #1a1100; border: none; padding: 20px 30px;
     }
-    
-    .card-header-title {
-        font-weight: 600;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    .card-header-title { font-weight: 600; margin: 0; display: flex; align-items: center; gap: 10px; }
+
+    .edit-badge {
+        background: linear-gradient(135deg, var(--color-warn-light) 0%, var(--color-warn) 100%);
+        color: #1a1100; padding: 6px 14px; border-radius: 20px; font-size: .85rem; font-weight: 600;
     }
-    
-    /* ========== RESPONSIVE ========== */
+
+    /* Acheteur info card */
+    .acheteur-info {
+        background: rgba(230, 168, 23, 0.06); border-radius: 12px; padding: 20px;
+        border: 1px solid rgba(230, 168, 23, 0.2); margin-bottom: 20px;
+    }
+
+    /* Map */
+    #map { height: 100%; width: 100%; }
+    .map-container {
+        border-radius: 12px; overflow: hidden; height: 300px;
+        border: 2px solid rgba(230, 168, 23, 0.3); margin-top: 10px;
+        box-shadow: 0 4px 15px rgba(230, 168, 23, 0.1);
+    }
+
+    /* Color preview */
+    .color-preview {
+        display: inline-flex; align-items: center; gap: 10px; padding: 8px 15px;
+        border-radius: 20px; background: rgba(230, 168, 23, 0.08); margin-top: 10px;
+        border: 1px solid rgba(230, 168, 23, 0.2);
+    }
+    .color-circle { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+
+    /* Buttons */
+    .btn-edit {
+        background: linear-gradient(135deg, var(--color-warn) 0%, var(--color-warn-dark) 100%);
+        border: none; padding: 12px 35px; border-radius: 8px; font-weight: 600;
+        font-size: 1rem; transition: all .3s ease; color: #1a1100;
+    }
+    .btn-edit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(230, 168, 23, 0.3); color: #1a1100; }
+    .btn-edit:disabled { opacity: .6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+    .btn-outline-warn { color: var(--color-warn); border-color: var(--color-warn); }
+    .btn-outline-warn:hover { background-color: var(--color-warn); color: #1a1100; transform: translateY(-1px); }
+
+    /* Loading */
+    .loading-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(135deg, rgba(230, 168, 23, 0.08) 0%, rgba(255,255,255,.95) 100%);
+        backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center;
+        z-index: 9999; opacity: 0; visibility: hidden; transition: all .3s ease;
+    }
+    .loading-overlay.active { opacity: 1; visibility: visible; }
+    .loading-content {
+        text-align: center; background: white; padding: 40px 50px; border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(230, 168, 23, 0.15); border: 2px solid rgba(230, 168, 23, 0.2);
+    }
+    .spinner {
+        width: 60px; height: 60px; border: 4px solid rgba(230, 168, 23, 0.15);
+        border-top: 4px solid var(--color-warn); border-radius: 50%;
+        animation: spin 1s linear infinite; margin: 0 auto 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text { color: var(--color-warn); font-weight: 600; font-size: 1.1rem; margin-top: 15px; }
+
+    /* Validation */
+    .is-valid { border-color: #28a745 !important; }
+    .is-invalid { border-color: #dc3545 !important; }
+    .invalid-feedback { color: #dc3545; font-size: .85rem; margin-top: 5px; display: none; align-items: center; gap: 5px; }
+    .is-invalid ~ .invalid-feedback { display: flex; }
+    .invalid-feedback:before { content: "⚠ "; }
+
+    .input-group-text { background-color: rgba(230, 168, 23, 0.1); border-color: rgba(230, 168, 23, 0.3); color: var(--color-warn-dark); border-radius: 8px 0 0 8px; }
+    .input-group .form-control:last-child { border-radius: 0 8px 8px 0; }
+
+    .select2-container--bootstrap-5 .select2-selection { border: 1px solid rgba(230, 168, 23, 0.35); border-radius: 8px; min-height: 46px; }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { line-height: 44px; padding-left: 15px; color: #5a4a00; }
+    .select2-container--bootstrap-5 .select2-dropdown { border: 1px solid rgba(230, 168, 23, 0.3); border-radius: 8px; box-shadow: 0 5px 15px rgba(230, 168, 23, 0.1); }
+
+    .form-text-help { font-size: .85rem; color: var(--color-warn); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+    .form-text-help:before { content: "💡"; font-size: .9rem; }
+
     @media (max-width: 768px) {
-        .input-group {
-            flex-direction: column;
-        }
-        
-        .input-group .form-control,
-        .input-group .input-group-text {
-            border-radius: 8px !important;
-            margin-bottom: 10px;
-        }
-        
-        .form-section {
-            padding: 15px;
-        }
-        
-        .btn-edit {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        .acheteur-info-item {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .acheteur-info-label {
-            min-width: auto;
-            margin-bottom: 5px;
-        }
+        .step-indicator { flex-direction: column; gap: 20px; }
+        .step { display: flex; align-items: center; gap: 15px; }
+        .step:before { margin: 0; flex-shrink: 0; }
+        .form-section { padding: 15px; }
+        .btn-edit { width: 100%; margin-bottom: 10px; }
     }
 </style>
 {% endblock %}
 
 {% block body %}
 
-<!-- Overlay de chargement -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-content">
         <div class="spinner"></div>
@@ -404,43 +209,61 @@
     </div>
 </div>
 
-<!-- Titre avec badge de modification -->
-<div class="row mb-4">
+<!-- Titre -->
+<div class="row g-4 mb-3">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h3 class="fs-4 mb-0"><i class="bi bi-pencil-square me-2" style="color: var(--color-warning);"></i>{% trans "Modification d'un acheteur" %}</h3>
-                <p class="text-muted mb-0">{% trans "Modifiez les informations de l'acheteur ci-dessous" %}</p>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <span class="edit-badge">{% trans "Mode Édition" %}</span>
-                <div id="acheteurCode" class="badge bg-secondary">{% trans "Chargement..." %}</div>
+        <div class="card card-body border">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="ms-2">
+                    <h4 style="color: var(--color-warn-dark);">
+                        <i class="bi bi-pencil-square me-2"></i>{% trans "Modification d'un acheteur" %}
+                    </h4>
+                    <span class="text-muted">{% trans "Modifiez les informations de l'acheteur en suivant les étapes." %}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="edit-badge"><i class="bi bi-pencil me-1"></i>{% trans "Mode Édition" %}</span>
+                    <span id="acheteurCodeBadge" class="badge bg-secondary fs-6">{% trans "Chargement..." %}</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Informations de l'acheteur -->
+<!-- Info acheteur -->
+<div class="acheteur-info" id="acheteurInfoCard" style="display:none;">
+    <div class="row">
+        <div class="col-md-4">
+            <small class="text-muted">{% trans "Code" %}</small>
+            <div class="fw-bold" id="infoCode">--</div>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted">{% trans "Statut" %}</small>
+            <div class="fw-bold" id="infoStatut">--</div>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted">{% trans "Date de création" %}</small>
+            <div class="fw-bold" id="infoDateCreation">--</div>
+        </div>
+    </div>
+</div>
+
+<!-- Indicateur de progression -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="acheteur-info" id="acheteurInfoCard">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <span class="acheteur-info-label">{% trans "Code" %} :</span>
-                        <span class="acheteur-info-value" id="infoCode">--</span>
+        <div class="card card-form">
+            <div class="card-body">
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-label">{% trans "Généralités" %}</div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <span class="acheteur-info-label">{% trans "Statut" %} :</span>
-                        <span class="acheteur-info-value" id="infoStatut">--</span>
+                    <div class="step" data-step="2">
+                        <div class="step-label">{% trans "Contacts" %}</div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <span class="acheteur-info-label">{% trans "Date création" %} :</span>
-                        <span class="acheteur-info-value" id="infoDateCreation">--</span>
+                    <div class="step" data-step="3">
+                        <div class="step-label">{% trans "Localisation" %}</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-label">{% trans "Opinion" %}</div>
                     </div>
                 </div>
             </div>
@@ -453,273 +276,225 @@
     <div class="col-12">
         <div class="card card-form">
             <div class="card-header">
-                <h4 class="card-header-title mb-0"><i class="bi bi-pencil me-2"></i>{% trans "Éditer les informations" %}</h4>
+                <h4 class="card-header-title mb-0"><i class="bi bi-pencil me-2"></i>{% trans "Informations de l'acheteur" %}</h4>
             </div>
 
             <div class="card-body">
                 <form id="editAcheteurForm" class="vstack gap-4" novalidate>
-                    <input type="hidden" name="id" id="editAcheteurId" />
 
-                    <!-- Section 1: Généralités -->
-                    <div class="form-section">
+                    <!-- Étape 1 : Généralités -->
+                    <div class="form-section" data-section="1">
                         <h5 class="section-title"><i class="bi bi-info-circle"></i> {% trans "Généralités sur l'acheteur" %}</h5>
 
                         <div class="row g-3">
-                            <!-- Nom -->
                             <div class="col-md-6">
-                                <label class="form-label">{% trans "Nom de l'acheteur" %} *</label>
-                                <input type="text" class="form-control" id="editNom" name="nom"
-                                       placeholder="{% trans 'Ex: BATI PLUS' %}" required
-                                       data-validation="required|min:2">
-                                <div class="invalid-feedback">{% trans "Veuillez saisir un nom valide (minimum 2 caractères)" %}</div>
+                                <label class="form-label required-field">{% trans "Nom de l'acheteur" %}</label>
+                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex: BATI PLUS" required>
+                                <div class="invalid-feedback">{% trans "Veuillez saisir un nom valide" %}</div>
                             </div>
-
-                            <!-- Sigle -->
                             <div class="col-md-6">
                                 <label class="form-label">{% trans "Sigle" %}</label>
-                                <input type="text" class="form-control" id="editSigle" name="sigle"
-                                       placeholder="Ex: BATI+">
+                                <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex: BATI+">
                             </div>
-
-                            <!-- Date de création -->
                             <div class="col-md-6">
-                                <label class="form-label">{% trans "Date de création" %} *</label>
-                                <input type="date" class="form-control" id="editDateCreation"
-                                       name="date_creation" required
-                                       data-validation="required">
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une date valide" %}</div>
+                                <label class="form-label">{% trans "Date de création" %}</label>
+                                <input type="date" class="form-control flatpickr" id="date_creation" name="date_creation">
                             </div>
-
-                            <!-- Activité principale -->
                             <div class="col-md-6">
-                                <label class="form-label">{% trans "Activité principale" %} *</label>
-                                <input type="text" class="form-control" id="editActivitePrincipale"
-                                       name="activite_principale"
-                                       placeholder="{% trans 'Ex: Vente de produits de construction' %}" required
-                                       data-validation="required|min:3">
-                                <div class="invalid-feedback">{% trans "Veuillez saisir une activité principale" %}</div>
+                                <label class="form-label">{% trans "Activité principale" %}</label>
+                                <input type="text" class="form-control" id="activite_principale" name="activite_principale"
+                                       placeholder="{% trans 'Ex: Vente de produits de construction' %}">
                             </div>
-
-                            <!-- Statut -->
-                            <div class="col-md-4">
-                                <label for="editStatutEntreprise" class="form-label">{% trans "Statut" %} *</label>
-                                <select class="form-select select2" id="editStatutEntreprise"
-                                        name="statut_entreprise" required
-                                        data-validation="required">
+                            <div class="col-md-6">
+                                <label for="statut_entreprise" class="form-label">{% trans "Statut" %}</label>
+                                <select class="form-select select2" id="statut_entreprise" name="statut_entreprise">
                                     <option value="">{% trans "Sélectionnez..." %}</option>
                                     {% for statut in statut_list %}
                                         <option value="{{ statut.id }}">{{ statut.libelle }}</option>
                                     {% endfor %}
                                 </select>
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner un statut" %}</div>
                             </div>
-
-
-                            <!-- Forme juridique -->
-                            <div class="col-md-4">
-                                <label for="editFormeJuridique" class="form-label">{% trans "Forme juridique" %} *</label>
-                                <select class="form-select select2" id="editFormeJuridique"
-                                        name="forme_juridique" required
-                                        data-validation="required">
+                            <div class="col-md-6">
+                                <label for="forme_juridique" class="form-label">{% trans "Forme juridique" %}</label>
+                                <select class="form-select select2" id="forme_juridique" name="forme_juridique">
                                     <option value="">{% trans "Sélectionnez..." %}</option>
                                     {% for juridique in juridique_list %}
                                         <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
                                     {% endfor %}
                                 </select>
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une forme juridique" %}</div>
                             </div>
 
-                            <!-- Code NACE -->
-                            <div class="col-md-12 mb-3">
-                                <label for="editCodeNace" class="form-label">{% trans "Code NACE" %}</label>
-                                <select class="form-control select2" id="editCodeNace" name="code_nace">
-                                    <option value="">{% trans "Sélectionnez..." %}</option>
-                                    {% for code_nace in code_nace_list %}
-                                        <!-- IMPORTANT: value="{{ code_nace.id }}" envoie la valeur complète -->
-                                        <option value="{{ code_nace.id }}">
-                                            {{ code_nace.code }} - {{ code_nace.libelle }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text-help">
-                                    {% trans "Code d'activité économique (NACE) - Optionnel" %}
+                            <!-- Code NACE Cascade -->
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-semibold">{% trans "Code NACE" %}</label>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <span class="nace-step-label">① Activity</span>
+                                        <select id="nace_activity" name="nace_activity" class="form-control">
+                                            <option value="">Select an activity…</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="nace-step-label">② Type</span>
+                                        <select id="nace_type" name="nace_type" class="form-control" disabled>
+                                            <option value="">Select a type…</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <span class="nace-step-label">③ NACE Code</span>
+                                        <select id="nace_code" name="nace_specifique" class="form-control" disabled>
+                                            <option value="">Select a code…</option>
+                                        </select>
+                                    </div>
                                 </div>
+                                <div class="form-text-help mt-1">{% trans "Code d'activité économique (NACE) - Optionnel" %}</div>
                             </div>
 
-                            <!-- Description -->
                             <div class="col-12">
-                                <label for="editDescription" class="form-label">{% trans "Description" %}</label>
-                                <textarea class="form-control" id="editDescription" name="description"
-                                          rows="6" placeholder="{% trans "Description détaillée de l'acheteur..." %}"></textarea>
+                                <label for="description" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="description" name="description"
+                                          rows="3" placeholder="{% trans "Description détaillée de l'acheteur..." %}"></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 2: Contacts -->
-                    <div class="form-section">
+                    <!-- Étape 2 : Contacts -->
+                    <div class="form-section" data-section="2">
                         <h5 class="section-title"><i class="bi bi-telephone"></i> {% trans "Contacts de l'acheteur" %}</h5>
-
                         <div class="row g-3">
-                            <!-- Email -->
                             <div class="col-md-6">
                                 <label class="form-label">{% trans "Email principal" %}</label>
-                                <input type="email" class="form-control" id="editEmail" name="email"
-                                       placeholder="contact@entreprise.ga"
-                                       data-validation="email">
-                                <div class="invalid-feedback">{% trans "Veuillez saisir une adresse email valide" %}</div>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="contact@entreprise.ga">
                             </div>
-
-                            <!-- Fax -->
                             <div class="col-md-6">
                                 <label class="form-label">{% trans "Fax" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-fax"></i></span>
-                                    <input type="text" class="form-control" id="editFax" name="fax"
-                                           placeholder="(+241) 22 22 22 22">
+                                    <input type="text" class="form-control" id="fax" name="fax" placeholder="(+241) 22 22 22 22">
                                 </div>
                             </div>
-
-                            <!-- Boîte postale -->
                             <div class="col-md-6">
                                 <label class="form-label">{% trans "Boîte postale" %}</label>
                                 <div class="input-group">
                                     <span class="input-group-text">BP</span>
-                                    <input type="text" class="form-control" id="editBoitePostale"
-                                           name="boite_postale" placeholder="2022 Libreville, Gabon">
+                                    <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="2022 Libreville, Gabon">
                                 </div>
                             </div>
-
-                            <!-- Code postal -->
                             <div class="col-md-6">
                                 <label class="form-label">{% trans "Code postal" %}</label>
-                                <input type="text" class="form-control" id="editCodePostal"
-                                       name="code_postal" placeholder="241">
+                                <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="241">
                             </div>
-
-                            <!-- Site internet -->
                             <div class="col-12">
                                 <label class="form-label">{% trans "Site internet" %}</label>
-                                <input type="text" class="form-control" id="editSiteInternet"
-                                    name="site_internet" placeholder="exemple.com">
+                                <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="exemple.com"
+                                       pattern="^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$">
                                 <div class="form-text-help">{% trans "Entrez uniquement le nom de domaine (ex: exemple.com)" %}</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 3: Localisation -->
-                    <div class="form-section">
+                    <!-- Étape 3 : Localisation -->
+                    <div class="form-section" data-section="3">
                         <h5 class="section-title"><i class="bi bi-geo-alt"></i> {% trans "Localisation de l'acheteur" %}</h5>
-
                         <div class="row g-3">
-                            <!-- Adresse -->
-                            <div class="col-md-3">
-                                <label class="form-label">{% trans "Numéro" %}</label>
-                                <input type="text" class="form-control" id="editNumeroAdresse"
-                                       name="numero_adresse" placeholder="17345">
-                            </div>
-
-                            <div class="col-md-9">
-                                <label class="form-label">{% trans "Rue" %}</label>
-                                <input type="text" class="form-control" id="editRueAdresse"
-                                       name="rue_adresse" placeholder="Rue Camp de Gaulle">
-                            </div>
-
-                            <!-- Pays -->
                             <div class="col-md-6">
-                                <label for="editPays" class="form-label">{% trans "Pays" %} *</label>
-                                <select class="form-select select2" id="editPays" name="pays" required
-                                        data-validation="required">
+                                <label for="pays" class="form-label required-field">{% trans "Pays" %}</label>
+                                <select class="form-select select2" id="pays" name="pays" required>
                                     <option value="">{% trans "Sélectionnez..." %}</option>
-                                    {% for pays in pays_list %}
-                                        <option value="{{ pays.id }}">{{ pays.nom }}</option>
+                                    {% for p in pays_list %}
+                                        <option value="{{ p.id }}">{{ p.nom }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="invalid-feedback">{% trans "Veuillez sélectionner un pays" %}</div>
                             </div>
-
-                            <!-- Ville -->
                             <div class="col-md-6">
-                                <label for="editVille" class="form-label">{% trans "Ville" %} *</label>
+                                <label for="ville" class="form-label required-field">{% trans "Ville" %}</label>
                                 <div class="position-relative">
-                                    <select class="form-select select2" id="editVille" name="ville"
-                                            disabled required data-validation="required">
+                                    <select class="form-select select2" id="ville" name="ville" disabled required>
                                         <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
                                     </select>
                                     <div id="villeSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
                                     </div>
                                 </div>
                                 <div class="invalid-feedback">{% trans "Veuillez sélectionner une ville" %}</div>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label"><i class="bi bi-hash me-1"></i>{% trans "N° de porte" %}</label>
+                                <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="Ex : 17345">
+                            </div>
+                            <div class="col-md-9">
+                                <label class="form-label"><i class="bi bi-signpost me-1"></i>{% trans "Rue / Avenue" %}</label>
+                                <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex : Rue Camp de Gaulle">
+                            </div>
 
-                            <!-- Carte (optionnelle) -->
+                            <!-- Carte interactive -->
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">{% trans "Localisation sur la carte (optionnel)" %}</label>
-                                    <button type="button" class="btn btn-outline-warning"
-                                            id="btn-edit-locate">
-                                        <i class="bi bi-geo-alt me-1"></i>{% trans "Localiser" %}
-                                    </button>
+                                    <label class="form-label mb-0">
+                                        <i class="bi bi-map me-1"></i>{% trans "Localisation sur la carte" %}
+                                        <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{% trans "optionnel" %}</span>
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-locate">
+                                            <i class="bi bi-crosshair me-1"></i>{% trans "Ma position" %}
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btn-clear-marker" style="display:none;">
+                                            <i class="bi bi-x-circle me-1"></i>{% trans "Effacer" %}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="map-container">
-                                    <div id="editMap"></div>
+                                <div class="card border rounded-3 overflow-hidden" style="height:380px;">
+                                    <div id="map" style="width:100%;height:100%;"></div>
                                 </div>
-                                <input type="hidden" id="editLatitude" name="latitude">
-                                <input type="hidden" id="editLongitude" name="longitude">
+                                <input type="hidden" id="latitude" name="latitude">
+                                <input type="hidden" id="longitude" name="longitude">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 4: Opinion -->
-                    <div class="form-section">
+                    <!-- Étape 4 : Opinion -->
+                    <div class="form-section" data-section="4">
                         <h5 class="section-title"><i class="bi bi-chat-left-text"></i> {% trans "Opinion ACREMAC" %}</h5>
-
                         <div class="row g-3">
-                            <!-- Coloration -->
                             <div class="col-md-6">
-                                <label for="editCouleurCommentaire" class="form-label">{% trans "Coloration" %} *</label>
-                                <select class="form-select select2" id="editCouleurCommentaire"
-                                        name="couleur_commentaire" required
-                                        data-validation="required">
+                                <label for="couleur_commentaire" class="form-label">{% trans "Coloration" %}</label>
+                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur..." %}</option>
                                     {% for coloration in coloration_list %}
-                                        <option value="{{ coloration.id }}"
-                                                data-color="{{ coloration.code }}">
+                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
                                             {{ coloration.couleur }} - [{{ coloration.code }}]
                                         </option>
                                     {% endfor %}
                                 </select>
-                                <div class="color-preview mt-2" id="editColorPreview" style="display: none;">
+                                <div class="color-preview mt-2" id="colorPreview" style="display: none;">
                                     <div class="color-circle" style="background-color: #000;"></div>
-                                    <span id="editColorName">{% trans "Aucune couleur sélectionnée" %}</span>
+                                    <span id="colorName">{% trans "Aucune couleur sélectionnée" %}</span>
                                 </div>
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une coloration" %}</div>
                             </div>
-
-                            <!-- Commentaire -->
                             <div class="col-12">
-                                <label for="editCommentaire" class="form-label">{% trans "Commentaire" %} *</label>
-                                <textarea class="form-control" id="editCommentaire" name="commentaire"
-                                          rows="6" placeholder="{% trans "Votre commentaire sur cet acheteur..." %}"
-                                          required data-validation="required|min:10"></textarea>
-                                <div class="invalid-feedback">{% trans "Veuillez saisir un commentaire (minimum 10 caractères)" %}</div>
+                                <label for="commentaire" class="form-label">{% trans "Commentaire" %}</label>
+                                <textarea class="form-control" id="commentaire" name="commentaire"
+                                          rows="4" placeholder="{% trans "Votre commentaire sur cet acheteur..." %}"></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Boutons d'action -->
-                    <div class="d-flex justify-content-between align-items-center pt-4 border-top" style="border-color: rgba(37, 173, 214, 0.2) !important;">
+                    <!-- Boutons de navigation -->
+                    <div class="d-flex justify-content-between align-items-center pt-4 border-top" style="border-color: rgba(230, 168, 23, 0.2) !important;">
                         <div>
-                            <button type="button" class="btn btn-outline-secondary" id="btn-cancel">
-                                <i class="bi bi-x-circle me-1"></i>{% trans "Annuler" %}
+                            <button type="button" class="btn btn-outline-secondary" id="btn-prev" disabled>
+                                <i class="bi bi-chevron-left me-1"></i>{% trans "Précédent" %}
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" id="btn-next">
+                                {% trans "Suivant" %}<i class="bi bi-chevron-right ms-1"></i>
                             </button>
                         </div>
-
                         <div class="text-end">
-                            <button type="button" class="btn btn-outline-warning me-2" id="btn-reset-edit">
-                                <i class="bi bi-arrow-clockwise me-1"></i>{% trans "Réinitialiser" %}
+                            <button type="button" class="btn btn-outline-danger me-2" id="btn-cancel">
+                                <i class="bi bi-x-circle me-1"></i>{% trans "Annuler" %}
                             </button>
-                            <button type="submit" class="btn btn-edit" id="btn-submit-edit">
+                            <button type="submit" class="btn btn-edit" id="btn-submit" style="display:none;">
                                 <i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer les modifications" %}
                             </button>
                         </div>
@@ -733,669 +508,510 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Librairies nécessaires -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
 
 <script>
-/* ── i18n strings ── */
-{% trans "Chargement..." as t_loading %}
-{% trans "Chargement des données..." as t_loadingData %}
-{% trans "Mise à jour en cours..." as t_updating %}
-{% trans "Erreur" as t_err %}
-{% trans "Succès" as t_success %}
-{% trans "Acheteur mis à jour avec succès" as t_updated %}
-{% trans "Erreur lors du chargement des données" as t_loadErr %}
-{% trans "Erreur lors de la mise à jour" as t_updateErr %}
-{% trans "Acheteur non trouvé" as t_notFound %}
-{% trans "ID de l'acheteur non trouvé" as t_noId %}
-{% trans "Erreurs de validation" as t_validErr %}
-{% trans "Erreur de validation" as t_validErrTitle %}
-{% trans "Session expirée. Veuillez vous reconnecter." as t_sessionExp %}
-{% trans "Une erreur est survenue lors de la mise à jour. Vérifiez la console pour plus de détails." as t_genericErr %}
-{% trans "Sélectionnez..." as t_select %}
-{% trans "Chargement..." as t_loadOpt %}
-{% trans "Erreur de chargement" as t_loadOptErr %}
-{% trans "Réinitialiser les modifications ?" as t_resetTitle %}
-{% trans "Toutes les modifications non sauvegardées seront perdues." as t_resetText %}
-{% trans "Oui, réinitialiser" as t_yesReset %}
-{% trans "Annuler" as t_cancel %}
-{% trans "Formulaire réinitialisé" as t_resetDone %}
-{% trans "Quitter sans sauvegarder ?" as t_leaveTitle %}
-{% trans "Les modifications non sauvegardées seront perdues." as t_leaveText %}
-{% trans "Oui, quitter" as t_yesLeave %}
-{% trans "Rester" as t_stay %}
-{% trans "Ce champ est obligatoire" as t_required %}
-{% trans "Email invalide" as t_emailInvalid %}
-{% trans "Le nom doit contenir au moins 2 caractères" as t_nomMin %}
-{% trans "L'activité principale doit contenir au moins 3 caractères" as t_activiteMin %}
-{% trans "Le commentaire doit contenir au moins 10 caractères" as t_commentMin %}
-{% trans "Veuillez corriger les erreurs dans le formulaire" as t_fixErrors %}
-{% trans "Champs invalides" as t_invalidFields %}
-{% trans "Session expirée" as t_sessionTitle %}
-{% trans "Votre session a expiré. Voulez-vous rafraîchir votre token ?" as t_sessionText %}
-{% trans "Rafraîchir" as t_refresh %}
-{% trans "Recharger la page" as t_reload %}
-{% trans "Succès !" as t_successBang %}
-{% trans "Token rafraîchi avec succès." as t_tokenOk %}
-{% trans "Impossible de rafraîchir le token." as t_tokenErr %}
-{% trans "Sélectionnez d'abord un pays" as t_selectCountryFirst %}
-
-var S = {
-    loading:      '{{ t_loading|escapejs }}',
-    loadingData:  '{{ t_loadingData|escapejs }}',
-    updating:     '{{ t_updating|escapejs }}',
-    err:          '{{ t_err|escapejs }}',
-    success:      '{{ t_success|escapejs }}',
-    updated:      '{{ t_updated|escapejs }}',
-    loadErr:      '{{ t_loadErr|escapejs }}',
-    updateErr:    '{{ t_updateErr|escapejs }}',
-    notFound:     '{{ t_notFound|escapejs }}',
-    noId:         '{{ t_noId|escapejs }}',
-    validErr:     '{{ t_validErr|escapejs }}',
-    validErrTitle:'{{ t_validErrTitle|escapejs }}',
-    sessionExp:   '{{ t_sessionExp|escapejs }}',
-    genericErr:   '{{ t_genericErr|escapejs }}',
-    select:       '{{ t_select|escapejs }}',
-    loadOpt:      '{{ t_loadOpt|escapejs }}',
-    loadOptErr:   '{{ t_loadOptErr|escapejs }}',
-    resetTitle:   '{{ t_resetTitle|escapejs }}',
-    resetText:    '{{ t_resetText|escapejs }}',
-    yesReset:     '{{ t_yesReset|escapejs }}',
-    cancel:       '{{ t_cancel|escapejs }}',
-    resetDone:    '{{ t_resetDone|escapejs }}',
-    leaveTitle:   '{{ t_leaveTitle|escapejs }}',
-    leaveText:    '{{ t_leaveText|escapejs }}',
-    yesLeave:     '{{ t_yesLeave|escapejs }}',
-    stay:         '{{ t_stay|escapejs }}',
-    required:     '{{ t_required|escapejs }}',
-    emailInvalid: '{{ t_emailInvalid|escapejs }}',
-    nomMin:       '{{ t_nomMin|escapejs }}',
-    activiteMin:  '{{ t_activiteMin|escapejs }}',
-    commentMin:   '{{ t_commentMin|escapejs }}',
-    fixErrors:    '{{ t_fixErrors|escapejs }}',
-    invalidFields:'{{ t_invalidFields|escapejs }}',
-    sessionTitle: '{{ t_sessionTitle|escapejs }}',
-    sessionText:  '{{ t_sessionText|escapejs }}',
-    refresh:      '{{ t_refresh|escapejs }}',
-    reload:       '{{ t_reload|escapejs }}',
-    successBang:  '{{ t_successBang|escapejs }}',
-    tokenOk:           '{{ t_tokenOk|escapejs }}',
-    tokenErr:          '{{ t_tokenErr|escapejs }}',
-    selectCountryFirst:'{{ t_selectCountryFirst|escapejs }}',
-};
-
 $(document).ready(function() {
 
-    // Stockage des tokens
-    let accessToken = '{{ access }}';
+    let accessToken  = '{{ access }}';
     let refreshToken = '{{ refresh }}';
-
-    // Variables globales
-    let acheteurId = '{{ id_acheteur }}';
+    let acheteurId   = '{{ id_acheteur }}';
+    let currentStep  = 1;
+    const totalSteps = 4;
+    let map = null;
     let originalData = {};
-    let editMap = null;
-    let editMarker = null;
 
-    // Initialisation Select2
+    // ── i18n ──
+    var i18n = {
+        select:           "{% trans 'Sélectionnez...' %}",
+        noResults:        "{% trans 'Aucun résultat trouvé' %}",
+        loading:          "{% trans 'Chargement...' %}",
+        loadingData:      "{% trans 'Chargement des données...' %}",
+        updating:         "{% trans 'Enregistrement en cours...' %}",
+        error:            "{% trans 'Erreur' %}",
+        success:          "{% trans 'Succès' %}",
+        updated:          "{% trans 'Acheteur mis à jour avec succès' %}",
+        loadErr:          "{% trans 'Erreur lors du chargement des données' %}",
+        notFound:         "{% trans 'Acheteur non trouvé' %}",
+        noId:             "{% trans 'ID de l\\'acheteur non trouvé' %}",
+        selectCountryFirst: "{% trans 'Sélectionnez d\\'abord un pays' %}",
+        loadOptErr:       "{% trans 'Erreur de chargement' %}",
+        resetTitle:       "{% trans 'Réinitialiser les modifications ?' %}",
+        resetText:        "{% trans 'Toutes les modifications non sauvegardées seront perdues.' %}",
+        yesReset:         "{% trans 'Oui, réinitialiser' %}",
+        cancel:           "{% trans 'Annuler' %}",
+        resetDone:        "{% trans 'Formulaire réinitialisé' %}",
+        leaveTitle:       "{% trans 'Quitter sans sauvegarder ?' %}",
+        leaveText:        "{% trans 'Les modifications non sauvegardées seront perdues.' %}",
+        yesLeave:         "{% trans 'Oui, quitter' %}",
+        stay:             "{% trans 'Rester' %}",
+        nomRequired:      "{% trans 'Veuillez saisir un nom valide' %}",
+        villeRequired:    "{% trans 'Veuillez sélectionner une ville' %}",
+        paysRequired:     "{% trans 'Veuillez sélectionner un pays' %}",
+        sessionExpired:   "{% trans 'Session expirée' %}",
+        sessionMsg:       "{% trans 'Votre session a expiré. Voulez-vous rafraîchir votre token?' %}",
+        refresh:          "{% trans 'Rafraîchir' %}",
+        reloadPage:       "{% trans 'Recharger la page' %}",
+        successTitle:     "{% trans 'Succès!' %}",
+        tokenRefreshed:   "{% trans 'Token rafraîchi avec succès.' %}",
+        tokenError:       "{% trans 'Impossible de rafraîchir le token.' %}",
+        noGeo:            "{% trans 'La géolocalisation n\\'est pas supportée par ce navigateur.' %}",
+        locating:         "{% trans 'Localisation...' %}",
+        noGps:            "{% trans 'Impossible d\\'obtenir votre position GPS.' %}",
+        myPosition:       "{% trans 'Ma position' %}",
+        noCityAvail:      "{% trans 'Aucune ville disponible' %}",
+        genericErr:       "{% trans 'Une erreur est survenue. Vérifiez la console pour plus de détails.' %}"
+    };
+
+    // ── Select2 ──
     $('.select2').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: S.select,
-        allowClear: true
+        theme: 'bootstrap-5', width: '100%',
+        placeholder: i18n.select, allowClear: true,
+        language: { noResults: function() { return i18n.noResults; } }
     });
 
-    // Fonctions utilitaires
-    function showLoading(message) {
-        $('#loadingText').text(message || S.loading);
-        $('#loadingOverlay').addClass('active');
-        $('body').css('overflow', 'hidden');
+    // ── NACE cascade ──
+    var NACE_API = '/api/nace/';
+
+    function naceAjax(url, params) {
+        return $.ajax({ url: url, data: params, headers: { 'Authorization': 'Bearer ' + getAccessToken() }, dataType: 'json' });
     }
 
-    function hideLoading() {
-        $('#loadingOverlay').removeClass('active');
-        $('body').css('overflow', '');
+    function initNaceSelect2(selector, placeholder) {
+        $(selector).select2({ theme: 'bootstrap-5', width: '100%', placeholder: placeholder, allowClear: true });
     }
+    initNaceSelect2('#nace_activity', 'Select an activity…');
+    initNaceSelect2('#nace_type',     'Select a type…');
+    initNaceSelect2('#nace_code',     'Select a code…');
 
-    function showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: S.err,
-            text: message,
-            confirmButtonColor: '#0A95CA'
+    function loadNaceActivities(selectedActivity) {
+        return naceAjax(NACE_API + 'activities/').done(function(data) {
+            var $sel = $('#nace_activity');
+            $sel.empty().append('<option value=""></option>');
+            $.each(data.activities || [], function(i, act) { $sel.append($('<option>').val(act).text(act)); });
+            if (selectedActivity) $sel.val(selectedActivity).trigger('change.select2');
         });
     }
 
-    function showSuccess(message) {
-        Swal.fire({
-            icon: 'success',
-            title: S.success,
-            text: message,
-            confirmButtonColor: '#0A95CA',
-            timer: 1500,
-            showConfirmButton: false
+    function loadNaceTypes(activity, selectedType) {
+        var $sel = $('#nace_type');
+        $sel.empty().append('<option value="">Loading…</option>').prop('disabled', true).trigger('change.select2');
+        return naceAjax(NACE_API + 'types/', { activity: activity }).done(function(data) {
+            $sel.empty().append('<option value=""></option>');
+            $.each(data.types || [], function(i, t) { $sel.append($('<option>').val(t).text(t)); });
+            $sel.prop('disabled', false);
+            if (selectedType) $sel.val(selectedType).trigger('change.select2');
+            else $sel.trigger('change.select2');
         });
     }
-    
-    // Charger les données de l'acheteur
-    function loadAcheteurData() {
-        if (!acheteurId) {
-            showError(S.noId);
+
+    function loadNaceCodes(activity, type, selectedId) {
+        var $sel = $('#nace_code');
+        $sel.empty().append('<option value="">Loading…</option>').prop('disabled', true).trigger('change.select2');
+        return naceAjax(NACE_API + 'codes/', { activity: activity, type: type }).done(function(data) {
+            $sel.empty().append('<option value=""></option>');
+            $.each(data.codes || [], function(i, c) { $sel.append($('<option>').val(c.id).text(c.label)); });
+            $sel.prop('disabled', false);
+            if (selectedId) $sel.val(selectedId).trigger('change.select2');
+            else $sel.trigger('change.select2');
+        });
+    }
+
+    function naceRestoreActivities(activity, type, codeId) {
+        loadNaceActivities(activity).done(function() {
+            loadNaceTypes(activity, type).done(function() {
+                loadNaceCodes(activity, type, codeId);
+            });
+        });
+    }
+
+    function resetNaceCascade() {
+        $('#nace_activity').val(null).trigger('change');
+        $('#nace_type').empty().append('<option value=""></option>').prop('disabled', true).trigger('change');
+        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change');
+    }
+
+    $('#nace_activity').on('change', function() {
+        var act = $(this).val();
+        $('#nace_type').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
+        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
+        if (act) loadNaceTypes(act, null);
+    });
+
+    $('#nace_type').on('change', function() {
+        var type = $(this).val(), act = $('#nace_activity').val();
+        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
+        if (type && act) loadNaceCodes(act, type, null);
+    });
+
+    // Charger les activités au départ
+    loadNaceActivities(null);
+
+    // ── Wizard ──
+    function updateSteps() {
+        $('.step').removeClass('active completed');
+        $('.step').each(function() {
+            var s = parseInt($(this).data('step'));
+            if (s < currentStep) $(this).addClass('completed');
+            else if (s === currentStep) $(this).addClass('active');
+        });
+        $('.form-section').hide();
+        $('.form-section[data-section="' + currentStep + '"]').show();
+
+        $('#btn-prev').prop('disabled', currentStep === 1);
+        $('#btn-next').toggle(currentStep < totalSteps);
+        $('#btn-submit').toggle(currentStep === totalSteps);
+
+        $(document).trigger('stepChanged');
+    }
+
+    $('#btn-next').on('click', function() {
+        if (!validateStep(currentStep)) return;
+        currentStep++;
+        updateSteps();
+        window.scrollTo(0, 0);
+    });
+
+    $('#btn-prev').on('click', function() {
+        if (currentStep > 1) { currentStep--; updateSteps(); window.scrollTo(0, 0); }
+    });
+
+    $('.step').on('click', function() {
+        var s = parseInt($(this).data('step'));
+        if (s < currentStep) { currentStep = s; updateSteps(); }
+    });
+
+    function validateStep(step) {
+        if (step === 1) {
+            var nom = $('#nom').val().trim();
+            if (!nom) { $('#nom').addClass('is-invalid'); return false; }
+            $('#nom').removeClass('is-invalid').addClass('is-valid');
+        }
+        if (step === 3) {
+            if (!$('#pays').val()) { $('#pays').addClass('is-invalid'); return false; }
+            $('#pays').removeClass('is-invalid');
+            if (!$('#ville').val()) {
+                $('#ville').next('.select2-container').find('.select2-selection').addClass('is-invalid');
+                return false;
+            }
+            $('#ville').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
+        }
+        return true;
+    }
+
+    // ── Villes ──
+    function loadVillesParPays(paysId, selectedVilleId) {
+        if (!paysId) {
+            $('#ville').prop('disabled', true).empty().append('<option value="">' + i18n.selectCountryFirst + '</option>').trigger('change.select2');
             return;
         }
-
-        showLoading(S.loadingData);
-        
+        $('#villeSpinner').show();
+        $('#ville').prop('disabled', true).empty().append('<option value="">' + i18n.loading + '</option>').trigger('change.select2');
         $.ajax({
-            url: `/api/editer-un-acheteur/${acheteurId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': `Bearer {{ access }}`,
-                'X-CSRFToken': getCsrfToken()
+            url: '/api/villes-par-pays/' + paysId + '/',
+            type: 'GET', headers: getHeaders(),
+            success: function(response) {
+                $('#ville').empty().append('<option value="">' + i18n.select + '</option>');
+                var villes = response.results || [];
+                if (villes.length > 0) {
+                    villes.forEach(function(v) {
+                        $('#ville').append(new Option(v.nom, v.id, false, String(v.id) === String(selectedVilleId)));
+                    });
+                    $('#ville').prop('disabled', false);
+                    if (selectedVilleId) $('#ville').trigger('change.select2');
+                } else {
+                    $('#ville').append('<option value="" disabled>' + i18n.noCityAvail + '</option>');
+                }
+                $('#ville').trigger('change.select2');
             },
+            error: function() {
+                $('#ville').empty().append('<option value="">' + i18n.loadOptErr + '</option>').prop('disabled', false);
+            },
+            complete: function() { $('#villeSpinner').hide(); }
+        });
+    }
+
+    $('#pays').on('change', function() {
+        loadVillesParPays($(this).val(), null);
+    });
+
+    // ── Carte Leaflet ──
+    function initMap(lat, lng) {
+        if (typeof L === 'undefined') return;
+        var centerLat = lat || 0.39, centerLng = lng || 9.45, zoom = lat ? 14 : 6;
+        map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
+        }).addTo(map);
+        if (lat && lng) placeMarker(lat, lng);
+
+        map.on('click', function(e) { placeMarker(e.latlng.lat, e.latlng.lng); });
+
+        $('#btn-locate').on('click', function() {
+            if (!navigator.geolocation) { showError(i18n.noGeo); return; }
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>' + i18n.locating);
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    map.flyTo([pos.coords.latitude, pos.coords.longitude], 16);
+                    placeMarker(pos.coords.latitude, pos.coords.longitude);
+                    $btn.prop('disabled', false).html('<i class="bi bi-crosshair me-1"></i>' + i18n.myPosition);
+                },
+                function() {
+                    showError(i18n.noGps);
+                    $btn.prop('disabled', false).html('<i class="bi bi-crosshair me-1"></i>' + i18n.myPosition);
+                },
+                { timeout: 10000 }
+            );
+        });
+
+        $('#btn-clear-marker').on('click', function() {
+            if (window._mapMarker) { map.removeLayer(window._mapMarker); window._mapMarker = null; }
+            $('#latitude,#longitude').val('');
+            $(this).hide();
+        });
+
+        $(document).on('stepChanged', function() {
+            if (currentStep === 3 && map) setTimeout(function() { map.invalidateSize(); }, 200);
+        });
+    }
+
+    function placeMarker(lat, lng) {
+        var icon = L.divIcon({
+            html: '<div style="width:18px;height:18px;border-radius:50%;background:var(--color-warn);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>',
+            iconSize: [18, 18], iconAnchor: [9, 9], className: ''
+        });
+        if (window._mapMarker) map.removeLayer(window._mapMarker);
+        window._mapMarker = L.marker([lat, lng], { icon: icon, draggable: true }).addTo(map);
+        window._mapMarker.on('dragend', function(e) {
+            var pos = e.target.getLatLng();
+            updateCoords(pos.lat, pos.lng);
+        });
+        updateCoords(lat, lng);
+        $('#btn-clear-marker').show();
+    }
+
+    function updateCoords(lat, lng) {
+        var latR = Math.round(lat * 1000000) / 1000000;
+        var lngR = Math.round(lng * 1000000) / 1000000;
+        $('#latitude').val(latR);
+        $('#longitude').val(lngR);
+    }
+
+    // ── Couleur ──
+    $('#couleur_commentaire').on('change', function() {
+        var selected = $(this).find('option:selected');
+        var colorCode = selected.data('color');
+        if (colorCode) {
+            $('#colorPreview').show();
+            $('#colorPreview .color-circle').css('background-color', colorCode);
+            $('#colorName').text(selected.text().split(' - ')[0]);
+        } else {
+            $('#colorPreview').hide();
+        }
+    });
+
+    // ── Chargement des données ──
+    function loadAcheteurData() {
+        if (!acheteurId) { showError(i18n.noId); return; }
+        showLoading(i18n.loadingData);
+        $.ajax({
+            url: '/api/editer-un-acheteur/' + acheteurId + '/',
+            type: 'GET', headers: getHeaders(),
             success: function(response) {
                 if (response.success && response.acheteur) {
-                    const acheteur = response.acheteur;
-                    
-                    // Sauvegarder les données originales
-                    originalData = { ...acheteur };
-                    
-                    // Remplir le formulaire
-                    fillForm(acheteur);
-                    
-                    // Mettre à jour les informations affichées
-                    updateAcheteurInfo(acheteur);
-                    
-                    // Initialiser la carte
-                    initEditMap(acheteur);
-                    
+                    var a = response.acheteur;
+                    originalData = Object.assign({}, a);
+                    fillForm(a);
+                    updateAcheteurInfo(a);
+                    initMap(
+                        a.latitude ? parseFloat(a.latitude) : null,
+                        a.longitude ? parseFloat(a.longitude) : null
+                    );
                     hideLoading();
                 } else {
                     hideLoading();
-                    showError(response.detail || S.loadErr);
+                    showError(response.detail || i18n.loadErr);
                 }
             },
             error: function(xhr) {
                 hideLoading();
                 if (xhr.status === 404) {
-                    showError(S.notFound);
-                    setTimeout(() => {
-                        window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
-                    }, 2000);
+                    showError(i18n.notFound);
+                    setTimeout(function() { window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs'; }, 2000);
                 } else {
-                    showError(S.loadErr);
+                    showError(i18n.loadErr);
                 }
             }
         });
     }
-    
-    // Remplir le formulaire avec les données
-    function fillForm(acheteur) {
-        // Généralités
-        $('#editAcheteurId').val(acheteur.id);
-        $('#editNom').val(acheteur.nom || '');
-        $('#editSigle').val(acheteur.sigle || '');
-        $('#editDateCreation').val(acheteur.date_creation || '');
-        $('#editActivitePrincipale').val(acheteur.activite_principale || '');
-        
-        // Selects
-        if (acheteur.statut_entreprise && acheteur.statut_entreprise.id) {
-            $('#editStatutEntreprise').val(acheteur.statut_entreprise.id).trigger('change');
+
+    function fillForm(a) {
+        function setVal(id, val) {
+            var $el = $('#' + id);
+            if (!$el.length || val === null || val === undefined) return;
+            if ($el.hasClass('select2')) $el.val(val).trigger('change');
+            else $el.val(val);
         }
-        
-        
-        if (acheteur.forme_juridique && acheteur.forme_juridique.id) {
-            $('#editFormeJuridique').val(acheteur.forme_juridique.id).trigger('change');
+
+        setVal('nom',               a.nom);
+        setVal('sigle',             a.sigle);
+        setVal('date_creation',     a.date_creation);
+        setVal('activite_principale', a.activite_principale);
+        setVal('description',       a.description);
+        setVal('statut_entreprise', a.statut_entreprise  ? a.statut_entreprise.id  : null);
+        setVal('forme_juridique',   a.forme_juridique    ? a.forme_juridique.id    : null);
+
+        // NACE cascade
+        if (a.nace_specifique_info) {
+            var ni = a.nace_specifique_info;
+            naceRestoreActivities(ni.activity, ni.type, ni.id);
         }
-        
-        if (acheteur.code_nace) {
-            $('#editCodeNace').val(acheteur.code_nace).trigger('change');
+
+        setVal('email',         a.email);
+        setVal('fax',           a.fax);
+        setVal('boite_postale', a.boite_postale);
+        setVal('code_postal',   a.code_postal);
+        setVal('site_internet', a.site_internet);
+        setVal('numero_adresse', a.numero_adresse);
+        setVal('rue_adresse',   a.rue_adresse);
+
+        // Pays → Villes
+        if (a.pays && a.pays.id) {
+            setVal('pays', a.pays.id);
+            loadVillesParPays(a.pays.id, a.ville ? a.ville.id : null);
         }
-        
-        $('#editDescription').val(acheteur.description || '');
-        
-        // Contacts
-        $('#editEmail').val(acheteur.email || '');
-        $('#editFax').val(acheteur.fax || '');
-        $('#editBoitePostale').val(acheteur.boite_postale || '');
-        $('#editCodePostal').val(acheteur.code_postal || '');
-        $('#editSiteInternet').val(acheteur.site_internet || '');
-        
-        // Localisation
-        $('#editNumeroAdresse').val(acheteur.numero_adresse || '');
-        $('#editRueAdresse').val(acheteur.rue_adresse || '');
-        
-        if (acheteur.pays && acheteur.pays.id) {
-            $('#editPays').val(acheteur.pays.id).trigger('change.select2');
-            loadVilles(acheteur.pays.id, acheteur);
-        }
-        
+
         // Opinion
-        if (acheteur.couleur_commentaire && acheteur.couleur_commentaire.id) {
-            $('#editCouleurCommentaire').val(acheteur.couleur_commentaire.id).trigger('change');
-            updateColorPreview(acheteur.couleur_commentaire);
-        }
-        
-        $('#editCommentaire').val(acheteur.commentaire || '');
-    }
-    
-    // Mettre à jour les informations affichées
-    function updateAcheteurInfo(acheteur) {
-        $('#acheteurCode').text(acheteur.code || '--');
-        $('#infoCode').text(acheteur.code || '--');
-        $('#infoStatut').text(acheteur.statut_entreprise ? acheteur.statut_entreprise.libelle : '--');
-        $('#infoDateCreation').text(acheteur.date_creation || '--');
-    }
-    
-    // Mettre à jour la prévisualisation des couleurs
-    function updateColorPreview(couleur) {
-        if (couleur && couleur.code) {
-            $('#editColorPreview').show();
-            $('#editColorPreview .color-circle').css('background-color', couleur.code);
-            $('#editColorName').text(couleur.couleur || '');
-        } else {
-            $('#editColorPreview').hide();
-        }
-    }
-    
-    // Charger les villes directement par pays
-    function loadVilles(paysId, acheteur = null) {
-        if (!paysId) {
-            $('#editVille').prop('disabled', true).empty()
-                .append('<option value="">' + S.selectCountryFirst + '</option>').trigger('change.select2');
-            return;
+        setVal('couleur_commentaire', a.couleur_commentaire ? a.couleur_commentaire.id : null);
+        setVal('commentaire',         a.commentaire);
+        if (a.couleur_commentaire && a.couleur_commentaire.code) {
+            $('#colorPreview').show();
+            $('#colorPreview .color-circle').css('background-color', a.couleur_commentaire.code);
+            $('#colorName').text(a.couleur_commentaire.couleur || '');
         }
 
-        $('#villeSpinner').show();
-        $('#editVille').prop('disabled', true).empty()
-            .append('<option value="">' + S.loadOpt + '</option>').trigger('change.select2');
-
-        $.ajax({
-            url: `/api/villes-par-pays/${paysId}/`,
-            type: 'GET',
-            headers: { 'Authorization': `Bearer {{ access }}` },
-            success: function(response) {
-                $('#editVille').empty().append('<option value="">' + S.select + '</option>');
-                if (response.results && response.results.length > 0) {
-                    response.results.forEach(function(ville) {
-                        $('#editVille').append(new Option(ville.nom, ville.id));
-                    });
-                    $('#editVille').prop('disabled', false);
-                    if (acheteur && acheteur.ville && acheteur.ville.id) {
-                        $('#editVille').val(acheteur.ville.id).trigger('change.select2');
-                    }
-                }
-            },
-            error: function() {
-                $('#editVille').empty().append('<option value="">' + S.loadOptErr + '</option>');
-            },
-            complete: function() {
-                $('#villeSpinner').hide();
-                $('#editVille').trigger('change.select2');
-            }
-        });
+        // Coordonnées
+        if (a.latitude)  $('#latitude').val(a.latitude);
+        if (a.longitude) $('#longitude').val(a.longitude);
     }
-    
-    // Initialiser la carte pour l'édition
-    function initEditMap(acheteur) {
-        if (typeof maplibregl === 'undefined') {
-            console.warn('MapLibre GL non chargé');
-            return;
-        }
-        
-        // Attendre que le DOM soit complètement chargé
-        setTimeout(() => {
-            try {
-                // Vérifier que le conteneur existe
-                const mapContainer = document.getElementById('editMap');
-                if (!mapContainer) {
-                    console.error('Conteneur #editMap non trouvé');
-                    return;
-                }
-                
-                // S'assurer que le conteneur a une taille
-                mapContainer.style.height = '300px';
-                mapContainer.style.width = '100%';
-                
-                editMap = new maplibregl.Map({
-                    container: 'editMap',
-                    style: 'https://demotiles.maplibre.org/style.json',
-                    center: [9.454, 0.395],
-                    zoom: 12
-                });
-                
-                editMap.addControl(new maplibregl.NavigationControl());
-                
-                console.log('Carte initialisée avec succès');
-                
-            } catch (error) {
-                console.error('Erreur initialisation carte:', error);
-            }
-        }, 500); // Délai pour s'assurer que le DOM est prêt
-    }
-    
-    // Gestion des événements
-    $('#editPays').on('change', function() {
-        loadVilles($(this).val());
-    });
-    
-    $('#editCouleurCommentaire').on('change', function() {
-        const selected = $(this).find('option:selected');
-        const colorCode = selected.data('color');
-        const colorName = selected.text().split(' - ')[0];
-        
-        if (colorCode) {
-            $('#editColorPreview').show();
-            $('#editColorPreview .color-circle').css('background-color', colorCode);
-            $('#editColorName').text(colorName);
-        } else {
-            $('#editColorPreview').hide();
-        }
-    });
-    
-    // Réinitialiser le formulaire
-    $('#btn-reset-edit').on('click', function() {
-        Swal.fire({
-            title: S.resetTitle,
-            text: S.resetText,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#0A95CA',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: S.yesReset,
-            cancelButtonText: S.cancel
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fillForm(originalData);
-                showSuccess(S.resetDone);
-            }
-        });
-    });
 
-    // Annuler et retourner
-    $('#btn-cancel').on('click', function() {
-        Swal.fire({
-            title: S.leaveTitle,
-            text: S.leaveText,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#0A95CA',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: S.yesLeave,
-            cancelButtonText: S.stay
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
-            }
-        });
-    });
-
-    // Fonction de nettoyage des URLs
-    function cleanSiteInternet(url) {
-        if (!url || url.trim() === '') return '';
-        
-        let cleanUrl = url.trim();
-        
-        // Supprimer les protocoles
-        cleanUrl = cleanUrl.replace(/^https?:\/\//i, '');
-        
-        // Supprimer www.
-        cleanUrl = cleanUrl.replace(/^www\./i, '');
-        
-        // Supprimer slash final
-        cleanUrl = cleanUrl.replace(/\/$/, '');
-        
-        // Supprimer les espaces
-        cleanUrl = cleanUrl.trim();
-        
-        return cleanUrl.toLowerCase();
+    function updateAcheteurInfo(a) {
+        $('#acheteurCodeBadge').text(a.code || '--');
+        $('#infoCode').text(a.code || '--');
+        $('#infoStatut').text(a.statut_entreprise ? a.statut_entreprise.libelle : '--');
+        $('#infoDateCreation').text(a.date_creation || '--');
+        $('#acheteurInfoCard').show();
     }
-        
-    // Soumission du formulaire
+
+    // ── Soumission (unique PUT à l'étape 4) ──
     $('#editAcheteurForm').on('submit', function(event) {
         event.preventDefault();
-        
-        // Récupérer et nettoyer les données
-        const formData = {};
-        $(this).serializeArray().forEach(item => {
-            formData[item.name] = item.value;
-        });
-        
-        // Nettoyer spécifiquement site_internet
+        if (!validateStep(currentStep)) return;
+
+        var formData = {};
+        $(this).serializeArray().forEach(function(item) { formData[item.name] = item.value; });
+
+        // Nettoyage URL
         if (formData.site_internet) {
-            formData.site_internet = cleanSiteInternet(formData.site_internet);
-            
-            // Si non vide, ajouter https:// pour la validation Django
-            if (formData.site_internet) {
-                formData.site_internet = 'https://' + formData.site_internet;
-            }
+            formData.site_internet = formData.site_internet.replace(/^https?:\/\//i, '').trim().replace(/\/$/, '');
         }
-        
-        // Convertir les IDs en entiers pour les ForeignKey
-        const foreignKeys = [
-            'forme_juridique',
-            'statut_entreprise',
-            'couleur_commentaire',
-            'pays',
-            'ville'
-        ];
-        
-        foreignKeys.forEach(key => {
-            if (formData[key] && formData[key] !== '') {
-                // Pour le sérialiseur, gardez juste l'ID
-                formData[key] = parseInt(formData[key]);
-            } else if (formData[key] === '') {
-                formData[key] = null;
-            }
+
+        // FK → entier ou null
+        ['forme_juridique','statut_entreprise','couleur_commentaire','pays','ville','nace_specifique'].forEach(function(k) {
+            if (formData[k] && formData[k] !== '') formData[k] = parseInt(formData[k]);
+            else if (formData[k] === '') formData[k] = null;
         });
-        
-        console.log('Données envoyées:', formData);
-        
-        showLoading(S.updating);
-        
+
+        showLoading(i18n.updating);
+
         $.ajax({
-            url: `/api/editer-un-acheteur/${acheteurId}/`,
+            url: '/api/editer-un-acheteur/' + acheteurId + '/',
             type: 'PUT',
             data: JSON.stringify(formData),
             contentType: 'application/json',
-            headers: {
-                'Authorization': `Bearer {{ access }}`,
-                'X-CSRFToken': getCsrfToken()
-            },
+            headers: getHeaders(),
             success: function(response) {
                 hideLoading();
-                
                 if (response.success) {
-                    showSuccess(S.updated);
-                    
-                    // Mettre à jour les données originales
                     if (response.acheteur) {
-                        originalData = { ...response.acheteur };
+                        originalData = Object.assign({}, response.acheteur);
                         updateAcheteurInfo(response.acheteur);
                     }
-                    
-                    // Redirection optionnelle après succès
-                    setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success', title: i18n.success, text: i18n.updated,
+                        confirmButtonColor: '#e6a817', timer: 1800, showConfirmButton: false
+                    }).then(function() {
                         window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
-                    }, 2000);
+                    });
                 } else {
-                    showError(response.message || S.updateErr);
+                    showError(response.message || i18n.genericErr);
                 }
             },
             error: function(xhr) {
                 hideLoading();
-                
-                if (xhr.status === 400) {
-                    const errors = xhr.responseJSON;
-                    console.error('Erreurs de validation:', errors);
-                    
-                    let errorMessage = S.validErr + ':<br><ul class="text-start">';
-                    
-                    if (errors.errors) {
-                        Object.keys(errors.errors).forEach(key => {
-                            errorMessage += `<li><strong>${key}:</strong> ${errors.errors[key].join(', ')}</li>`;
-                        });
-                    } else if (errors.message) {
-                        errorMessage = errors.message;
-                    } else if (errors.detail) {
-                        errorMessage = errors.detail;
-                    }
-                    
-                    errorMessage += '</ul>';
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: S.validErrTitle,
-                        html: errorMessage,
-                        confirmButtonColor: '#0A95CA'
-                    });
-                } else if (xhr.status === 401) {
-                    showError(S.sessionExp);
-                    setTimeout(() => {
-                        window.location.href = '/login/';
-                    }, 2000);
-                } else {
-                    console.error('Erreur AJAX:', xhr);
-                    showError(S.genericErr);
-                }
+                if (xhr.status === 401) { refreshAccessToken(); return; }
+                var errs = xhr.responseJSON;
+                var msg = (errs && errs.message) ? errs.message
+                    : (errs && errs.errors ? JSON.stringify(errs.errors) : i18n.genericErr);
+                showError(msg);
             }
         });
     });
 
-    // Validation du formulaire
-    function validateForm() {
-        let isValid = true;
-        
-        // Réinitialiser les erreurs
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').remove();
-        
-        // Validation des champs requis
-        $('#editAcheteurForm').find('[required]').each(function() {
-            const $input = $(this);
-            const value = $input.val();
-            
-            if (!value || value.trim() === '') {
-                markInvalid($input, S.required);
-                isValid = false;
-            }
+    // ── Annuler ──
+    $('#btn-cancel').on('click', function() {
+        Swal.fire({
+            title: i18n.leaveTitle, text: i18n.leaveText, icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#e6a817', cancelButtonColor: '#6c757d',
+            confirmButtonText: i18n.yesLeave, cancelButtonText: i18n.stay
+        }).then(function(result) {
+            if (result.isConfirmed) window.location.href = '/root-dashboard/acheteurs/liste-des-acheteurs';
         });
+    });
 
-        // Validation email
-        const email = $('#editEmail').val();
-        if (email && !validator.isEmail(email)) {
-            markInvalid($('#editEmail'), S.emailInvalid);
-            isValid = false;
-        }
-
-        // Validation longueur minimale
-        const nom = $('#editNom').val();
-        if (nom && nom.length < 2) {
-            markInvalid($('#editNom'), S.nomMin);
-            isValid = false;
-        }
-
-        const activite = $('#editActivitePrincipale').val();
-        if (activite && activite.length < 3) {
-            markInvalid($('#editActivitePrincipale'), S.activiteMin);
-            isValid = false;
-        }
-
-        const commentaire = $('#editCommentaire').val();
-        if (commentaire && commentaire.length < 10) {
-            markInvalid($('#editCommentaire'), S.commentMin);
-            isValid = false;
-        }
-
-        if (!isValid) {
-            Swal.fire({
-                icon: 'error',
-                title: S.invalidFields,
-                text: S.fixErrors,
-                confirmButtonColor: '#0A95CA'
-            });
-        }
-        
-        return isValid;
+    // ── Utilitaires ──
+    function getHeaders() {
+        return { 'Authorization': 'Bearer ' + getAccessToken(), 'X-CSRFToken': getCsrfToken() };
     }
-    
-    function markInvalid($input, message) {
-        $input.addClass('is-invalid');
-        const $feedback = $(`<div class="invalid-feedback">${message}</div>`);
-        $input.after($feedback);
-    }
-    
-    // Fonction pour récupérer le token CSRF
+    function getAccessToken() { return accessToken || localStorage.getItem('access_token'); }
     function getCsrfToken() {
-        const name = 'csrftoken';
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+        var match = document.cookie.split('; ').find(function(r) { return r.startsWith('csrftoken='); });
+        return match ? match.split('=')[1] : '';
     }
+    function showLoading(msg) {
+        $('#loadingText').text(msg || i18n.loading);
+        $('#loadingOverlay').addClass('active');
+        $('body').css('overflow', 'hidden');
+    }
+    function hideLoading() { $('#loadingOverlay').removeClass('active'); $('body').css('overflow', ''); }
+    function showError(msg) { Swal.fire({ icon: 'error', title: i18n.error, text: msg, confirmButtonColor: '#e6a817' }); }
 
-    // Intercepteur pour les erreurs d'authentification
-    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
-        if (jqxhr.status === 401) {
-            // Token expiré, tenter de le rafraîchir
-            refreshAccessToken();
-            return false; // Empêcher d'autres gestionnaires d'erreurs
-        }
-    });
-
-    // Fonction pour rafraîchir le token
     function refreshAccessToken() {
         Swal.fire({
-            title: S.sessionTitle,
-            text: S.sessionText,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: S.refresh,
-            cancelButtonText: S.reload,
+            title: i18n.sessionExpired, text: i18n.sessionMsg, icon: 'warning',
+            showCancelButton: true, confirmButtonText: i18n.refresh, cancelButtonText: i18n.reloadPage,
             showLoaderOnConfirm: true,
-            preConfirm: () => {
+            preConfirm: function() {
                 return $.ajax({
-                    url: '/api/token/refresh/',
-                    type: 'POST',
-                    contentType: 'application/json',
+                    url: '/api/token/refresh/', type: 'POST', contentType: 'application/json',
                     data: JSON.stringify({ refresh: refreshToken }),
-                    success: function(response) {
-                        accessToken = response.access;
-                        localStorage.setItem('access_token', accessToken);
-                        localStorage.setItem('refresh_token', refreshToken);
-                        
-                        // Recharger les données
-                        loadUsers(currentPage, currentSearch);
-                        
-                        return true;
-                    },
-                    error: function() {
-                        return false;
-                    }
+                    success: function(r) { accessToken = r.access; localStorage.setItem('access_token', accessToken); },
+                    error: function() { return false; }
                 });
             }
-        }).then((result) => {
-            if (result.dismiss === Swal.DismissReason.cancel) {
-                window.location.reload();
-            } else if (result.isConfirmed) {
-                Swal.fire(S.successBang, S.tokenOk, 'success');
-            } else {
-                Swal.fire(S.err, S.tokenErr, 'error');
-            }
+        }).then(function(result) {
+            if (result.dismiss === Swal.DismissReason.cancel) window.location.reload();
+            else if (result.isConfirmed) Swal.fire(i18n.successTitle, i18n.tokenRefreshed, 'success');
+            else showError(i18n.tokenError);
         });
     }
-    
-    // Démarrer le chargement des données
+
+    // ── Init ──
+    updateSteps();
     loadAcheteurData();
 });
 </script>
