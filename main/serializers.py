@@ -561,6 +561,7 @@ FORME_JURIDIQUE_EN = {
 
 # ── Traduction par libelle exact DB (fallback si code absent ou inconnu) ──
 FORME_JURIDIQUE_LIBELLE_EN = {
+    # ── Libellés standards ──
     "Association":                                                          "Association",
     "Coopérative":                                                          "Cooperative",
     "Entreprise individuelle (EI)":                                         "Sole proprietorship (EI)",
@@ -593,6 +594,27 @@ FORME_JURIDIQUE_LIBELLE_EN = {
     "Sociétés civiles (SC)":                                               "Civil companies (SC)",
     "Sociétés sans personnalité juridique":                                "Company without legal personality",
     "Syndicat de copropriété":                                             "Condominium association",
+    # ── Variantes présentes dans d'anciens enregistrements ──
+    "Partenariat":                                                          "Partnership",
+    "Partenership à responsibilité limitée":                               "Limited liability partnership (LLP)",
+    "Société anonyme avec administration générale":                        "Public limited company – general management (SA)",
+    "Société anonyme avec conseil d'administration":                       "Public limited company – board of directors (SA)",
+    "Société anonyme pluripersonnelle":                                    "Multi-member public limited company (SA)",
+    "Société à Responsabilité Limitée (SARL)":                            "Multi-member limited liability company (SARL)",
+    "Société à responsabilité limitée unipersonnelle":                    "Single-member limited liability company (SARL-U)",
+    "Société créée de fait et société de fait":                           "De facto company",
+    "Société d'État":                                                       "State-owned company (SE)",
+    "Société en Participation (SP)":                                       "Joint venture (SEP)",
+    "Société par Actions Simplifiée (SAS)":                               "Multi-member simplified joint-stock company (SAS)",
+    "Sociétés civiles immobilières":                                       "Real estate civil companies (SCI)",
+    "Groupement d'Intérêt Economique (GIE)":                             "Economic interest grouping (GIE)",
+    # ── Formes spécifiques au Gabon / CEMAC présentes en base ──
+    "Administration publique":                                             "Public Administration",
+    "Coopérative de Groupement":                                          "Group Cooperative",
+    "Etablissement Public à Caractère Commercial (EPCC)":                 "Public Commercial Establishment (EPCC)",
+    "Etablissement Public à Caractère Industriel et Commercial (EPIC)":   "Public Industrial and Commercial Establishment (EPIC)",
+    "Filiale":                                                             "Subsidiary",
+    "Succursale":                                                          "Branch",
 }
 
 
@@ -623,6 +645,7 @@ STATUT_ENTREPRISE_EN = {
 
 # ── Traduction StatutEntreprise : libelle FR → EN (fallback) ──
 STATUT_ENTREPRISE_LIBELLE_EN = {
+    # ── Libellés standards ──
     "Entreprise active":                                  "Active Business",
     "Entreprise inactive":                                "Inactive Business",
     "Entreprises en fusion":                              "Companies in merger",
@@ -644,6 +667,18 @@ STATUT_ENTREPRISE_LIBELLE_EN = {
     "Dissoute":                                           "Dissolved",
     "À suivre":                                           "Will follow up",
     "Entreprise introuvable":                             "Company Not Found",
+    # ── Variantes présentes dans d'anciens enregistrements ──
+    "Entreprise en fusion":                               "Companies in merger",
+    "Entreprise est en sommeil":                          "Business is dormant",
+    "L'activité a cessé":                                 "Ceased activity",
+    "Dissolution forcée":                                 "Compulsorily winding up",
+    "Dissolution volontaire du créancier":                "Creditor's voluntarily winding up",
+    "Entreprise en cours de désimmatriculation":          "Company in the process of de-registration",
+    "Va suivre":                                          "Will follow up",
+    "Pas immatriculée":                                   "The company is not registered",
+    "Impossible à localiser":                             "Unable to locate the company",
+    "N'existe pas":                                       "The company does not exist",
+    "Non identifiée":                                     "The company could not be identified",
 }
 
 
