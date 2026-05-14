@@ -1720,8 +1720,8 @@ def generer_rapport_solvabilite(request):
             "additional_information": {
                 "title_3": "INFORMATIONS SUPPLEMENTAIRES",
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
-                "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
-                "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
+                "nace_codes": nace_codes_formatted if nace_codes_formatted else [_t("Aucun code NACE disponible")],
+                "naf_codes": naf_codes_formatted if naf_codes_formatted else [_t("Aucun code NAF disponible")],
                 "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
                 "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
@@ -1742,7 +1742,7 @@ def generer_rapport_solvabilite(request):
                 "capitaux_propre": resume.capitaux_propre if resume and resume.capitaux_propre else "",
                 "nombre_employe": resume.nombre_employe if resume and resume.nombre_employe else "",
                 "date_creation": resume.date_creation.strftime("%d/%m/%Y") if resume and resume.date_creation else "",
-                "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible",
+                "commentaire": resume.commentaire if resume and resume.commentaire else _t("Aucun commentaire disponible"),
             },
             "summary_and_opinion": {
                 "title_5": "EVALUATION DU RISQUE",
@@ -1763,8 +1763,8 @@ def generer_rapport_solvabilite(request):
                 "mesure_propre_soutenir_credit": "Oui" if risk_rating and risk_rating.mesure_propre_soutenir_credit else "Non",
                 "cotation_du_risque": risk_rating.get_cotation_explication() if risk_rating else "",
                 "indice_du_risque": risk_rating.get_indice_explication() if risk_rating else "",
-                "interpretation": risk_rating.interpretation if risk_rating and risk_rating.interpretation else "Aucune interprétation disponible",
-                "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else "Aucune analyse détaillée disponible",
+                "interpretation": risk_rating.interpretation if risk_rating and risk_rating.interpretation else _t("Aucune interprétation disponible"),
+                "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else _t("Aucune analyse détaillée disponible"),
             },
             "acremac_opinion": {
                 "title_6": "AVIS CREDIT ACREMAC",
@@ -1795,7 +1795,7 @@ def generer_rapport_solvabilite(request):
                     "lecture_notes": "La section Notes liste les facteurs de risque actifs avec leur note respective.",
                 },
                 "montant_credit_maximum": acremac_opinion.montant_credit_maximum if acremac_opinion else "",
-                "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
+                "commentaire": acremac_opinion.commentaire if acremac_opinion else _t("Aucun commentaire disponible"),
             },
             "registered_data": {
                 "title_7": "DONNEES D'ENREGISTREMENT",
@@ -1814,7 +1814,7 @@ def generer_rapport_solvabilite(request):
                     if donnees_enregistrement and donnees_enregistrement.statut_registre
                     else donnees_enregistrement.statut_registre if donnees_enregistrement else ""
                 ),
-                "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else "Aucun commentaire disponible",
+                "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else _t("Aucun commentaire disponible"),
             },
             "legal_background": {
                 "title_8": "ANTECEDENTS JURIDIQUES",
@@ -1829,7 +1829,7 @@ def generer_rapport_solvabilite(request):
                     "greve": risk_management.greve if risk_management and risk_management.greve else "",
                     "degradation_qualite": risk_management.degradation_qualite if risk_management and risk_management.degradation_qualite else "",
                     "non_respect_condition": risk_management.non_respect_condition if risk_management and risk_management.non_respect_condition else "",
-                    "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else "Aucun commentaire disponible",
+                    "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else _t("Aucun commentaire disponible"),
                     "score": risk_management.get_management_score()['oui_count'] if risk_management else 0,
                     "image": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
                     "image_base64": risk_management.get_management_image_base64() if risk_management else None,
@@ -1844,7 +1844,7 @@ def generer_rapport_solvabilite(request):
                 "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "",
                 "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "",
                 "devise": composition_capital_social.devise.code if composition_capital_social and composition_capital_social.devise else "",
-                "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else "Aucun commentaire disponible",
+                "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else _t("Aucun commentaire disponible"),
             },
             "shareholders": {
                 "title_11": "ACTIONNARIAT/PROPRIETAIRES",
@@ -1894,10 +1894,10 @@ def generer_rapport_solvabilite(request):
             },
             "sector_analysis": {
                 "title_13": "ANALYSE ECONOMIQUE",
-                "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
-                "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
+                "nace_codes": nace_codes_formatted if nace_codes_formatted else [_t("Aucun code NACE disponible")],
+                "naf_codes": naf_codes_formatted if naf_codes_formatted else [_t("Aucun code NAF disponible")],
                 "sectorielle": {
-                    "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else "Aucun commentaire disponible",
+                    "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else _t("Aucun commentaire disponible"),
                     "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "",
                 },
                 "tendance": {
@@ -1909,7 +1909,7 @@ def generer_rapport_solvabilite(request):
                     "plus_informations": tendance.plus_informations if tendance and tendance.plus_informations else "",
                     "presse_media": tendance.presse_media if tendance and tendance.presse_media else "",
                     "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "",
-                    "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
+                    "commentaire": tendance.commentaire if tendance and tendance.commentaire else _t("Aucun commentaire disponible"),
                 },
                 "advice": {
                     "points_forts": advice.points_forts if advice and advice.points_forts else "",
@@ -1949,7 +1949,7 @@ def generer_rapport_solvabilite(request):
                 "type_compte": compte_financier.type_compte if compte_financier and compte_financier.type_compte else "",
                 "devise": compte_financier.devise if compte_financier and compte_financier.devise else "",
                 "type_bilan": compte_financier.type_bilan if compte_financier and compte_financier.type_bilan else compte_financier.type_bilan if compte_financier else "",
-                "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else "Aucun commentaire disponible",
+                "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else _t("Aucun commentaire disponible"),
             },
             
             
@@ -2032,7 +2032,7 @@ def generer_rapport_solvabilite(request):
                 "score_image_base64": get_static_image_base64(f"scoring/{score_indexe}.png"),
                 "score_value": f"{raw_score_sans_bilan:.2f}",  # <- toujours 2 décimales
                 "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "",
-                "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else "Aucun commentaire disponible",
+                "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else _t("Aucun commentaire disponible"),
                 "score_type": "Scoring sans bilan",
                 "url_site": static_base_url,
             },
@@ -2170,10 +2170,10 @@ def generer_rapport_solvabilite(request):
             
             "operation_history": {
                 "title_17": "HISTORIQUE DES OPERATIONS",
-                "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
-                "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else "Aucune description disponible",
+                "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else _t("Aucun commentaire disponible"),
+                "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else _t("Aucune description disponible"),
                 "importation": operation_history.importation if operation_history and operation_history.importation else "",
-                "historique": operation_history.historique if operation_history and operation_history.historique else "Aucun historique disponible",
+                "historique": operation_history.historique if operation_history and operation_history.historique else _t("Aucun historique disponible"),
             },
             "properties_and_assets": {
                 "title_18": "PROPRIÉTÉ ET ACTIFS",
@@ -2197,7 +2197,7 @@ def generer_rapport_solvabilite(request):
                 "title": "CONCLUSION GENERALE",
                 "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "",
                 "couleur_commentaire_code": (conclusion_generale.couleur_commentaire.code if conclusion_generale and conclusion_generale.couleur_commentaire else None) or "#ff0000",
-                "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else "Aucun commentaire disponible",
+                "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else _t("Aucun commentaire disponible"),
             }
         }
         
@@ -2264,6 +2264,7 @@ def _build_export_filename(report_data, acheteur_id, extension):
 
 # helper functions to support multi‑language templates
 from django.utils import translation
+from django.utils.translation import gettext as _t
 
 def _activate_language(lang_code):
     """Activate given language code for template rendering."""
