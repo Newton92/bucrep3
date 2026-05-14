@@ -666,48 +666,56 @@ $(document).ready(function() {
         $(document).trigger('stepChanged');
     }
 
-    // ── Collecte des champs par étape ──
+    // ── Collecte des champs par étape (même logique que le formulaire de création) ──
+    var STEP_FIELDS = {
+        1: ['nom','sigle','date_creation','activite_principale','statut_entreprise',
+            'forme_juridique','nace_specifique','description'],
+        2: ['email','fax','site_internet','boite_postale','code_postal','numero_adresse','rue_adresse'],
+        3: ['pays','ville','latitude','longitude']
+    };
+    var FK_FIELDS = ['statut_entreprise','forme_juridique','nace_specifique','pays','ville'];
+
     function collectStepData(step) {
-        var d = {};
-        if (step === 1) {
-            d.nom               = $('#nom').val().trim();
-            d.sigle             = $('#sigle').val().trim() || null;
-            d.date_creation     = $('#date_creation').val() || null;
-            d.activite_principale = $('#activite_principale').val().trim() || null;
-            d.description       = $('#description').val().trim() || null;
-            var se = $('#statut_entreprise').val();
-            d.statut_entreprise = se ? parseInt(se) : null;
-            var fj = $('#forme_juridique').val();
-            d.forme_juridique   = fj ? parseInt(fj) : null;
-            var nace = $('#nace_code').val();
-            d.nace_specifique   = nace ? parseInt(nace) : null;
-        } else if (step === 2) {
-            d.email         = $('#email').val().trim() || null;
-            d.fax           = $('#fax').val().trim() || null;
-            d.boite_postale = $('#boite_postale').val().trim() || null;
-            d.code_postal   = $('#code_postal').val().trim() || null;
-            var url = ($('#site_internet').val() || '').trim();
-            if (url) url = url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-            d.site_internet  = url || null;
-            d.numero_adresse = $('#numero_adresse').val().trim() || null;
-            d.rue_adresse    = $('#rue_adresse').val().trim() || null;
-        } else if (step === 3) {
-            var pays = $('#pays').val();
-            d.pays  = pays ? parseInt(pays) : null;
-            var ville = $('#ville').val();
-            d.ville = ville ? parseInt(ville) : null;
-            var lat = $('#latitude').val(), lng = $('#longitude').val();
-            d.latitude  = lat  ? parseFloat(lat)  : null;
-            d.longitude = lng  ? parseFloat(lng)  : null;
-        }
-        return d;
+        var data = {};
+        (STEP_FIELDS[step] || []).forEach(function(name) {
+            var $el = $('[name="' + name + '"]');
+            if (!$el.length) return;
+            var val = $el.val();
+            if (name === 'site_internet' && val) {
+                val = val.replace(/^https?:\/\//i, '').trim().replace(/\/$/, '');
+            }
+            data[name] = (val !== undefined && val !== null) ? val : '';
+        });
+        // Ne pas envoyer les champs vides : le serveur conserve la valeur existante
+        Object.keys(data).forEach(function(k) {
+            if (data[k] === '' || data[k] === null) delete data[k];
+        });
+        // Convertir les FK en entiers
+        FK_FIELDS.forEach(function(k) {
+            if (data[k]) data[k] = parseInt(data[k]);
+        });
+        // Convertir les coordonnées en décimaux
+        if (data.latitude)  data.latitude  = parseFloat(data.latitude);
+        if (data.longitude) data.longitude = parseFloat(data.longitude);
+        return data;
     }
 
-    // ── Sauvegarde partielle (PUT partial=True) ──
-    function saveStepData(stepData, callback) {
+    // ── Toast de confirmation sauvegarde ──
+    function showStepSaved(msg) {
+        var $t = $('<div class="alert alert-success alert-dismissible position-fixed d-flex align-items-center gap-2" ' +
+            'style="top:80px;right:20px;z-index:9999;min-width:260px;box-shadow:0 4px 15px rgba(0,0,0,.15);">' +
+            '<i class="bi bi-check-circle-fill text-success"></i>' +
+            '<span>' + msg + '</span>' +
+            '<button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button></div>');
+        $('body').append($t);
+        setTimeout(function() { $t.alert('close'); }, 3000);
+    }
+
+    // ── Sauvegarde partielle (PUT partial=True côté serveur) ──
+    function saveStepData(stepData, stepNum, callback) {
         var $btn = $('#btn-next');
-        var nextLabel = "{% trans 'Suivant' %} <i class='bi bi-chevron-right ms-1'></i>";
-        var savingLabel = "<span class='spinner-border spinner-border-sm me-1'></span>{% trans 'Sauvegarde...' %}";
+        var nextLabel = '{% trans "Suivant" %} <i class="bi bi-chevron-right ms-1"></i>';
+        var savingLabel = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Sauvegarde..." %}';
         $btn.prop('disabled', true).html(savingLabel);
 
         $.ajax({
@@ -719,6 +727,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     if (response.acheteur) originalData = Object.assign({}, response.acheteur);
+                    showStepSaved('{% trans "Étape" %} ' + stepNum + ' {% trans "sauvegardée" %} ✓');
                     callback(true);
                 } else {
                     showError(response.message || i18n.genericErr);
@@ -728,9 +737,13 @@ $(document).ready(function() {
             error: function(xhr) {
                 if (xhr.status === 401) { refreshAccessToken(); callback(false); return; }
                 var errs = xhr.responseJSON;
-                var msg = (errs && errs.message) ? errs.message
-                    : (errs && errs.errors ? JSON.stringify(errs.errors) : i18n.genericErr);
-                showError(msg);
+                var detail = '';
+                if (errs && errs.errors) {
+                    Object.keys(errs.errors).forEach(function(f) {
+                        detail += f + ': ' + (Array.isArray(errs.errors[f]) ? errs.errors[f].join(', ') : errs.errors[f]) + '\n';
+                    });
+                }
+                showError(detail || (errs && errs.message) || i18n.genericErr);
                 callback(false);
             },
             complete: function() {
@@ -742,7 +755,8 @@ $(document).ready(function() {
     $('#btn-next').on('click', function() {
         if (!validateStep(currentStep)) return;
         var stepData = collectStepData(currentStep);
-        saveStepData(stepData, function(ok) {
+        var step = currentStep;
+        saveStepData(stepData, step, function(ok) {
             if (!ok) return;
             currentStep++;
             updateSteps();
