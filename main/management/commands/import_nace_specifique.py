@@ -12,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--file",
             default=os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "..",
+                os.path.dirname(__file__), "..", "..", "..",
                 "Documents", "CODE NACE AVEC CLASSEMENT SPECIFIQUE.xls"
             ),
             help="Path to the Excel file",
