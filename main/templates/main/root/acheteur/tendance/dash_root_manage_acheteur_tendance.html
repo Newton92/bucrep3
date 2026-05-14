@@ -487,55 +487,119 @@
     animation: fadeInUp 0.6s ease-out;
 }
 
+/* ── Metric cards (display) ── */
+.metric-card {
+    background: var(--color-background);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(37, 173, 214, 0.12);
+    box-shadow: 0 2px 8px rgba(10, 149, 202, 0.06);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+}
+.metric-card.avis-commercial::before { background: var(--color-primary); }
+.metric-card.informations::before    { background: var(--color-accent); }
+.metric-card.alarmes::before         { background: #6c757d; }
+.metric-card.alarmes.has-alert::before { background: #dc3545; }
+.metric-card.presse-media::before    { background: #28a745; }
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+.metric-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+.metric-icon.alert-icon { background: rgba(220,53,69,.1); color: #dc3545; }
+.metric-icon.ok-icon    { background: rgba(40,167,69,.1);  color: #28a745; }
+
+.metric-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+.metric-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    line-height: 1.4;
+}
+.metric-value.sm          { font-size: 0.82rem; font-weight: 500; }
+.metric-value.alert-value { color: #dc3545; }
+.metric-value.ok-value    { color: #28a745; }
+.metric-empty             { font-size: 1rem; color: #ced4da; }
+
+/* ── Analysis text blocks ── */
+.analysis-block {
+    background: var(--color-background);
+    border-radius: 10px;
+    border: 1px solid rgba(37, 173, 214, 0.12);
+    box-shadow: 0 2px 8px rgba(10, 149, 202, 0.06);
+    overflow: hidden;
+    height: 100%;
+}
+.analysis-block-header {
+    padding: 0.65rem 1.25rem;
+    background: linear-gradient(135deg, rgba(10,149,202,.04), rgba(37,173,214,.04));
+    border-bottom: 1px solid rgba(37, 173, 214, 0.1);
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+}
+.analysis-block-body {
+    padding: 1rem 1.25rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-text);
+}
+
+/* ── Timestamps footer ── */
+.timestamps-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.73rem;
+    color: var(--color-text-muted);
+    padding: 0.5rem 0.25rem;
+    border-top: 1px solid rgba(37, 173, 214, 0.1);
+    margin-top: 0.75rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .page-header {
-        padding: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 1.8rem;
-    }
-    
-    .tendance-card {
-        padding: 1rem;
-    }
-    
-    .tendance-value {
-        font-size: 1.25rem;
-    }
-    
-    .tendance-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
-    }
-    
-    .rich-content {
-        padding: 1rem;
-    }
-    
-    .enhanced-form textarea.form-control {
-        min-height: 120px;
-    }
-    
-    .legend-box {
-        padding: 1rem;
-    }
+    .page-header { padding: 1rem; }
+    .page-title  { font-size: 1rem; }
+    .metric-card { padding: 0.85rem 1rem; }
+    .enhanced-form textarea.form-control { min-height: 100px; }
+    .timestamps-bar { flex-direction: column; gap: 0.25rem; align-items: flex-start; }
 }
 
 /* Optimisations d'accessibilité */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
 }
 
-/* Focus visible pour l'accessibilité */
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -545,30 +609,34 @@
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium -->
-    <div class="page-header" style="--order: 0;">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+
+    <!-- Header — buyer info inline -->
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title text-white">
-                    <i class="fas fa-chart-line me-3"></i>{% trans "Trend Analysis" %}
+                <h1 class="page-title">
+                    <i class="fas fa-chart-line me-2"></i>{% trans "Trend Analysis" %}
                 </h1>
-                <p class="page-subtitle">
-                    {% trans "Commercial and competitive assessment of the company" %}
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
+                    {% if acheteur.activite_principale %}&nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.activite_principale }}</span>{% endif %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Back" %}
                 </a>
                 {% if tendance %}
-                <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editTendanceModal">
+                <button class="btn btn-warning btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#editTendanceModal">
                     <i class="fas fa-edit me-1"></i>{% trans "Edit" %}
                 </button>
-                <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <button class="btn btn-danger btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     <i class="fas fa-trash me-1"></i>{% trans "Delete" %}
                 </button>
                 {% else %}
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
+                <button class="btn btn-success btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
                     <i class="fas fa-plus-circle me-1"></i>{% trans "Add analysis" %}
                 </button>
                 {% endif %}
@@ -576,284 +644,129 @@
         </div>
     </div>
 
-    <!-- Carte Acheteur avec vos couleurs -->
-    <div class="card enhanced-card mb-4" style="animation-delay: 0.1s;">
-        <div class="card-header card-header-gradient">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
-                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
-                </div>
-                <div class="text-md-end">
-                    <span class="badge bg-white text-dark fs-6 p-2 shadow-sm">
-                        <i class="fas fa-hashtag me-1" style="color: #0a95ca;"></i>{{ acheteur.code }}
-                    </span>
-                    <p class="mb-0 mt-1 small text-white-75">{% trans "Code ACREMAC" %}</p>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <div class="tendance-icon me-3">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Main Activity" %}</small>
-                            <span class="fw-medium text-dark">{% if acheteur.activite_principale %}{{ acheteur.activite_principale }}{% else %}{% trans "Not specified" %}{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <div class="tendance-icon me-3">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Creation Date" %}</small>
-                            <span class="fw-medium text-dark">{% if acheteur.date_creation %}{{ acheteur.date_creation|date:"d/m/Y" }}{% else %}{% trans "Not specified" %}{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <div class="tendance-icon me-3">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Status" %}</small>
-                            <span class="badge badge-success">{% if acheteur.statut_entreprise %}{{ acheteur.statut_entreprise.libelle }}{% else %}{% trans "Unknown" %}{% endif %}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Légende -->
-    <div class="row mb-4" style="animation-delay: 0.2s;">
-        <div class="col-12">
-            <div class="legend-box">
-                <h5 class="fw-bold mb-3" style="color: var(--color-primary);">
-                    <i class="fas fa-key me-2"></i>{% trans "Indicator Legend" %}
-                </h5>
-                <div class="row">
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: var(--color-primary);"></div>
-                            <span class="legend-text">
-                                <strong>AC:</strong> {% trans "Commercial Opinion" %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span class="legend-text">
-                                <strong>PM:</strong> {% trans "Press & Media" %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: var(--color-accent);"></div>
-                            <span class="legend-text">
-                                <strong>PI:</strong> {% trans "More Info" %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #dc3545;"></div>
-                            <span class="legend-text">
-                                <strong>AL:</strong> {% trans "Alerts" %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: var(--color-primary-dark);"></div>
-                            <span class="legend-text">
-                                <strong>PC:</strong> {% trans "Competitors" %}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: var(--color-secondary);"></div>
-                            <span class="legend-text">
-                                <strong>C:</strong> {% trans "Comment" %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analyse de Tendance -->
     {% if tendance %}
-    <div class="card enhanced-card mb-4" style="animation-delay: 0.3s;">
-        <div class="card-body">
-            <!-- Premier bloc : Avis Commercial, Presse & Médias, Plus d'Informations, Alarmes -->
-            <div class="row g-4 mb-4">
-                <!-- Avis Commercial -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="tendance-card avis-commercial">
-                        <div class="tendance-icon">
-                            <i class="fas fa-comment-dollar"></i>
-                        </div>
-                        <div class="tendance-label">{% trans "Commercial Opinion" %}</div>
-                        {% if tendance.avis_commercial %}
-                            {% with avis=tendance.avis_commercial|lower %}
-                            <span class="avis-badge 
-                                {% if 'négatif' in avis %}badge-negatif
-                                {% elif 'inconnu' in avis %}badge-inconnu
-                                {% elif 'moyen' in avis %}badge-moyen
-                                {% elif 'bon' in avis %}badge-bon
-                                {% elif 'très bien' in avis %}badge-tres-bien
-                                {% else %}badge-inconnu{% endif %}">
-                                <i class="fas fa-chart-bar me-1"></i>
-                                {{ tendance.avis_commercial }}
-                            </span>
-                            {% endwith %}
-                        {% else %}
-                            <div class="tendance-value">{% trans "Not assessed" %}</div>
-                        {% endif %}
-                        {% if tendance.avis_commercial_ref %}
-                        <small class="text-muted d-block mt-2">
-                            <i class="fas fa-link me-1"></i>{% trans "Reference" %}: {{ tendance.avis_commercial_ref.libelle }}
-                        </small>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Presse & Médias -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="tendance-card presse-media">
-                        <div class="tendance-icon">
-                            <i class="fas fa-newspaper"></i>
-                        </div>
-                        <div class="tendance-label">{% trans "Press & Media" %}</div>
-                        {% if tendance.presse_media %}
-                        <div class="tendance-value">{{ tendance.presse_media|truncatechars:30 }}</div>
-                        <small class="text-muted">{% trans "Media coverage" %}</small>
-                        {% else %}
-                        <div class="tendance-value">{% trans "No information" %}</div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Plus d'Informations -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="tendance-card informations">
-                        <div class="tendance-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <div class="tendance-label">{% trans "More Information" %}</div>
-                        {% if tendance.plus_informations %}
-                            <div class="tendance-value">
-                                {% for key, value in plus_informations_choices %}
-                                    {% if key == tendance.plus_informations %}
-                                        {% if "40" in key %}<span class="score-badge score-40">40</span>
-                                        {% elif "35" in key %}<span class="score-badge score-35">35</span>
-                                        {% elif "30" in key %}<span class="score-badge score-30">30</span>
-                                        {% elif "25" in key %}<span class="score-badge score-25">25</span>
-                                        {% elif "20" in key %}<span class="score-badge score-20">20</span>
-                                        {% elif "15" in key %}<span class="score-badge score-15">15</span>
-                                        {% elif "10" in key %}<span class="score-badge score-10">10</span>
-                                        {% endif %}
-                                        {{ value }}
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not tendance.plus_informations %}{% trans "Not specified" %}{% endif %}
-                            </div>
-                        {% else %}
-                            <div class="tendance-value">{% trans "Not specified" %}</div>
-                        {% endif %}
-                        <small class="text-muted">{% trans "Structure rating" %}</small>
-                    </div>
-                </div>
-                
-                <!-- Alarmes -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="tendance-card alarmes">
-                        <div class="tendance-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="tendance-label">{% trans "Alerts" %}</div>
-                        {% if tendance.alarmes %}
-                            {% for key, value in alarmes_choices %}
-                                {% if key == tendance.alarmes %}
-                                    <span class="avis-badge badge-danger">
-                                        <i class="fas fa-bell me-1"></i>
-                                        {{ value|truncatechars:30 }}
-                                    </span>
-                                {% endif %}
-                            {% endfor %}
-                        {% else %}
-                            <div class="tendance-value">{% trans "No alert" %}</div>
-                            <span class="avis-badge badge-success">
-                                <i class="fas fa-check-circle me-1"></i>
-                                {% trans "Normal situation" %}
-                            </span>
-                        {% endif %}
-                        <small class="text-muted">{% trans "Legal alerts" %}</small>
-                    </div>
-                </div>
-            </div>
+    <!-- 4 Key Metric Cards -->
+    <div class="row g-3 mb-3">
 
-            <!-- Principaux Concurrents -->
-            {% if tendance.principaux_concurrent %}
-            <div class="mb-4">
-                <h5 class="fw-bold mb-3" style="color: var(--color-primary-dark);">
-                    <i class="fas fa-users me-2"></i>{% trans "Competitive Analysis" %}
-                </h5>
-                <div class="rich-content">
-                    {{ tendance.principaux_concurrent|linebreaks }}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Commentaire -->
-            {% if tendance.commentaire %}
-            <div class="mb-4">
-                <h5 class="fw-bold mb-3" style="color: var(--color-secondary);">
-                    <i class="fas fa-comment-dots me-2"></i>{% trans "Analytical Comment" %}
-                </h5>
-                <div class="rich-content">
-                    {{ tendance.commentaire|linebreaks }}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Informations temporelles -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center text-muted small">
-                        <div>
-                            <i class="fas fa-calendar me-1" style="color: var(--color-primary);"></i>
-                            {% trans "Analysis created on" %} {{ tendance.created_at|date:"d/m/Y H:i" }}
-                            {% if tendance.created_by %}
-                                {% trans "by" %} {{ tendance.created_by.username }}
-                            {% endif %}
-                        </div>
-                        <div>
-                            <i class="fas fa-sync-alt me-1" style="color: var(--color-primary);"></i>
-                            {% trans "Last updated:" %} {{ tendance.updated_at|date:"d/m/Y H:i" }}
-                            {% if tendance.updated_by %}
-                                {% trans "by" %} {{ tendance.updated_by.username }}
-                            {% endif %}
-                        </div>
+        <!-- Commercial Opinion -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card avis-commercial">
+                <div class="metric-header">
+                    <div class="metric-icon"
+                         {% if tendance.avis_commercial %}style="background:{{ tendance.avis_commercial.couleur }}22; color:{{ tendance.avis_commercial.couleur }};"{% endif %}>
+                        <i class="fas fa-comment-dollar"></i>
                     </div>
+                    <span class="metric-label">{% trans "Commercial Opinion" %}</span>
                 </div>
+                {% if tendance.avis_commercial %}
+                    <div class="metric-value" style="color:{{ tendance.avis_commercial.couleur }};">
+                        {% if tendance.avis_commercial.libelle_en %}{{ tendance.avis_commercial.libelle_en }}{% else %}{{ tendance.avis_commercial.libelle }}{% endif %}
+                    </div>
+                {% else %}
+                    <div class="metric-empty">—</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- More Information -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card informations">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <span class="metric-label">{% trans "More Information" %}</span>
+                </div>
+                {% if tendance.plus_informations %}
+                    <div class="metric-value sm">{{ tendance.get_plus_informations_display }}</div>
+                {% else %}
+                    <div class="metric-empty">—</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card alarmes {% if tendance.alarmes %}has-alert{% endif %}">
+                <div class="metric-header">
+                    <div class="metric-icon {% if tendance.alarmes %}alert-icon{% else %}ok-icon{% endif %}">
+                        <i class="fas fa-{% if tendance.alarmes %}exclamation-triangle{% else %}shield-alt{% endif %}"></i>
+                    </div>
+                    <span class="metric-label">{% trans "Alerts" %}</span>
+                </div>
+                {% if tendance.alarmes %}
+                    <div class="metric-value sm alert-value">{{ tendance.get_alarmes_display }}</div>
+                {% else %}
+                    <div class="metric-value sm ok-value">
+                        <i class="fas fa-check-circle me-1"></i>{% trans "Normal situation" %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Press & Media -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="metric-card presse-media">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1); color:#28a745;">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <span class="metric-label">{% trans "Press & Media" %}</span>
+                </div>
+                {% if tendance.presse_media %}
+                    <div class="metric-value sm">{{ tendance.presse_media }}</div>
+                {% else %}
+                    <div class="metric-empty">—</div>
+                {% endif %}
             </div>
         </div>
     </div>
+
+    <!-- Text Analysis Sections -->
+    {% if tendance.principaux_concurrent or tendance.commentaire %}
+    <div class="row g-3 mb-2">
+        {% if tendance.principaux_concurrent %}
+        <div class="col-md-{% if tendance.commentaire %}6{% else %}12{% endif %}">
+            <div class="analysis-block">
+                <div class="analysis-block-header">
+                    <i class="fas fa-users me-2" style="color:var(--color-primary-dark);"></i>
+                    <strong>{% trans "Competitive Analysis" %}</strong>
+                </div>
+                <div class="analysis-block-body">{{ tendance.principaux_concurrent|linebreaks }}</div>
+            </div>
+        </div>
+        {% endif %}
+        {% if tendance.commentaire %}
+        <div class="col-md-{% if tendance.principaux_concurrent %}6{% else %}12{% endif %}">
+            <div class="analysis-block">
+                <div class="analysis-block-header">
+                    <i class="fas fa-comment-dots me-2" style="color:var(--color-secondary);"></i>
+                    <strong>{% trans "Analytical Comment" %}</strong>
+                </div>
+                <div class="analysis-block-body">{{ tendance.commentaire|linebreaks }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Timestamps -->
+    <div class="timestamps-bar">
+        <span>
+            <i class="fas fa-calendar-plus me-1"></i>
+            {% trans "Created" %} {{ tendance.created_at|date:"d/m/Y H:i" }}
+            {% if tendance.created_by %} {% trans "by" %} {{ tendance.created_by.get_full_name|default:tendance.created_by.username }}{% endif %}
+        </span>
+        <span>
+            <i class="fas fa-sync-alt me-1"></i>
+            {% trans "Updated" %} {{ tendance.updated_at|date:"d/m/Y H:i" }}
+            {% if tendance.updated_by %} {% trans "by" %} {{ tendance.updated_by.get_full_name|default:tendance.updated_by.username }}{% endif %}
+        </span>
+    </div>
+
     {% else %}
-    <!-- État vide -->
-    <div class="card enhanced-card" style="animation-delay: 0.3s;">
+    <!-- Empty State -->
+    <div class="card enhanced-card">
         <div class="card-body">
             <div class="empty-state">
                 <i class="fas fa-chart-line empty-state-icon"></i>
@@ -862,7 +775,7 @@
                     {% trans "This buyer does not yet have a trend analysis." %}<br>
                     {% trans "Add a complete commercial and competitive assessment." %}
                 </p>
-                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
+                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addTendanceModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Add analysis" %}
                 </button>
             </div>
