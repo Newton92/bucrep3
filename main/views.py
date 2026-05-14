@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 import random
 import threading
@@ -10255,7 +10255,7 @@ def dash_validateur_add_acheteur(request):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -10306,7 +10306,7 @@ def dash_validateur_edit_acheteur(request, acheteur_id):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -10358,7 +10358,7 @@ def dash_validateur_manage_acheteur(request, acheteur_id):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -10478,7 +10478,7 @@ def dash_validateur_manage_acheteur_data_save(request, acheteur_id):
     statut_list = _translate_statut_list(request)
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     context = {
         "acheteur_active": "active",
@@ -13594,7 +13594,7 @@ def dash_analyste_add_acheteur(request):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -13645,7 +13645,7 @@ def dash_analyste_edit_acheteur(request, acheteur_id):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -13697,7 +13697,7 @@ def dash_analyste_manage_acheteur(request, acheteur_id):
     categorie_list = CategorieEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     # Récupérer tous les statuts entreprise
     statut_list = _translate_statut_list(request)
@@ -13817,7 +13817,7 @@ def dash_analyste_manage_acheteur_data_save(request, acheteur_id):
     statut_list = _translate_statut_list(request)
 
     # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
+    juridique_list = _translate_juridique_list(request)
 
     context = {
         "acheteur_active": "active",
@@ -16234,6 +16234,7 @@ def dash_root_export_decompte(request):
         "refresh_token": refresh_token,
         "client_list":   client_list,
     })
+
 
 
 
