@@ -1,58 +1,135 @@
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from main.models import ListeInformationsAvisCommercial
 
 
-DEVELOPPEMENT_DATA = [
-    {'code_num': '5', 'libelle': 'Bon développement commercial', 'poids': 0.4},
-    {'code_num': '9', 'libelle': 'Développement commercial en déclin', 'poids': -1.0},
-    {'code_num': '7', 'libelle': 'Développement commercial acceptable', 'poids': 0.3},
-    {'code_num': '3', 'libelle': 'Développement commercial fort', 'poids': 0.6},
-    {'code_num': '8', 'libelle': 'Développement commercial moyennement en déclin', 'poids': -0.5},
-    {'code_num': '1', 'libelle': 'Développement commercial ne peut être déterminé par un tiers', 'poids': 0.0},
-    {'code_num': '6', 'libelle': 'Développement commercial passable', 'poids': 0.35},
-    {'code_num': '4', 'libelle': 'Développement commercial positif', 'poids': 0.5},
-    {'code_num': '2', 'libelle': 'Développement commercial très positif', 'poids': 0.7},
+AVIS_COMMERCIAL_DATA = [
+    {
+        'code': 0,
+        'libelle': "Le développement ne peut pas être déterminé par des tiers.",
+        'libelle_en': "Development cannot be determined by third parties.",
+        'couleur': '#95a5a6',
+    },
+    {
+        'code': 15,
+        'libelle': (
+            "En raison des informations relatives aux procédures d'insolvabilité/"
+            "préliminaires/d'échelonnement des dettes, nous ne sommes pas en mesure "
+            "de donner une évaluation définitive du développement de l'entreprise pour l'instant."
+        ),
+        'libelle_en': (
+            "In view of the information on insolvency/preliminary/debt staggering procedures, "
+            "we are not in a position to give a definitive assessment on the development "
+            "of the company at present."
+        ),
+        'couleur': '#c0392b',
+    },
+    {
+        'code': 100,
+        'libelle': "Développement commercial très positif",
+        'libelle_en': "Very positive business development",
+        'couleur': '#27ae60',
+    },
+    {
+        'code': 150,
+        'libelle': "Fort développement commercial",
+        'libelle_en': "Strong business development",
+        'couleur': '#2ecc71',
+    },
+    {
+        'code': 200,
+        'libelle': "Développement commercial positif",
+        'libelle_en': "Positive business development",
+        'couleur': '#16a085',
+    },
+    {
+        'code': 300,
+        'libelle': "Bon développement commercial",
+        'libelle_en': "Good business development",
+        'couleur': '#1abc9c',
+    },
+    {
+        'code': 350,
+        'libelle': "Développement commercial satisfaisant",
+        'libelle_en': "Fair business development",
+        'couleur': '#f1c40f',
+    },
+    {
+        'code': 400,
+        'libelle': "Développement commercial acceptable",
+        'libelle_en': "Acceptable business development",
+        'couleur': '#f39c12',
+    },
+    {
+        'code': 500,
+        'libelle': "Développement commercial légèrement en déclin",
+        'libelle_en': "Slightly declining business development",
+        'couleur': '#e67e22',
+    },
+    {
+        'code': 600,
+        'libelle': "Développement commercial en déclin",
+        'libelle_en': "Declining business development",
+        'couleur': '#e74c3c',
+    },
+    {
+        'code': 700,
+        'libelle': "Développement commercial en déclin rapide",
+        'libelle_en': "Rapidly declining business development",
+        'couleur': '#c0392b',
+    },
+    {
+        'code': 800,
+        'libelle': "Développement commercial fortement en déclin",
+        'libelle_en': "Declining business development.",
+        'couleur': '#922b21',
+    },
+    {
+        'code': 900,
+        'libelle': "Développement commercial inconnu",
+        'libelle_en': "Business development not known",
+        'couleur': '#7f8c8d',
+    },
 ]
 
 
 class Command(BaseCommand):
-    help = "Importer les avis de développement commercial"
+    help = "Importer / mettre à jour les avis de développement commercial (bilingues FR/EN)"
 
-    def handle(self, *args, **options):
-        created_count = 0
-
-        for item in DEVELOPPEMENT_DATA:
-            libelle = item["libelle"]
-            couleur = self.generate_color(libelle)
-
-            obj, created = ListeInformationsAvisCommercial.objects.get_or_create(
-                libelle=libelle,
-                defaults={"couleur": couleur},
-            )
-
-            if created:
-                created_count += 1
-                self.stdout.write(self.style.SUCCESS(f"✔ Ajouté : {libelle}"))
-            else:
-                self.stdout.write(f"• Existe déjà : {libelle}")
-
-        self.stdout.write(
-            self.style.SUCCESS(f"\n✅ Import terminé ({created_count} nouveaux éléments)")
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help="Supprime tous les enregistrements existants avant l'importation",
         )
 
-    def generate_color(self, libelle: str) -> str:
-        """Génère une couleur selon le contenu du libellé"""
-        text = libelle.lower()
+    def handle(self, *args, **options):
+        if options['clear']:
+            deleted, _ = ListeInformationsAvisCommercial.objects.all().delete()
+            self.stdout.write(self.style.WARNING(f"Supprimé {deleted} enregistrement(s) existant(s)"))
 
-        if "très positif" in text or "fort" in text:
-            return "#2ecc71"  # vert foncé
-        if "positif" in text or "bon" in text:
-            return "#27ae60"  # vert
-        if "acceptable" in text or "passable" in text:
-            return "#f1c40f"  # jaune
-        if "déclin" in text:
-            return "#e74c3c"  # rouge
-        if "ne peut être déterminé" in text:
-            return "#95a5a6"  # gris
+        created_count = 0
+        updated_count = 0
 
-        return "#bdc3c7"  # couleur par défaut
+        with transaction.atomic():
+            for item in AVIS_COMMERCIAL_DATA:
+                obj, created = ListeInformationsAvisCommercial.objects.update_or_create(
+                    code_ac=item['code'],
+                    defaults={
+                        'libelle': item['libelle'],
+                        'libelle_en': item['libelle_en'],
+                        'couleur': item['couleur'],
+                    },
+                )
+                if created:
+                    created_count += 1
+                    self.stdout.write(self.style.SUCCESS(f"✔ Créé [{item['code']}] : {item['libelle_en']}"))
+                else:
+                    updated_count += 1
+                    self.stdout.write(f"↺ Mis à jour [{item['code']}] : {item['libelle_en']}")
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\n✅ Import terminé — {created_count} créé(s), {updated_count} mis à jour"
+            )
+        )

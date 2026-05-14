@@ -11,7 +11,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -2516,7 +2516,15 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     tendance = Tendance.objects.filter(acheteur=acheteur).first()
     
     # Récupérer tous les avis commerciaux pour les listes déroulantes
-    commercial_list = ListeInformationsAvisCommercial.objects.all()
+    lang = get_language() or 'fr'
+    _qs = ListeInformationsAvisCommercial.objects.all()
+    if lang.startswith('en'):
+        commercial_list = [
+            {'id': a.id, 'libelle': a.libelle_en or a.libelle}
+            for a in _qs
+        ]
+    else:
+        commercial_list = _qs
     
     # ⭐ AJOUT : Préparer les choix pour le template
     plus_informations_choices = LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE

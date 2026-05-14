@@ -13909,8 +13909,14 @@ class ListeInformationsRating(models.Model):
 class ListeInformationsAvisCommercial(models.Model):
     """Modele metier: ListeInformationsAvisCommercial."""
     _safedelete_policy = SOFT_DELETE_CASCADE
-    libelle = models.TextField(_("libelle"), max_length=255)
+    code_ac = models.IntegerField(_("code"), default=0)
+    libelle = models.TextField(_("libelle"), max_length=500)
+    libelle_en = models.TextField(_("libelle (EN)"), max_length=500, blank=True, default="")
     couleur = models.CharField(_("couleur"), max_length=20)
+
+    class Meta:
+        ordering = ['code_ac']
+
     def __str__(self):
         return self.libelle
 
