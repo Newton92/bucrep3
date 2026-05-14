@@ -14,187 +14,190 @@
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
     :root {
-        --color-light: #fcfefe;
-        --color-primary: #0a95ca;
-        --color-primary-dark: #0d80be;
-        --color-primary-light: #25add6;
-        --color-secondary: #106cb2;
+        --cp: #0a95ca; --cp-dk: #0d80be; --cp-lt: #25add6;
+        --border: rgba(10,149,202,.22); --bg-tint: rgba(10,149,202,.04);
+    }
+    body { background: #f0f4f8; }
+
+    /* ── Layout ── */
+    .edit-wrapper { max-width: 960px; margin: 0 auto; }
+
+    /* ── Page header ── */
+    .page-hdr {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 0 14px;
+    }
+    .page-hdr-left h6 { font-size: .95rem; font-weight: 700; color: var(--cp-dk); margin: 0; }
+    .page-hdr-left small { color: #6c757d; font-size: .78rem; }
+    .edit-badge {
+        font-size: .75rem; font-weight: 600; padding: 4px 12px; border-radius: 20px;
+        background: linear-gradient(135deg, var(--cp-lt), var(--cp)); color: white;
+    }
+    #acheteurCodeBadge { font-size: .78rem; }
+
+    /* ── Info strip ── */
+    .info-strip {
+        display: none; background: var(--bg-tint); border: 1px solid var(--border);
+        border-radius: 8px; padding: 8px 16px; margin-bottom: 12px;
+    }
+    .info-strip .info-item small { font-size: .7rem; color: #6c757d; display: block; }
+    .info-strip .info-item strong { font-size: .82rem; color: #2c3e50; }
+
+    /* ── Card ── */
+    .card-form {
+        border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+        background: white; box-shadow: 0 2px 12px rgba(10,149,202,.07);
     }
 
-    body { background-color: #f8f9fa; }
-
-    /* NACE */
-    .select2-container--bootstrap-5.select2-container--focus,
-    .select2-container--bootstrap-5 { width: 100% !important; }
-
-    #nace_activity + .select2-container,
-    #nace_type + .select2-container,
-    #nace_code + .select2-container { width: 100% !important; margin-top: 4px; }
-
-    #nace_activity + .select2-container .select2-selection,
-    #nace_type + .select2-container .select2-selection,
-    #nace_code + .select2-container .select2-selection {
-        min-height: 46px; border-radius: 8px;
-        border: 1px solid rgba(10, 149, 202, 0.4);
+    /* ── Step indicator ── */
+    .step-bar {
+        display: flex; counter-reset: step; padding: 14px 20px;
+        background: linear-gradient(135deg, var(--cp) 0%, var(--cp-dk) 100%);
+        align-items: center;
     }
-    #nace_activity + .select2-container .select2-selection--single,
-    #nace_type + .select2-container .select2-selection--single { height: 46px; }
-
-    #nace_activity + .select2-container .select2-selection__rendered,
-    #nace_type + .select2-container .select2-selection__rendered { line-height: 44px !important; padding-left: 15px !important; }
-    #nace_code + .select2-container .select2-selection__rendered { line-height: 18px !important; padding: 6px 15px !important; white-space: normal !important; }
-
-    .nace-step-label { font-size: .72rem; font-weight: 600; color: var(--color-primary); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px; display: block; }
-    .select2-dropdown { min-width: 500px !important; max-width: 800px !important; }
-    .select2-results__option { white-space: normal !important; padding: 8px 15px !important; line-height: 1.4 !important; }
-
-    /* Sections */
-    .form-section {
-        background: rgba(10, 149, 202, 0.03);
-        border-radius: 12px; padding: 25px; margin-bottom: 25px;
-        border: 1px solid rgba(10, 149, 202, 0.2);
-        transition: all .3s ease;
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; }
+    .step + .step::before {
+        content: ''; position: absolute; top: 14px; left: calc(-50%);
+        width: 100%; height: 2px; background: rgba(255,255,255,.25); z-index: 0;
     }
-    .form-section:hover { box-shadow: 0 5px 20px rgba(10, 149, 202, 0.12); border-color: rgba(10, 149, 202, 0.35); }
+    .step-circle {
+        width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35);
+        background: rgba(255,255,255,.15); color: rgba(255,255,255,.75);
+        font-size: .78rem; font-weight: 700; display: flex; align-items: center;
+        justify-content: center; margin-bottom: 4px; transition: all .25s;
+        position: relative; z-index: 1;
+        counter-increment: step;
+    }
+    .step-circle::before { content: counter(step); }
+    .step.active .step-circle {
+        background: white; color: var(--cp); border-color: white;
+        box-shadow: 0 0 0 4px rgba(255,255,255,.25);
+    }
+    .step.completed .step-circle { background: rgba(255,255,255,.9); color: #22c55e; border-color: rgba(255,255,255,.9); }
+    .step.completed .step-circle::before { content: '✓'; }
+    .step-lbl { font-size: .7rem; color: rgba(255,255,255,.65); font-weight: 500; }
+    .step.active .step-lbl { color: white; font-weight: 700; }
+    .step.completed .step-lbl { color: rgba(255,255,255,.85); }
+
+    /* ── Form body ── */
+    .form-body { padding: 20px 24px; }
+
+    /* ── Form sections ── */
+    .form-section { display: none; }
 
     .section-title {
-        color: var(--color-primary-dark); font-weight: 600; margin-bottom: 20px;
-        display: flex; align-items: center; gap: 10px;
-        padding-bottom: 10px; border-bottom: 2px solid rgba(10, 149, 202, 0.15);
+        font-size: .82rem; font-weight: 700; color: var(--cp-dk);
+        display: flex; align-items: center; gap: 7px;
+        padding-bottom: 8px; margin-bottom: 14px;
+        border-bottom: 1px solid var(--border);
     }
     .section-title i {
-        font-size: 1.2rem; background: rgba(10, 149, 202, 0.12);
-        padding: 8px; border-radius: 8px; color: var(--color-primary);
+        width: 24px; height: 24px; border-radius: 6px;
+        background: var(--bg-tint); display: flex; align-items: center;
+        justify-content: center; color: var(--cp); font-size: .8rem;
+        border: 1px solid var(--border);
     }
 
-    /* Fields */
-    .form-label { font-weight: 500; color: #2c4a6e; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-    .required-field:after { content: " *"; color: #dc3545; font-weight: bold; }
+    /* ── Fields ── */
+    .form-label {
+        font-size: .78rem; font-weight: 600; color: #4a5568;
+        margin-bottom: 4px; display: block;
+    }
+    .required-field::after { content: " *"; color: #dc3545; }
     .form-control, .form-select {
-        border-radius: 8px; border: 1px solid rgba(10, 149, 202, 0.35);
-        padding: 12px 15px; transition: all .3s ease; background-color: white;
+        font-size: .875rem; padding: 7px 11px;
+        border-radius: 7px; border: 1px solid #d1dde8;
+        transition: border-color .2s, box-shadow .2s; background: white;
     }
     .form-control:focus, .form-select:focus {
-        border-color: var(--color-primary); box-shadow: 0 0 0 .25rem rgba(10, 149, 202, 0.18); background-color: white;
+        border-color: var(--cp); box-shadow: 0 0 0 3px rgba(10,149,202,.12);
+        outline: none;
     }
+    .input-group-text {
+        font-size: .82rem; background: #f8fafc; border: 1px solid #d1dde8;
+        border-radius: 7px 0 0 7px; color: #6c757d; padding: 7px 10px;
+    }
+    .input-group .form-control { border-radius: 0 7px 7px 0; }
+    .invalid-feedback { font-size: .75rem; color: #dc3545; margin-top: 3px; display: none; }
+    .is-invalid ~ .invalid-feedback, .is-invalid + .invalid-feedback { display: block; }
+    .is-invalid { border-color: #dc3545 !important; }
+    .form-text-help { font-size: .74rem; color: var(--cp); margin-top: 3px; }
 
-    /* Step indicator */
-    .step-indicator {
-        display: flex; justify-content: space-between; margin-bottom: 30px;
-        counter-reset: step; padding: 20px; background: white;
-        border-radius: 12px; border: 1px solid rgba(10, 149, 202, 0.2);
-        box-shadow: 0 2px 10px rgba(10, 149, 202, 0.06);
+    /* ── Select2 compact ── */
+    .select2-container--bootstrap-5 { width: 100% !important; }
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid #d1dde8; border-radius: 7px; min-height: 36px;
     }
-    .step { text-align: center; position: relative; flex: 1; }
-    .step:before {
-        counter-increment: step; content: counter(step);
-        width: 45px; height: 45px; line-height: 45px; border-radius: 50%;
-        background: rgba(10, 149, 202, 0.12); color: var(--color-primary);
-        display: block; margin: 0 auto 10px; font-weight: 600; font-size: 1.1rem;
-        transition: all .3s ease; border: 2px solid transparent;
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: 34px; padding-left: 11px; font-size: .875rem; color: #2c3e50;
     }
-    .step.active:before {
-        background: var(--color-primary); color: white; border-color: var(--color-primary);
-        box-shadow: 0 0 0 5px rgba(10, 149, 202, 0.22);
+    .select2-container--bootstrap-5 .select2-selection--single { height: 36px; }
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 1px solid #d1dde8; border-radius: 7px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.1);
     }
-    .step.completed:before { background: var(--color-primary-dark); color: white; border-color: var(--color-primary-dark); }
-    .step-label { font-size: .85rem; color: var(--color-primary-dark); font-weight: 500; }
-    .step.active .step-label { color: var(--color-primary); font-weight: 600; }
+    .select2-results__option { font-size: .85rem; padding: 7px 12px !important; }
+    .select2-dropdown { min-width: 320px !important; max-width: 700px !important; }
 
-    /* Cards */
-    .card-form {
-        border: 1px solid rgba(10, 149, 202, 0.25);
-        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.08);
-        border-radius: 12px; overflow: hidden; background: white;
-    }
-    .card-header {
-        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-        color: white; border: none; padding: 20px 30px;
-    }
-    .card-header-title { font-weight: 600; margin: 0; display: flex; align-items: center; gap: 10px; }
+    /* ── NACE cascade ── */
+    .nace-step-label { font-size: .68rem; font-weight: 700; color: var(--cp); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; display: block; }
+    #nace_activity + .select2-container .select2-selection,
+    #nace_type     + .select2-container .select2-selection,
+    #nace_code     + .select2-container .select2-selection { border-color: rgba(10,149,202,.3); }
+    #nace_code + .select2-container .select2-selection__rendered { white-space: normal !important; line-height: 1.4 !important; padding: 4px 11px !important; }
 
-    .edit-badge {
-        background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
-        color: white; padding: 6px 14px; border-radius: 20px; font-size: .85rem; font-weight: 600;
-    }
-
-    /* Acheteur info card */
-    .acheteur-info {
-        background: rgba(10, 149, 202, 0.06); border-radius: 12px; padding: 20px;
-        border: 1px solid rgba(10, 149, 202, 0.2); margin-bottom: 20px;
-    }
-
-    /* Map */
+    /* ── Map ── */
     #map { height: 100%; width: 100%; }
-    .map-container {
-        border-radius: 12px; overflow: hidden; height: 300px;
-        border: 2px solid rgba(10, 149, 202, 0.3); margin-top: 10px;
-        box-shadow: 0 4px 15px rgba(10, 149, 202, 0.1);
-    }
+    .map-wrap { border-radius: 8px; overflow: hidden; height: 280px; border: 1px solid #d1dde8; }
 
-    /* Color preview */
+    /* ── Color preview ── */
     .color-preview {
-        display: inline-flex; align-items: center; gap: 10px; padding: 8px 15px;
-        border-radius: 20px; background: rgba(10, 149, 202, 0.08); margin-top: 10px;
-        border: 1px solid rgba(10, 149, 202, 0.2);
+        display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px;
+        border-radius: 20px; background: var(--bg-tint); border: 1px solid var(--border);
+        font-size: .8rem; margin-top: 6px;
     }
-    .color-circle { width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+    .color-circle { width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
 
-    /* Buttons */
-    .btn-edit {
-        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-        border: none; padding: 12px 35px; border-radius: 8px; font-weight: 600;
-        font-size: 1rem; transition: all .3s ease; color: white;
+    /* ── Nav bar ── */
+    .nav-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 12px 24px; border-top: 1px solid #eef2f7; background: #fafbfc;
     }
-    .btn-edit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(10, 149, 202, 0.3); color: white; }
-    .btn-edit:disabled { opacity: .6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-    .btn-outline-primary { color: var(--color-primary); border-color: var(--color-primary); }
-    .btn-outline-primary:hover { background-color: var(--color-primary); color: white; transform: translateY(-1px); }
+    /* ── Buttons ── */
+    .btn-save {
+        background: linear-gradient(135deg, var(--cp), var(--cp-dk));
+        border: none; padding: 8px 24px; border-radius: 7px;
+        font-weight: 600; font-size: .875rem; color: white; transition: all .2s;
+    }
+    .btn-save:hover { box-shadow: 0 4px 14px rgba(10,149,202,.35); transform: translateY(-1px); color: white; }
+    .btn-save:disabled { opacity: .6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-outline-primary { font-size: .875rem; padding: 7px 16px; border-radius: 7px; border-color: var(--cp); color: var(--cp); }
+    .btn-outline-primary:hover { background: var(--cp); color: white; }
 
-    /* Loading */
+    /* ── Loading ── */
     .loading-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(135deg, rgba(10, 149, 202, 0.08) 0%, rgba(255,255,255,.95) 100%);
-        backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center;
-        z-index: 9999; opacity: 0; visibility: hidden; transition: all .3s ease;
+        position: fixed; inset: 0;
+        background: rgba(255,255,255,.88); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999; opacity: 0; visibility: hidden; transition: all .2s;
     }
     .loading-overlay.active { opacity: 1; visibility: visible; }
-    .loading-content {
-        text-align: center; background: white; padding: 40px 50px; border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(10, 149, 202, 0.15); border: 2px solid rgba(10, 149, 202, 0.2);
-    }
+    .loading-content { text-align: center; }
     .spinner {
-        width: 60px; height: 60px; border: 4px solid rgba(10, 149, 202, 0.15);
-        border-top: 4px solid var(--color-primary); border-radius: 50%;
-        animation: spin 1s linear infinite; margin: 0 auto 20px;
+        width: 40px; height: 40px; border: 3px solid rgba(10,149,202,.15);
+        border-top-color: var(--cp); border-radius: 50%;
+        animation: spin .8s linear infinite; margin: 0 auto 12px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { color: var(--color-primary); font-weight: 600; font-size: 1.1rem; margin-top: 15px; }
-
-    /* Validation */
-    .is-valid { border-color: #28a745 !important; }
-    .is-invalid { border-color: #dc3545 !important; }
-    .invalid-feedback { color: #dc3545; font-size: .85rem; margin-top: 5px; display: none; align-items: center; gap: 5px; }
-    .is-invalid ~ .invalid-feedback { display: flex; }
-    .invalid-feedback:before { content: "⚠ "; }
-
-    .input-group-text { background-color: rgba(10, 149, 202, 0.1); border-color: rgba(10, 149, 202, 0.3); color: var(--color-primary-dark); border-radius: 8px 0 0 8px; }
-    .input-group .form-control:last-child { border-radius: 0 8px 8px 0; }
-
-    .select2-container--bootstrap-5 .select2-selection { border: 1px solid rgba(10, 149, 202, 0.35); border-radius: 8px; min-height: 46px; }
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { line-height: 44px; padding-left: 15px; color: #2c4a6e; }
-    .select2-container--bootstrap-5 .select2-dropdown { border: 1px solid rgba(10, 149, 202, 0.3); border-radius: 8px; box-shadow: 0 5px 15px rgba(10, 149, 202, 0.1); }
-
-    .form-text-help { font-size: .85rem; color: var(--color-primary); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
-    .form-text-help:before { content: "💡"; font-size: .9rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: .9rem; font-weight: 600; color: var(--cp); }
 
     @media (max-width: 768px) {
-        .step-indicator { flex-direction: column; gap: 20px; }
-        .step { display: flex; align-items: center; gap: 15px; }
-        .step:before { margin: 0; flex-shrink: 0; }
-        .form-section { padding: 15px; }
-        .btn-edit { width: 100%; margin-bottom: 10px; }
+        .form-body { padding: 14px 16px; }
+        .nav-bar { padding: 10px 16px; }
+        .step-bar { padding: 12px 10px; }
+        .step-lbl { display: none; }
+        .btn-save { width: 100%; }
     }
 </style>
 {% endblock %}
@@ -208,302 +211,276 @@
     </div>
 </div>
 
-<!-- Titre -->
-<div class="row g-4 mb-3">
-    <div class="col-12">
-        <div class="card card-body border">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="ms-2">
-                    <h4 style="color: var(--color-primary-dark);">
-                        <i class="bi bi-pencil-square me-2"></i>{% trans "Modification d'un acheteur" %}
-                    </h4>
-                    <span class="text-muted">{% trans "Modifiez les informations de l'acheteur en suivant les étapes." %}</span>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="edit-badge"><i class="bi bi-pencil me-1"></i>{% trans "Mode Édition" %}</span>
-                    <span id="acheteurCodeBadge" class="badge bg-secondary fs-6">{% trans "Chargement..." %}</span>
-                </div>
-            </div>
+<div class="edit-wrapper">
+
+    <!-- En-tête page -->
+    <div class="page-hdr">
+        <div class="page-hdr-left">
+            <h6><i class="bi bi-pencil-square me-1"></i>{% trans "Modification d'un acheteur" %}</h6>
+            <small>{% trans "Remplissez les étapes puis enregistrez." %}</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="edit-badge"><i class="bi bi-pencil me-1"></i>{% trans "Édition" %}</span>
+            <span id="acheteurCodeBadge" class="badge bg-secondary">—</span>
+            <a href="/root-dashboard/acheteurs/liste-des-acheteurs" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+            </a>
         </div>
     </div>
-</div>
 
-<!-- Info acheteur -->
-<div class="acheteur-info" id="acheteurInfoCard" style="display:none;">
-    <div class="row">
-        <div class="col-md-4">
-            <small class="text-muted">{% trans "Code" %}</small>
-            <div class="fw-bold" id="infoCode">--</div>
-        </div>
-        <div class="col-md-4">
-            <small class="text-muted">{% trans "Statut" %}</small>
-            <div class="fw-bold" id="infoStatut">--</div>
-        </div>
-        <div class="col-md-4">
-            <small class="text-muted">{% trans "Date de création" %}</small>
-            <div class="fw-bold" id="infoDateCreation">--</div>
+    <!-- Bandeau info acheteur -->
+    <div class="info-strip" id="acheteurInfoCard">
+        <div class="row g-2">
+            <div class="col-auto info-item"><small>{% trans "Code" %}</small><strong id="infoCode">—</strong></div>
+            <div class="col-auto info-item ms-3"><small>{% trans "Statut" %}</small><strong id="infoStatut">—</strong></div>
+            <div class="col-auto info-item ms-3"><small>{% trans "Création" %}</small><strong id="infoDateCreation">—</strong></div>
         </div>
     </div>
-</div>
 
-<!-- Indicateur de progression -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card card-form">
-            <div class="card-body">
-                <div class="step-indicator">
-                    <div class="step active" data-step="1">
-                        <div class="step-label">{% trans "Généralités" %}</div>
-                    </div>
-                    <div class="step" data-step="2">
-                        <div class="step-label">{% trans "Contacts" %}</div>
-                    </div>
-                    <div class="step" data-step="3">
-                        <div class="step-label">{% trans "Localisation" %}</div>
-                    </div>
-                    <div class="step" data-step="4">
-                        <div class="step-label">{% trans "Opinion" %}</div>
-                    </div>
-                </div>
+    <!-- Carte principale -->
+    <div class="card-form">
+
+        <!-- Indicateur d'étapes (dans l'en-tête de la carte) -->
+        <div class="step-bar">
+            <div class="step active" data-step="1">
+                <div class="step-circle"></div>
+                <span class="step-lbl">{% trans "Généralités" %}</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle"></div>
+                <span class="step-lbl">{% trans "Contacts" %}</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle"></div>
+                <span class="step-lbl">{% trans "Localisation" %}</span>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle"></div>
+                <span class="step-lbl">{% trans "Opinion" %}</span>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Formulaire -->
-<div class="row">
-    <div class="col-12">
-        <div class="card card-form">
-            <div class="card-header">
-                <h4 class="card-header-title mb-0"><i class="bi bi-pencil me-2"></i>{% trans "Informations de l'acheteur" %}</h4>
-            </div>
+        <!-- Corps du formulaire -->
+        <form id="editAcheteurForm" novalidate>
+            <div class="form-body">
 
-            <div class="card-body">
-                <form id="editAcheteurForm" class="vstack gap-4" novalidate>
-
-                    <!-- Étape 1 : Généralités -->
-                    <div class="form-section" data-section="1">
-                        <h5 class="section-title"><i class="bi bi-info-circle"></i> {% trans "Généralités sur l'acheteur" %}</h5>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label required-field">{% trans "Nom de l'acheteur" %}</label>
-                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex: BATI PLUS" required>
-                                <div class="invalid-feedback">{% trans "Veuillez saisir un nom valide" %}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Sigle" %}</label>
-                                <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex: BATI+">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Date de création" %}</label>
-                                <input type="date" class="form-control flatpickr" id="date_creation" name="date_creation">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Activité principale" %}</label>
-                                <input type="text" class="form-control" id="activite_principale" name="activite_principale"
-                                       placeholder="{% trans 'Ex: Vente de produits de construction' %}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="statut_entreprise" class="form-label">{% trans "Statut" %}</label>
-                                <select class="form-select select2" id="statut_entreprise" name="statut_entreprise">
-                                    <option value="">{% trans "Sélectionnez..." %}</option>
-                                    {% for statut in statut_list %}
-                                        <option value="{{ statut.id }}">{{ statut.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="forme_juridique" class="form-label">{% trans "Forme juridique" %}</label>
-                                <select class="form-select select2" id="forme_juridique" name="forme_juridique">
-                                    <option value="">{% trans "Sélectionnez..." %}</option>
-                                    {% for juridique in juridique_list %}
-                                        <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Code NACE Cascade -->
-                            <div class="col-12 mb-3">
-                                <label class="form-label fw-semibold">{% trans "Code NACE" %}</label>
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-md-4">
-                                        <span class="nace-step-label">① Activity</span>
-                                        <select id="nace_activity" name="nace_activity" class="form-control">
-                                            <option value="">Select an activity…</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <span class="nace-step-label">② Type</span>
-                                        <select id="nace_type" name="nace_type" class="form-control" disabled>
-                                            <option value="">Select a type…</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <span class="nace-step-label">③ NACE Code</span>
-                                        <select id="nace_code" name="nace_specifique" class="form-control" disabled>
-                                            <option value="">Select a code…</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-text-help mt-1">{% trans "Code d'activité économique (NACE) - Optionnel" %}</div>
-                            </div>
-
-                            <div class="col-12">
-                                <label for="description" class="form-label">{% trans "Description" %}</label>
-                                <textarea class="form-control" id="description" name="description"
-                                          rows="3" placeholder="{% trans "Description détaillée de l'acheteur..." %}"></textarea>
-                            </div>
+                <!-- Étape 1 : Généralités -->
+                <div class="form-section" data-section="1">
+                    <div class="section-title"><i class="bi bi-info-circle"></i>{% trans "Généralités" %}</div>
+                    <div class="row g-2">
+                        <div class="col-md-7">
+                            <label class="form-label required-field">{% trans "Raison sociale" %}</label>
+                            <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex: BATI PLUS" required>
+                            <div class="invalid-feedback">{% trans "Champ obligatoire" %}</div>
                         </div>
-                    </div>
-
-                    <!-- Étape 2 : Contacts -->
-                    <div class="form-section" data-section="2">
-                        <h5 class="section-title"><i class="bi bi-telephone"></i> {% trans "Contacts de l'acheteur" %}</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Email principal" %}</label>
-                                <input type="email" class="form-control" id="email" name="email" placeholder="contact@entreprise.ga">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Fax" %}</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-fax"></i></span>
-                                    <input type="text" class="form-control" id="fax" name="fax" placeholder="(+241) 22 22 22 22">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Boîte postale" %}</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">BP</span>
-                                    <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="2022 Libreville, Gabon">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{% trans "Code postal" %}</label>
-                                <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="241">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">{% trans "Site internet" %}</label>
-                                <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="exemple.com"
-                                       pattern="^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$">
-                                <div class="form-text-help">{% trans "Entrez uniquement le nom de domaine (ex: exemple.com)" %}</div>
-                            </div>
+                        <div class="col-md-5">
+                            <label class="form-label">{% trans "Sigle" %}</label>
+                            <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex: BATI+">
                         </div>
-                    </div>
-
-                    <!-- Étape 3 : Localisation -->
-                    <div class="form-section" data-section="3">
-                        <h5 class="section-title"><i class="bi bi-geo-alt"></i> {% trans "Localisation de l'acheteur" %}</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="pays" class="form-label required-field">{% trans "Pays" %}</label>
-                                <select class="form-select select2" id="pays" name="pays" required>
-                                    <option value="">{% trans "Sélectionnez..." %}</option>
-                                    {% for p in pays_list %}
-                                        <option value="{{ p.id }}">{{ p.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner un pays" %}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="ville" class="form-label required-field">{% trans "Ville" %}</label>
-                                <div class="position-relative">
-                                    <select class="form-select select2" id="ville" name="ville" disabled required>
-                                        <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
+                        <div class="col-md-4">
+                            <label class="form-label">{% trans "Date de création" %}</label>
+                            <input type="date" class="form-control" id="date_creation" name="date_creation">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">{% trans "Activité principale" %}</label>
+                            <input type="text" class="form-control" id="activite_principale" name="activite_principale"
+                                   placeholder="{% trans 'Ex: Vente de produits de construction' %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Statut" %}</label>
+                            <select class="form-select select2" id="statut_entreprise" name="statut_entreprise">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for statut in statut_list %}
+                                    <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Forme juridique" %}</label>
+                            <select class="form-select select2" id="forme_juridique" name="forme_juridique">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for juridique in juridique_list %}
+                                    <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- NACE cascade -->
+                        <div class="col-12">
+                            <label class="form-label">{% trans "Code NACE" %} <span class="text-muted fw-normal" style="font-size:.72rem;">— {% trans "optionnel" %}</span></label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <span class="nace-step-label">① Activity</span>
+                                    <select id="nace_activity" name="nace_activity" class="form-control">
+                                        <option value="">{% trans "Sélectionnez..." %}</option>
                                     </select>
-                                    <div id="villeSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
-                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                    </div>
                                 </div>
-                                <div class="invalid-feedback">{% trans "Veuillez sélectionner une ville" %}</div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label"><i class="bi bi-hash me-1"></i>{% trans "N° de porte" %}</label>
-                                <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="Ex : 17345">
-                            </div>
-                            <div class="col-md-9">
-                                <label class="form-label"><i class="bi bi-signpost me-1"></i>{% trans "Rue / Avenue" %}</label>
-                                <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex : Rue Camp de Gaulle">
-                            </div>
-
-                            <!-- Carte interactive -->
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">
-                                        <i class="bi bi-map me-1"></i>{% trans "Localisation sur la carte" %}
-                                        <span class="badge bg-secondary ms-1" style="font-size:.7rem;">{% trans "optionnel" %}</span>
-                                    </label>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-locate">
-                                            <i class="bi bi-crosshair me-1"></i>{% trans "Ma position" %}
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" id="btn-clear-marker" style="display:none;">
-                                            <i class="bi bi-x-circle me-1"></i>{% trans "Effacer" %}
-                                        </button>
-                                    </div>
+                                <div class="col-md-3">
+                                    <span class="nace-step-label">② Type</span>
+                                    <select id="nace_type" name="nace_type" class="form-control" disabled>
+                                        <option value="">—</option>
+                                    </select>
                                 </div>
-                                <div class="card border rounded-3 overflow-hidden" style="height:380px;">
-                                    <div id="map" style="width:100%;height:100%;"></div>
+                                <div class="col-md-5">
+                                    <span class="nace-step-label">③ Code NACE</span>
+                                    <select id="nace_code" name="nace_specifique" class="form-control" disabled>
+                                        <option value="">—</option>
+                                    </select>
                                 </div>
-                                <input type="hidden" id="latitude" name="latitude">
-                                <input type="hidden" id="longitude" name="longitude">
                             </div>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">{% trans "Description" %}</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"
+                                      placeholder="{% trans "Description de l'entreprise..." %}"></textarea>
+                        </div>
                     </div>
+                </div>
 
-                    <!-- Étape 4 : Opinion -->
-                    <div class="form-section" data-section="4">
-                        <h5 class="section-title"><i class="bi bi-chat-left-text"></i> {% trans "Opinion ACREMAC" %}</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="couleur_commentaire" class="form-label">{% trans "Coloration" %}</label>
-                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
-                                    <option value="">{% trans "Sélectionnez une couleur..." %}</option>
-                                    {% for coloration in coloration_list %}
-                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
-                                            {{ coloration.couleur }} - [{{ coloration.code }}]
-                                        </option>
-                                    {% endfor %}
+                <!-- Étape 2 : Contacts -->
+                <div class="form-section" data-section="2">
+                    <div class="section-title"><i class="bi bi-telephone"></i>{% trans "Contacts" %}</div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Email" %}</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="contact@entreprise.ga">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Fax" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-fax"></i></span>
+                                <input type="text" class="form-control" id="fax" name="fax" placeholder="(+241) 22 22 22 22">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">{% trans "Boîte postale" %}</label>
+                            <div class="input-group">
+                                <span class="input-group-text">BP</span>
+                                <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="2022 Libreville">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "Code postal" %}</label>
+                            <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="241">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% trans "Site internet" %}</label>
+                            <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="exemple.com">
+                            <div class="form-text-help">{% trans "Domaine sans https://" %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 3 : Localisation -->
+                <div class="form-section" data-section="3">
+                    <div class="section-title"><i class="bi bi-geo-alt"></i>{% trans "Localisation" %}</div>
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label required-field">{% trans "Pays" %}</label>
+                            <select class="form-select select2" id="pays" name="pays" required>
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for p in pays_list %}
+                                    <option value="{{ p.id }}">{{ p.nom }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">{% trans "Pays requis" %}</div>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label required-field">{% trans "Ville" %}</label>
+                            <div class="position-relative">
+                                <select class="form-select select2" id="ville" name="ville" disabled required>
+                                    <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
                                 </select>
-                                <div class="color-preview mt-2" id="colorPreview" style="display: none;">
-                                    <div class="color-circle" style="background-color: #000;"></div>
-                                    <span id="colorName">{% trans "Aucune couleur sélectionnée" %}</span>
+                                <div id="villeSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <label for="commentaire" class="form-label">{% trans "Commentaire" %}</label>
-                                <textarea class="form-control" id="commentaire" name="commentaire"
-                                          rows="4" placeholder="{% trans "Votre commentaire sur cet acheteur..." %}"></textarea>
+                            <div class="invalid-feedback">{% trans "Ville requise" %}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "N°" %}</label>
+                            <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="17345">
+                        </div>
+                        <div class="col-md-10">
+                            <label class="form-label">{% trans "Rue / Avenue" %}</label>
+                            <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex : Rue Camp de Gaulle">
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">
+                                    <i class="bi bi-map me-1"></i>{% trans "Carte" %}
+                                    <span class="text-muted fw-normal" style="font-size:.7rem;">— {% trans "optionnel" %}</span>
+                                </label>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" id="btn-locate" style="font-size:.78rem;">
+                                        <i class="bi bi-crosshair me-1"></i>{% trans "Ma position" %}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" id="btn-clear-marker" style="display:none;font-size:.78rem;">
+                                        <i class="bi bi-x-circle me-1"></i>{% trans "Effacer" %}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="map-wrap">
+                                <div id="map" style="width:100%;height:100%;"></div>
+                            </div>
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 4 : Opinion -->
+                <div class="form-section" data-section="4">
+                    <div class="section-title"><i class="bi bi-chat-left-text"></i>{% trans "Opinion ACREMAC" %}</div>
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label">{% trans "Coloration" %}</label>
+                            <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
+                                <option value="">{% trans "Aucune couleur..." %}</option>
+                                {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
+                                        {{ coloration.couleur }} — {{ coloration.code }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="color-preview" id="colorPreview" style="display:none;">
+                                <div class="color-circle"></div>
+                                <span id="colorName"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Boutons de navigation -->
-                    <div class="d-flex justify-content-between align-items-center pt-4 border-top" style="border-color: rgba(10, 149, 202, 0.2) !important;">
-                        <div>
-                            <button type="button" class="btn btn-outline-secondary" id="btn-prev" disabled>
-                                <i class="bi bi-chevron-left me-1"></i>{% trans "Précédent" %}
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" id="btn-next">
-                                {% trans "Suivant" %}<i class="bi bi-chevron-right ms-1"></i>
-                            </button>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-outline-danger me-2" id="btn-cancel">
-                                <i class="bi bi-x-circle me-1"></i>{% trans "Annuler" %}
-                            </button>
-                            <button type="submit" class="btn btn-edit" id="btn-submit" style="display:none;">
-                                <i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer les modifications" %}
-                            </button>
+                        <div class="col-12">
+                            <label class="form-label">{% trans "Commentaire" %}</label>
+                            <textarea class="form-control" id="commentaire" name="commentaire" rows="3"
+                                      placeholder="{% trans "Votre commentaire sur cet acheteur..." %}"></textarea>
                         </div>
                     </div>
+                </div>
 
-                </form>
+            </div><!-- /form-body -->
+
+            <!-- Barre de navigation -->
+            <div class="nav-bar">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-prev" disabled>
+                        <i class="bi bi-chevron-left me-1"></i>{% trans "Précédent" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btn-next">
+                        {% trans "Suivant" %}<i class="bi bi-chevron-right ms-1"></i>
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-cancel">
+                        <i class="bi bi-x-circle me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-save btn-sm" id="btn-submit" style="display:none;">
+                        <i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}
+                    </button>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
+
+        </form>
+    </div><!-- /card-form -->
+
+</div><!-- /edit-wrapper -->
 {% endblock %}
 
 {% block scripts %}
