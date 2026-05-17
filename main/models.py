@@ -14032,11 +14032,11 @@ class MailAttachment(models.Model):
         IncomingMail, on_delete=models.CASCADE,
         related_name='attachments', verbose_name=_("mail"),
     )
-    filename = models.CharField(_("nom fichier"), max_length=500)
+    filename = models.CharField(_("nom fichier"), max_length=500, blank=True, default="")
     content_type = models.CharField(_("type MIME"), max_length=200, blank=True, default="")
     size = models.PositiveIntegerField(_("taille (octets)"), default=0)
-    file = models.FileField(_("fichier"), upload_to="mail_attachments/")
-    created_at = models.DateTimeField(auto_now_add=True)
+    file = models.FileField(_("fichier"), upload_to="mail_attachments/", blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         verbose_name = _("Pièce jointe mail")
