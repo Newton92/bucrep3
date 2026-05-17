@@ -13923,17 +13923,17 @@ class ListeInformationsAvisCommercial(models.Model):
 
 class MailInboxConfig(models.Model):
     """Configuration IMAP singleton pour recevoir les mails clients."""
-    imap_host = models.CharField(_("hôte IMAP"), max_length=255)
+    imap_host = models.CharField(_("hôte IMAP"), max_length=255, blank=True, default="")
     imap_port = models.PositiveSmallIntegerField(_("port"), default=993)
-    imap_user = models.CharField(_("utilisateur"), max_length=255)
-    imap_password = models.CharField(_("mot de passe"), max_length=500)
+    imap_user = models.CharField(_("utilisateur"), max_length=255, blank=True, default="")
+    imap_password = models.CharField(_("mot de passe"), max_length=500, blank=True, default="")
     use_ssl = models.BooleanField(_("SSL/TLS"), default=True)
     mailbox = models.CharField(_("boîte"), max_length=100, default="INBOX")
     is_active = models.BooleanField(_("actif"), default=True)
     last_polled_at = models.DateTimeField(_("dernier relevé"), null=True, blank=True)
     last_error = models.TextField(_("dernière erreur"), blank=True, default="")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         verbose_name = _("Configuration boîte mail")
@@ -13952,11 +13952,11 @@ class MailInboxConfig(models.Model):
 
 class MailSource(models.Model):
     """Expéditeur/domaine autorisé à déposer des demandes par mail."""
-    client_name = models.CharField(_("nom client"), max_length=255)
-    email_or_domain = models.CharField(_("email ou domaine"), max_length=255, unique=True)
+    client_name = models.CharField(_("nom client"), max_length=255, blank=True, default="")
+    email_or_domain = models.CharField(_("email ou domaine"), max_length=255, unique=True, blank=True, default="")
     notes = models.TextField(_("notes"), blank=True, default="")
     is_active = models.BooleanField(_("actif"), default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         verbose_name = _("Source mail autorisée")
@@ -13985,13 +13985,13 @@ class IncomingMail(models.Model):
         MailSource, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='mails', verbose_name=_("source"),
     )
-    message_id = models.CharField(_("Message-ID"), max_length=500, unique=True)
-    from_email = models.EmailField(_("expéditeur"))
+    message_id = models.CharField(_("Message-ID"), max_length=500, unique=True, blank=True, default="")
+    from_email = models.EmailField(_("expéditeur"), blank=True, default="")
     from_name = models.CharField(_("nom expéditeur"), max_length=255, blank=True, default="")
     subject = models.CharField(_("sujet"), max_length=500, blank=True, default="")
     body_text = models.TextField(_("corps texte"), blank=True, default="")
     body_html = models.TextField(_("corps HTML"), blank=True, default="")
-    received_at = models.DateTimeField(_("reçu le"))
+    received_at = models.DateTimeField(_("reçu le"), null=True, blank=True)
     status = models.CharField(
         _("statut"), max_length=20, choices=Status.choices, default=Status.PENDING,
     )
@@ -14014,8 +14014,8 @@ class IncomingMail(models.Model):
         "Commande", on_delete=models.SET_NULL, null=True, blank=True,
         related_name='incoming_mails', verbose_name=_("commande liée"),
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         verbose_name = _("Mail entrant")
@@ -14031,6 +14031,7 @@ class MailAttachment(models.Model):
     mail = models.ForeignKey(
         IncomingMail, on_delete=models.CASCADE,
         related_name='attachments', verbose_name=_("mail"),
+        null=True, blank=True,
     )
     filename = models.CharField(_("nom fichier"), max_length=500, blank=True, default="")
     content_type = models.CharField(_("type MIME"), max_length=200, blank=True, default="")
