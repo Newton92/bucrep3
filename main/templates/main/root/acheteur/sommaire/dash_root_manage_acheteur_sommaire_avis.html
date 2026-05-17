@@ -811,7 +811,7 @@
                     <i class="fas fa-file-alt"></i>{% trans "Sommaire et Avis" %}
                 </h1>
                 <p class="page-subtitle-premium">
-                    Évaluation synthétique et recommandations sur l'acheteur
+                    {% trans "Évaluation synthétique et recommandations sur l'acheteur" %}
                 </p>
             </div>
             <div class="d-flex gap-2">
@@ -905,7 +905,7 @@
                     <div class="sommaire-section-premium">
                         <div class="sommaire-label-premium">
                             <i class="fas fa-comment-dots"></i>
-                            Commentaire synthétique
+                            {% trans "Commentaire synthétique" %}
                         </div>
                         <div class="content-box-premium">
                             {{ sommaire_avis.commentaire|linebreaks }}
@@ -917,7 +917,7 @@
                     <div class="sommaire-section-premium">
                         <div class="sommaire-label-premium">
                             <i class="fas fa-palette"></i>
-                            Étiquette de couleur
+                            {% trans "Étiquette de couleur" %}
                         </div>
                         <div>
                             <span class="color-badge-premium">
@@ -933,7 +933,7 @@
                         <div class="sommaire-info-temp-item-premium">
                             <i class="fas fa-calendar-plus"></i>
                             <div>
-                                <div class="fw-medium">Créé le {{ sommaire_avis.created_at|date:"d/m/Y" }}</div>
+                                <div class="fw-medium">{% trans "Créé le" %} {{ sommaire_avis.created_at|date:"d/m/Y" }}</div>
                                 <small class="text-muted">à {{ sommaire_avis.created_at|date:"H:i" }}</small>
                             </div>
                         </div>
@@ -952,8 +952,8 @@
                     <i class="fas fa-file-alt sommaire-empty-state-icon-premium"></i>
                     <h4 class="fw-bold mb-3">{% trans "Aucun sommaire et avis défini" %}</h4>
                     <p class="text-muted mb-4">
-                        Cet acheteur ne possède pas encore de sommaire et avis enregistré.<br>
-                        Ajoutez un sommaire et avis pour synthétiser l'évaluation de l'acheteur.
+                        {% trans "Cet acheteur ne possède pas encore de sommaire et avis enregistré." %}<br>
+                        {% trans "Ajoutez un sommaire et avis pour synthétiser l'évaluation de l'acheteur." %}
                     </p>
                     <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addSommaireModal">
                         <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le sommaire et avis" %}
@@ -1132,8 +1132,8 @@
                 <i class="fas fa-file-alt fa-3x text-danger mb-3"></i>
                 <h6 class="fw-bold mb-3">{% trans "Supprimer le sommaire et avis" %}</h6>
                 <p class="text-dark mb-0" id="deleteConfirmationText">
-                    Cette action supprimera définitivement le sommaire et avis.<br>
-                    Cette opération est irréversible.
+                    {% trans "Cette action supprimera définitivement le sommaire et avis." %}<br>
+                    {% trans "Cette opération est irréversible." %}
                 </p>
             </div>
             <div class="modal-footer justify-content-center border-0">
@@ -1160,13 +1160,28 @@ $(document).ready(function() {
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/sommaire-avis/`;
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
-    
+
+    const I18N = {
+        commentRequired: '{% trans "Commentaire requis" %}',
+        commentMinLength: "{% trans "Veuillez rédiger un commentaire synthétique d'au moins 10 caractères." %}",
+        success: '{% trans "Succès" %}',
+        error: '{% trans "Erreur" %}',
+        deleteInProgress: '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Suppression..." %>',
+        deleteConfirm: '<i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %}',
+        sessionExpired: '{% trans "Session expirée" %}',
+        sessionExpiredText: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
+        reconnect: '{% trans "Se reconnecter" %}',
+        cancel: '{% trans "Annuler" %}',
+        cannotDelete: '{% trans "Impossible de supprimer le sommaire et avis" %}',
+        selectOption: '{% trans "Sélectionnez une option" %}',
+    };
+
     // Initialiser Select2
     function initSelect2() {
         $('.select2-with-search').select2({
             theme: 'bootstrap-5',
             width: '100%',
-            placeholder: 'Sélectionnez une option',
+            placeholder: I18N.selectOption,
             language: 'fr',
             allowClear: true,
             minimumResultsForSearch: 10,
@@ -1248,31 +1263,31 @@ $(document).ready(function() {
         if (!commentaire || commentaire.trim().length < 10) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Commentaire requis',
-                text: 'Veuillez rédiger un commentaire synthétique d\'au moins 10 caractères.'
+                title: I18N.commentRequired,
+                text: I18N.commentMinLength
             });
             return;
         }
-        
+
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        
+
         submitSommaireForm(data, '#submitAddBtn', 'addSommaireModal');
     });
-    
+
     // Formulaire de modification
     $('#editSommaireForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const commentaire = $('#editCommentaire').val();
         if (!commentaire || commentaire.trim().length < 10) {
             Swal.fire({
                 icon: 'warning',
-                title: 'Commentaire requis',
-                text: 'Veuillez rédiger un commentaire synthétique d\'au moins 10 caractères.'
+                title: I18N.commentRequired,
+                text: I18N.commentMinLength
             });
             return;
         }
@@ -1319,8 +1334,8 @@ $(document).ready(function() {
                 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Sommaire enregistré avec succès',
+                    title: I18N.success,
+                    text: response.message || '{% trans "Sommaire enregistré avec succès" %}',
                     timer: 2000,
                     showConfirmButton: false
                 }).then(() => {
@@ -1332,8 +1347,8 @@ $(document).ready(function() {
                 $btnText.show();
                 $btn.prop('disabled', false);
                 hideEditingIndicator();
-                
-                let errorMessage = 'Une erreur est survenue';
+
+                let errorMessage = '{% trans "Une erreur est survenue" %}';
                 if (xhr.responseJSON) {
                     if (xhr.responseJSON.error) {
                         errorMessage = xhr.responseJSON.error;
@@ -1347,7 +1362,7 @@ $(document).ready(function() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Erreur',
+                        title: I18N.error,
                         html: errorMessage.replace(/\n/g, '<br>')
                     });
                 }
@@ -1359,7 +1374,7 @@ $(document).ready(function() {
     $('#confirmDeleteBtn').on('click', function() {
         const $btn = $(this);
         $btn.prop('disabled', true);
-        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        $btn.html(I18N.deleteInProgress);
         showEditingIndicator();
         
         $.ajax({
@@ -1372,14 +1387,14 @@ $(document).ready(function() {
             success: function(response) {
                 $('#confirmDeleteModal').modal('hide');
                 $btn.prop('disabled', false);
-                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                $btn.html(I18N.deleteConfirm);
                 
                 setTimeout(() => hideEditingIndicator(), 1000);
                 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Sommaire et avis supprimé avec succès',
+                    title: I18N.success,
+                    text: response.message || '{% trans "Sommaire et avis supprimé avec succès" %}',
                     timer: 2000,
                     showConfirmButton: false
                 }).then(() => {
@@ -1388,7 +1403,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 $btn.prop('disabled', false);
-                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                $btn.html(I18N.deleteConfirm);
                 hideEditingIndicator();
                 
                 if (xhr.status === 401) {
@@ -1396,8 +1411,8 @@ $(document).ready(function() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.message || 'Impossible de supprimer le sommaire et avis'
+                        title: I18N.error,
+                        text: xhr.responseJSON?.message || I18N.cannotDelete
                     });
                 }
             }
@@ -1436,11 +1451,11 @@ $(document).ready(function() {
             error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    title: I18N.sessionExpired,
+                    text: I18N.sessionExpiredText,
                     showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler'
+                    confirmButtonText: I18N.reconnect,
+                    cancelButtonText: I18N.cancel
                 }).then((result) => {
                     if (result.isConfirmed) {
                         window.location.href = '/login/';

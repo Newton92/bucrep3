@@ -855,7 +855,7 @@
                     <i class="fas fa-chart-pie"></i>{% trans "Analyse Sectorielle" %}
                 </h1>
                 <p class="page-subtitle-premium">
-                    Évaluation approfondie du secteur d'activité et de la position concurrentielle de l'acheteur
+                    {% trans "Évaluation approfondie du secteur d'activité et de la position concurrentielle de l'acheteur" %}
                 </p>
             </div>
             <div class="d-flex gap-2">
@@ -948,7 +948,7 @@
                 <div class="analyse-header-premium">
                     <div class="analyse-title-premium">
                         <i class="fas fa-chart-pie"></i>
-                        Analyse Sectorielle Complète
+                        {% trans "Analyse Sectorielle Complète" %}
                     </div>
                     <div class="analyse-actions-premium">
                         <button class="btn btn-warning-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#editAnalyseModal">
@@ -964,7 +964,7 @@
                 <div class="content-section-premium">
                     <div class="content-label-premium">
                         <i class="fas fa-comment-dots"></i>
-                        Analyse Sectorielle
+                        {% trans "Analyse Sectorielle" %}
                     </div>
                     <div class="content-box-premium">
                         {{ analyse.commentaire|linebreaks }}
@@ -976,7 +976,7 @@
                 <div class="content-section-premium">
                     <div class="content-label-premium">
                         <i class="fas fa-virus"></i>
-                        Impact de la Pandémie COVID-19
+                        {% trans "Impact de la Pandémie COVID-19" %}
                     </div>
                     <div class="content-box-premium">
                         {{ analyse.impact_covid_19|linebreaks }}
@@ -989,7 +989,7 @@
                 <div class="content-section-premium">
                     <div class="content-label-premium">
                         <i class="fas fa-palette"></i>
-                        Étiquette de Classification
+                        {% trans "Étiquette de Classification" %}
                     </div>
                     <div>
                         <span class="color-badge-premium">
@@ -1011,7 +1011,7 @@
                     <div class="info-item-premium">
                         <i class="fas fa-calendar-plus"></i>
                         <div>
-                            <div class="fw-medium">Créée le {{ analyse.created_at|date:"d/m/Y" }}</div>
+                            <div class="fw-medium">{% trans "Créée le" %} {{ analyse.created_at|date:"d/m/Y" }}</div>
                             <small class="text-muted">à {{ analyse.created_at|date:"H:i" }}</small>
                         </div>
                     </div>
@@ -1030,9 +1030,8 @@
                 <i class="fas fa-chart-pie empty-state-icon-premium"></i>
                 <h4 class="fw-bold mb-3">{% trans "Analyse Sectorielle Non Définie" %}</h4>
                 <p class="text-muted mb-4">
-                    L'acheteur ne possède pas encore d'analyse sectorielle complète.<br>
-                    Cette analyse permet d'évaluer la position stratégique, les opportunités<br>
-                    et les risques spécifiques au secteur d'activité.
+                    {% trans "L'acheteur ne possède pas encore d'analyse sectorielle complète." %}<br>
+                    {% trans "Cette analyse permet d'évaluer la position stratégique, les opportunités et les risques spécifiques au secteur d'activité." %}
                 </p>
                 <button class="btn btn-success-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAnalyseModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Démarrer l'Analyse Sectorielle" %}
@@ -1075,7 +1074,7 @@
 
                     <div class="form-group">
                         <label for="impact_covid_19" class="form-label">
-                            <i class="fas fa-virus"></i>Impact COVID-19 (Optionnel)
+                            <i class="fas fa-virus"></i>{% trans "Impact COVID-19 (Optionnel)" %}
                         </label>
                         <textarea class="form-control" id="impact_covid_19" name="impact_covid_19" rows="5"
                                   placeholder="Évaluation spécifique de l'impact de la pandémie sur le secteur :
@@ -1146,7 +1145,7 @@
 
                     <div class="form-group">
                         <label for="editImpactCovid" class="form-label">
-                            <i class="fas fa-virus"></i>Impact COVID-19
+                            <i class="fas fa-virus"></i>{% trans "Impact COVID-19" %}
                         </label>
                         <textarea class="form-control" id="editImpactCovid" name="impact_covid_19" rows="5"></textarea>
                     </div>
@@ -1197,11 +1196,11 @@
                     <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 </div>
                 <h6 class="fw-bold mb-3" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Supprimer l'analyse sectorielle
+                    {% trans "Supprimer l'analyse sectorielle" %}
                 </h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Cette action supprimera définitivement l'analyse sectorielle.<br>
-                    Cette opération est irréversible.
+                    {% trans "Cette action supprimera définitivement l'analyse sectorielle." %}<br>
+                    {% trans "Cette opération est irréversible." %}
                 </p>
             </div>
             <div class="modal-footer justify-content-center border-0">
@@ -1228,6 +1227,18 @@ $(document).ready(function() {
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/analyse-sectorielle/`;
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
+
+    const I18N = {
+        success: '{% trans "Succès" %}',
+        error: '{% trans "Erreur" %}',
+        deleteInProgress: '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Suppression..." %}',
+        deleteConfirm: '<i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %>',
+        sessionExpired: '{% trans "Session expirée" %}',
+        sessionExpiredText: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
+        reconnect: '{% trans "Se reconnecter" %}',
+        cancel: '{% trans "Annuler" %}',
+        cannotDelete: '{% trans "Impossible de supprimer l\'analyse sectorielle" %}',
+    };
     
     // Fonction pour formater les options avec couleur
     function formatColorOption(option) {
@@ -1440,8 +1451,8 @@ $(document).ready(function() {
                 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Opération réussie',
+                    title: I18N.success,
+                    text: response.message || '{% trans "Opération réussie" %}',
                     timer: 2000,
                     showConfirmButton: false,
                     background: '#fcfefe',
@@ -1454,8 +1465,8 @@ $(document).ready(function() {
                 $spinner.addClass('d-none');
                 $btnText.show();
                 $btn.prop('disabled', false);
-                
-                let errorMessage = 'Une erreur est survenue';
+
+                let errorMessage = '{% trans "Une erreur est survenue" %}';
                 if (xhr.responseJSON) {
                     if (xhr.responseJSON.error) {
                         errorMessage = xhr.responseJSON.error;
@@ -1471,7 +1482,7 @@ $(document).ready(function() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Erreur',
+                        title: I18N.error,
                         html: errorMessage.replace(/\n/g, '<br>'),
                         background: '#fcfefe',
                         color: '#000000'
@@ -1485,7 +1496,7 @@ $(document).ready(function() {
     $('#confirmDeleteBtn').on('click', function() {
         const $btn = $(this);
         $btn.prop('disabled', true);
-        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        $btn.html(I18N.deleteInProgress);
         
         $.ajax({
             url: API_BASE_URL,
@@ -1497,12 +1508,12 @@ $(document).ready(function() {
             success: function(response) {
                 $('#confirmDeleteModal').modal('hide');
                 $btn.prop('disabled', false);
-                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                $btn.html(I18N.deleteConfirm);
                 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Analyse sectorielle supprimée avec succès',
+                    title: I18N.success,
+                    text: response.message || '{% trans "Analyse sectorielle supprimée avec succès" %}',
                     timer: 2000,
                     showConfirmButton: false,
                     background: '#fcfefe',
@@ -1513,7 +1524,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 $btn.prop('disabled', false);
-                $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
+                $btn.html(I18N.deleteConfirm);
                 
                 if (xhr.status === 401) {
                     refreshAccessToken(() => {
@@ -1522,8 +1533,8 @@ $(document).ready(function() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.message || 'Impossible de supprimer l\'analyse sectorielle',
+                        title: I18N.error,
+                        text: xhr.responseJSON?.message || I18N.cannotDelete,
                         background: '#fcfefe',
                         color: '#000000'
                     });
@@ -1566,11 +1577,11 @@ $(document).ready(function() {
             error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    title: I18N.sessionExpired,
+                    text: I18N.sessionExpiredText,
                     showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
+                    confirmButtonText: I18N.reconnect,
+                    cancelButtonText: I18N.cancel,
                     background: '#fcfefe',
                     color: '#000000'
                 }).then((result) => {
