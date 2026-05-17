@@ -1,0 +1,486 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block title %}Paramétrage — Boîte de réception{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-accent: #106cb2;
+}
+.page-header {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    color: #fff;
+}
+.page-header h4 { margin: 0; font-weight: 700; font-size: 1.1rem; }
+.page-header p  { margin: 4px 0 0; font-size: .85rem; opacity: .85; }
+.stat-pill {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    min-width: 80px;
+    cursor: pointer;
+}
+.stat-pill .stat-num   { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.stat-pill .stat-label { font-size: .7rem; color: #64748b; margin-top: 2px; }
+.stat-pill.active-filter { border-color: var(--color-primary); background: #eff9fe; }
+.mail-table th { font-size: .75rem; font-weight: 700; color: #64748b; text-transform: uppercase; white-space: nowrap; }
+.mail-table td { font-size: .84rem; vertical-align: middle; }
+.mail-table tr:hover { background: #f8fafc; cursor: pointer; }
+.badge-status-PENDING    { background: #fef3c7; color: #92400e; }
+.badge-status-DISPATCHED { background: #dbeafe; color: #1e40af; }
+.badge-status-ACCEPTED   { background: #d1fae5; color: #065f46; }
+.badge-status-PROCESSED  { background: #e0e7ff; color: #3730a3; }
+.badge-status-REJECTED   { background: #fee2e2; color: #991b1b; }
+.mail-subject   { font-weight: 600; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-from      { font-size: .78rem; color: #475569; }
+.mail-body-preview { max-height: 200px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: .82rem; white-space: pre-wrap; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-3 px-3">
+
+    <!-- En-tête -->
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h4><i class="bi bi-inbox me-2"></i>Boîte de réception</h4>
+            <p>Mails entrants des clients — consultation et dispatching.</p>
+        </div>
+        <button class="btn btn-light btn-sm" id="btnRefresh">
+            <i class="bi bi-arrow-repeat me-1"></i>Actualiser
+        </button>
+    </div>
+
+    <!-- Stats pills -->
+    <div class="d-flex gap-2 flex-wrap mb-3" id="statPills">
+        <div class="stat-pill active-filter" data-filter="">
+            <span class="stat-num text-dark" id="statTotal">—</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-pill" data-filter="PENDING">
+            <span class="stat-num text-warning" id="statPending">—</span>
+            <span class="stat-label">En attente</span>
+        </div>
+        <div class="stat-pill" data-filter="DISPATCHED">
+            <span class="stat-num" style="color:#1e40af" id="statDispatched">—</span>
+            <span class="stat-label">Dispatché</span>
+        </div>
+        <div class="stat-pill" data-filter="ACCEPTED">
+            <span class="stat-num text-success" id="statAccepted">—</span>
+            <span class="stat-label">Accepté</span>
+        </div>
+        <div class="stat-pill" data-filter="PROCESSED">
+            <span class="stat-num" style="color:#3730a3" id="statProcessed">—</span>
+            <span class="stat-label">Traité</span>
+        </div>
+        <div class="stat-pill" data-filter="REJECTED">
+            <span class="stat-num text-danger" id="statRejected">—</span>
+            <span class="stat-label">Rejeté</span>
+        </div>
+    </div>
+
+    <!-- Filtre recherche -->
+    <div class="mb-3">
+        <input type="search" class="form-control form-control-sm" id="searchInput"
+               placeholder="Rechercher par objet, expéditeur…" style="max-width:320px;">
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mail-table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>De</th>
+                            <th>Objet</th>
+                            <th>Source</th>
+                            <th>Reçu le</th>
+                            <th>Statut</th>
+                            <th>Assigné à</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="mailTableBody">
+                        <tr><td colspan="7" class="text-center py-4 text-muted">
+                            <span class="spinner-border spinner-border-sm me-1"></span> Chargement…
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="paginationBar">
+                <span class="small text-muted" id="paginationInfo"></span>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-outline-secondary btn-sm" id="btnPrevPage" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnNextPage" disabled>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas — détail mail -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="mailDetailCanvas" style="width:520px;">
+    <div class="offcanvas-header border-bottom">
+        <h6 class="offcanvas-title"><i class="bi bi-envelope-open me-2"></i><span id="detailSubject">…</span></h6>
+        <button type="button" class="btn-close btn-sm" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" id="mailDetailBody">
+        <div class="text-center py-5 text-muted">
+            <span class="spinner-border"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dispatch -->
+<div class="modal fade" id="dispatchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-send me-2"></i>Dispatcher le mail</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="dispatchMailId">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Assigner à</label>
+                    <select class="form-select form-select-sm" id="dispatchUser"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Note de dispatch</label>
+                    <textarea class="form-control form-control-sm" id="dispatchNote" rows="2"
+                              placeholder="Instructions, contexte…"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnConfirmDispatch">
+                    <i class="bi bi-send me-1"></i>Dispatcher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ACCESS_TOKEN = "{{ access_token }}";
+const API = "/api/v1/mail";
+
+function authHeaders() {
+    return { "Content-Type": "application/json", "Authorization": "Bearer " + ACCESS_TOKEN };
+}
+
+async function apiCall(method, url, data) {
+    const res = await fetch(url, {
+        method,
+        headers: authHeaders(),
+        body: data ? JSON.stringify(data) : undefined,
+    });
+    if (res.status === 204) return { ok: true, data: null };
+    return res.json().then(j => ({ ok: res.ok, status: res.status, data: j }));
+}
+
+function escHtml(s) {
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function fmtDate(iso) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric",
+        hour:"2-digit", minute:"2-digit" });
+}
+function statusBadge(s) {
+    const labels = { PENDING:"En attente", DISPATCHED:"Dispatché", ACCEPTED:"Accepté",
+                     PROCESSED:"Traité", REJECTED:"Rejeté" };
+    return `<span class="badge badge-status-${s}">${labels[s] || s}</span>`;
+}
+
+// ── State ────────────────────────────────────────────────────
+let currentPage = 1;
+let currentFilter = "";
+let currentSearch = "";
+let totalPages = 1;
+let allUsers = [];
+
+// ── Load users ───────────────────────────────────────────────
+async function loadUsers() {
+    const r = await apiCall("GET", `${API}/users/`);
+    if (r?.ok) allUsers = r.data;
+}
+
+// ── Load inbox ───────────────────────────────────────────────
+async function loadInbox() {
+    const tbody = document.getElementById("mailTableBody");
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
+        <span class="spinner-border spinner-border-sm me-1"></span> Chargement…</td></tr>`;
+
+    let url = `${API}/inbox/?page=${currentPage}`;
+    if (currentFilter) url += `&status=${currentFilter}`;
+    if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+    const r = await apiCall("GET", url);
+    if (!r?.ok) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Erreur de chargement.</td></tr>`;
+        return;
+    }
+
+    const d = r.data;
+    // Stats
+    const s = d.stats;
+    document.getElementById("statTotal").textContent = s.total;
+    document.getElementById("statPending").textContent = s.pending;
+    document.getElementById("statDispatched").textContent = s.dispatched;
+    document.getElementById("statAccepted").textContent = s.accepted;
+    document.getElementById("statProcessed").textContent = s.processed;
+    document.getElementById("statRejected").textContent = s.rejected;
+
+    // Pagination
+    totalPages = Math.ceil(d.count / d.page_size) || 1;
+    document.getElementById("paginationInfo").textContent =
+        `Page ${d.page} / ${totalPages} — ${d.count} mail(s)`;
+    document.getElementById("btnPrevPage").disabled = d.page <= 1;
+    document.getElementById("btnNextPage").disabled = d.page >= totalPages;
+
+    // Table
+    if (!d.results.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Aucun mail trouvé.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = d.results.map(m => `
+        <tr data-id="${m.id}" class="mail-row">
+            <td>
+                <div class="fw-semibold" style="font-size:.84rem;">${escHtml(m.from_name || m.from_email)}</div>
+                ${m.from_name ? `<div class="mail-from">${escHtml(m.from_email)}</div>` : ""}
+            </td>
+            <td><div class="mail-subject">${escHtml(m.subject || "(Sans objet)")}</div></td>
+            <td><span class="small text-muted">${escHtml(m.mail_source?.client_name || "—")}</span></td>
+            <td><span class="small">${fmtDate(m.received_at)}</span></td>
+            <td>${statusBadge(m.status)}</td>
+            <td><span class="small">${escHtml(m.assigned_to?.name || "—")}</span></td>
+            <td class="text-end">
+                <button class="btn btn-link btn-sm p-0 me-2 btn-view-mail" data-id="${m.id}" title="Voir">
+                    <i class="bi bi-eye"></i>
+                </button>
+                ${m.status === "PENDING" ? `
+                <button class="btn btn-link btn-sm p-0 text-primary btn-dispatch-mail" data-id="${m.id}" title="Dispatcher">
+                    <i class="bi bi-send"></i>
+                </button>` : ""}
+                ${["PENDING","DISPATCHED","ACCEPTED"].includes(m.status) ? `
+                <button class="btn btn-link btn-sm p-0 text-danger btn-reject-mail" data-id="${m.id}" title="Rejeter">
+                    <i class="bi bi-x-circle"></i>
+                </button>` : ""}
+                ${m.status === "REJECTED" ? `
+                <button class="btn btn-link btn-sm p-0 text-warning btn-restore-mail" data-id="${m.id}" title="Remettre en attente">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>` : ""}
+            </td>
+        </tr>`).join("");
+
+    tbody.querySelectorAll(".btn-view-mail").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); openMailDetail(b.dataset.id); }));
+    tbody.querySelectorAll(".mail-row").forEach(r => r.addEventListener("click", () => openMailDetail(r.dataset.id)));
+    tbody.querySelectorAll(".btn-dispatch-mail").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); openDispatch(b.dataset.id); }));
+    tbody.querySelectorAll(".btn-reject-mail").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); rejectMail(b.dataset.id); }));
+    tbody.querySelectorAll(".btn-restore-mail").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); restoreMail(b.dataset.id); }));
+}
+
+// ── Mail detail ──────────────────────────────────────────────
+async function openMailDetail(id) {
+    document.getElementById("detailSubject").textContent = "Chargement…";
+    document.getElementById("mailDetailBody").innerHTML = `<div class="text-center py-5"><span class="spinner-border"></span></div>`;
+    const canvas = new bootstrap.Offcanvas(document.getElementById("mailDetailCanvas"));
+    canvas.show();
+
+    const r = await apiCall("GET", `${API}/inbox/${id}/`);
+    if (!r?.ok) {
+        document.getElementById("mailDetailBody").innerHTML = `<div class="text-danger">Erreur de chargement.</div>`;
+        return;
+    }
+
+    const m = r.data;
+    document.getElementById("detailSubject").textContent = m.subject || "(Sans objet)";
+
+    const attachmentsHtml = m.attachments.length ? `
+        <div class="mb-3">
+            <div class="small fw-semibold mb-1"><i class="bi bi-paperclip me-1"></i>Pièces jointes (${m.attachments.length})</div>
+            ${m.attachments.map(a => `
+                <a href="${a.download_url}" class="btn btn-outline-secondary btn-sm me-1 mb-1" target="_blank">
+                    <i class="bi bi-file-earmark me-1"></i>${escHtml(a.filename)}
+                    <span class="text-muted" style="font-size:.7rem;">(${(a.size/1024).toFixed(1)} Ko)</span>
+                </a>`).join("")}
+        </div>` : "";
+
+    const dispatchInfoHtml = m.dispatched_at ? `
+        <div class="alert alert-info py-2 small mb-3">
+            <i class="bi bi-send me-1"></i>
+            Dispatché le ${fmtDate(m.dispatched_at)} par <strong>${escHtml(m.dispatched_by?.name || "—")}</strong>
+            → <strong>${escHtml(m.assigned_to?.name || "—")}</strong>
+            ${m.dispatch_note ? `<br><em>${escHtml(m.dispatch_note)}</em>` : ""}
+        </div>` : "";
+
+    document.getElementById("mailDetailBody").innerHTML = `
+        <div class="mb-3 p-3" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+            <div class="row g-2">
+                <div class="col-12">
+                    <span class="small text-muted">De :</span>
+                    <span class="small fw-semibold ms-1">${escHtml(m.from_name ? m.from_name + " <" + m.from_email + ">" : m.from_email)}</span>
+                </div>
+                <div class="col-6">
+                    <span class="small text-muted">Reçu :</span>
+                    <span class="small ms-1">${fmtDate(m.received_at)}</span>
+                </div>
+                <div class="col-6">
+                    <span class="small text-muted">Statut :</span>
+                    <span class="ms-1">${statusBadge(m.status)}</span>
+                </div>
+                ${m.mail_source ? `<div class="col-12">
+                    <span class="small text-muted">Source :</span>
+                    <span class="small ms-1">${escHtml(m.mail_source.client_name)}</span>
+                </div>` : ""}
+            </div>
+        </div>
+
+        ${dispatchInfoHtml}
+        ${attachmentsHtml}
+
+        <div class="mb-3">
+            <div class="small fw-semibold mb-1"><i class="bi bi-chat-left-text me-1"></i>Corps du message</div>
+            <div class="mail-body-preview">${m.body_html ? m.body_html : escHtml(m.body_text || "(Vide)")}</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mt-3 pt-3 border-top">
+            ${m.status === "PENDING" ? `
+            <button class="btn btn-primary btn-sm detail-dispatch" data-id="${m.id}">
+                <i class="bi bi-send me-1"></i>Dispatcher
+            </button>
+            <button class="btn btn-outline-secondary btn-sm detail-self-dispatch" data-id="${m.id}">
+                <i class="bi bi-person-check me-1"></i>Prendre en charge
+            </button>` : ""}
+            ${m.status === "DISPATCHED" ? `
+            <button class="btn btn-success btn-sm detail-processed" data-id="${m.id}">
+                <i class="bi bi-check-circle me-1"></i>Marquer traité
+            </button>
+            <button class="btn btn-outline-primary btn-sm detail-dispatch" data-id="${m.id}">
+                <i class="bi bi-send me-1"></i>Réaffecter
+            </button>` : ""}
+            ${["PENDING","DISPATCHED","ACCEPTED"].includes(m.status) ? `
+            <button class="btn btn-outline-danger btn-sm detail-reject" data-id="${m.id}">
+                <i class="bi bi-x-circle me-1"></i>Rejeter
+            </button>` : ""}
+            ${m.status === "REJECTED" ? `
+            <button class="btn btn-outline-warning btn-sm detail-restore" data-id="${m.id}">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Remettre en attente
+            </button>` : ""}
+        </div>`;
+
+    document.querySelectorAll(".detail-dispatch").forEach(b => b.addEventListener("click", () => {
+        bootstrap.Offcanvas.getInstance(document.getElementById("mailDetailCanvas")).hide();
+        openDispatch(b.dataset.id);
+    }));
+    document.querySelectorAll(".detail-self-dispatch").forEach(b => b.addEventListener("click", async () => {
+        await apiCall("POST", `${API}/inbox/${b.dataset.id}/self-dispatch/`);
+        bootstrap.Offcanvas.getInstance(document.getElementById("mailDetailCanvas")).hide();
+        loadInbox();
+    }));
+    document.querySelectorAll(".detail-processed").forEach(b => b.addEventListener("click", async () => {
+        await apiCall("POST", `${API}/inbox/${b.dataset.id}/processed/`);
+        bootstrap.Offcanvas.getInstance(document.getElementById("mailDetailCanvas")).hide();
+        loadInbox();
+    }));
+    document.querySelectorAll(".detail-reject").forEach(b => b.addEventListener("click", async () => {
+        await rejectMail(b.dataset.id);
+        bootstrap.Offcanvas.getInstance(document.getElementById("mailDetailCanvas")).hide();
+    }));
+    document.querySelectorAll(".detail-restore").forEach(b => b.addEventListener("click", async () => {
+        await restoreMail(b.dataset.id);
+        bootstrap.Offcanvas.getInstance(document.getElementById("mailDetailCanvas")).hide();
+    }));
+}
+
+// ── Dispatch modal ───────────────────────────────────────────
+async function openDispatch(mailId) {
+    document.getElementById("dispatchMailId").value = mailId;
+    document.getElementById("dispatchNote").value = "";
+    const select = document.getElementById("dispatchUser");
+    select.innerHTML = allUsers.map(u =>
+        `<option value="${u.id}">${escHtml(u.full_name)} (${escHtml(u.role || u.username)})</option>`
+    ).join("");
+    new bootstrap.Modal(document.getElementById("dispatchModal")).show();
+}
+
+document.getElementById("btnConfirmDispatch").addEventListener("click", async () => {
+    const id = document.getElementById("dispatchMailId").value;
+    const r = await apiCall("POST", `${API}/inbox/${id}/dispatch/`, {
+        assigned_to_id: parseInt(document.getElementById("dispatchUser").value),
+        dispatch_note: document.getElementById("dispatchNote").value.trim(),
+    });
+    if (r?.ok) {
+        bootstrap.Modal.getInstance(document.getElementById("dispatchModal")).hide();
+        loadInbox();
+    } else {
+        alert(r?.data?.detail || "Erreur.");
+    }
+});
+
+// ── Actions rapides ──────────────────────────────────────────
+async function rejectMail(id) {
+    if (!confirm("Rejeter ce mail ?")) return;
+    await apiCall("POST", `${API}/inbox/${id}/reject/`);
+    loadInbox();
+}
+async function restoreMail(id) {
+    await apiCall("POST", `${API}/inbox/${id}/restore/`);
+    loadInbox();
+}
+
+// ── Filtres et pagination ─────────────────────────────────────
+document.getElementById("statPills").querySelectorAll(".stat-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+        document.querySelectorAll(".stat-pill").forEach(p => p.classList.remove("active-filter"));
+        pill.classList.add("active-filter");
+        currentFilter = pill.dataset.filter;
+        currentPage = 1;
+        loadInbox();
+    });
+});
+
+document.getElementById("btnPrevPage").addEventListener("click", () => {
+    if (currentPage > 1) { currentPage--; loadInbox(); }
+});
+document.getElementById("btnNextPage").addEventListener("click", () => {
+    if (currentPage < totalPages) { currentPage++; loadInbox(); }
+});
+
+let searchTimeout;
+document.getElementById("searchInput").addEventListener("input", e => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        currentSearch = e.target.value.trim();
+        currentPage = 1;
+        loadInbox();
+    }, 350);
+});
+
+document.getElementById("btnRefresh").addEventListener("click", loadInbox);
+
+// ── Init ─────────────────────────────────────────────────────
+loadUsers();
+loadInbox();
+</script>
+{% endblock %}

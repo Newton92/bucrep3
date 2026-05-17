@@ -16247,6 +16247,34 @@ def dash_root_export_decompte(request):
     })
 
 
+@login_required
+def dash_root_parametrage_mail(request):
+    """Page de configuration IMAP et gestion des sources mail."""
+    if request.user.role != "Root":
+        return redirect_to_login(request.get_full_path())
+    refresh = RefreshToken.for_user(request.user)
+    return render(request, "main/root/parametrage/dash_root_parametrage_mail.html", {
+        "parametrage_active": "active",
+        "parametrage_mail_active": "active",
+        "access_token": str(refresh.access_token),
+        "refresh_token": str(refresh),
+    })
+
+
+@login_required
+def dash_root_mail_inbox(request):
+    """Boîte de réception des mails entrants et dispatching."""
+    if request.user.role != "Root":
+        return redirect_to_login(request.get_full_path())
+    refresh = RefreshToken.for_user(request.user)
+    return render(request, "main/root/parametrage/dash_root_mail_inbox.html", {
+        "parametrage_active": "active",
+        "parametrage_inbox_active": "active",
+        "access_token": str(refresh.access_token),
+        "refresh_token": str(refresh),
+    })
+
+
 
 
 

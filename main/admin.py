@@ -2712,3 +2712,32 @@ for model in AUTO_REGISTERED_MODELS:
     except admin.sites.AlreadyRegistered:
         pass
 
+
+@admin.register(MailInboxConfig)
+class MailInboxConfigAdmin(admin.ModelAdmin):
+    list_display = ("imap_user", "imap_host", "imap_port", "use_ssl", "is_active", "last_polled_at")
+    readonly_fields = ("last_polled_at", "last_error", "created_at", "updated_at")
+
+
+@admin.register(MailSource)
+class MailSourceAdmin(admin.ModelAdmin):
+    list_display = ("client_name", "email_or_domain", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("client_name", "email_or_domain")
+
+
+class MailAttachmentInline(admin.TabularInline):
+    model = MailAttachment
+    extra = 0
+    readonly_fields = ("filename", "content_type", "size", "file", "created_at")
+    can_delete = False
+
+
+@admin.register(IncomingMail)
+class IncomingMailAdmin(admin.ModelAdmin):
+    list_display = ("subject", "from_email", "status", "received_at", "assigned_to")
+    list_filter = ("status",)
+    search_fields = ("subject", "from_email", "message_id")
+    readonly_fields = ("message_id", "received_at", "created_at", "updated_at")
+    inlines = [MailAttachmentInline]
+

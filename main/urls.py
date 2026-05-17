@@ -25,6 +25,14 @@ from main.api.views_account import *
 from main.api.views_report import *
 from main.api.views_reporting import *
 from main.api.views_api_load_data import *
+from main.api.views_mail import (
+    mail_imap_config, mail_imap_test, mail_imap_poll, mail_cron_status,
+    mail_sources, mail_source_detail, mail_source_toggle,
+    mail_inbox_stats, mail_inbox, mail_inbox_detail,
+    mail_dispatch, mail_self_dispatch, mail_accept, mail_reassign,
+    mail_reject, mail_restore, mail_mark_processed,
+    mail_users_list, mail_attachment_download,
+)
 from main.views import *
 from main.api.views_scoring import (
     ScoringSansBilanAcheteurDetailView,
@@ -877,6 +885,18 @@ urlpatterns = [
     path("api/nace/activities/", NaceActivitiesAPIView.as_view(), name="api_nace_activities"),
     path("api/nace/types/",      NaceTypesAPIView.as_view(),      name="api_nace_types"),
     path("api/nace/codes/",      NaceCodesAPIView.as_view(),      name="api_nace_codes"),
+
+    # ── Paramétrage mail — Pages dashboard ──────────────────────────────────────
+    path(
+        "root-dashboard/parametrage/configuration-mail/",
+        dash_root_parametrage_mail,
+        name="dash_root_parametrage_mail",
+    ),
+    path(
+        "root-dashboard/parametrage/boite-de-reception/",
+        dash_root_mail_inbox,
+        name="dash_root_mail_inbox",
+    ),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -5198,6 +5218,27 @@ urlpatterns = [
     path('api/database/dump/', DatabaseDumpAPIView.as_view(), name='api-db-dump'),
     path('api/load-data/', APILoadDataView.as_view(), name='api-load-data'),
     path('api/telecharger-data-sql/', telecharger_donnees_postgres_sql_texte, name='telecharger_data_sql'),
+
+    # ── Mail inbox API ───────────────────────────────────────────────────────────
+    path("api/v1/mail/imap/",              mail_imap_config,          name="mail-imap-config"),
+    path("api/v1/mail/imap/test/",         mail_imap_test,            name="mail-imap-test"),
+    path("api/v1/mail/imap/poll/",         mail_imap_poll,            name="mail-imap-poll"),
+    path("api/v1/mail/imap/status/",       mail_cron_status,          name="mail-imap-status"),
+    path("api/v1/mail/sources/",           mail_sources,              name="mail-sources"),
+    path("api/v1/mail/sources/<int:source_id>/",        mail_source_detail,  name="mail-source-detail"),
+    path("api/v1/mail/sources/<int:source_id>/toggle/", mail_source_toggle,  name="mail-source-toggle"),
+    path("api/v1/mail/inbox/stats/",       mail_inbox_stats,          name="mail-inbox-stats"),
+    path("api/v1/mail/inbox/",             mail_inbox,                name="mail-inbox"),
+    path("api/v1/mail/inbox/<int:mail_id>/",            mail_inbox_detail,   name="mail-inbox-detail"),
+    path("api/v1/mail/inbox/<int:mail_id>/dispatch/",   mail_dispatch,       name="mail-dispatch"),
+    path("api/v1/mail/inbox/<int:mail_id>/self-dispatch/", mail_self_dispatch, name="mail-self-dispatch"),
+    path("api/v1/mail/inbox/<int:mail_id>/accept/",     mail_accept,         name="mail-accept"),
+    path("api/v1/mail/inbox/<int:mail_id>/reassign/",   mail_reassign,       name="mail-reassign"),
+    path("api/v1/mail/inbox/<int:mail_id>/reject/",     mail_reject,         name="mail-reject"),
+    path("api/v1/mail/inbox/<int:mail_id>/restore/",    mail_restore,        name="mail-restore"),
+    path("api/v1/mail/inbox/<int:mail_id>/processed/",  mail_mark_processed, name="mail-processed"),
+    path("api/v1/mail/users/",             mail_users_list,           name="mail-users"),
+    path("api/v1/mail/attachments/<int:attachment_id>/download/", mail_attachment_download, name="mail-attachment-download"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END                                                                                                      #

@@ -13921,6 +13921,130 @@ class ListeInformationsAvisCommercial(models.Model):
         return self.libelle
 
 
+class MailInboxConfig(models.Model):
+    """Configuration IMAP singleton pour recevoir les mails clients."""
+    imap_host = models.CharField(_("hôte IMAP"), max_length=255)
+    imap_port = models.PositiveSmallIntegerField(_("port"), default=993)
+    imap_user = models.CharField(_("utilisateur"), max_length=255)
+    imap_password = models.CharField(_("mot de passe"), max_length=500)
+    use_ssl = models.BooleanField(_("SSL/TLS"), default=True)
+    mailbox = models.CharField(_("boîte"), max_length=100, default="INBOX")
+    is_active = models.BooleanField(_("actif"), default=True)
+    last_polled_at = models.DateTimeField(_("dernier relevé"), null=True, blank=True)
+    last_error = models.TextField(_("dernière erreur"), blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Configuration boîte mail")
+        verbose_name_plural = _("Configuration boîte mail")
+
+    def __str__(self):
+        return f"{self.imap_user}@{self.imap_host}"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1, defaults={
+            'imap_host': '', 'imap_user': '', 'imap_password': '',
+        })
+        return obj
+
+
+class MailSource(models.Model):
+    """Expéditeur/domaine autorisé à déposer des demandes par mail."""
+    client_name = models.CharField(_("nom client"), max_length=255)
+    email_or_domain = models.CharField(_("email ou domaine"), max_length=255, unique=True)
+    notes = models.TextField(_("notes"), blank=True, default="")
+    is_active = models.BooleanField(_("actif"), default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Source mail autorisée")
+        verbose_name_plural = _("Sources mail autorisées")
+        ordering = ['client_name']
+
+    def __str__(self):
+        return f"{self.client_name} <{self.email_or_domain}>"
+
+    @property
+    def is_domain(self):
+        return self.email_or_domain.startswith('@') or '@' not in self.email_or_domain
+
+
+class IncomingMail(models.Model):
+    """Mail entrant reçu depuis une source autorisée."""
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', _("En attente")
+        DISPATCHED = 'DISPATCHED', _("Dispatché")
+        ACCEPTED = 'ACCEPTED', _("Accepté")
+        PROCESSED = 'PROCESSED', _("Traité")
+        REJECTED = 'REJECTED', _("Rejeté")
+
+    mail_source = models.ForeignKey(
+        MailSource, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mails', verbose_name=_("source"),
+    )
+    message_id = models.CharField(_("Message-ID"), max_length=500, unique=True)
+    from_email = models.EmailField(_("expéditeur"))
+    from_name = models.CharField(_("nom expéditeur"), max_length=255, blank=True, default="")
+    subject = models.CharField(_("sujet"), max_length=500, blank=True, default="")
+    body_text = models.TextField(_("corps texte"), blank=True, default="")
+    body_html = models.TextField(_("corps HTML"), blank=True, default="")
+    received_at = models.DateTimeField(_("reçu le"))
+    status = models.CharField(
+        _("statut"), max_length=20, choices=Status.choices, default=Status.PENDING,
+    )
+    assigned_to = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assigned_mails', verbose_name=_("assigné à"),
+    )
+    dispatched_at = models.DateTimeField(_("dispatché le"), null=True, blank=True)
+    dispatched_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='dispatched_mails', verbose_name=_("dispatché par"),
+    )
+    dispatch_note = models.TextField(_("note de dispatch"), blank=True, default="")
+    accepted_at = models.DateTimeField(_("accepté le"), null=True, blank=True)
+    accepted_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='accepted_mails', verbose_name=_("accepté par"),
+    )
+    commande = models.ForeignKey(
+        "Commande", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='incoming_mails', verbose_name=_("commande liée"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Mail entrant")
+        verbose_name_plural = _("Mails entrants")
+        ordering = ['-received_at']
+
+    def __str__(self):
+        return f"[{self.status}] {self.subject} — {self.from_email}"
+
+
+class MailAttachment(models.Model):
+    """Pièce jointe d'un mail entrant."""
+    mail = models.ForeignKey(
+        IncomingMail, on_delete=models.CASCADE,
+        related_name='attachments', verbose_name=_("mail"),
+    )
+    filename = models.CharField(_("nom fichier"), max_length=500)
+    content_type = models.CharField(_("type MIME"), max_length=200, blank=True, default="")
+    size = models.PositiveIntegerField(_("taille (octets)"), default=0)
+    file = models.FileField(_("fichier"), upload_to="mail_attachments/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Pièce jointe mail")
+        verbose_name_plural = _("Pièces jointes mail")
+
+    def __str__(self):
+        return self.filename
+
 
 ##########################################################
 ##########################################################
