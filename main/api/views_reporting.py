@@ -1696,7 +1696,11 @@ def generer_rapport_solvabilite(request):
                 "date_rapport": commande.date_rapport.strftime("%d/%m/%Y") if commande and commande.date_rapport else "",
                 "delais": commande.delais if commande else "",
                 "priorite": commande.priorite if commande else "",
-                "type_rapport": commande.type_rapport if commande else ""
+                "type_rapport": commande.type_rapport if commande else "",
+                "credit_demande": commande.credit_demande if commande and commande.credit_demande else "",
+                "credit_recommande": commande.credit_recommande if commande and commande.credit_recommande else "",
+                "devise_credit_demande": commande.devise_credit_demande.code if commande and commande.devise_credit_demande else "",
+                "devise_credit_recommande": commande.devise_credit_recommande.code if commande and commande.devise_credit_recommande else "",
             },
             "identification": {
                 "title_2": "IDENTIFICATION",
