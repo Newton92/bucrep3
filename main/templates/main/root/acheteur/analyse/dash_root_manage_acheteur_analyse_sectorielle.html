@@ -231,25 +231,10 @@
     </div>
     {% endif %}
 
-    <!-- Classification couleur + timestamps -->
-    <div class="analysis-block">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2">
-            {% if analyse.couleur_commentaire %}
-            <span class="color-badge">
-                <span class="color-dot" style="background-color:{{ analyse.couleur_commentaire.code|default:'#5a6c7d' }};"></span>
-                {{ analyse.couleur_commentaire.couleur }}
-                {% if analyse.couleur_commentaire.description %}
-                <span class="text-muted">— {{ analyse.couleur_commentaire.description }}</span>
-                {% endif %}
-            </span>
-            {% else %}
-            <span class="text-muted" style="font-size:.78rem;">{% trans "Aucune classification" %}</span>
-            {% endif %}
-        </div>
-        <div class="timestamps-bar">
-            <span><i class="fas fa-calendar-plus"></i>{% trans "Créée le" %} {{ analyse.created_at|date:"d/m/Y" }} {% trans "à" %} {{ analyse.created_at|date:"H:i" }}</span>
-            <span><i class="fas fa-sync-alt"></i>{% trans "Mise à jour" %} {{ analyse.updated_at|date:"d/m/Y H:i" }}</span>
-        </div>
+    <!-- Timestamps -->
+    <div class="timestamps-bar" style="border-radius:10px;border:1px solid rgba(13,128,190,.07);">
+        <span><i class="fas fa-calendar-plus"></i>{% trans "Créée le" %} {{ analyse.created_at|date:"d/m/Y" }} {% trans "à" %} {{ analyse.created_at|date:"H:i" }}</span>
+        <span><i class="fas fa-sync-alt"></i>{% trans "Mise à jour" %} {{ analyse.updated_at|date:"d/m/Y H:i" }}</span>
     </div>
 
     {% else %}
@@ -300,19 +285,6 @@
                                   placeholder="{% trans "Effets sur la demande, mesures d'adaptation, perspectives post-pandémie..." %}"></textarea>
                     </div>
 
-                    <div class="mb-1">
-                        <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:.88rem;">
-                            <i class="fas fa-palette me-1" style="color:#6f42c1;"></i>{% trans "Classification par Couleur" %}
-                        </label>
-                        <select class="form-select select2-couleur" id="couleur_commentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une classification" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#5a6c7d' }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="color-preview-bar" id="colorPreview">{% trans "Aperçu de la couleur" %}</div>
-                    </div>
-
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
@@ -354,19 +326,6 @@
                             <i class="fas fa-virus me-1" style="color:#fd7e14;"></i>{% trans "Impact COVID-19" %}
                         </label>
                         <textarea class="form-control rich-editor" id="editImpactCovid" name="impact_covid_19" rows="4"></textarea>
-                    </div>
-
-                    <div class="mb-1">
-                        <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:.88rem;">
-                            <i class="fas fa-palette me-1" style="color:#6f42c1;"></i>{% trans "Classification par Couleur" %}
-                        </label>
-                        <select class="form-select select2-couleur" id="editCouleurCommentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une classification" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#5a6c7d' }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="color-preview-bar" id="editColorPreview">{% trans "Aperçu de la couleur" %}</div>
                     </div>
 
                 </div>
@@ -438,59 +397,9 @@ $(document).ready(function() {
         cannotDelete: '{% trans "Impossible de supprimer l\'analyse sectorielle" %}',
     };
 
-    /* ── Couleur de contraste ── */
-    function getContrastColor(hex) {
-        if (!hex || !hex.startsWith('#')) return '#000';
-        const r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
-        return (0.299*r + 0.587*g + 0.114*b)/255 > 0.5 ? '#000' : '#fff';
-    }
-
-    function updateColorPreview(previewId, color) {
-        const $p = $(previewId);
-        if (color) {
-            $p.css({ background: color, borderColor: color, color: getContrastColor(color) }).text('{% trans "Couleur sélectionnée" %}');
-        } else {
-            $p.css({ background: '', borderColor: 'rgba(13,128,190,.15)', color: 'var(--color-text-muted)' }).text('{% trans "Aperçu de la couleur" %}');
-        }
-    }
-
-    /* ── Select2 ── */
-    function formatColorOption(opt) {
-        if (!opt.id) return opt.text;
-        const color = $(opt.element).data('color');
-        if (!color) return opt.text;
-        return $(`<div class="d-flex align-items-center gap-2"><span style="background:${color};width:18px;height:18px;border-radius:50%;flex-shrink:0;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);display:inline-block;"></span><span>${opt.text}</span></div>`);
-    }
-
-    function initSelect2(modalSelector) {
-        $(modalSelector + ' .select2-couleur').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $(modalSelector),
-            allowClear: true,
-            minimumResultsForSearch: 10,
-            templateResult: formatColorOption,
-            templateSelection: formatColorOption,
-        });
-    }
-
-    initSelect2('#addAnalyseModal');
-    initSelect2('#editAnalyseModal');
-
-    /* ── Aperçu couleur en temps réel ── */
-    $('#couleur_commentaire').on('change', function() {
-        updateColorPreview('#colorPreview', $(this).find('option:selected').data('color'));
-    });
-    $('#editCouleurCommentaire').on('change', function() {
-        updateColorPreview('#editColorPreview', $(this).find('option:selected').data('color'));
-    });
-
     /* ── Réinitialiser à la fermeture ── */
     $('#addAnalyseModal, #editAnalyseModal').on('hidden.bs.modal', function() {
         $(this).find('form')[0].reset();
-        $(this).find('.select2-couleur').val(null).trigger('change');
-        updateColorPreview('#colorPreview', null);
-        updateColorPreview('#editColorPreview', null);
     });
 
     /* ── Pré-remplissage modal édition ── */
@@ -504,14 +413,6 @@ $(document).ready(function() {
         $('#editAnalyseId').val(data.id);
         window.quillSetValue('editCommentaire', data.commentaire || '');
         window.quillSetValue('editImpactCovid', data.impact_covid_19 || '');
-        if (data.couleur_commentaire?.id) {
-            $('#editCouleurCommentaire').val(data.couleur_commentaire.id).trigger('change');
-            if (data.couleur_commentaire.code) {
-                updateColorPreview('#editColorPreview', data.couleur_commentaire.code);
-            }
-        } else {
-            $('#editCouleurCommentaire').val(null).trigger('change');
-        }
     }
     {% endif %}
 
