@@ -31,7 +31,15 @@
     border-radius: 12px;
     border: 1px solid rgba(13,128,190,.08);
     box-shadow: 0 4px 20px rgba(10,149,202,.07);
-    overflow: hidden;
+}
+/* Quill dédié page formulaire — hauteur libre, pas de max-height */
+#quillPolitique, #quillEconomique {
+    min-height: 380px;
+}
+#quillPolitique .ql-editor, #quillEconomique .ql-editor {
+    min-height: 340px;
+    max-height: none;
+    overflow-y: auto;
 }
 .form-card-header {
     background: var(--primary-gradient);
@@ -233,19 +241,20 @@
             </div>
             <div class="form-card-body">
                 <div class="row g-4">
-                    <div class="col-md-6">
-                        <label for="donnees_politiques" class="form-label fw-semibold" style="font-size:.88rem;">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold" style="font-size:.88rem;">
                             <i class="fas fa-landmark me-1" style="color:var(--color-primary-dark);"></i>{% trans "Analyse Politique" %}
                         </label>
-                        <textarea class="form-control rich-editor" id="donnees_politiques" name="donnees_politiques" rows="10"
-                                  placeholder="{% trans "Stabilité gouvernementale, relations internationales, risques de conflits..." %}">{% if geopolitic %}{{ geopolitic.donnees_politiques|default:'' }}{% endif %}</textarea>
+                        <!-- Quill initialisé manuellement — pas de rich-editor class pour éviter le double init -->
+                        <div id="quillPolitique"></div>
+                        <input type="hidden" id="donnees_politiques" name="donnees_politiques">
                     </div>
-                    <div class="col-md-6">
-                        <label for="donnees_economiques" class="form-label fw-semibold" style="font-size:.88rem;">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold" style="font-size:.88rem;">
                             <i class="fas fa-chart-line me-1" style="color:#20c997;"></i>{% trans "Analyse Économique" %}
                         </label>
-                        <textarea class="form-control rich-editor" id="donnees_economiques" name="donnees_economiques" rows="10"
-                                  placeholder="{% trans "Croissance, inflation, dette publique, indicateurs clés..." %}">{% if geopolitic %}{{ geopolitic.donnees_economiques|default:'' }}{% endif %}</textarea>
+                        <div id="quillEconomique"></div>
+                        <input type="hidden" id="donnees_economiques" name="donnees_economiques">
                     </div>
                 </div>
             </div>
@@ -290,6 +299,52 @@ $(document).ready(function() {
         cancel: '{% trans "Annuler" %}',
     };
 
+    /* ── Quill : initialisation manuelle et indépendante du global ── */
+    const QUILL_TOOLBAR = [
+        [{ 'header': [false, 1, 2, 3] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        ['blockquote'], ['clean']
+    ];
+
+    var qPol = new Quill('#quillPolitique', {
+        theme: 'snow',
+        modules: { toolbar: QUILL_TOOLBAR },
+        placeholder: '{% trans "Stabilité gouvernementale, relations internationales, risques de conflits..." %}'
+    });
+    var qEco = new Quill('#quillEconomique', {
+        theme: 'snow',
+        modules: { toolbar: QUILL_TOOLBAR },
+        placeholder: '{% trans "Croissance, inflation, dette publique, indicateurs clés..." %}'
+    });
+
+    /* Pré-remplissage depuis les données existantes */
+    {% if geopolitic and geopolitic_json %}
+    (function() {
+        var data = JSON.parse('{{ geopolitic_json|escapejs }}');
+        if (data.donnees_politiques) {
+            qPol.clipboard.dangerouslyPasteHTML(data.donnees_politiques);
+            document.getElementById('donnees_politiques').value = data.donnees_politiques;
+        }
+        if (data.donnees_economiques) {
+            qEco.clipboard.dangerouslyPasteHTML(data.donnees_economiques);
+            document.getElementById('donnees_economiques').value = data.donnees_economiques;
+        }
+    })();
+    {% endif %}
+
+    /* Sync hidden inputs à chaque frappe */
+    qPol.on('text-change', function() {
+        var html = qPol.root.innerHTML;
+        document.getElementById('donnees_politiques').value = (html === '<p><br></p>') ? '' : html;
+    });
+    qEco.on('text-change', function() {
+        var html = qEco.root.innerHTML;
+        document.getElementById('donnees_economiques').value = (html === '<p><br></p>') ? '' : html;
+    });
+
     /* ── Slider display ── */
     function scoreColor(v) {
         if (v >= 8) return '#28a745';
@@ -318,24 +373,15 @@ $(document).ready(function() {
         $('#' + id).val(def).trigger('input');
     });
 
-    /* ── Pre-fill Quill editors ── */
-    {% if geopolitic and geopolitic_json %}
-    (function() {
-        const data = JSON.parse('{{ geopolitic_json|escapejs }}');
-        if (data.donnees_politiques) {
-            var ta = document.getElementById('donnees_politiques');
-            if (ta) { ta.value = data.donnees_politiques; if (ta._quill) ta._quill.clipboard.dangerouslyPasteHTML(data.donnees_politiques); }
-        }
-        if (data.donnees_economiques) {
-            var ta2 = document.getElementById('donnees_economiques');
-            if (ta2) { ta2.value = data.donnees_economiques; if (ta2._quill) ta2._quill.clipboard.dangerouslyPasteHTML(data.donnees_economiques); }
-        }
-    })();
-    {% endif %}
-
-    /* ── Form submit ── */
+    /* ── Form submit (lit les hidden inputs mis à jour par Quill) ── */
     $('#geopoliticForm').on('submit', function(e) {
         e.preventDefault();
+        /* Forcer la synchro des éditeurs avant lecture */
+        var hPol = qPol.root.innerHTML;
+        document.getElementById('donnees_politiques').value = (hPol === '<p><br></p>') ? '' : hPol;
+        var hEco = qEco.root.innerHTML;
+        document.getElementById('donnees_economiques').value = (hEco === '<p><br></p>') ? '' : hEco;
+
         const data = {};
         new FormData(this).forEach((v, k) => data[k] = v);
 
