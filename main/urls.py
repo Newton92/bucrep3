@@ -495,6 +495,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_geopolitic",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/geopolitiques/formulaire/",
+        dash_root_manage_acheteur_geopolitic_form,
+        name="dash_root_manage_acheteur_geopolitic_form",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-bancaires/",
         dash_root_manage_acheteur_banking_optimized,
         name="dash_root_manage_acheteur_banking_optimized",

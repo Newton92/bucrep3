@@ -1,0 +1,396 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static humanize %}
+
+{% block styles %}
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text-muted: #5a6c7d;
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+}
+
+.page-header {
+    background: var(--primary-gradient);
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    color: white;
+}
+.page-title   { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: 0.8rem; opacity: 0.85; font-weight: 400; }
+
+.form-card {
+    background: var(--color-background);
+    border-radius: 12px;
+    border: 1px solid rgba(13,128,190,.08);
+    box-shadow: 0 4px 20px rgba(10,149,202,.07);
+    overflow: hidden;
+}
+.form-card-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 0.65rem 1.1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.form-card-body { padding: 1.25rem; }
+
+.score-slider-group { margin-bottom: 0; }
+.score-slider-group .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.score-slider-group .slider-label { font-size: 0.82rem; font-weight: 600; color: var(--color-primary-dark); }
+.score-slider-group .slider-val   { font-size: 0.82rem; font-weight: 700; color: var(--color-primary); min-width: 32px; text-align: right; }
+.score-slider-group input[type=range] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, #dc3545 0%, #fd7e14 33%, #ffc107 66%, #28a745 100%);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+.score-slider-group input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 2px 6px rgba(10,149,202,.3);
+    cursor: pointer;
+}
+.score-slider-group input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--color-primary);
+    cursor: pointer;
+}
+.slider-reset {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    border: none; background: none; padding: 0;
+}
+.slider-reset:hover { color: var(--color-primary); }
+
+.score-legend-compact {
+    background: rgba(10,149,202,.03);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(13,128,190,.08);
+    font-size: 0.78rem;
+    height: 100%;
+}
+.legend-dots { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+.legend-dot { display: flex; align-items: center; gap: 0.3rem; }
+.legend-dot-color { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+.section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.btn-action {
+    border-radius: 8px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    transition: all 0.25s ease;
+}
+.btn-action:hover { transform: translateY(-1px); }
+
+@media (max-width: 768px) {
+    .page-header { padding: 1rem; }
+    .page-title  { font-size: 1rem; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+    <!-- Header compact -->
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-globe-americas me-2"></i>
+                    {% if geopolitic %}{% trans "Modifier l'Analyse Géopolitique" %}{% else %}{% trans "Nouvelle Analyse Géopolitique" %}{% endif %}
+                </h1>
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
+                    {% if acheteur.pays %}&nbsp;·&nbsp;<i class="fas fa-map-marker-alt me-1"></i><span class="opacity-75">{{ acheteur.pays.nom }}</span>{% endif %}
+                </p>
+            </div>
+            <a href="{% url 'dash_root_manage_acheteur_geopolitic' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+            </a>
+        </div>
+    </div>
+
+    <form id="geopoliticForm">
+        {% if geopolitic %}<input type="hidden" id="geopoliticId" value="{{ geopolitic.id }}">{% endif %}
+
+        <!-- Indicateurs Scores -->
+        <div class="form-card mb-3">
+            <div class="form-card-header">
+                <i class="fas fa-chart-bar me-2"></i>{% trans "Indicateurs Géopolitiques" %} (0–10)
+            </div>
+            <div class="form-card-body">
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label"><i class="fas fa-landmark me-1" style="color:var(--color-primary);"></i>{% trans "Stabilité Politique" %}</label>
+                                <span class="slider-val" id="valStabilite">5</span>
+                            </div>
+                            <input type="range" class="score-input" id="stabilite_politique" name="stabilite_politique" min="0" max="10"
+                                   value="{{ geopolitic.stabilite_politique|default:5 }}">
+                            <button type="button" class="slider-reset mt-1" data-target="stabilite_politique" data-default="5">{% trans "Réinitialiser" %}</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label"><i class="fas fa-balance-scale me-1" style="color:var(--color-primary);"></i>{% trans "État de Droit" %}</label>
+                                <span class="slider-val" id="valDroit">5</span>
+                            </div>
+                            <input type="range" class="score-input" id="etat_droit" name="etat_droit" min="0" max="10"
+                                   value="{{ geopolitic.etat_droit|default:5 }}">
+                            <button type="button" class="slider-reset mt-1" data-target="etat_droit" data-default="5">{% trans "Réinitialiser" %}</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label"><i class="fas fa-cogs me-1" style="color:var(--color-primary);"></i>{% trans "Efficacité Gouvernementale" %}</label>
+                                <span class="slider-val" id="valEfficacite">5</span>
+                            </div>
+                            <input type="range" class="score-input" id="efficacite" name="efficacite" min="0" max="10"
+                                   value="{{ geopolitic.efficacite|default:5 }}">
+                            <button type="button" class="slider-reset mt-1" data-target="efficacite" data-default="5">{% trans "Réinitialiser" %}</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label"><i class="fas fa-file-contract me-1" style="color:var(--color-primary);"></i>{% trans "Qualité Réglementaire" %}</label>
+                                <span class="slider-val" id="valQualite">5</span>
+                            </div>
+                            <input type="range" class="score-input" id="qualite" name="qualite" min="0" max="10"
+                                   value="{{ geopolitic.qualite|default:5 }}">
+                            <button type="button" class="slider-reset mt-1" data-target="qualite" data-default="5">{% trans "Réinitialiser" %}</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label"><i class="fas fa-comment-dots me-1" style="color:var(--color-primary);"></i>{% trans "Liberté d'Expression" %}</label>
+                                <span class="slider-val" id="valLiberte">5</span>
+                            </div>
+                            <input type="range" class="score-input" id="liberte_expression" name="liberte_expression" min="0" max="10"
+                                   value="{{ geopolitic.liberte_expression|default:5 }}">
+                            <button type="button" class="slider-reset mt-1" data-target="liberte_expression" data-default="5">{% trans "Réinitialiser" %}</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="score-legend-compact">
+                            <div class="fw-semibold mb-1" style="font-size:.8rem;">{% trans "Légende des Scores" %}</div>
+                            <div class="legend-dots">
+                                <div class="legend-dot"><div class="legend-dot-color" style="background:#dc3545;"></div><span>0–3 {% trans "Risque Critique" %}</span></div>
+                                <div class="legend-dot"><div class="legend-dot-color" style="background:#fd7e14;"></div><span>4–5 {% trans "Risque Élevé" %}</span></div>
+                                <div class="legend-dot"><div class="legend-dot-color" style="background:#ffc107;"></div><span>6–7 {% trans "Acceptable" %}</span></div>
+                                <div class="legend-dot"><div class="legend-dot-color" style="background:#28a745;"></div><span>8–10 {% trans "Bon/Sécurisé" %}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analyses Détaillées -->
+        <div class="form-card mb-3">
+            <div class="form-card-header">
+                <i class="fas fa-file-alt me-2"></i>{% trans "Analyses Détaillées" %}
+            </div>
+            <div class="form-card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label for="donnees_politiques" class="form-label fw-semibold" style="font-size:.88rem;">
+                            <i class="fas fa-landmark me-1" style="color:var(--color-primary-dark);"></i>{% trans "Analyse Politique" %}
+                        </label>
+                        <textarea class="form-control rich-editor" id="donnees_politiques" name="donnees_politiques" rows="10"
+                                  placeholder="{% trans "Stabilité gouvernementale, relations internationales, risques de conflits..." %}">{% if geopolitic %}{{ geopolitic.donnees_politiques|default:'' }}{% endif %}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="donnees_economiques" class="form-label fw-semibold" style="font-size:.88rem;">
+                            <i class="fas fa-chart-line me-1" style="color:#20c997;"></i>{% trans "Analyse Économique" %}
+                        </label>
+                        <textarea class="form-control rich-editor" id="donnees_economiques" name="donnees_economiques" rows="10"
+                                  placeholder="{% trans "Croissance, inflation, dette publique, indicateurs clés..." %}">{% if geopolitic %}{{ geopolitic.donnees_economiques|default:'' }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer actions -->
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a href="{% url 'dash_root_manage_acheteur_geopolitic' acheteur.id %}" class="btn btn-outline-secondary btn-action">
+                <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+            </a>
+            <button type="submit" class="btn btn-success btn-action" id="submitBtn">
+                <span class="btn-text">
+                    <i class="fas fa-save me-1"></i>
+                    {% if geopolitic %}{% trans "Mettre à jour" %}{% else %}{% trans "Créer l'analyse" %}{% endif %}
+                </span>
+                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_URL = `/api/acheteur/${ACHETEUR_ID}/geopolitics/`;
+    const REDIRECT_URL = '{% url "dash_root_manage_acheteur_geopolitic" acheteur.id %}';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+
+    const I18N = {
+        success: '{% trans "Succès" %}',
+        error: '{% trans "Erreur" %}',
+        validationError: '{% trans "Erreur de validation" %}',
+        scoreOutOfRange: '{% trans "Le score doit être compris entre 0 et 10." %}',
+        sessionExpired: '{% trans "Session expirée" %}',
+        sessionExpiredText: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
+        reconnect: '{% trans "Se reconnecter" %}',
+        cancel: '{% trans "Annuler" %}',
+    };
+
+    /* ── Slider display ── */
+    function scoreColor(v) {
+        if (v >= 8) return '#28a745';
+        if (v >= 6) return '#ffc107';
+        if (v >= 4) return '#fd7e14';
+        return '#dc3545';
+    }
+
+    function bindSlider(sliderId, displayId) {
+        const $s = $('#' + sliderId), $d = $('#' + displayId);
+        if (!$s.length) return;
+        function update() { const v = parseInt($s.val()); $d.text(v).css('color', scoreColor(v)); }
+        $s.on('input', update);
+        update();
+    }
+
+    bindSlider('stabilite_politique', 'valStabilite');
+    bindSlider('etat_droit',          'valDroit');
+    bindSlider('efficacite',          'valEfficacite');
+    bindSlider('qualite',             'valQualite');
+    bindSlider('liberte_expression',  'valLiberte');
+
+    $(document).on('click', '.slider-reset', function() {
+        const id = $(this).data('target');
+        const def = $(this).data('default') || 5;
+        $('#' + id).val(def).trigger('input');
+    });
+
+    /* ── Pre-fill Quill editors ── */
+    {% if geopolitic and geopolitic_json %}
+    (function() {
+        const data = JSON.parse('{{ geopolitic_json|escapejs }}');
+        if (data.donnees_politiques) {
+            var ta = document.getElementById('donnees_politiques');
+            if (ta) { ta.value = data.donnees_politiques; if (ta._quill) ta._quill.clipboard.dangerouslyPasteHTML(data.donnees_politiques); }
+        }
+        if (data.donnees_economiques) {
+            var ta2 = document.getElementById('donnees_economiques');
+            if (ta2) { ta2.value = data.donnees_economiques; if (ta2._quill) ta2._quill.clipboard.dangerouslyPasteHTML(data.donnees_economiques); }
+        }
+    })();
+    {% endif %}
+
+    /* ── Form submit ── */
+    $('#geopoliticForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {};
+        new FormData(this).forEach((v, k) => data[k] = v);
+
+        const scoreFields = ['stabilite_politique', 'etat_droit', 'efficacite', 'qualite', 'liberte_expression'];
+        for (const field of scoreFields) {
+            const v = parseInt(data[field]);
+            if (!isNaN(v) && (v < 0 || v > 10)) {
+                Swal.fire({ icon: 'error', title: I18N.validationError, text: I18N.scoreOutOfRange, confirmButtonText: 'OK', background: '#fcfefe' });
+                return;
+            }
+        }
+
+        const $btn = $('#submitBtn');
+        $btn.prop('disabled', true).find('.btn-text').hide();
+        $btn.find('.spinner-border').removeClass('d-none');
+
+        $.ajax({
+            url: API_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(response) {
+                Swal.fire({ icon: 'success', title: I18N.success, text: response.message || '{% trans "Opération réussie" %}', timer: 2000, showConfirmButton: false, background: '#fcfefe' })
+                    .then(() => window.location.href = REDIRECT_URL);
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).find('.btn-text').show();
+                $btn.find('.spinner-border').addClass('d-none');
+                let msg = '{% trans "Une erreur est survenue" %}';
+                if (xhr.responseJSON?.error) msg = xhr.responseJSON.error;
+                else if (xhr.responseJSON && typeof xhr.responseJSON === 'object') msg = Object.values(xhr.responseJSON).flat().join('\n');
+                if (xhr.status === 401) { refreshAccessToken(() => $('#geopoliticForm').submit()); }
+                else { Swal.fire({ icon: 'error', title: I18N.error, html: msg.replace(/\n/g, '<br>'), background: '#fcfefe' }); }
+            }
+        });
+    });
+
+    function getCookie(name) {
+        let val = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => { c = c.trim(); if (c.startsWith(name + '=')) val = decodeURIComponent(c.substring(name.length + 1)); });
+        return val;
+    }
+
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(r) { if (r.access) { ACCESS_TOKEN = r.access; callback && callback(); } },
+            error: function() {
+                Swal.fire({ icon: 'error', title: I18N.sessionExpired, text: I18N.sessionExpiredText,
+                    showCancelButton: true, confirmButtonText: I18N.reconnect, cancelButtonText: I18N.cancel, background: '#fcfefe' })
+                    .then(r => { if (r.isConfirmed) window.location.href = '/login/'; });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

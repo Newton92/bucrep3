@@ -4485,6 +4485,56 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
         context,
     )
 
+
+def dash_root_manage_acheteur_geopolitic_form(request, acheteur_id):
+    """Page dédiée pour créer/modifier l'analyse géopolitique (évite le débordement du modal Quill)."""
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
+        id=acheteur_id,
+    )
+
+    geopolitic = Geopolitics.objects.filter(acheteur=acheteur).first()
+
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect_to_login(request.get_full_path())
+
+    geopolitic_json = None
+    if geopolitic:
+        geopolitic_data = {
+            'id': geopolitic.id,
+            'stabilite_politique': geopolitic.stabilite_politique or '',
+            'etat_droit': geopolitic.etat_droit or '',
+            'efficacite': geopolitic.efficacite or '',
+            'qualite': geopolitic.qualite or '',
+            'liberte_expression': geopolitic.liberte_expression or '',
+            'donnees_politiques': geopolitic.donnees_politiques or '',
+            'donnees_economiques': geopolitic.donnees_economiques or '',
+        }
+        geopolitic_json = json.dumps(geopolitic_data, default=str)
+
+    context = {
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur": acheteur,
+        "geopolitic": geopolitic,
+        "geopolitic_json": geopolitic_json or 'null',
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/geopolitique/dash_root_manage_acheteur_geopolitic_form.html",
+        context,
+    )
+
+
 def calculate_average_score(geopolitic):
     """Calcule la moyenne des scores géopolitiques"""
     scores = []

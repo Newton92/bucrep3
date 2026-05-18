@@ -1938,6 +1938,11 @@ def generer_rapport_solvabilite(request):
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "",
                     "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "",
+                    "stabilite_politique": geopolitics.stabilite_politique if geopolitics and geopolitics.stabilite_politique else "",
+                    "etat_droit": geopolitics.etat_droit if geopolitics and geopolitics.etat_droit else "",
+                    "efficacite": geopolitics.efficacite if geopolitics and geopolitics.efficacite else "",
+                    "qualite": geopolitics.qualite if geopolitics and geopolitics.qualite else "",
+                    "liberte_expression": geopolitics.liberte_expression if geopolitics and geopolitics.liberte_expression else "",
                 },
                 # Nouveaux elements
                 "swot": {
