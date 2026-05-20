@@ -515,12 +515,12 @@ $(document).ready(function() {
         $(document).trigger('stepChanged');
     }
 
-    // ── Collecte des champs par étape (même logique que le formulaire de création) ──
+    // ── Collecte des champs par étape ──
     var STEP_FIELDS = {
         1: ['nom','sigle','date_creation','activite_principale','statut_entreprise',
             'forme_juridique'],
-        2: ['email','fax','site_internet','boite_postale','code_postal','numero_adresse','rue_adresse'],
-        3: ['pays','ville','latitude','longitude']
+        2: ['email','fax','site_internet','boite_postale','code_postal'],
+        3: ['pays','ville','numero_adresse','rue_adresse']
     };
     var FK_FIELDS = ['statut_entreprise','forme_juridique','pays','ville'];
 
@@ -543,9 +543,6 @@ $(document).ready(function() {
         FK_FIELDS.forEach(function(k) {
             if (data[k]) data[k] = parseInt(data[k]);
         });
-        // Convertir les coordonnées en décimaux
-        if (data.latitude)  data.latitude  = parseFloat(data.latitude);
-        if (data.longitude) data.longitude = parseFloat(data.longitude);
         return data;
     }
 
@@ -813,9 +810,9 @@ $(document).ready(function() {
         setVal('numero_adresse', a.numero_adresse);
         setVal('rue_adresse',   a.rue_adresse);
 
-        // Pays → Villes
+        // Pays → Villes (change.select2 pour ne pas déclencher le handler pays qui charge les villes sans ID)
         if (a.pays && a.pays.id) {
-            setVal('pays', a.pays.id);
+            $('#pays').val(a.pays.id).trigger('change.select2');
             loadVillesParPays(a.pays.id, a.ville ? a.ville.id : null);
         }
 

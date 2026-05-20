@@ -287,16 +287,24 @@
         </div>
     </div>
 
-    <!-- ── Search bar ────────────────────────────────────────── -->
-    <div class="search-bar">
-        <div class="input-group input-group-sm">
+    <!-- ── Barre de recherche et filtres ─────────────────────── -->
+    <div class="search-bar align-items-center flex-wrap gap-2">
+        <div class="input-group input-group-sm" style="min-width:200px;flex:1;">
             <span class="input-group-text" style="background:rgba(10,149,202,.06);border-color:rgba(13,128,190,.15);">
                 <i class="fas fa-search text-muted"></i>
             </span>
             <input type="text" class="form-control" id="searchCodeNaceInput"
                    placeholder="{% trans "Rechercher par code ou libellé…" %}">
         </div>
-        <button class="btn btn-outline-secondary btn-sm btn-action" id="clearSearchBtn">
+        <select id="filterCategorie" class="form-select form-select-sm" style="max-width:260px;">
+            <option value="">{% trans "— Toutes les catégories —" %}</option>
+        </select>
+        <select id="filterStatut" class="form-select form-select-sm" style="max-width:160px;">
+            <option value="">{% trans "— Tous —" %}</option>
+            <option value="actif">{% trans "Actif" %}</option>
+            <option value="inactif">{% trans "Inactif" %}</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm btn-action" id="clearSearchBtn" title="{% trans 'Réinitialiser' %}">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -659,17 +667,55 @@ $(document).ready(function() {
     }
     function hidePreview() { $('#codeNacePreview').addClass('d-none'); }
 
-    // ── Search (server) ───────────────────────────────────────
-    $('#searchCodeNaceInput').on('input', debounce(function() {
-        const q = $(this).val().trim();
-        if (q) loadCodesNace(q);
-        else location.reload();
-    }, 400));
+    // ── Filtre client-side (catégorie + statut + texte) ──────
+    function buildCategoryFilter() {
+        const seen = new Set();
+        $('#codesNaceContainer .nace-card-category').each(function() {
+            const txt = $(this).text().trim();
+            if (txt && !seen.has(txt)) {
+                seen.add(txt);
+                $('#filterCategorie').append(`<option value="${txt}">${txt}</option>`);
+            }
+        });
+    }
+
+    function applyFilters() {
+        const q       = $('#searchCodeNaceInput').val().trim().toLowerCase();
+        const catVal  = $('#filterCategorie').val().trim().toLowerCase();
+        const statut  = $('#filterStatut').val();
+
+        $('#codesNaceContainer .col-sm-6').each(function() {
+            const $card   = $(this);
+            const code    = $card.find('.nace-card-code').text().toLowerCase();
+            const libelle = $card.find('.nace-card-libelle').text().toLowerCase();
+            const cat     = $card.find('.nace-card-category').text().toLowerCase();
+            const isActif = $card.find('[style*="198754"]').length > 0;
+
+            const matchText   = !q    || code.includes(q) || libelle.includes(q);
+            const matchCat    = !catVal || cat.includes(catVal);
+            const matchStatut = !statut
+                || (statut === 'actif' && isActif)
+                || (statut === 'inactif' && !isActif);
+
+            $card.toggle(matchText && matchCat && matchStatut);
+        });
+
+        const visible = $('#codesNaceContainer .col-sm-6:visible').length;
+        $('#statCount').text(visible);
+    }
+
+    $('#searchCodeNaceInput').on('input', debounce(applyFilters, 300));
+    $('#filterCategorie').on('change', applyFilters);
+    $('#filterStatut').on('change', applyFilters);
 
     $('#clearSearchBtn').on('click', function() {
         $('#searchCodeNaceInput').val('');
-        location.reload();
+        $('#filterCategorie').val('');
+        $('#filterStatut').val('');
+        applyFilters();
     });
+
+    buildCategoryFilter();
 
     function debounce(fn, ms) {
         let t;
