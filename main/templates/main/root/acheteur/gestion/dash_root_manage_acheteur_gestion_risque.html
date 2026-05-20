@@ -5,6 +5,13 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+.ql-toolbar.ql-snow { border-radius: 8px 8px 0 0; border-color: rgba(13,128,190,.15) !important; background: #f8fafc; }
+.ql-container.ql-snow { border-radius: 0 0 8px 8px; border-color: rgba(13,128,190,.15) !important; min-height: 120px; font-size: .88rem; }
+.ql-container.ql-snow:focus-within { border-color: var(--color-primary) !important; box-shadow: 0 0 0 .2rem rgba(10,149,202,.12); }
+.ql-editor { min-height: 110px; }
+</style>
 
 <style>
 :root {
@@ -489,23 +496,12 @@
                             </select>
                         </div>
                         {% endfor %}
-                        <div class="col-md-6">
-                            <label for="couleur_commentaire" class="form-label" style="font-size:0.78rem;">
-                                <i class="fas fa-palette" style="color:var(--color-secondary);"></i> {% trans "Couleur Commentaire" %}
-                            </label>
-                            <select class="form-select form-select-sm select2" id="couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
-                            <label for="commentaire" class="form-label" style="font-size:0.78rem;">
+                            <label class="form-label" style="font-size:0.78rem;">
                                 <i class="fas fa-comment-dots" style="color:#28a745;"></i> {% trans "Commentaire d'évaluation" %}
                             </label>
-                            <textarea class="form-control form-control-sm" id="commentaire" name="commentaire"
-                                      rows="3" placeholder="{% trans "Ajoutez des observations et recommandations…" %}"></textarea>
+                            <div id="addCommentaireEditor"></div>
+                            <input type="hidden" name="commentaire" id="addCommentaireHidden">
                         </div>
                     </div>
                 </div>
@@ -559,22 +555,12 @@
                             </select>
                         </div>
                         {% endfor %}
-                        <div class="col-md-6">
-                            <label for="editCouleurCommentaire" class="form-label" style="font-size:0.78rem;">
-                                <i class="fas fa-palette" style="color:var(--color-secondary);"></i> {% trans "Couleur Commentaire" %}
-                            </label>
-                            <select class="form-select form-select-sm select2" id="editCouleurCommentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
-                            <label for="editCommentaire" class="form-label" style="font-size:0.78rem;">
+                            <label class="form-label" style="font-size:0.78rem;">
                                 <i class="fas fa-comment-dots" style="color:#28a745;"></i> {% trans "Commentaire d'évaluation" %}
                             </label>
-                            <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
+                            <div id="editCommentaireEditor"></div>
+                            <input type="hidden" name="commentaire" id="editCommentaireHidden">
                         </div>
                     </div>
                 </div>
@@ -645,6 +631,7 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 
 <script>
 const fieldsConfig = [
@@ -661,6 +648,37 @@ $(document).ready(function() {
     const ACCESS_TOKEN  = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
 
+    // ── Quill editors ─────────────────────────────────────────
+    const QUILL_TOOLBAR = [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ indent: '-1' }, { indent: '+1' }],
+        ['link', 'blockquote'],
+        ['clean'],
+    ];
+    let addQuill = null;
+    let editQuill = null;
+
+    function initAddQuill() {
+        if (addQuill) return;
+        addQuill = new Quill('#addCommentaireEditor', {
+            theme: 'snow',
+            placeholder: '{% trans "Ajoutez des observations et recommandations…" %}',
+            modules: { toolbar: QUILL_TOOLBAR },
+        });
+    }
+
+    function initEditQuill() {
+        if (editQuill) return;
+        editQuill = new Quill('#editCommentaireEditor', {
+            theme: 'snow',
+            placeholder: '{% trans "Ajoutez des observations et recommandations…" %}',
+            modules: { toolbar: QUILL_TOOLBAR },
+        });
+    }
+
     // ── Select2 ──────────────────────────────────────────────
     function initSelect2(parent) {
         const opts = {
@@ -673,14 +691,6 @@ $(document).ready(function() {
         (parent ? parent.find('.select2') : $('.select2')).select2(opts);
     }
     initSelect2();
-
-    $('#addRiskManagementModal, #editRiskManagementModal').on('shown.bs.modal', function() {
-        const $modal = $(this);
-        $modal.find('.select2').each(function() {
-            if ($(this).data('select2')) $(this).select2('destroy');
-        });
-        initSelect2($modal);
-    });
 
     // ── Image logic ───────────────────────────────────────────
     let gestionRisqueData = null;
@@ -719,22 +729,37 @@ $(document).ready(function() {
         $('#viewImageModal').modal('show');
     };
 
-    fieldsConfig.forEach(f => {
-        $(`#${f.id}`).on('change', function() {
+    // Délégation sur le modal (robuste après destroy/reinit Select2)
+    $('#addRiskManagementModal').on('change', '[name]', function() {
+        if (fieldsConfig.some(f => f.name === $(this).attr('name'))) {
             updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
-        });
-        const editId = `edit${f.name.charAt(0).toUpperCase() + f.name.slice(1)}`;
-        $(`#${editId}`).on('change', function() {
+        }
+    });
+    $('#editRiskManagementModal').on('change', '[name]', function() {
+        if (fieldsConfig.some(f => f.name === $(this).attr('name'))) {
             updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+        }
+    });
+
+    // ── Modal add : init Quill + Select2 + image ──────────────
+    $('#addRiskManagementModal').on('shown.bs.modal', function() {
+        const $modal = $(this);
+        $modal.find('.select2').each(function() {
+            if ($(this).data('select2')) $(this).select2('destroy');
         });
+        initSelect2($modal);
+        initAddQuill();
+        setTimeout(() => updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage'), 50);
     });
 
-    $('#addRiskManagementModal').on('show.bs.modal', function() {
-        setTimeout(() => updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage'), 100);
-    });
-
-    // ── Edit form populate ────────────────────────────────────
+    // ── Modal edit : init Quill + Select2 + load data ─────────
     $('#editRiskManagementModal').on('shown.bs.modal', function() {
+        const $modal = $(this);
+        $modal.find('.select2').each(function() {
+            if ($(this).data('select2')) $(this).select2('destroy');
+        });
+        initSelect2($modal);
+        initEditQuill();
         if (!{{ gestion_risque|yesno:"true,false" }}) return;
         $.ajax({
             url: API_BASE_URL, type: 'GET',
@@ -747,29 +772,36 @@ $(document).ready(function() {
     function populateEditForm(d) {
         if (!d) return;
         $('#editRiskManagementId').val(d.id);
-        $('#editCommentaire').val(d.commentaire || '');
+        if (editQuill) {
+            editQuill.root.innerHTML = d.commentaire || '';
+        }
         fieldsConfig.forEach(f => {
             const id = `edit${f.name.charAt(0).toUpperCase() + f.name.slice(1)}`;
             if (d[f.name]) $(`#${id}`).val(d[f.name]).trigger('change');
         });
-        if (d.couleur_commentaire) $('#editCouleurCommentaire').val(d.couleur_commentaire).trigger('change');
         $('#editRiskManagementImage').attr('src', getManagementImagePath(d));
     }
 
     // ── Form reset ────────────────────────────────────────────
     $('#addRiskManagementModal').on('hidden.bs.modal', function() {
         $('#addRiskManagementForm')[0].reset();
-        $('.select2').val(null).trigger('change');
+        $('#addRiskManagementModal .select2').val(null).trigger('change');
         $('#addRiskManagementImage').attr('src', `{% static 'management/mauvais.png' %}`);
+        if (addQuill) addQuill.setText('');
+        $('#addCommentaireHidden').val('');
     });
 
     // ── Form submit ───────────────────────────────────────────
     $('#addRiskManagementForm').on('submit', function(e) {
         e.preventDefault();
+        const html = addQuill ? addQuill.root.innerHTML : '';
+        $('#addCommentaireHidden').val(html === '<p><br></p>' ? '' : html);
         submitForm('POST', $(this).serialize(), '#submitAddBtn', 'addRiskManagementModal');
     });
     $('#editRiskManagementForm').on('submit', function(e) {
         e.preventDefault();
+        const html = editQuill ? editQuill.root.innerHTML : '';
+        $('#editCommentaireHidden').val(html === '<p><br></p>' ? '' : html);
         submitForm('POST', $(this).serialize(), '#submitEditBtn', 'editRiskManagementModal');
     });
 
