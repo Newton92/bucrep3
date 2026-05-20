@@ -139,13 +139,6 @@
     .select2-results__option { font-size: .85rem; padding: 7px 12px !important; }
     .select2-dropdown { min-width: 320px !important; max-width: 700px !important; }
 
-    /* ── NACE cascade ── */
-    .nace-step-label { font-size: .68rem; font-weight: 700; color: var(--cp); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; display: block; }
-    #nace_activity + .select2-container .select2-selection,
-    #nace_type     + .select2-container .select2-selection,
-    #nace_code     + .select2-container .select2-selection { border-color: rgba(10,149,202,.3); }
-    #nace_code + .select2-container .select2-selection__rendered { white-space: normal !important; line-height: 1.4 !important; padding: 4px 11px !important; }
-
     /* ── Map ── */
     #map { height: 100%; width: 100%; }
     .map-wrap { border-radius: 8px; overflow: hidden; height: 280px; border: 1px solid #d1dde8; }
@@ -303,30 +296,6 @@
                                     <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        <!-- NACE cascade -->
-                        <div class="col-12">
-                            <label class="form-label">{% trans "Code NACE" %} <span class="text-muted fw-normal" style="font-size:.72rem;">— {% trans "optionnel" %}</span></label>
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <span class="nace-step-label">① Activity</span>
-                                    <select id="nace_activity" name="nace_activity" class="form-control">
-                                        <option value="">{% trans "Sélectionnez..." %}</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <span class="nace-step-label">② Type</span>
-                                    <select id="nace_type" name="nace_type" class="form-control" disabled>
-                                        <option value="">—</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-5">
-                                    <span class="nace-step-label">③ Code NACE</span>
-                                    <select id="nace_code" name="nace_specifique" class="form-control" disabled>
-                                        <option value="">—</option>
-                                    </select>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -543,83 +512,6 @@ $(document).ready(function() {
         language: { noResults: function() { return i18n.noResults; } }
     });
 
-    // ── NACE cascade ──
-    var NACE_API = '/api/nace/';
-
-    function naceAjax(url, params) {
-        return $.ajax({ url: url, data: params, headers: { 'Authorization': 'Bearer ' + getAccessToken() }, dataType: 'json' });
-    }
-
-    function initNaceSelect2(selector, placeholder) {
-        $(selector).select2({ theme: 'bootstrap-5', width: '100%', placeholder: placeholder, allowClear: true });
-    }
-    initNaceSelect2('#nace_activity', 'Select an activity…');
-    initNaceSelect2('#nace_type',     'Select a type…');
-    initNaceSelect2('#nace_code',     'Select a code…');
-
-    function loadNaceActivities(selectedActivity) {
-        return naceAjax(NACE_API + 'activities/').done(function(data) {
-            var $sel = $('#nace_activity');
-            $sel.empty().append('<option value=""></option>');
-            $.each(data.activities || [], function(i, act) { $sel.append($('<option>').val(act).text(act)); });
-            if (selectedActivity) $sel.val(selectedActivity).trigger('change.select2');
-        });
-    }
-
-    function loadNaceTypes(activity, selectedType) {
-        var $sel = $('#nace_type');
-        $sel.empty().append('<option value="">Loading…</option>').prop('disabled', true).trigger('change.select2');
-        return naceAjax(NACE_API + 'types/', { activity: activity }).done(function(data) {
-            $sel.empty().append('<option value=""></option>');
-            $.each(data.types || [], function(i, t) { $sel.append($('<option>').val(t).text(t)); });
-            $sel.prop('disabled', false);
-            if (selectedType) $sel.val(selectedType).trigger('change.select2');
-            else $sel.trigger('change.select2');
-        });
-    }
-
-    function loadNaceCodes(activity, type, selectedId) {
-        var $sel = $('#nace_code');
-        $sel.empty().append('<option value="">Loading…</option>').prop('disabled', true).trigger('change.select2');
-        return naceAjax(NACE_API + 'codes/', { activity: activity, type: type }).done(function(data) {
-            $sel.empty().append('<option value=""></option>');
-            $.each(data.codes || [], function(i, c) { $sel.append($('<option>').val(c.id).text(c.label)); });
-            $sel.prop('disabled', false);
-            if (selectedId) $sel.val(selectedId).trigger('change.select2');
-            else $sel.trigger('change.select2');
-        });
-    }
-
-    function naceRestoreActivities(activity, type, codeId) {
-        loadNaceActivities(activity).done(function() {
-            loadNaceTypes(activity, type).done(function() {
-                loadNaceCodes(activity, type, codeId);
-            });
-        });
-    }
-
-    function resetNaceCascade() {
-        $('#nace_activity').val(null).trigger('change');
-        $('#nace_type').empty().append('<option value=""></option>').prop('disabled', true).trigger('change');
-        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change');
-    }
-
-    $('#nace_activity').on('change', function() {
-        var act = $(this).val();
-        $('#nace_type').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
-        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
-        if (act) loadNaceTypes(act, null);
-    });
-
-    $('#nace_type').on('change', function() {
-        var type = $(this).val(), act = $('#nace_activity').val();
-        $('#nace_code').empty().append('<option value=""></option>').prop('disabled', true).trigger('change.select2');
-        if (type && act) loadNaceCodes(act, type, null);
-    });
-
-    // Charger les activités au départ
-    loadNaceActivities(null);
-
     // ── Wizard ──
     function updateSteps() {
         $('.step').removeClass('active completed');
@@ -641,11 +533,11 @@ $(document).ready(function() {
     // ── Collecte des champs par étape (même logique que le formulaire de création) ──
     var STEP_FIELDS = {
         1: ['nom','sigle','date_creation','activite_principale','statut_entreprise',
-            'forme_juridique','nace_specifique'],
+            'forme_juridique'],
         2: ['email','fax','site_internet','boite_postale','code_postal','numero_adresse','rue_adresse'],
         3: ['pays','ville','latitude','longitude']
     };
-    var FK_FIELDS = ['statut_entreprise','forme_juridique','nace_specifique','pays','ville'];
+    var FK_FIELDS = ['statut_entreprise','forme_juridique','pays','ville'];
 
     function collectStepData(step) {
         var data = {};
@@ -926,12 +818,6 @@ $(document).ready(function() {
         setVal('statut_entreprise', a.statut_entreprise  ? a.statut_entreprise.id  : null);
         setVal('forme_juridique',   a.forme_juridique    ? a.forme_juridique.id    : null);
 
-        // NACE cascade
-        if (a.nace_specifique_info) {
-            var ni = a.nace_specifique_info;
-            naceRestoreActivities(ni.activity, ni.type, ni.id);
-        }
-
         setVal('email',         a.email);
         setVal('fax',           a.fax);
         setVal('boite_postale', a.boite_postale);
@@ -982,7 +868,7 @@ $(document).ready(function() {
         }
 
         // FK → entier ou null
-        ['forme_juridique','statut_entreprise','couleur_commentaire','pays','ville','nace_specifique'].forEach(function(k) {
+        ['forme_juridique','statut_entreprise','couleur_commentaire','pays','ville'].forEach(function(k) {
             if (formData[k] && formData[k] !== '') formData[k] = parseInt(formData[k]);
             else if (formData[k] === '') formData[k] = null;
         });
