@@ -2715,7 +2715,9 @@ for model in AUTO_REGISTERED_MODELS:
 
 @admin.register(MailInboxConfig)
 class MailInboxConfigAdmin(admin.ModelAdmin):
-    list_display = ("imap_user", "imap_host", "imap_port", "use_ssl", "is_active", "last_polled_at")
+    list_display = ("name", "imap_user", "imap_host", "imap_port", "use_ssl", "is_active", "last_polled_at")
+    list_filter = ("is_active", "use_ssl")
+    search_fields = ("name", "imap_user", "imap_host")
     readonly_fields = ("last_polled_at", "last_error", "created_at", "updated_at")
 
 

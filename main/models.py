@@ -13929,7 +13929,8 @@ class ListeInformationsAvisCommercial(models.Model):
 
 
 class MailInboxConfig(models.Model):
-    """Configuration IMAP singleton pour recevoir les mails clients."""
+    """Configuration IMAP — supporte plusieurs boîtes mail."""
+    name = models.CharField(_("nom du compte"), max_length=100, blank=True, default="")
     imap_host = models.CharField(_("hôte IMAP"), max_length=255, blank=True, default="")
     imap_port = models.PositiveSmallIntegerField(_("port"), default=993)
     imap_user = models.CharField(_("utilisateur"), max_length=255, blank=True, default="")
@@ -13944,17 +13945,12 @@ class MailInboxConfig(models.Model):
 
     class Meta:
         verbose_name = _("Configuration boîte mail")
-        verbose_name_plural = _("Configuration boîte mail")
+        verbose_name_plural = _("Configurations boîtes mail")
+        ordering = ['id']
 
     def __str__(self):
-        return f"{self.imap_user}@{self.imap_host}"
-
-    @classmethod
-    def get_solo(cls):
-        obj, _ = cls.objects.get_or_create(pk=1, defaults={
-            'imap_host': '', 'imap_user': '', 'imap_password': '',
-        })
-        return obj
+        label = self.name or self.imap_user
+        return f"{label} ({self.imap_host})" if label else self.imap_host
 
 
 class MailSource(models.Model):

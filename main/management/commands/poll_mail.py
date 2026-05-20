@@ -25,7 +25,7 @@ from main.models import MailInboxConfig, MailSource, IncomingMail, MailAttachmen
 
 
 class Command(BaseCommand):
-    help = "Poll la boîte IMAP configurée et intercepte les mails clients."
+    help = "Poll les boîtes IMAP configurées et intercepte les mails clients."
 
     SPAM_FOLDERS = [
         "Spam", "Junk", "SPAM", "JUNK", "Junk Email", "Junk Mail",
@@ -35,25 +35,40 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--verbose", action="store_true", help="Détail de chaque email traité")
         parser.add_argument("--days", type=int, default=None, help="Fenêtre de recherche en jours")
+        parser.add_argument("--config-id", dest="config_id", type=int, default=None,
+                            help="ID d'une configuration IMAP spécifique à utiliser")
 
     def handle(self, *args, **options):
         self.verbose = options.get("verbose", False)
         self.force_days = options.get("days")
+        config_id = options.get("config_id")
 
-        cfg = MailInboxConfig.get_solo()
-        if not cfg.is_active or not cfg.imap_host:
+        if config_id is not None:
+            try:
+                configs = [MailInboxConfig.objects.get(id=config_id)]
+            except MailInboxConfig.DoesNotExist:
+                self.stderr.write(self.style.ERROR(f"Configuration IMAP id={config_id} introuvable."))
+                return
+        else:
+            configs = list(MailInboxConfig.objects.filter(is_active=True).exclude(imap_host="").order_by("id"))
+
+        if not configs:
             self.stdout.write("Aucune configuration IMAP active.")
             return
 
-        self.stdout.write(f"→ Polling {cfg.imap_user}@{cfg.imap_host}…")
-        try:
-            new_count = self._poll(cfg)
-            self.stdout.write(self.style.SUCCESS(f"  ✓ {new_count} nouveau(x) mail(s) intercepté(s)."))
-        except Exception as exc:
-            cfg.last_error = str(exc)
-            cfg.last_polled_at = timezone.now()
-            cfg.save(update_fields=["last_error", "last_polled_at"])
-            self.stderr.write(self.style.ERROR(f"  ✗ Erreur : {exc}"))
+        for cfg in configs:
+            if not cfg.is_active or not cfg.imap_host:
+                self.stdout.write(f"  [{cfg.id}] Ignoré (inactif ou hôte vide).")
+                continue
+            self.stdout.write(f"→ Polling [{cfg.id}] {cfg.imap_user}@{cfg.imap_host}…")
+            try:
+                new_count = self._poll(cfg)
+                self.stdout.write(self.style.SUCCESS(f"  ✓ {new_count} nouveau(x) mail(s) intercepté(s)."))
+            except Exception as exc:
+                cfg.last_error = str(exc)
+                cfg.last_polled_at = timezone.now()
+                cfg.save(update_fields=["last_error", "last_polled_at"])
+                self.stderr.write(self.style.ERROR(f"  ✗ Erreur : {exc}"))
 
     def _poll(self, cfg: MailInboxConfig) -> int:
         socket.setdefaulttimeout(30)

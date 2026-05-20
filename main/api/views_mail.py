@@ -2,16 +2,17 @@
 Mail entrant — API views pour la configuration IMAP, les sources et l'inbox.
 
 Routes (toutes sous /api/v1/mail/):
-  GET/PUT    imap/                → config IMAP singleton
-  POST       imap/test/           → tester la connexion IMAP
-  POST       imap/poll/           → déclencher un poll immédiat
-  GET        imap/status/         → statut du service de polling
-  GET/POST   sources/             → lister / créer une source
-  PATCH/DEL  sources/<id>/        → modifier / supprimer
-  POST       sources/<id>/toggle/ → activer/désactiver
-  GET        inbox/               → liste mails interceptés
-  GET        inbox/<id>/          → détail + pièces jointes
-  GET        inbox/stats/         → compteurs par statut
+  GET/POST   imap/                    → lister / créer une config IMAP
+  GET/PUT/DEL imap/<id>/              → détail / modifier / supprimer une config
+  POST       imap/<id>/test/          → tester la connexion IMAP d'une config
+  POST       imap/<id>/poll/          → déclencher un poll immédiat
+  GET        imap/status/             → statut global du service de polling
+  GET/POST   sources/                 → lister / créer une source
+  PATCH/DEL  sources/<id>/            → modifier / supprimer
+  POST       sources/<id>/toggle/     → activer/désactiver
+  GET        inbox/                   → liste mails interceptés
+  GET        inbox/<id>/              → détail + pièces jointes
+  GET        inbox/stats/             → compteurs par statut
   POST       inbox/<id>/dispatch/     → dispatcher à un utilisateur
   POST       inbox/<id>/self-dispatch/ → se dispatcher le mail
   POST       inbox/<id>/accept/       → accepter le dossier
@@ -19,7 +20,7 @@ Routes (toutes sous /api/v1/mail/):
   POST       inbox/<id>/reject/       → rejeter
   POST       inbox/<id>/restore/      → remettre en attente
   POST       inbox/<id>/processed/    → marquer comme traité
-  GET        users/               → liste des utilisateurs pour le dispatch
+  GET        users/                   → liste des utilisateurs pour le dispatch
   GET        attachments/<id>/download/ → télécharger une pièce jointe
 """
 
@@ -55,6 +56,7 @@ def _is_root(user) -> bool:
 def _imap_config_payload(cfg):
     return {
         "id": cfg.id,
+        "name": cfg.name,
         "imap_host": cfg.imap_host,
         "imap_port": cfg.imap_port,
         "imap_user": cfg.imap_user,
@@ -139,28 +141,86 @@ def _minutes_ago(dt):
 
 
 # ─────────────────────────────────────────────────────────────
-# IMAP Config
+# IMAP Config — multi-record
 # ─────────────────────────────────────────────────────────────
 
-@api_view(["GET", "PUT"])
+def _cfg_health(cfg):
+    """Retourne (health, label) pour une config."""
+    if not cfg.imap_host:
+        return "unconfigured", "Non configuré"
+    if not cfg.is_active:
+        return "inactive", "Arrêté"
+    minutes = _minutes_ago(cfg.last_polled_at)
+    if minutes is None:
+        return "stale", "En attente du premier passage"
+    if cfg.last_error:
+        return "error", f"Erreur — {cfg.last_error[:60]}"
+    if minutes < 10:
+        return "healthy", f"Actif — il y a {minutes} min"
+    if minutes < 20:
+        return "delayed", f"En retard — il y a {minutes} min"
+    return "stale", f"Inactif — il y a {minutes} min"
+
+
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def mail_imap_config(request):
     if not _is_root(request.user):
         return Response({"detail": "Réservé aux administrateurs."}, status=403)
 
-    cfg = MailInboxConfig.get_solo()
+    if request.method == "GET":
+        configs = MailInboxConfig.objects.all().order_by("id")
+        return Response([_imap_config_payload(c) for c in configs])
+
+    # POST — créer une nouvelle config
+    data = request.data or {}
+    imap_host = (data.get("imap_host") or "").strip()
+    imap_user = (data.get("imap_user") or "").strip()
+    if not imap_host or not imap_user:
+        return Response({"detail": "imap_host et imap_user sont requis."}, status=400)
+
+    cfg = MailInboxConfig.objects.create(
+        name=(data.get("name") or "").strip(),
+        imap_host=imap_host,
+        imap_port=int(data.get("imap_port") or 993),
+        imap_user=imap_user,
+        imap_password=(data.get("imap_password") or ""),
+        use_ssl=bool(data.get("use_ssl", True)),
+        mailbox=(data.get("mailbox") or "INBOX").strip() or "INBOX",
+        is_active=bool(data.get("is_active", True)),
+    )
+    return Response(_imap_config_payload(cfg), status=201)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
+def mail_imap_config_detail(request, config_id: int):
+    if not _is_root(request.user):
+        return Response({"detail": "Réservé aux administrateurs."}, status=403)
+
+    try:
+        cfg = MailInboxConfig.objects.get(id=config_id)
+    except MailInboxConfig.DoesNotExist:
+        return Response({"detail": "Configuration introuvable."}, status=404)
 
     if request.method == "GET":
         return Response(_imap_config_payload(cfg))
 
+    if request.method == "DELETE":
+        cfg.delete()
+        return Response(status=204)
+
+    # PUT — modifier
     data = request.data or {}
+    if "name" in data:
+        cfg.name = (data["name"] or "").strip()
     cfg.imap_host = (data.get("imap_host") or "").strip()
     cfg.imap_port = int(data.get("imap_port") or 993)
     cfg.imap_user = (data.get("imap_user") or "").strip()
     cfg.use_ssl = bool(data.get("use_ssl", True))
     cfg.mailbox = (data.get("mailbox") or "INBOX").strip() or "INBOX"
     cfg.is_active = bool(data.get("is_active", True))
-    if "imap_password" in data and data["imap_password"]:
+    if data.get("imap_password"):
         cfg.imap_password = data["imap_password"]
     if not cfg.imap_host or not cfg.imap_user:
         return Response({"detail": "imap_host et imap_user sont requis."}, status=400)
@@ -170,24 +230,34 @@ def mail_imap_config(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def mail_imap_test(request):
+def mail_imap_test(request, config_id: int = None):
     if not _is_root(request.user):
         return Response({"detail": "Réservé aux administrateurs."}, status=403)
 
     data = request.data or {}
-    host = (data.get("imap_host") or "").strip()
-    port = int(data.get("imap_port") or 993)
-    user = (data.get("imap_user") or "").strip()
-    password = data.get("imap_password") or ""
-    use_ssl = bool(data.get("use_ssl", True))
-    mailbox = (data.get("mailbox") or "INBOX").strip()
+
+    # Si appelé avec un config_id dans l'URL, utiliser les données sauvegardées
+    if config_id is not None:
+        try:
+            cfg = MailInboxConfig.objects.get(id=config_id)
+        except MailInboxConfig.DoesNotExist:
+            return Response({"detail": "Configuration introuvable."}, status=404)
+        host = cfg.imap_host
+        port = cfg.imap_port
+        user = cfg.imap_user
+        password = cfg.imap_password
+        use_ssl = cfg.use_ssl
+        mailbox = cfg.mailbox
+    else:
+        host = (data.get("imap_host") or "").strip()
+        port = int(data.get("imap_port") or 993)
+        user = (data.get("imap_user") or "").strip()
+        password = data.get("imap_password") or ""
+        use_ssl = bool(data.get("use_ssl", True))
+        mailbox = (data.get("mailbox") or "INBOX").strip()
 
     if not host or not user:
         return Response({"detail": "Hôte et utilisateur requis."}, status=400)
-
-    if not password:
-        cfg = MailInboxConfig.get_solo()
-        password = cfg.imap_password
 
     try:
         imap = imaplib.IMAP4_SSL(host, port) if use_ssl else imaplib.IMAP4(host, port)
@@ -209,25 +279,38 @@ def mail_imap_test(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def mail_imap_poll(request):
+def mail_imap_poll(request, config_id: int = None):
     if not _is_root(request.user):
         return Response({"detail": "Réservé aux administrateurs."}, status=403)
 
-    cfg = MailInboxConfig.get_solo()
-    if not cfg.is_active or not cfg.imap_host:
-        return Response({"detail": "Aucune configuration IMAP active."}, status=404)
-
     from django.core.management import call_command
-    try:
-        call_command("poll_mail")
-        cfg.refresh_from_db()
-        return Response({
-            "success": True,
-            "last_polled_at": cfg.last_polled_at,
-            "last_error": cfg.last_error,
-        })
-    except Exception as e:
-        return Response({"success": False, "message": str(e)}, status=500)
+
+    if config_id is not None:
+        try:
+            cfg = MailInboxConfig.objects.get(id=config_id)
+        except MailInboxConfig.DoesNotExist:
+            return Response({"detail": "Configuration introuvable."}, status=404)
+        if not cfg.is_active or not cfg.imap_host:
+            return Response({"detail": "Configuration IMAP inactive ou non configurée."}, status=400)
+        try:
+            call_command("poll_mail", config_id=config_id)
+            cfg.refresh_from_db()
+            return Response({
+                "success": True,
+                "last_polled_at": cfg.last_polled_at,
+                "last_error": cfg.last_error,
+            })
+        except Exception as e:
+            return Response({"success": False, "message": str(e)}, status=500)
+    else:
+        # Déclencher le poll pour toutes les configs actives
+        if not MailInboxConfig.objects.filter(is_active=True).exclude(imap_host="").exists():
+            return Response({"detail": "Aucune configuration IMAP active."}, status=404)
+        try:
+            call_command("poll_mail")
+            return Response({"success": True})
+        except Exception as e:
+            return Response({"success": False, "message": str(e)}, status=500)
 
 
 @api_view(["GET"])
@@ -236,46 +319,48 @@ def mail_cron_status(request):
     if not _is_root(request.user):
         return Response({"detail": "Réservé aux administrateurs."}, status=403)
 
-    cfg = MailInboxConfig.get_solo()
-    if not cfg.imap_host:
+    configs = list(MailInboxConfig.objects.filter(is_active=True).order_by("id"))
+
+    if not configs:
         return Response({
             "health": "unconfigured",
-            "health_label": "Non configuré",
+            "health_label": "Aucune boîte configurée",
             "is_active": False,
-            "last_run": None,
-            "last_error": "",
-            "minutes_since_last_run": None,
+            "configs": [],
         })
 
-    if not cfg.is_active:
-        return Response({
-            "health": "inactive",
-            "health_label": "Arrêté",
-            "is_active": False,
+    config_statuses = []
+    health_priority = {"error": 0, "stale": 1, "delayed": 2, "inactive": 3, "unconfigured": 4, "healthy": 5}
+    worst_health = "healthy"
+
+    for cfg in configs:
+        health, label = _cfg_health(cfg)
+        if health_priority.get(health, 5) < health_priority.get(worst_health, 5):
+            worst_health = health
+        config_statuses.append({
+            "id": cfg.id,
+            "name": cfg.name or cfg.imap_user,
+            "health": health,
+            "health_label": label,
             "last_run": cfg.last_polled_at,
             "last_error": cfg.last_error,
             "minutes_since_last_run": _minutes_ago(cfg.last_polled_at),
         })
 
-    minutes = _minutes_ago(cfg.last_polled_at)
-    if minutes is None:
-        health, label = "stale", "En attente du premier passage"
-    elif cfg.last_error:
-        health, label = "error", f"Erreur IMAP — {cfg.last_error[:80]}"
-    elif minutes < 10:
-        health, label = "healthy", f"Actif — dernier passage il y a {minutes} min"
-    elif minutes < 20:
-        health, label = "delayed", f"En retard — dernier passage il y a {minutes} min"
-    else:
-        health, label = "stale", f"Inactif — dernier passage il y a {minutes} min"
+    health_labels = {
+        "healthy": "Tout actif",
+        "delayed": "En retard",
+        "stale": "Inactif",
+        "error": "Erreur IMAP",
+        "inactive": "Arrêté",
+        "unconfigured": "Non configuré",
+    }
 
     return Response({
-        "health": health,
-        "health_label": label,
-        "is_active": cfg.is_active,
-        "last_run": cfg.last_polled_at,
-        "last_error": cfg.last_error,
-        "minutes_since_last_run": minutes,
+        "health": worst_health,
+        "health_label": health_labels.get(worst_health, worst_health),
+        "is_active": True,
+        "configs": config_statuses,
     })
 
 

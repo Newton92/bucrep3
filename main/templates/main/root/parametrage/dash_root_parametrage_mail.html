@@ -13,139 +13,141 @@
 .page-header {
     background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
     border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 24px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 20px;
     color: #fff;
 }
-.page-header h4 { margin: 0; font-weight: 700; font-size: 1.1rem; }
-.page-header p  { margin: 4px 0 0; font-size: .85rem; opacity: .85; }
-.config-card {
+.page-header h4 { margin: 0; font-weight: 700; font-size: 1.05rem; }
+.page-header p  { margin: 2px 0 0; font-size: .78rem; opacity: .85; }
+
+.section-card {
     background: #fff;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(10,149,202,.07);
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 20px 20px 12px;
+    margin-bottom: 20px;
 }
-.config-card .card-title {
-    font-size: .9rem;
+.section-title {
+    font-size: .88rem;
     font-weight: 700;
     color: var(--color-primary-dark);
     border-bottom: 2px solid var(--color-primary);
-    padding-bottom: 10px;
-    margin-bottom: 18px;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
+
+/* ── Inbox cards ────────────────────────────────────────── */
+.inbox-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #f8fafc;
+    transition: box-shadow .15s;
+}
+.inbox-card:hover { box-shadow: 0 3px 12px rgba(10,149,202,.12); }
+.inbox-card.inactive { opacity: .7; background: #f1f5f9; }
+
+.inbox-host   { font-weight: 700; font-size: .9rem; color: #1e293b; }
+.inbox-user   { font-size: .8rem; color: #64748b; }
+.inbox-meta   { font-size: .75rem; color: #94a3b8; }
+.inbox-name-tag {
+    font-size: .72rem;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-weight: 600;
+}
+
+/* ── Status badges ──────────────────────────────────────── */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
+    gap: 5px;
+    padding: 3px 10px;
     border-radius: 20px;
-    font-size: .78rem;
+    font-size: .72rem;
     font-weight: 600;
+    white-space: nowrap;
 }
-.status-healthy  { background: #d1fae5; color: #065f46; }
-.status-error    { background: #fee2e2; color: #991b1b; }
-.status-stale    { background: #fef3c7; color: #92400e; }
-.status-inactive { background: #f1f5f9; color: #64748b; }
+.status-healthy      { background: #d1fae5; color: #065f46; }
+.status-error        { background: #fee2e2; color: #991b1b; }
+.status-stale        { background: #fef3c7; color: #92400e; }
+.status-delayed      { background: #fef3c7; color: #92400e; }
+.status-inactive     { background: #f1f5f9; color: #64748b; }
 .status-unconfigured { background: #f1f5f9; color: #64748b; }
+
+/* ── Sources ────────────────────────────────────────────── */
 .source-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 0;
+    padding: 8px 0;
     border-bottom: 1px solid #f1f5f9;
 }
 .source-row:last-child { border-bottom: none; }
 .source-info { flex: 1; min-width: 0; }
-.source-name  { font-weight: 600; font-size: .88rem; color: #1e293b; }
-.source-email { font-size: .78rem; color: #64748b; }
+.source-name  { font-weight: 600; font-size: .85rem; color: #1e293b; }
+.source-email { font-size: .76rem; color: #64748b; }
+
+/* ── Global cron badge ──────────────────────────────────── */
+#globalStatusBadge { font-size: .78rem; }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid py-3 px-3">
 
-    <!-- En-tête -->
+    <!-- En-tête page -->
     <div class="page-header">
         <h4><i class="bi bi-envelope-gear me-2"></i>{% trans "Configuration de la boîte mail" %}</h4>
-        <p>{% trans "Paramétrez la connexion IMAP et les sources autorisées à déposer des demandes." %}</p>
+        <p>{% trans "Gérez les connexions IMAP et les sources autorisées à déposer des demandes." %}</p>
     </div>
 
     <div class="row g-3">
 
-        <!-- ── Connexion IMAP ────────────────────────────────── -->
+        <!-- ── Boîtes IMAP ───────────────────────────────── -->
         <div class="col-12 col-xl-7">
-            <div class="config-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="card-title mb-0">{% trans "Connexion IMAP" %}</span>
-                    <span id="cronStatusBadge" class="status-badge status-unconfigured">
-                        <span class="spinner-border spinner-border-sm"></span> {% trans "Chargement…" %}
+            <div class="section-card">
+                <div class="section-title">
+                    <span>
+                        <i class="bi bi-inbox me-2"></i>{% trans "Boîtes IMAP configurées" %}
+                        <span id="globalStatusBadge" class="status-badge status-unconfigured ms-2">
+                            <span class="spinner-border spinner-border-sm" style="width:.65rem;height:.65rem;"></span>
+                        </span>
                     </span>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addImapModal">
+                        <i class="bi bi-plus-lg me-1"></i>{% trans "Ajouter" %}
+                    </button>
                 </div>
 
-                <form id="imapForm">
-                    <div class="row g-2">
-                        <div class="col-md-8">
-                            <label class="form-label small fw-semibold">{% trans "Hôte IMAP" %}</label>
-                            <input type="text" class="form-control form-control-sm" id="imapHost" placeholder="imap.example.com">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">{% trans "Port" %}</label>
-                            <input type="number" class="form-control form-control-sm" id="imapPort" value="993">
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label small fw-semibold">{% trans "Utilisateur" %}</label>
-                            <input type="text" class="form-control form-control-sm" id="imapUser" placeholder="contact@bucrep.net">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">{% trans "Boîte mail" %}</label>
-                            <input type="text" class="form-control form-control-sm" id="imapMailbox" value="INBOX">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold">{% trans "Mot de passe" %}</label>
-                            <input type="password" class="form-control form-control-sm" id="imapPassword" placeholder="{% trans "Laisser vide pour ne pas modifier" %}">
-                        </div>
-                        <div class="col-6 d-flex align-items-center gap-3 mt-1">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="imapSsl" checked>
-                                <label class="form-check-label small" for="imapSsl">SSL/TLS</label>
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="imapActive" checked>
-                                <label class="form-check-label small" for="imapActive">{% trans "Actif" %}</label>
-                            </div>
-                        </div>
-                        <div class="col-12 d-flex gap-2 mt-2">
-                            <button type="button" id="btnTestImap" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-plug me-1"></i>{% trans "Tester" %}
-                            </button>
-                            <button type="button" id="btnSaveImap" class="btn btn-primary btn-sm">
-                                <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer" %}
-                            </button>
-                            <button type="button" id="btnPollNow" class="btn btn-outline-info btn-sm">
-                                <i class="bi bi-arrow-repeat me-1"></i>{% trans "Relever maintenant" %}
-                            </button>
-                        </div>
+                <div id="imapList">
+                    <div class="text-center py-4 text-muted small">
+                        <span class="spinner-border spinner-border-sm"></span> {% trans "Chargement…" %}
                     </div>
-                </form>
+                </div>
 
                 <div id="imapFeedback" class="mt-2 d-none"></div>
             </div>
         </div>
 
-        <!-- ── Sources autorisées ─────────────────────────────── -->
+        <!-- ── Sources autorisées ────────────────────────── -->
         <div class="col-12 col-xl-5">
-            <div class="config-card h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="card-title mb-0">{% trans "Sources autorisées" %}</span>
+            <div class="section-card h-100">
+                <div class="section-title">
+                    <span><i class="bi bi-person-check me-2"></i>{% trans "Sources autorisées" %}</span>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSourceModal">
                         <i class="bi bi-plus-lg me-1"></i>{% trans "Ajouter" %}
                     </button>
                 </div>
                 <div id="sourcesList">
                     <div class="text-center py-3 text-muted small">
-                        <span class="spinner-border spinner-border-sm"></span> Chargement…
+                        <span class="spinner-border spinner-border-sm"></span> {% trans "Chargement…" %}
                     </div>
                 </div>
             </div>
@@ -154,26 +156,75 @@
     </div>
 </div>
 
-<!-- Modal Ajout Source -->
-<div class="modal fade" id="addSourceModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- Modal — Ajouter une boîte IMAP                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addImapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title"><i class="bi bi-envelope-plus me-2"></i>{% trans "Ajouter une source mail" %}</h6>
+            <div class="modal-header py-2 px-3">
+                <h6 class="modal-title mb-0"><i class="bi bi-inbox-fill me-2 text-primary"></i>{% trans "Nouvelle boîte IMAP" %}</h6>
                 <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
+            <div class="modal-body px-3 py-2">
+                {% include "main/root/parametrage/_imap_form_fields.html" with prefix="add" %}
+            </div>
+            <div class="modal-footer py-2 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnAddImap">
+                    <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- Modal — Modifier une boîte IMAP                          -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="editImapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3">
+                <h6 class="modal-title mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>{% trans "Modifier la boîte IMAP" %}</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-3 py-2">
+                <input type="hidden" id="editImapId">
+                {% include "main/root/parametrage/_imap_form_fields.html" with prefix="edit" %}
+            </div>
+            <div class="modal-footer py-2 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSaveEditImap">
+                    <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- Modal — Ajouter une source                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addSourceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3">
+                <h6 class="modal-title mb-0"><i class="bi bi-envelope-plus me-2 text-primary"></i>{% trans "Ajouter une source mail" %}</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-3 py-2">
+                <div class="mb-2">
                     <label class="form-label small fw-semibold">{% trans "Nom client" %} *</label>
                     <input type="text" class="form-control form-control-sm" id="srcClientName" placeholder="{% trans "Ex: Entreprise ABC" %}">
                 </div>
-                <div class="mb-3">
+                <div class="mb-2">
                     <label class="form-label small fw-semibold">{% trans "Email ou domaine" %} *</label>
                     <input type="text" class="form-control form-control-sm" id="srcEmailDomain"
                            placeholder="contact@abc.com  {% trans "ou" %}  abc.com">
-                    <div class="form-text">{% trans "Un email exact ou un domaine (sans @) pour filtrer tous les emails du domaine." %}</div>
+                    <div class="form-text small">{% trans "Email exact ou domaine pour filtrer tous les emails du domaine." %}</div>
                 </div>
-                <div class="mb-3">
+                <div class="mb-2">
                     <label class="form-label small fw-semibold">{% trans "Notes" %}</label>
                     <textarea class="form-control form-control-sm" id="srcNotes" rows="2"></textarea>
                 </div>
@@ -182,7 +233,7 @@
                     <label class="form-check-label small" for="srcActive">{% trans "Actif" %}</label>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer py-2 px-3">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
                 <button type="button" class="btn btn-primary btn-sm" id="btnAddSource">{% trans "Enregistrer" %}</button>
             </div>
@@ -196,15 +247,17 @@
 const ACCESS_TOKEN = "{{ access_token }}";
 const API = "/api/v1/mail";
 const I18N = {
-    loading:        "{% trans "Chargement…" %}",
-    saved:          "{% trans "Configuration enregistrée." %}",
-    error:          "{% trans "Erreur." %}",
-    testOk:         "{% trans "Test…" %}",
-    polled:         "{% trans "Relevé effectué." %}",
-    polling:        "{% trans "Relevé…" %}",
-    noSource:       "{% trans "Aucune source configurée." %}",
-    deleteConfirm:  "{% trans "Supprimer cette source ?" %}",
-    addError:       "{% trans "Erreur lors de l'ajout." %}",
+    loading:         "{% trans "Chargement…" %}",
+    saved:           "{% trans "Configuration enregistrée." %}",
+    error:           "{% trans "Erreur." %}",
+    polled:          "{% trans "Relevé effectué." %}",
+    noInbox:         "{% trans "Aucune boîte IMAP configurée. Cliquez sur « Ajouter » pour en créer une." %}",
+    noSource:        "{% trans "Aucune source configurée." %}",
+    deleteImapConfirm:   "{% trans "Supprimer cette boîte IMAP ?" %}",
+    deleteSourceConfirm: "{% trans "Supprimer cette source ?" %}",
+    addError:        "{% trans "Erreur lors de l'ajout." %}",
+    testSuccess:     "{% trans "Test réussi." %}",
+    testFail:        "{% trans "Échec du test." %}",
 };
 
 function authHeaders() {
@@ -215,95 +268,245 @@ async function apiCall(method, url, data) {
     const res = await fetch(url, {
         method,
         headers: authHeaders(),
-        body: data ? JSON.stringify(data) : undefined,
+        body: data !== undefined ? JSON.stringify(data) : undefined,
     });
-    if (res.status === 204) return null;
+    if (res.status === 204) return { ok: true, status: 204, data: null };
     return res.json().then(j => ({ ok: res.ok, status: res.status, data: j }));
 }
 
-// ── Status cron ──────────────────────────────────────────────
-async function loadCronStatus() {
-    const badge = document.getElementById("cronStatusBadge");
-    const r = await apiCall("GET", `${API}/imap/status/`);
-    if (!r || !r.ok) return;
-    const h = r.data.health;
-    const cls = h === "healthy" ? "status-healthy" : h === "error" ? "status-error" :
-                h === "delayed" ? "status-stale" : h === "inactive" ? "status-inactive" : "status-unconfigured";
-    const icon = h === "healthy" ? "bi-check-circle-fill" : h === "error" ? "bi-exclamation-triangle-fill" :
-                 "bi-clock-fill";
-    badge.className = `status-badge ${cls}`;
-    badge.innerHTML = `<i class="bi ${icon}"></i> ${r.data.health_label}`;
+function escHtml(s) {
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-// ── IMAP Config ──────────────────────────────────────────────
-async function loadImapConfig() {
-    const r = await apiCall("GET", `${API}/imap/`);
-    if (!r || !r.ok || !r.data) return;
-    const d = r.data;
-    document.getElementById("imapHost").value = d.imap_host || "";
-    document.getElementById("imapPort").value = d.imap_port || 993;
-    document.getElementById("imapUser").value = d.imap_user || "";
-    document.getElementById("imapMailbox").value = d.mailbox || "INBOX";
-    document.getElementById("imapSsl").checked = d.use_ssl;
-    document.getElementById("imapActive").checked = d.is_active;
-}
-
-function showImapFeedback(msg, ok) {
-    const el = document.getElementById("imapFeedback");
+function showFeedback(msg, ok, containerId = "imapFeedback") {
+    const el = document.getElementById(containerId);
+    if (!el) return;
     el.className = `mt-2 alert alert-${ok ? "success" : "danger"} py-2 small`;
     el.textContent = msg;
 }
 
-document.getElementById("btnSaveImap").addEventListener("click", async () => {
-    const r = await apiCall("PUT", `${API}/imap/`, {
-        imap_host: document.getElementById("imapHost").value.trim(),
-        imap_port: parseInt(document.getElementById("imapPort").value) || 993,
-        imap_user: document.getElementById("imapUser").value.trim(),
-        imap_password: document.getElementById("imapPassword").value,
-        mailbox: document.getElementById("imapMailbox").value.trim() || "INBOX",
-        use_ssl: document.getElementById("imapSsl").checked,
-        is_active: document.getElementById("imapActive").checked,
-    });
-    showImapFeedback(r && r.ok ? I18N.saved : (r?.data?.detail || I18N.error), r?.ok);
-    if (r?.ok) loadCronStatus();
-});
+// ── Health badge helpers ─────────────────────────────────────
+function healthCls(h) {
+    return { healthy: "status-healthy", error: "status-error", delayed: "status-delayed",
+             stale: "status-stale", inactive: "status-inactive" }[h] || "status-unconfigured";
+}
+function healthIcon(h) {
+    return { healthy: "bi-check-circle-fill", error: "bi-exclamation-triangle-fill",
+             delayed: "bi-clock-fill", stale: "bi-clock", inactive: "bi-pause-circle-fill" }[h] || "bi-question-circle";
+}
 
-document.getElementById("btnTestImap").addEventListener("click", async () => {
-    const btn = document.getElementById("btnTestImap");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Test…';
-    const r = await apiCall("POST", `${API}/imap/test/`, {
-        imap_host: document.getElementById("imapHost").value.trim(),
-        imap_port: parseInt(document.getElementById("imapPort").value) || 993,
-        imap_user: document.getElementById("imapUser").value.trim(),
-        imap_password: document.getElementById("imapPassword").value,
-        mailbox: document.getElementById("imapMailbox").value.trim() || "INBOX",
-        use_ssl: document.getElementById("imapSsl").checked,
-    });
-    btn.disabled = false;
-    btn.innerHTML = `<i class="bi bi-plug me-1"></i>${I18N.loading.replace("…","")}`;
-    showImapFeedback(r?.data?.message || I18N.error, r?.data?.success);
-});
+// ── Global cron status ───────────────────────────────────────
+async function loadCronStatus() {
+    const badge = document.getElementById("globalStatusBadge");
+    const r = await apiCall("GET", `${API}/imap/status/`);
+    if (!r || !r.ok) return;
+    const h = r.data.health;
+    badge.className = `status-badge ${healthCls(h)} ms-2`;
+    badge.innerHTML = `<i class="bi ${healthIcon(h)}"></i> ${escHtml(r.data.health_label)}`;
+}
 
-document.getElementById("btnPollNow").addEventListener("click", async () => {
-    const btn = document.getElementById("btnPollNow");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Relevé…';
-    const r = await apiCall("POST", `${API}/imap/poll/`);
-    btn.disabled = false;
-    btn.innerHTML = `<i class="bi bi-arrow-repeat me-1"></i>${I18N.polled.split(".")[0]}`;
-    showImapFeedback(r?.ok ? I18N.polled : (r?.data?.detail || I18N.error), r?.ok);
+// ── IMAP List ────────────────────────────────────────────────
+async function loadImapList() {
+    const container = document.getElementById("imapList");
+    const r = await apiCall("GET", `${API}/imap/`);
+    if (!r || !r.ok) {
+        container.innerHTML = `<p class="text-danger small">{% trans "Erreur de chargement." %}</p>`;
+        return;
+    }
+    const configs = r.data;
+    if (!configs.length) {
+        container.innerHTML = `<div class="text-center py-4 text-muted small">
+            <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>${escHtml(I18N.noInbox)}</div>`;
+        return;
+    }
+
+    container.innerHTML = configs.map(cfg => {
+        const h = imapHealth(cfg);
+        return `
+        <div class="inbox-card ${cfg.is_active ? "" : "inactive"}" id="inbox-card-${cfg.id}">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        ${cfg.name ? `<span class="inbox-name-tag">${escHtml(cfg.name)}</span>` : ""}
+                        <span class="inbox-host">${escHtml(cfg.imap_user)}</span>
+                        <span class="status-badge ${healthCls(h.health)}" id="health-${cfg.id}">
+                            <i class="bi ${healthIcon(h.health)}"></i> ${escHtml(h.label)}
+                        </span>
+                    </div>
+                    <div class="inbox-user">
+                        <i class="bi bi-server me-1"></i>${escHtml(cfg.imap_host)}:${cfg.imap_port}
+                        &nbsp;·&nbsp; <span class="badge bg-secondary" style="font-size:.65rem;">${cfg.use_ssl ? "SSL" : "Non-SSL"}</span>
+                        &nbsp;·&nbsp; ${escHtml(cfg.mailbox)}
+                    </div>
+                    ${cfg.last_error ? `<div class="inbox-meta text-danger mt-1"><i class="bi bi-exclamation-triangle me-1"></i>${escHtml(cfg.last_error.slice(0,100))}</div>` : ""}
+                </div>
+                <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
+                    <div class="form-check form-switch mb-0" title="${cfg.is_active ? "{% trans "Désactiver" %}" : "{% trans "Activer" %}"}">
+                        <input class="form-check-input imap-toggle" type="checkbox" data-id="${cfg.id}" ${cfg.is_active ? "checked" : ""}>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-1 mt-2 flex-wrap">
+                <button class="btn btn-outline-secondary btn-sm imap-edit" data-id="${cfg.id}" title="{% trans "Modifier" %}">
+                    <i class="bi bi-pencil"></i> {% trans "Modifier" %}
+                </button>
+                <button class="btn btn-outline-info btn-sm imap-test" data-id="${cfg.id}" title="{% trans "Tester la connexion" %}">
+                    <i class="bi bi-plug"></i> {% trans "Tester" %}
+                </button>
+                <button class="btn btn-outline-primary btn-sm imap-poll" data-id="${cfg.id}" title="{% trans "Relever les mails maintenant" %}">
+                    <i class="bi bi-arrow-repeat"></i> {% trans "Relever" %}
+                </button>
+                <button class="btn btn-outline-danger btn-sm imap-delete" data-id="${cfg.id}" title="{% trans "Supprimer" %}">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        </div>`;
+    }).join("");
+
+    // Bind events
+    container.querySelectorAll(".imap-toggle").forEach(el => {
+        el.addEventListener("change", () => toggleImap(parseInt(el.dataset.id), el.checked));
+    });
+    container.querySelectorAll(".imap-edit").forEach(el => {
+        el.addEventListener("click", () => openEditModal(parseInt(el.dataset.id), configs));
+    });
+    container.querySelectorAll(".imap-test").forEach(el => {
+        el.addEventListener("click", () => testImap(parseInt(el.dataset.id), el));
+    });
+    container.querySelectorAll(".imap-poll").forEach(el => {
+        el.addEventListener("click", () => pollImap(parseInt(el.dataset.id), el));
+    });
+    container.querySelectorAll(".imap-delete").forEach(el => {
+        el.addEventListener("click", () => deleteImap(parseInt(el.dataset.id)));
+    });
+}
+
+function imapHealth(cfg) {
+    if (!cfg.imap_host) return { health: "unconfigured", label: "{% trans "Non configuré" %}" };
+    if (!cfg.is_active) return { health: "inactive", label: "{% trans "Arrêté" %}" };
+    if (!cfg.last_polled_at) return { health: "stale", label: "{% trans "Jamais relevé" %}" };
+    const mins = Math.floor((Date.now() - new Date(cfg.last_polled_at)) / 60000);
+    if (cfg.last_error) return { health: "error", label: `{% trans "Erreur" %} — il y a ${mins} min` };
+    if (mins < 10)  return { health: "healthy", label: `{% trans "Actif" %} — il y a ${mins} min` };
+    if (mins < 20) return { health: "delayed", label: `{% trans "En retard" %} — il y a ${mins} min` };
+    return { health: "stale", label: `{% trans "Inactif" %} — il y a ${mins} min` };
+}
+
+async function toggleImap(id, newActive) {
+    const r = await apiCall("PUT", `${API}/imap/${id}/`, { is_active: newActive });
+    if (!r || !r.ok) { loadImapList(); return; }
+    loadImapList();
     loadCronStatus();
+}
+
+async function testImap(id, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    const r = await apiCall("POST", `${API}/imap/${id}/test/`);
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-plug"></i> {% trans "Tester" %}`;
+    const msg = r?.data?.message || (r?.ok ? I18N.testSuccess : I18N.testFail);
+    showFeedback(msg, r?.data?.success ?? r?.ok);
+    document.getElementById("imapFeedback").classList.remove("d-none");
+}
+
+async function pollImap(id, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    const r = await apiCall("POST", `${API}/imap/${id}/poll/`);
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-arrow-repeat"></i> {% trans "Relever" %}`;
+    showFeedback(r?.ok ? I18N.polled : (r?.data?.detail || I18N.error), r?.ok);
+    document.getElementById("imapFeedback").classList.remove("d-none");
+    loadImapList();
+    loadCronStatus();
+}
+
+async function deleteImap(id) {
+    if (!confirm(I18N.deleteImapConfirm)) return;
+    const r = await apiCall("DELETE", `${API}/imap/${id}/`);
+    if (r?.ok) { loadImapList(); loadCronStatus(); }
+    else showFeedback(r?.data?.detail || I18N.error, false);
+}
+
+// ── Add Imap Modal ───────────────────────────────────────────
+document.getElementById("btnAddImap").addEventListener("click", async () => {
+    const btn = document.getElementById("btnAddImap");
+    btn.disabled = true;
+    const r = await apiCall("POST", `${API}/imap/`, {
+        name:          document.getElementById("addImapName").value.trim(),
+        imap_host:     document.getElementById("addImapHost").value.trim(),
+        imap_port:     parseInt(document.getElementById("addImapPort").value) || 993,
+        imap_user:     document.getElementById("addImapUser").value.trim(),
+        imap_password: document.getElementById("addImapPassword").value,
+        mailbox:       document.getElementById("addImapMailbox").value.trim() || "INBOX",
+        use_ssl:       document.getElementById("addImapSsl").checked,
+        is_active:     document.getElementById("addImapActive").checked,
+    });
+    btn.disabled = false;
+    if (r?.ok) {
+        bootstrap.Modal.getInstance(document.getElementById("addImapModal")).hide();
+        document.getElementById("addImapModal").querySelectorAll("input, textarea").forEach(el => {
+            if (el.type === "checkbox") { el.checked = el.id.includes("Ssl") || el.id.includes("Active"); }
+            else if (el.id === "addImapPort") { el.value = "993"; }
+            else if (el.id === "addImapMailbox") { el.value = "INBOX"; }
+            else { el.value = ""; }
+        });
+        loadImapList();
+        loadCronStatus();
+    } else {
+        alert(r?.data?.detail || I18N.addError);
+    }
+});
+
+// ── Edit Imap Modal ──────────────────────────────────────────
+function openEditModal(id, configs) {
+    const cfg = configs.find(c => c.id === id);
+    if (!cfg) return;
+    document.getElementById("editImapId").value = cfg.id;
+    document.getElementById("editImapName").value = cfg.name || "";
+    document.getElementById("editImapHost").value = cfg.imap_host || "";
+    document.getElementById("editImapPort").value = cfg.imap_port || 993;
+    document.getElementById("editImapUser").value = cfg.imap_user || "";
+    document.getElementById("editImapPassword").value = "";
+    document.getElementById("editImapMailbox").value = cfg.mailbox || "INBOX";
+    document.getElementById("editImapSsl").checked = cfg.use_ssl;
+    document.getElementById("editImapActive").checked = cfg.is_active;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("editImapModal")).show();
+}
+
+document.getElementById("btnSaveEditImap").addEventListener("click", async () => {
+    const btn = document.getElementById("btnSaveEditImap");
+    const id = parseInt(document.getElementById("editImapId").value);
+    btn.disabled = true;
+    const r = await apiCall("PUT", `${API}/imap/${id}/`, {
+        name:          document.getElementById("editImapName").value.trim(),
+        imap_host:     document.getElementById("editImapHost").value.trim(),
+        imap_port:     parseInt(document.getElementById("editImapPort").value) || 993,
+        imap_user:     document.getElementById("editImapUser").value.trim(),
+        imap_password: document.getElementById("editImapPassword").value,
+        mailbox:       document.getElementById("editImapMailbox").value.trim() || "INBOX",
+        use_ssl:       document.getElementById("editImapSsl").checked,
+        is_active:     document.getElementById("editImapActive").checked,
+    });
+    btn.disabled = false;
+    if (r?.ok) {
+        bootstrap.Modal.getInstance(document.getElementById("editImapModal")).hide();
+        loadImapList();
+        loadCronStatus();
+    } else {
+        alert(r?.data?.detail || I18N.error);
+    }
 });
 
 // ── Sources ──────────────────────────────────────────────────
 async function loadSources() {
     const container = document.getElementById("sourcesList");
     const r = await apiCall("GET", `${API}/sources/`);
-    if (!r || !r.ok) { container.innerHTML = '<p class="text-danger small">Erreur de chargement.</p>'; return; }
+    if (!r || !r.ok) { container.innerHTML = '<p class="text-danger small">{% trans "Erreur de chargement." %}</p>'; return; }
     const sources = r.data;
     if (!sources.length) {
-        container.innerHTML = `<p class="text-muted small text-center py-2">${I18N.noSource}</p>`;
+        container.innerHTML = `<p class="text-muted small text-center py-3">${I18N.noSource}</p>`;
         return;
     }
     container.innerHTML = sources.map(s => `
@@ -311,15 +514,15 @@ async function loadSources() {
             <div class="source-info">
                 <div class="source-name">${escHtml(s.client_name)}</div>
                 <div class="source-email">${escHtml(s.email_or_domain)}
-                    ${s.is_domain ? ' <span class="badge bg-secondary" style="font-size:.65rem;">domaine</span>' : ''}
+                    ${s.is_domain ? ' <span class="badge bg-secondary" style="font-size:.62rem;">{% trans "domaine" %}</span>' : ''}
                 </div>
                 ${s.notes ? `<div class="source-email text-muted">${escHtml(s.notes)}</div>` : ""}
             </div>
             <div class="form-check form-switch mb-0">
                 <input class="form-check-input src-toggle" type="checkbox" ${s.is_active ? "checked" : ""}
-                       data-id="${s.id}" title="${s.is_active ? "Désactiver" : "Activer"}">
+                       data-id="${s.id}" title="${s.is_active ? "{% trans "Désactiver" %}" : "{% trans "Activer" %}"}">
             </div>
-            <button class="btn btn-outline-danger btn-sm src-delete" data-id="${s.id}" title="Supprimer">
+            <button class="btn btn-outline-danger btn-sm src-delete" data-id="${s.id}" title="{% trans "Supprimer" %}">
                 <i class="bi bi-trash3"></i>
             </button>
         </div>`).join("");
@@ -338,36 +541,31 @@ async function toggleSource(id) {
 }
 
 async function deleteSource(id) {
-    if (!confirm(I18N.deleteConfirm)) return;
+    if (!confirm(I18N.deleteSourceConfirm)) return;
     await apiCall("DELETE", `${API}/sources/${id}/`);
     loadSources();
 }
 
 document.getElementById("btnAddSource").addEventListener("click", async () => {
     const r = await apiCall("POST", `${API}/sources/`, {
-        client_name: document.getElementById("srcClientName").value.trim(),
+        client_name:    document.getElementById("srcClientName").value.trim(),
         email_or_domain: document.getElementById("srcEmailDomain").value.trim(),
-        notes: document.getElementById("srcNotes").value.trim(),
-        is_active: document.getElementById("srcActive").checked,
+        notes:          document.getElementById("srcNotes").value.trim(),
+        is_active:      document.getElementById("srcActive").checked,
     });
     if (r?.ok) {
         bootstrap.Modal.getInstance(document.getElementById("addSourceModal")).hide();
-        document.getElementById("srcClientName").value = "";
-        document.getElementById("srcEmailDomain").value = "";
-        document.getElementById("srcNotes").value = "";
+        ["srcClientName","srcEmailDomain","srcNotes"].forEach(id => document.getElementById(id).value = "");
+        document.getElementById("srcActive").checked = true;
         loadSources();
     } else {
         alert(r?.data?.detail || I18N.addError);
     }
 });
 
-function escHtml(s) {
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-
 // ── Init ─────────────────────────────────────────────────────
 loadCronStatus();
-loadImapConfig();
+loadImapList();
 loadSources();
 setInterval(loadCronStatus, 60000);
 </script>
