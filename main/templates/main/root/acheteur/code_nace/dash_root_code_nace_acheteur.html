@@ -225,6 +225,22 @@
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ── Cascade NACE ─────────────────────────────────────────── */
+.nace-step-label {
+    font-size: .68rem; font-weight: 700; color: var(--color-primary-dark);
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; display: block;
+}
+.nace-step-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--color-primary); color: #fff;
+    font-size: .65rem; font-weight: 700; margin-right: 4px; flex-shrink: 0;
+}
+.cascade-arrow {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-primary); font-size: .9rem; padding: .4rem 0;
+}
 </style>
 {% endblock %}
 
@@ -372,39 +388,45 @@
             </div>
             <form id="addCodeNaceForm" class="enhanced-form">
                 <div class="modal-body py-3 px-3">
+                    <!-- Étape ① Catégorie -->
                     <div class="mb-2">
                         <label class="form-label">
-                            <i class="fas fa-search me-1" style="color:var(--color-primary);"></i>
-                            {% trans "Rechercher un code NACE" %}
+                            <span class="nace-step-icon">①</span>{% trans "Catégorie" %}
                         </label>
-                        <select id="codeNaceSelect" name="code" style="width:100%;" required>
-                            <option value=""></option>
+                        <select id="addNaceCategory" class="form-select form-select-sm">
+                            <option value="">{% trans "Sélectionnez une catégorie..." %}</option>
                         </select>
-                        <small class="text-muted" style="font-size:.72rem;">{% trans "Tapez au moins 1 caractère pour rechercher" %}</small>
                     </div>
-
+                    <div class="cascade-arrow"><i class="fas fa-chevron-down"></i></div>
+                    <!-- Étape ② Groupe -->
+                    <div class="mb-2">
+                        <label class="form-label">
+                            <span class="nace-step-icon">②</span>{% trans "Groupe" %}
+                        </label>
+                        <select id="addNaceGroupe" class="form-select form-select-sm" disabled>
+                            <option value="">{% trans "Sélectionnez d'abord une catégorie..." %}</option>
+                        </select>
+                    </div>
+                    <div class="cascade-arrow"><i class="fas fa-chevron-down"></i></div>
+                    <!-- Étape ③ Code NACE -->
+                    <div class="mb-2">
+                        <label class="form-label">
+                            <span class="nace-step-icon">③</span>{% trans "Code NACE" %}
+                        </label>
+                        <select id="addNaceCode" name="code" class="form-select form-select-sm" disabled required>
+                            <option value="">{% trans "Sélectionnez d'abord un groupe..." %}</option>
+                        </select>
+                    </div>
                     <!-- Prévisualisation -->
-                    <div id="codeNacePreview" class="nace-preview d-none">
+                    <div id="codeNacePreview" class="nace-preview d-none mt-2">
                         <div class="fw-semibold mb-2" style="font-size:.8rem;color:var(--color-primary-dark);">
                             <i class="fas fa-eye me-1"></i>{% trans "Aperçu" %}
                         </div>
                         <div class="preview-row">
-                            <div class="preview-item">
-                                <div class="preview-label">{% trans "Code" %}</div>
-                                <div class="preview-val" id="previewCode">—</div>
-                            </div>
-                            <div class="preview-item">
-                                <div class="preview-label">{% trans "Libellé" %}</div>
-                                <div class="preview-val" id="previewLibelle">—</div>
-                            </div>
-                            <div class="preview-item">
-                                <div class="preview-label">{% trans "Catégorie" %}</div>
-                                <div class="preview-val" id="previewCategoryCode">—</div>
-                            </div>
-                            <div class="preview-item">
-                                <div class="preview-label">{% trans "Poids" %}</div>
-                                <div class="preview-val" id="previewPoids">—</div>
-                            </div>
+                            <div class="preview-item"><div class="preview-label">{% trans "Code" %}</div><div class="preview-val" id="previewCode">—</div></div>
+                            <div class="preview-item"><div class="preview-label">{% trans "Libellé" %}</div><div class="preview-val" id="previewLibelle">—</div></div>
+                            <div class="preview-item"><div class="preview-label">{% trans "Catégorie" %}</div><div class="preview-val" id="previewCategoryCode">—</div></div>
+                            <div class="preview-item"><div class="preview-label">{% trans "Poids" %}</div><div class="preview-val" id="previewPoids">—</div></div>
                         </div>
                     </div>
                 </div>
@@ -437,12 +459,34 @@
             <form id="editCodeNaceForm" class="enhanced-form">
                 <input type="hidden" id="editCodeNaceId" name="id">
                 <div class="modal-body py-3 px-3">
+                    <!-- Étape ① Catégorie -->
                     <div class="mb-2">
                         <label class="form-label">
-                            <i class="fas fa-exchange-alt me-1" style="color:var(--color-primary);"></i>
-                            {% trans "Nouveau code NACE" %}
+                            <span class="nace-step-icon">①</span>{% trans "Catégorie" %}
                         </label>
-                        <select id="editCodeNaceSelect" name="code" style="width:100%;" required></select>
+                        <select id="editNaceCategory" class="form-select form-select-sm">
+                            <option value="">{% trans "Sélectionnez une catégorie..." %}</option>
+                        </select>
+                    </div>
+                    <div class="cascade-arrow"><i class="fas fa-chevron-down"></i></div>
+                    <!-- Étape ② Groupe -->
+                    <div class="mb-2">
+                        <label class="form-label">
+                            <span class="nace-step-icon">②</span>{% trans "Groupe" %}
+                        </label>
+                        <select id="editNaceGroupe" class="form-select form-select-sm" disabled>
+                            <option value="">{% trans "Sélectionnez d'abord une catégorie..." %}</option>
+                        </select>
+                    </div>
+                    <div class="cascade-arrow"><i class="fas fa-chevron-down"></i></div>
+                    <!-- Étape ③ Code NACE -->
+                    <div class="mb-2">
+                        <label class="form-label">
+                            <span class="nace-step-icon">③</span>{% trans "Code NACE" %}
+                        </label>
+                        <select id="editNaceCode" name="code" class="form-select form-select-sm" disabled required>
+                            <option value="">{% trans "Sélectionnez d'abord un groupe..." %}</option>
+                        </select>
                     </div>
                     <div class="d-flex gap-3 mt-2" style="font-size:.72rem;color:var(--color-text-muted);">
                         <span><i class="fas fa-calendar me-1"></i>{% trans "Créé le" %} <strong id="editCreatedAtInfo"></strong></span>
@@ -502,87 +546,114 @@
 $(document).ready(function() {
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-nace-oneview/`;
-    const API_SUBCATEGORIES_URL = '/api/subcategories-nace-oneview/';
+    const API_CATS_URL  = '/api/codes-nace/categories/';
+    const API_SUBS_URL  = (catId) => `/api/codes-nace/categories/${catId}/subcategories/`;
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentCodeNaceId = null;
+    let addSubcategories  = [];   // cache pour le modal ajout
+    let editSubcategories = [];   // cache pour le modal modification
 
-    // ── Select2 AJAX pour la recherche de codes NACE ─────────
-    function initAddSelect2() {
-        const $sel = $('#codeNaceSelect');
-        if ($sel.data('select2')) $sel.select2('destroy');
-        $sel.select2({
-            theme: 'bootstrap-5',
-            placeholder: "{% trans "Rechercher un code NACE…" %}",
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#addCodeNaceModal'),
-            language: {
-                searching: () => "{% trans "Recherche en cours…" %}",
-                noResults: () => "{% trans "Aucun résultat" %}",
-                inputTooShort: () => "{% trans "Tapez au moins 1 caractère" %}",
-            },
-            ajax: {
-                url: API_SUBCATEGORIES_URL,
-                dataType: 'json',
-                delay: 400,
-                data: params => ({ search: params.term || '' }),
-                processResults: data => ({
-                    results: (Array.isArray(data) ? data : []).map(item => ({
-                        id: item.id,
-                        text: `${item.code || ''} — ${item.libelle || ''}`,
-                        data: item,
-                    }))
-                }),
-                cache: true,
-            },
-            minimumInputLength: 1,
-        }).on('select2:select', function(e) {
-            const d = e.params.data.data;
-            if (d) showPreview(d);
-        }).on('select2:clear', hidePreview);
-    }
+    // ── Cascade Catégorie → Groupe → Code NACE ────────────────
 
-    function initEditSelect2() {
-        const $sel = $('#editCodeNaceSelect');
-        if ($sel.data('select2')) $sel.select2('destroy');
-        $sel.select2({
-            theme: 'bootstrap-5',
-            placeholder: "{% trans "Rechercher un code NACE…" %}",
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#editCodeNaceModal'),
-            language: {
-                searching: () => "{% trans "Recherche en cours…" %}",
-                noResults: () => "{% trans "Aucun résultat" %}",
-                inputTooShort: () => "{% trans "Tapez au moins 1 caractère" %}",
+    function loadCategories($sel, selectedCatId) {
+        $sel.empty().append('<option value="">{% trans "Chargement..." %}</option>');
+        $.ajax({
+            url: API_CATS_URL,
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(data) {
+                $sel.empty().append('<option value="">{% trans "Sélectionnez une catégorie..." %}</option>');
+                data.forEach(function(cat) {
+                    $sel.append(`<option value="${cat.id}">${cat.code} — ${cat.libelle}</option>`);
+                });
+                if (selectedCatId) $sel.val(selectedCatId).trigger('change');
             },
-            ajax: {
-                url: API_SUBCATEGORIES_URL,
-                dataType: 'json',
-                delay: 300,
-                data: params => ({ search: params.term || '' }),
-                processResults: data => ({
-                    results: (Array.isArray(data) ? data : []).map(item => ({
-                        id: item.id,
-                        text: `${item.code} — ${item.libelle}`,
-                        data: item,
-                    }))
-                }),
-                cache: true,
-            },
-            minimumInputLength: 1,
+            error: function() { $sel.html('<option value="">{% trans "Erreur de chargement" %}</option>'); }
         });
     }
 
-    $('#addCodeNaceModal').on('shown.bs.modal', initAddSelect2);
-    $('#editCodeNaceModal').on('shown.bs.modal', initEditSelect2);
+    function loadSubcategories(catId, $groupeSel, $codeSel, selectedPrefix, selectedSubId, subcacheRef) {
+        $groupeSel.empty().append('<option value="">{% trans "Chargement..." %}</option>').prop('disabled', true);
+        $codeSel.empty().append('<option value="">{% trans "—" %}</option>').prop('disabled', true);
+        $.ajax({
+            url: API_SUBS_URL(catId),
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(data) {
+                subcacheRef.data = data;
+                const prefixes = [...new Set(data.map(s => s.code ? s.code.split('.')[0] : ''))].filter(Boolean).sort();
+                $groupeSel.empty().append('<option value="">{% trans "Sélectionnez un groupe..." %}</option>');
+                prefixes.forEach(function(p) { $groupeSel.append(`<option value="${p}">${p}</option>`); });
+                $groupeSel.prop('disabled', false);
+                if (selectedPrefix) {
+                    $groupeSel.val(selectedPrefix);
+                    fillCodesSel($codeSel, data, selectedPrefix, selectedSubId);
+                }
+            },
+            error: function() { $groupeSel.html('<option value="">{% trans "Erreur" %}</option>'); }
+        });
+    }
+
+    function fillCodesSel($codeSel, subcats, prefix, selectedSubId) {
+        const filtered = subcats.filter(s => s.code && s.code.split('.')[0] === prefix);
+        $codeSel.empty().append('<option value="">{% trans "Sélectionnez un code..." %}</option>');
+        filtered.forEach(function(s) {
+            $codeSel.append(`<option value="${s.id}">${s.code} — ${s.libelle}</option>`);
+        });
+        $codeSel.prop('disabled', false);
+        if (selectedSubId) $codeSel.val(String(selectedSubId));
+    }
+
+    // ── Événements cascade — modal Ajout ─────────────────────
+    var addSubcache = { data: [] };
+
+    $('#addCodeNaceModal').on('shown.bs.modal', function() {
+        loadCategories($('#addNaceCategory'), null);
+    });
+
+    $('#addNaceCategory').on('change', function() {
+        const catId = $(this).val();
+        $('#addNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez un groupe..." %}</option>').prop('disabled', true);
+        $('#addNaceCode').empty().append('<option value="">{% trans "—" %}</option>').prop('disabled', true).val('');
+        hidePreview();
+        if (catId) loadSubcategories(catId, $('#addNaceGroupe'), $('#addNaceCode'), null, null, addSubcache);
+    });
+
+    $('#addNaceGroupe').on('change', function() {
+        const prefix = $(this).val();
+        $('#addNaceCode').empty().append('<option value="">{% trans "—" %}</option>').prop('disabled', true).val('');
+        hidePreview();
+        if (prefix) fillCodesSel($('#addNaceCode'), addSubcache.data, prefix, null);
+    });
+
+    $('#addNaceCode').on('change', function() {
+        const subId = $(this).val();
+        if (!subId) { hidePreview(); return; }
+        const sub = addSubcache.data.find(s => String(s.id) === String(subId));
+        if (sub) showPreview(sub);
+    });
+
+    // ── Événements cascade — modal Modification ──────────────
+    var editSubcache = { data: [] };
+
+    $('#editNaceCategory').on('change', function() {
+        const catId = $(this).val();
+        $('#editNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez un groupe..." %}</option>').prop('disabled', true);
+        $('#editNaceCode').empty().append('<option value="">{% trans "—" %}</option>').prop('disabled', true).val('');
+        if (catId) loadSubcategories(catId, $('#editNaceGroupe'), $('#editNaceCode'), null, null, editSubcache);
+    });
+
+    $('#editNaceGroupe').on('change', function() {
+        const prefix = $(this).val();
+        $('#editNaceCode').empty().append('<option value="">{% trans "—" %}</option>').prop('disabled', true).val('');
+        if (prefix) fillCodesSel($('#editNaceCode'), editSubcache.data, prefix, null);
+    });
 
     // ── Preview ───────────────────────────────────────────────
     function showPreview(d) {
         $('#previewCode').text(d.code || '—');
         $('#previewLibelle').text(d.libelle || '—');
-        $('#previewCategoryCode').text(d.category_info ? `${d.category_info.code} · ${d.category_info.libelle}` : '—');
+        const cat = d.category || {};
+        $('#previewCategoryCode').text(cat.code ? `${cat.code} · ${cat.libelle}` : '—');
         $('#previewPoids').text(d.poids || '0');
         $('#codeNacePreview').removeClass('d-none');
     }
@@ -673,8 +744,8 @@ $(document).ready(function() {
     // ── Form Ajout ────────────────────────────────────────────
     $('#addCodeNaceForm').on('submit', function(e) {
         e.preventDefault();
-        const codeId = $('#codeNaceSelect').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE." %}'); return; }
+        const codeId = $('#addNaceCode').val();
+        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
         submitForm('POST', { code: codeId, acheteur: ACHETEUR_ID }, '#submitAddBtn', '#addCodeNaceModal');
     });
 
@@ -682,8 +753,8 @@ $(document).ready(function() {
     $('#editCodeNaceForm').on('submit', function(e) {
         e.preventDefault();
         if (!currentCodeNaceId) return;
-        const codeId = $('#editCodeNaceSelect').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE." %}'); return; }
+        const codeId = $('#editNaceCode').val();
+        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
         submitForm('PUT', { code: codeId }, '#submitEditBtn', '#editCodeNaceModal', currentCodeNaceId);
     });
 
@@ -731,13 +802,22 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 $('#editCodeNaceId').val(r.id);
-                const option = new Option(
-                    `${r.subcategory_details.code} — ${r.subcategory_details.libelle}`,
-                    r.code, true, true
-                );
-                $('#editCodeNaceSelect').append(option).trigger('change');
                 $('#editCreatedAtInfo').text(formatDate(r.created_at));
                 $('#editUpdatedAtInfo').text(formatDate(r.updated_at));
+
+                // Restaurer la cascade : catégorie → groupe → code
+                const sub = r.subcategory_details || {};
+                const cat = sub.category || {};
+                const subCode = sub.code || '';
+                const prefix  = subCode.split('.')[0];
+                const subId   = sub.id;
+
+                // Charger les catégories et pré-sélectionner
+                loadCategories($('#editNaceCategory'), cat.id ? String(cat.id) : null);
+                if (cat.id) {
+                    loadSubcategories(cat.id, $('#editNaceGroupe'), $('#editNaceCode'), prefix, subId, editSubcache);
+                }
+
                 $('#editCodeNaceModal').modal('show');
             },
             error: function(xhr) {
@@ -781,16 +861,16 @@ $(document).ready(function() {
     // ── Reset modals ──────────────────────────────────────────
     $('#addCodeNaceModal').on('hidden.bs.modal', function() {
         $('#addCodeNaceForm')[0].reset();
-        if ($('#codeNaceSelect').data('select2')) {
-            $('#codeNaceSelect').val(null).trigger('change');
-        }
+        $('#addNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
+        $('#addNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
+        addSubcache.data = [];
         hidePreview();
     });
     $('#editCodeNaceModal').on('hidden.bs.modal', function() {
         $('#editCodeNaceForm')[0].reset();
-        if ($('#editCodeNaceSelect').data('select2')) {
-            $('#editCodeNaceSelect').val(null).trigger('change');
-        }
+        $('#editNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
+        $('#editNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
+        editSubcache.data = [];
         currentCodeNaceId = null;
     });
 
