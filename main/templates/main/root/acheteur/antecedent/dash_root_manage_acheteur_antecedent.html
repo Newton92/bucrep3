@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -607,10 +607,11 @@
                     <i class="fas fa-gavel me-3"></i>{% trans "Antécédents Juridiques" %}
                 </h1>
                 <p class="page-subtitle">
-                    Gestion des antécédents juridiques de l'acheteur
+                    {% trans "Gestion des antécédents juridiques de l'acheteur" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'antecedent' %}
                 <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
@@ -822,18 +823,18 @@
             <div class="row g-3 align-items-center enhanced-form">
                 <div class="col-md-5">
                     <div class="form-group mb-0">
-                        <label class="form-label">
+                        <label class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-search" style="color: var(--color-primary);"></i>{% trans "Recherche" %}
                         </label>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher dans les antécédents...">
+                        <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="{% trans 'Rechercher dans les antécédents...' %}">
                     </div>
                 </div>
                 <div class="col-md-5">
                     <div class="form-group mb-0">
-                        <label class="form-label">
+                        <label class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-filter" style="color: var(--color-primary);"></i>{% trans "Filtrer par type" %}
                         </label>
-                        <select class="form-select" id="filterType">
+                        <select class="form-select form-select-sm" id="filterType">
                             <option value="">{% trans "Tous les types" %}</option>
                             <option value="faillite">{% trans "Dossiers de Faillite" %}</option>
                             <option value="jugement">{% trans "Jugements de Cour" %}</option>
@@ -844,7 +845,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
+                    <button class="btn btn-sm btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
                         <i class="fas fa-filter me-1"></i>{% trans "Filtrer" %}
                     </button>
                 </div>
@@ -863,7 +864,7 @@
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label text-white" for="selectAll">
-                            Sélectionner tout
+                            {% trans "Sélectionner tout" %}
                         </label>
                     </div>
                     <button class="btn btn-danger btn-sm btn-action" id="deleteSelected" disabled>
@@ -874,7 +875,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover mb-0 enhanced-table" id="antecedentTable">
+                <table class="table table-sm table-hover mb-0 enhanced-table" id="antecedentTable">
                     <thead>
                         <tr>
                             <th width="50">
@@ -911,38 +912,38 @@
 
 <!-- Modal Ajout Antécédent -->
 <div class="modal fade" id="addAntecedentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Antécédent Juridique" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addAntecedentForm" class="enhanced-form">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="alert alert-info" style="border-left: 4px solid var(--color-primary);">
                         <i class="fas fa-info-circle me-2"></i>
-                        Remplissez au moins un des champs suivants
+                        {% trans "Remplissez au moins un des champs suivants" %}
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="dossier_faillite" class="form-label">
+                                <label for="dossier_faillite" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-ban" style="color: var(--faillite-color);"></i>{% trans "Dossier de Faillite" %}
                                 </label>
-                                <input type="text" class="form-control" id="dossier_faillite" name="dossier_faillite" 
-                                       placeholder="Référence du dossier de faillite">
+                                <input type="text" class="form-control form-control-sm" id="dossier_faillite" name="dossier_faillite"
+                                       placeholder="{% trans 'Référence du dossier de faillite' %}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="jugement_cour" class="form-label">
+                                <label for="jugement_cour" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-balance-scale" style="color: var(--jugement-color);"></i>{% trans "Jugement de Cour" %}
                                 </label>
-                                <input type="text" class="form-control" id="jugement_cour" name="jugement_cour" 
-                                       placeholder="Référence du jugement">
+                                <input type="text" class="form-control form-control-sm" id="jugement_cour" name="jugement_cour"
+                                       placeholder="{% trans 'Référence du jugement' %}">
                             </div>
                         </div>
                     </div>
@@ -950,20 +951,20 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="antecedant_redressement" class="form-label">
+                                <label for="antecedant_redressement" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-redo" style="color: var(--redressement-color);"></i>{% trans "Antécédent de Redressement" %}
                                 </label>
-                                <input type="text" class="form-control" id="antecedant_redressement" name="antecedant_redressement" 
-                                       placeholder="Détails du redressement">
+                                <input type="text" class="form-control form-control-sm" id="antecedant_redressement" name="antecedant_redressement"
+                                       placeholder="{% trans 'Détails du redressement' %}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="autre" class="form-label">
+                                <label for="autre" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-file-alt" style="color: var(--autre-color);"></i>{% trans "Autre" %}
                                 </label>
-                                <input type="text" class="form-control" id="autre" name="autre" 
-                                       placeholder="Autres informations">
+                                <input type="text" class="form-control form-control-sm" id="autre" name="autre"
+                                       placeholder="{% trans 'Autres informations' %}">
                             </div>
                         </div>
                     </div>
@@ -971,10 +972,10 @@
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="couleur_commentaire" class="form-label">
+                                <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-primary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
@@ -986,7 +987,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper" style="color: var(--color-primary);"></i>{% trans "Aperçu" %}
                                 </label>
                                 <div class="color-preview" id="colorPreview" style="
@@ -1001,18 +1002,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: var(--color-secondary);"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4" 
-                                  placeholder="Commentaires supplémentaires..."></textarea>
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="3"
+                                  placeholder="{% trans 'Commentaires supplémentaires...' %}"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-sm btn-success btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
                         </span>
@@ -1026,9 +1027,9 @@
 
 <!-- Modal Modification Antécédent -->
 <div class="modal fade" id="editAntecedentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Antécédent Juridique" %}
                 </h5>
@@ -1036,22 +1037,22 @@
             </div>
             <form id="editAntecedentForm" class="enhanced-form">
                 <input type="hidden" id="editAntecedentId" name="id">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editDossierFaillite" class="form-label">
+                                <label for="editDossierFaillite" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-ban" style="color: var(--faillite-color);"></i>{% trans "Dossier de Faillite" %}
                                 </label>
-                                <input type="text" class="form-control" id="editDossierFaillite" name="dossier_faillite">
+                                <input type="text" class="form-control form-control-sm" id="editDossierFaillite" name="dossier_faillite">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editJugementCour" class="form-label">
+                                <label for="editJugementCour" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-balance-scale" style="color: var(--jugement-color);"></i>{% trans "Jugement de Cour" %}
                                 </label>
-                                <input type="text" class="form-control" id="editJugementCour" name="jugement_cour">
+                                <input type="text" class="form-control form-control-sm" id="editJugementCour" name="jugement_cour">
                             </div>
                         </div>
                     </div>
@@ -1059,18 +1060,18 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editAntecedantRedressement" class="form-label">
+                                <label for="editAntecedantRedressement" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-redo" style="color: var(--redressement-color);"></i>{% trans "Antécédent de Redressement" %}
                                 </label>
-                                <input type="text" class="form-control" id="editAntecedantRedressement" name="antecedant_redressement">
+                                <input type="text" class="form-control form-control-sm" id="editAntecedantRedressement" name="antecedant_redressement">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editAutre" class="form-label">
+                                <label for="editAutre" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-file-alt" style="color: var(--autre-color);"></i>{% trans "Autre" %}
                                 </label>
-                                <input type="text" class="form-control" id="editAutre" name="autre">
+                                <input type="text" class="form-control form-control-sm" id="editAutre" name="autre">
                             </div>
                         </div>
                     </div>
@@ -1078,10 +1079,10 @@
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="editCouleurCommentaire" class="form-label">
+                                <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-primary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
@@ -1093,7 +1094,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper" style="color: var(--color-primary);"></i>{% trans "Aperçu" %}
                                 </label>
                                 <div class="color-preview" id="editColorPreview" style="
@@ -1108,17 +1109,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: var(--color-secondary);"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-sm btn-warning btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1132,28 +1133,28 @@
 
 <!-- Modal de confirmation de suppression -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--faillite-color), #fd7e14);">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="antecedent-icon mb-3" style="margin: 0 auto; background: linear-gradient(135deg, var(--faillite-color), #fd7e14);">
                     <i class="fas fa-trash-alt"></i>
                 </div>
                 <h6 class="fw-bold" style="color: var(--faillite-color);">{% trans "Supprimer le(s) antécédent(s)" %}</h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer cet antécédent ? Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer cet antécédent ? Cette action est irréversible." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-sm btn-danger btn-action" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
@@ -1167,6 +1168,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+// Translated strings for JS use
+const _t = {
+    aucunAntecedent: "{% trans 'Aucun antécédent trouvé' %}",
+    utilisezFiltres: "{% trans 'Utilisez les filtres ou ajoutez un nouvel antécédent' %}",
+    affichage: "{% trans 'Affichage' %}",
+    sur: "{% trans 'sur' %}",
+    antecedents: "{% trans 'antécédents' %}"
+};
+
 $(document).ready(function() {
     // Configuration
     const ACHETEUR_ID = '{{ acheteur.id }}';
@@ -1277,8 +1287,8 @@ $(document).ready(function() {
                     <td colspan="9" class="text-center py-5">
                         <div class="empty-state">
                             <i class="fas fa-gavel fa-3x empty-state-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                            <h5 class="fw-bold mb-2" style="color: var(--color-primary);">Aucun antécédent trouvé</h5>
-                            <p class="text-muted">Utilisez les filtres ou ajoutez un nouvel antécédent</p>
+                            <h5 class="fw-bold mb-2" style="color: var(--color-primary);">${_t.aucunAntecedent}</h5>
+                            <p class="text-muted">${_t.utilisezFiltres}</p>
                         </div>
                     </td>
                 </tr>
@@ -1359,7 +1369,7 @@ $(document).ready(function() {
         
         $('#paginationContainer').show();
         $('#paginationInfo').text(
-            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} antécédents`
+            `${_t.affichage} ${response.start_index || 1} à ${response.end_index || response.count} ${_t.sur} ${response.count} ${_t.antecedents}`
         );
         
         // Bouton précédent

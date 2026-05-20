@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -25,48 +25,16 @@
     --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, var(--color-accent) 100%);
 }
 
-/* Header Premium */
 .page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte Responsable Premium */
 .responsable-card {
@@ -557,14 +525,15 @@
                     <i class="fas fa-users-cog me-3"></i>{% trans "Gestion des Responsables" %}
                 </h1>
                 <p class="page-subtitle">
-                    Gestion complète des responsables associés à l'acheteur
+                    {% trans "Gestion complète des responsables associés à l'acheteur" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'responsable' %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm btn-action">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addResponsableModal">
+                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addResponsableModal">
                     <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter un responsable" %}
                 </button>
             </div>
@@ -743,17 +712,17 @@
                 <div class="col-md-4">
                     <div class="form-group mb-0">
                         <label class="form-label">
-                            <i class="fas fa-search" style="color: var(--color-primary);"></i>&nbsp; Recherche
+                            <i class="fas fa-search" style="color: var(--color-primary);"></i>&nbsp; {% trans "Recherche" %}
                         </label>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Nom, prénom, poste...">
+                        <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="{% trans 'Nom, prénom, poste...' %}">
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="form-group mb-0">
                         <label class="form-label">
-                            <i class="fas fa-venus-mars" style="color: var(--color-primary);"></i>&nbsp; Sexe
+                            <i class="fas fa-venus-mars" style="color: var(--color-primary);"></i>&nbsp; {% trans "Sexe" %}
                         </label>
-                        <select class="form-select" id="filterSexe">
+                        <select class="form-select form-select-sm" id="filterSexe">
                             <option value="">{% trans "Tous" %}</option>
                             <option value="Masculin">{% trans "Masculin" %}</option>
                             <option value="Feminin">{% trans "Féminin" %}</option>
@@ -763,9 +732,9 @@
                 <div class="col-md-3">
                     <div class="form-group mb-0">
                         <label class="form-label">
-                            <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>&nbsp; Poste
+                            <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>&nbsp; {% trans "Poste" %}
                         </label>
-                        <select class="form-select" id="filterPoste">
+                        <select class="form-select form-select-sm" id="filterPoste">
                             <option value="">{% trans "Tous les postes" %}</option>
                             {% for key, value in poste_choices %}
                             <option value="{{ key }}">{{ value }}</option>
@@ -774,7 +743,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
+                    <button class="btn btn-primary btn-sm w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
                         <i class="fas fa-filter me-1"></i>{% trans "Filtrer" %}
                     </button>
                 </div>
@@ -793,7 +762,7 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label small text-white" for="selectAll">
-                            Sélectionner tout
+                            {% trans "Sélectionner tout" %}
                         </label>
                     </div>
                     <button class="btn btn-danger btn-sm btn-action" id="deleteSelected" disabled>
@@ -804,7 +773,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="responsableTable">
+                <table class="table table-hover table-sm mb-0" id="responsableTable">
                     <thead>
                         <tr>
                             <th>
@@ -838,31 +807,31 @@
 
 <!-- Modal Ajout Responsable Premium -->
 <div class="modal fade" id="addResponsableModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Responsable" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addResponsableForm" class="enhanced-form">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="nom" class="form-label">
+                                <label for="nom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Nom" %}
                                 </label>
-                                <input type="text" class="form-control" id="nom" name="nom" required>
+                                <input type="text" class="form-control form-control-sm" id="nom" name="nom" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="prenom" class="form-label">
+                                <label for="prenom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Prénom" %}
                                 </label>
-                                <input type="text" class="form-control" id="prenom" name="prenom" required>
+                                <input type="text" class="form-control form-control-sm" id="prenom" name="prenom" required>
                             </div>
                         </div>
                     </div>
@@ -870,10 +839,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="sexe" class="form-label">
+                                <label for="sexe" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-venus-mars" style="color: var(--color-primary);"></i>{% trans "Sexe" %}
                                 </label>
-                                <select class="form-select" id="sexe" name="sexe" required>
+                                <select class="form-select form-select-sm" id="sexe" name="sexe" required>
                                     <option value="">{% trans "Sélectionnez le sexe" %}</option>
                                     <option value="Masculin">{% trans "Masculin" %}</option>
                                     <option value="Feminin">{% trans "Féminin" %}</option>
@@ -882,10 +851,10 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="nationalite" class="form-label">
+                                <label for="nationalite" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-globe" style="color: var(--color-primary);"></i>{% trans "Nationalité" %}
                                 </label>
-                                <input type="text" class="form-control" id="nationalite" name="nationalite" required>
+                                <input type="text" class="form-control form-control-sm" id="nationalite" name="nationalite" required>
                             </div>
                         </div>
                     </div>
@@ -893,10 +862,10 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="poste" class="form-label">
+                                <label for="poste" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>{% trans "Poste" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="poste" name="poste" required>
+                                <select class="form-select form-select-sm select2-with-search" id="poste" name="poste" required>
                                     <option value="">{% trans "Sélectionnez un poste" %}</option>
                                     {% for key, value in poste_choices %}
                                     <option value="{{ key }}">{{ value }}</option>
@@ -909,10 +878,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="couleur_commentaire" class="form-label">
+                                <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-primary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'var(--color-text-muted)' }}">
@@ -924,7 +893,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper" style="color: var(--color-primary);"></i>{% trans "Aperçu" %}
                                 </label>
                                 <div class="color-preview" id="colorPreview" style="
@@ -939,17 +908,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: var(--color-primary);"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="4"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-sm btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
                         </span>
@@ -963,9 +932,9 @@
 
 <!-- Modal Modification Responsable Premium -->
 <div class="modal fade" id="editResponsableModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier le Responsable" %}
                 </h5>
@@ -973,22 +942,22 @@
             </div>
             <form id="editResponsableForm" class="enhanced-form">
                 <input type="hidden" id="editResponsableId" name="id">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editNom" class="form-label">
+                                <label for="editNom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Nom" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNom" name="nom" required>
+                                <input type="text" class="form-control form-control-sm" id="editNom" name="nom" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editPrenom" class="form-label">
+                                <label for="editPrenom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Prénom" %}
                                 </label>
-                                <input type="text" class="form-control" id="editPrenom" name="prenom" required>
+                                <input type="text" class="form-control form-control-sm" id="editPrenom" name="prenom" required>
                             </div>
                         </div>
                     </div>
@@ -996,10 +965,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editSexe" class="form-label">
+                                <label for="editSexe" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-venus-mars" style="color: var(--color-primary);"></i>{% trans "Sexe" %}
                                 </label>
-                                <select class="form-select" id="editSexe" name="sexe" required>
+                                <select class="form-select form-select-sm" id="editSexe" name="sexe" required>
                                     <option value="">{% trans "Sélectionnez le sexe" %}</option>
                                     <option value="Masculin">{% trans "Masculin" %}</option>
                                     <option value="Feminin">{% trans "Féminin" %}</option>
@@ -1008,10 +977,10 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editNationalite" class="form-label">
+                                <label for="editNationalite" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-globe" style="color: var(--color-primary);"></i>{% trans "Nationalité" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNationalite" name="nationalite" required>
+                                <input type="text" class="form-control form-control-sm" id="editNationalite" name="nationalite" required>
                             </div>
                         </div>
                     </div>
@@ -1019,10 +988,10 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="editPoste" class="form-label">
+                                <label for="editPoste" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>{% trans "Poste" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="editPoste" name="poste" required>
+                                <select class="form-select form-select-sm select2-with-search" id="editPoste" name="poste" required>
                                     <option value="">{% trans "Sélectionnez un poste" %}</option>
                                     {% for key, value in poste_choices %}
                                     <option value="{{ key }}">{{ value }}</option>
@@ -1035,10 +1004,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editCouleurCommentaire" class="form-label">
+                                <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-primary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'var(--color-text-muted)' }}">
@@ -1050,7 +1019,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper" style="color: var(--color-primary);"></i>{% trans "Aperçu" %}
                                 </label>
                                 <div class="color-preview" id="editColorPreview" style="
@@ -1065,17 +1034,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: var(--color-primary);"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-sm btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1089,26 +1058,26 @@
 
 <!-- Modal de confirmation de suppression Premium -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-danger text-white">
-                <h5 class="modal-title">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #dc3545, #fd7e14); color: #fff;">
+                <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body py-3 px-4 text-center">
                 <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
                 <h6 class="fw-bold">{% trans "Supprimer le(s) responsable(s)" %}</h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer ce responsable ? Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer ce responsable ? Cette action est irréversible." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-danger btn-sm btn-action" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
@@ -1219,8 +1188,8 @@ $(document).ready(function() {
                 <tr>
                     <td colspan="6" class="text-center py-5">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucun responsable trouvé</h5>
-                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouveau responsable</p>
+                        <h5 class="text-muted">{% trans "Aucun responsable trouvé" %}</h5>
+                        <p class="text-muted mb-0">{% trans "Utilisez les filtres ou ajoutez un nouveau responsable" %}</p>
                     </td>
                 </tr>
             `);

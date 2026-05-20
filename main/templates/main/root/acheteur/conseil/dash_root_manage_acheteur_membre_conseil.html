@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -25,48 +25,16 @@
     --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
 }
 
-/* Header Premium */
 .page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte Membre Premium */
 .membre-card {
@@ -775,14 +743,15 @@
                     <i class="fas fa-users me-3"></i>{% trans "Conseil d'Administration" %}
                 </h1>
                 <p class="page-subtitle">
-                    Gestion des membres du conseil d'administration
+                    {% trans "Gestion des membres du conseil d'administration" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'membre_conseil' %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm btn-action">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addConseilModal">
+                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addConseilModal">
                     <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter un membre" %}
                 </button>
             </div>
@@ -885,7 +854,7 @@
                 <i class="fas fa-history me-2"></i>{% trans "Membres récemment ajoutés/modifiés" %}
             </h5>
             <span class="badge" style="background: linear-gradient(135deg, var(--color-primary), var(--color-accent));">
-                {{ membres_recent|length }} membre(s)
+                {{ membres_recent|length }} {% trans "membre(s)" %}
             </span>
         </div>
         <div class="row g-3">
@@ -964,12 +933,12 @@
                         <label class="form-label">
                             <i class="fas fa-search"></i>{% trans "Rechercher un membre" %}
                         </label>
-                        <input type="text" class="form-control" id="searchInput" 
-                               placeholder="Nom, fonction, commentaire...">
+                        <input type="text" class="form-control form-control-sm" id="searchInput"
+                               placeholder="{% trans 'Nom, fonction, commentaire...' %}">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
+                    <button class="btn btn-primary btn-sm w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
                         <i class="fas fa-filter me-1"></i>{% trans "Appliquer" %}
                     </button>
                 </div>
@@ -988,7 +957,7 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label small text-white" for="selectAll">
-                            Sélectionner tout
+                            {% trans "Sélectionner tout" %}
                         </label>
                     </div>
                     <button class="btn btn-danger btn-sm btn-action" id="deleteSelected" disabled>
@@ -1000,7 +969,7 @@
         <div class="card-body">
             <div class="enhanced-table-container">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="conseilTable">
+                    <table class="table table-hover table-sm mb-0" id="conseilTable">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">
@@ -1034,31 +1003,31 @@
 
 <!-- Modal Ajout Membre Premium -->
 <div class="modal fade" id="addConseilModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Membre du Conseil" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addConseilForm" class="enhanced-form">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="form-group">
-                        <label for="nom" class="form-label">
+                        <label for="nom" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Nom complet du membre" %}
                         </label>
-                        <input type="text" class="form-control" id="nom" name="nom" required
-                               placeholder="Ex: Jean Dupont">
+                        <input type="text" class="form-control form-control-sm" id="nom" name="nom" required
+                               placeholder="{% trans 'Ex: Jean Dupont' %}">
                     </div>
 
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="fonction_dans_le_conseil" class="form-label">
+                                <label for="fonction_dans_le_conseil" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>{% trans "Fonction dans le Conseil" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="fonction_dans_le_conseil" name="fonction_dans_le_conseil">
+                                <select class="form-select form-select-sm select2-with-search" id="fonction_dans_le_conseil" name="fonction_dans_le_conseil">
                                     <option value="">{% trans "Sélectionnez une fonction" %}</option>
                                     {% for fonction in fonction_list %}
                                     <option value="{{ fonction.valeur }}">{{ fonction.libelle }}</option>
@@ -1071,20 +1040,20 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="numero_adresse" class="form-label">
+                                <label for="numero_adresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-hashtag" style="color: var(--color-primary);"></i>{% trans "Numéro" %}
                                 </label>
-                                <input type="text" class="form-control" id="numero_adresse" name="numero_adresse"
-                                       placeholder="Ex: 123">
+                                <input type="text" class="form-control form-control-sm" id="numero_adresse" name="numero_adresse"
+                                       placeholder="{% trans 'Ex: 123' %}">
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="rue_adresse" class="form-label">
+                                <label for="rue_adresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-road" style="color: var(--color-primary);"></i>{% trans "Rue" %}
                                 </label>
-                                <input type="text" class="form-control" id="rue_adresse" name="rue_adresse"
-                                       placeholder="Ex: Avenue des Champs-Élysées">
+                                <input type="text" class="form-control form-control-sm" id="rue_adresse" name="rue_adresse"
+                                       placeholder="{% trans 'Ex: Avenue des Champs-Élysées' %}">
                             </div>
                         </div>
                     </div>
@@ -1092,19 +1061,19 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="code_postale_adresse" class="form-label">
+                                <label for="code_postale_adresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-mail-bulk" style="color: var(--color-primary);"></i>{% trans "Code Postal" %}
                                 </label>
-                                <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse"
-                                       placeholder="Ex: 75008">
+                                <input type="text" class="form-control form-control-sm" id="code_postale_adresse" name="code_postale_adresse"
+                                       placeholder="{% trans 'Ex: 75008' %}">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="couleur_commentaire" class="form-label">
+                                <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:coloration.code|default:'#6c757d' }}">
@@ -1119,7 +1088,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper"></i>{% trans "Aperçu de la couleur" %}
                                 </label>
                                 <div class="color-preview" id="colorPreview">
@@ -1130,18 +1099,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaires additionnels" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
-                                  placeholder="Informations complémentaires sur ce membre..."></textarea>
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="4"
+                                  placeholder="{% trans 'Informations complémentaires sur ce membre...' %}"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-sm btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>{% trans "Ajouter le membre" %}
                         </span>
@@ -1155,9 +1124,9 @@
 
 <!-- Modal Modification Membre Premium -->
 <div class="modal fade" id="editConseilModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier le Membre du Conseil" %}
                 </h5>
@@ -1165,21 +1134,21 @@
             </div>
             <form id="editConseilForm" class="enhanced-form">
                 <input type="hidden" id="editConseilId" name="id">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <div class="form-group">
-                        <label for="editNom" class="form-label">
+                        <label for="editNom" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-user" style="color: var(--color-primary);"></i>{% trans "Nom complet du membre" %}
                         </label>
-                        <input type="text" class="form-control" id="editNom" name="nom" required>
+                        <input type="text" class="form-control form-control-sm" id="editNom" name="nom" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="editFonctionDansLeConseil" class="form-label">
+                                <label for="editFonctionDansLeConseil" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-briefcase" style="color: var(--color-primary);"></i>{% trans "Fonction dans le Conseil" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="editFonctionDansLeConseil" name="fonction_dans_le_conseil">
+                                <select class="form-select form-select-sm select2-with-search" id="editFonctionDansLeConseil" name="fonction_dans_le_conseil">
                                     <option value="">{% trans "Sélectionnez une fonction" %}</option>
                                     {% for fonction in fonction_list %}
                                     <option value="{{ fonction.valeur }}">{{ fonction.libelle }}</option>
@@ -1192,18 +1161,18 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="editNumeroAdresse" class="form-label">
+                                <label for="editNumeroAdresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-hashtag" style="color: var(--color-primary);"></i>{% trans "Numéro" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
+                                <input type="text" class="form-control form-control-sm" id="editNumeroAdresse" name="numero_adresse">
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="editRueAdresse" class="form-label">
+                                <label for="editRueAdresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-road" style="color: var(--color-primary);"></i>{% trans "Rue" %}
                                 </label>
-                                <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
+                                <input type="text" class="form-control form-control-sm" id="editRueAdresse" name="rue_adresse">
                             </div>
                         </div>
                     </div>
@@ -1211,18 +1180,18 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editCodePostaleAdresse" class="form-label">
+                                <label for="editCodePostaleAdresse" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-mail-bulk" style="color: var(--color-primary);"></i>{% trans "Code Postal" %}
                                 </label>
-                                <input type="text" class="form-control" id="editCodePostaleAdresse" name="code_postale_adresse">
+                                <input type="text" class="form-control form-control-sm" id="editCodePostaleAdresse" name="code_postale_adresse">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editCouleurCommentaire" class="form-label">
+                                <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:coloration.code|default:'#6c757d' }}">
@@ -1237,7 +1206,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper"></i>{% trans "Aperçu de la couleur" %}
                                 </label>
                                 <div class="color-preview" id="editColorPreview">
@@ -1248,17 +1217,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaires additionnels" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-sm btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1272,28 +1241,28 @@
 
 <!-- Modal de confirmation de suppression Premium -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-danger text-white">
-                <h5 class="modal-title">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #dc3545, #fd7e14); color: #fff;">
+                <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-3"></i>{% trans "Confirmation de suppression" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center py-4">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="membre-avatar mx-auto mb-3" style="width: 80px; height: 80px;">
                     <i class="fas fa-trash-alt fa-2x"></i>
                 </div>
                 <h6 class="fw-bold mb-3">{% trans "Supprimer le(s) membre(s) du conseil" %}</h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer ce membre ? Cette action est irréversible." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-sm btn-action" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-danger btn-sm btn-action" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-2"></i>{% trans "Supprimer définitivement" %}
                 </button>
             </div>
@@ -1412,10 +1381,10 @@ $(document).ready(function() {
                             <div class="empty-state-icon">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <h5 class="text-muted mb-2">Aucun membre du conseil trouvé</h5>
-                            <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouveau membre</p>
-                            <button class="btn btn-primary btn-action mt-3" data-bs-toggle="modal" data-bs-target="#addConseilModal">
-                                <i class="fas fa-plus-circle me-1"></i>Ajouter un membre
+                            <h5 class="text-muted mb-2">{% trans "Aucun membre du conseil trouvé" %}</h5>
+                            <p class="text-muted mb-0">{% trans "Utilisez les filtres ou ajoutez un nouveau membre" %}</p>
+                            <button class="btn btn-primary btn-sm btn-action mt-3" data-bs-toggle="modal" data-bs-target="#addConseilModal">
+                                <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter un membre" %}
                             </button>
                         </div>
                     </td>

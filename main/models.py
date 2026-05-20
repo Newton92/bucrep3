@@ -369,6 +369,13 @@ class Pays(Model):
         verbose_name=_("Afficher au dashboard"),
         help_text=_("Indique si ce pays doit apparaître dans les tableaux de bord."),
     )
+    devise = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+        verbose_name=_("Devise"),
+        help_text=_("Code ou libellé de la devise, par exemple 'FCFA', 'EUR', 'USD'."),
+    )
     date_creation = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),

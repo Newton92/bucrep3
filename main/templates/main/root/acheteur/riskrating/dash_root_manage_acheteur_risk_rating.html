@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -31,27 +31,14 @@ body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Header Premium */
+/* Header Compact */
 .page-header {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
-}
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
 
 @keyframes shimmer {
@@ -59,20 +46,8 @@ body {
     100% { transform: translateX(100%); }
 }
 
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte de statistiques premium */
 .stat-card {
@@ -563,39 +538,24 @@ body {
     padding-left: 3.5rem;
 }
 
-/* Modales premium */
+/* Modales compact */
 .modal-content {
-    border-radius: 25px;
+    border-radius: 12px;
     overflow: hidden;
     border: none;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
     background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
     color: white;
     border-bottom: none;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
+    padding: 0.5rem 0.75rem;
 }
 
 .modal-title {
-    font-weight: 800;
-    font-size: 1.5rem;
-    position: relative;
-    z-index: 2;
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
 .btn-close-white {
@@ -669,14 +629,6 @@ body {
 }
 
 @media (max-width: 768px) {
-    .page-header {
-        padding: 2rem;
-    }
-    
-    .page-title {
-        font-size: 2rem;
-    }
-    
     .risk-score-container {
         padding: 2rem 1rem;
     }
@@ -700,14 +652,6 @@ body {
 }
 
 @media (max-width: 576px) {
-    .page-header {
-        padding: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 1.75rem;
-    }
-    
     .stat-card {
         padding: 1.25rem;
     }
@@ -848,22 +792,23 @@ body {
                     <i class="fas fa-shield-alt me-3"></i>{% trans "Évaluation de Risque" %}
                 </h1>
                 <p class="page-subtitle">
-                    Analyse et gestion approfondie du profil de risque de l'acheteur
+                    {% trans "Analyse et gestion approfondie du profil de risque de l'acheteur" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'risk_rating' %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm btn-action">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
                 {% if risk_rating %}
-                <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editRiskRatingModal">
+                <button class="btn btn-warning btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#editRiskRatingModal">
                     <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
                 </button>
-                <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <button class="btn btn-danger btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
                 {% else %}
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
                     <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter une évaluation" %}
                 </button>
                 {% endif %}
@@ -947,11 +892,11 @@ body {
                         <p class="risk-score-label">{% trans "Score de risque global" %}</p>
                         <span class="badge-premium mt-2">
                             {% if score <= 2 %}
-                            <i class="fas fa-check-circle me-2"></i>Risque faible
+                            <i class="fas fa-check-circle me-2"></i>{% trans "Risque faible" %}
                             {% elif score <= 5 %}
-                            <i class="fas fa-exclamation-triangle me-2"></i>Risque modéré
+                            <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Risque modéré" %}
                             {% else %}
-                            <i class="fas fa-exclamation-circle me-2"></i>Risque élevé
+                            <i class="fas fa-exclamation-circle me-2"></i>{% trans "Risque élevé" %}
                             {% endif %}
                         </span>
                     </div>
@@ -1143,13 +1088,13 @@ body {
                         <div class="meta-item mb-3 mb-md-0">
                             <i class="fas fa-calendar"></i>
                             <span class="ms-2 fw-medium">
-                                Créé le {{ risk_rating.created_at|date:"d/m/Y H:i" }}
+                                {% trans "Créé le" %} {{ risk_rating.created_at|date:"d/m/Y H:i" }}
                             </span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-sync-alt"></i>
                             <span class="ms-2 fw-medium">
-                                Dernière mise à jour : {{ risk_rating.updated_at|date:"d/m/Y H:i" }}
+                                {% trans "Dernière mise à jour" %} : {{ risk_rating.updated_at|date:"d/m/Y H:i" }}
                             </span>
                         </div>
                     </div>
@@ -1166,10 +1111,10 @@ body {
                 <i class="fas fa-shield-alt empty-state-icon"></i>
                 <h4 class="fw-bold mb-2">{% trans "Aucune évaluation de risque" %}</h4>
                 <p class="text-muted mb-4">
-                    Cet acheteur ne possède pas encore d'évaluation de risque.<br>
-                    Créez-en une pour évaluer son profil de risque et prendre des décisions éclairées.
+                    {% trans "Cet acheteur ne possède pas encore d'évaluation de risque." %}<br>
+                    {% trans "Créez-en une pour évaluer son profil de risque et prendre des décisions éclairées." %}
                 </p>
-                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Créer une évaluation" %}
                 </button>
             </div>
@@ -1178,18 +1123,18 @@ body {
     {% endif %}
 </div>
 
-<!-- Modal Ajout d'Évaluation de Risque Premium -->
+<!-- Modal Ajout d'Évaluation de Risque -->
 <div class="modal fade" id="addRiskRatingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header py-2 px-3">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Évaluation de Risque" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addRiskRatingForm" class="enhanced-form">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <!-- Score visuel dynamique -->
                     <div class="risk-score-image-container mb-4 mx-auto">
                         <img id="addRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
@@ -1205,7 +1150,7 @@ body {
                                 <label for="remboursabilite" class="form-label">
                                     <i class="fas fa-money-check-alt"></i>{% trans "Remboursabilité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="remboursabilite" name="remboursabilite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="remboursabilite" name="remboursabilite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Bonne capacité de remboursement" %}</option>
                                     <option value="false">{% trans "Non - Capacité de remboursement limitée" %}</option>
@@ -1218,7 +1163,7 @@ body {
                                 <label for="situation_liquidite" class="form-label">
                                     <i class="fas fa-water"></i>{% trans "Situation de Liquidité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="situation_liquidite" name="situation_liquidite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="situation_liquidite" name="situation_liquidite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Liquidité satisfaisante" %}</option>
                                     <option value="false">{% trans "Non - Problèmes de liquidité" %}</option>
@@ -1234,7 +1179,7 @@ body {
                                 <label for="performance_rentabilite" class="form-label">
                                     <i class="fas fa-chart-line"></i>{% trans "Performance & Rentabilité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="performance_rentabilite" name="performance_rentabilite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="performance_rentabilite" name="performance_rentabilite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Performance satisfaisante" %}</option>
                                     <option value="false">{% trans "Non - Performance insuffisante" %}</option>
@@ -1247,7 +1192,7 @@ body {
                                 <label for="perspective_secteur" class="form-label">
                                     <i class="fas fa-industry"></i>{% trans "Perspective du Secteur" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="perspective_secteur" name="perspective_secteur" required>
+                                <select class="form-select form-select-sm risk-criteria" id="perspective_secteur" name="perspective_secteur" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Secteur porteur" %}</option>
                                     <option value="false">{% trans "Non - Secteur en difficulté" %}</option>
@@ -1263,7 +1208,7 @@ body {
                                 <label for="qualite_information_analyse" class="form-label">
                                     <i class="fas fa-file-alt"></i>{% trans "Qualité de l'Information" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="qualite_information_analyse" name="qualite_information_analyse" required>
+                                <select class="form-select form-select-sm risk-criteria" id="qualite_information_analyse" name="qualite_information_analyse" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Information fiable" %}</option>
                                     <option value="false">{% trans "Non - Information douteuse" %}</option>
@@ -1276,7 +1221,7 @@ body {
                                 <label for="existence_garantie" class="form-label">
                                     <i class="fas fa-handshake"></i>{% trans "Existence de Garantie" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="existence_garantie" name="existence_garantie" required>
+                                <select class="form-select form-select-sm risk-criteria" id="existence_garantie" name="existence_garantie" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Garanties existantes" %}</option>
                                     <option value="false">{% trans "Non - Aucune garantie" %}</option>
@@ -1292,7 +1237,7 @@ body {
                                 <label for="terme_financier_duree_pret" class="form-label">
                                     <i class="fas fa-clock"></i>{% trans "Terme Financier" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="terme_financier_duree_pret" name="terme_financier_duree_pret" required>
+                                <select class="form-select form-select-sm risk-criteria" id="terme_financier_duree_pret" name="terme_financier_duree_pret" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Conditions favorables" %}</option>
                                     <option value="false">{% trans "Non - Conditions défavorables" %}</option>
@@ -1305,7 +1250,7 @@ body {
                                 <label for="mesure_propre_soutenir_credit" class="form-label">
                                     <i class="fas fa-life-ring"></i>{% trans "Mesure de Soutien" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="mesure_propre_soutenir_credit" name="mesure_propre_soutenir_credit" required>
+                                <select class="form-select form-select-sm risk-criteria" id="mesure_propre_soutenir_credit" name="mesure_propre_soutenir_credit" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Soutiens existants" %}</option>
                                     <option value="false">{% trans "Non - Aucun soutien" %}</option>
@@ -1321,7 +1266,7 @@ body {
                                 <label for="cotation_du_risque" class="form-label">
                                     <i class="fas fa-chart-line"></i>{% trans "Cotation du Risque" %}
                                 </label>
-                                <select class="form-select" id="cotation_du_risque" name="cotation_du_risque" required>
+                                <select class="form-select form-select-sm" id="cotation_du_risque" name="cotation_du_risque" required>
                                     <option value="">{% trans "Sélectionnez une cotation" %}</option>
                                     <option value="non_douteux">{% trans "Non douteux" %}</option>
                                     <option value="risque_faible">{% trans "Risque faible" %}</option>
@@ -1338,7 +1283,7 @@ body {
                                 <label for="indice_du_risque" class="form-label">
                                     <i class="fas fa-exclamation-triangle"></i>{% trans "Indice du Risque" %}
                                 </label>
-                                <select class="form-select" id="indice_du_risque" name="indice_du_risque" required>
+                                <select class="form-select form-select-sm" id="indice_du_risque" name="indice_du_risque" required>
                                     <option value="">{% trans "Sélectionnez un indice" %}</option>
                                     <option value="eleve">{% trans "Élevé" %}</option>
                                     <option value="moyen">{% trans "Moyen" %}</option>
@@ -1354,8 +1299,8 @@ body {
                         <label for="interpretation" class="form-label">
                             <i class="fas fa-comment-dots"></i>{% trans "Interprétation" %}
                         </label>
-                        <textarea class="form-control" id="interpretation" name="interpretation" 
-                                  rows="3" placeholder="Ajoutez une interprétation du profil de risque..."></textarea>
+                        <textarea class="form-control form-control-sm" id="interpretation" name="interpretation"
+                                  rows="3" placeholder="{% trans 'Ajoutez une interprétation du profil de risque...' %}"></textarea>
                         <small class="form-text text-muted mt-2">{% trans "Analyse synthétique du risque" %}</small>
                     </div>
 
@@ -1363,16 +1308,16 @@ body {
                         <label for="analyse" class="form-label">
                             <i class="fas fa-search"></i>{% trans "Analyse Détaillée" %}
                         </label>
-                        <textarea class="form-control" id="analyse" name="analyse" 
-                                  rows="3" placeholder="Ajoutez une analyse détaillée..."></textarea>
+                        <textarea class="form-control form-control-sm" id="analyse" name="analyse"
+                                  rows="3" placeholder="{% trans 'Ajoutez une analyse détaillée...' %}"></textarea>
                         <small class="form-text text-muted mt-2">{% trans "Évaluation approfondie des facteurs de risque" %}</small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-sm btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>{% trans "Créer l'évaluation" %}
                         </span>
@@ -1384,11 +1329,11 @@ body {
     </div>
 </div>
 
-<!-- Modal Modification d'Évaluation de Risque Premium -->
+<!-- Modal Modification d'Évaluation de Risque -->
 <div class="modal fade" id="editRiskRatingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header py-2 px-3">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Évaluation de Risque" %}
                 </h5>
@@ -1396,7 +1341,7 @@ body {
             </div>
             <form id="editRiskRatingForm" class="enhanced-form">
                 <input type="hidden" id="editRiskRatingId" name="id">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <!-- Score visuel dynamique -->
                     <div class="risk-score-image-container mb-4 mx-auto">
                         <img id="editRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
@@ -1412,7 +1357,7 @@ body {
                                 <label for="editRemboursabilite" class="form-label">
                                     <i class="fas fa-money-check-alt"></i>{% trans "Remboursabilité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editRemboursabilite" name="remboursabilite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editRemboursabilite" name="remboursabilite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Bonne capacité de remboursement" %}</option>
                                     <option value="false">{% trans "Non - Capacité de remboursement limitée" %}</option>
@@ -1424,7 +1369,7 @@ body {
                                 <label for="editSituationLiquidite" class="form-label">
                                     <i class="fas fa-water"></i>{% trans "Situation de Liquidité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editSituationLiquidite" name="situation_liquidite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editSituationLiquidite" name="situation_liquidite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Liquidité satisfaisante" %}</option>
                                     <option value="false">{% trans "Non - Problèmes de liquidité" %}</option>
@@ -1439,7 +1384,7 @@ body {
                                 <label for="editPerformanceRentabilite" class="form-label">
                                     <i class="fas fa-chart-line"></i>{% trans "Performance & Rentabilité" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editPerformanceRentabilite" name="performance_rentabilite" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editPerformanceRentabilite" name="performance_rentabilite" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Performance satisfaisante" %}</option>
                                     <option value="false">{% trans "Non - Performance insuffisante" %}</option>
@@ -1451,7 +1396,7 @@ body {
                                 <label for="editPerspectiveSecteur" class="form-label">
                                     <i class="fas fa-industry"></i>{% trans "Perspective du Secteur" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editPerspectiveSecteur" name="perspective_secteur" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editPerspectiveSecteur" name="perspective_secteur" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Secteur porteur" %}</option>
                                     <option value="false">{% trans "Non - Secteur en difficulté" %}</option>
@@ -1466,7 +1411,7 @@ body {
                                 <label for="editQualiteInformationAnalyse" class="form-label">
                                     <i class="fas fa-file-alt"></i>{% trans "Qualité de l'Information" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Information fiable" %}</option>
                                     <option value="false">{% trans "Non - Information douteuse" %}</option>
@@ -1478,7 +1423,7 @@ body {
                                 <label for="editExistenceGarantie" class="form-label">
                                     <i class="fas fa-handshake"></i>{% trans "Existence de Garantie" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editExistenceGarantie" name="existence_garantie" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editExistenceGarantie" name="existence_garantie" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Garanties existantes" %}</option>
                                     <option value="false">{% trans "Non - Aucune garantie" %}</option>
@@ -1493,7 +1438,7 @@ body {
                                 <label for="editTermeFinancierDureePret" class="form-label">
                                     <i class="fas fa-clock"></i>{% trans "Terme Financier" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Conditions favorables" %}</option>
                                     <option value="false">{% trans "Non - Conditions défavorables" %}</option>
@@ -1505,7 +1450,7 @@ body {
                                 <label for="editMesurePropreSoutenirCredit" class="form-label">
                                     <i class="fas fa-life-ring"></i>{% trans "Mesure de Soutien" %}
                                 </label>
-                                <select class="form-select risk-criteria" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
+                                <select class="form-select form-select-sm risk-criteria" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
                                     <option value="">{% trans "Sélectionnez" %}</option>
                                     <option value="true">{% trans "Oui - Soutiens existants" %}</option>
                                     <option value="false">{% trans "Non - Aucun soutien" %}</option>
@@ -1520,7 +1465,7 @@ body {
                                 <label for="editCotationDuRisque" class="form-label">
                                     <i class="fas fa-chart-line"></i>{% trans "Cotation du Risque" %}
                                 </label>
-                                <select class="form-select" id="editCotationDuRisque" name="cotation_du_risque" required>
+                                <select class="form-select form-select-sm" id="editCotationDuRisque" name="cotation_du_risque" required>
                                     <option value="">{% trans "Sélectionnez une cotation" %}</option>
                                     <option value="non_douteux">{% trans "Non douteux" %}</option>
                                     <option value="risque_faible">{% trans "Risque faible" %}</option>
@@ -1536,7 +1481,7 @@ body {
                                 <label for="editIndiceDuRisque" class="form-label">
                                     <i class="fas fa-exclamation-triangle"></i>{% trans "Indice du Risque" %}
                                 </label>
-                                <select class="form-select" id="editIndiceDuRisque" name="indice_du_risque" required>
+                                <select class="form-select form-select-sm" id="editIndiceDuRisque" name="indice_du_risque" required>
                                     <option value="">{% trans "Sélectionnez un indice" %}</option>
                                     <option value="eleve">{% trans "Élevé" %}</option>
                                     <option value="moyen">{% trans "Moyen" %}</option>
@@ -1551,21 +1496,21 @@ body {
                         <label for="editInterpretation" class="form-label">
                             <i class="fas fa-comment-dots"></i>{% trans "Interprétation" %}
                         </label>
-                        <textarea class="form-control" id="editInterpretation" name="interpretation" rows="3"></textarea>
+                        <textarea class="form-control form-control-sm" id="editInterpretation" name="interpretation" rows="3"></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="editAnalyse" class="form-label">
                             <i class="fas fa-search"></i>{% trans "Analyse Détaillée" %}
                         </label>
-                        <textarea class="form-control" id="editAnalyse" name="analyse" rows="3"></textarea>
+                        <textarea class="form-control form-control-sm" id="editAnalyse" name="analyse" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-sm btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1577,31 +1522,31 @@ body {
     </div>
 </div>
 
-<!-- Modal de confirmation de suppression Premium -->
+<!-- Modal de confirmation de suppression -->
 <div class="modal fade modal-danger" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header py-2 px-3">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation de suppression" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center py-5">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="mb-4">
                     <i class="fas fa-trash-alt fa-4x text-danger opacity-75"></i>
                 </div>
                 <h6 class="fw-bold text-dark mb-3">{% trans "Supprimer l'évaluation de risque" %}</h6>
                 <p class="text-dark opacity-90 mb-4">
-                    Êtes-vous sûr de vouloir supprimer cette évaluation de risque ?<br>
-                    Cette action est irréversible et supprimera définitivement toutes les analyses.
+                    {% trans "Êtes-vous sûr de vouloir supprimer cette évaluation de risque ?" %}<br>
+                    {% trans "Cette action est irréversible et supprimera définitivement toutes les analyses." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center border-top-0 pt-0">
-                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
+            <div class="modal-footer justify-content-center border-top-0 pt-0 py-2">
+                <button type="button" class="btn btn-secondary btn-sm btn-action" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-light btn-action text-danger fw-bold" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-light btn-sm btn-action text-danger fw-bold" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>

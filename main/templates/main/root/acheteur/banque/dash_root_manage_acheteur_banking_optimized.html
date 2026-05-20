@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -26,48 +26,17 @@
     --banking-gradient: linear-gradient(135deg, #0d80be 0%, #25add6 100%);
 }
 
-/* Header Premium */
+/* Page Header Compact */
 .page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte Acheteur Premium */
 .acheteur-card {
@@ -87,17 +56,7 @@
     overflow: hidden;
 }
 
-.acheteur-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 2s infinite;
-}
+/* shimmer removed */
 
 .acheteur-badge {
     padding: 0.75rem 1.5rem;
@@ -623,14 +582,6 @@
 }
 
 @media (max-width: 768px) {
-    .page-header {
-        padding: 1.75rem;
-    }
-    
-    .page-title {
-        font-size: 2rem;
-    }
-    
     .acheteur-info-item {
         flex-direction: column;
         text-align: center;
@@ -663,10 +614,6 @@
 }
 
 @media (max-width: 576px) {
-    .page-title {
-        font-size: 1.75rem;
-    }
-    
     .stat-value {
         font-size: 1.75rem;
     }
@@ -773,23 +720,24 @@
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium -->
+    <!-- Page Header Compact -->
     <div class="page-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1 class="page-title text-white">
-                    <i class="fas fa-university me-3"></i>{% trans "Gestion des Données Bancaires" %}
+                    <i class="fas fa-university me-2"></i>{% trans "Gestion des Données Bancaires" %}
                 </h1>
                 <p class="page-subtitle">
-                    Gérez les informations bancaires et comptes de l'acheteur
+                    {% trans "Gérez les informations bancaires et comptes de l'acheteur" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'banking' %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addBankingModal">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un compte bancaire" %}
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addBankingModal">
+                    <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter un compte bancaire" %}
                 </button>
             </div>
         </div>
@@ -806,7 +754,7 @@
                 <div class="text-md-end">
                     <span class="acheteur-badge">
                         <i class="fas fa-credit-card me-2"></i>
-                        <span id="totalBanking">{{ stats.total }}</span> comptes bancaires
+                        <span id="totalBanking">{{ stats.total }}</span> {% trans "comptes bancaires" %}
                     </span>
                     <p class="mb-0 mt-2 small text-white-75">{% trans "Total des données bancaires" %}</p>
                 </div>
@@ -832,7 +780,7 @@
                         </div>
                         <div>
                             <small class="tendance-label">{% trans "Activité" %}</small>
-                            <span class="fw-bold text-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                            <span class="fw-bold text-dark">{{ acheteur.activite_principale|default:_("Non spécifié") }}</span>
                         </div>
                     </div>
                 </div>
@@ -854,7 +802,7 @@
                         </div>
                         <div>
                             <small class="tendance-label">{% trans "Statut" %}</small>
-                            <span class="badge" style="background: var(--success-gradient); color: white; border: none; padding: 0.5rem 1rem;">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                            <span class="badge" style="background: var(--success-gradient); color: white; border: none; padding: 0.5rem 1rem;">{{ acheteur.statut_entreprise.libelle|default:_("Inconnu") }}</span>
                         </div>
                     </div>
                 </div>
@@ -977,13 +925,13 @@
                     <label class="form-label">
                         <i class="fas fa-search" style="color: var(--color-primary);"></i>{% trans "Recherche" %}
                     </label>
-                    <input type="text" class="form-control" id="searchInput" 
-                           placeholder="Nom de banque, numéro de compte, type de relation, ville...">
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="{% trans 'Nom de banque, numéro de compte, type de relation, ville...' %}">
                 </div>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
-                    <i class="fas fa-filter me-2"></i>{% trans "Filtrer" %}
+                <button class="btn btn-primary btn-sm w-100" id="applyFilters" style="margin-top: 24px;">
+                    <i class="fas fa-filter me-1"></i>{% trans "Filtrer" %}
                 </button>
             </div>
         </div>
@@ -1000,18 +948,18 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label small" for="selectAll">
-                            Sélectionner tout
+                            {% trans "Sélectionner tout" %}
                         </label>
                     </div>
-                    <button class="btn btn-danger btn-action btn-sm" id="deleteSelected" disabled>
-                        <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                    <button class="btn btn-danger btn-sm" id="deleteSelected" disabled>
+                        <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                     </button>
                 </div>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table mb-0" id="bankingTable">
+                <table class="table table-sm mb-0" id="bankingTable">
                     <thead>
                         <tr>
                             <th width="50">
@@ -1044,43 +992,43 @@
     </div>
 </div>
 
-<!-- Modal Ajout Donnée Bancaire Premium -->
+<!-- Modal Ajout Donnée Bancaire -->
 <div class="modal fade" id="addBankingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Compte Bancaire" %}
+        <div class="modal-content border-0">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
+                <h5 class="modal-title fw-bold" style="font-size:0.95rem;">
+                    <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter un Compte Bancaire" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addBankingForm" class="enhanced-form">
-                <div class="modal-body bg-white">
+                <div class="modal-body py-3 px-4">
                     <div class="form-group">
-                        <label for="nom_banque" class="form-label">
-                            <i class="fas fa-university"></i>{% trans "Nom de la Banque" %}
+                        <label for="nom_banque" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-university me-1"></i>{% trans "Nom de la Banque" %}
                         </label>
-                        <input type="text" class="form-control" id="nom_banque" name="nom_banque" required
+                        <input type="text" class="form-control form-control-sm" id="nom_banque" name="nom_banque" required
                                placeholder="Ex: Société Générale">
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="numero_compte" class="form-label">
-                                    <i class="fas fa-credit-card"></i>{% trans "Numéro de Compte" %}
+                                <label for="numero_compte" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-credit-card me-1"></i>{% trans "Numéro de Compte" %}
                                 </label>
-                                <input type="text" class="form-control" id="numero_compte" name="numero_compte"
+                                <input type="text" class="form-control form-control-sm" id="numero_compte" name="numero_compte"
                                        placeholder="Ex: FR76 3000 6000 0112 3456 7890 189">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="type_relation" class="form-label">
-                                    <i class="fas fa-handshake"></i>{% trans "Type de Relation" %}
+                                <label for="type_relation" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-handshake me-1"></i>{% trans "Type de Relation" %}
                                 </label>
-                                <input type="text" class="form-control" id="type_relation" name="type_relation"
-                                       placeholder="Ex: Crédit">
+                                <input type="text" class="form-control form-control-sm" id="type_relation" name="type_relation"
+                                       placeholder="{% trans 'Ex: Crédit' %}">
                             </div>
                         </div>
                     </div>
@@ -1088,20 +1036,20 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="numero" class="form-label">
-                                    <i class="fas fa-hashtag"></i>{% trans "Numéro" %}
+                                <label for="numero" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-hashtag me-1"></i>{% trans "Numéro" %}
                                 </label>
-                                <input type="text" class="form-control" id="numero" name="numero"
+                                <input type="text" class="form-control form-control-sm" id="numero" name="numero"
                                        placeholder="Ex: 123">
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="rue" class="form-label">
-                                    <i class="fas fa-road"></i>{% trans "Rue" %}
+                                <label for="rue" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-road me-1"></i>{% trans "Rue" %}
                                 </label>
-                                <input type="text" class="form-control" id="rue" name="rue"
-                                       placeholder="Ex: Avenue des Champs-Élysées">
+                                <input type="text" class="form-control form-control-sm" id="rue" name="rue"
+                                       placeholder="{% trans 'Ex: Avenue des Champs-Élysées' %}">
                             </div>
                         </div>
                     </div>
@@ -1109,13 +1057,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="ville" class="form-label">
-                                    <i class="fas fa-city"></i>{% trans "Ville" %}
+                                <label for="ville" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-city me-1"></i>{% trans "Ville" %}
                                 </label>
-                                <select class="form-select select2-field" id="ville" name="ville" required>
+                                <select class="form-select form-select-sm select2-field" id="ville" name="ville" required>
                                     <option value="">{% trans "Sélectionnez une ville" %}</option>
                                     {% for ville in ville_list %}
-                                    <option value="{{ ville.id }}" 
+                                    <option value="{{ ville.id }}"
                                             data-code="{{ ville.code|default:'' }}">
                                         {{ ville.nom }} ({{ ville.code|default:'' }})
                                     </option>
@@ -1125,20 +1073,20 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="code_postal" class="form-label">
-                                    <i class="fas fa-mail-bulk"></i>{% trans "Code Postal" %}
+                                <label for="code_postal" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-mail-bulk me-1"></i>{% trans "Code Postal" %}
                                 </label>
-                                <input type="text" class="form-control" id="code_postal" name="code_postal"
+                                <input type="text" class="form-control form-control-sm" id="code_postal" name="code_postal"
                                        placeholder="Ex: 75008">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="couleur_commentaire" class="form-label">
-                            <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
+                        <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-palette me-1"></i>{% trans "Couleur Commentaire" %}
                         </label>
-                        <select class="form-select select2-field" id="couleur_commentaire" name="couleur_commentaire">
+                        <select class="form-select form-select-sm select2-field" id="couleur_commentaire" name="couleur_commentaire">
                             <option value="">{% trans "Sélectionnez une couleur" %}</option>
                             {% for coloration in coloration_list %}
                             <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
@@ -1149,20 +1097,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-comment-dots me-1"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
-                                  placeholder="Commentaires sur le compte bancaire..."></textarea>
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="3"
+                                  placeholder="{% trans 'Commentaires sur le compte bancaire...' %}"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-sm" id="submitAddBtn">
                         <span class="btn-text">
-                            <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
+                            <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
                         </span>
                         <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
                     </button>
@@ -1172,42 +1120,42 @@
     </div>
 </div>
 
-<!-- Modal Modification Donnée Bancaire Premium -->
+<!-- Modal Modification Donnée Bancaire -->
 <div class="modal fade" id="editBankingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Compte Bancaire" %}
+        <div class="modal-content border-0">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
+                <h5 class="modal-title fw-bold" style="font-size:0.95rem;">
+                    <i class="fas fa-edit me-1"></i>{% trans "Modifier le Compte Bancaire" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editBankingForm" class="enhanced-form">
                 <input type="hidden" id="editBankingId" name="id">
-                <div class="modal-body bg-white">
+                <div class="modal-body py-3 px-4">
                     <div class="form-group">
-                        <label for="editNomBanque" class="form-label">
-                            <i class="fas fa-university"></i>{% trans "Nom de la Banque" %}
+                        <label for="editNomBanque" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-university me-1"></i>{% trans "Nom de la Banque" %}
                         </label>
-                        <input type="text" class="form-control" id="editNomBanque" name="nom_banque" required>
+                        <input type="text" class="form-control form-control-sm" id="editNomBanque" name="nom_banque" required>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editNumeroCompte" class="form-label">
-                                    <i class="fas fa-credit-card"></i>{% trans "Numéro de Compte" %}
+                                <label for="editNumeroCompte" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-credit-card me-1"></i>{% trans "Numéro de Compte" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNumeroCompte" name="numero_compte">
+                                <input type="text" class="form-control form-control-sm" id="editNumeroCompte" name="numero_compte">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editTypeRelation" class="form-label">
-                                    <i class="fas fa-handshake"></i>{% trans "Type de Relation" %}
+                                <label for="editTypeRelation" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-handshake me-1"></i>{% trans "Type de Relation" %}
                                 </label>
-                                <input type="text" class="form-control" id="editTypeRelation" name="type_relation"
-                                       placeholder="Ex: Crédit">
+                                <input type="text" class="form-control form-control-sm" id="editTypeRelation" name="type_relation"
+                                       placeholder="{% trans 'Ex: Crédit' %}">
                             </div>
                         </div>
                     </div>
@@ -1215,18 +1163,18 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="editNumero" class="form-label">
-                                    <i class="fas fa-hashtag"></i>{% trans "Numéro" %}
+                                <label for="editNumero" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-hashtag me-1"></i>{% trans "Numéro" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNumero" name="numero">
+                                <input type="text" class="form-control form-control-sm" id="editNumero" name="numero">
                             </div>
                         </div>
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label for="editRue" class="form-label">
-                                    <i class="fas fa-road"></i>{% trans "Rue" %}
+                                <label for="editRue" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-road me-1"></i>{% trans "Rue" %}
                                 </label>
-                                <input type="text" class="form-control" id="editRue" name="rue">
+                                <input type="text" class="form-control form-control-sm" id="editRue" name="rue">
                             </div>
                         </div>
                     </div>
@@ -1234,13 +1182,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editVille" class="form-label">
-                                    <i class="fas fa-city"></i>{% trans "Ville" %}
+                                <label for="editVille" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-city me-1"></i>{% trans "Ville" %}
                                 </label>
-                                <select class="form-select select2-field" id="editVille" name="ville" required>
+                                <select class="form-select form-select-sm select2-field" id="editVille" name="ville" required>
                                     <option value="">{% trans "Sélectionnez une ville" %}</option>
                                     {% for ville in ville_list %}
-                                    <option value="{{ ville.id }}" 
+                                    <option value="{{ ville.id }}"
                                             data-code="{{ ville.code|default:'' }}">
                                         {{ ville.nom }} ({{ ville.code|default:'' }})
                                     </option>
@@ -1250,19 +1198,19 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editCodePostal" class="form-label">
-                                    <i class="fas fa-mail-bulk"></i>{% trans "Code Postal" %}
+                                <label for="editCodePostal" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-mail-bulk me-1"></i>{% trans "Code Postal" %}
                                 </label>
-                                <input type="text" class="form-control" id="editCodePostal" name="code_postal">
+                                <input type="text" class="form-control form-control-sm" id="editCodePostal" name="code_postal">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="editCouleurCommentaire" class="form-label">
-                            <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
+                        <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-palette me-1"></i>{% trans "Couleur Commentaire" %}
                         </label>
-                        <select class="form-select select2-field" id="editCouleurCommentaire" name="couleur_commentaire">
+                        <select class="form-select form-select-sm select2-field" id="editCouleurCommentaire" name="couleur_commentaire">
                             <option value="">{% trans "Sélectionnez une couleur" %}</option>
                             {% for coloration in coloration_list %}
                             <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
@@ -1273,19 +1221,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
+                            <i class="fas fa-comment-dots me-1"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-sm" id="submitEditBtn">
                         <span class="btn-text">
-                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
+                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
                         <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
                     </button>
@@ -1295,33 +1243,33 @@
     </div>
 </div>
 
-<!-- Modal de confirmation de suppression premium -->
+<!-- Modal de confirmation de suppression -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
-            <div class="modal-header" style="background: var(--danger-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
+        <div class="modal-content border-0">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #dc3545, #fd7e14); color: #fff;">
+                <h5 class="modal-title fw-bold" style="font-size:0.95rem;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>{% trans "Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center py-4">
                 <div class="mb-3">
-                    <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    <i class="fas fa-trash-alt fa-3x text-danger"></i>
                 </div>
-                <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Supprimer le(s) compte(s) bancaire(s)
+                <h6 class="fw-bold mb-2 text-danger">
+                    {% trans "Supprimer le(s) compte(s) bancaire(s)" %}
                 </h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer ce compte bancaire ? Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer ce compte bancaire ? Cette action est irréversible." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+            <div class="modal-footer py-2 justify-content-center border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+                <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
         </div>
@@ -1493,8 +1441,8 @@ $(document).ready(function() {
                                 <i class="fas fa-university"></i>
                             </div>
                         </div>
-                        <h5 class="text-dark mb-2">Aucune donnée bancaire trouvée</h5>
-                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez une nouvelle donnée bancaire</p>
+                        <h5 class="text-dark mb-2">{% trans "Aucune donnée bancaire trouvée" %}</h5>
+                        <p class="text-muted mb-0">{% trans "Utilisez les filtres ou ajoutez une nouvelle donnée bancaire" %}</p>
                     </td>
                 </tr>
             `);
@@ -1504,14 +1452,14 @@ $(document).ready(function() {
         bankings.forEach((banking) => {
             const isSelected = selectedBankings.has(banking.id.toString());
             const adresse = `${banking.numero || ''} ${banking.rue || ''}`.trim();
-            const villeNom = banking.ville?.nom || 'Non spécifiée';
+            const villeNom = banking.ville?.nom || '{% trans "Non spécifiée" %}';
             const relationClass = banking.type_relation ? 'relation-' + banking.type_relation.toLowerCase() : '';
-            
+
             const row = `
                 <tr data-id="${banking.id}">
                     <td>
                         <div class="form-check">
-                            <input class="form-check-input row-checkbox" type="checkbox" 
+                            <input class="form-check-input row-checkbox" type="checkbox"
                                    data-id="${banking.id}" ${isSelected ? 'checked' : ''}>
                         </div>
                     </td>
@@ -1521,26 +1469,26 @@ $(document).ready(function() {
                                 ${banking.nom_banque ? banking.nom_banque.charAt(0).toUpperCase() : '?'}
                             </div>
                             <div>
-                                <strong class="text-dark">${banking.nom_banque || 'Non spécifié'}</strong>
+                                <strong class="text-dark">${banking.nom_banque || '{% trans "Non spécifié" %}'}</strong>
                                 <div class="text-muted small">
                                     <i class="fas fa-calendar me-1"></i>
-                                    Ajoutée le ${banking.created_at_formatted || ''}
+                                    {% trans "Ajoutée le" %} ${banking.created_at_formatted || ''}
                                 </div>
                             </div>
                         </div>
                     </td>
                     <td>
-                        ${banking.numero_compte ? 
-                            `<code class="account-number">${banking.numero_compte}</code>` : 
-                            '<span class="text-muted">Non spécifié</span>'}
+                        ${banking.numero_compte ?
+                            `<code class="account-number">${banking.numero_compte}</code>` :
+                            '<span class="text-muted">{% trans "Non spécifié" %}</span>'}
                     </td>
                     <td>
                         ${banking.type_relation ? `
                             <span class="badge-relation ${relationClass}">${banking.type_relation}</span>
-                        ` : '<span class="text-muted">Non spécifié</span>'}
+                        ` : '<span class="text-muted">{% trans "Non spécifié" %}</span>'}
                     </td>
                     <td>
-                        <span class="text-dark">${adresse || 'Non spécifiée'}</span><br>
+                        <span class="text-dark">${adresse || '{% trans "Non spécifiée" %}'}</span><br>
                         <small class="text-muted">${banking.code_postal || ''}</small>
                     </td>
                     <td>
@@ -1581,7 +1529,7 @@ $(document).ready(function() {
         const end = Math.min(currentPage * (response.page_size || 10), totalItems);
         
         $('#paginationInfo').text(
-            `Affichage ${start} à ${end} sur ${totalItems} données bancaires`
+            `{% trans "Affichage" %} ${start} {% trans "à" %} ${end} {% trans "sur" %} ${totalItems} {% trans "données bancaires" %}`
         );
         
         // Bouton précédent

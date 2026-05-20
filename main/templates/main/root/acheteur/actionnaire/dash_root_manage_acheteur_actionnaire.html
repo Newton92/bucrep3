@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -25,48 +25,16 @@
     --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
 }
 
-/* Header Premium */
 .page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte Acheteur Premium */
 .acheteur-card {
@@ -751,10 +719,11 @@
                     <i class="fas fa-chart-pie me-3"></i>{% trans "Gestion des Actionnaires" %}
                 </h1>
                 <p class="page-subtitle">
-                    Gérez la composition actionnariale de l'entreprise
+                    {% trans "Gérez la composition actionnariale de l'entreprise" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'actionnaire' %}
                 <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
                     <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
                 </a>
@@ -931,15 +900,15 @@
         <div class="row g-3 align-items-center">
             <div class="col-md-10">
                 <div class="form-group mb-0">
-                    <label class="form-label">
+                    <label class="form-label fw-semibold" style="font-size:0.78rem;">
                         <i class="fas fa-search" style="color: var(--color-primary);"></i>{% trans "Recherche" %}
                     </label>
-                    <input type="text" class="form-control" id="searchInput" 
-                           placeholder="Nom, prénom, pourcentage, commentaire...">
+                    <input type="text" class="form-control form-control-sm" id="searchInput"
+                           placeholder="{% trans 'Nom, prénom, pourcentage, commentaire...' %}">
                 </div>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
+                <button class="btn btn-sm btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
                     <i class="fas fa-filter me-2"></i>{% trans "Filtrer" %}
                 </button>
             </div>
@@ -957,7 +926,7 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label small" for="selectAll">
-                            Sélectionner tout
+                            {% trans "Sélectionner tout" %}
                         </label>
                     </div>
                     <button class="btn btn-danger btn-action btn-sm" id="deleteSelected" disabled>
@@ -968,7 +937,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table mb-0" id="actionnaireTable">
+                <table class="table table-sm mb-0" id="actionnaireTable">
                     <thead>
                         <tr>
                             <th width="50">
@@ -1004,41 +973,41 @@
 <div class="modal fade" id="addActionnaireModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Actionnaire" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addActionnaireForm" class="enhanced-form">
-                <div class="modal-body bg-white">
+                <div class="modal-body py-3 px-4 bg-white">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="nom" class="form-label">
+                                <label for="nom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user"></i>{% trans "Nom" %}
                                 </label>
-                                <input type="text" class="form-control" id="nom" name="nom" required
+                                <input type="text" class="form-control form-control-sm" id="nom" name="nom" required
                                        placeholder="Ex: DUPONT">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="prenom" class="form-label">
+                                <label for="prenom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user"></i>{% trans "Prénom" %}
                                 </label>
-                                <input type="text" class="form-control" id="prenom" name="prenom" required
+                                <input type="text" class="form-control form-control-sm" id="prenom" name="prenom" required
                                        placeholder="Ex: Jean">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="pourcentage" class="form-label">
+                        <label for="pourcentage" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-percentage"></i>{% trans "Pourcentage de détention" %}
                         </label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="pourcentage" name="pourcentage"
+                        <div class="input-group input-group-sm">
+                            <input type="number" class="form-control form-control-sm" id="pourcentage" name="pourcentage"
                                    step="0.01" min="0" max="100" placeholder="Ex: 25.50">
                             <span class="input-group-text">%</span>
                         </div>
@@ -1046,10 +1015,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="couleur_commentaire" class="form-label">
+                        <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
                         </label>
-                        <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                        <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
                             <option value="">{% trans "Sélectionnez une couleur" %}</option>
                             {% for coloration in coloration_list %}
                             <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
@@ -1062,7 +1031,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper"></i>{% trans "Aperçu couleur" %}
                                 </label>
                                 <div class="color-preview" id="colorPreview"></div>
@@ -1071,18 +1040,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="3"
                                   placeholder="Commentaires additionnels sur l'actionnaire..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2 bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-sm btn-success btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
                         </span>
@@ -1098,7 +1067,7 @@
 <div class="modal fade" id="editActionnaireModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Actionnaire" %}
                 </h5>
@@ -1106,32 +1075,32 @@
             </div>
             <form id="editActionnaireForm" class="enhanced-form">
                 <input type="hidden" id="editActionnaireId" name="id">
-                <div class="modal-body bg-white">
+                <div class="modal-body py-3 px-4 bg-white">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editNom" class="form-label">
+                                <label for="editNom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user"></i>{% trans "Nom" %}
                                 </label>
-                                <input type="text" class="form-control" id="editNom" name="nom" required>
+                                <input type="text" class="form-control form-control-sm" id="editNom" name="nom" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editPrenom" class="form-label">
+                                <label for="editPrenom" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-user"></i>{% trans "Prénom" %}
                                 </label>
-                                <input type="text" class="form-control" id="editPrenom" name="prenom" required>
+                                <input type="text" class="form-control form-control-sm" id="editPrenom" name="prenom" required>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="editPourcentage" class="form-label">
+                        <label for="editPourcentage" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-percentage"></i>{% trans "Pourcentage de détention" %}
                         </label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="editPourcentage" name="pourcentage"
+                        <div class="input-group input-group-sm">
+                            <input type="number" class="form-control form-control-sm" id="editPourcentage" name="pourcentage"
                                    step="0.01" min="0" max="100">
                             <span class="input-group-text">%</span>
                         </div>
@@ -1139,10 +1108,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCouleurCommentaire" class="form-label">
+                        <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
                         </label>
-                        <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                        <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
                             <option value="">{% trans "Sélectionnez une couleur" %}</option>
                             {% for coloration in coloration_list %}
                             <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
@@ -1155,7 +1124,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">
+                                <label class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-eye-dropper"></i>{% trans "Aperçu couleur" %}
                                 </label>
                                 <div class="color-preview" id="editColorPreview"></div>
@@ -1164,17 +1133,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2 bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-sm btn-warning btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1190,28 +1159,28 @@
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0" style="box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
-            <div class="modal-header" style="background: var(--danger-gradient);">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center py-4">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="mb-3">
                     <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 </div>
                 <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Supprimer le(s) actionnaire(s)
+                    {% trans "Supprimer le(s) actionnaire(s)" %}
                 </h6>
                 <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer cet actionnaire ? Cette action est irréversible." %}
                 </p>
             </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 justify-content-center border-0">
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-action" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-sm btn-danger btn-action" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
                 </button>
             </div>
@@ -1226,6 +1195,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+// Translated strings for JS use
+const _t = {
+    aucunActionnaire: "{% trans 'Aucun actionnaire trouvé' %}",
+    utilisezFiltres: "{% trans 'Utilisez les filtres ou ajoutez un nouvel actionnaire' %}",
+    ajouteLe: "{% trans 'Ajouté le' %}",
+    nonSpecifie: "{% trans 'Non spécifié' %}",
+    aucunCommentaire: "{% trans 'Aucun' %}"
+};
+
 // Le script JavaScript reste le même que dans votre version originale
 // Il fonctionne parfaitement avec le nouveau design premium
 
@@ -1401,8 +1379,8 @@ $(document).ready(function() {
                 <tr>
                     <td colspan="6" class="text-center py-5">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucun actionnaire trouvé</h5>
-                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez un nouvel actionnaire</p>
+                        <h5 class="text-muted">${_t.aucunActionnaire}</h5>
+                        <p class="text-muted mb-0">${_t.utilisezFiltres}</p>
                     </td>
                 </tr>
             `);
@@ -1413,9 +1391,9 @@ $(document).ready(function() {
             const isSelected = selectedActionnaires.has(actionnaire.id.toString());
             const pourcentage = actionnaire.pourcentage || 0;
             const couleur = actionnaire.couleur_commentaire?.code_couleur || '#6c757d';
-            const commentairePreview = actionnaire.commentaire ? 
-                (actionnaire.commentaire.length > 50 ? actionnaire.commentaire.substring(0, 50) + '...' : actionnaire.commentaire) : 
-                'Aucun';
+            const commentairePreview = actionnaire.commentaire ?
+                (actionnaire.commentaire.length > 50 ? actionnaire.commentaire.substring(0, 50) + '...' : actionnaire.commentaire) :
+                _t.aucunCommentaire;
             
             const row = `
                 <tr data-id="${actionnaire.id}">
@@ -1434,7 +1412,7 @@ $(document).ready(function() {
                                 <strong>${actionnaire.nom} ${actionnaire.prenom}</strong>
                                 <div class="text-muted small">
                                     <i class="fas fa-calendar me-1"></i>
-                                    Ajouté le ${actionnaire.created_at_formatted || ''}
+                                    ${_t.ajouteLe} ${actionnaire.created_at_formatted || ''}
                                 </div>
                             </div>
                         </div>
@@ -1452,7 +1430,7 @@ $(document).ready(function() {
                             <span class="badge" style="background-color: ${couleur}; color: white;">
                                 ${actionnaire.couleur_commentaire.couleur}
                             </span>
-                        ` : 'Non spécifié'}
+                        ` : _t.nonSpecifie}
                     </td>
                     <td>
                         <span class="text-muted" title="${actionnaire.commentaire || ''}">

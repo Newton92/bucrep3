@@ -217,7 +217,7 @@ class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportMod
     
     fieldsets = (
         (_('Informations de base'), {
-            'fields': ('code', 'nom')
+            'fields': ('code', 'nom', 'devise')
         }),
         (_('Configuration'), {
             'fields': ('is_active', 'afficher_au_dashboard'),

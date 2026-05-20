@@ -1,5 +1,5 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static %}
+{% load i18n static acheteur_navigation %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -25,48 +25,18 @@
     --orange-gradient: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
 }
 
-/* Header Premium */
+/* Header compact */
 .page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(13,108,178,.15);
 }
 
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
+.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
 
 /* Carte de risque améliorée avec vos couleurs */
 .risk-card {
@@ -523,14 +493,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .page-header {
-        padding: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 1.8rem;
-    }
-    
     .risk-card {
         padding: 1rem;
     }
@@ -592,22 +554,23 @@
                     <i class="fas fa-shield-alt me-3"></i>{% trans "Evaluation des Risques" %}
                 </h1>
                 <p class="page-subtitle">
-                    Évaluation des risques managériaux de l'entreprise
+                    {% trans "Évaluation des risques managériaux de l'entreprise" %}
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+            <div class="d-flex gap-2 align-items-center">
+                {% acheteur_page_nav 'gestion_risque' %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
                     <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
                 </a>
                 {% if gestion_risque %}
-                <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editRiskManagementModal">
+                <button class="btn btn-warning btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#editRiskManagementModal">
                     <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
                 </button>
-                <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <button class="btn btn-danger btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
                 {% else %}
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                <button class="btn btn-success btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
                     <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter l'évaluation" %}
                 </button>
                 {% endif %}
@@ -837,7 +800,7 @@
                 <div class="mt-2 text-end">
                     <span class="status-badge badge-info">
                         <i class="fas fa-palette me-1"></i>
-                        Couleur: {{ gestion_risque.couleur_commentaire.couleur }}
+                        {% trans "Couleur" %}: {{ gestion_risque.couleur_commentaire.couleur }}
                     </span>
                 </div>
                 {% endif %}
@@ -850,11 +813,11 @@
                     <div class="d-flex justify-content-between align-items-center text-muted small">
                         <div class="stat-card">
                             <i class="fas fa-calendar me-1" style="color: var(--color-primary);"></i>
-                            <span class="fw-medium">Évaluation créée le {{ gestion_risque.created_at|date:"d/m/Y H:i" }}</span>
+                            <span class="fw-medium">{% trans "Évaluation créée le" %} {{ gestion_risque.created_at|date:"d/m/Y H:i" }}</span>
                         </div>
                         <div class="stat-card">
                             <i class="fas fa-sync-alt me-1" style="color: var(--color-primary);"></i>
-                            <span class="fw-medium">Dernière mise à jour : {{ gestion_risque.updated_at|date:"d/m/Y H:i" }}</span>
+                            <span class="fw-medium">{% trans "Dernière mise à jour" %} : {{ gestion_risque.updated_at|date:"d/m/Y H:i" }}</span>
                         </div>
                     </div>
                 </div>
@@ -869,10 +832,10 @@
                 <i class="fas fa-shield-alt empty-state-icon"></i>
                 <h4 class="fw-bold mb-2" style="color: var(--color-primary);">{% trans "Aucune évaluation des risques" %}</h4>
                 <p class="text-muted mb-4">
-                    Cet acheteur ne possède pas encore d'évaluation des risques managériaux.<br>
-                    Ajoutez une évaluation complète des risques de l'entreprise.
+                    {% trans "Cet acheteur ne possède pas encore d'évaluation des risques managériaux." %}<br>
+                    {% trans "Ajoutez une évaluation complète des risques de l'entreprise." %}
                 </p>
-                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                <button class="btn btn-success btn-lg btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter l'évaluation" %}
                 </button>
             </div>
@@ -883,16 +846,16 @@
 
 <!-- Modal Ajout de Gestion des Risques -->
 <div class="modal fade" id="addRiskManagementModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Évaluation des Risques" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addRiskManagementForm" class="enhanced-form">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <!-- Image dynamique -->
                     <div class="text-center mb-4">
                         <div class="risk-image-container">
@@ -903,14 +866,14 @@
                         <small class="text-muted d-block mt-2">{% trans "L'image se met à jour automatiquement selon vos sélections" %}</small>
                     </div>
 
-                    <div class="row g-4">
+                    <div class="row g-3">
                         {% for field in fields %}
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="{{ field.id }}" class="form-label">
+                                <label for="{{ field.id }}" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas {{ field.icon }}" style="color: var(--color-primary);"></i>{{ field.label }}
                                 </label>
-                                <select class="form-select select2" id="{{ field.id }}" name="{{ field.name }}" required>
+                                <select class="form-select form-select-sm select2" id="{{ field.id }}" name="{{ field.name }}" required>
                                     <option value="Aucun">{% trans "Aucun" %}</option>
                                     <option value="Oui">{% trans "Oui" %}</option>
                                     <option value="Non">{% trans "Non" %}</option>
@@ -921,13 +884,13 @@
                         {% endfor %}
                     </div>
 
-                    <div class="row g-4">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="couleur_commentaire" class="form-label">
+                                <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
@@ -938,18 +901,18 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="commentaire" class="form-label">
+                        <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaire d'évaluation" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" 
-                                  rows="5" placeholder="Ajoutez des observations et recommandations..."></textarea>
+                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire"
+                                  rows="4" placeholder="Ajoutez des observations et recommandations..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-action btn-sm" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}
                         </span>
@@ -963,9 +926,9 @@
 
 <!-- Modal Modification de Gestion des Risques -->
 <div class="modal fade" id="editRiskManagementModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Évaluation des Risques" %}
                 </h5>
@@ -973,7 +936,7 @@
             </div>
             <form id="editRiskManagementForm" class="enhanced-form">
                 <input type="hidden" id="editRiskManagementId" name="id">
-                <div class="modal-body">
+                <div class="modal-body py-3 px-4">
                     <!-- Image dynamique -->
                     <div class="text-center mb-4">
                         <div class="risk-image-container">
@@ -983,14 +946,14 @@
                         </div>
                     </div>
 
-                    <div class="row g-4">
+                    <div class="row g-3">
                         {% for field in fields %}
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="edit{{ field.name|capfirst }}" class="form-label">
+                                <label for="edit{{ field.name|capfirst }}" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas {{ field.icon }}" style="color: var(--color-primary);"></i>{{ field.label }}
                                 </label>
-                                <select class="form-select select2" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
+                                <select class="form-select form-select-sm select2" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
                                     <option value="Aucun">{% trans "Aucun" %}</option>
                                     <option value="Oui">{% trans "Oui" %}</option>
                                     <option value="Non">{% trans "Non" %}</option>
@@ -1000,13 +963,13 @@
                         {% endfor %}
                     </div>
 
-                    <div class="row g-4">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editCouleurCommentaire" class="form-label">
+                                <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-palette" style="color: var(--color-secondary);"></i>{% trans "Couleur Commentaire" %}
                                 </label>
-                                <select class="form-select select2" id="editCouleurCommentaire" name="couleur_commentaire">
+                                <select class="form-select form-select-sm select2" id="editCouleurCommentaire" name="couleur_commentaire">
                                     <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                     {% for coloration in coloration_list %}
                                     <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
@@ -1017,17 +980,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
+                        <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaire d'évaluation" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="5"></textarea>
+                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-action btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-action btn-sm" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
                         </span>
@@ -1041,26 +1004,26 @@
 
 <!-- Modal de confirmation de suppression -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header py-2 px-3 bg-danger text-white">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="risk-image-container mx-auto mb-3" style="width: 80px; height: 80px;">
                     <i class="fas fa-trash-alt fa-2x text-danger"></i>
                 </div>
                 <h6 class="fw-bold">{% trans "Supprimer l'évaluation des risques" %}</h6>
-                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible.</p>
+                <p class="text-muted mb-0">{% trans "Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible." %}</p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-secondary btn-action btn-sm" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
                 </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                <button type="button" class="btn btn-danger btn-action btn-sm" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
@@ -1070,13 +1033,13 @@
 
 <!-- Modal pour visualiser l'image en grand -->
 <div class="modal fade" id="viewImageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
+            <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title text-white">{% trans "Statut de Gestion des Risques" %}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body py-3 px-4 text-center">
                 <div class="risk-image-container mx-auto mb-3" style="width: 250px; height: 125px;">
                     <img id="fullRiskManagementImage" src="" alt="Statut complet" class="risk-image">
                 </div>
