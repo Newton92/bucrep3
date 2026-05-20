@@ -559,8 +559,24 @@ $(document).ready(function() {
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentCodeNaceId = null;
-    let addSubcategories  = [];   // cache pour le modal ajout
-    let editSubcategories = [];   // cache pour le modal modification
+    let addSubcategories  = [];
+    let editSubcategories = [];
+
+    // Labels complets pour le niveau Groupe (préfixe du code avant le point)
+    const NACE_GROUPE_LABELS = {
+        'A':   'A — Manufacturers',
+        'B':   'B — Wholesalers & Agents',
+        'C':   'C — Retailers',
+        'D':   'D — Services & other',
+        'OPS': 'Other Public Services'
+    };
+
+    // Retourne la partie code lisible (après le premier point)
+    function naceDisplayCode(code) {
+        if (!code) return '—';
+        const dot = code.indexOf('.');
+        return dot >= 0 ? code.substring(dot + 1) : code;
+    }
 
     // ── Cascade Catégorie → Groupe → Code NACE ────────────────
 
@@ -590,7 +606,10 @@ $(document).ready(function() {
                 subcacheRef.data = data;
                 const prefixes = [...new Set(data.map(s => s.code ? s.code.split('.')[0] : ''))].filter(Boolean).sort();
                 $groupeSel.empty().append('<option value="">{% trans "Sélectionnez un groupe..." %}</option>');
-                prefixes.forEach(function(p) { $groupeSel.append(`<option value="${p}">${p}</option>`); });
+                prefixes.forEach(function(p) {
+                    const label = NACE_GROUPE_LABELS[p] || p;
+                    $groupeSel.append(`<option value="${p}">${label}</option>`);
+                });
                 $groupeSel.prop('disabled', false);
                 if (selectedPrefix) {
                     $groupeSel.val(selectedPrefix);
@@ -605,7 +624,8 @@ $(document).ready(function() {
         const filtered = subcats.filter(s => s.code && s.code.split('.')[0] === prefix);
         $codeSel.empty().append('<option value="">{% trans "Sélectionnez un code..." %}</option>');
         filtered.forEach(function(s) {
-            $codeSel.append(`<option value="${s.id}">${s.code} — ${s.libelle}</option>`);
+            const displayCode = naceDisplayCode(s.code);
+            $codeSel.append(`<option value="${s.id}">${displayCode} — ${s.libelle}</option>`);
         });
         $codeSel.prop('disabled', false);
         if (selectedSubId) $codeSel.val(String(selectedSubId));
@@ -658,7 +678,7 @@ $(document).ready(function() {
 
     // ── Preview ───────────────────────────────────────────────
     function showPreview(d) {
-        $('#previewCode').text(d.code || '—');
+        $('#previewCode').text(naceDisplayCode(d.code));
         $('#previewLibelle').text(d.libelle || '—');
         const cat = d.category || {};
         $('#previewCategoryCode').text(cat.code ? `${cat.code} · ${cat.libelle}` : '—');
