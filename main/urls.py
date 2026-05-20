@@ -5227,6 +5227,7 @@ urlpatterns = [
     # ── Mail inbox API ───────────────────────────────────────────────────────────
     path("api/v1/mail/imap/",                             mail_imap_config,        name="mail-imap-config"),
     path("api/v1/mail/imap/status/",                      mail_cron_status,        name="mail-imap-status"),
+    path("api/v1/mail/imap/test/",                        mail_imap_test,          name="mail-imap-test-form"),
     path("api/v1/mail/imap/<int:config_id>/",             mail_imap_config_detail, name="mail-imap-config-detail"),
     path("api/v1/mail/imap/<int:config_id>/test/",        mail_imap_test,          name="mail-imap-test"),
     path("api/v1/mail/imap/<int:config_id>/poll/",        mail_imap_poll,          name="mail-imap-poll"),

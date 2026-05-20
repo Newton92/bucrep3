@@ -255,6 +255,14 @@ def mail_imap_test(request, config_id: int = None):
         password = data.get("imap_password") or ""
         use_ssl = bool(data.get("use_ssl", True))
         mailbox = (data.get("mailbox") or "INBOX").strip()
+        # Fallback : si le mot de passe est vide et qu'un config_id est fourni dans le corps,
+        # on récupère le mot de passe sauvegardé (cas de l'édition sans re-saisie du mdp)
+        if not password and data.get("config_id"):
+            try:
+                saved = MailInboxConfig.objects.get(id=int(data["config_id"]))
+                password = saved.imap_password
+            except (MailInboxConfig.DoesNotExist, ValueError, TypeError):
+                pass
 
     if not host or not user:
         return Response({"detail": "Hôte et utilisateur requis."}, status=400)
