@@ -94,6 +94,28 @@
 .source-name  { font-weight: 600; font-size: .85rem; color: #1e293b; }
 .source-email { font-size: .76rem; color: #64748b; }
 
+/* ── Schedule card ──────────────────────────────────────── */
+.schedule-card {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.schedule-card.off {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border-color: #fca5a5;
+}
+.schedule-icon { font-size: 1.5rem; flex-shrink: 0; }
+.schedule-info { flex: 1; min-width: 160px; }
+.schedule-label  { font-weight: 700; font-size: .88rem; color: #166534; }
+.schedule-card.off .schedule-label { color: #991b1b; }
+.schedule-sub    { font-size: .77rem; color: #4ade80; }
+.schedule-card.off .schedule-sub { color: #f87171; }
+
 /* ── Modal test result ──────────────────────────────────── */
 .test-result {
     font-size: .8rem;
@@ -103,6 +125,8 @@
 }
 .test-result.ok  { background: #d1fae5; color: #065f46; }
 .test-result.err { background: #fee2e2; color: #991b1b; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 
@@ -113,6 +137,17 @@
     <div class="page-header">
         <h4><i class="bi bi-envelope-gear me-2"></i>{% trans "Configuration de la boîte mail" %}</h4>
         <p>{% trans "Gérez les connexions IMAP et les sources autorisées à déposer des demandes." %}</p>
+    </div>
+
+    <!-- ── Service de polling automatique ──────────────────── -->
+    <div id="scheduleCard" class="schedule-card mb-3">
+        <div class="schedule-icon">
+            <span class="spinner-border spinner-border-sm text-success" style="width:1.3rem;height:1.3rem;"></span>
+        </div>
+        <div class="schedule-info">
+            <div class="schedule-label">{% trans "Chargement du service…" %}</div>
+            <div class="schedule-sub" id="scheduleSub"></div>
+        </div>
     </div>
 
     <div class="row g-3">
@@ -296,6 +331,48 @@
                         <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer" %}
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     Modal — Configurer l'intervalle de polling
+════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3">
+                <h6 class="modal-title mb-0">
+                    <i class="bi bi-clock-history me-2 text-primary"></i>{% trans "Intervalle de polling" %}
+                </h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-3 py-3">
+                <p class="small text-muted mb-3">
+                    {% trans "Définissez la fréquence à laquelle le serveur relève automatiquement les boîtes mail IMAP actives." %}
+                </p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">{% trans "Intervalle (en minutes)" %}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control" id="scheduleMinutes" min="1" max="1440" value="5">
+                        <span class="input-group-text">min</span>
+                    </div>
+                    <div class="form-text">{% trans "Minimum 1 min · Maximum 1440 min (24h)" %}</div>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="scheduleEnabled" checked>
+                    <label class="form-check-label small fw-semibold" for="scheduleEnabled">
+                        {% trans "Polling automatique actif" %}
+                    </label>
+                </div>
+                <div id="scheduleFeedback" class="d-none test-result mt-2"></div>
+            </div>
+            <div class="modal-footer py-2 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSaveSchedule">
+                    <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer" %}
+                </button>
             </div>
         </div>
     </div>
@@ -713,10 +790,92 @@ document.getElementById("btnAddSource").addEventListener("click", async () => {
     }
 });
 
+// ── Polling schedule ─────────────────────────────────────────
+async function loadSchedule() {
+    const card = document.getElementById("scheduleCard");
+    const sub  = document.getElementById("scheduleSub");
+    const r = await apiCall("GET", `${API}/imap/schedule/`);
+    if (!r || !r.ok) {
+        card.className = "schedule-card off mb-3";
+        card.querySelector(".schedule-icon").innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i>`;
+        card.querySelector(".schedule-label").textContent = "{% trans "Impossible de lire le planning." %}";
+        return;
+    }
+    const d = r.data;
+    const enabled = d.enabled;
+    const mins = d.interval_minutes || 5;
+    const configured = d.configured;
+
+    card.className = `schedule-card${enabled ? "" : " off"} mb-3`;
+    card.querySelector(".schedule-icon").innerHTML = enabled
+        ? `<i class="bi bi-arrow-repeat text-success" style="font-size:1.5rem;animation:spin 2s linear infinite;"></i>`
+        : `<i class="bi bi-pause-circle text-danger" style="font-size:1.5rem;"></i>`;
+
+    const statusText = enabled
+        ? `{% trans "Polling automatique actif" %} — {% trans "toutes les" %} ${mins} min`
+        : `{% trans "Polling automatique désactivé" %}`;
+    card.querySelector(".schedule-label").textContent = statusText;
+
+    let subHtml = "";
+    if (d.last_run_at) {
+        const last = new Date(d.last_run_at);
+        const diffMins = Math.round((Date.now() - last) / 60000);
+        subHtml += `{% trans "Dernier relevé" %} : il y a ${diffMins} min`;
+    }
+    if (enabled && d.next_run_at) {
+        const next = new Date(d.next_run_at);
+        const diffMins = Math.round((next - Date.now()) / 60000);
+        if (diffMins > 0) subHtml += ` &nbsp;·&nbsp; {% trans "Prochain" %} : dans ${diffMins} min`;
+    }
+    if (!configured) subHtml = `{% trans "Démarrez Celery Beat pour activer le polling automatique." %}`;
+    sub.innerHTML = subHtml;
+
+    // Rendre la carte cliquable pour ouvrir le modal de config
+    if (!card.dataset.bound) {
+        card.dataset.bound = "1";
+        card.style.cursor = "pointer";
+        card.title = "{% trans "Configurer l'intervalle" %}";
+        card.addEventListener("click", () => {
+            document.getElementById("scheduleMinutes").value = mins;
+            document.getElementById("scheduleEnabled").checked = enabled;
+            document.getElementById("scheduleFeedback").classList.add("d-none");
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("scheduleModal")).show();
+        });
+    }
+}
+
+document.getElementById("btnSaveSchedule").addEventListener("click", async () => {
+    const btn = document.getElementById("btnSaveSchedule");
+    btn.disabled = true;
+    const mins = parseInt(document.getElementById("scheduleMinutes").value) || 5;
+    const enabled = document.getElementById("scheduleEnabled").checked;
+    const r = await apiCall("PUT", `${API}/imap/schedule/`, {
+        interval_minutes: Math.max(1, Math.min(1440, mins)),
+        enabled,
+    });
+    btn.disabled = false;
+    const fb = document.getElementById("scheduleFeedback");
+    if (r?.ok) {
+        fb.className = "test-result ok";
+        fb.textContent = "{% trans "Intervalle enregistré." %}";
+        fb.classList.remove("d-none");
+        setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById("scheduleModal")).hide();
+            loadSchedule();
+        }, 1000);
+    } else {
+        fb.className = "test-result err";
+        fb.textContent = r?.data?.detail || "{% trans "Erreur." %}";
+        fb.classList.remove("d-none");
+    }
+});
+
 // ── Init ─────────────────────────────────────────────────────
 loadCronStatus();
 loadImapList();
 loadSources();
+loadSchedule();
 setInterval(loadCronStatus, 60000);
+setInterval(loadSchedule, 60000);
 </script>
 {% endblock %}

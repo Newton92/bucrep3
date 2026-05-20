@@ -161,6 +161,11 @@ CELERY_BEAT_SCHEDULE = {
         #'schedule': crontab(minute='*/1'),  # toutes les 10 minutes = */10
         "args": ("quotidienne",),  # Argument pour filtrer les fréquences
     },
+    # ── Polling IMAP automatique ─────────────────────────────
+    "poll-mail-inbox": {
+        "task": "main.tasks.poll_mail_inbox",
+        "schedule": timezone.timedelta(minutes=5),  # Modifiable via l'interface mail
+    },
 }
 
 

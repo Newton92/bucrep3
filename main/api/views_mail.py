@@ -141,6 +141,103 @@ def _minutes_ago(dt):
 
 
 # ─────────────────────────────────────────────────────────────
+# Polling schedule — lecture / mise à jour de l'intervalle Beat
+# ─────────────────────────────────────────────────────────────
+
+POLL_TASK_NAME = "poll-mail-inbox"
+
+
+def _get_poll_task():
+    """Retourne la PeriodicTask de polling, ou None."""
+    try:
+        from django_celery_beat.models import PeriodicTask
+        return PeriodicTask.objects.get(name=POLL_TASK_NAME)
+    except Exception:
+        return None
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def mail_poll_schedule(request):
+    """Lire ou modifier l'intervalle de polling automatique."""
+    if not _is_root(request.user):
+        return Response({"detail": "Réservé aux administrateurs."}, status=403)
+
+    task = _get_poll_task()
+
+    if request.method == "GET":
+        if task is None:
+            return Response({
+                "configured": False,
+                "enabled": False,
+                "interval_minutes": 5,
+                "last_run_at": None,
+                "next_run_at": None,
+            })
+
+        minutes = None
+        if task.interval:
+            period = task.interval.period  # "minutes", "hours", etc.
+            every = task.interval.every
+            if period == "minutes":
+                minutes = every
+            elif period == "hours":
+                minutes = every * 60
+            elif period == "seconds":
+                minutes = round(every / 60, 1)
+
+        last = task.last_run_at
+        next_run = None
+        if last and minutes:
+            from datetime import timedelta as _td
+            next_run = last + _td(minutes=minutes)
+
+        return Response({
+            "configured": True,
+            "enabled": task.enabled,
+            "interval_minutes": minutes or 5,
+            "last_run_at": last,
+            "next_run_at": next_run,
+        })
+
+    # PUT — modifier l'intervalle
+    data = request.data or {}
+    try:
+        minutes = int(data.get("interval_minutes") or 5)
+        if minutes < 1:
+            minutes = 1
+    except (ValueError, TypeError):
+        return Response({"detail": "interval_minutes doit être un entier positif."}, status=400)
+
+    enabled = bool(data.get("enabled", True))
+
+    try:
+        from django_celery_beat.models import PeriodicTask, IntervalSchedule
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=minutes,
+            period=IntervalSchedule.MINUTES,
+        )
+        if task is None:
+            PeriodicTask.objects.create(
+                name=POLL_TASK_NAME,
+                task="main.tasks.poll_mail_inbox",
+                interval=schedule,
+                enabled=enabled,
+            )
+        else:
+            task.interval = schedule
+            task.enabled = enabled
+            task.save(update_fields=["interval", "enabled"])
+        return Response({
+            "configured": True,
+            "enabled": enabled,
+            "interval_minutes": minutes,
+        })
+    except Exception as exc:
+        return Response({"detail": str(exc)}, status=500)
+
+
+# ─────────────────────────────────────────────────────────────
 # IMAP Config — multi-record
 # ─────────────────────────────────────────────────────────────
 

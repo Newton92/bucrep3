@@ -15,6 +15,27 @@ from .models import AlerteLog, Contact, Portefeuille
 
 logger = logging.getLogger(__name__)
 
+# ─────────────────────────────────────────────────────────────
+# Polling IMAP automatique
+# ─────────────────────────────────────────────────────────────
+
+POLL_TASK_NAME = "poll-mail-inbox"
+
+
+@shared_task(name="main.tasks.poll_mail_inbox", bind=True, ignore_result=True)
+def poll_mail_inbox(self):
+    """
+    Polling automatique de toutes les boîtes IMAP actives.
+    Planifié via Celery Beat — intervalle configurable dans l'interface mail.
+    """
+    from django.core.management import call_command
+    try:
+        call_command("poll_mail")
+    except Exception as exc:
+        logger.error("poll_mail_inbox: erreur — %s", exc)
+        raise self.retry(exc=exc, countdown=60, max_retries=2)
+
+
 # ---
 
 

@@ -26,7 +26,8 @@ from main.api.views_report import *
 from main.api.views_reporting import *
 from main.api.views_api_load_data import *
 from main.api.views_mail import (
-    mail_imap_config, mail_imap_config_detail, mail_imap_test, mail_imap_poll, mail_cron_status,
+    mail_imap_config, mail_imap_config_detail, mail_imap_test, mail_imap_poll,
+    mail_cron_status, mail_poll_schedule,
     mail_sources, mail_source_detail, mail_source_toggle,
     mail_inbox_stats, mail_inbox, mail_inbox_detail,
     mail_dispatch, mail_self_dispatch, mail_accept, mail_reassign,
@@ -5227,6 +5228,7 @@ urlpatterns = [
     # ── Mail inbox API ───────────────────────────────────────────────────────────
     path("api/v1/mail/imap/",                             mail_imap_config,        name="mail-imap-config"),
     path("api/v1/mail/imap/status/",                      mail_cron_status,        name="mail-imap-status"),
+    path("api/v1/mail/imap/schedule/",                    mail_poll_schedule,      name="mail-imap-schedule"),
     path("api/v1/mail/imap/test/",                        mail_imap_test,          name="mail-imap-test-form"),
     path("api/v1/mail/imap/<int:config_id>/",             mail_imap_config_detail, name="mail-imap-config-detail"),
     path("api/v1/mail/imap/<int:config_id>/test/",        mail_imap_test,          name="mail-imap-test"),
