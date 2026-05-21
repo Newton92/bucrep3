@@ -2327,11 +2327,32 @@ def exporter_rapport(request):
         export_format = data.get('export_format', 'pdf').lower()
         acheteur_id = data.get('acheteur_id')
         report_data = _inject_static_urls(report_data, request)
-        
+
+        # Enrichir les codes NACE depuis la DB (le frontend ne connaît pas nace_codes_grouped)
+        if acheteur_id:
+            nace_rows = list(CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id)
+                .select_related('code__category')
+                .values('code__code', 'code__libelle', 'code__category__code', 'code__category__libelle')
+                .distinct()
+                .order_by('code__category__code', 'code__code'))
+            nace_by_cat: dict = {}
+            for item in nace_rows:
+                raw = item['code__code'] or ''
+                dcode = raw.split('.', 1)[1] if '.' in raw else raw
+                lib = item['code__libelle'] or ''
+                ccat = item['code__category__code'] or '—'
+                clib = item['code__category__libelle'] or 'Non classifié'
+                if ccat not in nace_by_cat:
+                    nace_by_cat[ccat] = {'cat_code': ccat, 'cat_libelle': clib, 'codes': []}
+                nace_by_cat[ccat]['codes'].append({'code': dcode, 'libelle': lib or '—'})
+            nace_grouped = list(nace_by_cat.values())
+            if isinstance(report_data.get('additional_information'), dict):
+                report_data['additional_information']['nace_codes_grouped'] = nace_grouped
+
         print(f"📤 Export demandé: {export_format}")
         print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
         print(f"📝 Form data - Clés: {list(form_data.keys())}")
-        
+
         if export_format.upper() == 'PDF':
             print("Génération du PDF...")  # Debug
             # activer la langue provenant des données si disponible
