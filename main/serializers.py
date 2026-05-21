@@ -12216,31 +12216,29 @@ class SubCategoryNafCodeOneSerializer(serializers.ModelSerializer):
 
 class SubCategoryNafCodeSimpleOneSerializer(serializers.ModelSerializer):
     category_info = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = SubCategoryNafCode
-        fields = ['id', 'code', 'libelle', 'category_info', 'active', 'poids']
+        fields = ['id', 'code', 'libelle', 'libelle_en', 'category_info', 'active', 'poids']
         read_only_fields = ['category_info']
-    
+
     def get_category_info(self, obj):
         if obj.category:
             return {
                 'id': obj.category.id,
                 'code': obj.category.code,
-                'libelle': obj.category.libelle
+                'libelle': obj.category.libelle,
+                'libelle_en': obj.category.libelle_en or '',
             }
         return None
-    
+
     def to_representation(self, instance):
-        """S'assurer que toutes les valeurs sont présentes"""
         data = super().to_representation(instance)
-        
-        # S'assurer que les valeurs par défaut sont présentes
         data['code'] = data.get('code', '')
         data['libelle'] = data.get('libelle', '')
+        data['libelle_en'] = data.get('libelle_en') or ''
         data['active'] = data.get('active', False)
         data['poids'] = data.get('poids', 0.0)
-        
         return data
     
 class CodeNafAcheteurOneSerializer(serializers.ModelSerializer):

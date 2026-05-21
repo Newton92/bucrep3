@@ -1,5 +1,6 @@
 {% extends 'main/root/base.html' %}
 {% load i18n static humanize %}
+{% get_current_language as LANG %}
 
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -297,10 +298,10 @@
                                 <i class="fas fa-weight-hanging"></i>{{ code_naf.code.poids|default:"0" }}
                             </span>
                         </div>
-                        <div class="naf-card-libelle">{{ code_naf.code.libelle|default:"—" }}</div>
+                        <div class="naf-card-libelle">{% if LANG == "en" %}{{ code_naf.code.libelle_en|default:code_naf.code.libelle|default:"—" }}{% else %}{{ code_naf.code.libelle|default:"—" }}{% endif %}</div>
                         {% if code_naf.code.category %}
                         <div class="naf-card-category">
-                            <i class="fas fa-folder me-1"></i>{{ code_naf.code.category.code }} · {{ code_naf.code.category.libelle }}
+                            <i class="fas fa-folder me-1"></i>{{ code_naf.code.category.code }} · {% if LANG == "en" %}{{ code_naf.code.category.libelle_en|default:code_naf.code.category.libelle }}{% else %}{{ code_naf.code.category.libelle }}{% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -375,10 +376,12 @@
                             <option value="{{ sub.id }}"
                                 data-code="{{ sub.code }}"
                                 data-libelle="{{ sub.libelle|default:'' }}"
+                                data-libelle-en="{{ sub.libelle_en|default:'' }}"
                                 data-cat-code="{{ sub.category.code|default:'' }}"
                                 data-cat-libelle="{{ sub.category.libelle|default:'' }}"
+                                data-cat-libelle-en="{{ sub.category.libelle_en|default:'' }}"
                                 data-poids="{{ sub.poids|default:'0' }}">
-                                {{ sub.code }} — {{ sub.libelle }}
+                                {{ sub.code }} — {% if LANG == "en" %}{{ sub.libelle_en|default:sub.libelle }}{% else %}{{ sub.libelle }}{% endif %}
                             </option>
                             {% endfor %}
                         </select>
@@ -433,10 +436,12 @@
                             <option value="{{ sub.id }}"
                                 data-code="{{ sub.code }}"
                                 data-libelle="{{ sub.libelle|default:'' }}"
+                                data-libelle-en="{{ sub.libelle_en|default:'' }}"
                                 data-cat-code="{{ sub.category.code|default:'' }}"
                                 data-cat-libelle="{{ sub.category.libelle|default:'' }}"
+                                data-cat-libelle-en="{{ sub.category.libelle_en|default:'' }}"
                                 data-poids="{{ sub.poids|default:'0' }}">
-                                {{ sub.code }} — {{ sub.libelle }}
+                                {{ sub.code }} — {% if LANG == "en" %}{{ sub.libelle_en|default:sub.libelle }}{% else %}{{ sub.libelle }}{% endif %}
                             </option>
                             {% endfor %}
                         </select>
@@ -540,6 +545,7 @@ $(document).ready(function() {
         placeholder:  "{{ t_placeholder|escapejs }}",
     };
     const REFRESH_TOKEN = '{{ refresh_token }}';
+    const LANG = '{{ LANG }}';
     let currentCodeNafId = null;
 
     // ── Select2 factory (filtrage client-side, options rendues serveur) ──
@@ -561,14 +567,25 @@ $(document).ready(function() {
     const $addSel  = makeSelect2('#addNafCode',  '#addCodeNafModal');
     const $editSel = makeSelect2('#editNafCode', '#editCodeNafModal');
 
+    function pickLibelle($opt) {
+        const en = $opt.data('libelle-en') || '';
+        const fr = $opt.data('libelle')    || '';
+        return (LANG === 'en' && en) ? en : fr;
+    }
+    function pickCatLibelle($opt) {
+        const en = $opt.data('cat-libelle-en') || '';
+        const fr = $opt.data('cat-libelle')    || '';
+        return (LANG === 'en' && en) ? en : fr;
+    }
+
     $addSel.on('select2:select', function(e) {
         const $opt = $(e.params.data.element);
         showPreview({
-            code:     $opt.data('code')       || '',
-            libelle:  $opt.data('libelle')    || '',
-            cat_code: $opt.data('cat-code')   || '',
-            cat_lib:  $opt.data('cat-libelle')|| '',
-            poids:    $opt.data('poids')      || '0'
+            code:     $opt.data('code')   || '',
+            libelle:  pickLibelle($opt),
+            cat_code: $opt.data('cat-code') || '',
+            cat_lib:  pickCatLibelle($opt),
+            poids:    $opt.data('poids')  || '0'
         });
     }).on('select2:clear', hidePreview);
 
