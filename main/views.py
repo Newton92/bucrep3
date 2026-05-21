@@ -9391,6 +9391,14 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
     
     codes_naf_json = json.dumps(codes_naf_data, default=str)
     
+    # Tous les codes NAF actifs pour le Select2 côté serveur (évite AJAX dans modal)
+    all_naf_subcategories = (
+        SubCategoryNafCode.objects
+        .filter(active=True)
+        .select_related('category')
+        .order_by('category__code', 'code')
+    )
+
     context = {
         "acheteurs_active": "active",
         "user": request.user,
@@ -9404,6 +9412,7 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
         "codes_naf_json": codes_naf_json or '[]',
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
+        "all_naf_subcategories": all_naf_subcategories,
     }
     return render(
         request,

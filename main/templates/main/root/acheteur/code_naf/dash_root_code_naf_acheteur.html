@@ -371,6 +371,16 @@
                         <label class="form-label">{% trans "Code NAF" %}</label>
                         <select id="addNafCode" name="code" style="width:100%;" required>
                             <option value=""></option>
+                            {% for sub in all_naf_subcategories %}
+                            <option value="{{ sub.id }}"
+                                data-code="{{ sub.code }}"
+                                data-libelle="{{ sub.libelle|default:'' }}"
+                                data-cat-code="{{ sub.category.code|default:'' }}"
+                                data-cat-libelle="{{ sub.category.libelle|default:'' }}"
+                                data-poids="{{ sub.poids|default:'0' }}">
+                                {{ sub.code }} — {{ sub.libelle }}
+                            </option>
+                            {% endfor %}
                         </select>
                         <small class="text-muted" style="font-size:.72rem;">{% trans "Tapez pour rechercher par code ou libellé…" %}</small>
                     </div>
@@ -417,7 +427,19 @@
                 <div class="modal-body py-3 px-3">
                     <div class="mb-2">
                         <label class="form-label">{% trans "Nouveau code NAF" %}</label>
-                        <select id="editNafCode" name="code" style="width:100%;" required></select>
+                        <select id="editNafCode" name="code" style="width:100%;" required>
+                            <option value=""></option>
+                            {% for sub in all_naf_subcategories %}
+                            <option value="{{ sub.id }}"
+                                data-code="{{ sub.code }}"
+                                data-libelle="{{ sub.libelle|default:'' }}"
+                                data-cat-code="{{ sub.category.code|default:'' }}"
+                                data-cat-libelle="{{ sub.category.libelle|default:'' }}"
+                                data-poids="{{ sub.poids|default:'0' }}">
+                                {{ sub.code }} — {{ sub.libelle }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="d-flex gap-3 mt-2" style="font-size:.72rem;color:var(--color-text-muted);">
                         <span><i class="fas fa-calendar me-1"></i>{% trans "Créé le" %} <strong id="editCreatedAtInfo"></strong></span>
@@ -496,7 +518,6 @@
 $(document).ready(function() {
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-naf-oneview/`;
-    const API_SUBS_URL = '/api/subcategories-naf-oneview/';
     let ACCESS_TOKEN = '{{ access_token }}';
     const T = {
         sel_req:      "{{ t_sel_req|escapejs }}",
@@ -521,7 +542,7 @@ $(document).ready(function() {
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentCodeNafId = null;
 
-    // ── Select2 factory ───────────────────────────────────────
+    // ── Select2 factory (filtrage client-side, options rendues serveur) ──
     function makeSelect2(sel, parentSel) {
         return $(sel).select2({
             theme: 'bootstrap-5',
@@ -530,38 +551,8 @@ $(document).ready(function() {
             width: '100%',
             dropdownParent: $(parentSel),
             language: {
-                searching:   () => T.searching,
-                noResults:   () => T.no_results,
-                loadingMore: () => T.loading
-            },
-            ajax: {
-                url: API_SUBS_URL,
-                dataType: 'json',
-                delay: 250,
-                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
-                data: p => ({ search: p.term || '' }),
-                processResults: function(data) {
-                    if (!Array.isArray(data)) {
-                        console.warn('NAF subcategories: réponse inattendue', data);
-                        return { results: [] };
-                    }
-                    return {
-                        results: data.map(item => ({
-                            id: item.id,
-                            text: `${item.code || ''} — ${item.libelle || ''}`,
-                            data: item
-                        }))
-                    };
-                },
-                error: function(xhr) {
-                    console.error('NAF subcategories AJAX error', xhr.status, xhr.responseText);
-                    if (xhr.status === 401) {
-                        refreshAccessToken(function() {
-                            $(sel).select2('close').select2('open');
-                        });
-                    }
-                },
-                cache: false
+                searching: () => T.searching,
+                noResults: () => T.no_results
             },
             minimumInputLength: 0
         });
@@ -571,15 +562,21 @@ $(document).ready(function() {
     const $editSel = makeSelect2('#editNafCode', '#editCodeNafModal');
 
     $addSel.on('select2:select', function(e) {
-        if (e.params.data && e.params.data.data) showPreview(e.params.data.data);
+        const $opt = $(e.params.data.element);
+        showPreview({
+            code:     $opt.data('code')       || '',
+            libelle:  $opt.data('libelle')    || '',
+            cat_code: $opt.data('cat-code')   || '',
+            cat_lib:  $opt.data('cat-libelle')|| '',
+            poids:    $opt.data('poids')      || '0'
+        });
     }).on('select2:clear', hidePreview);
 
     // ── Preview ───────────────────────────────────────────────
     function showPreview(d) {
         $('#previewCode').text(d.code || '—');
         $('#previewLibelle').text(d.libelle || '—');
-        const cat = d.category_info || d.category || {};
-        $('#previewCategoryCode').text(cat.code ? `${cat.code} · ${cat.libelle}` : '—');
+        $('#previewCategoryCode').text(d.cat_code ? `${d.cat_code} · ${d.cat_lib}` : '—');
         $('#previewPoids').text(d.poids || '0');
         $('#codeNafPreview').removeClass('d-none');
     }
@@ -703,14 +700,6 @@ $(document).ready(function() {
                 else showError(T.err, xhr.responseJSON?.detail || T.dissoc_err);
             }
         });
-    });
-
-    // ── Ouverture auto du Select2 quand le modal s'affiche ────
-    $('#addCodeNafModal').on('shown.bs.modal', function() {
-        $addSel.select2('open');
-    });
-    $('#editCodeNafModal').on('shown.bs.modal', function() {
-        if (!currentCodeNafId) $editSel.select2('open');
     });
 
     // ── Reset modals ──────────────────────────────────────────
