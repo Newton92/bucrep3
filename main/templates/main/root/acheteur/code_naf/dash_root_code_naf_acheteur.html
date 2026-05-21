@@ -473,12 +473,51 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+{% trans "Sélection requise" as t_sel_req %}
+{% trans "Veuillez sélectionner un code NAF." as t_sel_naf %}
+{% trans "Succès" as t_success %}
+{% trans "Opération réussie" as t_op_ok %}
+{% trans "Erreur lors de l'opération." as t_op_err %}
+{% trans "Erreur" as t_err %}
+{% trans "Impossible de charger les détails." as t_det_err %}
+{% trans "Code dissocié" as t_dissoc %}
+{% trans "Impossible de dissocier." as t_dissoc_err %}
+{% trans "Dissociation…" as t_dissoc_prog %}
+{% trans "Dissocier" as t_dissoc_btn %}
+{% trans "Session expirée" as t_sess_exp %}
+{% trans "Veuillez vous reconnecter." as t_reconnect %}
+{% trans "Se reconnecter" as t_reconnect_btn %}
+{% trans "Recherche…" as t_searching %}
+{% trans "Aucun résultat" as t_no_results %}
+{% trans "Chargement…" as t_loading %}
+{% trans "Rechercher un code NAF…" as t_placeholder %}
+
 <script>
 $(document).ready(function() {
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-naf-oneview/`;
     const API_SUBS_URL = '/api/subcategories-naf-oneview/';
     let ACCESS_TOKEN = '{{ access_token }}';
+    const T = {
+        sel_req:      "{{ t_sel_req|escapejs }}",
+        sel_naf:      "{{ t_sel_naf|escapejs }}",
+        success:      "{{ t_success|escapejs }}",
+        op_ok:        "{{ t_op_ok|escapejs }}",
+        op_err:       "{{ t_op_err|escapejs }}",
+        err:          "{{ t_err|escapejs }}",
+        det_err:      "{{ t_det_err|escapejs }}",
+        dissoc:       "{{ t_dissoc|escapejs }}",
+        dissoc_err:   "{{ t_dissoc_err|escapejs }}",
+        dissoc_prog:  "{{ t_dissoc_prog|escapejs }}",
+        dissoc_btn:   "{{ t_dissoc_btn|escapejs }}",
+        sess_exp:     "{{ t_sess_exp|escapejs }}",
+        reconnect:    "{{ t_reconnect|escapejs }}",
+        reconnect_btn:"{{ t_reconnect_btn|escapejs }}",
+        searching:    "{{ t_searching|escapejs }}",
+        no_results:   "{{ t_no_results|escapejs }}",
+        loading:      "{{ t_loading|escapejs }}",
+        placeholder:  "{{ t_placeholder|escapejs }}",
+    };
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentCodeNafId = null;
 
@@ -486,14 +525,14 @@ $(document).ready(function() {
     function makeSelect2(sel, parentSel) {
         return $(sel).select2({
             theme: 'bootstrap-5',
-            placeholder: '{% trans "Rechercher un code NAF…" %}',
+            placeholder: T.placeholder,
             allowClear: true,
             width: '100%',
             dropdownParent: $(parentSel),
             language: {
-                searching: () => '{% trans "Recherche…" %}',
-                noResults: () => '{% trans "Aucun résultat" %}',
-                loadingMore: () => '{% trans "Chargement…" %}'
+                searching:   () => T.searching,
+                noResults:   () => T.no_results,
+                loadingMore: () => T.loading
             },
             ajax: {
                 url: API_SUBS_URL,
@@ -561,7 +600,7 @@ $(document).ready(function() {
     $('#addCodeNafForm').on('submit', function(e) {
         e.preventDefault();
         const codeId = $('#addNafCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NAF." %}'); return; }
+        if (!codeId) { showError(T.sel_req, T.sel_naf); return; }
         submitForm('POST', { code: codeId, acheteur: ACHETEUR_ID }, '#submitAddBtn', '#addCodeNafModal');
     });
 
@@ -570,7 +609,7 @@ $(document).ready(function() {
         e.preventDefault();
         if (!currentCodeNafId) return;
         const codeId = $('#editNafCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NAF." %}'); return; }
+        if (!codeId) { showError(T.sel_req, T.sel_naf); return; }
         submitForm('PUT', { code: codeId }, '#submitEditBtn', '#editCodeNafModal', currentCodeNafId);
     });
 
@@ -589,7 +628,7 @@ $(document).ready(function() {
                 $btn.prop('disabled', false).find('.btn-text').show();
                 $btn.find('.spinner-border').addClass('d-none');
                 $(modalSel).modal('hide');
-                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: r.message || '{% trans "Opération réussie" %}',
+                Swal.fire({ icon: 'success', title: T.success, text: r.message || T.op_ok,
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
                 .then(() => location.reload());
             },
@@ -597,8 +636,8 @@ $(document).ready(function() {
                 $btn.prop('disabled', false).find('.btn-text').show();
                 $btn.find('.spinner-border').addClass('d-none');
                 if (xhr.status === 401) { refreshAccessToken(() => submitForm(method, data, btnSel, modalSel, codeNafId)); return; }
-                const msg = xhr.responseJSON?.detail || xhr.responseJSON?.code?.join?.('\n') || '{% trans "Erreur lors de l\'opération." %}';
-                showError('{% trans "Erreur" %}', msg);
+                const msg = xhr.responseJSON?.detail || xhr.responseJSON?.code?.join?.('\n') || T.op_err;
+                showError(T.err, msg);
             }
         });
     }
@@ -621,7 +660,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 if (xhr.status === 401) refreshAccessToken(() => $('.edit-code-naf-btn[data-id="' + currentCodeNafId + '"]').click());
-                else showError('{% trans "Erreur" %}', '{% trans "Impossible de charger les détails." %}');
+                else showError(T.err, T.det_err);
             }
         });
     });
@@ -636,21 +675,21 @@ $(document).ready(function() {
     $('#confirmDeleteBtn').on('click', function() {
         if (!currentCodeNafId) return;
         const $btn = $(this).prop('disabled', true)
-            .html('<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Dissociation…" %}');
+            .html('<i class="fas fa-spinner fa-spin me-1"></i>' + T.dissoc_prog);
         $.ajax({
             url: `${API_BASE_URL}${currentCodeNafId}/`,
             type: 'DELETE',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
             success: function(r) {
                 $('#confirmDeleteModal').modal('hide');
-                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: r.message || '{% trans "Code dissocié" %}',
+                Swal.fire({ icon: 'success', title: T.success, text: r.message || T.dissoc,
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
                 .then(() => location.reload());
             },
             error: function(xhr) {
-                $btn.prop('disabled', false).html('<i class="fas fa-unlink me-1"></i>{% trans "Dissocier" %}');
+                $btn.prop('disabled', false).html('<i class="fas fa-unlink me-1"></i>' + T.dissoc_btn);
                 if (xhr.status === 401) refreshAccessToken();
-                else showError('{% trans "Erreur" %}', xhr.responseJSON?.detail || '{% trans "Impossible de dissocier." %}');
+                else showError(T.err, xhr.responseJSON?.detail || T.dissoc_err);
             }
         });
     });
@@ -685,9 +724,9 @@ $(document).ready(function() {
             contentType: 'application/json',
             success: function(r) { if (r.access) { ACCESS_TOKEN = r.access; if (cb) cb(); } },
             error: function() {
-                Swal.fire({ icon: 'error', title: '{% trans "Session expirée" %}',
-                    text: '{% trans "Veuillez vous reconnecter." %}',
-                    confirmButtonText: '{% trans "Se reconnecter" %}', background: '#fcfefe' })
+                Swal.fire({ icon: 'error', title: T.sess_exp,
+                    text: T.reconnect,
+                    confirmButtonText: T.reconnect_btn, background: '#fcfefe' })
                 .then(r => { if (r.isConfirmed) location.href = '/login/'; });
             }
         });
