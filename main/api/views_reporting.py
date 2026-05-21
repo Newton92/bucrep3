@@ -1688,6 +1688,7 @@ def generer_rapport_solvabilite(request):
             "logo_path": get_logo_path(),
             "qr_code_base64": qr_code_base64,
             "url_site": riskrating_base_url,
+            "acheteur_id": acheteur.pk,
             "header_report": {
                 "acremac_services": f"Services ACREMAC — {_pays_actif_nom}",
                 "acremac_mail": "credit.report@acremac.com",
@@ -2325,10 +2326,15 @@ def exporter_rapport(request):
         report_data = data.get('report_data', {})
         form_data = data.get('form_data', {})
         export_format = data.get('export_format', 'pdf').lower()
-        acheteur_id = data.get('acheteur_id')
+        # acheteur_id peut venir du top-level, du form_data, ou être embarqué dans report_data
+        acheteur_id = (
+            data.get('acheteur_id')
+            or form_data.get('acheteur_id')
+            or report_data.get('acheteur_id')
+        )
         report_data = _inject_static_urls(report_data, request)
 
-        # Enrichir les codes NACE depuis la DB (le frontend ne connaît pas nace_codes_grouped)
+        # Toujours ré-injecter les codes NACE depuis la DB pour éviter les données obsolètes
         if acheteur_id:
             nace_rows = list(CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id)
                 .select_related('code__category')
