@@ -9413,6 +9413,7 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
         "all_naf_subcategories": all_naf_subcategories,
+        "is_english": (get_language() or '').startswith('en'),
     }
     return render(
         request,
