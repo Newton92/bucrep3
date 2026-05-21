@@ -541,7 +541,10 @@ $(document).ready(function() {
                 headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
                 data: p => ({ search: p.term || '' }),
                 processResults: function(data) {
-                    if (!Array.isArray(data)) return { results: [] };
+                    if (!Array.isArray(data)) {
+                        console.warn('NAF subcategories: réponse inattendue', data);
+                        return { results: [] };
+                    }
                     return {
                         results: data.map(item => ({
                             id: item.id,
@@ -549,6 +552,14 @@ $(document).ready(function() {
                             data: item
                         }))
                     };
+                },
+                error: function(xhr) {
+                    console.error('NAF subcategories AJAX error', xhr.status, xhr.responseText);
+                    if (xhr.status === 401) {
+                        refreshAccessToken(function() {
+                            $(sel).select2('close').select2('open');
+                        });
+                    }
                 },
                 cache: false
             },
@@ -692,6 +703,14 @@ $(document).ready(function() {
                 else showError(T.err, xhr.responseJSON?.detail || T.dissoc_err);
             }
         });
+    });
+
+    // ── Ouverture auto du Select2 quand le modal s'affiche ────
+    $('#addCodeNafModal').on('shown.bs.modal', function() {
+        $addSel.select2('open');
+    });
+    $('#editCodeNafModal').on('shown.bs.modal', function() {
+        if (!currentCodeNafId) $editSel.select2('open');
     });
 
     // ── Reset modals ──────────────────────────────────────────
