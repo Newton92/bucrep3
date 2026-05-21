@@ -586,13 +586,22 @@ $(document).ready(function() {
             url: API_CATS_URL,
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(data) {
+                console.log('[NACE] loadCategories success — status OK, data:', data);
                 $sel.empty().append('<option value="">{% trans "Sélectionnez une catégorie..." %}</option>');
+                if (!Array.isArray(data)) {
+                    console.error('[NACE] data is not an array:', typeof data, data);
+                    return;
+                }
                 data.forEach(function(cat) {
                     $sel.append(`<option value="${cat.id}">${cat.code} — ${cat.libelle}</option>`);
                 });
+                console.log('[NACE] ' + data.length + ' catégorie(s) chargée(s)');
                 if (selectedCatId) $sel.val(selectedCatId).trigger('change');
             },
-            error: function() { $sel.html('<option value="">{% trans "Erreur de chargement" %}</option>'); }
+            error: function(xhr) {
+                console.error('[NACE] loadCategories error — status:', xhr.status, xhr.responseText);
+                $sel.html('<option value="">{% trans "Erreur de chargement" %}</option>');
+            }
         });
     }
 
