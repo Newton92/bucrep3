@@ -895,16 +895,23 @@ def generer_rapport_solvabilite(request):
         # Recuperation des codes NACE avec leurs libellés
         nace_codes_data = list(CodeNaceAcheteur.objects.filter(acheteur=acheteur)
             .select_related('code__category')
-            .values('code__code', 'code__libelle', 'code__category__libelle')
-            .distinct())
+            .values('code__code', 'code__libelle', 'code__category__code', 'code__category__libelle')
+            .distinct()
+            .order_by('code__category__code', 'code__code'))
 
-        # Formatage pour affichage
         nace_codes_formatted = []
+        nace_by_cat: dict = {}
         for item in nace_codes_data:
-            if item['code__libelle']:
-                nace_codes_formatted.append(f"{item['code__code']} - {item['code__libelle']}")
-            else:
-                nace_codes_formatted.append(item['code__code'])
+            raw_code = item['code__code'] or ''
+            display_code = raw_code.split('.', 1)[1] if '.' in raw_code else raw_code
+            libelle = item['code__libelle'] or ''
+            nace_codes_formatted.append(f"{display_code} - {libelle}" if libelle else display_code)
+            cat_code = item['code__category__code'] or '—'
+            cat_libelle = item['code__category__libelle'] or 'Non classifié'
+            if cat_code not in nace_by_cat:
+                nace_by_cat[cat_code] = {'cat_code': cat_code, 'cat_libelle': cat_libelle, 'codes': []}
+            nace_by_cat[cat_code]['codes'].append({'code': display_code, 'libelle': libelle or '—'})
+        nace_codes_grouped = list(nace_by_cat.values())
 
         # Recuperation des codes NAF avec leurs libellés
         naf_codes_data = list(CodeNafAcheteur.objects.filter(acheteur=acheteur)
@@ -1738,6 +1745,7 @@ def generer_rapport_solvabilite(request):
                 "title_3": "INFORMATIONS SUPPLEMENTAIRES",
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
                 "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
+                "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
                 "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
                 "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
@@ -1913,6 +1921,7 @@ def generer_rapport_solvabilite(request):
             "sector_analysis": {
                 "title_13": "ANALYSE ECONOMIQUE",
                 "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
+                "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
                 "sectorielle": {
                     "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else _t("Aucun commentaire disponible"),
