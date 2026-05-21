@@ -913,19 +913,25 @@ def generer_rapport_solvabilite(request):
             nace_by_cat[cat_code]['codes'].append({'code': display_code, 'libelle': libelle or '—'})
         nace_codes_grouped = list(nace_by_cat.values())
 
-        # Recuperation des codes NAF avec leurs libellés
+        # Recuperation des codes NAF avec leurs libellés et catégories
         naf_codes_data = list(CodeNafAcheteur.objects.filter(acheteur=acheteur)
             .select_related('code__category')
-            .values('code__code', 'code__libelle', 'code__category__libelle')
-            .distinct())
+            .values('code__code', 'code__libelle', 'code__category__code', 'code__category__libelle')
+            .distinct()
+            .order_by('code__category__code', 'code__code'))
 
-        # Formatage pour affichage
         naf_codes_formatted = []
+        naf_by_cat: dict = {}
         for item in naf_codes_data:
-            if item['code__libelle']:
-                naf_codes_formatted.append(f"{item['code__code']} - {item['code__libelle']}")
-            else:
-                naf_codes_formatted.append(item['code__code'])
+            raw_code = item['code__code'] or ''
+            libelle = item['code__libelle'] or ''
+            naf_codes_formatted.append(f"{raw_code} - {libelle}" if libelle else raw_code)
+            cat_code = item['code__category__code'] or '—'
+            cat_libelle = item['code__category__libelle'] or 'Non classifié'
+            if cat_code not in naf_by_cat:
+                naf_by_cat[cat_code] = {'cat_code': cat_code, 'cat_libelle': cat_libelle, 'codes': []}
+            naf_by_cat[cat_code]['codes'].append({'code': raw_code, 'libelle': libelle or '—'})
+        naf_codes_grouped = list(naf_by_cat.values())
         
         # Récupération Evaluation de risque
         # Au niveau du template il faudra afficher une image en fonction de la valeur totale trouve
@@ -1748,6 +1754,7 @@ def generer_rapport_solvabilite(request):
                 "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
                 "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
+                "naf_codes_grouped": naf_codes_grouped if naf_codes_grouped else [],
                 "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
                 "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
@@ -2334,8 +2341,14 @@ def exporter_rapport(request):
         )
         report_data = _inject_static_urls(report_data, request)
 
-        # Toujours ré-injecter les codes NACE depuis la DB pour éviter les données obsolètes
+        # Toujours ré-injecter les codes NACE et NAF depuis la DB pour éviter les données obsolètes
         if acheteur_id:
+            add_info = report_data.get('additional_information')
+            if not isinstance(add_info, dict):
+                add_info = {}
+                report_data['additional_information'] = add_info
+
+            # NACE grouped
             nace_rows = list(CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id)
                 .select_related('code__category')
                 .values('code__code', 'code__libelle', 'code__category__code', 'code__category__libelle')
@@ -2351,9 +2364,24 @@ def exporter_rapport(request):
                 if ccat not in nace_by_cat:
                     nace_by_cat[ccat] = {'cat_code': ccat, 'cat_libelle': clib, 'codes': []}
                 nace_by_cat[ccat]['codes'].append({'code': dcode, 'libelle': lib or '—'})
-            nace_grouped = list(nace_by_cat.values())
-            if isinstance(report_data.get('additional_information'), dict):
-                report_data['additional_information']['nace_codes_grouped'] = nace_grouped
+            add_info['nace_codes_grouped'] = list(nace_by_cat.values())
+
+            # NAF grouped
+            naf_rows = list(CodeNafAcheteur.objects.filter(acheteur_id=acheteur_id)
+                .select_related('code__category')
+                .values('code__code', 'code__libelle', 'code__category__code', 'code__category__libelle')
+                .distinct()
+                .order_by('code__category__code', 'code__code'))
+            naf_by_cat: dict = {}
+            for item in naf_rows:
+                raw = item['code__code'] or ''
+                lib = item['code__libelle'] or ''
+                ccat = item['code__category__code'] or '—'
+                clib = item['code__category__libelle'] or 'Non classifié'
+                if ccat not in naf_by_cat:
+                    naf_by_cat[ccat] = {'cat_code': ccat, 'cat_libelle': clib, 'codes': []}
+                naf_by_cat[ccat]['codes'].append({'code': raw, 'libelle': lib or '—'})
+            add_info['naf_codes_grouped'] = list(naf_by_cat.values())
 
         print(f"📤 Export demandé: {export_format}")
         print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
