@@ -740,13 +740,14 @@ class NaceSpecifique(Model):
 
 class CategoryNafCode(Model):
     """Modele metier: CategoryNafCode."""
-    
+
     safedelete_policy  = SOFT_DELETE_CASCADE
-    
+
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    libelle_en = models.CharField(_("Libellé EN"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
     poids = models.FloatField(_("Poids"), default=0.0)
 
@@ -772,9 +773,9 @@ class CategoryNafCode(Model):
 
 class SubCategoryNafCode(Model):
     """Modele metier: SubCategoryNafCode."""
-    
+
     safedelete_policy  = SOFT_DELETE_CASCADE
-    
+
     category = models.ForeignKey(
         CategoryNafCode,
         on_delete=models.CASCADE,
@@ -785,6 +786,7 @@ class SubCategoryNafCode(Model):
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    libelle_en = models.CharField(_("Libellé EN"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
     poids = models.FloatField(_("Poids"), default=0.0)
 
