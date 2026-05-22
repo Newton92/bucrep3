@@ -707,24 +707,28 @@
     outline-offset: 2px;
 }
 </style>
+<link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
     <!-- Header Premium -->
-    <div class="page-header" style="--order: 0;">
+    <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
-                <h1 class="page-title text-white">
+                <h1 class="page-title">
                     <i class="fas fa-chart-pie me-3"></i>{% trans "Gestion des Actionnaires" %}
                 </h1>
-                <p class="page-subtitle">
-                    {% trans "Gérez la composition actionnariale de l'entreprise" %}
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
+                    {% if acheteur.activite_principale %}&nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.activite_principale }}</span>{% endif %}
                 </p>
             </div>
-            <div class="d-flex gap-2 align-items-center">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
                 {% acheteur_page_nav 'actionnaire' %}
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
                     <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
                 </a>
                 <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addActionnaireModal">
@@ -734,72 +738,7 @@
         </div>
     </div>
 
-    <!-- Carte Acheteur Premium -->
-    <div class="acheteur-card">
-        <div class="acheteur-header">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
-                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
-                </div>
-                <div class="text-md-end">
-                    <span class="acheteur-badge">
-                        <i class="fas fa-percentage me-2"></i>
-                        <span id="totalPourcentage">{{ stats.pourcentage_total|floatformat:2 }}</span>%
-                    </span>
-                    <p class="mb-0 mt-2 small text-white-75">{% trans "Total détention" %}</p>
-                </div>
-            </div>
-        </div>
-        <div class="acheteur-info-grid">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-hashtag"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Code ACREMAC" %}</small>
-                            <span class="fw-bold text-dark">{{ acheteur.code }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Activité" %}</small>
-                            <span class="fw-bold text-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Actionnaires" %}</small>
-                            <span class="fw-bold text-dark">{{ stats.total }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div>
-                            <small class="tendance-label">{% trans "Statut" %}</small>
-                            <span class="badge" style="background: var(--success-gradient); color: white; border: none; padding: 0.5rem 1rem;">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Statistiques Premium -->
     <div class="stats-grid">
@@ -922,7 +861,7 @@
                 <h5 class="card-title mb-0" style="color: var(--color-primary-dark);">
                     <i class="fas fa-list me-2"></i>{% trans "Liste des Actionnaires" %}
                 </h5>
-                <div class="d-flex gap-2 align-items-center">
+                <div class="d-flex gap-2 flex-wrap align-items-center">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="selectAll">
                         <label class="form-check-label small" for="selectAll">
