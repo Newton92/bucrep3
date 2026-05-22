@@ -883,11 +883,30 @@
     align-items: center;
     gap: 0.5rem;
 }
-.period-card {
-    background: rgba(13,128,190,0.03);
-    border: 1px solid rgba(13,128,190,0.1);
+.period-grid-container {
+    border: 1px solid rgba(13,128,190,0.15);
     border-radius: 8px;
-    padding: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.period-grid-header {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: rgba(13,128,190,0.06);
+}
+.period-grid-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid rgba(13,128,190,0.08);
+}
+.period-grid-cell-header,
+.period-grid-cell {
+    padding: 0.5rem 0.75rem;
+    border-left: 1px solid rgba(13,128,190,0.08);
+}
+.period-grid-cell-header:first-child,
+.period-grid-cell:first-child {
+    border-left: none;
 }
 .period-label {
     font-size: 0.7rem;
@@ -895,10 +914,16 @@
     color: #0d80be;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
     gap: 0.35rem;
+}
+/* Modal selects: taille adaptée */
+.modal .select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.875rem !important;
 }
 .modal-form-label {
     font-size: 0.8rem;
@@ -1651,8 +1676,8 @@
                         <div class="col-md-4">
                             <label class="modal-form-label"><i class="fas fa-money-bill-wave me-1"></i>{% trans "Devise" %}</label>
                             <select class="form-select form-select-sm select2-with-search select2-enhanced" id="devise" name="devise">
-                                {% for code, label in devise_choices %}
-                                    <option value="{{ code }}" {% if code == 'XAF' %}selected{% endif %}>{{ label }}</option>
+                                {% for devise in devise_list %}
+                                    <option value="{{ devise.code }}" {% if devise.code == 'XAF' %}selected{% endif %}>{{ devise.nom }} ({{ devise.symbole }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -1680,30 +1705,42 @@
                     <h5 class="modal-section-title mt-3">
                         <i class="fas fa-calendar-alt"></i>{% trans "Périodes Comptables" %}
                     </h5>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <div class="period-card">
+                    <div class="period-grid-container">
+                        <div class="period-grid-header">
+                            <div class="period-grid-cell-header">
                                 <div class="period-label"><i class="fas fa-calendar-check"></i>{% trans "Compte N" %}</div>
+                            </div>
+                            <div class="period-grid-cell-header">
+                                <div class="period-label"><i class="fas fa-calendar-minus"></i>{% trans "Compte N-1" %}</div>
+                            </div>
+                            <div class="period-grid-cell-header">
+                                <div class="period-label"><i class="fas fa-calendar-times"></i>{% trans "Compte N-2" %}</div>
+                            </div>
+                        </div>
+                        <div class="period-grid-row">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="date_compte" name="date_compte">
+                                <input type="date" class="form-control form-control-sm" id="date_compte" name="date_compte">
+                            </div>
+                            <div class="period-grid-cell">
+                                <label class="modal-form-label">{% trans "Début" %}</label>
+                                <input type="date" class="form-control form-control-sm" id="date_compte_n_moins_un" name="date_compte_n_moins_un">
+                            </div>
+                            <div class="period-grid-cell">
+                                <label class="modal-form-label">{% trans "Début" %}</label>
+                                <input type="date" class="form-control form-control-sm" id="date_compte_n_moins_deux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="period-grid-row">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="date_fin" name="date_fin">
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="period-card">
-                                <div class="period-label"><i class="fas fa-calendar-minus"></i>{% trans "Compte N-1" %}</div>
-                                <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="date_compte_n_moins_un" name="date_compte_n_moins_un">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="date_fin_n_moins_un" name="date_fin_n_moins_un">
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="period-card">
-                                <div class="period-label"><i class="fas fa-calendar-times"></i>{% trans "Compte N-2" %}</div>
-                                <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="date_compte_n_moins_deux" name="date_compte_n_moins_deux">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="date_fin_n_moins_deux" name="date_fin_n_moins_deux">
                             </div>
@@ -1711,24 +1748,13 @@
                     </div>
 
                     <!-- Section 3 : Commentaire & Annotation -->
-                    <h5 class="modal-section-title mt-3">
+                    <h5 class="modal-section-title mt-2">
                         <i class="fas fa-comment-dots"></i>{% trans "Commentaire et Analyse" %}
                     </h5>
                     <div class="row g-2">
-                        <div class="col-md-4">
-                            <label class="modal-form-label"><i class="fas fa-palette me-1"></i>{% trans "Étiquette de couleur" %}</label>
-                            <select class="form-select form-select-sm select2-with-search select2-enhanced" id="couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                        {{ coloration.couleur }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
                             <label class="modal-form-label"><i class="fas fa-file-alt me-1"></i>{% trans "Commentaire" %}</label>
-                            <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="3"
+                            <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="4"
                                       placeholder="{% trans 'Analyse des comptes financiers, observations importantes, risques identifiés, recommandations...' %}"></textarea>
                         </div>
                     </div>
@@ -1792,8 +1818,8 @@
                         <div class="col-md-4">
                             <label class="modal-form-label"><i class="fas fa-money-bill-wave me-1"></i>{% trans "Devise" %}</label>
                             <select class="form-select form-select-sm select2-with-search select2-enhanced" id="editDevise" name="devise">
-                                {% for code, label in devise_choices %}
-                                    <option value="{{ code }}">{{ label }}</option>
+                                {% for devise in devise_list %}
+                                    <option value="{{ devise.code }}">{{ devise.nom }} ({{ devise.symbole }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -1819,30 +1845,42 @@
                     <h5 class="modal-section-title mt-3">
                         <i class="fas fa-calendar-alt"></i>{% trans "Périodes Comptables" %}
                     </h5>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <div class="period-card">
+                    <div class="period-grid-container">
+                        <div class="period-grid-header">
+                            <div class="period-grid-cell-header">
                                 <div class="period-label"><i class="fas fa-calendar-check"></i>{% trans "Compte N" %}</div>
+                            </div>
+                            <div class="period-grid-cell-header">
+                                <div class="period-label"><i class="fas fa-calendar-minus"></i>{% trans "Compte N-1" %}</div>
+                            </div>
+                            <div class="period-grid-cell-header">
+                                <div class="period-label"><i class="fas fa-calendar-times"></i>{% trans "Compte N-2" %}</div>
+                            </div>
+                        </div>
+                        <div class="period-grid-row">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="editDateCompte" name="date_compte">
+                                <input type="date" class="form-control form-control-sm" id="editDateCompte" name="date_compte">
+                            </div>
+                            <div class="period-grid-cell">
+                                <label class="modal-form-label">{% trans "Début" %}</label>
+                                <input type="date" class="form-control form-control-sm" id="editDateCompteNMoinsUn" name="date_compte_n_moins_un">
+                            </div>
+                            <div class="period-grid-cell">
+                                <label class="modal-form-label">{% trans "Début" %}</label>
+                                <input type="date" class="form-control form-control-sm" id="editDateCompteNMoinsDeux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="period-grid-row">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="editDateFin" name="date_fin">
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="period-card">
-                                <div class="period-label"><i class="fas fa-calendar-minus"></i>{% trans "Compte N-1" %}</div>
-                                <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="editDateCompteNMoinsUn" name="date_compte_n_moins_un">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="editDateFinNMoinsUn" name="date_fin_n_moins_un">
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="period-card">
-                                <div class="period-label"><i class="fas fa-calendar-times"></i>{% trans "Compte N-2" %}</div>
-                                <label class="modal-form-label">{% trans "Début" %}</label>
-                                <input type="date" class="form-control form-control-sm mb-2" id="editDateCompteNMoinsDeux" name="date_compte_n_moins_deux">
+                            <div class="period-grid-cell">
                                 <label class="modal-form-label">{% trans "Fin" %}</label>
                                 <input type="date" class="form-control form-control-sm" id="editDateFinNMoinsDeux" name="date_fin_n_moins_deux">
                             </div>
@@ -1850,24 +1888,13 @@
                     </div>
 
                     <!-- Section 3 : Commentaire & Annotation -->
-                    <h5 class="modal-section-title mt-3">
+                    <h5 class="modal-section-title mt-2">
                         <i class="fas fa-comment-dots"></i>{% trans "Commentaire et Analyse" %}
                     </h5>
                     <div class="row g-2">
-                        <div class="col-md-4">
-                            <label class="modal-form-label"><i class="fas fa-palette me-1"></i>{% trans "Étiquette de couleur" %}</label>
-                            <select class="form-select form-select-sm select2-with-search select2-enhanced" id="editCouleurCommentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                        {{ coloration.couleur }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
                             <label class="modal-form-label"><i class="fas fa-file-alt me-1"></i>{% trans "Commentaire" %}</label>
-                            <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
+                            <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
                         </div>
                     </div>
 
@@ -1928,6 +1955,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.9/tinymce.min.js" referrerpolicy="origin"></script>
 
 <script>
 $(document).ready(function() {
@@ -2116,10 +2144,40 @@ $(document).ready(function() {
     initDatePickers();
     
     // Si un compte existe, pré-remplir le formulaire d'édition
+    // TinyMCE helpers
+    function initTinyMCE(id) {
+        if (tinymce.get(id)) return;
+        tinymce.init({
+            selector: '#' + id,
+            plugins: 'link lists paste',
+            toolbar: 'undo redo | bold italic underline | bullist numlist | link',
+            height: 180,
+            menubar: false,
+            statusbar: false,
+            branding: false,
+            promotion: false,
+            skin: 'oxide',
+            content_css: 'default',
+        });
+    }
+    function destroyTinyMCE(id) {
+        const ed = tinymce.get(id);
+        if (ed) ed.remove();
+    }
+    function setTinyMCEContent(id, html) {
+        const ed = tinymce.get(id);
+        if (ed) ed.setContent(html || '');
+        else $('#' + id).val(html || '');
+    }
+    function syncTinyMCE(id) {
+        const ed = tinymce.get(id);
+        if (ed) ed.save();
+    }
+
     {% if compte_financier %}
     function populateEditForm() {
         const compteData = JSON.parse('{{ compte_financier_json|escapejs }}');
-        
+
         $('#editCompteId').val(compteData.id);
         $('#editCabinet').val(compteData.cabinet || '');
         $('#editRequisPourDeposer').val(compteData.requis_pour_deposer || '');
@@ -2127,7 +2185,7 @@ $(document).ready(function() {
         $('#editSource').val(compteData.source || '');
         $('#editPresentation').val(compteData.presentation || '');
         $('#editTypeCompte').val(compteData.type_compte || '');
-        
+
         // Dates
         $('#editDateCompte').val(compteData.date_compte || '');
         $('#editDateFin').val(compteData.date_fin || '');
@@ -2135,63 +2193,65 @@ $(document).ready(function() {
         $('#editDateFinNMoinsUn').val(compteData.date_fin_n_moins_un || '');
         $('#editDateCompteNMoinsDeux').val(compteData.date_compte_n_moins_deux || '');
         $('#editDateFinNMoinsDeux').val(compteData.date_fin_n_moins_deux || '');
-        
+
         // Sélecteurs
         $('#editDevise').val(compteData.devise || 'XAF').trigger('change');
         $('#editTypeBilan').val(compteData.type_bilan || '').trigger('change');
-        $('#editCouleurCommentaire').val(compteData.couleur_commentaire?.id || '').trigger('change');
-        
-        // Commentaire
-        $('#editCommentaire').val(compteData.commentaire || '');
+
+        // Commentaire via TinyMCE
+        setTinyMCEContent('editCommentaire', compteData.commentaire || '');
     }
-    
-    $('#editCompteModal').on('shown.bs.modal', function() {
-        populateEditForm();
-    });
     {% endif %}
-    
-    // Gérer l'ouverture des modals
+
+    // Ouverture modals : init TinyMCE, puis pré-remplir si édition
     $('#addCompteModal').on('shown.bs.modal', function() {
+        initTinyMCE('commentaire');
         $('#cabinet').focus();
     });
 
     $('#editCompteModal').on('shown.bs.modal', function() {
+        initTinyMCE('editCommentaire');
+        {% if compte_financier %}
+        populateEditForm();
+        {% endif %}
         $('#editCabinet').focus();
     });
-    
-    // Gérer la fermeture des modals
-    $('#addCompteModal, #editCompteModal').on('hidden.bs.modal', function() {
+
+    // Fermeture : détruire TinyMCE, reset form
+    $('#addCompteModal').on('hidden.bs.modal', function() {
+        destroyTinyMCE('commentaire');
         $(this).find('form')[0].reset();
         $('.select2-with-search').val(null).trigger('change');
     });
-    
+    $('#editCompteModal').on('hidden.bs.modal', function() {
+        destroyTinyMCE('editCommentaire');
+        $(this).find('form')[0].reset();
+        $('.select2-with-search').val(null).trigger('change');
+    });
+
     // Formulaire d'ajout
     $('#addCompteForm').on('submit', function(e) {
         e.preventDefault();
-        
+        syncTinyMCE('commentaire');
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        
         submitCompteForm(data, '#submitAddBtn', 'addCompteModal');
     });
-    
+
     // Formulaire de modification
     $('#editCompteForm').on('submit', function(e) {
         e.preventDefault();
-        
+        syncTinyMCE('editCommentaire');
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        
-        // Inclure l'ID dans les données
         const compteId = $('#editCompteId').val();
         data['id'] = compteId;
-        
         submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
     });
     
