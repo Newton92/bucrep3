@@ -886,9 +886,12 @@
 .period-grid-container {
     border: 1px solid rgba(13,128,190,0.15);
     border-radius: 8px;
-    overflow: hidden;
     margin-bottom: 1rem;
 }
+/* Quill compact dans les modals */
+.modal .ql-container { height: auto !important; border-radius: 0 0 6px 6px; }
+.modal .ql-editor { min-height: 80px; max-height: 160px; overflow-y: auto; }
+.modal .ql-toolbar { border-radius: 6px 6px 0 0; }
 .period-grid-header {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1636,7 +1639,7 @@
 
 <!-- Modal Ajout Compte Financier -->
 <div class="modal fade" id="addCompteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0">
             <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title fw-bold" style="font-size:0.95rem;">
@@ -1780,7 +1783,7 @@
 
 <!-- Modal Modification Compte Financier -->
 <div class="modal fade" id="editCompteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0">
             <div class="modal-header py-2 px-3" style="background: linear-gradient(135deg, #0a95ca, #106cb2); color: #fff;">
                 <h5 class="modal-title fw-bold" style="font-size:0.95rem;">
@@ -2121,17 +2124,15 @@ $(document).ready(function() {
         });
     }
     
-    // Datepickers — flatpickr chargé via base.html
-    function initDatePickers() {
-        $('#addCompteModal input[type="date"], #editCompteModal input[type="date"]').each(function() {
-            if (this._flatpickr) return;
-            flatpickr(this, {
-                dateFormat: "Y-m-d",
-                allowInput: true,
-                appendTo: document.body,
-            });
+    // Datepickers — init à l'ouverture de page (flatpickr fonctionne sur éléments masqués)
+    $('input[type="date"]').each(function() {
+        if (this._flatpickr) return;
+        flatpickr(this, {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            appendTo: document.body,
         });
-    }
+    });
 
     // Initialisation
     initSelect2();
@@ -2166,14 +2167,12 @@ $(document).ready(function() {
     }
     {% endif %}
 
-    // Ouverture modals : init datepickers + pré-remplir si édition
+    // Ouverture modals
     $('#addCompteModal').on('shown.bs.modal', function() {
-        initDatePickers();
         $('#cabinet').focus();
     });
 
     $('#editCompteModal').on('shown.bs.modal', function() {
-        initDatePickers();
         {% if compte_financier %}
         populateEditForm();
         {% endif %}
