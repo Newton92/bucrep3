@@ -925,6 +925,11 @@
     padding: 0.25rem 0.75rem !important;
     font-size: 0.875rem !important;
 }
+/* Flatpickr au-dessus du modal */
+.flatpickr-calendar { z-index: 9999 !important; }
+/* NicEdit dans le modal */
+.nicEdit-main { min-height: 100px; }
+.nicEdit-panelContain { z-index: 9998 !important; }
 .modal-form-label {
     font-size: 0.8rem;
     font-weight: 600;
@@ -1955,7 +1960,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.9/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -2132,8 +2137,7 @@ $(document).ready(function() {
                 locale: "fr",
                 allowInput: true,
                 theme: "light",
-                position: "auto center",
-                static: true
+                position: "auto",
             });
         });
     }
@@ -2144,34 +2148,20 @@ $(document).ready(function() {
     initDatePickers();
     
     // Si un compte existe, pré-remplir le formulaire d'édition
-    // TinyMCE helpers
-    function initTinyMCE(id) {
-        if (tinymce.get(id)) return;
-        tinymce.init({
-            selector: '#' + id,
-            plugins: 'link lists paste',
-            toolbar: 'undo redo | bold italic underline | bullist numlist | link',
-            height: 180,
-            menubar: false,
-            statusbar: false,
-            branding: false,
-            promotion: false,
-            skin: 'oxide',
-            content_css: 'default',
-        });
+    // NicEdit helpers
+    const NICEDIT_BUTTONS = ['bold','italic','underline','left','center','right','justify','ol','ul','fontSize','fontFamily','forecolor','link','unlink'];
+    function initNicEdit(id) {
+        if (nicEditors.findEditor(id)) return;
+        new nicEditor({ buttonList: NICEDIT_BUTTONS }).panelInstance(id);
     }
-    function destroyTinyMCE(id) {
-        const ed = tinymce.get(id);
-        if (ed) ed.remove();
+    function getNicEditContent(id) {
+        const ed = nicEditors.findEditor(id);
+        return ed ? ed.getContent() : $('#' + id).val();
     }
-    function setTinyMCEContent(id, html) {
-        const ed = tinymce.get(id);
+    function setNicEditContent(id, html) {
+        const ed = nicEditors.findEditor(id);
         if (ed) ed.setContent(html || '');
         else $('#' + id).val(html || '');
-    }
-    function syncTinyMCE(id) {
-        const ed = tinymce.get(id);
-        if (ed) ed.save();
     }
 
     {% if compte_financier %}
@@ -2198,33 +2188,33 @@ $(document).ready(function() {
         $('#editDevise').val(compteData.devise || 'XAF').trigger('change');
         $('#editTypeBilan').val(compteData.type_bilan || '').trigger('change');
 
-        // Commentaire via TinyMCE
-        setTinyMCEContent('editCommentaire', compteData.commentaire || '');
+        // Commentaire via NicEdit
+        setNicEditContent('editCommentaire', compteData.commentaire || '');
     }
     {% endif %}
 
-    // Ouverture modals : init TinyMCE, puis pré-remplir si édition
+    // Ouverture modals : init NicEdit, pré-remplir si édition
     $('#addCompteModal').on('shown.bs.modal', function() {
-        initTinyMCE('commentaire');
+        initNicEdit('commentaire');
         $('#cabinet').focus();
     });
 
     $('#editCompteModal').on('shown.bs.modal', function() {
-        initTinyMCE('editCommentaire');
+        initNicEdit('editCommentaire');
         {% if compte_financier %}
         populateEditForm();
         {% endif %}
         $('#editCabinet').focus();
     });
 
-    // Fermeture : détruire TinyMCE, reset form
+    // Fermeture : reset contenu NicEdit + form
     $('#addCompteModal').on('hidden.bs.modal', function() {
-        destroyTinyMCE('commentaire');
+        setNicEditContent('commentaire', '');
         $(this).find('form')[0].reset();
         $('.select2-with-search').val(null).trigger('change');
     });
     $('#editCompteModal').on('hidden.bs.modal', function() {
-        destroyTinyMCE('editCommentaire');
+        setNicEditContent('editCommentaire', '');
         $(this).find('form')[0].reset();
         $('.select2-with-search').val(null).trigger('change');
     });
@@ -2232,24 +2222,20 @@ $(document).ready(function() {
     // Formulaire d'ajout
     $('#addCompteForm').on('submit', function(e) {
         e.preventDefault();
-        syncTinyMCE('commentaire');
+        $('#commentaire').val(getNicEditContent('commentaire'));
         const formData = new FormData(this);
         const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
+        formData.forEach((value, key) => { data[key] = value; });
         submitCompteForm(data, '#submitAddBtn', 'addCompteModal');
     });
 
     // Formulaire de modification
     $('#editCompteForm').on('submit', function(e) {
         e.preventDefault();
-        syncTinyMCE('editCommentaire');
+        $('#editCommentaire').val(getNicEditContent('editCommentaire'));
         const formData = new FormData(this);
         const data = {};
-        formData.forEach((value, key) => {
-            data[key] = value;
-        });
+        formData.forEach((value, key) => { data[key] = value; });
         const compteId = $('#editCompteId').val();
         data['id'] = compteId;
         submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
