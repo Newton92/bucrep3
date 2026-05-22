@@ -2185,23 +2185,29 @@ $(document).ready(function() {
         $('.select2-with-search').val(null).trigger('change');
     });
 
-    // Formulaire d'ajout — Quill sync géré par base.html (form submit event)
+    const DATE_FIELDS = ['date_compte','date_fin','date_compte_n_moins_un','date_fin_n_moins_un','date_compte_n_moins_deux','date_fin_n_moins_deux'];
+
+    function buildFormData(form) {
+        const data = {};
+        new FormData(form).forEach((value, key) => { data[key] = value; });
+        // Convertir les champs date vides en null (DRF rejette les chaînes vides)
+        DATE_FIELDS.forEach(function(f) {
+            if (f in data && data[f] === '') data[f] = null;
+        });
+        return data;
+    }
+
+    // Formulaire d'ajout
     $('#addCompteForm').on('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
-        const data = {};
-        formData.forEach((value, key) => { data[key] = value; });
-        submitCompteForm(data, '#submitAddBtn', 'addCompteModal');
+        submitCompteForm(buildFormData(this), '#submitAddBtn', 'addCompteModal');
     });
 
     // Formulaire de modification
     $('#editCompteForm').on('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
-        const data = {};
-        formData.forEach((value, key) => { data[key] = value; });
-        const compteId = $('#editCompteId').val();
-        data['id'] = compteId;
+        const data = buildFormData(this);
+        data['id'] = $('#editCompteId').val();
         submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
     });
     
