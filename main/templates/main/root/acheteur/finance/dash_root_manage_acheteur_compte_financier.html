@@ -927,9 +927,6 @@
 }
 /* Flatpickr au-dessus du modal */
 .flatpickr-calendar { z-index: 9999 !important; }
-/* NicEdit dans le modal */
-.nicEdit-main { min-height: 100px; }
-.nicEdit-panelContain { z-index: 9998 !important; }
 .modal-form-label {
     font-size: 0.8rem;
     font-weight: 600;
@@ -1759,7 +1756,7 @@
                     <div class="row g-2">
                         <div class="col-12">
                             <label class="modal-form-label"><i class="fas fa-file-alt me-1"></i>{% trans "Commentaire" %}</label>
-                            <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="4"
+                            <textarea class="form-control rich-editor" id="commentaire" name="commentaire" rows="4"
                                       placeholder="{% trans 'Analyse des comptes financiers, observations importantes, risques identifiés, recommandations...' %}"></textarea>
                         </div>
                     </div>
@@ -1899,7 +1896,7 @@
                     <div class="row g-2">
                         <div class="col-12">
                             <label class="modal-form-label"><i class="fas fa-file-alt me-1"></i>{% trans "Commentaire" %}</label>
-                            <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                            <textarea class="form-control rich-editor" id="editCommentaire" name="commentaire" rows="4"></textarea>
                         </div>
                     </div>
 
@@ -1958,9 +1955,6 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -2127,17 +2121,14 @@ $(document).ready(function() {
         });
     }
     
-    // Initialiser les datepickers premium
+    // Datepickers — flatpickr chargé via base.html
     function initDatePickers() {
-        flatpickr.localize(flatpickr.l10ns.fr);
-        
-        $('input[type="date"]').each(function() {
+        $('#addCompteModal input[type="date"], #editCompteModal input[type="date"]').each(function() {
+            if (this._flatpickr) return;
             flatpickr(this, {
                 dateFormat: "Y-m-d",
-                locale: "fr",
                 allowInput: true,
-                theme: "light",
-                position: "auto",
+                appendTo: document.body,
             });
         });
     }
@@ -2145,24 +2136,6 @@ $(document).ready(function() {
     // Initialisation
     initSelect2();
     initEnhancedSelect2();
-    initDatePickers();
-    
-    // Si un compte existe, pré-remplir le formulaire d'édition
-    // NicEdit helpers
-    const NICEDIT_BUTTONS = ['bold','italic','underline','left','center','right','justify','ol','ul','fontSize','fontFamily','forecolor','link','unlink'];
-    function initNicEdit(id) {
-        if (nicEditors.findEditor(id)) return;
-        new nicEditor({ buttonList: NICEDIT_BUTTONS }).panelInstance(id);
-    }
-    function getNicEditContent(id) {
-        const ed = nicEditors.findEditor(id);
-        return ed ? ed.getContent() : $('#' + id).val();
-    }
-    function setNicEditContent(id, html) {
-        const ed = nicEditors.findEditor(id);
-        if (ed) ed.setContent(html || '');
-        else $('#' + id).val(html || '');
-    }
 
     {% if compte_financier %}
     function populateEditForm() {
@@ -2188,41 +2161,40 @@ $(document).ready(function() {
         $('#editDevise').val(compteData.devise || 'XAF').trigger('change');
         $('#editTypeBilan').val(compteData.type_bilan || '').trigger('change');
 
-        // Commentaire via NicEdit
-        setNicEditContent('editCommentaire', compteData.commentaire || '');
+        // Commentaire via Quill (global)
+        window.quillSetValue('editCommentaire', compteData.commentaire || '');
     }
     {% endif %}
 
-    // Ouverture modals : init NicEdit, pré-remplir si édition
+    // Ouverture modals : init datepickers + pré-remplir si édition
     $('#addCompteModal').on('shown.bs.modal', function() {
-        initNicEdit('commentaire');
+        initDatePickers();
         $('#cabinet').focus();
     });
 
     $('#editCompteModal').on('shown.bs.modal', function() {
-        initNicEdit('editCommentaire');
+        initDatePickers();
         {% if compte_financier %}
         populateEditForm();
         {% endif %}
         $('#editCabinet').focus();
     });
 
-    // Fermeture : reset contenu NicEdit + form
+    // Fermeture : reset Quill + form
     $('#addCompteModal').on('hidden.bs.modal', function() {
-        setNicEditContent('commentaire', '');
+        window.quillSetValue('commentaire', '');
         $(this).find('form')[0].reset();
         $('.select2-with-search').val(null).trigger('change');
     });
     $('#editCompteModal').on('hidden.bs.modal', function() {
-        setNicEditContent('editCommentaire', '');
+        window.quillSetValue('editCommentaire', '');
         $(this).find('form')[0].reset();
         $('.select2-with-search').val(null).trigger('change');
     });
 
-    // Formulaire d'ajout
+    // Formulaire d'ajout — Quill sync géré par base.html (form submit event)
     $('#addCompteForm').on('submit', function(e) {
         e.preventDefault();
-        $('#commentaire').val(getNicEditContent('commentaire'));
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => { data[key] = value; });
@@ -2232,7 +2204,6 @@ $(document).ready(function() {
     // Formulaire de modification
     $('#editCompteForm').on('submit', function(e) {
         e.preventDefault();
-        $('#editCommentaire').val(getNicEditContent('editCommentaire'));
         const formData = new FormData(this);
         const data = {};
         formData.forEach((value, key) => { data[key] = value; });
