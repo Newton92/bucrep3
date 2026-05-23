@@ -8237,13 +8237,10 @@ class SearchAcheteurActifClassiqueView(APIView):
 class AddAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
-        # Add acheteur to the data if not present
+    def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
-        if 'acheteur' not in data:
-            data['acheteur'] = acheteur_id
-            
-        serializer = AddActifCSerializer(data=request.data)
+        data['acheteur'] = acheteur_id
+        serializer = AddActifCSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -8562,13 +8559,10 @@ class SearchAcheteurPassifClassiqueView(APIView):
 class AddAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
-        # Add acheteur to the data if not present
+    def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
-        if 'acheteur' not in data:
-            data['acheteur'] = acheteur_id
-            
-        serializer = AddPassifCSerializer(data=data)
+        data['acheteur'] = acheteur_id
+        serializer = AddPassifCSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -9015,13 +9009,10 @@ class SearchAcheteurResultatClassiqueView(APIView):
 class AddAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
-        # Add acheteur to the data if not present
+    def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
-        if 'acheteur' not in data:
-            data['acheteur'] = acheteur_id
-            
-        serializer = AddResultatCSerializer(data=data)
+        data['acheteur'] = acheteur_id
+        serializer = AddResultatCSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

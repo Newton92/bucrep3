@@ -4913,6 +4913,41 @@ class ActifASerializer(serializers.ModelSerializer):
         return value
 
 
+class AnneeUniciteAnnuelleMixin:
+    """
+    Mixin appliqué aux serializers Add/Edit de bilans.
+    - Rend l'année obligatoire.
+    - Si le CompteFinancier de l'acheteur a type_compte = 'Annuel',
+      interdit deux enregistrements du même type pour la même année.
+      (Pour les edits, l'instance courante est exclue du contrôle.)
+    """
+
+    def validate(self, data):
+        annee = data.get('annee')
+        acheteur = data.get('acheteur')
+
+        if not annee:
+            raise serializers.ValidationError(
+                {'annee': "L'année est obligatoire."}
+            )
+
+        if annee and acheteur:
+            compte = CompteFinancier.objects.filter(acheteur=acheteur).first()
+            if compte and compte.type_compte == 'Annuel':
+                qs = self.Meta.model.objects.filter(acheteur=acheteur, annee=annee)
+                if self.instance:
+                    qs = qs.exclude(pk=self.instance.pk)
+                if qs.exists():
+                    raise serializers.ValidationError({
+                        'annee': (
+                            "Un bilan de ce type existe déjà pour cette année. "
+                            "Le type de compte est « Annuel » : une seule entrée par année est autorisée."
+                        )
+                    })
+
+        return super().validate(data)
+
+
 ACTIF_A_FIELDS = [
     "id", "annee", "acheteur",
     # Non-current
@@ -4959,7 +4994,7 @@ RESULTAT_A_FIELDS = [
 ]
 
 
-class AddActifASerializer(serializers.ModelSerializer):
+class AddActifASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = ACTIF_A_FIELDS
@@ -4971,7 +5006,7 @@ class GetActifASerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditActifASerializer(serializers.ModelSerializer):
+class EditActifASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = ACTIF_A_FIELDS
@@ -4988,7 +5023,7 @@ class PassifASerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class AddPassifASerializer(serializers.ModelSerializer):
+class AddPassifASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = PASSIF_A_FIELDS
@@ -5000,7 +5035,7 @@ class GetPassifASerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditPassifASerializer(serializers.ModelSerializer):
+class EditPassifASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = PASSIF_A_FIELDS
@@ -5017,7 +5052,7 @@ class ResultatASerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class AddResultatASerializer(serializers.ModelSerializer):
+class AddResultatASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = RESULTAT_A_FIELDS
@@ -5029,7 +5064,7 @@ class GetResultatASerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditResultatASerializer(serializers.ModelSerializer):
+class EditResultatASerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = RESULTAT_A_FIELDS
@@ -5226,7 +5261,7 @@ class ActifCSerializer(serializers.ModelSerializer):
         return value
 
 
-class AddActifCSerializer(serializers.ModelSerializer):
+class AddActifCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
@@ -5285,7 +5320,7 @@ class GetActifCSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditActifCSerializer(serializers.ModelSerializer):
+class EditActifCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
@@ -5449,7 +5484,7 @@ class PassifCSerializer(serializers.ModelSerializer):
         return value
 
 
-class AddPassifCSerializer(serializers.ModelSerializer):
+class AddPassifCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
@@ -5493,7 +5528,7 @@ class GetPassifCSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditPassifCSerializer(serializers.ModelSerializer):
+class EditPassifCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
@@ -5737,7 +5772,7 @@ class ResultatCSerializer(serializers.ModelSerializer):
         return value
 
 
-class AddResultatCSerializer(serializers.ModelSerializer):
+class AddResultatCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
@@ -5802,7 +5837,7 @@ class GetResultatCSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditResultatCSerializer(serializers.ModelSerializer):
+class EditResultatCSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
@@ -5878,7 +5913,7 @@ class ActifSysCohadaSerializer(serializers.ModelSerializer):
     # Répétez pour chaque champ DecimalField...
 
 
-class AddActifSysCohadaSerializer(serializers.ModelSerializer):
+class AddActifSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
@@ -5918,7 +5953,7 @@ class GetActifSysCohadaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditActifSysCohadaSerializer(serializers.ModelSerializer):
+class EditActifSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
@@ -5974,7 +6009,7 @@ class PassifSysSCohadaSerializer(serializers.ModelSerializer):
     # Répétez pour chaque champ DecimalField...
 
 
-class AddPassifSysCohadaSerializer(serializers.ModelSerializer):
+class AddPassifSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
@@ -6014,7 +6049,7 @@ class GetPassifSysCohadaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditPassifSysCohadaSerializer(serializers.ModelSerializer):
+class EditPassifSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
@@ -6070,7 +6105,7 @@ class ResultatSysCohadaSerializer(serializers.ModelSerializer):
     # Répétez pour chaque champ DecimalField...
 
 
-class AddResultatSysCohadaSerializer(serializers.ModelSerializer):
+class AddResultatSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
@@ -6120,7 +6155,7 @@ class GetResultatSysCohadaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class EditResultatSysCohadaSerializer(serializers.ModelSerializer):
+class EditResultatSysCohadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
@@ -12355,7 +12390,7 @@ class ActifClassiqueSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddActifClassiqueSerializer(serializers.ModelSerializer):
+class AddActifClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
@@ -12373,7 +12408,7 @@ class AddActifClassiqueSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditActifClassiqueSerializer(serializers.ModelSerializer):
+class EditActifClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
@@ -12410,7 +12445,7 @@ class PassifClassiqueSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddPassifClassiqueSerializer(serializers.ModelSerializer):
+class AddPassifClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
@@ -12424,7 +12459,7 @@ class AddPassifClassiqueSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditPassifClassiqueSerializer(serializers.ModelSerializer):
+class EditPassifClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
@@ -12465,7 +12500,7 @@ class ResultatClassiqueSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddResultatClassiqueSerializer(serializers.ModelSerializer):
+class AddResultatClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
@@ -12489,7 +12524,7 @@ class AddResultatClassiqueSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditResultatClassiqueSerializer(serializers.ModelSerializer):
+class EditResultatClassiqueSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
@@ -12547,7 +12582,7 @@ class ActifSysOhadaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddActifSysOhadaSerializer(serializers.ModelSerializer):
+class AddActifSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
@@ -12563,7 +12598,7 @@ class AddActifSysOhadaSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditActifSysOhadaSerializer(serializers.ModelSerializer):
+class EditActifSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
@@ -12600,7 +12635,7 @@ class PassifSysOhadaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddPassifSysOhadaSerializer(serializers.ModelSerializer):
+class AddPassifSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
@@ -12618,7 +12653,7 @@ class AddPassifSysOhadaSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditPassifSysOhadaSerializer(serializers.ModelSerializer):
+class EditPassifSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
@@ -12660,7 +12695,7 @@ class ResultatSysOhadaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddResultatSysOhadaSerializer(serializers.ModelSerializer):
+class AddResultatSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
@@ -12685,7 +12720,7 @@ class AddResultatSysOhadaSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditResultatSysOhadaSerializer(serializers.ModelSerializer):
+class EditResultatSysOhadaSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
@@ -12748,13 +12783,13 @@ class ActifAnglaisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddActifAnglaisSerializer(serializers.ModelSerializer):
+class AddActifAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = ACTIF_A_FIELDS
 
 
-class EditActifAnglaisSerializer(serializers.ModelSerializer):
+class EditActifAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = ACTIF_A_FIELDS
@@ -12793,13 +12828,13 @@ class PassifAnglaisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddPassifAnglaisSerializer(serializers.ModelSerializer):
+class AddPassifAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = PASSIF_A_FIELDS
 
 
-class EditPassifAnglaisSerializer(serializers.ModelSerializer):
+class EditPassifAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = PASSIF_A_FIELDS
@@ -12846,13 +12881,13 @@ class ResultatAnglaisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AddResultatAnglaisSerializer(serializers.ModelSerializer):
+class AddResultatAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = RESULTAT_A_FIELDS
 
 
-class EditResultatAnglaisSerializer(serializers.ModelSerializer):
+class EditResultatAnglaisSerializer(AnneeUniciteAnnuelleMixin, serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = RESULTAT_A_FIELDS

@@ -1,888 +1,300 @@
 <!-- dash_root_adresse_acheteur.html -->
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
 :root {
     --color-background: #fcfefe;
-    --color-primary: #20c997;
-    --color-primary-dark: #17a2b8;
-    --color-secondary: #2ce0b0;
-    --color-accent: #148f77;
-    --color-text: #2c3e50;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
     --color-text-muted: #5a6c7d;
-    --color-border: rgba(32, 201, 151, 0.1);
-    
+    --color-border: #e2e8f0;
     --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
     --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --adresse-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
 }
 
-/* Header Premium Élevé */
-.page-header-premium {
+.page-header {
     background: var(--primary-gradient);
-    padding: .75rem 1.25rem;
+    padding: 0.75rem 1.25rem;
     border-radius: 10px;
-    margin-bottom: .75rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.12);
-}
-
-.page-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    display: none;
-}
-
-@keyframes shimmer { 0%, 100% { opacity: 0; } }
-
-.page-title-premium {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    position: relative;
-    text-shadow: none;
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-}
-
-.page-subtitle-premium {
-    font-size: .8rem;
-    opacity: .9;
-    max-width: unset;
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-/* Carte Acheteur Premium */
-.acheteur-card-premium {
-    background: linear-gradient(145deg, var(--color-background), #f0fcf9);
-    border-radius: 10px;
-    border: 1px solid rgba(32, 201, 151, 0.15);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.06);
-    margin-bottom: .75rem;
-    position: relative;
-}
-
-.acheteur-header-premium {
-    background: var(--primary-gradient);
-    padding: .6rem 1rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    display: none;
-}
-
-.acheteur-title-premium {
-    font-size: .9rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    text-shadow: none;
-}
-
-.acheteur-badge-premium {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Grille d'informations acheteur */
-.acheteur-info-grid {
-    padding: 2rem;
-}
-
-.acheteur-info-item {
-    background: linear-gradient(145deg, rgba(32, 201, 151, 0.03), rgba(23, 162, 184, 0.03));
-    border-radius: 16px;
-    padding: 1.5rem;
-    border: 1px solid var(--color-border);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-info-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(32, 201, 151, 0.12);
-    border-color: rgba(23, 162, 184, 0.3);
-}
-
-.acheteur-info-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-gradient);
-}
-
-.acheteur-info-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     margin-bottom: 1rem;
-    font-size: 1.75rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    box-shadow: 0 6px 20px rgba(32, 201, 151, 0.25);
+    color: white;
 }
+.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: 0.8rem; opacity: 0.85; }
 
-.acheteur-info-label {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+.metric-card {
+    background: var(--color-background);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(37,173,214,0.12);
+    box-shadow: 0 2px 8px rgba(10,149,202,0.06);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+}
+.metric-card.mc-primary::before { background: var(--color-primary); }
+.metric-card.mc-info::before    { background: #17a2b8; }
+.metric-card.mc-success::before { background: #28a745; }
+.metric-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.metric-icon {
+    width: 26px; height: 26px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    background: rgba(10,149,202,0.1); color: var(--color-primary); flex-shrink: 0;
+}
+.metric-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted); font-weight: 600; }
+.metric-value { font-size: 1.15rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1.3; }
+.metric-sub   { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.15rem; }
+
+.table-card {
+    background: var(--color-background);
+    border-radius: 12px;
+    border: 1px solid rgba(37,173,214,0.12);
+    box-shadow: 0 2px 8px rgba(10,149,202,0.06);
+    overflow: hidden;
+}
+.table-card-header {
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, rgba(10,149,202,0.04), rgba(37,173,214,0.04));
+    border-bottom: 1px solid rgba(37,173,214,0.1);
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table thead th {
+    background: linear-gradient(135deg, rgba(10,149,202,0.08), rgba(37,173,214,0.08));
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 2px solid rgba(10,149,202,0.15);
+    font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    display: block;
+    white-space: nowrap;
+}
+.modern-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(37,173,214,0.07); vertical-align: middle; }
+.modern-table tbody tr:hover { background: rgba(10,149,202,0.02); }
+.modern-table tbody tr:last-child td { border-bottom: none; }
+
+.btn-tbl {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; border: none; cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-tbl-edit   { background: rgba(10,149,202,0.1); color: var(--color-primary); }
+.btn-tbl-edit:hover   { background: var(--color-primary); color: white; transform: translateY(-1px); }
+.btn-tbl-delete { background: rgba(220,53,69,0.1); color: #dc3545; }
+.btn-tbl-delete:hover { background: #dc3545; color: white; transform: translateY(-1px); }
+
+.search-input {
+    border: 1.5px solid var(--color-border); border-radius: 8px;
+    padding: 0.4rem 0.85rem; font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px rgba(10,149,202,0.12); }
+
+.btn-add {
+    background: var(--success-gradient); color: white;
+    border: none; border-radius: 8px; padding: 0.4rem 0.9rem;
+    font-weight: 600; font-size: 0.875rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
+}
+.btn-add:hover { color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+
+.empty-state {
+    padding: 2.5rem 1.5rem; text-align: center;
+    background: linear-gradient(145deg, rgba(10,149,202,0.02), rgba(37,173,214,0.02));
+    border-radius: 10px; border: 2px dashed rgba(13,128,190,0.2);
 }
 
-.acheteur-info-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    line-height: 1.3;
+.adresse-cell {
+    display: flex; align-items: flex-start; gap: 0.5rem;
 }
-
-.acheteur-info-value.badge-value {
-    background: linear-gradient(135deg, rgba(32, 201, 151, 0.15), rgba(23, 162, 184, 0.05));
-    color: #148f77;
-    border: 1px solid rgba(32, 201, 151, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: inline-block;
+.adresse-pin {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(10,149,202,0.12);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: var(--color-primary);
+    flex-shrink: 0; margin-top: 2px;
 }
-
-/* Cartes d'adresses Premium */
-.adresse-card-premium {
-    background: linear-gradient(145deg, var(--color-background), rgba(32, 201, 151, 0.02));
-    border-radius: 20px;
-    padding: 2rem;
-    border: 2px solid var(--color-border);
-    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.05);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 1.5rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.adresse-card-premium:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(32, 201, 151, 0.15);
-    border-color: rgba(32, 201, 151, 0.3);
-}
-
-.adresse-card-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background: var(--primary-gradient);
-    border-radius: 5px 0 0 5px;
-}
-
-.adresse-content-premium {
+.adresse-text {
+    font-size: 0.88rem;
     color: var(--color-text);
-    line-height: 1.7;
-    font-size: 1.05rem;
-    margin-bottom: 1.5rem;
-    padding-right: 1rem;
-    border-left: 3px solid rgba(32, 201, 151, 0.2);
-    padding-left: 1.5rem;
+    line-height: 1.5;
+    word-break: break-word;
 }
 
-.adresse-meta-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--color-border);
-    font-size: 0.9rem;
+.pag-info { font-size: 0.78rem; color: var(--color-text-muted); }
+.page-link-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 7px;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--color-border); background: white;
+    color: var(--color-primary-dark); margin: 0 2px;
+    text-decoration: none; transition: all 0.2s;
 }
-
-.adresse-meta-info-premium {
-    color: var(--color-text-muted);
+.page-link-btn:hover, .page-link-btn.active {
+    background: var(--primary-gradient); color: white; border-color: var(--color-primary);
 }
-
-.adresse-meta-info-premium div {
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.adresse-meta-info-premium i {
-    width: 20px;
-    text-align: center;
-    color: var(--color-primary);
-}
-
-.adresse-actions-premium {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.adresse-actions-premium .btn {
-    border-radius: 12px;
-    padding: 0.625rem 1.25rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.adresse-actions-premium .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Compteur d'adresses Premium */
-.adresse-count-badge-premium {
-    padding: 1rem 1.5rem;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.25);
-}
-
-/* Section Actions Adresses */
-.adresse-actions-header-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--color-border);
-    position: relative;
-}
-
-.adresse-actions-header-premium::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--color-primary), transparent);
-}
-
-.adresse-section-title-premium {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.adresse-section-title-premium i {
-    color: var(--color-primary);
-    font-size: 2rem;
-}
-
-/* État vide Premium */
-.adresse-empty-state-premium {
-    padding: 5rem 3rem;
-    text-align: center;
-    background: linear-gradient(145deg, rgba(32, 201, 151, 0.02), rgba(23, 162, 184, 0.02));
-    border-radius: 20px;
-    border: 3px dashed rgba(32, 201, 151, 0.3);
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.adresse-empty-state-icon-premium {
-    font-size: 5rem;
-    margin-bottom: 2rem;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    opacity: 0.8;
-}
-
-.adresse-empty-state-premium h4 {
-    font-weight: 800;
-    margin-bottom: 1.25rem;
-    color: var(--color-primary-dark);
-    font-size: 1.75rem;
-}
-
-.adresse-empty-state-premium p {
-    color: var(--color-text-muted);
-    max-width: 500px;
-    margin: 0 auto 2.5rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-}
-
-/* Boutons Premium */
-.btn-action-premium {
-    border-radius: 12px;
-    padding: 0.875rem 2rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-action-premium:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(32, 201, 151, 0.25);
-}
-
-.btn-adresse-premium {
-    background: var(--primary-gradient);
-    color: white;
-}
-
-.btn-adresse-outline-premium {
-    color: var(--color-primary);
-    border: 2px solid var(--color-primary);
-    background: transparent;
-}
-
-.btn-adresse-outline-premium:hover {
-    background: var(--primary-gradient);
-    border-color: transparent;
-    color: white;
-}
-
-.btn-warning-premium {
-    background: var(--warning-gradient);
-    color: white;
-}
-
-.btn-danger-premium {
-    background: var(--danger-gradient);
-    color: white;
-}
-
-.btn-back-premium {
-    background: linear-gradient(135deg, #6c757d, #495057);
-    color: white;
-}
-
-.btn-success-premium {
-    background: var(--success-gradient);
-    color: white;
-}
-
-/* Formulaires Premium */
-.enhanced-form-premium .form-group {
-    margin-bottom: 2rem;
-    position: relative;
-}
-
-.enhanced-form-premium .form-label {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 1.1rem;
-}
-
-.enhanced-form-premium .form-label i {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(32, 201, 151, 0.1);
-    color: var(--color-primary);
-    font-size: 1.5rem;
-    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.1);
-}
-
-/* Form controls premium */
-.enhanced-form-premium .form-control,
-.enhanced-form-premium .form-select,
-.enhanced-form-premium textarea {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(145deg, var(--color-background), rgba(32, 201, 151, 0.02));
-    color: var(--color-text);
-    min-height: 56px;
-}
-
-.enhanced-form-premium .form-control:focus,
-.enhanced-form-premium .form-select:focus,
-.enhanced-form-premium textarea:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.15);
-    background: var(--color-background);
-}
-
-.enhanced-form-premium textarea {
-    min-height: 150px;
-    resize: vertical;
-    line-height: 1.6;
-}
-
-/* Modales Premium */
-.modal-header-premium {
-    background: var(--primary-gradient);
-    color: white;
-    padding: 2rem !important;
-    border-bottom: none !important;
-    border-radius: 20px 20px 0 0 !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    animation: shimmer 2s infinite;
-}
-
-.modal-title-premium {
-    font-size: 1.5rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.modal-body-premium {
-    padding: 2.5rem !important;
-    background: var(--color-background);
-}
-
-.modal-footer-premium {
-    padding: 2rem !important;
-    background: linear-gradient(145deg, rgba(32, 201, 151, 0.02), rgba(23, 162, 184, 0.01));
-    border-top: 2px solid var(--color-border) !important;
-    border-radius: 0 0 20px 20px !important;
-}
-
-.modal-content-premium {
-    border: none !important;
-    border-radius: 20px !important;
-    box-shadow: 0 25px 70px rgba(32, 201, 151, 0.3) !important;
-    overflow: hidden;
-}
-
-/* Modal danger */
-.modal-danger-header-premium {
-    background: var(--danger-gradient);
-}
-
-.modal-danger-content-premium {
-    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
-}
-
-/* Animation d'édition en temps réel */
-.editing-indicator-premium {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: var(--primary-gradient);
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    z-index: 1000;
-    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.3);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.3s ease;
-}
-
-.editing-indicator-premium.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Animation fadeInUp */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.adresse-content-loaded {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .page-title-premium {
-        font-size: 1.05rem;
-    }
-    
-    .acheteur-title-premium,
-    .adresse-section-title-premium {
-        font-size: 1.5rem;
-    }
-}
-
-@media (max-width: 992px) {
-    .adresse-meta-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
-    }
-    
-    .adresse-actions-premium {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .adresse-actions-header-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
-    }
-}
+.page-link-btn.disabled { opacity: 0.4; pointer-events: none; }
 
 @media (max-width: 768px) {
-    .page-header-premium {
-        padding: 1.75rem;
-    }
-    
-    .acheteur-header-premium {
-        padding: 1.5rem;
-    }
-    
-    .adresse-card-premium {
-        padding: 1.5rem;
-    }
-    
-    .modal-body-premium,
-    .modal-footer-premium {
-        padding: 1.5rem !important;
-    }
-    
-    .adresse-content-premium {
-        padding-left: 1rem;
-    }
+    .page-header { padding: 0.75rem 1rem; }
+    .modern-table { font-size: 0.8rem; }
 }
-
-@media (max-width: 576px) {
-    .page-title-premium {
-        font-size: 1.75rem;
-    }
-    
-    .acheteur-title-premium,
-    .adresse-section-title-premium {
-        font-size: 1.25rem;
-    }
-    
-    .adresse-actions-premium {
-        flex-direction: column;
-    }
-    
-    .adresse-actions-premium .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .btn-action-premium {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-    }
-}
-
 </style>
-<link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium Élevé -->
+
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title">
-                    <i class="fas fa-map-marker-alt"></i>{% trans "Gestion des Adresses" %}
-                </h1>
+                <h1 class="page-title"><i class="fas fa-map-marker-alt me-2"></i>{% trans "Adresses" %}</h1>
                 <p class="page-subtitle mb-0">
                     <span class="fw-semibold">{{ acheteur.nom }}</span>
                     {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
                     &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
-                    {% if acheteur.activite_principale %}&nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.activite_principale }}</span>{% endif %}
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
                 </a>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Section Adresses -->
-    <div class="row">
-        <div class="col-12">
-            <!-- Header des actions -->
-            <div class="adresse-actions-header-premium">
-                <h5 class="adresse-section-title-premium mb-0">
-                    <i class="fas fa-map-location-dot"></i>
-                    Liste des adresses
-                </h5>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="adresse-count-badge-premium">
-                        <i class="fas fa-map-pin"></i>
-                        {{ adresses_count }} adresse{{ adresses_count|pluralize }}
-                    </span>
-                    <button class="btn btn-adresse-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une adresse" %}
-                    </button>
-                </div>
-            </div>
-            
-            {% if adresses %}
-                <!-- Liste des adresses -->
-                <div class="adresses-list" id="adressesList">
-                    {% for adresse in adresses %}
-                    <div class="adresse-card-premium adresse-content-loaded" id="adresseCard{{ adresse.id }}" data-id="{{ adresse.id }}">
-                        <div class="adresse-content-premium" id="adresseContent{{ adresse.id }}">
-                            {{ adresse.adresse|linebreaks }}
-                        </div>
-                        <div class="adresse-meta-premium">
-                            <div class="adresse-meta-info-premium">
-                                <div>
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>Créée par {{ adresse.created_by.get_full_name|default:"Système" }}</span>
-                                </div>
-                                <div>
-                                    <i class="fas fa-calendar-plus"></i>
-                                    <span>Le {{ adresse.created_at|date:"d/m/Y à H:i" }}</span>
-                                </div>
-                                {% if adresse.updated_by %}
-                                <div>
-                                    <i class="fas fa-user-edit"></i>
-                                    <span>Modifiée par {{ adresse.updated_by.get_full_name }}</span>
-                                </div>
-                                <div>
-                                    <i class="fas fa-sync-alt"></i>
-                                    <span>Le {{ adresse.updated_at|date:"d/m/Y à H:i" }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="adresse-actions-premium">
-                                <button class="btn btn-warning-premium btn-sm edit-adresse-btn" data-id="{{ adresse.id }}">
-                                    <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
-                                </button>
-                                <button class="btn btn-danger-premium btn-sm delete-adresse-btn" data-id="{{ adresse.id }}">
-                                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <!-- État vide premium -->
-                <div class="adresse-empty-state-premium">
-                    <i class="fas fa-map-marker-alt adresse-empty-state-icon-premium"></i>
-                    <h4 class="fw-bold mb-3">{% trans "Aucune adresse enregistrée" %}</h4>
-                    <p class="text-muted mb-4">
-                        Cet acheteur ne possède pas encore d'adresse enregistrée.<br>
-                        Ajoutez des adresses pour compléter son profil et faciliter les opérations.
-                    </p>
-                    <button class="btn btn-adresse-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter la première adresse" %}
-                    </button>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Indicateur d'édition en temps réel -->
-<div class="editing-indicator-premium" id="editingIndicator">
-    <div class="spinner-border spinner-border-sm" role="status"></div>
-    <span>{% trans "Mise à jour en cours..." %}</span>
-</div>
-
-<!-- Modal Création Adresse Premium -->
-<div class="modal fade" id="addAdresseModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-premium">
-            <div class="modal-header modal-header-premium">
-                <h5 class="modal-title-premium text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Nouvelle Adresse" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addAdresseForm" class="enhanced-form-premium">
-                <div class="modal-body modal-body-premium">
-                    <div class="form-group">
-                        <label for="adresse" class="form-label">
-                            <i class="fas fa-map-marker-alt"></i>{% trans "Adresse complète" %}
-                        </label>
-                        <textarea class="form-control" id="adresse" 
-                                  name="adresse" 
-                                  rows="6"
-                                  placeholder="Saisissez l'adresse complète de l'acheteur...
-- Rue et numéro
-- Code postal et ville
-- État/région
-- Pays
-- Compléments d'adresse...
-                                  "
-                                  required></textarea>
-                        <small class="form-text text-muted">
-                            Saisissez l'adresse complète incluant tous les détails nécessaires
-                        </small>
-                    </div>
-                </div>
-                <div class="modal-footer modal-footer-premium">
-                    <button type="button" class="btn btn-adresse-outline-premium btn-action-premium" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-success-premium btn-action-premium" id="addSubmitBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check me-2"></i>{% trans "Ajouter" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Modification Adresse Premium -->
-<div class="modal fade" id="editAdresseModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-premium">
-            <div class="modal-header modal-header-premium">
-                <h5 class="modal-title-premium text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Adresse" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editAdresseForm" class="enhanced-form-premium">
-                <input type="hidden" id="editAdresseId" name="id">
-                <div class="modal-body modal-body-premium">
-                    <div class="form-group">
-                        <label for="editAdresse" class="form-label">
-                            <i class="fas fa-map-marker-alt"></i>{% trans "Adresse complète" %}
-                        </label>
-                        <textarea class="form-control" id="editAdresse" 
-                                  name="adresse" 
-                                  rows="6"
-                                  placeholder="Saisissez l'adresse complète de l'acheteur..."
-                                  required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer modal-footer-premium">
-                    <button type="button" class="btn btn-adresse-outline-premium btn-action-premium" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-warning-premium btn-action-premium" id="editSubmitBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-2"></i>{% trans "Modifier" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmation de suppression premium -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content modal-content-premium modal-danger-content-premium">
-            <div class="modal-header modal-header-premium modal-danger-header-premium">
-                <h5 class="modal-title-premium">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-5">
-                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                <h6 class="fw-bold mb-3">{% trans "Supprimer l'adresse" %}</h6>
-                <p class="text-dark mb-0" id="deleteAdresseContent">
-                    Cette action supprimera définitivement l'adresse.<br>
-                    Cette opération est irréversible.
-                </p>
-            </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-adresse-outline-premium btn-action-premium" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <button class="btn-add" id="openAddModal">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
                 </button>
-                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card mc-primary">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <span class="metric-label">{% trans "Total" %}</span>
+                </div>
+                <div class="metric-value" id="mc-count">—</div>
+                <div class="metric-sub">{% trans "adresses enregistrées" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card mc-info">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(23,162,184,.1);color:#17a2b8;"><i class="fas fa-clock"></i></div>
+                    <span class="metric-label">{% trans "Dernière adresse" %}</span>
+                </div>
+                <div class="metric-value" id="mc-recent" style="color:#17a2b8;font-size:0.85rem;word-break:break-word;">—</div>
+                <div class="metric-sub" id="mc-recent-date">—</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card mc-success">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-info-circle"></i></div>
+                    <span class="metric-label">{% trans "Conseil" %}</span>
+                </div>
+                <div class="metric-value" style="color:#28a745;font-size:0.85rem;">{% trans "Adresse complète" %}</div>
+                <div class="metric-sub">{% trans "Quartier, Ville, BP, Pays" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-list me-2"></i>{% trans "Liste des adresses" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Rechercher...' %}" style="width:200px;">
+                <button class="btn-add" id="openAddModal2">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th>{% trans "Adresse" %}</th>
+                        <th style="width:130px;">{% trans "Ajouté par" %}</th>
+                        <th style="width:120px;">{% trans "Ajouté le" %}</th>
+                        <th class="text-center" style="width:90px;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                            <span class="text-muted small">{% trans "Chargement..." %}</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="emptyState" class="empty-state mx-3 my-3" style="display:none;">
+            <i class="fas fa-map-marker-alt fa-3x mb-3" style="color:rgba(10,149,202,0.3);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucune adresse enregistrée" %}</h5>
+            <p class="text-muted mb-3">{% trans "Ajoutez la première adresse pour cet acheteur." %}</p>
+            <button class="btn-add" id="openAddModal3">
+                <i class="fas fa-plus"></i>{% trans "Ajouter une adresse" %}
+            </button>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,0.1);">
+            <span class="pag-info" id="paginationInfo">—</span>
+            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Add/Edit -->
+<div class="modal fade" id="crudModal" tabindex="-1" aria-labelledby="crudModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="crudModalLabel"><i class="fas fa-map-marker-alt me-2"></i>{% trans "Adresse" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Adresse complète" %} <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="adresseInput" rows="4"
+                        placeholder="{% trans 'Ex: Quartier Louis, Rue des Bougainvilliers, BP 1234, Libreville, Gabon' %}" required></textarea>
+                    <div class="form-text">{% trans "Saisissez l'adresse complète : quartier, rue, boîte postale, ville, pays." %}</div>
+                </div>
+                <div id="modalError" class="alert alert-danger py-2 small" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
                 </button>
             </div>
         </div>
@@ -892,459 +304,256 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function() {
-    // Configuration
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/adresses/`;
-    let ACCESS_TOKEN = '{{ access_token }}';
+(function () {
+    'use strict';
+
+    const ACHETEUR_ID   = '{{ id_acheteur }}';
+    let   ACCESS_TOKEN  = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
-    let currentAdresseId = null;
-    
-    // Mettre à jour l'affichage après modification
-    function updateAdresseDisplay(adresseData) {
-        let $card = $(`#adresseCard${adresseData.id}`);
-        const formattedAdresse = adresseData.adresse.replace(/\n/g, '<br>');
-        
-        if ($card.length > 0) {
-            $(`#adresseContent${adresseData.id}`).html(formattedAdresse);
-            
-            if (adresseData.updated_by_nom && adresseData.updated_at_formatted) {
-                const metaHtml = `
-                    <div class="adresse-meta-info-premium">
-                        <div>
-                            <i class="fas fa-user-plus"></i>
-                            <span>Créée par ${adresseData.created_by_nom || 'Système'}</span>
-                        </div>
-                        <div>
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Le ${adresseData.created_at_formatted}</span>
-                        </div>
-                        <div>
-                            <i class="fas fa-user-edit"></i>
-                            <span>Modifiée par ${adresseData.updated_by_nom}</span>
-                        </div>
-                        <div>
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Le ${adresseData.updated_at_formatted}</span>
-                        </div>
-                    </div>
-                `;
-                $card.find('.adresse-meta-premium > .adresse-meta-info-premium').html(metaHtml);
-            }
-            
-            $card.addClass('adresse-content-loaded');
-        } else {
-            const newCardHtml = `
-                <div class="adresse-card-premium adresse-content-loaded" id="adresseCard${adresseData.id}" data-id="${adresseData.id}">
-                    <div class="adresse-content-premium" id="adresseContent${adresseData.id}">
-                        ${formattedAdresse}
-                    </div>
-                    <div class="adresse-meta-premium">
-                        <div class="adresse-meta-info-premium">
-                            <div>
-                                <i class="fas fa-user-plus"></i>
-                                <span>Créée par ${adresseData.created_by_nom || 'Système'}</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-calendar-plus"></i>
-                                <span>Le ${adresseData.created_at_formatted}</span>
-                            </div>
-                            ${adresseData.updated_by_nom ? `
-                            <div>
-                                <i class="fas fa-user-edit"></i>
-                                <span>Modifiée par ${adresseData.updated_by_nom}</span>
-                            </div>
-                            <div>
-                                <i class="fas fa-sync-alt"></i>
-                                <span>Le ${adresseData.updated_at_formatted}</span>
-                            </div>
-                            ` : ''}
-                        </div>
-                        <div class="adresse-actions-premium">
-                            <button class="btn btn-warning-premium btn-sm edit-adresse-btn" data-id="${adresseData.id}">
-                                <i class="fas fa-edit me-1"></i>Modifier
-                            </button>
-                            <button class="btn btn-danger-premium btn-sm delete-adresse-btn" data-id="${adresseData.id}">
-                                <i class="fas fa-trash me-1"></i>Supprimer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            if ($('#adressesList').find('.adresse-empty-state-premium').length > 0) {
-                $('#adressesList').html(newCardHtml);
+    let   currentPage = 1, currentSearch = '';
+
+    const modal        = new bootstrap.Modal(document.getElementById('crudModal'));
+    const editId       = document.getElementById('editId');
+    const adresseInput = document.getElementById('adresseInput');
+    const modalError   = document.getElementById('modalError');
+    const tableBody    = document.getElementById('tableBody');
+    const emptyState   = document.getElementById('emptyState');
+    const searchInput  = document.getElementById('searchInput');
+
+    function apiFetch(url, opts = {}) {
+        return fetch(url, {
+            ...opts,
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+        });
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    /* ── Load ── */
+    function load(page, search) {
+        currentPage = page ?? currentPage;
+        currentSearch = search ?? currentSearch;
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span class="text-muted small">{% trans "Chargement..." %}</span></td></tr>`;
+        emptyState.style.display = 'none';
+
+        const url = `/api/acheteur/${ACHETEUR_ID}/adresses/?page=${currentPage}&search=${encodeURIComponent(currentSearch)}`;
+
+        apiFetch(url)
+            .then(r => { if (!r.ok) throw r; return r.json(); })
+            .then(data => {
+                const items = Array.isArray(data) ? data : (data.results || []);
+                const meta  = Array.isArray(data) ? { count: data.length, total_pages: 1 } : data;
+                render(items, meta);
+                updateMetrics(items, meta);
+            })
+            .catch(err => {
+                if (err.status === 401) { refreshToken(() => load()); return; }
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Erreur lors du chargement." %}</td></tr>`;
+            });
+    }
+
+    function render(items, meta) {
+        const q = currentSearch.toLowerCase();
+        const filtered = q ? items.filter(i => (i.adresse || '').toLowerCase().includes(q)) : items;
+
+        if (filtered.length === 0) {
+            tableBody.innerHTML = '';
+            if (currentSearch) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-muted">{% trans "Aucun résultat pour cette recherche." %}</td></tr>`;
             } else {
-                $('#adressesList').prepend(newCardHtml);
+                emptyState.style.display = 'block';
             }
-            
-            updateAdresseCount();
-        }
-    }
-    
-    // Mettre à jour le compteur d'adresses
-    function updateAdresseCount() {
-        const count = $('#adressesList').find('.adresse-card-premium').length;
-        $('.adresse-count-badge-premium').html(`<i class="fas fa-map-pin"></i> ${count} adresse${count !== 1 ? 's' : ''}`);
-    }
-    
-    // Afficher l'indicateur d'édition
-    function showEditingIndicator() {
-        $('#editingIndicator').addClass('show');
-    }
-    
-    // Cacher l'indicateur d'édition
-    function hideEditingIndicator() {
-        setTimeout(() => {
-            $('#editingIndicator').removeClass('show');
-        }, 1000);
-    }
-    
-    // Formulaire d'ajout d'adresse
-    $('#addAdresseForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const $btn = $('#addSubmitBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        const formData = {
-            adresse: $('#adresse').val()
-        };
-        
-        if (!formData.adresse || formData.adresse.trim().length < 5) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Adresse invalide',
-                text: 'Veuillez saisir une adresse valide (minimum 5 caractères).'
-            });
+            renderPagination(meta);
             return;
         }
-        
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#addAdresseModal').modal('hide');
-                $('#addAdresseForm')[0].reset();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Adresse ajoutée avec succès',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Erreur lors de l\'ajout de l\'adresse';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
-                    } else if (xhr.responseJSON.adresse) {
-                        errorMessage = xhr.responseJSON.adresse.join('\n');
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Bouton pour modifier une adresse
-    $(document).on('click', '.edit-adresse-btn', function() {
-        currentAdresseId = $(this).data('id');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentAdresseId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#editAdresseId').val(response.id);
-                $('#editAdresse').val(response.adresse);
-                $('#editAdresseModal').modal('show');
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les détails de l\'adresse.',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Formulaire de modification d'adresse
-    $('#editAdresseForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const $btn = $('#editSubmitBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        const formData = {
-            adresse: $('#editAdresse').val()
-        };
-        
-        if (!formData.adresse || formData.adresse.trim().length < 5) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Adresse invalide',
-                text: 'Veuillez saisir une adresse valide (minimum 5 caractères).',
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
-            return;
-        }
-        
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentAdresseId}/`,
-            type: 'PUT',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#editAdresseModal').modal('hide');
-                $('#editAdresseForm')[0].reset();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Adresse modifiée avec succès',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Erreur lors de la modification de l\'adresse';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
-                    } else if (xhr.responseJSON.adresse) {
-                        errorMessage = xhr.responseJSON.adresse.join('\n');
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Bouton de suppression
-    $(document).on('click', '.delete-adresse-btn', function() {
-        currentAdresseId = $(this).data('id');
-        const adresseContent = $(this).closest('.adresse-card-premium').find('.adresse-content-premium').text().substring(0, 80);
-        $('#deleteAdresseContent').html(`
-            <p class="text-dark mb-0">
-                <strong>${adresseContent}${adresseContent.length >= 80 ? '...' : ''}</strong><br>
-                Cette action est irréversible.
-            </p>
-        `);
-        $('#confirmDeleteModal').modal('show');
-    });
-    
-    // Confirmer la suppression
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!currentAdresseId) return;
-        
-        const $btn = $(this);
-        const originalText = $btn.html();
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentAdresseId}/`,
-            type: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $('#confirmDeleteModal').modal('hide');
-                $btn.prop('disabled', false).html(originalText);
-                
-                showEditingIndicator();
-                $(`#adresseCard${currentAdresseId}`).remove();
-                
-                if ($('#adressesList').find('.adresse-card-premium').length === 0) {
-                    const emptyStateHtml = `
-                        <div class="adresse-empty-state-premium">
-                            <i class="fas fa-map-marker-alt adresse-empty-state-icon-premium"></i>
-                            <h4 class="fw-bold mb-3">Aucune adresse enregistrée</h4>
-                            <p class="text-muted mb-4">
-                                Cet acheteur ne possède pas encore d'adresse enregistrée.<br>
-                                Ajoutez des adresses pour compléter son profil et faciliter les opérations.
-                            </p>
-                            <button class="btn btn-adresse-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
-                                <i class="fas fa-plus-circle me-2"></i>Ajouter la première adresse
-                            </button>
-                        </div>
-                    `;
-                    $('#adressesList').html(emptyStateHtml);
-                }
-                
-                updateAdresseCount();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Adresse supprimée avec succès',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    hideEditingIndicator();
-                });
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false).html(originalText);
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'adresse',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Helper: Get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+        emptyState.style.display = 'none';
+        const offset = (currentPage - 1) * 10;
+        tableBody.innerHTML = filtered.map((item, i) => `
+            <tr>
+                <td class="text-muted small">${offset + i + 1}</td>
+                <td>
+                    <div class="adresse-cell">
+                        <span class="adresse-pin"><i class="fas fa-map-marker-alt"></i></span>
+                        <span class="adresse-text">${escHtml(item.adresse || '—')}</span>
+                    </div>
+                </td>
+                <td class="text-muted small">${escHtml(item.created_by_nom || '—')}</td>
+                <td class="text-muted small">${fmtDate(item.created_at)}</td>
+                <td class="text-center">
+                    <button class="btn-tbl btn-tbl-edit me-1 edit-btn"
+                        data-id="${item.id}" title="{% trans 'Modifier' %}">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button class="btn-tbl btn-tbl-delete delete-btn"
+                        data-id="${item.id}" data-adresse="${escAttr(item.adresse || '')}"
+                        title="{% trans 'Supprimer' %}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`).join('');
     }
-    
-    // Fonction pour rafraîchir le token d'accès
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access) {
-                    ACCESS_TOKEN = response.access;
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
+
+    function renderPagination(meta) {
+        const count = meta ? (meta.count ?? 0) : 0;
+        const totalPages = Math.max(1, Math.ceil(count / 10));
+        const from = count === 0 ? 0 : (currentPage - 1) * 10 + 1;
+        const to = Math.min(currentPage * 10, count);
+        document.getElementById('paginationInfo').textContent =
+            count === 0 ? '{% trans "Aucun élément" %}' : `${from}–${to} / ${count}`;
+
+        const ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const prev = document.createElement('span');
+        prev.className = 'page-link-btn' + (currentPage === 1 ? ' disabled' : '');
+        prev.innerHTML = '<i class="fas fa-chevron-left fa-xs"></i>';
+        prev.addEventListener('click', () => { if (currentPage > 1) load(currentPage - 1); });
+        ctrl.appendChild(prev);
+
+        for (let p = 1; p <= totalPages; p++) {
+            const btn = document.createElement('span');
+            btn.className = 'page-link-btn' + (p === currentPage ? ' active' : '');
+            btn.textContent = p;
+            btn.addEventListener('click', () => { if (p !== currentPage) load(p); });
+            ctrl.appendChild(btn);
+        }
+
+        const next = document.createElement('span');
+        next.className = 'page-link-btn' + (currentPage === totalPages ? ' disabled' : '');
+        next.innerHTML = '<i class="fas fa-chevron-right fa-xs"></i>';
+        next.addEventListener('click', () => { if (currentPage < totalPages) load(currentPage + 1); });
+        ctrl.appendChild(next);
+    }
+
+    function updateMetrics(items, meta) {
+        const count = meta.count ?? items.length;
+        document.getElementById('mc-count').textContent = count;
+        if (items.length > 0) {
+            const txt = items[0].adresse || '—';
+            document.getElementById('mc-recent').textContent = txt.length > 40 ? txt.substring(0, 40) + '…' : txt;
+            document.getElementById('mc-recent-date').textContent = fmtDate(items[0].created_at);
+        } else {
+            document.getElementById('mc-recent').textContent = '—';
+            document.getElementById('mc-recent-date').textContent = '—';
+        }
+    }
+
+    /* ── Modal helpers ── */
+    function openAdd() {
+        editId.value = '';
+        adresseInput.value = '';
+        modalError.style.display = 'none';
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter une adresse" %}';
+        modal.show();
+    }
+
+    function openEdit(id) {
+        editId.value = id;
+        adresseInput.value = '';
+        modalError.style.display = 'none';
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier l\'adresse" %}';
+        apiFetch(`/api/acheteur/${ACHETEUR_ID}/adresses/${id}/`)
+            .then(r => r.json())
+            .then(data => { adresseInput.value = data.adresse || ''; modal.show(); })
+            .catch(() => { adresseInput.value = ''; modal.show(); });
+    }
+
+    function showModalError(msg) {
+        modalError.textContent = msg;
+        modalError.style.display = 'block';
+    }
+
+    /* ── Save ── */
+    document.getElementById('saveBtn').addEventListener('click', function () {
+        const val = adresseInput.value.trim();
+        if (!val) { showModalError('{% trans "L\'adresse est obligatoire." %}'); return; }
+        modalError.style.display = 'none';
+
+        const id = editId.value;
+        const isEdit = !!id;
+        const url = isEdit
+            ? `/api/acheteur/${ACHETEUR_ID}/adresses/${id}/`
+            : `/api/acheteur/${ACHETEUR_ID}/adresses/`;
+
+        apiFetch(url, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({ adresse: val }) })
+            .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+            .then(({ ok, data }) => {
+                if (!ok) {
+                    const msg = data.adresse ? data.adresse[0] : (data.detail || '{% trans "Erreur lors de l\'opération." %}');
+                    showModalError(msg); return;
                 }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
+                modal.hide();
+                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Opération réussie." %}', timer: 1500, showConfirmButton: false });
+                load(1);
+            })
+            .catch(() => showModalError('{% trans "Erreur réseau." %}'));
+    });
+
+    /* ── Delete ── */
+    function deleteItem(id, adresse) {
+        Swal.fire({
+            title: '{% trans "Supprimer cette adresse ?" %}',
+            html: `<div class="text-start small p-2 bg-light rounded">${escHtml(adresse)}</div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '{% trans "Oui, supprimer" %}',
+            cancelButtonText: '{% trans "Annuler" %}'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            apiFetch(`/api/acheteur/${ACHETEUR_ID}/adresses/${id}/`, { method: 'DELETE' })
+                .then(r => {
+                    if (r.status === 401) { refreshToken(() => deleteItem(id, adresse)); return; }
+                    Swal.fire({ icon: 'success', title: '{% trans "Supprimé !" %}', timer: 1200, showConfirmButton: false });
+                    load(1);
+                }).catch(() => Swal.fire({ icon: 'error', title: '{% trans "Erreur lors de la suppression." %}' }));
         });
     }
-    
-    // Configurer l'interception des erreurs 401
-    $(document).ajaxError(function(event, xhr) {
-        if (xhr.status === 401) {
-            refreshAccessToken();
-        }
+
+    /* ── Events ── */
+    ['openAddModal', 'openAddModal2', 'openAddModal3'].forEach(btnId => {
+        const el = document.getElementById(btnId);
+        if (el) el.addEventListener('click', openAdd);
     });
-});
+
+    document.addEventListener('click', function (e) {
+        const editBtn = e.target.closest('.edit-btn');
+        if (editBtn) { openEdit(editBtn.dataset.id); return; }
+        const delBtn = e.target.closest('.delete-btn');
+        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.adresse); }
+    });
+
+    let searchTimer;
+    searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        currentSearch = this.value.trim();
+        searchTimer = setTimeout(() => load(1), 300);
+    });
+
+    /* ── Utils ── */
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+    function refreshToken(cb) {
+        fetch('/api/token/refresh/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: REFRESH_TOKEN })
+        }).then(r => r.json()).then(d => { if (d.access) { ACCESS_TOKEN = d.access; if (cb) cb(); } })
+          .catch(() => Swal.fire({ icon: 'error', title: '{% trans "Session expirée" %}', text: '{% trans "Veuillez vous reconnecter." %}' })
+              .then(() => { window.location.href = '/login/'; }));
+    }
+
+    load(1);
+})();
 </script>
 {% endblock %}
