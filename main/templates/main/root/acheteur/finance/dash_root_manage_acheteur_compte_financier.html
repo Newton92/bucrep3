@@ -1417,231 +1417,326 @@
 
 
     <!-- Section Compte Financier -->
-    <div class="row">
-        <div class="col-12">
-            {% if compte_financier %}
-            <!-- Affichage du compte financier existant -->
-            <div class="financial-unique-card-premium">
-                <div class="financial-header-premium">
-                    <div class="financial-title-premium">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        {% trans "Compte Financier" %}
-                    </div>
-                    <div class="financial-actions-premium">
-                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editCompteModal">
-                            <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
-                        </button>
-                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                            <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
-                        </button>
-                    </div>
-                </div>
+    {% if compte_financier %}
+    <style>
+    /* ── Carte principale ── */
+    .cf-card {
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid rgba(10,149,202,0.12);
+        box-shadow: 0 2px 12px rgba(10,149,202,0.07);
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    .cf-card-header {
+        background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
+        padding: 0.7rem 1.25rem;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .cf-card-header-title { color: #fff; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .cf-card-header-actions { display: flex; gap: 0.5rem; }
 
-                <!-- Grille des informations financières premium -->
-                <div class="financial-grid-premium">
-                    <!-- Informations générales -->
-                    <div class="financial-card-premium informations">
-                        <div class="financial-section-premium">
-                            <div class="financial-label-premium">
-                                <i class="fas fa-info-circle"></i>
-                                {% trans "Informations Générales" %}
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-building"></i>{% trans "Cabinet:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.cabinet|default:_("Non spécifié") }}</span>
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-file-alt"></i>{% trans "Requis pour déposer:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.requis_pour_deposer|default:_("Non spécifié") }}</span>
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-star"></i>{% trans "Crédibilité cabinet:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    {% if compte_financier.credibilite_cabinet == 'OUI' %}
-                                    <span class="status-badge-premium success">
-                                        <i class="fas fa-check"></i>{% trans "Oui" %}
-                                    </span>
-                                    {% elif compte_financier.credibilite_cabinet == 'NON' %}
-                                    <span class="status-badge-premium danger">
-                                        <i class="fas fa-times"></i>{% trans "Non" %}
-                                    </span>
-                                    {% else %}
-                                    {% trans "Non spécifié" %}
-                                    {% endif %}
-                                </span>
-                            </div>
+    /* ── Badges d'information rapide ── */
+    .cf-meta-strip {
+        display: flex; flex-wrap: wrap; gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, rgba(10,149,202,0.04), rgba(16,108,178,0.02));
+        border-bottom: 1px solid rgba(10,149,202,0.1);
+    }
+    .cf-meta-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.28rem 0.7rem;
+        border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+        background: rgba(10,149,202,0.08); color: #0d80be;
+        border: 1px solid rgba(10,149,202,0.15);
+    }
+    .cf-meta-badge.badge-success { background: rgba(40,167,69,0.1); color: #28a745; border-color: rgba(40,167,69,0.2); }
+    .cf-meta-badge.badge-danger  { background: rgba(220,53,69,0.1);  color: #dc3545; border-color: rgba(220,53,69,0.2); }
+    .cf-meta-badge.badge-warning { background: rgba(255,193,7,0.12); color: #856404; border-color: rgba(255,193,7,0.25); }
+    .cf-meta-badge i { font-size: 0.7rem; }
 
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-database"></i>{% trans "Source:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.source|default:_("Non spécifié") }}</span>
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-eye"></i>{% trans "Présentation:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.presentation|default:_("Non spécifié") }}</span>
-                            </div>
-                        </div>
-                    </div>
+    /* ── Sections internes ── */
+    .cf-section { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(10,149,202,0.07); }
+    .cf-section:last-child { border-bottom: none; }
+    .cf-section-title {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.07em; color: #0a95ca;
+        margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.35rem;
+    }
 
-                    <!-- Périodes comptables -->
-                    <div class="financial-card-premium periodes">
-                        <div class="financial-section-premium">
-                            <div class="financial-label-premium">
-                                <i class="fas fa-calendar-alt"></i>
-                                {% trans "Périodes Comptables" %}
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-calendar-day"></i>{% trans "Compte N:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    {% if compte_financier.date_compte and compte_financier.date_fin %}
-                                        <strong>{{ compte_financier.date_compte|date:"d/m/Y" }} - {{ compte_financier.date_fin|date:"d/m/Y" }}</strong>
-                                    {% else %}
-                                        {% trans "Non spécifié" %}
-                                    {% endif %}
-                                </span>
-                            </div>
+    /* ── Grille info ── */
+    .cf-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.6rem; }
+    .cf-info-item { display: flex; flex-direction: column; gap: 0.1rem; }
+    .cf-info-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; font-weight: 600; }
+    .cf-info-value { font-size: 0.88rem; font-weight: 600; color: #1a2d3d; }
+    .cf-info-value.empty { color: #adb5bd; font-weight: 400; font-style: italic; }
 
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-calendar-week"></i>{% trans "Compte N-1:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    {% if compte_financier.date_compte_n_moins_un and compte_financier.date_fin_n_moins_un %}
-                                        {{ compte_financier.date_compte_n_moins_un|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_un|date:"d/m/Y" }}
-                                    {% else %}
-                                        {% trans "Non spécifié" %}
-                                    {% endif %}
-                                </span>
-                            </div>
+    /* ── Cartes de période ── */
+    .cf-periods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    @media (max-width: 768px) { .cf-periods-grid { grid-template-columns: 1fr; } }
 
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-calendar-month"></i>{% trans "Compte N-2:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    {% if compte_financier.date_compte_n_moins_deux and compte_financier.date_fin_n_moins_deux %}
-                                        {{ compte_financier.date_compte_n_moins_deux|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_deux|date:"d/m/Y" }}
-                                    {% else %}
-                                        {% trans "Non spécifié" %}
-                                    {% endif %}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+    .cf-period-card {
+        border-radius: 10px; overflow: hidden;
+        border: 1px solid rgba(10,149,202,0.15);
+    }
+    .cf-period-card-header {
+        padding: 0.4rem 0.85rem;
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .cf-period-n   .cf-period-card-header { background: linear-gradient(135deg,#0a95ca,#106cb2); color:#fff; }
+    .cf-period-n1  .cf-period-card-header { background: linear-gradient(135deg,#17a2b8,#138496); color:#fff; }
+    .cf-period-n2  .cf-period-card-header { background: linear-gradient(135deg,#6c757d,#495057); color:#fff; }
 
-                    <!-- Informations comptables -->
-                    <div class="financial-card-premium comptabilite">
-                        <div class="financial-section-premium">
-                            <div class="financial-label-premium">
-                                <i class="fas fa-calculator"></i>
-                                {% trans "Informations Comptables" %}
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-file-invoice"></i>{% trans "Type de compte:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.type_compte|default:_("Non spécifié") }}</span>
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-money-bill-wave"></i>{% trans "Devise:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    <span class="status-badge-premium info">
-                                        <i class="fas fa-coins"></i>{{ compte_financier.devise|default:"XAF" }}
-                                    </span>
-                                </span>
-                            </div>
-                            
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-balance-scale"></i>{% trans "Type de bilan:" %}
-                                </span>
-                                <span class="info-value-premium">{{ compte_financier.type_bilan|default:_("Non spécifié") }}</span>
-                            </div>
-                            
-                            {% if compte_financier.couleur_commentaire %}
-                            <div class="info-item-premium">
-                                <span class="info-label-premium">
-                                    <i class="fas fa-palette"></i>{% trans "Étiquette:" %}
-                                </span>
-                                <span class="info-value-premium">
-                                    <span class="color-badge-premium">
-                                        <div class="color-preview-premium" style="background-color: {{ compte_financier.couleur_commentaire.code|default:'#6c757d' }}"></div>
-                                        {{ compte_financier.couleur_commentaire.couleur }}
-                                    </span>
-                                </span>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+    .cf-period-card-body { padding: 0.65rem 0.85rem; background: #fafcfe; }
+    .cf-period-row {
+        display: flex; align-items: flex-start; gap: 0.6rem;
+        padding: 0.3rem 0;
+    }
+    .cf-period-row + .cf-period-row { border-top: 1px dashed rgba(10,149,202,0.1); }
+    .cf-period-row-label { font-size: 0.65rem; text-transform: uppercase; color: #6c757d; font-weight: 700; width: 38px; flex-shrink: 0; padding-top: 2px; }
+    .cf-period-row-value { font-size: 0.85rem; font-weight: 700; color: #1a2d3d; }
+    .cf-period-row-value.empty { color: #adb5bd; font-weight: 400; font-style: italic; font-size: 0.78rem; }
+    .cf-period-duration {
+        margin-top: 0.4rem; padding: 0.25rem 0.6rem;
+        background: rgba(10,149,202,0.07); border-radius: 6px;
+        font-size: 0.72rem; color: #0d80be; font-weight: 600;
+        text-align: center;
+    }
+    .cf-period-empty {
+        text-align: center; padding: 0.75rem 0.5rem;
+        color: #adb5bd; font-size: 0.78rem; font-style: italic;
+    }
 
-                <!-- Commentaire -->
-                {% if compte_financier.commentaire %}
-                <div class="commentaire-section-premium">
-                    <div class="financial-label-premium">
-                        <i class="fas fa-comment-dots"></i>
-                        {% trans "Commentaire" %}
-                    </div>
-                    <div class="commentaire-content-premium">
-                        {{ compte_financier.commentaire|safe }}
-                    </div>
-                </div>
-                {% endif %}
+    /* ── Commentaire ── */
+    .cf-comment-box {
+        background: rgba(255,193,7,0.05); border-left: 3px solid #ffc107;
+        border-radius: 0 8px 8px 0; padding: 0.75rem 1rem;
+        font-size: 0.875rem; color: #3d3d3d; line-height: 1.6;
+    }
 
-                <!-- Informations temporelles -->
-                <div class="info-temporelle-premium">
-                    <div class="info-temp-item-premium">
-                        <i class="fas fa-calendar-plus"></i>
-                        <div>
-                            <div class="fw-medium">{% trans "Créé le" %} {{ compte_financier.created_at|date:"d/m/Y" }}</div>
-                            <small class="text-muted">à {{ compte_financier.created_at|date:"H:i" }}</small>
-                        </div>
-                    </div>
-                    <div class="info-temp-item-premium">
-                        <i class="fas fa-sync-alt"></i>
-                        <div>
-                            <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
-                            <small class="text-muted">{{ compte_financier.updated_at|date:"d/m/Y H:i" }}</small>
-                        </div>
-                    </div>
-                </div>
+    /* ── Timestamps ── */
+    .cf-timestamps {
+        display: flex; flex-wrap: wrap; gap: 1.25rem;
+        padding: 0.6rem 1.25rem;
+        background: rgba(10,149,202,0.03);
+        border-top: 1px solid rgba(10,149,202,0.08);
+        font-size: 0.72rem; color: #6c757d;
+    }
+    .cf-timestamps span { display: flex; align-items: center; gap: 0.35rem; }
+    </style>
+
+    <div class="cf-card">
+        <!-- En-tête avec actions -->
+        <div class="cf-card-header">
+            <div class="cf-card-header-title">
+                <i class="fas fa-file-invoice-dollar"></i>
+                {% trans "Compte Financier" %}
             </div>
-            {% else %}
-            <!-- État vide -->
-            <div class="empty-state-premium">
-                <i class="fas fa-file-invoice-dollar empty-state-icon-premium"></i>
-                <h4 class="fw-bold mb-3">{% trans "Compte Financier Non Défini" %}</h4>
-                <p class="text-muted mb-4">
-                    {% trans "L'acheteur ne possède pas encore de compte financier enregistré." %}<br>
-                    {% trans "Cette section permet de documenter les informations financières, comptables et les périodes fiscales de l'acheteur." %}
-                </p>
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCompteModal">
-                    <i class="fas fa-plus-circle me-1"></i>{% trans "Créer le Compte Financier" %}
+            <div class="cf-card-header-actions">
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editCompteModal">
+                    <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+                </button>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
+        </div>
+
+        <!-- Badges résumé rapide -->
+        <div class="cf-meta-strip">
+            {% if compte_financier.type_compte %}
+            <span class="cf-meta-badge badge-warning">
+                <i class="fas fa-file-invoice"></i>{{ compte_financier.type_compte }}
+            </span>
+            {% endif %}
+            {% if compte_financier.devise %}
+            <span class="cf-meta-badge">
+                <i class="fas fa-coins"></i>{{ compte_financier.devise }}
+            </span>
+            {% endif %}
+            {% if compte_financier.type_bilan %}
+            <span class="cf-meta-badge">
+                <i class="fas fa-balance-scale"></i>{{ compte_financier.type_bilan }}
+            </span>
+            {% endif %}
+            {% if compte_financier.credibilite_cabinet == 'OUI' %}
+            <span class="cf-meta-badge badge-success">
+                <i class="fas fa-check-circle"></i>{% trans "Cabinet crédible" %}
+            </span>
+            {% elif compte_financier.credibilite_cabinet == 'NON' %}
+            <span class="cf-meta-badge badge-danger">
+                <i class="fas fa-times-circle"></i>{% trans "Cabinet non crédible" %}
+            </span>
+            {% endif %}
+            {% if compte_financier.couleur_commentaire %}
+            <span class="cf-meta-badge" style="background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.1);">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ compte_financier.couleur_commentaire.code|default:'#6c757d' }};"></span>
+                {{ compte_financier.couleur_commentaire.couleur }}
+            </span>
             {% endif %}
         </div>
+
+        <!-- Section : Périodes Comptables -->
+        <div class="cf-section">
+            <div class="cf-section-title">
+                <i class="fas fa-calendar-alt"></i>{% trans "Périodes Comptables" %}
+            </div>
+            <div class="cf-periods-grid">
+
+                <!-- Période N -->
+                <div class="cf-period-card cf-period-n">
+                    <div class="cf-period-card-header">
+                        <span><i class="fas fa-calendar-check me-1"></i>{% trans "Compte N" %}</span>
+                        {% if compte_financier.date_compte and compte_financier.date_fin %}
+                        <span style="opacity:.8;font-weight:400;">{{ compte_financier.date_compte|date:"Y" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="cf-period-card-body">
+                        {% if compte_financier.date_compte or compte_financier.date_fin %}
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Début" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_compte %}empty{% endif %}">
+                                {% if compte_financier.date_compte %}{{ compte_financier.date_compte|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Fin" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_fin %}empty{% endif %}">
+                                {% if compte_financier.date_fin %}{{ compte_financier.date_fin|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        {% else %}
+                        <div class="cf-period-empty">{% trans "Période non renseignée" %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Période N-1 -->
+                <div class="cf-period-card cf-period-n1">
+                    <div class="cf-period-card-header">
+                        <span><i class="fas fa-calendar-minus me-1"></i>{% trans "Compte N-1" %}</span>
+                        {% if compte_financier.date_compte_n_moins_un and compte_financier.date_fin_n_moins_un %}
+                        <span style="opacity:.8;font-weight:400;">{{ compte_financier.date_compte_n_moins_un|date:"Y" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="cf-period-card-body">
+                        {% if compte_financier.date_compte_n_moins_un or compte_financier.date_fin_n_moins_un %}
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Début" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_compte_n_moins_un %}empty{% endif %}">
+                                {% if compte_financier.date_compte_n_moins_un %}{{ compte_financier.date_compte_n_moins_un|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Fin" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_fin_n_moins_un %}empty{% endif %}">
+                                {% if compte_financier.date_fin_n_moins_un %}{{ compte_financier.date_fin_n_moins_un|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        {% else %}
+                        <div class="cf-period-empty">{% trans "Période non renseignée" %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Période N-2 -->
+                <div class="cf-period-card cf-period-n2">
+                    <div class="cf-period-card-header">
+                        <span><i class="fas fa-calendar-times me-1"></i>{% trans "Compte N-2" %}</span>
+                        {% if compte_financier.date_compte_n_moins_deux and compte_financier.date_fin_n_moins_deux %}
+                        <span style="opacity:.8;font-weight:400;">{{ compte_financier.date_compte_n_moins_deux|date:"Y" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="cf-period-card-body">
+                        {% if compte_financier.date_compte_n_moins_deux or compte_financier.date_fin_n_moins_deux %}
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Début" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_compte_n_moins_deux %}empty{% endif %}">
+                                {% if compte_financier.date_compte_n_moins_deux %}{{ compte_financier.date_compte_n_moins_deux|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div class="cf-period-row">
+                            <span class="cf-period-row-label">{% trans "Fin" %}</span>
+                            <span class="cf-period-row-value {% if not compte_financier.date_fin_n_moins_deux %}empty{% endif %}">
+                                {% if compte_financier.date_fin_n_moins_deux %}{{ compte_financier.date_fin_n_moins_deux|date:"d/m/Y" }}{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        {% else %}
+                        <div class="cf-period-empty">{% trans "Période non renseignée" %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Section : Informations Générales -->
+        <div class="cf-section">
+            <div class="cf-section-title">
+                <i class="fas fa-info-circle"></i>{% trans "Informations Générales" %}
+            </div>
+            <div class="cf-info-grid">
+                <div class="cf-info-item">
+                    <span class="cf-info-label">{% trans "Cabinet" %}</span>
+                    <span class="cf-info-value {% if not compte_financier.cabinet %}empty{% endif %}">
+                        {{ compte_financier.cabinet|default:"—" }}
+                    </span>
+                </div>
+                <div class="cf-info-item">
+                    <span class="cf-info-label">{% trans "Source" %}</span>
+                    <span class="cf-info-value {% if not compte_financier.source %}empty{% endif %}">
+                        {{ compte_financier.source|default:"—" }}
+                    </span>
+                </div>
+                <div class="cf-info-item">
+                    <span class="cf-info-label">{% trans "Présentation" %}</span>
+                    <span class="cf-info-value {% if not compte_financier.presentation %}empty{% endif %}">
+                        {{ compte_financier.presentation|default:"—" }}
+                    </span>
+                </div>
+                <div class="cf-info-item">
+                    <span class="cf-info-label">{% trans "Requis pour déposer" %}</span>
+                    <span class="cf-info-value {% if not compte_financier.requis_pour_deposer %}empty{% endif %}">
+                        {{ compte_financier.requis_pour_deposer|default:"—" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section : Commentaire (conditionnel) -->
+        {% if compte_financier.commentaire %}
+        <div class="cf-section">
+            <div class="cf-section-title">
+                <i class="fas fa-comment-dots"></i>{% trans "Commentaire & Analyse" %}
+            </div>
+            <div class="cf-comment-box">
+                {{ compte_financier.commentaire|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Timestamps -->
+        <div class="cf-timestamps">
+            <span><i class="fas fa-calendar-plus"></i>{% trans "Créé le" %} {{ compte_financier.created_at|date:"d/m/Y à H:i" }}</span>
+            <span><i class="fas fa-sync-alt"></i>{% trans "Mis à jour le" %} {{ compte_financier.updated_at|date:"d/m/Y à H:i" }}</span>
+        </div>
     </div>
+
+    {% else %}
+    <!-- État vide -->
+    <div class="empty-state-premium">
+        <i class="fas fa-file-invoice-dollar empty-state-icon-premium"></i>
+        <h4 class="fw-bold mb-3">{% trans "Compte Financier Non Défini" %}</h4>
+        <p class="text-muted mb-4">
+            {% trans "L'acheteur ne possède pas encore de compte financier enregistré." %}<br>
+            {% trans "Cette section permet de documenter les informations financières, comptables et les périodes fiscales de l'acheteur." %}
+        </p>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCompteModal">
+            <i class="fas fa-plus-circle me-1"></i>{% trans "Créer le Compte Financier" %}
+        </button>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Modal Ajout Compte Financier -->
