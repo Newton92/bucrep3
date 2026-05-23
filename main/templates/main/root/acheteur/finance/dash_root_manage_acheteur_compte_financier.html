@@ -1705,8 +1705,12 @@
                         </div>
                         <div class="col-md-4">
                             <label class="modal-form-label"><i class="fas fa-file-invoice me-1"></i>{% trans "Type de compte" %}</label>
-                            <input type="text" class="form-control form-control-sm" id="type_compte" name="type_compte"
-                                   placeholder="{% trans 'Type de compte (simplifié, développé, etc.)' %}">
+                            <select class="form-control form-control-sm" id="type_compte" name="type_compte">
+                                <option value="">{% trans "Sélectionner..." %}</option>
+                                <option value="Annuel">{% trans "Annuel" %}</option>
+                                <option value="Semestriel">{% trans "Semestriel" %}</option>
+                                <option value="Autre">{% trans "Autre" %}</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1846,7 +1850,12 @@
                         </div>
                         <div class="col-md-4">
                             <label class="modal-form-label"><i class="fas fa-file-invoice me-1"></i>{% trans "Type de compte" %}</label>
-                            <input type="text" class="form-control form-control-sm" id="editTypeCompte" name="type_compte">
+                            <select class="form-control form-control-sm" id="editTypeCompte" name="type_compte">
+                                <option value="">{% trans "Sélectionner..." %}</option>
+                                <option value="Annuel">{% trans "Annuel" %}</option>
+                                <option value="Semestriel">{% trans "Semestriel" %}</option>
+                                <option value="Autre">{% trans "Autre" %}</option>
+                            </select>
                         </div>
                     </div>
 
@@ -2197,15 +2206,101 @@ $(document).ready(function() {
         return data;
     }
 
+    // ── Messages de validation (traduits côté serveur) ──
+    const MSG_DATE_FIN_REQUIRED = '{% trans "La date de fin est requise lorsque la date de début est renseignée." %}';
+    const MSG_ANNUEL_INVALID    = '{% trans "La période doit couvrir environ 1 an (365 jours ± 30)." %}';
+    const MSG_SEMI_INVALID      = '{% trans "La période doit couvrir environ 6 mois (180 jours ± 30)." %}';
+    const MSG_DATE_END_BEFORE   = '{% trans "La date de fin doit être postérieure à la date de début." %}';
+
+    // ── Validation des dates ──
+    function validateDates(isEdit) {
+        const ids = isEdit ? {
+            type:   'editTypeCompte',
+            s0: 'editDateCompte',        e0: 'editDateFin',
+            s1: 'editDateCompteNMoinsUn', e1: 'editDateFinNMoinsUn',
+            s2: 'editDateCompteNMoinsDeux', e2: 'editDateFinNMoinsDeux',
+        } : {
+            type:   'type_compte',
+            s0: 'date_compte',            e0: 'date_fin',
+            s1: 'date_compte_n_moins_un', e1: 'date_fin_n_moins_un',
+            s2: 'date_compte_n_moins_deux', e2: 'date_fin_n_moins_deux',
+        };
+
+        const typeCompte = $('#' + ids.type).val();
+        const periods = [
+            { start: ids.s0, end: ids.e0, label: 'N' },
+            { start: ids.s1, end: ids.e1, label: 'N-1' },
+            { start: ids.s2, end: ids.e2, label: 'N-2' },
+        ];
+
+        for (const p of periods) {
+            const startVal = $('#' + p.start).val();
+            const endVal   = $('#' + p.end).val();
+
+            if (!startVal) continue;
+
+            // Règle universelle : date de fin requise si date de début renseignée
+            if (!endVal) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{% trans "Date de fin manquante" %} (' + p.label + ')',
+                    text: MSG_DATE_FIN_REQUIRED,
+                    background: '#fcfefe'
+                });
+                $('#' + p.end).focus();
+                return false;
+            }
+
+            const start = new Date(startVal);
+            const end   = new Date(endVal);
+
+            if (end <= start) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{% trans "Dates invalides" %} (' + p.label + ')',
+                    text: MSG_DATE_END_BEFORE,
+                    background: '#fcfefe'
+                });
+                return false;
+            }
+
+            const days = Math.round((end - start) / 86400000);
+
+            if (typeCompte === 'Annuel' && (days < 335 || days > 395)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{% trans "Durée invalide" %} (' + p.label + ' — ' + days + ' {% trans "jours" %})',
+                    text: MSG_ANNUEL_INVALID,
+                    background: '#fcfefe'
+                });
+                return false;
+            }
+
+            if (typeCompte === 'Semestriel' && (days < 150 || days > 210)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{% trans "Durée invalide" %} (' + p.label + ' — ' + days + ' {% trans "jours" %})',
+                    text: MSG_SEMI_INVALID,
+                    background: '#fcfefe'
+                });
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // Formulaire d'ajout
     $('#addCompteForm').on('submit', function(e) {
         e.preventDefault();
+        if (!validateDates(false)) return;
         submitCompteForm(buildFormData(this), '#submitAddBtn', 'addCompteModal');
     });
 
     // Formulaire de modification
     $('#editCompteForm').on('submit', function(e) {
         e.preventDefault();
+        if (!validateDates(true)) return;
         const data = buildFormData(this);
         data['id'] = $('#editCompteId').val();
         submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
