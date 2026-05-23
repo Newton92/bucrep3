@@ -1,0 +1,313 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-success: #28a745;
+    --color-border: #e2e8f0;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+.page-header {
+    background: var(--primary-gradient);
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+.form-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    padding: 2rem;
+}
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.enhanced-form .form-label i { color: var(--color-primary); }
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.9rem;
+    transition: border-color 0.2s;
+}
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10,149,202,0.15);
+}
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.65rem 1.4rem;
+    font-weight: 600;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.btn-enhanced:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-success-enhanced { background: var(--success-gradient); color: white; }
+.summary-box {
+    background: #f8fafc;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+}
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5.select2-container--open .select2-selection {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(10,149,202,0.15);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h4 class="mb-1 fw-bold"><i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Passif" %}</h4>
+                <small class="opacity-75">{{ acheteur.nom }} — {% trans "Bilan Anglais" %}</small>
+            </div>
+            <a href="{% url 'dash_root_manage_acheteur_passif_anglais' acheteur.id %}"
+               class="btn-enhanced" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);">
+                <i class="fas fa-arrow-left"></i>{% trans "Retour à la liste" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-lg-11">
+            <div class="form-card">
+                <form id="addForm" class="enhanced-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="acheteur" value="{{ acheteur.id }}">
+                    <div class="row g-3">
+
+                        <!-- Année -->
+                        <div class="col-12">
+                            <label for="annee" class="form-label"><i class="fas fa-calendar-alt"></i>{% trans "Année" %} *</label>
+                            <select class="form-select" id="annee" name="annee" required>
+                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- CR -->
+                        <div class="col-md-6">
+                            <label for="capital_reserves" class="form-label"><i class="fas fa-landmark"></i>{% trans "CR — Capital et Réserves" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="capital_reserves" name="capital_reserves" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- CD -->
+                        <div class="col-md-6">
+                            <label for="capital_declare" class="form-label"><i class="fas fa-file-signature"></i>{% trans "CD — Capital Déclaré" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="capital_declare" name="capital_declare" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- BND -->
+                        <div class="col-md-6">
+                            <label for="benefices_non_distribues" class="form-label"><i class="fas fa-chart-line"></i>{% trans "BND — Bénéfices Non Distribués" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="benefices_non_distribues" name="benefices_non_distribues" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- PB -->
+                        <div class="col-md-6">
+                            <label for="pret_bancaire" class="form-label"><i class="fas fa-university"></i>{% trans "PB — Prêt Bancaire" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="pret_bancaire" name="pret_bancaire" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- CCA -->
+                        <div class="col-md-6">
+                            <label for="compte_courant_administrateurs" class="form-label"><i class="fas fa-users"></i>{% trans "CCA — Compte Courant Administrateurs" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="compte_courant_administrateurs" name="compte_courant_administrateurs" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- DCA -->
+                        <div class="col-md-6">
+                            <label for="dettes_commerciales_autres_dettes" class="form-label"><i class="fas fa-file-invoice"></i>{% trans "DCA — Dettes Commerciales et Autres" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="dettes_commerciales_autres_dettes" name="dettes_commerciales_autres_dettes" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- DB -->
+                        <div class="col-md-6">
+                            <label for="decouvert_bancaire" class="form-label"><i class="fas fa-credit-card"></i>{% trans "DB — Découvert Bancaire" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="decouvert_bancaire" name="decouvert_bancaire" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- IMP -->
+                        <div class="col-md-6">
+                            <label for="impots" class="form-label"><i class="fas fa-balance-scale"></i>{% trans "IMP — Impôts" %} *</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="impots" name="impots" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="col-12">
+                            <div class="summary-box">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">CR:</span><span class="fw-bold" id="sumCR">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">CD:</span><span class="fw-bold" id="sumCD">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">BND:</span><span class="fw-bold" id="sumBND">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">PB:</span><span class="fw-bold" id="sumPB">0 FCFA</span></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">CCA:</span><span class="fw-bold" id="sumCCA">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">DCA:</span><span class="fw-bold" id="sumDCA">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">DB:</span><span class="fw-bold" id="sumDB">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">IMP:</span><span class="fw-bold" id="sumIMP">0 FCFA</span></div>
+                                        <div class="mb-2 pt-2 border-top d-flex justify-content-between">
+                                            <span class="fw-bold text-primary">{% trans "Total:" %}</span>
+                                            <span class="fw-bold text-primary" id="sumTotal">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-12 d-flex justify-content-between mt-2">
+                            <a href="{% url 'dash_root_manage_acheteur_passif_anglais' acheteur.id %}" class="btn-enhanced" style="background:#6c757d;color:white;">
+                                <i class="fas fa-times"></i>{% trans "Annuler" %}
+                            </a>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitBtn">
+                                <i class="fas fa-check"></i>{% trans "Enregistrer" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    const ACHETEUR_ID   = '{{ acheteur.id }}';
+    const ACCESS_TOKEN  = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+
+    $('#annee').select2({ theme: 'bootstrap-5', width: '100%', placeholder: '{% trans "Sélectionnez une année..." %}' });
+
+    function fmt(val) {
+        return (parseFloat(val) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' FCFA';
+    }
+
+    function updateSummary() {
+        const cr  = parseFloat($('#capital_reserves').val()) || 0;
+        const cd  = parseFloat($('#capital_declare').val()) || 0;
+        const bnd = parseFloat($('#benefices_non_distribues').val()) || 0;
+        const pb  = parseFloat($('#pret_bancaire').val()) || 0;
+        const cca = parseFloat($('#compte_courant_administrateurs').val()) || 0;
+        const dca = parseFloat($('#dettes_commerciales_autres_dettes').val()) || 0;
+        const db  = parseFloat($('#decouvert_bancaire').val()) || 0;
+        const imp = parseFloat($('#impots').val()) || 0;
+        const total = cr + cd + bnd + pb + cca + dca + db + imp;
+        $('#sumCR').text(fmt(cr)); $('#sumCD').text(fmt(cd)); $('#sumBND').text(fmt(bnd));
+        $('#sumPB').text(fmt(pb)); $('#sumCCA').text(fmt(cca)); $('#sumDCA').text(fmt(dca));
+        $('#sumDB').text(fmt(db)); $('#sumIMP').text(fmt(imp)); $('#sumTotal').text(fmt(total));
+    }
+
+    $('#addForm input[type="number"]').on('input', updateSummary);
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => { c = c.trim(); if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1)); });
+        return v;
+    }
+
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/', type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
+            success: function(r) { if (r.access && typeof callback === 'function') callback(); },
+            error: function() { Swal.fire({ icon: 'error', title: '{% trans "Session expirée" %}', confirmButtonText: '{% trans "Se reconnecter" %}' }).then(() => { window.location.href = '/login/'; }); }
+        });
+    }
+
+    $('#addForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#submitBtn');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Enregistrement..." %}');
+
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/ajouter-un-passif/`,
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function() {
+                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Passif ajouté avec succès" %}', timer: 1800, showConfirmButton: false })
+                    .then(() => { window.location.href = "{% url 'dash_root_manage_acheteur_passif_anglais' acheteur.id %}"; });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}');
+                let msg = '{% trans "Une erreur est survenue" %}';
+                if (xhr.responseJSON?.detail) msg = xhr.responseJSON.detail;
+                else if (xhr.responseJSON?.error) msg = xhr.responseJSON.error;
+                Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}', text: msg });
+                if (xhr.status === 401) refreshAccessToken(() => $('#addForm').submit());
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

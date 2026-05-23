@@ -827,10 +827,9 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
-                                    data-bs-toggle="modal" data-bs-target="#addResultatModal">
+                            <a href="{% url 'dash_root_manage_acheteur_add_resultat_anglais' acheteur.id %}" class="btn-enhanced btn-success-enhanced w-100 d-flex align-items-center justify-content-center">
                                 <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter" %}
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -903,432 +902,9 @@
     </div>
 </div>
 
-<!-- Modal Ajout Résultat -->
-<div class="modal fade enhanced-modal" id="addResultatModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouveau Résultat" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addResultatForm" class="enhanced-form">
-                <input type="hidden" value="{{ acheteur.id }}" name="acheteur" />
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Remplissez les champs ci-dessous pour ajouter un nouveau résultat. Les champs marqués d'un astérisque (*) sont obligatoires.
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Année avec Select2 -->
-                        <div class="col-md-12 mb-3">
-                            <label for="annee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>Année *
-                            </label>
-                            <div id="anneeContainer">
-                                <select class="form-select select2-enhanced" id="annee" name="annee" required>
-                                    <option value="">{% trans "Sélectionnez une année..." %}</option>
-                                    {% for annee in annee_list %}
-                                        <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Produits des Activités Ordinaires -->
-                        <div class="col-md-6 mb-3">
-                            <label for="produits_activites_ordinaires" class="form-label">
-                                <i class="fas fa-chart-bar"></i>PAO (Produits des Activités Ordinaires) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="produits_activites_ordinaires" 
-                                       name="produits_activites_ordinaires" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Ventes -->
-                        <div class="col-md-6 mb-3">
-                            <label for="ventes" class="form-label">
-                                <i class="fas fa-shopping-cart"></i>VEN (Ventes) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="ventes" 
-                                       name="ventes" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Charges d'Exploitation -->
-                        <div class="col-md-6 mb-3">
-                            <label for="charges_exploitation" class="form-label">
-                                <i class="fas fa-cogs"></i>CE (Charges d'Exploitation) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="charges_exploitation" 
-                                       name="charges_exploitation" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Frais de Vente, Généraux et Administratifs -->
-                        <div class="col-md-6 mb-3">
-                            <label for="frais_vente_generaux_administratifs" class="form-label">
-                                <i class="fas fa-file-invoice-dollar"></i>FVGA (Frais de Vente, Généraux et Administratifs) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="frais_vente_generaux_administratifs" 
-                                       name="frais_vente_generaux_administratifs" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres Revenus -->
-                        <div class="col-md-6 mb-3">
-                            <label for="autres_revenus" class="form-label">
-                                <i class="fas fa-money-bill-wave"></i>AR (Autres Revenus) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="autres_revenus" 
-                                       name="autres_revenus" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Frais Financier -->
-                        <div class="col-md-6 mb-3">
-                            <label for="frais_financier" class="form-label">
-                                <i class="fas fa-university"></i>FF (Frais Financier) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="frais_financier" 
-                                       name="frais_financier" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Charge d'Impôt sur le Revenu -->
-                        <div class="col-md-6 mb-3">
-                            <label for="charge_impot_sur_revenu" class="form-label">
-                                <i class="fas fa-balance-scale"></i>CIR (Charge d'Impôt sur le Revenu) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="charge_impot_sur_revenu" 
-                                       name="charge_impot_sur_revenu" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres Éléments du Résultat Global -->
-                        <div class="col-md-6 mb-3">
-                            <label for="autres_elements_resultat_global" class="form-label">
-                                <i class="fas fa-globe"></i>AERG (Autres Éléments du Résultat Global) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="autres_elements_resultat_global" 
-                                       name="autres_elements_resultat_global" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Résumé calculé -->
-                        <div class="col-md-12 mt-4">
-                            <div class="card bg-light border">
-                                <div class="card-body">
-                                    <h6 class="fw-bold mb-3">
-                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total PAO:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryPAO">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total VEN:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryVEN">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CE:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCE">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total FVGA:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryFVGA">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AR:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryAR">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total FF:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryFF">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CIR:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCIR">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AERG:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryAERG">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2 pt-2 border-top">
-                                                <span class="fw-bold">{% trans "Résultat net:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryResultat">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <div id="summaryStatus" class="performance-indicator result-neutral">
-                                            <i class="fas fa-minus-circle"></i>
-                                            <span>{% trans "Résultat neutre" %}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
-                                    style="background: #ffc107; color: #000;">
-                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
-                            </button>
-                            <button type="submit" class="btn-enhanced btn-success-enhanced">
-                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Modification Résultat -->
-<div class="modal fade enhanced-modal" id="editResultatModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Résultat" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editResultatForm" class="enhanced-form">
-                <input type="hidden" id="editResultatId" name="id">
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Modifiez les champs ci-dessous pour mettre à jour le résultat.
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Année avec Select2 -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editAnnee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>Année *
-                            </label>
-                            <div id="editAnneeContainer">
-                                <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
-                                    {% for annee in annee_list %}
-                                        <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <!-- Produits des Activités Ordinaires -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editProduitsActivitesOrdinaires" class="form-label">
-                                <i class="fas fa-chart-bar"></i>PAO (Produits des Activités Ordinaires) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editProduitsActivitesOrdinaires" 
-                                       name="produits_activites_ordinaires" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Ventes -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editVentes" class="form-label">
-                                <i class="fas fa-shopping-cart"></i>VEN (Ventes) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editVentes" 
-                                       name="ventes" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Charges d'Exploitation -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editChargesExploitation" class="form-label">
-                                <i class="fas fa-cogs"></i>CE (Charges d'Exploitation) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editChargesExploitation" 
-                                       name="charges_exploitation" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Frais de Vente, Généraux et Administratifs -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editFraisVenteGenerauxAdministratifs" class="form-label">
-                                <i class="fas fa-file-invoice-dollar"></i>FVGA (Frais de Vente, Généraux et Administratifs) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editFraisVenteGenerauxAdministratifs" 
-                                       name="frais_vente_generaux_administratifs" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres Revenus -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editAutresRevnus" class="form-label">
-                                <i class="fas fa-money-bill-wave"></i>AR (Autres Revenus) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editAutresRevnus" 
-                                       name="autres_revenus" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Frais Financier -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editFraisFinancier" class="form-label">
-                                <i class="fas fa-university"></i>FF (Frais Financier) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editFraisFinancier" 
-                                       name="frais_financier" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Charge d'Impôt sur le Revenu -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editChargeImpotSurRevenu" class="form-label">
-                                <i class="fas fa-balance-scale"></i>CIR (Charge d'Impôt sur le Revenu) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editChargeImpotSurRevenu" 
-                                       name="charge_impot_sur_revenu" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres Éléments du Résultat Global -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editAutresElementsResultatGlobal" class="form-label">
-                                <i class="fas fa-globe"></i>AERG (Autres Éléments du Résultat Global) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editAutresElementsResultatGlobal" 
-                                       name="autres_elements_resultat_global" step="0.01" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Résumé calculé -->
-                        <div class="col-md-12 mt-4">
-                            <div class="card bg-light border">
-                                <div class="card-body">
-                                    <h6 class="fw-bold mb-3">
-                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total PAO:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryPAO">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total VEN:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryVEN">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CE:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryCE">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total FVGA:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryFVGA">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AR:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryAR">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total FF:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryFF">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CIR:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryCIR">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AERG:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryAERG">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2 pt-2 border-top">
-                                                <span class="fw-bold">{% trans "Résultat net:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryResultat">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <div id="editSummaryStatus" class="performance-indicator result-neutral">
-                                            <i class="fas fa-minus-circle"></i>
-                                            <span>{% trans "Résultat neutre" %}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn-enhanced btn-success-enhanced">
-                                <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -1336,11 +912,10 @@ $(document).ready(function() {
     // Variables globales
     let currentPage = 1;
     let currentSearch = '';
-    let selectedResultatId = null;
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const ACCESS_TOKEN = '{{ access }}';
     const REFRESH_TOKEN = '{{ refresh }}';
-    
+
     // Formater les nombres
     function formatNumber(num, decimals = 2) {
         if (num === null || num === undefined || num === '') return '-';
@@ -1351,143 +926,41 @@ $(document).ready(function() {
             maximumFractionDigits: decimals
         });
     }
-    
+
     // Formater en devise
     function formatCurrency(num) {
         return formatNumber(num) + ' FCFA';
     }
-    
+
     // Calculer le résultat net
     function calculateNetResult(pao, ven, ce, fvga, ar, ff, cir, aerg) {
-        // Produits = PAO + VEN + AR
         const produits = (parseFloat(pao) || 0) + (parseFloat(ven) || 0) + (parseFloat(ar) || 0);
-        // Charges = CE + FVGA + FF + CIR + AERG
-        const charges = (parseFloat(ce) || 0) + (parseFloat(fvga) || 0) + (parseFloat(ff) || 0) + 
+        const charges = (parseFloat(ce) || 0) + (parseFloat(fvga) || 0) + (parseFloat(ff) || 0) +
                        (parseFloat(cir) || 0) + (parseFloat(aerg) || 0);
         return produits - charges;
     }
-    
+
     // Déterminer la classe CSS pour un résultat
     function getResultClass(result) {
         if (result > 0) return 'result-positive';
         if (result < 0) return 'result-negative';
         return 'result-neutral';
     }
-    
+
     // Déterminer l'icône pour un résultat
     function getResultIcon(result) {
         if (result > 0) return 'fas fa-arrow-up text-success';
         if (result < 0) return 'fas fa-arrow-down text-danger';
         return 'fas fa-minus text-muted';
     }
-    
+
     // Déterminer le texte pour un résultat
     function getResultText(result) {
         if (result > 0) return 'Bénéfice';
         if (result < 0) return 'Perte';
         return 'Équilibre';
     }
-    
-    // Initialiser Select2 avec fix pour les modals
-    function initSelect2() {
-        // Configuration pour Select2 avec dropdownParent fix
-        const select2Options = {
-            theme: 'bootstrap-5',
-            placeholder: 'Sélectionnez une année...',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#addResultatModal') // Fix pour l'affichage dans le modal
-        };
-        
-        const editSelect2Options = {
-            theme: 'bootstrap-5',
-            placeholder: 'Sélectionnez une année...',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#editResultatModal') // Fix pour l'affichage dans le modal
-        };
-        
-        // Initialiser avec délai
-        setTimeout(function() {
-            if ($('#annee').length) {
-                $('#annee').select2(select2Options);
-            }
-            
-            if ($('#editAnnee').length) {
-                $('#editAnnee').select2(editSelect2Options);
-            }
-        }, 100);
-        
-        // Fermer les selects quand le modal est fermé
-        $('#addResultatModal').on('hidden.bs.modal', function() {
-            $('#annee').select2('close');
-        });
-        
-        $('#editResultatModal').on('hidden.bs.modal', function() {
-            $('#editAnnee').select2('close');
-        });
-    }
-    
-    // Mettre à jour les résumés dans le formulaire d'ajout
-    function updateAddFormSummaries() {
-        const pao = parseFloat($('#produits_activites_ordinaires').val()) || 0;
-        const ven = parseFloat($('#ventes').val()) || 0;
-        const ce = parseFloat($('#charges_exploitation').val()) || 0;
-        const fvga = parseFloat($('#frais_vente_generaux_administratifs').val()) || 0;
-        const ar = parseFloat($('#autres_revenus').val()) || 0;
-        const ff = parseFloat($('#frais_financier').val()) || 0;
-        const cir = parseFloat($('#charge_impot_sur_revenu').val()) || 0;
-        const aerg = parseFloat($('#autres_elements_resultat_global').val()) || 0;
-        
-        const resultat = calculateNetResult(pao, ven, ce, fvga, ar, ff, cir, aerg);
-        
-        $('#summaryPAO').text(formatCurrency(pao));
-        $('#summaryVEN').text(formatCurrency(ven));
-        $('#summaryCE').text(formatCurrency(ce));
-        $('#summaryFVGA').text(formatCurrency(fvga));
-        $('#summaryAR').text(formatCurrency(ar));
-        $('#summaryFF').text(formatCurrency(ff));
-        $('#summaryCIR').text(formatCurrency(cir));
-        $('#summaryAERG').text(formatCurrency(aerg));
-        $('#summaryResultat').text(formatCurrency(resultat));
-        
-        // Mettre à jour l'indicateur de statut
-        const $status = $('#summaryStatus');
-        $status.removeClass('result-positive result-negative result-neutral');
-        $status.addClass(getResultClass(resultat));
-        $status.html(`<i class="${getResultIcon(resultat)}"></i> <span>${getResultText(resultat)}: ${formatCurrency(resultat)}</span>`);
-    }
-    
-    // Mettre à jour les résumés dans le formulaire d'édition
-    function updateEditFormSummaries() {
-        const pao = parseFloat($('#editProduitsActivitesOrdinaires').val()) || 0;
-        const ven = parseFloat($('#editVentes').val()) || 0;
-        const ce = parseFloat($('#editChargesExploitation').val()) || 0;
-        const fvga = parseFloat($('#editFraisVenteGenerauxAdministratifs').val()) || 0;
-        const ar = parseFloat($('#editAutresRevnus').val()) || 0;
-        const ff = parseFloat($('#editFraisFinancier').val()) || 0;
-        const cir = parseFloat($('#editChargeImpotSurRevenu').val()) || 0;
-        const aerg = parseFloat($('#editAutresElementsResultatGlobal').val()) || 0;
-        
-        const resultat = calculateNetResult(pao, ven, ce, fvga, ar, ff, cir, aerg);
-        
-        $('#editSummaryPAO').text(formatCurrency(pao));
-        $('#editSummaryVEN').text(formatCurrency(ven));
-        $('#editSummaryCE').text(formatCurrency(ce));
-        $('#editSummaryFVGA').text(formatCurrency(fvga));
-        $('#editSummaryAR').text(formatCurrency(ar));
-        $('#editSummaryFF').text(formatCurrency(ff));
-        $('#editSummaryCIR').text(formatCurrency(cir));
-        $('#editSummaryAERG').text(formatCurrency(aerg));
-        $('#editSummaryResultat').text(formatCurrency(resultat));
-        
-        // Mettre à jour l'indicateur de statut
-        const $status = $('#editSummaryStatus');
-        $status.removeClass('result-positive result-negative result-neutral');
-        $status.addClass(getResultClass(resultat));
-        $status.html(`<i class="${getResultIcon(resultat)}"></i> <span>${getResultText(resultat)}: ${formatCurrency(resultat)}</span>`);
-    }
-    
+
     // Charger les résultats
     function loadResultats() {
         const url = `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/liste-des-resultats/?page=${currentPage}&search=${currentSearch}`;
@@ -1626,11 +1099,11 @@ $(document).ready(function() {
                     </td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary edit-btn" data-id="${resultat.id}" 
-                                    data-bs-toggle="tooltip" title="Modifier">
+                            <a href="/root-dashboard/acheteurs/manager-un-acheteur/${ACHETEUR_ID}/bilan-anglais/resultats/${resultat.id}/modifier/"
+                               class="btn btn-outline-primary btn-sm" title="Modifier">
                                 <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger delete-btn" data-id="${resultat.id}" 
+                            </a>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${resultat.id}"
                                     data-bs-toggle="tooltip" title="Supprimer">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -1790,61 +1263,6 @@ $(document).ready(function() {
         }
     });
     
-    // Écouter les changements dans les champs de formulaire
-    $('#addResultatForm input[type="number"]').on('input', updateAddFormSummaries);
-    $('#editResultatForm input[type="number"]').on('input', updateEditFormSummaries);
-    
-    // Effacer le formulaire d'ajout
-    $('#clearAddFormBtn').on('click', function() {
-        if (confirm('Êtes-vous sûr de vouloir effacer tous les champs ?')) {
-            $('#addResultatForm')[0].reset();
-            $('#annee').val(null).trigger('change');
-            updateAddFormSummaries();
-        }
-    });
-    
-    // Éditer un résultat
-    $(document).on('click', '.edit-btn', function() {
-        const resultatId = $(this).data('id');
-        selectedResultatId = resultatId;
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-resultat/${resultatId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#editResultatId').val(response.id);
-                $('#editProduitsActivitesOrdinaires').val(response.produits_activites_ordinaires);
-                $('#editVentes').val(response.ventes);
-                $('#editChargesExploitation').val(response.charges_exploitation);
-                $('#editFraisVenteGenerauxAdministratifs').val(response.frais_vente_generaux_administratifs);
-                $('#editAutresRevnus').val(response.autres_revenus);
-                $('#editFraisFinancier').val(response.frais_financier);
-                $('#editChargeImpotSurRevenu').val(response.charge_impot_sur_revenu);
-                $('#editAutresElementsResultatGlobal').val(response.autres_elements_resultat_global);
-                $('#editAnnee').val(response.annee).trigger('change');
-                
-                updateEditFormSummaries();
-                $('#editResultatModal').modal('show');
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les données du résultat.'
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $(`.edit-btn[data-id="${resultatId}"]`).click();
-                    });
-                }
-            }
-        });
-    });
-    
     // Supprimer un résultat
     $(document).on('click', '.delete-btn', function() {
         const resultatId = $(this).data('id');
@@ -1893,133 +1311,6 @@ $(document).ready(function() {
                         }
                     }
                 });
-            }
-        });
-    });
-    
-    // Soumettre le formulaire d'ajout
-    $('#addResultatForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#addResultatForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/ajouter-un-resultat/`,
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#addResultatModal').modal('hide');
-                $('#addResultatForm')[0].reset();
-                $('#annee').val(null).trigger('change');
-                updateAddFormSummaries();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Résultat ajouté avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadResultats();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#addResultatForm').submit());
-                }
-            }
-        });
-    });
-    
-    // Soumettre le formulaire d'édition
-    $('#editResultatForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#editResultatForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-resultat/${selectedResultatId}/`,
-            type: 'PUT',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#editResultatModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Résultat mis à jour avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadResultats();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#editResultatForm').submit());
-                }
             }
         });
     });
@@ -2076,31 +1367,13 @@ $(document).ready(function() {
     function init() {
         // Initialiser les tooltips
         $('[data-bs-toggle="tooltip"]').tooltip();
-        
-        // Initialiser Select2
-        initSelect2();
-        
+
         // Charger les données initiales
         loadResultats();
-        updateAddFormSummaries();
-        updateEditFormSummaries();
     }
-    
+
     init();
 
-});
-</script>
-
-<!-- Script nicEdit original (conservé) -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    new nicEditor({
-        buttonList: [
-            'bold','italic','underline','left','center','right','justify',
-            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
-        ]
-    }).panelInstance('message');
 });
 </script>
 {% endblock %}

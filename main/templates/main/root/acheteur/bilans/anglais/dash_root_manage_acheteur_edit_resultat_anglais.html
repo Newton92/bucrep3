@@ -1,0 +1,279 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-border: #e2e8f0;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+.page-header { background: var(--primary-gradient); padding: 1.5rem 2rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem; color: white; box-shadow: var(--shadow-md); }
+.form-card { background: var(--color-card); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-md); padding: 2rem; }
+.enhanced-form .form-label { font-weight: 600; color: var(--color-text); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+.enhanced-form .form-label i { color: var(--color-primary); }
+.enhanced-form .form-control, .enhanced-form .form-select { border: 2px solid var(--color-border); border-radius: var(--radius-md); padding: 0.6rem 0.9rem; transition: border-color 0.2s; }
+.enhanced-form .form-control:focus, .enhanced-form .form-select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(10,149,202,0.15); }
+.btn-enhanced { border-radius: var(--radius-md); padding: 0.65rem 1.4rem; font-weight: 600; border: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; text-decoration: none; }
+.btn-enhanced:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-success-enhanced { background: var(--success-gradient); color: white; }
+.summary-box { background: #f8fafc; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-top: 1rem; }
+.result-positive { color: var(--color-success); }
+.result-negative { color: var(--color-danger); }
+.result-neutral { color: #6c757d; }
+.performance-indicator { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.9rem; border-radius: 50px; font-weight: 600; font-size: 0.9rem; }
+.pi-positive { background: rgba(40,167,69,0.1); color: var(--color-success); border: 1px solid rgba(40,167,69,0.3); }
+.pi-negative { background: rgba(220,53,69,0.1); color: var(--color-danger); border: 1px solid rgba(220,53,69,0.3); }
+.pi-neutral  { background: rgba(108,117,125,0.1); color: #6c757d; border: 1px solid rgba(108,117,125,0.3); }
+.loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-lg); z-index: 10; }
+.select2-container--bootstrap-5 .select2-selection { border: 2px solid var(--color-border); border-radius: var(--radius-md); min-height: 44px; display: flex; align-items: center; }
+.select2-container--bootstrap-5.select2-container--focus .select2-selection, .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: var(--color-primary) !important; box-shadow: 0 0 0 3px rgba(10,149,202,0.15); }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="page-header">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h4 class="mb-1 fw-bold"><i class="fas fa-edit me-2"></i>{% trans "Modifier le Résultat" %}</h4>
+                <small class="opacity-75">{{ acheteur.nom }} — {% trans "Bilan Anglais" %}</small>
+            </div>
+            <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' acheteur.id %}"
+               class="btn-enhanced" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);">
+                <i class="fas fa-arrow-left"></i>{% trans "Retour à la liste" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-lg-11">
+            <div class="form-card position-relative">
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <p class="text-muted mb-0">{% trans "Chargement..." %}</p>
+                    </div>
+                </div>
+                <form id="editForm" class="enhanced-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="acheteur" value="{{ acheteur.id }}">
+                    <div class="row g-3">
+
+                        <div class="col-12">
+                            <label for="annee" class="form-label"><i class="fas fa-calendar-alt"></i>{% trans "Année" %} *</label>
+                            <select class="form-select" id="annee" name="annee" required>
+                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                {% for annee in annee_list %}<option value="{{ annee.id }}">{{ annee.annee }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="produits_activites_ordinaires" class="form-label"><i class="fas fa-chart-bar"></i>{% trans "PAO — Produits des Activités Ordinaires" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="produits_activites_ordinaires" name="produits_activites_ordinaires" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ventes" class="form-label"><i class="fas fa-shopping-cart"></i>{% trans "VEN — Ventes" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="ventes" name="ventes" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="charges_exploitation" class="form-label"><i class="fas fa-cogs"></i>{% trans "CE — Charges d'Exploitation" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="charges_exploitation" name="charges_exploitation" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="frais_vente_generaux_administratifs" class="form-label"><i class="fas fa-file-invoice-dollar"></i>{% trans "FVGA — Frais de Vente, Généraux et Administratifs" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="frais_vente_generaux_administratifs" name="frais_vente_generaux_administratifs" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="autres_revenus" class="form-label"><i class="fas fa-money-bill-wave"></i>{% trans "AR — Autres Revenus" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="autres_revenus" name="autres_revenus" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="frais_financier" class="form-label"><i class="fas fa-university"></i>{% trans "FF — Frais Financier" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="frais_financier" name="frais_financier" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="charge_impot_sur_revenu" class="form-label"><i class="fas fa-balance-scale"></i>{% trans "CIR — Charge d'Impôt sur le Revenu" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="charge_impot_sur_revenu" name="charge_impot_sur_revenu" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="autres_elements_resultat_global" class="form-label"><i class="fas fa-globe"></i>{% trans "AERG — Autres Éléments du Résultat Global" %} *</label>
+                            <div class="input-group"><input type="number" class="form-control" id="autres_elements_resultat_global" name="autres_elements_resultat_global" step="0.01" required><span class="input-group-text">FCFA</span></div>
+                        </div>
+
+                        <!-- Summary -->
+                        <div class="col-12">
+                            <div class="summary-box">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">PAO:</span><span class="fw-bold" id="sumPAO">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">VEN:</span><span class="fw-bold" id="sumVEN">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">CE:</span><span class="fw-bold" id="sumCE">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">FVGA:</span><span class="fw-bold" id="sumFVGA">0 FCFA</span></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">AR:</span><span class="fw-bold" id="sumAR">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">FF:</span><span class="fw-bold" id="sumFF">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">CIR:</span><span class="fw-bold" id="sumCIR">0 FCFA</span></div>
+                                        <div class="mb-2 d-flex justify-content-between"><span class="text-muted">AERG:</span><span class="fw-bold" id="sumAERG">0 FCFA</span></div>
+                                        <div class="mb-2 pt-2 border-top d-flex justify-content-between">
+                                            <span class="fw-bold">{% trans "Résultat net:" %}</span>
+                                            <span class="fw-bold" id="sumResultat">0 FCFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="performance-indicator pi-neutral" id="statusIndicator">
+                                        <i class="fas fa-minus"></i> {% trans "Résultat neutre" %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-between mt-2">
+                            <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' acheteur.id %}" class="btn-enhanced" style="background:#6c757d;color:white;">
+                                <i class="fas fa-times"></i>{% trans "Annuler" %}
+                            </a>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitBtn">
+                                <i class="fas fa-save"></i>{% trans "Mettre à jour" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    const ACHETEUR_ID   = '{{ acheteur.id }}';
+    const RESULTAT_ID   = '{{ resultat_id }}';
+    const ACCESS_TOKEN  = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+
+    $('#annee').select2({ theme: 'bootstrap-5', width: '100%', placeholder: '{% trans "Sélectionnez une année..." %}' });
+
+    function fmt(val) { return (parseFloat(val) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' FCFA'; }
+
+    function calcNet(pao, ven, ce, fvga, ar, ff, cir, aerg) {
+        return ((pao||0) + (ven||0) + (ar||0)) - ((ce||0) + (fvga||0) + (ff||0) + (cir||0) + (aerg||0));
+    }
+
+    function updateSummary() {
+        const pao  = parseFloat($('#produits_activites_ordinaires').val()) || 0;
+        const ven  = parseFloat($('#ventes').val()) || 0;
+        const ce   = parseFloat($('#charges_exploitation').val()) || 0;
+        const fvga = parseFloat($('#frais_vente_generaux_administratifs').val()) || 0;
+        const ar   = parseFloat($('#autres_revenus').val()) || 0;
+        const ff   = parseFloat($('#frais_financier').val()) || 0;
+        const cir  = parseFloat($('#charge_impot_sur_revenu').val()) || 0;
+        const aerg = parseFloat($('#autres_elements_resultat_global').val()) || 0;
+        const net  = calcNet(pao, ven, ce, fvga, ar, ff, cir, aerg);
+
+        $('#sumPAO').text(fmt(pao)); $('#sumVEN').text(fmt(ven)); $('#sumCE').text(fmt(ce));
+        $('#sumFVGA').text(fmt(fvga)); $('#sumAR').text(fmt(ar)); $('#sumFF').text(fmt(ff));
+        $('#sumCIR').text(fmt(cir)); $('#sumAERG').text(fmt(aerg));
+        $('#sumResultat').removeClass('result-positive result-negative result-neutral').text(fmt(net));
+
+        const $ind = $('#statusIndicator');
+        $ind.removeClass('pi-positive pi-negative pi-neutral');
+        if (net > 0) {
+            $('#sumResultat').addClass('result-positive');
+            $ind.addClass('pi-positive').html('<i class="fas fa-arrow-up"></i> {% trans "Bénéfice" %}: ' + fmt(net));
+        } else if (net < 0) {
+            $('#sumResultat').addClass('result-negative');
+            $ind.addClass('pi-negative').html('<i class="fas fa-arrow-down"></i> {% trans "Perte" %}: ' + fmt(net));
+        } else {
+            $('#sumResultat').addClass('result-neutral');
+            $ind.addClass('pi-neutral').html('<i class="fas fa-minus"></i> {% trans "Équilibre" %}');
+        }
+    }
+
+    $('#editForm input[type="number"]').on('input', updateSummary);
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => { c = c.trim(); if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1)); });
+        return v;
+    }
+
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/', type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
+            success: function(r) { if (r.access && typeof callback === 'function') callback(); },
+            error: function() { Swal.fire({ icon: 'error', title: '{% trans "Session expirée" %}', confirmButtonText: '{% trans "Se reconnecter" %}' }).then(() => { window.location.href = '/login/'; }); }
+        });
+    }
+
+    function loadResultat() {
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-resultat/${RESULTAT_ID}/`,
+            type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(data) {
+                $('#annee').val(data.annee).trigger('change');
+                $('#produits_activites_ordinaires').val(data.produits_activites_ordinaires);
+                $('#ventes').val(data.ventes);
+                $('#charges_exploitation').val(data.charges_exploitation);
+                $('#frais_vente_generaux_administratifs').val(data.frais_vente_generaux_administratifs);
+                $('#autres_revenus').val(data.autres_revenus);
+                $('#frais_financier').val(data.frais_financier);
+                $('#charge_impot_sur_revenu').val(data.charge_impot_sur_revenu);
+                $('#autres_elements_resultat_global').val(data.autres_elements_resultat_global);
+                updateSummary();
+                $('#loadingOverlay').hide();
+            },
+            error: function(xhr) {
+                $('#loadingOverlay').hide();
+                Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}', text: '{% trans "Impossible de charger les données du résultat." %}' });
+                if (xhr.status === 401) refreshAccessToken(loadResultat);
+            }
+        });
+    }
+
+    loadResultat();
+
+    $('#editForm').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $('#submitBtn');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Mise à jour..." %}');
+
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-resultat/${RESULTAT_ID}/`,
+            type: 'PUT',
+            data: $(this).serialize(),
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function() {
+                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Résultat mis à jour avec succès" %}', timer: 1800, showConfirmButton: false })
+                    .then(() => { window.location.href = "{% url 'dash_root_manage_acheteur_resultat_anglais' acheteur.id %}"; });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}');
+                let msg = '{% trans "Une erreur est survenue" %}';
+                if (xhr.responseJSON?.detail) msg = xhr.responseJSON.detail;
+                else if (xhr.responseJSON?.error) msg = xhr.responseJSON.error;
+                Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}', text: msg });
+                if (xhr.status === 401) refreshAccessToken(() => $('#editForm').submit());
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

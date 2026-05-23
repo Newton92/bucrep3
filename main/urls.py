@@ -541,6 +541,36 @@ urlpatterns = [
         name="dash_root_manage_acheteur_resultat_anglais",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/actifs/ajouter/",
+        dash_root_manage_acheteur_add_actif_anglais,
+        name="dash_root_manage_acheteur_add_actif_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/actifs/<int:actif_id>/modifier/",
+        dash_root_manage_acheteur_edit_actif_anglais,
+        name="dash_root_manage_acheteur_edit_actif_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/passifs/ajouter/",
+        dash_root_manage_acheteur_add_passif_anglais,
+        name="dash_root_manage_acheteur_add_passif_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/passifs/<int:passif_id>/modifier/",
+        dash_root_manage_acheteur_edit_passif_anglais,
+        name="dash_root_manage_acheteur_edit_passif_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/resultats/ajouter/",
+        dash_root_manage_acheteur_add_resultat_anglais,
+        name="dash_root_manage_acheteur_add_resultat_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/resultats/<int:resultat_id>/modifier/",
+        dash_root_manage_acheteur_edit_resultat_anglais,
+        name="dash_root_manage_acheteur_edit_resultat_anglais",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/actifs/",
         dash_root_manage_acheteur_actif_classique,
         name="dash_root_manage_acheteur_actif_classique",

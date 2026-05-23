@@ -726,10 +726,9 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
-                                    data-bs-toggle="modal" data-bs-target="#addActifModal">
+                            <a href="{% url 'dash_root_manage_acheteur_add_actif_anglais' acheteur.id %}" class="btn-enhanced btn-success-enhanced w-100 d-flex align-items-center justify-content-center">
                                 <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter" %}
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -796,320 +795,9 @@
     </div>
 </div>
 
-<!-- Modal Ajout Actif -->
-<div class="modal fade enhanced-modal" id="addActifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouvel Actif" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addActifForm" class="enhanced-form">
-                <input type="hidden" value="{{ acheteur.id }}" name="acheteur" />
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Remplissez les champs ci-dessous pour ajouter un nouvel actif. Les champs marqués d'un astérisque (*) sont obligatoires.
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Année -->
-                        <div class="col-md-12 mb-3">
-                            <label for="annee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>Année *
-                            </label>
-                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
-                                <option value="">{% trans "Sélectionnez une année..." %}</option>
-                                {% for annee in annee_list %}
-                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- BIE -->
-                        <div class="col-md-6 mb-3">
-                            <label for="biens_installations_equipements" class="form-label">
-                                <i class="fas fa-building"></i>BIE (Biens, Installations et Équipements) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="biens_installations_equipements" 
-                                       name="biens_installations_equipements" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- INV -->
-                        <div class="col-md-6 mb-3">
-                            <label for="inventaire" class="form-label">
-                                <i class="fas fa-boxes"></i>INV (Inventaire) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="inventaire" 
-                                       name="inventaire" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- CCA -->
-                        <div class="col-md-6 mb-3">
-                            <label for="creances_commerciales_autres_creances" class="form-label">
-                                <i class="fas fa-file-invoice-dollar"></i>CCA (Créances Commerciales et Autres) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="creances_commerciales_autres_creances" 
-                                       name="creances_commerciales_autres_creances" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- AIC -->
-                        <div class="col-md-6 mb-3">
-                            <label for="actif_impots_courant" class="form-label">
-                                <i class="fas fa-balance-scale"></i>AIC (Actif d'Impôts Courant) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="actif_impots_courant" 
-                                       name="actif_impots_courant" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- CB -->
-                        <div class="col-md-12 mb-3">
-                            <label for="caisses_banques" class="form-label">
-                                <i class="fas fa-university"></i>CB (Caisse et Banque) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="caisses_banques" 
-                                       name="caisses_banques" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Résumé calculé -->
-                        <div class="col-md-12">
-                            <div class="card bg-light border">
-                                <div class="card-body">
-                                    <h6 class="fw-bold mb-3">
-                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total BIE:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryBIE">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total INV:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryINV">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CCA:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCCA">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AIC:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryAIC">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CB:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCB">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2 pt-2 border-top">
-                                                <span class="text-primary fw-bold">{% trans "Total général:" %}</span>
-                                                <span class="fw-bold text-primary float-end" id="summaryTotal">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
-                                    style="background: #ffc107; color: #000;">
-                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
-                            </button>
-                            <button type="submit" class="btn-enhanced btn-success-enhanced">
-                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Modification Actif -->
-<div class="modal fade enhanced-modal" id="editActifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Actif" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editActifForm" class="enhanced-form">
-                <input type="hidden" id="editActifId" name="id">
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Modifiez les champs ci-dessous pour mettre à jour l'actif.
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Année -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editAnnee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>Année *
-                            </label>
-                            <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
-                                {% for annee in annee_list %}
-                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- BIE -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editBiensInstallationsEquipements" class="form-label">
-                                <i class="fas fa-building"></i>BIE (Biens, Installations et Équipements) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editBiensInstallationsEquipements" 
-                                       name="biens_installations_equipements" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- INV -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editInventaire" class="form-label">
-                                <i class="fas fa-boxes"></i>INV (Inventaire) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editInventaire" 
-                                       name="inventaire" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- CCA -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editCreancesCommercialesAutresCreances" class="form-label">
-                                <i class="fas fa-file-invoice-dollar"></i>CCA (Créances Commerciales et Autres) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editCreancesCommercialesAutresCreances" 
-                                       name="creances_commerciales_autres_creances" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- AIC -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editActifImpotsCourant" class="form-label">
-                                <i class="fas fa-balance-scale"></i>AIC (Actif d'Impôts Courant) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editActifImpotsCourant" 
-                                       name="actif_impots_courant" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- CB -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editCaissesBanques" class="form-label">
-                                <i class="fas fa-university"></i>CB (Caisse et Banque) *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="editCaissesBanques" 
-                                       name="caisses_banques" step="0.01" min="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Résumé calculé -->
-                        <div class="col-md-12">
-                            <div class="card bg-light border">
-                                <div class="card-body">
-                                    <h6 class="fw-bold mb-3">
-                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total BIE:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryBIE">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total INV:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryINV">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CCA:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryCCA">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total AIC:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryAIC">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Total CB:" %}</span>
-                                                <span class="fw-bold float-end" id="editSummaryCB">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2 pt-2 border-top">
-                                                <span class="text-primary fw-bold">{% trans "Total général:" %}</span>
-                                                <span class="fw-bold text-primary float-end" id="editSummaryTotal">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn-enhanced btn-success-enhanced">
-                                <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -1117,11 +805,10 @@ $(document).ready(function() {
     // Variables globales
     let currentPage = 1;
     let currentSearch = '';
-    let selectedActifId = null;
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const ACCESS_TOKEN = '{{ access }}';
     const REFRESH_TOKEN = '{{ refresh }}';
-    
+
     // Formater les nombres
     function formatNumber(num, decimals = 2) {
         if (num === null || num === undefined || num === '') return '-';
@@ -1132,70 +819,12 @@ $(document).ready(function() {
             maximumFractionDigits: decimals
         });
     }
-    
+
     // Formater en devise
     function formatCurrency(num) {
         return formatNumber(num) + ' FCFA';
     }
-    
-    // Initialiser Select2
-    function initSelect2() {
-        // Configuration pour les selects dans les modals
-        const select2Config = {
-            theme: 'bootstrap-5',
-            placeholder: 'Sélectionnez une année...',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#addActifModal')  // Important: dire à Select2 où ouvrir le dropdown
-        };
-        
-        const editSelect2Config = {
-            theme: 'bootstrap-5',
-            placeholder: 'Sélectionnez une année...',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#editActifModal')  // Important: dire à Select2 où ouvrir le dropdown
-        };
-        
-        // Appliquer la configuration
-        $('#annee').select2(select2Config);
-        $('#editAnnee').select2(editSelect2Config);
-    }
-    
-    // Mettre à jour les résumés dans le formulaire d'ajout
-    function updateAddFormSummaries() {
-        const bie = parseFloat($('#biens_installations_equipements').val()) || 0;
-        const inv = parseFloat($('#inventaire').val()) || 0;
-        const cca = parseFloat($('#creances_commerciales_autres_creances').val()) || 0;
-        const aic = parseFloat($('#actif_impots_courant').val()) || 0;
-        const cb = parseFloat($('#caisses_banques').val()) || 0;
-        const total = bie + inv + cca + aic + cb;
-        
-        $('#summaryBIE').text(formatCurrency(bie));
-        $('#summaryINV').text(formatCurrency(inv));
-        $('#summaryCCA').text(formatCurrency(cca));
-        $('#summaryAIC').text(formatCurrency(aic));
-        $('#summaryCB').text(formatCurrency(cb));
-        $('#summaryTotal').text(formatCurrency(total));
-    }
-    
-    // Mettre à jour les résumés dans le formulaire d'édition
-    function updateEditFormSummaries() {
-        const bie = parseFloat($('#editBiensInstallationsEquipements').val()) || 0;
-        const inv = parseFloat($('#editInventaire').val()) || 0;
-        const cca = parseFloat($('#editCreancesCommercialesAutresCreances').val()) || 0;
-        const aic = parseFloat($('#editActifImpotsCourant').val()) || 0;
-        const cb = parseFloat($('#editCaissesBanques').val()) || 0;
-        const total = bie + inv + cca + aic + cb;
-        
-        $('#editSummaryBIE').text(formatCurrency(bie));
-        $('#editSummaryINV').text(formatCurrency(inv));
-        $('#editSummaryCCA').text(formatCurrency(cca));
-        $('#editSummaryAIC').text(formatCurrency(aic));
-        $('#editSummaryCB').text(formatCurrency(cb));
-        $('#editSummaryTotal').text(formatCurrency(total));
-    }
-    
+
     // Charger les actifs
     function loadActifs() {
         const url = `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/liste-des-actifs/?page=${currentPage}&search=${currentSearch}`;
@@ -1310,11 +939,11 @@ $(document).ready(function() {
                     </td>
                     <td class="text-center">
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary edit-btn" data-id="${actif.id}" 
-                                    data-bs-toggle="tooltip" title="Modifier">
+                            <a href="/root-dashboard/acheteurs/manager-un-acheteur/${ACHETEUR_ID}/bilan-anglais/actifs/${actif.id}/modifier/"
+                               class="btn btn-outline-primary btn-sm" title="Modifier">
                                 <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger delete-btn" data-id="${actif.id}" 
+                            </a>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${actif.id}"
                                     data-bs-toggle="tooltip" title="Supprimer">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -1444,58 +1073,6 @@ $(document).ready(function() {
         }
     });
     
-    // Écouter les changements dans les champs de formulaire
-    $('#addActifForm input[type="number"]').on('input', updateAddFormSummaries);
-    $('#editActifForm input[type="number"]').on('input', updateEditFormSummaries);
-    
-    // Effacer le formulaire d'ajout
-    $('#clearAddFormBtn').on('click', function() {
-        if (confirm('Êtes-vous sûr de vouloir effacer tous les champs ?')) {
-            $('#addActifForm')[0].reset();
-            $('#annee').val(null).trigger('change');
-            updateAddFormSummaries();
-        }
-    });
-    
-    // Éditer un actif
-    $(document).on('click', '.edit-btn', function() {
-        const actifId = $(this).data('id');
-        selectedActifId = actifId;
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-actif/${actifId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#editActifId').val(response.id);
-                $('#editBiensInstallationsEquipements').val(response.biens_installations_equipements);
-                $('#editInventaire').val(response.inventaire);
-                $('#editCreancesCommercialesAutresCreances').val(response.creances_commerciales_autres_creances);
-                $('#editActifImpotsCourant').val(response.actif_impots_courant);
-                $('#editCaissesBanques').val(response.caisses_banques);
-                $('#editAnnee').val(response.annee).trigger('change');
-                
-                updateEditFormSummaries();
-                $('#editActifModal').modal('show');
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les données de l\'actif.'
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $(`.edit-btn[data-id="${actifId}"]`).click();
-                    });
-                }
-            }
-        });
-    });
-    
     // Supprimer un actif
     $(document).on('click', '.delete-btn', function() {
         const actifId = $(this).data('id');
@@ -1544,133 +1121,6 @@ $(document).ready(function() {
                         }
                     }
                 });
-            }
-        });
-    });
-    
-    // Soumettre le formulaire d'ajout
-    $('#addActifForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#addActifForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/ajouter-un-actif/`,
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#addActifModal').modal('hide');
-                $('#addActifForm')[0].reset();
-                $('#annee').val(null).trigger('change');
-                updateAddFormSummaries();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Actif ajouté avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadActifs();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#addActifForm').submit());
-                }
-            }
-        });
-    });
-    
-    // Soumettre le formulaire d'édition
-    $('#editActifForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#editActifForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/editer-un-actif/${selectedActifId}/`,
-            type: 'PUT',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#editActifModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Actif mis à jour avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadActifs();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#editActifForm').submit());
-                }
             }
         });
     });
@@ -1727,31 +1177,13 @@ $(document).ready(function() {
     function init() {
         // Initialiser les tooltips
         $('[data-bs-toggle="tooltip"]').tooltip();
-        
-        // Initialiser Select2
-        initSelect2();
-        
+
         // Charger les données initiales
         loadActifs();
-        updateAddFormSummaries();
-        updateEditFormSummaries();
     }
-    
+
     init();
 
-});
-</script>
-
-<!-- Script nicEdit original (conservé) -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    new nicEditor({
-        buttonList: [
-            'bold','italic','underline','left','center','right','justify',
-            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
-        ]
-    }).panelInstance('message');
 });
 </script>
 {% endblock %}

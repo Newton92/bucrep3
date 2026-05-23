@@ -4879,6 +4879,86 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     )
 
 
+def _bilan_anglais_base_context(request, acheteur_id):
+    """Shared context builder for all bilan anglais add/edit views."""
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
+        id=acheteur_id,
+    )
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        return None, acheteur
+    return {
+        "acheteur_active": "active",
+        "user": request.user,
+        "access": access_token,
+        "refresh": refresh_token,
+        "acheteur": acheteur,
+        "annee_list": Annee.objects.all(),
+    }, acheteur
+
+
+@login_required
+def dash_root_manage_acheteur_add_actif_anglais(request, acheteur_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_add_actif_anglais.html", ctx)
+
+
+@login_required
+def dash_root_manage_acheteur_edit_actif_anglais(request, acheteur_id, actif_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    ctx["actif_id"] = actif_id
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_edit_actif_anglais.html", ctx)
+
+
+@login_required
+def dash_root_manage_acheteur_add_passif_anglais(request, acheteur_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_add_passif_anglais.html", ctx)
+
+
+@login_required
+def dash_root_manage_acheteur_edit_passif_anglais(request, acheteur_id, passif_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    ctx["passif_id"] = passif_id
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_edit_passif_anglais.html", ctx)
+
+
+@login_required
+def dash_root_manage_acheteur_add_resultat_anglais(request, acheteur_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_add_resultat_anglais.html", ctx)
+
+
+@login_required
+def dash_root_manage_acheteur_edit_resultat_anglais(request, acheteur_id, resultat_id):
+    ctx, acheteur = _bilan_anglais_base_context(request, acheteur_id)
+    if ctx is None:
+        messages.error(request, "Erreur d'authentification.")
+        return redirect_to_login(request.get_full_path())
+    ctx["resultat_id"] = resultat_id
+    return render(request, "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_edit_resultat_anglais.html", ctx)
+
+
 
 
 
