@@ -7411,581 +7411,668 @@ class Banquier(Model):
 
 # Debut Modules Bilan Anglais
 
-class ActifA(Model):
-    """Modele metier: ActifA."""
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    # ... (champs existants)
-    annee = models.ForeignKey(
-        "Annee",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile"),
+class ActifA(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    annee = models.ForeignKey('Annee', on_delete=models.DO_NOTHING)
+    acheteur = models.ForeignKey('Acheteur', on_delete=models.DO_NOTHING)
+
+    # NON-CURRENT ASSETS
+    biens_installations_equipements = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Property, plant and equipment")
     )
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur"),
+    droit_utilisation = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Right-of-use assets")
+    )
+    immobilisations_incorporelles = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Intangible assets")
+    )
+    goodwill = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Goodwill")
+    )
+    actif_impot_differe = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Deferred tax assets")
+    )
+    investissements_associes = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Investment in associates")
+    )
+    creances_pret_non_courant = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Loans receivable (non-current)")
+    )
+    actifs_financiers_juste_valeur_resultat = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Financial assets at fair value through profit or loss")
     )
 
-    biens_installations_equipements = models.DecimalField(
-        max_digits=100,
-        decimal_places=5,
-        null=True,
-        blank=True,
-        verbose_name=_("Biens, installations et équipements"),
-    )
+    # CURRENT ASSETS
     inventaire = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Inventory")
     )
     creances_commerciales_autres_creances = models.DecimalField(
-        max_digits=100,
-        decimal_places=5,
-        null=True,
-        blank=True,
-        verbose_name=_("Créances commerciales et autres"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Trade and other receivables")
     )
     actif_impots_courant = models.DecimalField(
-        max_digits=100,
-        decimal_places=5,
-        null=True,
-        blank=True,
-        verbose_name=_("Actif d'Impôts courant"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Income tax receivable")
+    )
+    creances_pret_courant = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Loans receivable (current)")
     )
     caisses_banques = models.DecimalField(
-        max_digits=100,
-        decimal_places=5,
-        null=True,
-        blank=True,
-        verbose_name=_("Caisse et banque"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Cash and cash equivalents")
+    )
+    actifs_financiers_derives = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Derivative financial assets")
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-
-    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "User",
-        related_name="actifa_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
+        'User', related_name='actifa_user_update',
+        null=True, blank=True, on_delete=models.DO_NOTHING
     )
 
     history = HistoricalRecords()
 
-
     def __str__(self):
-        return (
-            _("Actif bilan anglais : ")
-            + str(self.id)
-            + ". "
-            + str(self.acheteur)
-            + " ("
-            + str(self.annee)
-            + ")"
-        )
+        return f"Actif bilan anglais : {self.id}. {self.acheteur} ({self.annee})"
 
     class Meta:
         verbose_name = _("Actif bilan anglais")
         verbose_name_plural = _("Actifs bilans anglais")
 
-    @property
     def total_actifs_non_courants(self):
-        """Calcule le total des actifs non-courants (immobilisés)."""
-        return self.biens_installations_equipements or 0
+        o = Decimal("0.0")
+        return (
+            (self.biens_installations_equipements or o) +
+            (self.droit_utilisation or o) +
+            (self.immobilisations_incorporelles or o) +
+            (self.goodwill or o) +
+            (self.actif_impot_differe or o) +
+            (self.investissements_associes or o) +
+            (self.creances_pret_non_courant or o) +
+            (self.actifs_financiers_juste_valeur_resultat or o)
+        )
 
-    @property
-    def total_actifs_courants(self):
-        """Calcule le total des actifs courants."""
-        fields = [self.inventaire, self.creances_commerciales_autres_creances, self.actif_impots_courant, self.caisses_banques]
-        return sum(f or 0 for f in fields)
-        
-    @property
+    def total_actif_circulant(self):
+        o = Decimal("0.0")
+        return (
+            (self.inventaire or o) +
+            (self.creances_commerciales_autres_creances or o) +
+            (self.actif_impots_courant or o) +
+            (self.creances_pret_courant or o) +
+            (self.caisses_banques or o) +
+            (self.actifs_financiers_derives or o)
+        )
+
     def total_actif(self):
-        """Calcule le total général de l'actif."""
-        return self.total_actifs_non_courants + self.total_actifs_courants
-    
-    # PROPRIÉTÉS ANALYTIQUES SUPPLEMENTAIRES
-    
-    @property
-    def ratio_liquidite(self):
-        """Ratio de liquidité (actifs courants / total actif)."""
-        if self.total_actif:
-            return float(self.actifs_courants) / float(self.total_actif)
-        return 0
-    
-    @property
-    def ratio_tresorerie(self):
-        """Ratio de trésorerie (caisse / actifs courants)."""
-        if self.actifs_courants and self.caisses_banques:
-            return float(self.caisses_banques) / float(self.actifs_courants)
-        return 0
-    
-    @property
-    def rotation_stocks(self):
-        """Rotation des stocks (inventaire / actifs courants)."""
-        if self.actifs_courants and self.inventaire:
-            return float(self.inventaire) / float(self.actifs_courants)
-        return 0
-    
-    @property
-    def jours_creances_clients(self):
-        """Jours de créances clients estimés."""
-        # Formule simplifiée : (créances / CA annuel) * 365
-        # À adapter avec les données réelles de CA
-        return None  # À implémenter avec données supplémentaires
-    
-    def get_summary(self):
-        """Retourne un résumé de l'actif."""
-        return {
-            'actifs_non_courants': float(self.actifs_non_courants),
-            'actifs_courants': float(self.actifs_courants),
-            'total_actif': float(self.total_actif),
-            'inventaire': float(self.inventaire) if self.inventaire else 0,
-            'creances': float(self.creances_commerciales_autres_creances) if self.creances_commerciales_autres_creances else 0,
-            'liquidite': float(self.caisses_banques) if self.caisses_banques else 0,
-            'ratio_liquidite': self.ratio_liquidite,
-            'ratio_tresorerie': self.ratio_tresorerie,
-            'rotation_stocks': self.rotation_stocks,
-        }
+        return self.total_actifs_non_courants() + self.total_actif_circulant()
 
 
-class PassifA(Model):
-    """Modele metier: PassifA."""
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    # ... (champs existants)
-    annee = models.ForeignKey(
-        "Annee",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile"),
-    )
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur"),
-    )
+class PassifA(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
-    capital_reserves = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Capital et Réserves"),
+    annee = models.ForeignKey('Annee', on_delete=models.DO_NOTHING)
+    acheteur = models.ForeignKey('Acheteur', on_delete=models.DO_NOTHING)
+
+    # CAPITAL & RESERVES
+    capital_social = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Share capital")
     )
-    capital_declare = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Capital déclaré"),
+    prime_emission = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Share premium")
+    )
+    reserve_couverture_tresorerie = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Cash flow hedge reserve")
+    )
+    reserve_cout_couverture = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Cost of hedging reserve")
+    )
+    reserve_conversion_devise = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Foreign currency translation reserve")
     )
     benefices_non_distribues = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Bénéfices non distribués"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Retained earnings")
+    )
+    resultat_net_exercice = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Net result of the year")
+    )
+    reserve_distribuable = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Distributable reserve")
     )
 
-    pret_bancaire = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Prêt bancaire"),
+    # NON-CURRENT LIABILITIES
+    dettes_financieres_pret_bancaire = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Financial debts (bank loan)")
+    )
+    dettes_commerciales_long_terme = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Long term trade liabilities")
     )
     compte_courant_administrateurs = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Compte courant des administrateurs"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Directors current account")
+    )
+    provisions_long_terme = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Long term provisions")
+    )
+    autres_passifs_long_terme = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Other long term liabilities")
     )
 
+    # CURRENT LIABILITIES
     dettes_commerciales_autres_dettes = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Dettes commerciales et autres dettes"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Trade and other payables")
     )
-    decouvert_bancaire = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Découvert bancaire"),
+    dettes_location = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Lease liabilities")
+    )
+    avantages_employes = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Employee benefits")
     )
     impots = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Impôts"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Income tax payable")
+    )
+    passifs_financiers_derives = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Derivative financial liabilities")
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-
-    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "User",
-        related_name="passifa_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
+        'User', related_name='passifa_user_update',
+        null=True, blank=True, on_delete=models.DO_NOTHING
     )
 
     history = HistoricalRecords()
 
-
     def __str__(self):
-        return (
-            _("Passif bilan anglais : ")
-            + str(self.id)
-            + ". "
-            + str(self.acheteur)
-            + " ("
-            + str(self.annee)
-            + ")"
-        )
+        return f"Passif bilan anglais : {self.id}. {self.acheteur} ({self.annee})"
 
     class Meta:
         verbose_name = _("Passif bilan anglais")
         verbose_name_plural = _("Passifs bilans anglais")
 
-    @property
     def total_fonds_propres(self):
-        """Calcule le total des fonds propres."""
-        return (self.capital_reserves or 0) + (self.capital_declare or 0) + (self.benefices_non_distribues or 0)
+        o = Decimal("0.0")
+        return (
+            (self.capital_social or o) +
+            (self.prime_emission or o) +
+            (self.reserve_couverture_tresorerie or o) +
+            (self.reserve_cout_couverture or o) +
+            (self.reserve_conversion_devise or o) +
+            (self.benefices_non_distribues or o) +
+            (self.resultat_net_exercice or o) +
+            (self.reserve_distribuable or o)
+        )
 
-    @property
-    def total_passifs_non_courants(self):
-        """Calcule le total des passifs à long terme."""
-        fields = [self.pret_bancaire, self.compte_courant_administrateurs]
-        return sum(f or 0 for f in fields)
+    def total_passif_long_terme(self):
+        o = Decimal("0.0")
+        return (
+            (self.dettes_financieres_pret_bancaire or o) +
+            (self.dettes_commerciales_long_terme or o) +
+            (self.compte_courant_administrateurs or o) +
+            (self.provisions_long_terme or o) +
+            (self.autres_passifs_long_terme or o)
+        )
 
-    @property
-    def total_passifs_courants(self):
-        """Calcule le total des passifs courants."""
-        fields = [self.dettes_commerciales_autres_dettes, self.decouvert_bancaire, self.impots]
-        return sum(f or 0 for f in fields)
-        
-    @property
+    def total_passif_circulant(self):
+        o = Decimal("0.0")
+        return (
+            (self.dettes_commerciales_autres_dettes or o) +
+            (self.dettes_location or o) +
+            (self.avantages_employes or o) +
+            (self.impots or o) +
+            (self.passifs_financiers_derives or o)
+        )
+
     def total_passif(self):
-        """Calcule le total général du passif."""
-        return self.total_fonds_propres + self.total_passifs_non_courants + self.total_passifs_courants
-        
-    @property
-    def total_fonds_propres_passif(self):
-        """Calcule le total fonds propres du passif."""
-        pass
+        return self.total_passif_long_terme() + self.total_passif_circulant()
+
+    def total_capitaux_propres_et_passif(self):
+        return self.total_fonds_propres() + self.total_passif()
 
 
-class ResultatA(Model):
-    """Modele metier: ResultatA."""
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    # ... (champs existants)
-    annee = models.ForeignKey(
-        "Annee",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile"),
-    )
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur"),
-    )
+class ResultatA(SafeDeleteModel):
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
-    produits_activites_ordinaires = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Produits des activités ordinaires"),
+    annee = models.ForeignKey('Annee', on_delete=models.DO_NOTHING)
+    acheteur = models.ForeignKey('Acheteur', on_delete=models.DO_NOTHING)
+
+    # REVENUE / DIRECT COSTS
+    chiffre_affaires = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Revenue (Turnover)")
     )
-    ventes = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True
+    cout_des_ventes = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Cost of Sales")
     )
     charges_exploitation = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Charges d'exploitation"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Operating Costs")
     )
-    frais_vente_generaux_administratifs = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Frais de vente, généraux et administratifs"),
-    )
+
+    # OTHER INCOME
     autres_revenus = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Other Income")
     )
-    frais_financier = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True
+
+    # OPERATING EXPENSES
+    charges_administratives = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Administrative Expenses")
     )
+    depreciation_amortissement = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Depreciation and amortisation")
+    )
+    couts_occupation = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Occupancy costs")
+    )
+    couts_personnel = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Employment costs")
+    )
+    autres_couts = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Other costs")
+    )
+
+    # DISPOSAL / EXTRAORDINARY
+    perte_cession_immobilisations = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Loss on disposal of property, plant and equipment")
+    )
+    profit_cession_activite = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Profit on disposal of business")
+    )
+
+    # FINANCE
+    revenus_financiers = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Financial income")
+    )
+    charges_financieres = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Financial expense")
+    )
+    charge_nette_financement = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Net financing expense")
+    )
+
+    # TAX / ASSOCIATES / OCI
     charge_impot_sur_revenu = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Charge d'impôt sur le revenu"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Income tax expense")
+    )
+    quote_part_perte_associes = models.DecimalField(
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Share of loss of associates")
     )
     autres_elements_resultat_global = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Autres éléments du résultat global"),
+        max_digits=100, decimal_places=5, null=True, blank=True,
+        verbose_name=_("Other Comprehensive Income")
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-
-    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "User",
-        related_name="resultata_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
+        'User', related_name='resultata_user_update',
+        null=True, blank=True, on_delete=models.DO_NOTHING
     )
 
     history = HistoricalRecords()
 
-
     def __str__(self):
-        return (
-            _("Résultat bilan anglais : ")
-            + str(self.id)
-            + ". "
-            + str(self.acheteur)
-            + " ("
-            + str(self.annee)
-            + ")"
-        )
+        return f"{self.acheteur} - {self.annee}"
 
     class Meta:
         verbose_name = _("Résultat bilan anglais")
         verbose_name_plural = _("Résultat bilans anglais")
 
-    @property
-    def marge_brute(self):
-        """Calcule la marge brute."""
-        return (self.ventes or 0) - (self.charges_exploitation or 0)
-    
-    @property
-    def resultat_exploitation(self):
-        """Calcule le résultat d'exploitation (Operating Profit)."""
-        return self.marge_brute - (self.frais_vente_generaux_administratifs or 0)
-        
-    @property
-    def resultat_avant_interets_impots(self):
-        """Calcule le bénéfice avant coûts financiers et impôts (EBIT)."""
-        return self.resultat_exploitation + (self.autres_revenus or 0)
-    
-    @property
-    def resultat_avant_impots(self):
-        """Calcule le résultat avant impôts (PBT)."""
-        return self.resultat_avant_interets_impots - (self.frais_financier or 0)
-    
-    @property
-    def resultat_net(self):
-        """Calcule le résultat net (Net Income)."""
-        return self.resultat_avant_impots - (self.charge_impot_sur_revenu or 0)
+    def gross_profit(self):
+        o = Decimal("0.0")
+        return (
+            (self.chiffre_affaires or o) +
+            (self.cout_des_ventes or o) +
+            (self.charges_exploitation or o)
+        )
 
-    @property
-    def benefices_non_distribues(self):
-        """Calcule les bénéfices non distribués (Retained Earnings)."""
-        return (self.resultat_net or 0) + (self.autres_elements_resultat_global or 0)
+    def total_income(self):
+        o = Decimal("0.0")
+        return self.gross_profit() + (self.autres_revenus or o)
+
+    def operating_profit(self):
+        o = Decimal("0.0")
+        return (
+            self.total_income() +
+            (self.charges_administratives or o) +
+            (self.depreciation_amortissement or o) +
+            (self.couts_occupation or o) +
+            (self.couts_personnel or o) +
+            (self.autres_couts or o)
+        )
+
+    def profit_before_finance_cost_and_taxation(self):
+        o = Decimal("0.0")
+        return (
+            self.operating_profit() +
+            (self.perte_cession_immobilisations or o) +
+            (self.profit_cession_activite or o)
+        )
+
+    def profit_before_taxation(self):
+        o = Decimal("0.0")
+        return (
+            self.profit_before_finance_cost_and_taxation() +
+            (self.revenus_financiers or o) +
+            (self.charges_financieres or o) +
+            (self.charge_nette_financement or o)
+        )
+
+    def profit_for_the_year(self):
+        o = Decimal("0.0")
+        return (
+            self.profit_before_taxation() +
+            (self.charge_impot_sur_revenu or o) +
+            (self.quote_part_perte_associes or o)
+        )
+
+    def retained_earnings(self):
+        o = Decimal("0.0")
+        return self.profit_for_the_year() + (self.autres_elements_resultat_global or o)
+
 
 # Calcul des ratios
 
-class RatiosAnglais:
-    def __init__(self, actif: ActifA, passif: PassifA, resultat: ResultatA):
-        self.actif = actif
-        self.passif = passif
-        self.resultat = resultat
-    
-    def _get_val(self, model, prop):
-        return getattr(model, prop, Decimal('0')) or Decimal('0')
+class Ratioang:
+    def __init__(self, acheteur, annee):
+        self.actifang = list(
+            acheteur.actifa_set.filter(annee__annee__in=[annee, annee - 1, annee - 2]).order_by('-annee'))
+        self.passifang = list(
+            acheteur.passifa_set.filter(annee__annee__in=[annee, annee - 1, annee - 2]).order_by('-annee'))
+        self.resultatang = list(
+            acheteur.resultata_set.filter(annee__annee__in=[annee, annee - 1, annee - 2]).order_by('-annee'))
 
-    @property
     def solvabilite(self):
-        """ Solvabilité = Total passif / Total actif """
-        total_actif = self._get_val(self.actif, 'total_actif')
-        total_passif = self._get_val(self.passif, 'total_passif')
-        if total_actif != 0:
-            return total_passif / total_actif
-        return None
-        
-    @property
-    def autonomie_financiere(self):
-        """ Autonomie financière = Total fonds propres / Total passif """
-        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
-        total_passif = self._get_val(self.passif, 'total_passif')
-        if total_passif != 0:
-            return fonds_propres / total_passif
-        return None
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.passifang[i].total_fonds_propres() / self.actifang[i].total_actif()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
 
-    @property
+    def autonomiefin(self):
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.passifang[i].total_fonds_propres() / (
+                    self.passifang[i].total_fonds_propres() + self.passifang[i].total_passif_long_terme())
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def rendement_capitaux_propres(self):
-        """ Rendement des capitaux propres (ROE) = Résultat net / Total fonds propres """
-        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
-        resultat_net = self._get_val(self.resultat, 'resultat_net')
-        if fonds_propres != 0:
-            return resultat_net / fonds_propres
-        return None
-        
-    @property
-    def taux_marge_net(self):
-        """ Taux de marge net = Résultat net / Ventes """
-        ventes = self._get_val(self.resultat, 'ventes')
-        resultat_net = self._get_val(self.resultat, 'resultat_net')
-        if ventes != 0:
-            return resultat_net / ventes
-        return None
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].profit_for_the_year() / self.passifang[i].total_fonds_propres()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
 
-    @property
+    def taux_marge_net(self):
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].profit_for_the_year() / self.resultatang[i].chiffre_affaires
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def liquidite_generale(self):
-        """ Ratio de liquidité générale = Actifs courants / Passifs courants """
-        actifs_courants = self._get_val(self.actif, 'total_actifs_courants')
-        passifs_courants = self._get_val(self.passif, 'total_passifs_courants')
-        if passifs_courants != 0:
-            return actifs_courants / passifs_courants
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.actifang[i].total_actif_circulant() / self.passifang[i].total_passif_circulant()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def jour_recouvrement_moyen(self):
-        """ Jours de recouvrement moyen = (Créances commerciales / Ventes) * 365 """
-        creances = self._get_val(self.actif, 'creances_commerciales_autres_creances')
-        ventes = self._get_val(self.resultat, 'ventes')
-        if ventes != 0:
-            return (creances / ventes) * 365
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = ((self.actifang[i].total_actif_circulant() - self.actifang[i].inventaire) /
+                          self.resultatang[i].chiffre_affaires) * 365
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def jour_paiement_moyen(self):
-        """ Jours de paiement moyen = (Dettes commerciales / Coût des ventes) * 365 """
-        dettes = self._get_val(self.passif, 'dettes_commerciales_autres_dettes')
-        charges_exploitation = self._get_val(self.resultat, 'charges_exploitation')
-        if charges_exploitation != 0:
-            return (dettes / charges_exploitation) * 365
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = (self.passifang[i].dettes_commerciales_autres_dettes /
+                          self.resultatang[i].chiffre_affaires) * 365
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def taux_rotation_creance(self):
-        """Taux de rotation des créances = Ventes / Créances commerciales"""
-        ventes = self._get_val(self.resultat, 'ventes')
-        creances = self._get_val(self.actif, 'creances_commerciales_autres_creances')
-        if creances != 0:
-            return float(ventes) / float(creances)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].chiffre_affaires / (
+                    self.actifang[i].total_actif_circulant() - self.actifang[i].inventaire)
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def taux_rotation_stock(self):
-        """Taux de rotation des stocks = Ventes / Inventaire"""
-        ventes = self._get_val(self.resultat, 'ventes')
-        inventaire = self._get_val(self.actif, 'inventaire')
-        if inventaire != 0:
-            return float(ventes) / float(inventaire)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].chiffre_affaires / self.actifang[i].inventaire
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def taux_rotation_actif(self):
-        """Taux de rotation des actifs = Ventes / Actifs non courants"""
-        ventes = self._get_val(self.resultat, 'ventes')
-        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
-        if actifs_non_courants != 0:
-            return float(ventes) / float(actifs_non_courants)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].chiffre_affaires / self.actifang[i].total_actifs_non_courants()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def ratio_endettement1(self):
-        """Ratio d'endettement 1 = (Prêts bancaires + Dettes commerciales) / Total fonds propres et passif"""
-        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
-        dettes_commerciales = self._get_val(self.passif, 'dettes_commerciales_autres_dettes')
-        total_passif = self._get_val(self.passif, 'total_passif')
-        if total_passif != 0:
-            return float(prets_bancaires + dettes_commerciales) / float(total_passif)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = (self.passifang[i].dettes_financieres_pret_bancaire +
+                          self.passifang[i].dettes_commerciales_autres_dettes) / \
+                         self.passifang[i].total_capitaux_propres_et_passif()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def ratio_endettement2(self):
-        """Ratio d'endettement 2 = Prêts bancaires / Actifs non courants"""
-        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
-        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
-        if actifs_non_courants != 0:
-            return float(prets_bancaires) / float(actifs_non_courants)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.passifang[i].dettes_financieres_pret_bancaire / \
+                         self.actifang[i].total_actifs_non_courants()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def passif_cour_terme(self):
-        """Passif court terme = Passifs courants / Actifs non courants"""
-        passifs_courants = self._get_val(self.passif, 'total_passifs_courants')
-        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
-        if actifs_non_courants != 0:
-            return float(passifs_courants) / float(actifs_non_courants)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.passifang[i].total_passif_circulant() / self.actifang[i].total_actifs_non_courants()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def ratios_couverture_interet(self):
-        """Ratio de couverture des intérêts = EBIT / Frais financiers"""
-        ebit = self._get_val(self.resultat, 'resultat_avant_interets_impots')
-        frais_financiers = self._get_val(self.resultat, 'frais_financier')
-        if frais_financiers != 0:
-            return float(ebit) / float(frais_financiers)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.resultatang[i].profit_before_finance_cost_and_taxation() / \
+                         self.resultatang[i].charges_financieres
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
+    def ratios_liquidite_general(self):
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.actifang[i].total_actif_circulant() / self.passifang[i].total_passif_circulant()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
+    def ratios_liquidite2(self):
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = (self.actifang[i].total_actif_circulant() - self.actifang[i].inventaire) / \
+                         self.passifang[i].total_passif_circulant()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def ratio_g_score_fin(self):
-        """Ratio G-Score financier = Actifs non courants / Total actif"""
-        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
-        total_actif = self._get_val(self.actif, 'total_actif')
-        if total_actif != 0:
-            return float(actifs_non_courants) / float(total_actif)
-        return None
-        
-    @property
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.actifang[i].total_actifs_non_courants() / self.actifang[i].total_actif()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
+
     def ratio_endettement_g_score(self):
-        """Ratio d'endettement G-Score = Prêts bancaires / Fonds propres"""
-        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
-        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
-        if fonds_propres != 0:
-            return float(prets_bancaires) / float(fonds_propres)
-        return None
+        res = {0: 0.0, 1: 0.0, 2: 0.0, 'var': 0.0}
+        for i in range(3):
+            try:
+                res[i] = self.passifang[i].dettes_financieres_pret_bancaire / \
+                         self.passifang[i].total_fonds_propres()
+            except Exception:
+                pass
+        try:
+            res['var'] = res.get(0) - res.get(1) / res.get(1)
+        except Exception:
+            pass
+        return res
 
 
 ##########################################################

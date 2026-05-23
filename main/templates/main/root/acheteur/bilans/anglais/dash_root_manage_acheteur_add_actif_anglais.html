@@ -3,20 +3,15 @@
 
 {% block styles %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
 :root {
     --color-primary: #0A95CA;
-    --color-primary-dark: #0d80be;
-    --color-primary-light: rgba(10, 149, 202, 0.1);
     --color-success: #28a745;
     --color-border: #e2e8f0;
-    --color-background: #f8fafc;
     --color-card: #ffffff;
     --color-text: #2d3748;
-    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
-    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
     --radius-md: 12px;
     --radius-lg: 16px;
@@ -36,6 +31,17 @@
     box-shadow: var(--shadow-md);
     padding: 2rem;
 }
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+}
 .enhanced-form .form-label {
     font-weight: 600;
     color: var(--color-text);
@@ -43,6 +49,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.875rem;
 }
 .enhanced-form .form-label i { color: var(--color-primary); }
 .enhanced-form .form-control,
@@ -56,6 +63,7 @@
 .enhanced-form .form-select:focus {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(10,149,202,0.15);
+    outline: none;
 }
 .btn-enhanced {
     border-radius: var(--radius-md);
@@ -67,6 +75,7 @@
     gap: 0.5rem;
     transition: all 0.2s;
     text-decoration: none;
+    cursor: pointer;
 }
 .btn-enhanced:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .btn-success-enhanced { background: var(--success-gradient); color: white; }
@@ -74,20 +83,29 @@
     background: #f8fafc;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 1rem 1.25rem;
+    padding: 1.25rem;
     margin-top: 1rem;
 }
-.select2-container--bootstrap-5 .select2-selection {
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    min-height: 44px;
+.summary-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 0.3rem 0;
+    font-size: 0.875rem;
 }
-.select2-container--bootstrap-5.select2-container--focus .select2-selection,
-.select2-container--bootstrap-5.select2-container--open .select2-selection {
-    border-color: var(--color-primary) !important;
-    box-shadow: 0 0 0 3px rgba(10,149,202,0.15);
+.summary-row.total-row {
+    border-top: 2px solid var(--color-border);
+    margin-top: 0.4rem;
+    padding-top: 0.6rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.summary-section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 0.6rem 0 0.2rem;
 }
 </style>
 {% endblock %}
@@ -98,93 +116,198 @@
     <div class="page-header">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
-                <h4 class="mb-1 fw-bold"><i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Actif" %}</h4>
-                <small class="opacity-75">{{ acheteur.nom }} — {% trans "Bilan Anglais" %}</small>
+                <h4 class="mb-1 fw-bold"><i class="fas fa-plus-circle me-2"></i>Add Asset (Balance Sheet)</h4>
+                <small class="opacity-75">{{ acheteur.nom }} &mdash; English Balance Sheet</small>
             </div>
             <a href="{% url 'dash_root_manage_acheteur_actif_anglais' acheteur.id %}"
                class="btn-enhanced" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);">
-                <i class="fas fa-arrow-left"></i>{% trans "Retour à la liste" %}
+                <i class="fas fa-arrow-left"></i>Back to list
             </a>
         </div>
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-xl-8 col-lg-10">
+        <div class="col-xl-9 col-lg-11">
             <div class="form-card">
                 <form id="addForm" class="enhanced-form">
                     {% csrf_token %}
                     <input type="hidden" name="acheteur" value="{{ acheteur.id }}">
 
                     <div class="row g-3">
-                        <!-- Année -->
+
+                        <!-- Year -->
                         <div class="col-12">
                             <label for="annee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>{% trans "Année" %} *
+                                <i class="fas fa-calendar-alt"></i>Year *
                             </label>
                             <select class="form-select" id="annee" name="annee" required>
-                                <option value="">{% trans "Sélectionnez une année..." %}</option>
+                                <option value="">Select a year...</option>
                                 {% for annee in annee_list %}
                                     <option value="{{ annee.id }}">{{ annee.annee }}</option>
                                 {% endfor %}
                             </select>
                         </div>
 
-                        <!-- BIE -->
+                        <!-- NON-CURRENT ASSETS -->
+                        <div class="col-12">
+                            <div class="section-title"><i class="fas fa-landmark me-1"></i>Non-Current Assets</div>
+                        </div>
+
                         <div class="col-md-6">
                             <label for="biens_installations_equipements" class="form-label">
-                                <i class="fas fa-building"></i>{% trans "BIE — Biens, Installations et Équipements" %} *
+                                <i class="fas fa-building"></i>Property, plant and equipment
                             </label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="biens_installations_equipements"
-                                       name="biens_installations_equipements" step="0.01" min="0" required>
+                                <input type="number" class="form-control nca-field" id="biens_installations_equipements"
+                                       name="biens_installations_equipements" step="0.01" placeholder="0.00">
                                 <span class="input-group-text">FCFA</span>
                             </div>
                         </div>
 
-                        <!-- INV -->
+                        <div class="col-md-6">
+                            <label for="droit_utilisation" class="form-label">
+                                <i class="fas fa-file-contract"></i>Right-of-use assets
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="droit_utilisation"
+                                       name="droit_utilisation" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="immobilisations_incorporelles" class="form-label">
+                                <i class="fas fa-lightbulb"></i>Intangible assets
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="immobilisations_incorporelles"
+                                       name="immobilisations_incorporelles" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="goodwill" class="form-label">
+                                <i class="fas fa-star"></i>Goodwill
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="goodwill"
+                                       name="goodwill" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="actif_impot_differe" class="form-label">
+                                <i class="fas fa-balance-scale"></i>Deferred tax assets
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="actif_impot_differe"
+                                       name="actif_impot_differe" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="investissements_associes" class="form-label">
+                                <i class="fas fa-handshake"></i>Investment in associates
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="investissements_associes"
+                                       name="investissements_associes" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="creances_pret_non_courant" class="form-label">
+                                <i class="fas fa-file-invoice-dollar"></i>Loans receivable (non-current)
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="creances_pret_non_courant"
+                                       name="creances_pret_non_courant" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="actifs_financiers_juste_valeur_resultat" class="form-label">
+                                <i class="fas fa-chart-line"></i>Financial assets at fair value through P&amp;L
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control nca-field" id="actifs_financiers_juste_valeur_resultat"
+                                       name="actifs_financiers_juste_valeur_resultat" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- CURRENT ASSETS -->
+                        <div class="col-12 mt-2">
+                            <div class="section-title"><i class="fas fa-coins me-1"></i>Current Assets</div>
+                        </div>
+
                         <div class="col-md-6">
                             <label for="inventaire" class="form-label">
-                                <i class="fas fa-boxes"></i>{% trans "INV — Inventaire" %} *
+                                <i class="fas fa-boxes"></i>Inventory
                             </label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="inventaire"
-                                       name="inventaire" step="0.01" min="0" required>
+                                <input type="number" class="form-control ca-field" id="inventaire"
+                                       name="inventaire" step="0.01" placeholder="0.00">
                                 <span class="input-group-text">FCFA</span>
                             </div>
                         </div>
 
-                        <!-- CCA -->
                         <div class="col-md-6">
                             <label for="creances_commerciales_autres_creances" class="form-label">
-                                <i class="fas fa-file-invoice-dollar"></i>{% trans "CCA — Créances Commerciales et Autres" %} *
+                                <i class="fas fa-file-invoice"></i>Trade and other receivables
                             </label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="creances_commerciales_autres_creances"
-                                       name="creances_commerciales_autres_creances" step="0.01" min="0" required>
+                                <input type="number" class="form-control ca-field" id="creances_commerciales_autres_creances"
+                                       name="creances_commerciales_autres_creances" step="0.01" placeholder="0.00">
                                 <span class="input-group-text">FCFA</span>
                             </div>
                         </div>
 
-                        <!-- AIC -->
                         <div class="col-md-6">
                             <label for="actif_impots_courant" class="form-label">
-                                <i class="fas fa-balance-scale"></i>{% trans "AIC — Actif d'Impôts Courant" %} *
+                                <i class="fas fa-receipt"></i>Income tax receivable
                             </label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="actif_impots_courant"
-                                       name="actif_impots_courant" step="0.01" min="0" required>
+                                <input type="number" class="form-control ca-field" id="actif_impots_courant"
+                                       name="actif_impots_courant" step="0.01" placeholder="0.00">
                                 <span class="input-group-text">FCFA</span>
                             </div>
                         </div>
 
-                        <!-- CB -->
-                        <div class="col-12">
-                            <label for="caisses_banques" class="form-label">
-                                <i class="fas fa-university"></i>{% trans "CB — Caisse et Banque" %} *
+                        <div class="col-md-6">
+                            <label for="creances_pret_courant" class="form-label">
+                                <i class="fas fa-hand-holding-usd"></i>Loans receivable (current)
                             </label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="caisses_banques"
-                                       name="caisses_banques" step="0.01" min="0" required>
+                                <input type="number" class="form-control ca-field" id="creances_pret_courant"
+                                       name="creances_pret_courant" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="caisses_banques" class="form-label">
+                                <i class="fas fa-university"></i>Cash and cash equivalents
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control ca-field" id="caisses_banques"
+                                       name="caisses_banques" step="0.01" placeholder="0.00">
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="actifs_financiers_derives" class="form-label">
+                                <i class="fas fa-exchange-alt"></i>Derivative financial assets
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control ca-field" id="actifs_financiers_derives"
+                                       name="actifs_financiers_derives" step="0.01" placeholder="0.00">
                                 <span class="input-group-text">FCFA</span>
                             </div>
                         </div>
@@ -192,36 +315,29 @@
                         <!-- Summary box -->
                         <div class="col-12">
                             <div class="summary-box">
-                                <h6 class="fw-bold mb-3"><i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé des montants" %}</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-2 d-flex justify-content-between">
-                                            <span class="text-muted">{% trans "BIE:" %}</span>
-                                            <span class="fw-bold" id="sumBIE">0 FCFA</span>
-                                        </div>
-                                        <div class="mb-2 d-flex justify-content-between">
-                                            <span class="text-muted">{% trans "INV:" %}</span>
-                                            <span class="fw-bold" id="sumINV">0 FCFA</span>
-                                        </div>
-                                        <div class="mb-2 d-flex justify-content-between">
-                                            <span class="text-muted">{% trans "CCA:" %}</span>
-                                            <span class="fw-bold" id="sumCCA">0 FCFA</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-2 d-flex justify-content-between">
-                                            <span class="text-muted">{% trans "AIC:" %}</span>
-                                            <span class="fw-bold" id="sumAIC">0 FCFA</span>
-                                        </div>
-                                        <div class="mb-2 d-flex justify-content-between">
-                                            <span class="text-muted">{% trans "CB:" %}</span>
-                                            <span class="fw-bold" id="sumCB">0 FCFA</span>
-                                        </div>
-                                        <div class="mb-2 pt-2 border-top d-flex justify-content-between">
-                                            <span class="fw-bold text-primary">{% trans "Total:" %}</span>
-                                            <span class="fw-bold text-primary" id="sumTotal">0 FCFA</span>
-                                        </div>
-                                    </div>
+                                <h6 class="fw-bold mb-2"><i class="fas fa-calculator text-primary me-2"></i>Real-time Summary</h6>
+                                <div class="summary-section-label">Non-Current Assets</div>
+                                <div class="summary-row"><span class="text-muted">Property, plant and equipment</span><span id="s_bie">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Right-of-use assets</span><span id="s_droit">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Intangible assets</span><span id="s_inc">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Goodwill</span><span id="s_gw">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Deferred tax assets</span><span id="s_did">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Investment in associates</span><span id="s_inv_asso">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Loans receivable (non-current)</span><span id="s_pret_nc">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Financial assets at FV through P&amp;L</span><span id="s_fv">0.00 FCFA</span></div>
+                                <div class="summary-row total-row"><span>Total Non-Current Assets</span><span id="s_total_nca">0.00 FCFA</span></div>
+
+                                <div class="summary-section-label mt-3">Current Assets</div>
+                                <div class="summary-row"><span class="text-muted">Inventory</span><span id="s_inv">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Trade and other receivables</span><span id="s_cca">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Income tax receivable</span><span id="s_aic">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Loans receivable (current)</span><span id="s_pret_c">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Cash and cash equivalents</span><span id="s_cb">0.00 FCFA</span></div>
+                                <div class="summary-row"><span class="text-muted">Derivative financial assets</span><span id="s_deriv">0.00 FCFA</span></div>
+                                <div class="summary-row total-row"><span>Total Current Assets</span><span id="s_total_ca">0.00 FCFA</span></div>
+
+                                <div class="summary-row total-row" style="font-size:1rem; color:#0A95CA; border-top: 3px solid #0A95CA; margin-top:0.6rem;">
+                                    <span>Total Assets</span><span id="s_total">0.00 FCFA</span>
                                 </div>
                             </div>
                         </div>
@@ -230,10 +346,10 @@
                         <div class="col-12 d-flex justify-content-between mt-2">
                             <a href="{% url 'dash_root_manage_acheteur_actif_anglais' acheteur.id %}"
                                class="btn-enhanced" style="background:#6c757d;color:white;">
-                                <i class="fas fa-times"></i>{% trans "Annuler" %}
+                                <i class="fas fa-times"></i>Cancel
                             </a>
                             <button type="submit" class="btn-enhanced btn-success-enhanced" id="submitBtn">
-                                <i class="fas fa-check"></i>{% trans "Enregistrer" %}
+                                <i class="fas fa-check"></i>Save
                             </button>
                         </div>
                     </div>
@@ -245,100 +361,109 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const ACCESS_TOKEN = '{{ access }}';
+(function () {
+    'use strict';
+
+    const ACHETEUR_ID   = '{{ acheteur.id }}';
+    const ACCESS_TOKEN  = '{{ access }}';
     const REFRESH_TOKEN = '{{ refresh }}';
 
-    $('#annee').select2({ theme: 'bootstrap-5', width: '100%', placeholder: '{% trans "Sélectionnez une année..." %}' });
-
-    function formatCurrency(val) {
+    function fmt(val) {
         const n = parseFloat(val) || 0;
         return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' FCFA';
     }
 
+    function v(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+    function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = fmt(val); }
+
     function updateSummary() {
-        const bie = parseFloat($('#biens_installations_equipements').val()) || 0;
-        const inv = parseFloat($('#inventaire').val()) || 0;
-        const cca = parseFloat($('#creances_commerciales_autres_creances').val()) || 0;
-        const aic = parseFloat($('#actif_impots_courant').val()) || 0;
-        const cb  = parseFloat($('#caisses_banques').val()) || 0;
-        const total = bie + inv + cca + aic + cb;
-        $('#sumBIE').text(formatCurrency(bie));
-        $('#sumINV').text(formatCurrency(inv));
-        $('#sumCCA').text(formatCurrency(cca));
-        $('#sumAIC').text(formatCurrency(aic));
-        $('#sumCB').text(formatCurrency(cb));
-        $('#sumTotal').text(formatCurrency(total));
+        const bie      = v('biens_installations_equipements');
+        const droit    = v('droit_utilisation');
+        const inc      = v('immobilisations_incorporelles');
+        const gw       = v('goodwill');
+        const did      = v('actif_impot_differe');
+        const invAsso  = v('investissements_associes');
+        const pretNC   = v('creances_pret_non_courant');
+        const fv       = v('actifs_financiers_juste_valeur_resultat');
+        const totalNCA = bie + droit + inc + gw + did + invAsso + pretNC + fv;
+
+        const inv      = v('inventaire');
+        const cca      = v('creances_commerciales_autres_creances');
+        const aic      = v('actif_impots_courant');
+        const pretC    = v('creances_pret_courant');
+        const cb       = v('caisses_banques');
+        const deriv    = v('actifs_financiers_derives');
+        const totalCA  = inv + cca + aic + pretC + cb + deriv;
+
+        set('s_bie', bie); set('s_droit', droit); set('s_inc', inc); set('s_gw', gw);
+        set('s_did', did); set('s_inv_asso', invAsso); set('s_pret_nc', pretNC); set('s_fv', fv);
+        set('s_total_nca', totalNCA);
+        set('s_inv', inv); set('s_cca', cca); set('s_aic', aic); set('s_pret_c', pretC);
+        set('s_cb', cb); set('s_deriv', deriv);
+        set('s_total_ca', totalCA);
+        set('s_total', totalNCA + totalCA);
     }
 
-    $('#addForm input[type="number"]').on('input', updateSummary);
+    document.querySelectorAll('#addForm input[type="number"]').forEach(function (el) {
+        el.addEventListener('input', updateSummary);
+    });
 
     function getCookie(name) {
         let v = null;
-        if (document.cookie) {
-            document.cookie.split(';').forEach(c => {
-                c = c.trim();
-                if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
-            });
-        }
+        document.cookie.split(';').forEach(function (c) {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+        });
         return v;
     }
 
     function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access && typeof callback === 'function') callback();
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: '{% trans "Session expirée" %}',
-                    text: '{% trans "Veuillez vous reconnecter." %}',
-                    confirmButtonText: '{% trans "Se reconnecter" %}'
-                }).then(() => { window.location.href = '/login/'; });
-            }
+        fetch('/api/token/refresh/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: REFRESH_TOKEN })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.access && typeof callback === 'function') callback();
+        }).catch(function () {
+            Swal.fire({ icon: 'error', title: 'Session expired', text: 'Please log in again.' })
+                .then(function () { window.location.href = '/login/'; });
         });
     }
 
-    $('#addForm').on('submit', function(e) {
+    document.getElementById('addForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        const $btn = $('#submitBtn');
-        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Enregistrement..." %}');
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/ajouter-un-actif/`,
-            type: 'POST',
-            data: $(this).serialize(),
-            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
-            success: function() {
-                Swal.fire({
-                    icon: 'success',
-                    title: '{% trans "Succès" %}',
-                    text: '{% trans "Actif ajouté avec succès" %}',
-                    timer: 1800,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = "{% url 'dash_root_manage_acheteur_actif_anglais' acheteur.id %}";
-                });
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach(function (val, key) { data[key] = val; });
+
+        fetch('/api/acheteur/' + ACHETEUR_ID + '/bilan-anglais/ajouter-un-actif/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
-            error: function(xhr) {
-                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}');
-                let msg = '{% trans "Une erreur est survenue" %}';
-                if (xhr.responseJSON?.detail) msg = xhr.responseJSON.detail;
-                else if (xhr.responseJSON?.error) msg = xhr.responseJSON.error;
-                Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}', text: msg });
-                if (xhr.status === 401) refreshAccessToken(() => $('#addForm').submit());
+            body: JSON.stringify(data)
+        }).then(function (r) {
+            if (r.ok) {
+                return Swal.fire({ icon: 'success', title: 'Success', text: 'Asset added successfully.', timer: 1800, showConfirmButton: false })
+                    .then(function () { window.location.href = "{% url 'dash_root_manage_acheteur_actif_anglais' acheteur.id %}"; });
             }
+            return r.json().then(function (err) { throw err; });
+        }).catch(function (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Save';
+            const msg = (err && (err.detail || err.error)) || 'An error occurred.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+            if (err && err.status === 401) refreshAccessToken(function () { document.getElementById('addForm').requestSubmit(); });
         });
     });
-});
+})();
 </script>
 {% endblock %}

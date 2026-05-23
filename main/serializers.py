@@ -4913,29 +4913,59 @@ class ActifASerializer(serializers.ModelSerializer):
         return value
 
 
+ACTIF_A_FIELDS = [
+    "id", "annee", "acheteur",
+    # Non-current
+    "biens_installations_equipements", "droit_utilisation", "immobilisations_incorporelles",
+    "goodwill", "actif_impot_differe", "investissements_associes",
+    "creances_pret_non_courant", "actifs_financiers_juste_valeur_resultat",
+    # Current
+    "inventaire", "creances_commerciales_autres_creances", "actif_impots_courant",
+    "creances_pret_courant", "caisses_banques", "actifs_financiers_derives",
+    "created_by", "updated_by",
+]
+
+PASSIF_A_FIELDS = [
+    "id", "annee", "acheteur",
+    # Capital & reserves
+    "capital_social", "prime_emission", "reserve_couverture_tresorerie",
+    "reserve_cout_couverture", "reserve_conversion_devise", "benefices_non_distribues",
+    "resultat_net_exercice", "reserve_distribuable",
+    # Non-current liabilities
+    "dettes_financieres_pret_bancaire", "dettes_commerciales_long_terme",
+    "compte_courant_administrateurs", "provisions_long_terme", "autres_passifs_long_terme",
+    # Current liabilities
+    "dettes_commerciales_autres_dettes", "dettes_location", "avantages_employes",
+    "impots", "passifs_financiers_derives",
+    "created_by", "updated_by",
+]
+
+RESULTAT_A_FIELDS = [
+    "id", "annee", "acheteur",
+    # Revenue / direct costs
+    "chiffre_affaires", "cout_des_ventes", "charges_exploitation",
+    # Other income
+    "autres_revenus",
+    # Operating expenses
+    "charges_administratives", "depreciation_amortissement", "couts_occupation",
+    "couts_personnel", "autres_couts",
+    # Disposal / extraordinary
+    "perte_cession_immobilisations", "profit_cession_activite",
+    # Finance
+    "revenus_financiers", "charges_financieres", "charge_nette_financement",
+    # Tax / associates / OCI
+    "charge_impot_sur_revenu", "quote_part_perte_associes", "autres_elements_resultat_global",
+    "created_by", "updated_by",
+]
+
+
 class AddActifASerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "biens_installations_equipements",
-            "inventaire",
-            "creances_commerciales_autres_creances",
-            "actif_impots_courant",
-            "caisses_banques",
-            "created_by",
-            "updated_by",
-        ]
+        fields = ACTIF_A_FIELDS
 
 
 class GetActifASerializer(serializers.ModelSerializer):
-    # acheteur = AcheteurSerializer()
-    # annee = AnneeSerializer()
-    # created_by = UserSerializer()
-    # updated_by = UserSerializer()
-
     class Meta:
         model = ActifA
         fields = "__all__"
@@ -4944,18 +4974,7 @@ class GetActifASerializer(serializers.ModelSerializer):
 class EditActifASerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "biens_installations_equipements",
-            "inventaire",
-            "creances_commerciales_autres_creances",
-            "actif_impots_courant",
-            "caisses_banques",
-            "created_by",
-            "updated_by",
-        ]
+        fields = ACTIF_A_FIELDS
 
 
 class PassifASerializer(serializers.ModelSerializer):
@@ -4968,73 +4987,14 @@ class PassifASerializer(serializers.ModelSerializer):
         model = PassifA
         fields = "__all__"
 
-    def validate_capital_reserves(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_capital_declare(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_benefices_non_distribues(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_pret_bancaire(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_compte_courant_administrateurs(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_dettes_commerciales_autres_dettes(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_decouvert_bancaire(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_impots(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
 
 class AddPassifASerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "capital_reserves",
-            "capital_declare",
-            "benefices_non_distribues",
-            "pret_bancaire",
-            "compte_courant_administrateurs",
-            "dettes_commerciales_autres_dettes",
-            "decouvert_bancaire",
-            "impots",
-            "created_by",
-            "updated_by",
-        ]
+        fields = PASSIF_A_FIELDS
 
 
 class GetPassifASerializer(serializers.ModelSerializer):
-    # acheteur = AcheteurSerializer()
-    # annee = AnneeSerializer()
-    # created_by = UserSerializer()
-    # updated_by = UserSerializer()
-
     class Meta:
         model = PassifA
         fields = "__all__"
@@ -5043,21 +5003,7 @@ class GetPassifASerializer(serializers.ModelSerializer):
 class EditPassifASerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "capital_reserves",
-            "capital_declare",
-            "benefices_non_distribues",
-            "pret_bancaire",
-            "compte_courant_administrateurs",
-            "dettes_commerciales_autres_dettes",
-            "decouvert_bancaire",
-            "impots",
-            "created_by",
-            "updated_by",
-        ]
+        fields = PASSIF_A_FIELDS
 
 
 class ResultatASerializer(serializers.ModelSerializer):
@@ -5070,73 +5016,14 @@ class ResultatASerializer(serializers.ModelSerializer):
         model = ResultatA
         fields = "__all__"
 
-    def validate_produits_activites_ordinaires(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_ventes(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_charges_exploitation(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_frais_vente_generaux_administratifs(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_autres_revenus(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_frais_financier(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_charge_impot_sur_revenu(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
-    def validate_autres_elements_resultat_global(self, value):
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
-        return value
-
 
 class AddResultatASerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "produits_activites_ordinaires",
-            "ventes",
-            "charges_exploitation",
-            "frais_vente_generaux_administratifs",
-            "autres_revenus",
-            "frais_financier",
-            "charge_impot_sur_revenu",
-            "autres_elements_resultat_global",
-            "created_by",
-            "updated_by",
-        ]
+        fields = RESULTAT_A_FIELDS
 
 
 class GetResultatASerializer(serializers.ModelSerializer):
-    # acheteur = AcheteurSerializer()
-    # annee = AnneeSerializer()
-    # created_by = UserSerializer()
-    # updated_by = UserSerializer()
-
     class Meta:
         model = ResultatA
         fields = "__all__"
@@ -5145,21 +5032,7 @@ class GetResultatASerializer(serializers.ModelSerializer):
 class EditResultatASerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
-        fields = [
-            "id",
-            "annee",
-            "acheteur",
-            "produits_activites_ordinaires",
-            "ventes",
-            "charges_exploitation",
-            "frais_vente_generaux_administratifs",
-            "autres_revenus",
-            "frais_financier",
-            "charge_impot_sur_revenu",
-            "autres_elements_resultat_global",
-            "created_by",
-            "updated_by",
-        ]
+        fields = RESULTAT_A_FIELDS
 
 
 class ActifCSerializer(serializers.ModelSerializer):
@@ -12857,10 +12730,18 @@ class ActifAnglaisSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     updated_by = UserSerializer(read_only=True)
 
-    # Inclusion des propriétés de calcul en lecture seule
-    total_actifs_non_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    total_actifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    total_actif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actifs_non_courants = serializers.SerializerMethodField()
+    total_actif_circulant = serializers.SerializerMethodField()
+    total_actif = serializers.SerializerMethodField()
+
+    def get_total_actifs_non_courants(self, obj):
+        return obj.total_actifs_non_courants()
+
+    def get_total_actif_circulant(self, obj):
+        return obj.total_actif_circulant()
+
+    def get_total_actif(self, obj):
+        return obj.total_actif()
 
     class Meta:
         model = ActifA
@@ -12870,19 +12751,13 @@ class ActifAnglaisSerializer(serializers.ModelSerializer):
 class AddActifAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
-        fields = [
-            'annee', 'acheteur', 'biens_installations_equipements', 'inventaire',
-            'creances_commerciales_autres_creances', 'actif_impots_courant', 'caisses_banques'
-        ]
+        fields = ACTIF_A_FIELDS
 
 
 class EditActifAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
-        fields = [
-            'annee', 'acheteur', 'biens_installations_equipements', 'inventaire',
-            'creances_commerciales_autres_creances', 'actif_impots_courant', 'caisses_banques'
-        ]
+        fields = ACTIF_A_FIELDS
 
 
 # --- Sérialiseurs pour le modèle PassifA ---
@@ -12892,11 +12767,26 @@ class PassifAnglaisSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     updated_by = UserSerializer(read_only=True)
 
-    # Inclusion des propriétés de calcul
-    total_fonds_propres = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    total_passifs_non_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    total_passifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    total_passif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_fonds_propres = serializers.SerializerMethodField()
+    total_passif_long_terme = serializers.SerializerMethodField()
+    total_passif_circulant = serializers.SerializerMethodField()
+    total_passif = serializers.SerializerMethodField()
+    total_capitaux_propres_et_passif = serializers.SerializerMethodField()
+
+    def get_total_fonds_propres(self, obj):
+        return obj.total_fonds_propres()
+
+    def get_total_passif_long_terme(self, obj):
+        return obj.total_passif_long_terme()
+
+    def get_total_passif_circulant(self, obj):
+        return obj.total_passif_circulant()
+
+    def get_total_passif(self, obj):
+        return obj.total_passif()
+
+    def get_total_capitaux_propres_et_passif(self, obj):
+        return obj.total_capitaux_propres_et_passif()
 
     class Meta:
         model = PassifA
@@ -12906,23 +12796,13 @@ class PassifAnglaisSerializer(serializers.ModelSerializer):
 class AddPassifAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
-        fields = [
-            'annee', 'acheteur', 'capital_reserves', 'capital_declare',
-            'benefices_non_distribues', 'pret_bancaire',
-            'compte_courant_administrateurs', 'dettes_commerciales_autres_dettes',
-            'decouvert_bancaire', 'impots'
-        ]
+        fields = PASSIF_A_FIELDS
 
 
 class EditPassifAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
-        fields = [
-            'annee', 'acheteur', 'capital_reserves', 'capital_declare',
-            'benefices_non_distribues', 'pret_bancaire',
-            'compte_courant_administrateurs', 'dettes_commerciales_autres_dettes',
-            'decouvert_bancaire', 'impots'
-        ]
+        fields = PASSIF_A_FIELDS
 
 
 # --- Sérialiseurs pour le modèle ResultatA ---
@@ -12932,13 +12812,34 @@ class ResultatAnglaisSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
     updated_by = UserSerializer(read_only=True)
 
-    # Inclusion des propriétés de calcul
-    marge_brute = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    resultat_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    resultat_avant_interets_impots = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    resultat_avant_impots = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    resultat_net = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
-    benefices_non_distribues = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    gross_profit = serializers.SerializerMethodField()
+    total_income = serializers.SerializerMethodField()
+    operating_profit = serializers.SerializerMethodField()
+    profit_before_finance_cost_and_taxation = serializers.SerializerMethodField()
+    profit_before_taxation = serializers.SerializerMethodField()
+    profit_for_the_year = serializers.SerializerMethodField()
+    retained_earnings = serializers.SerializerMethodField()
+
+    def get_gross_profit(self, obj):
+        return obj.gross_profit()
+
+    def get_total_income(self, obj):
+        return obj.total_income()
+
+    def get_operating_profit(self, obj):
+        return obj.operating_profit()
+
+    def get_profit_before_finance_cost_and_taxation(self, obj):
+        return obj.profit_before_finance_cost_and_taxation()
+
+    def get_profit_before_taxation(self, obj):
+        return obj.profit_before_taxation()
+
+    def get_profit_for_the_year(self, obj):
+        return obj.profit_for_the_year()
+
+    def get_retained_earnings(self, obj):
+        return obj.retained_earnings()
 
     class Meta:
         model = ResultatA
@@ -12948,23 +12849,13 @@ class ResultatAnglaisSerializer(serializers.ModelSerializer):
 class AddResultatAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
-        fields = [
-            'annee', 'acheteur', 'produits_activites_ordinaires', 'ventes',
-            'charges_exploitation', 'frais_vente_generaux_administratifs',
-            'autres_revenus', 'frais_financier', 'charge_impot_sur_revenu',
-            'autres_elements_resultat_global'
-        ]
+        fields = RESULTAT_A_FIELDS
 
 
 class EditResultatAnglaisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
-        fields = [
-            'annee', 'acheteur', 'produits_activites_ordinaires', 'ventes',
-            'charges_exploitation', 'frais_vente_generaux_administratifs',
-            'autres_revenus', 'frais_financier', 'charge_impot_sur_revenu',
-            'autres_elements_resultat_global'
-        ]
+        fields = RESULTAT_A_FIELDS
         
         
         
