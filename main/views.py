@@ -4724,6 +4724,9 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
+    devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -4735,6 +4738,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "devise_acheteur": devise_acheteur,
     }
     return render(
         request,
@@ -4792,6 +4796,9 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
+    devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -4803,6 +4810,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "devise_acheteur": devise_acheteur,
     }
     return render(
         request,
@@ -4860,6 +4868,9 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
+    devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -4871,6 +4882,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "devise_acheteur": devise_acheteur,
     }
     return render(
         request,
@@ -4892,6 +4904,8 @@ def _bilan_anglais_base_context(request, acheteur_id):
     except Exception as e:
         logger.error(f"Erreur lors de la génération des tokens: {e}")
         return None, acheteur
+    compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
+    devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
     return {
         "acheteur_active": "active",
         "user": request.user,
@@ -4899,6 +4913,7 @@ def _bilan_anglais_base_context(request, acheteur_id):
         "refresh": refresh_token,
         "acheteur": acheteur,
         "annee_list": Annee.objects.all(),
+        "devise_acheteur": devise_acheteur,
     }, acheteur
 
 
