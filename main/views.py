@@ -3814,8 +3814,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
         "compte_financier": compte_financier,
         "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
-        "devise_list": Devise.objects.all(),
-        "devise_choices": CompteFinancier.STATUS_CHANGE,
+        "devise_list": Devise.objects.filter(code__in=[c for c, _ in CompteFinancier.STATUS_CHANGE]),
         "type_bilan_choices": CompteFinancier.LIEN_TYPE_BILAN_CHOICE,
         "oui_non_choices": CompteFinancier.STATUS__OUI_NON,  # Si disponible dans le modèle
     }
