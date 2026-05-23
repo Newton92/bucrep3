@@ -2215,17 +2215,24 @@ $(document).ready(function() {
     const MSG_SEMI_INVALID      = '{% trans "La période doit couvrir environ 6 mois (180 jours ± 30)." %}';
     const MSG_DATE_END_BEFORE   = '{% trans "La date de fin doit être postérieure à la date de début." %}';
 
+    // ── Helper : alerte SweetAlert2 rendue DANS le modal actif ──
+    // Évite le problème de z-index : Swal s'injecte à l'intérieur du modal ouvert.
+    function alertInModal(opts) {
+        const activeModal = document.querySelector('.modal.show') || document.body;
+        return Swal.fire(Object.assign({ target: activeModal, background: '#fcfefe' }, opts));
+    }
+
     // ── Validation des dates ──
     function validateDates(isEdit) {
         const ids = isEdit ? {
             type:   'editTypeCompte',
-            s0: 'editDateCompte',        e0: 'editDateFin',
-            s1: 'editDateCompteNMoinsUn', e1: 'editDateFinNMoinsUn',
+            s0: 'editDateCompte',          e0: 'editDateFin',
+            s1: 'editDateCompteNMoinsUn',  e1: 'editDateFinNMoinsUn',
             s2: 'editDateCompteNMoinsDeux', e2: 'editDateFinNMoinsDeux',
         } : {
             type:   'type_compte',
-            s0: 'date_compte',            e0: 'date_fin',
-            s1: 'date_compte_n_moins_un', e1: 'date_fin_n_moins_un',
+            s0: 'date_compte',              e0: 'date_fin',
+            s1: 'date_compte_n_moins_un',   e1: 'date_fin_n_moins_un',
             s2: 'date_compte_n_moins_deux', e2: 'date_fin_n_moins_deux',
         };
 
@@ -2244,13 +2251,12 @@ $(document).ready(function() {
 
             // Règle universelle : date de fin requise si date de début renseignée
             if (!endVal) {
-                Swal.fire({
+                alertInModal({
                     icon: 'warning',
                     title: '{% trans "Date de fin manquante" %} (' + p.label + ')',
                     text: MSG_DATE_FIN_REQUIRED,
-                    background: '#fcfefe'
                 });
-                $('#' + p.end).focus();
+                setTimeout(() => $('#' + p.end).focus(), 300);
                 return false;
             }
 
@@ -2258,11 +2264,10 @@ $(document).ready(function() {
             const end   = new Date(endVal);
 
             if (end <= start) {
-                Swal.fire({
+                alertInModal({
                     icon: 'warning',
                     title: '{% trans "Dates invalides" %} (' + p.label + ')',
                     text: MSG_DATE_END_BEFORE,
-                    background: '#fcfefe'
                 });
                 return false;
             }
@@ -2270,21 +2275,19 @@ $(document).ready(function() {
             const days = Math.round((end - start) / 86400000);
 
             if (typeCompte === 'Annuel' && (days < 335 || days > 395)) {
-                Swal.fire({
+                alertInModal({
                     icon: 'warning',
                     title: '{% trans "Durée invalide" %} (' + p.label + ' — ' + days + ' {% trans "jours" %})',
                     text: MSG_ANNUEL_INVALID,
-                    background: '#fcfefe'
                 });
                 return false;
             }
 
             if (typeCompte === 'Semestriel' && (days < 150 || days > 210)) {
-                Swal.fire({
+                alertInModal({
                     icon: 'warning',
                     title: '{% trans "Durée invalide" %} (' + p.label + ' — ' + days + ' {% trans "jours" %})',
                     text: MSG_SEMI_INVALID,
-                    background: '#fcfefe'
                 });
                 return false;
             }
