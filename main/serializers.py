@@ -11486,17 +11486,17 @@ class ListAdresseAcheteurSerializer(serializers.ModelSerializer):
 class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["adresse", "acheteur"]
+        fields = ["adresse", "nom", "acheteur"]
 
 class DetailAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["id", "adresse", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "adresse", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
 
 class EditAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["id", "adresse", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "adresse", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
         extra_kwargs = {
             "id": {"read_only": True},
             "created_at": {"read_only": True},
@@ -11523,17 +11523,17 @@ class ListPortableAcheteurSerializer(serializers.ModelSerializer):
 class AddPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
-        fields = ["portable", "acheteur"]
+        fields = ["portable", "nom", "acheteur"]
 
 class DetailPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
-        fields = ["id", "portable", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "portable", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
 
 class EditPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
-        fields = ["id", "portable", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "portable", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
         extra_kwargs = {
             "id": {"read_only": True},
             "created_at": {"read_only": True},
@@ -11558,17 +11558,17 @@ class ListTelephoneAcheteurSerializer(serializers.ModelSerializer):
 class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
-        fields = ["telephone", "acheteur"]
+        fields = ["telephone", "nom", "acheteur"]
 
 class DetailTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
-        fields = ["id", "telephone", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "telephone", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
 
 class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
-        fields = ["id", "telephone", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "telephone", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
         extra_kwargs = {
             "id": {"read_only": True},
             "created_at": {"read_only": True},
@@ -11593,7 +11593,7 @@ class ListEmailAcheteurSerializer(serializers.ModelSerializer):
 class AddEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
-        fields = ["email", "acheteur"]
+        fields = ["email", "description", "acheteur"]
 
     def validate_email(self, value):
         try:
@@ -11605,12 +11605,12 @@ class AddEmailAcheteurSerializer(serializers.ModelSerializer):
 class DetailEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
-        fields = ["id", "email", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "email", "description", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
 
 class EditEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
-        fields = ["id", "email", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "email", "description", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
         extra_kwargs = {
             "id": {"read_only": True},
             "created_at": {"read_only": True},

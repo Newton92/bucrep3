@@ -4345,6 +4345,7 @@ class AdresseAcheteur(Model):
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
+    nom = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Libellé"), help_text=_("Ex: Siège social, Entrepôt, Agence régionale"))
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,

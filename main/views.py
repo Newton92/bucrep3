@@ -8941,6 +8941,7 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
         adresses_data.append({
             'id': adresse.id,
             'adresse': adresse.adresse or '',
+            'nom': adresse.nom or '',
             'created_at': adresse.created_at.isoformat() if adresse.created_at else None,
             'updated_at': adresse.updated_at.isoformat() if adresse.updated_at else None,
             'created_by': adresse.created_by.get_full_name() if adresse.created_by else None,

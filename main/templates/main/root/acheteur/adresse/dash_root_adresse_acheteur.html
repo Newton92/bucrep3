@@ -31,6 +31,7 @@
 .modern-table tbody tr:last-child td { border-bottom: none; }
 .modern-table tbody tr:hover { background: rgba(10,149,202,.03); }
 .adresse-text { line-height: 1.4; white-space: pre-line; }
+.nom-badge { font-size: .7rem; color: #6c757d; background: rgba(108,117,125,.08); border-radius: 4px; padding: 1px 5px; display: inline-block; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn-tbl { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
 .btn-tbl-edit   { background: rgba(10,149,202,.1);  color: #0a95ca; }
 .btn-tbl-delete { background: rgba(220,53,69,.1);   color: #dc3545; }
@@ -121,7 +122,7 @@
                     <tr>
                         <th style="width:40px;">#</th>
                         <th>{% trans "Adresse" %}</th>
-                        <th style="width:130px;">{% trans "Ajouté par" %}</th>
+                        <th style="width:160px;">{% trans "Libellé" %}</th>
                         <th style="width:115px;">{% trans "Ajouté le" %}</th>
                         <th class="text-center" style="width:75px;">{% trans "Actions" %}</th>
                     </tr>
@@ -157,6 +158,10 @@
                     <textarea class="form-control" id="adresseInput" rows="4"
                         placeholder="{% trans 'Ex: Quartier Louis, Rue des Bougainvilliers, BP 1234, Libreville, Gabon' %}" required></textarea>
                     <div class="form-text small">{% trans "Saisissez l'adresse complète : quartier, rue, boîte postale, ville, pays." %}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Libellé" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                    <input type="text" class="form-control" id="nomInput" placeholder="{% trans 'Ex: Siège social, Entrepôt, Agence régionale' %}">
                 </div>
                 <div id="modalError" class="alert alert-danger py-2 small" style="display:none;"></div>
             </div>
@@ -248,6 +253,9 @@
         var page  = filtered.slice(start, start + PAGE_SIZE);
 
         tableBody.innerHTML = page.map(function(item, i) {
+            var nomHtml = item.nom
+                ? '<span class="nom-badge" title="' + escAttr(item.nom) + '">' + escHtml(item.nom) + '</span>'
+                : '<span class="text-muted" style="font-size:.75rem;">—</span>';
             return '<tr>' +
                 '<td class="text-muted small">' + (start + i + 1) + '</td>' +
                 '<td>' +
@@ -256,7 +264,7 @@
                     '<span class="adresse-text">' + escHtml(item.adresse || '—') + '</span>' +
                   '</div>' +
                 '</td>' +
-                '<td class="text-muted small">' + escHtml(item.created_by || '—') + '</td>' +
+                '<td>' + nomHtml + '</td>' +
                 '<td class="text-muted small">' + fmtDate(item.created_at) + '</td>' +
                 '<td class="text-center" style="white-space:nowrap;">' +
                   '<button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="' + item.id + '" title="{% trans 'Modifier' %}"><i class="fas fa-pencil-alt"></i></button>' +
@@ -299,6 +307,7 @@
     function openAdd() {
         document.getElementById('editId').value = '';
         document.getElementById('adresseInput').value = '';
+        document.getElementById('nomInput').value = '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter une adresse" %}';
         getModal().show();
@@ -312,6 +321,7 @@
         if (!item) return;
         document.getElementById('editId').value = item.id;
         document.getElementById('adresseInput').value = item.adresse || '';
+        document.getElementById('nomInput').value = item.nom || '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>' + "{% trans "Modifier l'adresse" %}";
         getModal().show();
@@ -320,6 +330,7 @@
     /* ── Save ── */
     document.getElementById('saveBtn').addEventListener('click', function () {
         var val = document.getElementById('adresseInput').value.trim();
+        var nom = document.getElementById('nomInput').value.trim();
         if (!val) { showModalError("{% trans "L'adresse est obligatoire." %}"); return; }
         document.getElementById('modalError').style.display = 'none';
         var id     = document.getElementById('editId').value;
@@ -329,7 +340,7 @@
             : '/api/acheteur/' + ACHETEUR_ID + '/adresses/';
         this.disabled = true;
         var self = this;
-        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({adresse: val})})
+        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({adresse: val, nom: nom})})
             .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
             .then(function(res) {
                 if (!res.ok) {
