@@ -1,1227 +1,220 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
 :root {
-    --primary-color: #0d80be;
-    --secondary-color: #25add6;
-    --accent-color: #0a95ca;
-    --light-color: #fcfefe;
-    --dark-color: #106cb2;
-    --success-color: #28a745;
-    --warning-color: #f39c12;
-    --danger-color: #e74c3c;
-    --whatsapp-color: #25D366;
-    --card-shadow: 0 8px 25px rgba(12, 128, 190, 0.08);
-    --card-shadow-hover: 0 15px 35px rgba(12, 128, 190, 0.15);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-accent: #106cb2;
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
 }
-
-body {
-    background-color: var(--light-color);
-    color: #333;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-}
-
-/* Header Premium */
 .page-header {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    padding: 2.5rem;
-    border-radius: 20px;
-    margin-bottom: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
-}
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    position: relative;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.95;
-    max-width: 700px;
-    font-weight: 400;
-}
-
-/* Carte portable premium */
-.portable-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    transition: var(--transition);
-    position: relative;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-}
-
-.portable-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--card-shadow-hover);
-    border-color: var(--secondary-color);
-    background: linear-gradient(135deg, white, rgba(252, 254, 254, 0.95));
-}
-
-.portable-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--success-color), #20c997);
-}
-
-/* Effet de brillance sur les cartes */
-.portable-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        transparent 70%
-    );
-    transform: rotate(45deg);
-    animation: cardShine 6s infinite;
-}
-
-@keyframes cardShine {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-/* En-tête de la carte premium */
-.portable-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 2;
-}
-
-.portable-number {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--primary-color);
-    font-family: 'SF Mono', 'Roboto Mono', monospace;
-    letter-spacing: 1.5px;
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
-}
-
-.portable-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-/* Actions rapides premium */
-.portable-actions-quick {
-    display: flex;
-    gap: 1rem;
-    margin: 1.5rem 0;
-    position: relative;
-    z-index: 2;
-}
-
-.btn-call {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    border: none;
-    border-radius: 15px;
-    padding: 0.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.2);
-}
-
-.btn-call::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: 0.5s;
-}
-
-.btn-call:hover::before {
-    left: 100%;
-}
-
-.btn-call:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
-    color: white;
-}
-
-.btn-whatsapp {
-    background: linear-gradient(135deg, var(--whatsapp-color), #128C7E);
-    color: white;
-    border: none;
-    border-radius: 15px;
-    padding: 0.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.2);
-}
-
-.btn-whatsapp::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: 0.5s;
-}
-
-.btn-whatsapp:hover::before {
-    left: 100%;
-}
-
-.btn-whatsapp:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
-    color: white;
-}
-
-/* Informations métadonnées premium */
-.portable-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid rgba(37, 173, 214, 0.15);
-    font-size: 0.95rem;
-    color: #6c757d;
-    position: relative;
-    z-index: 2;
-}
-
-.meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    background: var(--primary-gradient);
     padding: 0.75rem 1.25rem;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(37, 173, 214, 0.1);
-    transition: var(--transition);
-}
-
-.meta-item:hover {
-    transform: translateY(-2px);
-    background: white;
-    border-color: var(--secondary-color);
-    box-shadow: 0 4px 12px rgba(12, 128, 190, 0.1);
-}
-
-.meta-item i {
-    font-size: 1.2rem;
-    color: var(--accent-color);
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, rgba(37, 173, 214, 0.1), rgba(10, 149, 202, 0.1));
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Badge de statut premium */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 1.25rem;
-    border-radius: 25px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.badge-primary {
-    background: linear-gradient(135deg, rgba(13, 128, 190, 0.9), rgba(10, 149, 202, 0.9));
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-}
-
-.badge-success {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.9), rgba(46, 204, 113, 0.9));
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-}
-
-/* État vide premium */
-.empty-state {
-    padding: 5rem 3rem;
-    text-align: center;
-    background: linear-gradient(135deg, rgba(252, 254, 254, 0.9), rgba(240, 248, 255, 0.9));
-    border-radius: 25px;
-    border: 3px dashed rgba(37, 173, 214, 0.4);
-    margin: 3rem 0;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-}
-
-.empty-state::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(37, 173, 214, 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: float 20s linear infinite;
-}
-
-@keyframes float {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(40px, 40px) rotate(360deg); }
-}
-
-.empty-state-icon {
-    font-size: 6rem;
-    color: var(--secondary-color);
-    margin-bottom: 2.5rem;
-    opacity: 0.9;
-    position: relative;
-    z-index: 2;
-    filter: drop-shadow(0 4px 6px rgba(12, 128, 190, 0.2));
-}
-
-.empty-state h4 {
-    color: var(--primary-color);
-    font-weight: 800;
-    margin-bottom: 1.25rem;
-    font-size: 2rem;
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.empty-state p {
-    color: #6c757d;
-    max-width: 500px;
-    margin: 0 auto 3rem;
-    position: relative;
-    z-index: 2;
-    line-height: 1.8;
-    font-size: 1.1rem;
-}
-
-/* Formulaires premium */
-.enhanced-form .form-group {
-    margin-bottom: 1.75rem;
-    position: relative;
-}
-
-.enhanced-form .form-label {
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.05rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.enhanced-form .form-label i {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--success-color), #20c997);
     border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-bottom: 1rem;
     color: white;
-    font-size: 1.2rem;
 }
-
-.enhanced-form .form-control {
-    border: 2px solid rgba(37, 173, 214, 0.3);
-    border-radius: 15px;
-    padding: 1rem 1.25rem;
-    font-size: 1.1rem;
-    transition: var(--transition);
+.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: 0.8rem; opacity: 0.85; }
+.metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    box-shadow: 0 2px 8px rgba(10,149,202,0.07);
+    border: 1px solid rgba(10,149,202,0.1);
+}
+.metric-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+.metric-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(10,149,202,0.1); color: var(--color-primary);
+    display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.metric-label { font-size: 0.75rem; color: #5a6c7d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.metric-value { font-size: 1.4rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1; }
+.metric-sub   { font-size: 0.72rem; color: #8a9ab0; margin-top: 0.2rem; }
+.table-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,149,202,0.07); border: 1px solid rgba(10,149,202,0.1); overflow: hidden; }
+.table-card-header {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    padding: 0.75rem 1rem; border-bottom: 1px solid rgba(37,173,214,0.1);
+}
+.search-input {
+    border: 1px solid rgba(10,149,202,0.25); border-radius: 6px;
+    padding: 0.3rem 0.65rem; font-size: 0.8rem; outline: none; color: #333;
+}
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(10,149,202,0.12); }
+.btn-add {
+    background: var(--primary-gradient); color: white; border: none;
+    border-radius: 6px; padding: 0.35rem 0.8rem; font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
+    transition: opacity 0.15s;
+}
+.btn-add:hover { opacity: 0.88; }
+.modern-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.modern-table thead th {
+    background: rgba(10,149,202,0.05); padding: 0.55rem 0.75rem;
+    font-weight: 600; color: #4a5568; border-bottom: 2px solid rgba(10,149,202,0.12);
+    white-space: nowrap;
+}
+.modern-table tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: rgba(10,149,202,0.03); }
+.phone-number {
     font-family: 'SF Mono', 'Roboto Mono', monospace;
-    letter-spacing: 1.5px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(5px);
-}
-
-.enhanced-form .form-control:focus {
-    border-color: var(--success-color);
-    box-shadow: 0 0 0 0.35rem rgba(40, 167, 69, 0.25);
-    background: white;
-    transform: translateY(-2px);
-}
-
-/* Cartes premium */
-.enhanced-card {
-    border-radius: 20px;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    transition: var(--transition);
-    background: white;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-}
-
-.enhanced-card:hover {
-    box-shadow: var(--card-shadow-hover);
-    transform: translateY(-5px);
-}
-
-.card-header-gradient {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    color: white;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 1.75rem 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.card-header-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-/* Boutons premium */
-.btn-action {
-    padding: 0.75rem 2rem;
-    border-radius: 15px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    transition: var(--transition);
-    border: none;
-    position: relative;
-    overflow: hidden;
+    font-weight: 600;
+    color: var(--color-primary-dark);
     letter-spacing: 0.5px;
 }
-
-.btn-action::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: 0.5s;
+.btn-tbl {
+    width: 26px; height: 26px; border: none; border-radius: 5px;
+    cursor: pointer; font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
 }
-
-.btn-action:hover::before {
-    left: 100%;
+.btn-tbl-edit      { background: rgba(10,149,202,0.1);  color: #0a95ca; }
+.btn-tbl-delete    { background: rgba(220,53,69,0.1);   color: #dc3545; }
+.btn-tbl-call      { background: rgba(40,167,69,0.1);   color: #28a745; }
+.btn-tbl-whatsapp  { background: rgba(37,211,102,0.1);  color: #25D366; }
+.btn-tbl:hover     { opacity: 0.75; transform: scale(1.08); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: #8a9ab0; }
+.pag-info { font-size: 0.75rem; color: #8a9ab0; }
+.page-link-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px; padding: 0 4px;
+    border: 1px solid rgba(10,149,202,0.2); border-radius: 5px;
+    font-size: 0.75rem; color: #4a5568; cursor: pointer; transition: all 0.15s;
 }
-
-.btn-action:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.btn-success {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-.btn-outline-success {
-    background: transparent;
-    border: 2px solid var(--success-color);
-    color: var(--success-color);
-}
-
-.btn-outline-success:hover {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    border-color: transparent;
-}
-
-/* Grille des portables premium */
-.portables-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-/* Contrôles de recherche premium */
-.search-controls {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(252, 254, 254, 0.9));
-    padding: 1.5rem;
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    box-shadow: 0 8px 20px rgba(12, 128, 190, 0.1);
-}
-
-.search-input {
-    flex: 1;
-}
-
-.search-input .input-group {
-    height: 60px;
-}
-
-.search-input .input-group-text {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    padding: 0 1.5rem;
-    border-radius: 15px 0 0 15px !important;
-}
-
-.search-input .form-control {
-    height: 100%;
-    border: 2px solid rgba(37, 173, 214, 0.2);
-    border-left: none;
-    border-radius: 0 15px 15px 0 !important;
-    font-size: 1.1rem;
-    padding: 0 1.5rem;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(5px);
-}
-
-.search-input .form-control:focus {
-    box-shadow: none;
-    border-color: var(--success-color);
-    background: white;
-}
-
-/* Statistiques premium */
-.stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    border-radius: 20px;
-    padding: 2rem;
-    text-align: center;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    backdrop-filter: blur(10px);
-    transition: var(--transition);
-    box-shadow: 0 8px 20px rgba(12, 128, 190, 0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card:hover {
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 15px 35px rgba(12, 128, 190, 0.2);
-    border-color: var(--secondary-color);
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 5px;
-    background: linear-gradient(90deg, var(--success-color), #20c997);
-}
-
-.stat-number {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: var(--success-color);
-    margin-bottom: 0.5rem;
-    font-family: 'SF Mono', 'Roboto Mono', monospace;
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-label {
-    font-size: 1rem;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 600;
-}
-
-/* Indicateur portable premium */
-.phone-portable-indicator {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    padding: 0.5rem 1.5rem;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    z-index: 3;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-}
-
-/* Pagination premium */
-.pagination .page-item .page-link {
-    border: none;
-    margin: 0 5px;
-    border-radius: 12px;
-    color: var(--primary-color);
-    font-weight: 600;
-    transition: var(--transition);
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(37, 173, 214, 0.2);
-}
-
-.pagination .page-item.active .page-link {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-}
-
-.pagination .page-item .page-link:hover {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
-}
-
-/* Modales premium */
-.modal-content {
-    border-radius: 25px;
-    overflow: hidden;
-    border: none;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
-}
-
-.modal-header {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    color: white;
-    border-bottom: none;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-.modal-title {
-    font-weight: 800;
-    font-size: 1.5rem;
-    position: relative;
-    z-index: 2;
-}
-
-.btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
-    opacity: 0.8;
-    transition: var(--transition);
-    position: relative;
-    z-index: 2;
-}
-
-.btn-close-white:hover {
-    opacity: 1;
-    transform: rotate(90deg);
-}
-
-.modal-success .modal-header {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-}
-
-.modal-danger .modal-header {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .portables-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .page-header {
-        padding: 2rem;
-    }
-    
-    .page-title {
-        font-size: 2rem;
-    }
-    
-    .portables-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-    
-    .portable-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .portable-number {
-        font-size: 1.75rem;
-    }
-    
-    .portable-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .search-controls {
-        flex-direction: column;
-    }
-    
-    .empty-state {
-        padding: 3rem 1.5rem;
-    }
-    
-    .empty-state-icon {
-        font-size: 4rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .page-header {
-        padding: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 1.75rem;
-    }
-    
-    .portable-number {
-        font-size: 1.5rem;
-    }
-    
-    .portable-actions-quick {
-        flex-direction: column;
-    }
-    
-    .stats-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .stat-card {
-        padding: 1.5rem;
-    }
-    
-    .stat-number {
-        font-size: 2.5rem;
-    }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in-up {
-    animation: fadeInUp 0.6s ease forwards;
-}
-
-/* Ajustements pour la carte acheteur */
-.acheteur-info-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 15px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(37, 173, 214, 0.1);
-    transition: var(--transition);
-}
-
-.acheteur-info-item:hover {
-    transform: translateX(10px);
-    background: white;
-    border-color: var(--secondary-color);
-    box-shadow: 0 8px 20px rgba(12, 128, 190, 0.1);
-}
-
-.acheteur-info-item i {
-    width: 45px;
-    height: 45px;
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.3rem;
-}
-
-/* Badge premium */
-.badge-premium {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-    color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
-}
+.page-link-btn:hover, .page-link-btn.active { background: var(--primary-gradient); color: white; border-color: var(--color-primary); }
+.page-link-btn.disabled { opacity: 0.4; pointer-events: none; }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
 
-    <!-- Header Premium -->
-    <div class="page-header fade-in-up" style="--order: 0;">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title text-white">
-                    <i class="fas fa-mobile-alt me-3"></i>{% trans "Numéros de Portable" %}
-                </h1>
-                <p class="page-subtitle">
-                    Gestion professionnelle des numéros de téléphone portable de l'acheteur
+                <h1 class="page-title"><i class="fas fa-mobile-alt me-2"></i>{% trans "Portables / Mobiles" %}</h1>
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
                 </p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
-                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
                 </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Carte Acheteur Premium -->
-    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 1;">
-        <div class="card-header card-header-gradient">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h5 class="mb-1 fw-bold text-white display-9">{{ acheteur.nom }}</h5>
-                    <p class="mb-0 opacity-90 fs-5">{{ acheteur.sigle|default:"" }}</p>
-                </div>
-                <div class="text-md-end">
-                    <span class="badge-premium fs-6">
-                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code }}
-                    </span>
-                    <p class="mb-0 mt-2 small opacity-75">{% trans "Code ACREMAC" %}</p>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-briefcase"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Activité principale" %}</small>
-                            <span class="fw-bold fs-6">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Pays" %}</small>
-                            <span class="fw-bold fs-6">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Statut" %}</small>
-                            <span class="fw-bold text-success fs-6">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistiques Premium -->
-    <div class="stats-cards fade-in-up" style="--order: 2;">
-        <div class="stat-card">
-            <div class="stat-number">{{ portables_count }}</div>
-            <div class="stat-label">{% trans "Numéros de Portable" %}</div>
-        </div>
-    </div>
-
-    <!-- Section Portables Premium -->
-    <div class="row fade-in-up" style="--order: 3;">
-        <div class="col-12">
-            <div class="card enhanced-card">
-                <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-white fw-bold fs-4">
-                        <i class="fas fa-mobile-alt me-2"></i>{% trans "Inventaire des Numéros de Portable" %}
-                    </h5>
-                    <div>
-                        <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addPortableModal">
-                            <i class="fas fa-plus-circle me-2"></i>{% trans "Nouveau Numéro" %}
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="card-body">
-                    <!-- Contrôles de recherche premium -->
-                    <div class="search-controls mb-5">
-                        <div class="search-input">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                                <input type="text" class="form-control" id="searchPortableInput" 
-                                       placeholder="Rechercher un numéro de portable...">
-                            </div>
-                        </div>
-                        <button class="btn btn-outline-success btn-action" id="clearSearchBtn">
-                            <i class="fas fa-times me-2"></i>{% trans "Réinitialiser" %}
-                        </button>
-                    </div>
-
-                    {% if portables %}
-                    <!-- Grille des portables premium -->
-                    <div class="portables-grid" id="portablesContainer">
-                        {% for portable in portables %}
-                        <div class="portable-card" data-id="{{ portable.id }}">
-                            <!-- Indicateur portable -->
-                            <span class="phone-portable-indicator">
-                                <i class="fas fa-mobile-alt me-2"></i>{% trans "Portable" %}
-                            </span>
-                            <br><br>
-                            
-                            <div class="portable-header">
-                                <div>
-                                    <span class="portable-number">
-                                        {{ portable.get_formatted_number|default:portable.portable }}
-                                    </span>
-                                </div>
-                                <div class="portable-actions">
-                                    <button class="btn btn-sm btn-outline-warning edit-portable-btn" 
-                                            data-id="{{ portable.id }}"
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-title="Modifier ce numéro">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger delete-portable-btn" 
-                                            data-id="{{ portable.id }}"
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-title="Supprimer ce numéro">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Actions rapides premium -->
-                            <div class="portable-actions-quick">
-                                <a href="{{ portable.get_call_link }}" 
-                                   class="btn-call"
-                                   target="_blank">
-                                    <i class="fas fa-phone-alt"></i>
-                                    Appeler ce numéro
-                                </a>
-                                <a href="{{ portable.get_whatsapp_link }}" 
-                                   class="btn-whatsapp"
-                                   target="_blank">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp
-                                </a>
-                            </div>
-
-                            <!-- Métadonnées premium -->
-                            <div class="portable-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>
-                                        <small class="text-muted d-block">{% trans "Créé par" %}</small>
-                                        <strong>{{ portable.created_by.get_full_name|default:"Inconnu" }}</strong>
-                                    </span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-clock"></i>
-                                    <span>
-                                        <small class="text-muted d-block">{% trans "Date d'ajout" %}</small>
-                                        {{ portable.created_at|date:"d/m/Y H:i" }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Pagination premium -->
-                    {% if portables_count > 10 %}
-                    <div class="d-flex justify-content-center mt-5">
-                        <nav>
-                            <ul class="pagination">
-                                <li class="page-item disabled">
-                                    <span class="page-link">
-                                        <i class="fas fa-chevron-left me-2"></i>{% trans "Précédent" %}
-                                    </span>
-                                </li>
-                                <li class="page-item active">
-                                    <span class="page-link">1</span>
-                                </li>
-                                <li class="page-item disabled">
-                                    <span class="page-link">
-                                        Suivant<i class="fas fa-chevron-right ms-2"></i>
-                                    </span>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <!-- État vide premium -->
-                    <div class="empty-state">
-                        <i class="fas fa-mobile-alt empty-state-icon"></i>
-                        <h4 class="fw-bold mb-2">{% trans "Aucun numéro de portable enregistré" %}</h4>
-                        <p class="text-muted mb-4">
-                            Cet acheteur ne possède pas encore de numéro de téléphone portable enregistré.<br>
-                            Ajoutez des numéros pour faciliter les communications professionnelles.
-                        </p>
-                        <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addPortableModal">
-                            <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le premier numéro" %}
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Ajout Portable Premium -->
-<div class="modal fade modal-success" id="addPortableModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Numéro de Portable" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addPortableForm" class="enhanced-form">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="portable" class="form-label">
-                            <i class="fas fa-mobile-alt"></i>{% trans "Numéro de portable" %}
-                        </label>
-                        <input type="text" class="form-control" id="portable" name="portable" 
-                            placeholder="Ex: +241 01 23 45 67, 01 23 45 67, 032 12 34 56" 
-                            pattern="^\+?[0-9\s\-\(\)]{8,20}$"
-                            required>
-                        <div class="form-text mt-2 p-3 bg-light rounded">
-                            <h6 class="fw-bold text-success mb-2">
-                                <i class="fas fa-info-circle me-2"></i>{% trans "Formats acceptés :" %}
-                            </h6>
-                            <ul class="mb-0">
-                                <li><strong>{% trans "International :" %}</strong> +241 01 23 45 67</li>
-                                <li><strong>{% trans "Local :" %}</strong> 01 23 45 67</li>
-                                <li><strong>{% trans "Avec indicatif régional :" %}</strong> 032 12 34 56</li>
-                                <li><strong>Minimum 8 chiffres</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-success btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check me-1"></i>{% trans "Ajouter le numéro" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Modification Portable Premium -->
-<div class="modal fade modal-success" id="editPortableModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier un Numéro de Portable" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editPortableForm" class="enhanced-form">
-                <input type="hidden" id="editPortableId" name="id">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="editPortable" class="form-label">
-                            <i class="fas fa-mobile-alt"></i>{% trans "Numéro de portable" %}
-                        </label>
-                        <input type="text" class="form-control" id="editPortable" name="portable" required>
-                    </div>
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="meta-item w-100 h-100">
-                                <i class="fas fa-user-plus"></i>
-                                <span>
-                                    <small class="text-muted d-block">{% trans "Créé par" %}</small>
-                                    <strong id="createdByInfo"></strong>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="meta-item w-100 h-100">
-                                <i class="fas fa-clock"></i>
-                                <span>
-                                    <small class="text-muted d-block">{% trans "Date de création" %}</small>
-                                    <span id="createdAtInfo"></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-success btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmation de suppression Premium -->
-<div class="modal fade modal-danger" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation de suppression" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-5">
-                <div class="mb-4">
-                    <i class="fas fa-trash-alt fa-4x text-danger opacity-75"></i>
-                </div>
-                <h6 class="fw-bold text-dark mb-3">{% trans "Supprimer le numéro de portable" %}</h6>
-                <p class="text-dark opacity-90 mb-4">
-                    Êtes-vous sûr de vouloir supprimer ce numéro de portable ?<br>
-                    Cette action est irréversible et supprimera définitivement ce contact.
-                </p>
-                <div class="fw-bold fs-5 text-success mb-4" id="deletePortableNumber"></div>
-            </div>
-            <div class="modal-footer justify-content-center border-top-0 pt-0">
-                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                <button class="btn-add" id="openAddModal">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
                 </button>
-                <button type="button" class="btn btn-light btn-action text-danger fw-bold" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="fas fa-mobile-alt"></i></div>
+                    <span class="metric-label">{% trans "Total" %}</span>
+                </div>
+                <div class="metric-value" id="mc-count">{{ portables_count }}</div>
+                <div class="metric-sub">{% trans "numéros enregistrés" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(23,162,184,.1);color:#17a2b8;"><i class="fas fa-clock"></i></div>
+                    <span class="metric-label">{% trans "Dernier ajout" %}</span>
+                </div>
+                <div class="metric-value phone-number" id="mc-recent" style="color:#17a2b8;font-size:1rem;">—</div>
+                <div class="metric-sub" id="mc-recent-date">—</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(37,211,102,.1);color:#25D366;"><i class="fab fa-whatsapp"></i></div>
+                    <span class="metric-label">{% trans "WhatsApp" %}</span>
+                </div>
+                <div class="metric-value" style="color:#25D366;font-size:0.9rem;">+241 XX XX XX XX</div>
+                <div class="metric-sub">{% trans "Appel & WhatsApp disponibles" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-list me-2"></i>{% trans "Liste des portables" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Rechercher...' %}" style="width:200px;">
+                <button class="btn-add" id="openAddModal2">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width:45px;">#</th>
+                        <th>{% trans "Numéro portable" %}</th>
+                        <th style="width:130px;">{% trans "Ajouté par" %}</th>
+                        <th style="width:115px;">{% trans "Ajouté le" %}</th>
+                        <th class="text-center" style="width:120px;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-mobile-alt fa-3x mb-3" style="color:rgba(10,149,202,0.25);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucun portable enregistré" %}</h5>
+            <p class="text-muted mb-3 small">{% trans "Ajoutez le premier numéro de portable pour cet acheteur." %}</p>
+            <button class="btn-add" id="openAddModal3"><i class="fas fa-plus"></i>{% trans "Ajouter un portable" %}</button>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,0.1);">
+            <span class="pag-info" id="paginationInfo"></span>
+            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="crudModal" tabindex="-1" aria-labelledby="crudModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="crudModalLabel"><i class="fas fa-mobile-alt me-2"></i>{% trans "Portable" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Numéro de portable" %} <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" id="portableInput" placeholder="+241 XX XX XX XX" required>
+                    <div class="form-text small">{% trans "Inclure l'indicatif pays. Ex: +241 06 12 34 56" %}</div>
+                </div>
+                <div id="modalError" class="alert alert-danger py-2 small" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
                 </button>
             </div>
         </div>
@@ -1230,590 +223,206 @@ body {
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
-
 <script>
-$(document).ready(function() {
-    // Configuration
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/portables/`;
-    let ACCESS_TOKEN = '{{ access_token }}';
-    const REFRESH_TOKEN = '{{ refresh_token }}';
-    let currentPortableId = null;
-    
-    // Formatter de numéro de téléphone
-    function formatPhoneNumber(phoneNumber) {
-        if (!phoneNumber) return '';
-        
-        // Nettoyer le numéro
-        const cleaned = phoneNumber.replace(/\D/g, '');
-        
-        // Format par préfixe de pays
-        const formatRules = {
-            '241': (num) => { // Gabon
-                if (num.length === 11) {
-                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 11)}`;
-                } else if (num.length === 8) {
-                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
-                } else if (num.length === 9) {
-                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 9)}`;
-                }
-                return phoneNumber;
-            },
-            '225': (num) => { // Côte d'Ivoire
-                if (num.length === 12) {
-                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 12)}`;
-                } else if (num.length === 10) {
-                    return `0${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)} ${num.substring(8, 10)}`;
-                } else if (num.length === 8) {
-                    return `${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
-                }
-                return phoneNumber;
-            },
-            '223': (num) => { // Mali
-                if (num.length === 11) {
-                    return `+${num.substring(0, 3)} ${num.substring(3, 5)} ${num.substring(5, 7)} ${num.substring(7, 9)} ${num.substring(9, 11)}`;
-                } else if (num.length === 8) {
-                    return `${num.substring(0, 2)} ${num.substring(2, 4)} ${num.substring(4, 6)} ${num.substring(6, 8)}`;
-                }
-                return phoneNumber;
-            }
+(function () {
+    'use strict';
+
+    const ALL_ITEMS     = {{ portables_json|safe }};
+    let   ACCESS_TOKEN  = '{{ access_token }}';
+    const ACHETEUR_ID   = '{{ id_acheteur }}';
+    const PAGE_SIZE     = 15;
+    let   currentPage   = 1, currentSearch = '';
+
+    let _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
+    function escHtml(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return String(s||'').replace(/"/g,'&quot;'); }
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+    }
+
+    function apiFetch(url, opts={}) {
+        return fetch(url, {
+            ...opts,
+            headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json', ...(opts.headers||{})}
+        });
+    }
+
+    function getFiltered() {
+        const q = currentSearch.toLowerCase();
+        return q ? ALL_ITEMS.filter(i => (i.portable||'').toLowerCase().includes(q)) : ALL_ITEMS;
+    }
+
+    function render() {
+        const filtered   = getFiltered();
+        const tableBody  = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const total      = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        if (ALL_ITEMS.length > 0) {
+            document.getElementById('mc-recent').textContent      = ALL_ITEMS[0].portable || '—';
+            document.getElementById('mc-recent-date').textContent = fmtDate(ALL_ITEMS[0].created_at);
+        }
+
+        if (total === 0) {
+            tableBody.innerHTML = currentSearch
+                ? `<tr><td colspan="5" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>`
+                : '';
+            emptyState.style.display = currentSearch ? 'none' : 'block';
+            document.getElementById('paginationInfo').textContent = '';
+            document.getElementById('paginationControls').innerHTML = '';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const page  = filtered.slice(start, start + PAGE_SIZE);
+
+        tableBody.innerHTML = page.map((item, i) => `
+            <tr>
+                <td class="text-muted small">${start + i + 1}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width:22px;height:22px;border-radius:50%;background:rgba(10,149,202,0.1);color:#0a95ca;display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">
+                            <i class="fas fa-mobile-alt"></i>
+                        </span>
+                        <span class="phone-number">${escHtml(item.portable || '—')}</span>
+                    </div>
+                </td>
+                <td class="text-muted small">${escHtml(item.created_by || '—')}</td>
+                <td class="text-muted small">${fmtDate(item.created_at)}</td>
+                <td class="text-center">
+                    <a class="btn-tbl btn-tbl-call me-1" href="tel:${escAttr(item.portable || '')}" title="{% trans 'Appeler' %}">
+                        <i class="fas fa-phone-alt"></i>
+                    </a>
+                    <a class="btn-tbl btn-tbl-whatsapp me-1" href="https://wa.me/${escAttr((item.portable||'').replace(/\D/g,''))}" target="_blank" title="{% trans 'WhatsApp' %}">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="${item.id}" title="{% trans 'Modifier' %}">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button class="btn-tbl btn-tbl-delete delete-btn" data-id="${item.id}" data-portable="${escAttr(item.portable || '')}" title="{% trans 'Supprimer' %}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`).join('');
+
+        renderPagination(total, totalPages);
+    }
+
+    function renderPagination(total, totalPages) {
+        const from = (currentPage - 1) * PAGE_SIZE + 1;
+        const to   = Math.min(currentPage * PAGE_SIZE, total);
+        document.getElementById('paginationInfo').textContent = totalPages <= 1
+            ? `${total} {% trans "élément(s)" %}`
+            : `${from}–${to} / ${total}`;
+
+        const ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const mkBtn = (html, pg, disabled, active) => {
+            const el = document.createElement('span');
+            el.className = 'page-link-btn' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+            el.innerHTML = html;
+            if (!disabled) el.onclick = () => { currentPage = pg; render(); };
+            return el;
         };
-        
-        // Chercher le format correspondant
-        for (const prefix in formatRules) {
-            if (cleaned.startsWith(prefix)) {
-                return formatRules[prefix](cleaned);
-            }
-        }
-        
-        // Format pour numéros de portable
-        if (cleaned.length === 8) {
-            return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
-        } else if (cleaned.length === 9) {
-            return `${cleaned.substring(0, 3)} ${cleaned.substring(3, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7, 9)}`;
-        } else if (cleaned.length === 10) {
-            return `${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)} ${cleaned.substring(8, 10)}`;
-        }
-        
-        // Retourner le numéro original si aucun format ne correspond
-        return phoneNumber;
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-left fa-xs"></i>', currentPage - 1, currentPage === 1, false));
+        for (let p = 1; p <= totalPages; p++) ctrl.appendChild(mkBtn(p, p, false, p === currentPage));
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-right fa-xs"></i>', currentPage + 1, currentPage === totalPages, false));
     }
-    
-    // Initialiser le formatteur de numéro
-    function initPhoneFormatters() {
-        // Configuration pour l'ajout
-        $('#portable').on('input', function() {
-            const cleaned = $(this).val().replace(/\D/g, '');
-            const $input = $(this);
-            
-            if (cleaned.length >= 8 && cleaned.length <= 15) {
-                $input.removeClass('is-invalid').addClass('is-valid');
-            } else {
-                $input.removeClass('is-valid').addClass('is-invalid');
-            }
-        });
-        
-        // Configuration pour l'édition
-        $('#editPortable').on('input', function() {
-            const cleaned = $(this).val().replace(/\D/g, '');
-            const $input = $(this);
-            
-            if (cleaned.length >= 8 && cleaned.length <= 15) {
-                $input.removeClass('is-invalid').addClass('is-valid');
-            } else {
-                $input.removeClass('is-valid').addClass('is-invalid');
-            }
+
+    /* ── Modal ── */
+    const editId        = document.getElementById('editId');
+    const portableInput = document.getElementById('portableInput');
+    const modalError    = document.getElementById('modalError');
+
+    function showModalError(msg) { modalError.textContent = msg; modalError.style.display = 'block'; }
+
+    function openAdd() {
+        editId.value = ''; portableInput.value = ''; modalError.style.display = 'none';
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter un portable" %}';
+        getModal().show();
+    }
+
+    function openEdit(id) {
+        const item = ALL_ITEMS.find(x => String(x.id) === String(id));
+        if (!item) return;
+        editId.value = item.id; portableInput.value = item.portable || ''; modalError.style.display = 'none';
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier le portable" %}';
+        getModal().show();
+    }
+
+    /* ── Save ── */
+    document.getElementById('saveBtn').addEventListener('click', function () {
+        const val = portableInput.value.trim();
+        if (!val) { showModalError('{% trans "Le numéro de portable est obligatoire." %}'); return; }
+        modalError.style.display = 'none';
+        const id     = editId.value;
+        const isEdit = !!id;
+        const url    = isEdit
+            ? `/api/acheteur/${ACHETEUR_ID}/portables/${id}/`
+            : `/api/acheteur/${ACHETEUR_ID}/portables/`;
+        this.disabled = true;
+        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({portable: val})})
+            .then(r => r.json().then(d => ({ok: r.ok, data: d})))
+            .then(({ok, data}) => {
+                if (!ok) {
+                    showModalError(data.portable ? data.portable[0] : (data.detail || '{% trans "Erreur lors de l\'opération." %}'));
+                    this.disabled = false; return;
+                }
+                window.location.reload();
+            })
+            .catch(() => { showModalError('{% trans "Erreur réseau." %}'); this.disabled = false; });
+    });
+
+    /* ── Delete ── */
+    function deleteItem(id, portable) {
+        Swal.fire({
+            title: '{% trans "Supprimer ce numéro ?" %}',
+            html: `<strong class="font-monospace">${escHtml(portable)}</strong>`,
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: '{% trans "Oui, supprimer" %}',
+            cancelButtonText: '{% trans "Annuler" %}'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            apiFetch(`/api/acheteur/${ACHETEUR_ID}/portables/${id}/`, {method: 'DELETE'})
+                .then(() => window.location.reload())
+                .catch(() => Swal.fire({icon:'error', title:'{% trans "Erreur lors de la suppression." %}'}));
         });
     }
 
-    // Initialisation
-    initPhoneFormatters();
-    
-    // Charger les portables
-    function loadPortables(search = '') {
-        let url = API_BASE_URL;
-        if (search) {
-            url += `?search=${encodeURIComponent(search)}`;
-        }
-        
-        $.ajax({
-            url: url,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                const portablesContainer = $('#portablesContainer');
-                const emptyState = $('.empty-state');
-                
-                if (response.results && response.results.length > 0) {
-                    // Cacher l'état vide
-                    if (emptyState.length) {
-                        emptyState.hide();
-                    }
-                    
-                    // Afficher les portables
-                    let html = '';
-                    response.results.forEach(function(portable) {
-                        const formattedNumber = formatPhoneNumber(portable.portable);
-                        const createdBy = portable.created_by?.full_name || portable.created_by?.username || 'Inconnu';
-                        const createdAt = new Date(portable.created_at).toLocaleString('fr-FR');
-                        
-                        html += `
-                        <div class="portable-card" data-id="${portable.id}">
-                            <!-- Indicateur portable -->
-                            <span class="phone-portable-indicator">
-                                <i class="fas fa-mobile-alt me-2"></i>Portable
-                            </span>
-                            <br><br>
-                            
-                            <div class="portable-header">
-                                <div>
-                                    <span class="portable-number">${formattedNumber}</span>
-                                </div>
-                                <div class="portable-actions">
-                                    <button class="btn btn-sm btn-outline-warning edit-portable-btn" 
-                                            data-id="${portable.id}"
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-title="Modifier ce numéro">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger delete-portable-btn" 
-                                            data-id="${portable.id}"
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-title="Supprimer ce numéro">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
+    /* ── Events ── */
+    ['openAddModal', 'openAddModal2', 'openAddModal3'].forEach(btnId => {
+        const el = document.getElementById(btnId);
+        if (el) el.addEventListener('click', openAdd);
+    });
 
-                            <div class="portable-actions-quick">
-                                <a href="tel:${portable.portable.replace(/\s+/g, '')}" 
-                                   class="btn-call"
-                                   target="_blank">
-                                    <i class="fas fa-phone-alt"></i>
-                                    Appeler ce numéro
-                                </a>
-                                <a href="https://wa.me/${portable.portable.replace(/\D/g, '')}" 
-                                   class="btn-whatsapp"
-                                   target="_blank">
-                                    <i class="fab fa-whatsapp"></i>
-                                    WhatsApp
-                                </a>
-                            </div>
+    document.addEventListener('click', function (e) {
+        const editBtn = e.target.closest('.edit-btn');
+        if (editBtn) { openEdit(editBtn.dataset.id); return; }
+        const delBtn = e.target.closest('.delete-btn');
+        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.portable); return; }
+    });
 
-                            <div class="portable-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>
-                                        <small class="text-muted d-block">Créé par</small>
-                                        <strong>${createdBy}</strong>
-                                    </span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-clock"></i>
-                                    <span>
-                                        <small class="text-muted d-block">Date d'ajout</small>
-                                        ${createdAt}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-                    
-                    portablesContainer.html(html);
-                    
-                    // Initialiser les tooltips
-                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                    
-                } else {
-                    // Afficher l'état vide
-                    if (!emptyState.length) {
-                        portablesContainer.html(`
-                            <div class="empty-state">
-                                <i class="fas fa-mobile-alt empty-state-icon"></i>
-                                <h4 class="fw-bold mb-2">Aucun numéro de portable trouvé</h4>
-                                <p class="text-muted mb-4">
-                                    Aucun numéro de portable ne correspond à votre recherche.
-                                </p>
-                            </div>
-                        `);
-                    } else {
-                        emptyState.show();
-                    }
-                }
-                
-                // Mettre à jour le compteur
-                $('#portablesCount').text(response.count || response.results?.length || 0);
-            },
-            error: function(xhr) {
-                console.error('Erreur lors du chargement:', xhr);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur de chargement',
-                    text: 'Impossible de charger les numéros de portable.',
-                    background: 'linear-gradient(135deg, var(--success-color), #20c997)',
-                    color: 'white',
-                    iconColor: 'white'
-                });
-            }
-        });
-    }
-    
-    // Recherche de portables
-    $('#searchPortableInput').on('input', function() {
-        const search = $(this).val();
-        loadPortables(search);
+    document.getElementById('searchInput').addEventListener('input', function () {
+        currentSearch = this.value.trim();
+        currentPage = 1;
+        render();
     });
-    
-    $('#clearSearchBtn').click(function() {
-        $('#searchPortableInput').val('');
-        loadPortables();
-    });
-    
-    // Formulaire d'ajout
-    $('#addPortableForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const portableNumber = $('#portable').val();
-        if (!portableNumber || portableNumber.replace(/\D/g, '').length < 8) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Format invalide',
-                text: 'Veuillez saisir un numéro de portable valide (minimum 8 chiffres).',
-                confirmButtonColor: 'var(--success-color)'
-            });
-            return;
-        }
-        
-        const $btn = $('#submitAddBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        // Afficher le spinner
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'POST',
-            data: JSON.stringify({ portable: portableNumber }),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#addPortableModal').modal('hide');
-                $('#addPortableForm')[0].reset();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Numéro ajouté !',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'linear-gradient(135deg, var(--success-color), #20c997)',
-                    color: 'white',
-                    iconColor: 'white'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Erreur lors de l\'ajout du numéro';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.portable) {
-                        errorMessage = xhr.responseJSON.portable.join('\n');
-                    } else if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur d\'ajout',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        confirmButtonColor: 'var(--success-color)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Ouvrir la modale d'édition
-    $(document).on('click', '.edit-portable-btn', function() {
-        const portableId = $(this).data('id');
-        currentPortableId = portableId;
-        
-        $.ajax({
-            url: `${API_BASE_URL}${portableId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#editPortableId').val(response.id);
-                $('#editPortable').val(response.portable);
-                $('#createdByInfo').text(response.created_by?.full_name || response.created_by?.username || 'Inconnu');
-                $('#createdAtInfo').text(new Date(response.created_at).toLocaleString('fr-FR'));
-                $('#editPortableModal').modal('show');
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les détails du numéro.',
-                        confirmButtonColor: 'var(--success-color)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Formulaire de modification
-    $('#editPortableForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        if (!currentPortableId) return;
-        
-        const portableNumber = $('#editPortable').val();
-        if (!portableNumber || portableNumber.replace(/\D/g, '').length < 8) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Format invalide',
-                text: 'Veuillez saisir un numéro de portable valide (minimum 8 chiffres).',
-                confirmButtonColor: 'var(--success-color)'
-            });
-            return;
-        }
-        
-        const $btn = $('#submitEditBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        // Afficher le spinner
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentPortableId}/`,
-            type: 'PUT',
-            data: JSON.stringify({ portable: portableNumber }),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#editPortableModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Modification réussie !',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'linear-gradient(135deg, var(--success-color), #20c997)',
-                    color: 'white',
-                    iconColor: 'white'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Erreur lors de la modification du numéro';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.portable) {
-                        errorMessage = xhr.responseJSON.portable.join('\n');
-                    } else if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur de modification',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        confirmButtonColor: 'var(--success-color)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Ouvrir la modale de suppression
-    $(document).on('click', '.delete-portable-btn', function() {
-        const portableId = $(this).data('id');
-        const portableNumber = $(this).closest('.portable-card').find('.portable-number').text();
-        
-        currentPortableId = portableId;
-        $('#deletePortableNumber').text(portableNumber);
-        $('#confirmDeleteModal').modal('show');
-    });
-    
-    // Confirmer la suppression
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!currentPortableId) return;
-        
-        const $btn = $(this);
-        const originalText = $btn.html();
-        
-        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
-        $btn.prop('disabled', true);
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentPortableId}/`,
-            type: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $btn.html(originalText);
-                $btn.prop('disabled', false);
-                
-                $('#confirmDeleteModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Suppression réussie !',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'linear-gradient(135deg, var(--success-color), #20c997)',
-                    color: 'white',
-                    iconColor: 'white'
-                }).then(() => {
-                    loadPortables();
-                });
-            },
-            error: function(xhr) {
-                $btn.html(originalText);
-                $btn.prop('disabled', false);
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur de suppression',
-                        text: xhr.responseJSON?.detail || 'Impossible de supprimer le numéro',
-                        confirmButtonColor: 'var(--success-color)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Helper: Get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Fonction pour rafraîchir le token d'accès
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access) {
-                    ACCESS_TOKEN = response.access;
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
-                    confirmButtonColor: 'var(--success-color)'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
-        });
-    }
-    
-    // Configurer l'interception des erreurs 401
-    $(document).ajaxError(function(event, xhr) {
-        if (xhr.status === 401) {
-            refreshAccessToken();
-        }
-    });
-    
-    // Charger les portables au démarrage
-    loadPortables();
-    
-    // Animation des cartes
-    function animateCardsOnScroll() {
-        $('.portable-card, .stat-card, .enhanced-card').each(function() {
-            const elementTop = $(this).offset().top;
-            const elementBottom = elementTop + $(this).outerHeight();
-            const viewportTop = $(window).scrollTop();
-            const viewportBottom = viewportTop + $(window).height();
-            
-            if (elementBottom > viewportTop && elementTop < viewportBottom) {
-                $(this).addClass('animate');
-            }
-        });
-    }
 
-    $(window).on('scroll', animateCardsOnScroll);
-    setTimeout(animateCardsOnScroll, 100);
-});
+    render();
+})();
 </script>
 {% endblock %}
