@@ -304,7 +304,13 @@
     const REFRESH_TOKEN = '{{ refresh }}';
     let   currentPage = 1, currentSearch = '';
 
-    const modal      = new bootstrap.Modal(document.getElementById('crudModal'));
+    /* ── Lazy modal initialization ── */
+    let _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
     const editId     = document.getElementById('editId');
     const portInput  = document.getElementById('portInput');
     const modalError = document.getElementById('modalError');
@@ -431,7 +437,7 @@
         portInput.value = '';
         modalError.style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter un portable" %}';
-        modal.show();
+        getModal().show();
     }
 
     function openEdit(id) {
@@ -442,8 +448,8 @@
 
         apiFetch(`/api/acheteur/${ACHETEUR_ID}/editer-un-portable/${id}/`)
             .then(r => r.json())
-            .then(data => { portInput.value = data.portable || ''; modal.show(); })
-            .catch(() => { portInput.value = ''; modal.show(); });
+            .then(data => { portInput.value = data.portable || ''; getModal().show(); })
+            .catch(() => { portInput.value = ''; getModal().show(); });
     }
 
     function showModalError(msg) {
@@ -470,7 +476,7 @@
                     const msg = data.portable ? data.portable[0] : (data.detail || '{% trans "Erreur lors de l\'opération." %}');
                     showModalError(msg); return;
                 }
-                modal.hide();
+                getModal().hide();
                 Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Opération réussie." %}', timer: 1500, showConfirmButton: false });
                 load(1);
             })

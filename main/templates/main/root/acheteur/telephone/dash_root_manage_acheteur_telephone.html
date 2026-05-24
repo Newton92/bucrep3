@@ -274,7 +274,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 (function () {
     'use strict';
@@ -284,7 +283,13 @@
     const REFRESH_TOKEN = '{{ refresh }}';
     let   allData = [];
 
-    const modal     = new bootstrap.Modal(document.getElementById('crudModal'));
+    /* ── Lazy modal initialization ── */
+    let _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
     const editId    = document.getElementById('editId');
     const telInput  = document.getElementById('telInput');
     const modalError = document.getElementById('modalError');
@@ -373,14 +378,14 @@
         telInput.value = '';
         modalError.style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter un téléphone" %}';
-        modal.show();
+        getModal().show();
     }
     function openEdit(id, tel) {
         editId.value = id;
         telInput.value = tel;
         modalError.style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier le téléphone" %}';
-        modal.show();
+        getModal().show();
     }
     function showModalError(msg) {
         modalError.textContent = msg;
@@ -406,7 +411,7 @@
                     const msg = data.telephone ? data.telephone[0] : (data.detail || '{% trans "Erreur lors de l\'opération." %}');
                     showModalError(msg); return;
                 }
-                modal.hide();
+                getModal().hide();
                 Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Opération réussie." %}', timer: 1500, showConfirmButton: false });
                 load();
             })

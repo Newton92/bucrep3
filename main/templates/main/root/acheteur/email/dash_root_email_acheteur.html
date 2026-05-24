@@ -297,19 +297,9 @@
     </div>
 </div>
 
-<!-- Toast copy -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
-    <div id="copyToast" class="toast align-items-center text-bg-info border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body"><i class="fas fa-check me-2"></i>{% trans "Email copié !" %}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 (function () {
     'use strict';
@@ -319,8 +309,13 @@
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let   currentPage = 1, currentSearch = '';
 
-    const modal      = new bootstrap.Modal(document.getElementById('crudModal'));
-    const copyToast  = new bootstrap.Toast(document.getElementById('copyToast'), { delay: 1800 });
+    /* ── Lazy modal initialization ── */
+    let _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
     const editId     = document.getElementById('editId');
     const emailInput = document.getElementById('emailInput');
     const modalError = document.getElementById('modalError');
@@ -467,7 +462,7 @@
         emailInput.value = '';
         modalError.style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter un email" %}';
-        modal.show();
+        getModal().show();
     }
 
     function openEdit(id) {
@@ -477,8 +472,8 @@
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier l\'email" %}';
         apiFetch(`/api/acheteur/${ACHETEUR_ID}/emails/${id}/`)
             .then(r => r.json())
-            .then(data => { emailInput.value = data.email || ''; modal.show(); })
-            .catch(() => { emailInput.value = ''; modal.show(); });
+            .then(data => { emailInput.value = data.email || ''; getModal().show(); })
+            .catch(() => { emailInput.value = ''; getModal().show(); });
     }
 
     function showModalError(msg) {
@@ -506,7 +501,7 @@
                     const msg = data.email ? data.email[0] : (data.detail || '{% trans "Erreur lors de l\'opération." %}');
                     showModalError(msg); return;
                 }
-                modal.hide();
+                getModal().hide();
                 Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: '{% trans "Opération réussie." %}', timer: 1500, showConfirmButton: false });
                 load(1);
             })
@@ -550,7 +545,17 @@
 
         const copyBtn = e.target.closest('.copy-btn');
         if (copyBtn) {
-            navigator.clipboard.writeText(copyBtn.dataset.email).then(() => copyToast.show());
+            navigator.clipboard.writeText(copyBtn.dataset.email).then(() => {
+                const icon = copyBtn.querySelector('i');
+                icon.className = 'fas fa-check';
+                copyBtn.style.background = '#28a745';
+                copyBtn.style.color = 'white';
+                setTimeout(() => {
+                    icon.className = 'fas fa-copy';
+                    copyBtn.style.background = '';
+                    copyBtn.style.color = '';
+                }, 1500);
+            });
         }
     });
 
