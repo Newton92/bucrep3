@@ -9467,8 +9467,8 @@ class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TelephoneAcheteur
-        fields = ["telephone", "acheteur"]
-    
+        fields = ["telephone", "nom", "acheteur"]
+
     def validate_telephone(self, value):
         """Validation du numéro de téléphone fixe"""
         import re
@@ -9494,7 +9494,7 @@ class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
 class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
-        fields = ["telephone", "updated_by"]
+        fields = ["telephone", "nom", "updated_by"]
         
     def update(self, instance, validated_data):
         # Récupérer l'utilisateur du contexte (passé par la vue)
@@ -9639,18 +9639,13 @@ class GetPortableAcheteurSerializer(serializers.ModelSerializer):
 class AddPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
-        fields = [
-            "portable",
-            "acheteur",
-        ]
+        fields = ["portable", "nom", "acheteur"]
 
 
 class EditPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
-        fields = [
-            "portable",
-        ]
+        fields = ["portable", "nom"]
        
         
 class UserSimpleSerializer(serializers.ModelSerializer):
@@ -9779,10 +9774,10 @@ class AddEmailAcheteurSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
         queryset=Acheteur.objects.all()
     )
-    
+
     class Meta:
         model = EmailAcheteur
-        fields = ["email", "acheteur"]
+        fields = ["email", "description", "acheteur"]
     
     def validate_email(self, value):
         """Validation de l'adresse email"""
@@ -9816,7 +9811,7 @@ class AddEmailAcheteurSerializer(serializers.ModelSerializer):
 class EditEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
-        fields = ["email", "updated_by"]
+        fields = ["email", "description", "updated_by"]
     
     def validate_email(self, value):
         """Même validation que pour l'ajout"""

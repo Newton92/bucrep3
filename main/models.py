@@ -4238,6 +4238,7 @@ class TelephoneAcheteur(Model):
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     telephone = models.TextField(max_length=100, verbose_name=_("Téléphone"))
+    nom = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Libellé"), help_text=_("Ex: Siège social, Direction, Service commercial"))
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -4390,6 +4391,7 @@ class PortableAcheteur(Model):
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"), help_text=_("Format: +241 XX XX XX XX ou 0X XX XX XX"))
+    nom = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Libellé"), help_text=_("Ex: WhatsApp principal, Mobile direction, Urgences"))
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -4547,6 +4549,7 @@ class EmailAcheteur(Model):
         max_length=254,  # Limite la taille à celle d'une adresse email standard
         verbose_name=_("Adresse email"),
     )
+    description = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Description"), help_text=_("Ex: Email principal, Comptabilité, Service commercial"))
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,

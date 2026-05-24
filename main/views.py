@@ -9027,6 +9027,7 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
         portables_data.append({
             'id': portable.id,
             'portable': portable.portable or '',
+            'nom': portable.nom or '',
             'created_at': portable.created_at.isoformat() if portable.created_at else None,
             'updated_at': portable.updated_at.isoformat() if portable.updated_at else None,
             'created_by': portable.created_by.get_full_name() if portable.created_by else 'Inconnu',
@@ -9111,6 +9112,7 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
         telephones_data.append({
             'id': telephone.id,
             'telephone': telephone.telephone or '',
+            'nom': telephone.nom or '',
             'formatted_number': telephone.get_formatted_number(),
             'created_at': telephone.created_at.isoformat() if telephone.created_at else None,
             'updated_at': telephone.updated_at.isoformat() if telephone.updated_at else None,
@@ -9196,7 +9198,7 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
         emails_data.append({
             'id': email.id,
             'email': email.email or '',
-            'display_email': email.get_display_email(),
+            'description': email.description or '',
             'created_at': email.created_at.isoformat() if email.created_at else None,
             'updated_at': email.updated_at.isoformat() if email.updated_at else None,
             'created_by': email.created_by.get_full_name() if email.created_by else 'Inconnu',
