@@ -11486,17 +11486,17 @@ class ListAdresseAcheteurSerializer(serializers.ModelSerializer):
 class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["adresse", "nom", "acheteur"]
+        fields = ["adresse", "rue", "numero_porte", "bp", "nom", "acheteur"]
 
 class DetailAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["id", "adresse", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "adresse", "rue", "numero_porte", "bp", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
 
 class EditAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ["id", "adresse", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        fields = ["id", "adresse", "rue", "numero_porte", "bp", "nom", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
         extra_kwargs = {
             "id": {"read_only": True},
             "created_at": {"read_only": True},

@@ -4344,7 +4344,10 @@ class AdresseAcheteur(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
-    adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
+    adresse = models.TextField(max_length=100, null=True, blank=True, verbose_name=_("Adresse"))
+    rue = models.CharField(max_length=200, null=True, blank=True, verbose_name=_("Rue"))
+    numero_porte = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Numéro de porte"))
+    bp = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Boîte Postale"))
     nom = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Libellé"), help_text=_("Ex: Siège social, Entrepôt, Agence régionale"))
     acheteur = models.ForeignKey(
         "Acheteur",
