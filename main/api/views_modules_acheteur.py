@@ -13258,7 +13258,7 @@ class AcheteurAdresseListView(APIView):
                 action_type='CREATE_ADRESSE',
                 object_id=adresse.id,
                 object_type='AdresseAcheteur',
-                details=f"Adresse créée pour l'acheteur {acheteur.nom}: {adresse.adresse[:50]}...",
+                details=f"Adresse créée pour l'acheteur {acheteur.nom}: {(adresse.rue or adresse.adresse or '')[:50]}",
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )

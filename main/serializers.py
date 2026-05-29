@@ -9600,8 +9600,8 @@ class AdresseAcheteurSerializer(serializers.ModelSerializer):
 class AdresseAcheteurCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ['adresse', 'acheteur']
-    
+        fields = ['adresse', 'rue', 'numero_porte', 'bp', 'nom', 'acheteur']
+
     def create(self, validated_data):
         request = self.context.get('request')
         validated_data['created_by'] = request.user if request else None
@@ -9610,8 +9610,8 @@ class AdresseAcheteurCreateSerializer(serializers.ModelSerializer):
 class AdresseAcheteurUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
-        fields = ['adresse']
-    
+        fields = ['adresse', 'rue', 'numero_porte', 'bp', 'nom']
+
     def update(self, instance, validated_data):
         request = self.context.get('request')
         if request:
