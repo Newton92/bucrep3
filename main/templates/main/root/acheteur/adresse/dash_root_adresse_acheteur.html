@@ -30,7 +30,6 @@
 .modern-table tbody td { padding: .5rem .75rem; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
 .modern-table tbody tr:last-child td { border-bottom: none; }
 .modern-table tbody tr:hover { background: rgba(10,149,202,.03); }
-.adresse-text { line-height: 1.4; white-space: pre-line; }
 .nom-badge { font-size: .7rem; color: #6c757d; background: rgba(108,117,125,.08); border-radius: 4px; padding: 1px 5px; display: inline-block; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn-tbl { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
 .btn-tbl-edit   { background: rgba(10,149,202,.1);  color: #0a95ca; }
@@ -97,8 +96,8 @@
                     <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-info-circle"></i></div>
                     <span class="metric-label">{% trans "Conseil" %}</span>
                 </div>
-                <div class="metric-value" style="color:#28a745;font-size:.85rem;">{% trans "Adresse complète" %}</div>
-                <div class="metric-sub">{% trans "Quartier, Ville, BP, Pays" %}</div>
+                <div class="metric-value" style="color:#28a745;font-size:.85rem;">{% trans "Adresse structurée" %}</div>
+                <div class="metric-sub">{% trans "Rue, Numéro de porte, Boîte Postale" %}</div>
             </div>
         </div>
     </div>
@@ -121,8 +120,10 @@
                 <thead>
                     <tr>
                         <th style="width:40px;">#</th>
-                        <th>{% trans "Adresse" %}</th>
-                        <th style="width:160px;">{% trans "Libellé" %}</th>
+                        <th>{% trans "Rue" %}</th>
+                        <th style="width:110px;">{% trans "N° de porte" %}</th>
+                        <th style="width:100px;">{% trans "Boîte Postale" %}</th>
+                        <th style="width:150px;">{% trans "Libellé" %}</th>
                         <th style="width:115px;">{% trans "Ajouté le" %}</th>
                         <th class="text-center" style="width:75px;">{% trans "Actions" %}</th>
                     </tr>
@@ -153,15 +154,29 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editId">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">{% trans "Adresse complète" %} <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="adresseInput" rows="4"
-                        placeholder="{% trans 'Ex: Quartier Louis, Rue des Bougainvilliers, BP 1234, Libreville, Gabon' %}" required></textarea>
-                    <div class="form-text small">{% trans "Saisissez l'adresse complète : quartier, rue, boîte postale, ville, pays." %}</div>
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label fw-semibold">{% trans "Rue" %} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="rueInput"
+                            placeholder="{% trans 'Ex: Rue des Bougainvilliers, Quartier Louis' %}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-semibold">{% trans "Numéro de porte" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="numeroPorteInput"
+                            placeholder="{% trans 'Ex: 42B' %}">
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">{% trans "Libellé" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                    <input type="text" class="form-control" id="nomInput" placeholder="{% trans 'Ex: Siège social, Entrepôt, Agence régionale' %}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{% trans "Boîte Postale" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="bpInput"
+                            placeholder="{% trans 'Ex: BP 1234' %}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{% trans "Libellé" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="nomInput"
+                            placeholder="{% trans 'Ex: Siège social, Entrepôt, Agence régionale' %}">
+                    </div>
                 </div>
                 <div id="modalError" class="alert alert-danger py-2 small" style="display:none;"></div>
             </div>
@@ -214,12 +229,24 @@
         }));
     }
 
+    /* ── Libellé d'affichage de l'adresse ── */
+    function adresseDisplay(item) {
+        var parts = [];
+        if (item.rue) parts.push(item.rue);
+        if (item.numero_porte) parts.push('N° ' + item.numero_porte);
+        if (item.bp) parts.push(item.bp);
+        return parts.length > 0 ? parts.join(' · ') : (item.adresse || '—');
+    }
+
     /* ── Filtrage ── */
     function getFiltered() {
         var q = currentSearch.toLowerCase();
         if (!q) return ALL_ITEMS;
         return ALL_ITEMS.filter(function(i) {
-            return (i.adresse || '').toLowerCase().includes(q);
+            return (i.rue || '').toLowerCase().indexOf(q) >= 0
+                || (i.bp || '').toLowerCase().indexOf(q) >= 0
+                || (i.nom || '').toLowerCase().indexOf(q) >= 0
+                || (i.adresse || '').toLowerCase().indexOf(q) >= 0;
         });
     }
 
@@ -233,14 +260,14 @@
         if (currentPage > totalPages) currentPage = totalPages;
 
         if (ALL_ITEMS.length > 0) {
-            var preview = (ALL_ITEMS[0].adresse || '').split('\n')[0].substring(0, 40);
-            document.getElementById('mc-recent').textContent      = preview + (preview.length >= 40 ? '…' : '');
+            var label = adresseDisplay(ALL_ITEMS[0]).substring(0, 40);
+            document.getElementById('mc-recent').textContent      = label + (label.length >= 40 ? '…' : '');
             document.getElementById('mc-recent-date').textContent = fmtDate(ALL_ITEMS[0].created_at);
         }
 
         if (total === 0) {
             tableBody.innerHTML = currentSearch
-                ? '<tr><td colspan="5" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
+                ? '<tr><td colspan="7" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
                 : '';
             emptyState.style.display = currentSearch ? 'none' : 'block';
             document.getElementById('paginationInfo').textContent = '';
@@ -256,21 +283,35 @@
             var nomHtml = item.nom
                 ? '<span class="nom-badge" title="' + escAttr(item.nom) + '">' + escHtml(item.nom) + '</span>'
                 : '<span class="text-muted" style="font-size:.75rem;">—</span>';
-            return '<tr>' +
-                '<td class="text-muted small">' + (start + i + 1) + '</td>' +
-                '<td>' +
-                  '<div class="d-flex align-items-start gap-2">' +
-                    '<span style="width:22px;height:22px;border-radius:50%;background:rgba(10,149,202,.1);color:#0a95ca;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;margin-top:1px;"><i class="fas fa-map-marker-alt"></i></span>' +
-                    '<span class="adresse-text">' + escHtml(item.adresse || '—') + '</span>' +
-                  '</div>' +
-                '</td>' +
-                '<td>' + nomHtml + '</td>' +
-                '<td class="text-muted small">' + fmtDate(item.created_at) + '</td>' +
-                '<td class="text-center" style="white-space:nowrap;">' +
-                  '<button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="' + item.id + '" title="{% trans 'Modifier' %}"><i class="fas fa-pencil-alt"></i></button>' +
-                  '<button class="btn-tbl btn-tbl-delete delete-btn" data-id="' + item.id + '" data-adresse="' + escAttr(item.adresse || '') + '" title="{% trans 'Supprimer' %}"><i class="fas fa-trash"></i></button>' +
-                '</td>' +
-            '</tr>';
+
+            var rueHtml;
+            if (item.rue) {
+                rueHtml = '<div class="d-flex align-items-start gap-2">'
+                    + '<span style="width:22px;height:22px;border-radius:50%;background:rgba(10,149,202,.1);color:#0a95ca;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;margin-top:1px;"><i class="fas fa-map-marker-alt"></i></span>'
+                    + '<span>' + escHtml(item.rue) + '</span>'
+                    + '</div>';
+            } else if (item.adresse) {
+                rueHtml = '<span class="text-muted small fst-italic">' + escHtml(item.adresse.substring(0, 60)) + (item.adresse.length > 60 ? '…' : '') + '</span>';
+            } else {
+                rueHtml = '<span class="text-muted">—</span>';
+            }
+
+            var numHtml = item.numero_porte ? escHtml(item.numero_porte) : '<span class="text-muted small">—</span>';
+            var bpHtml  = item.bp ? escHtml(item.bp) : '<span class="text-muted small">—</span>';
+            var display = adresseDisplay(item);
+
+            return '<tr>'
+                + '<td class="text-muted small">' + (start + i + 1) + '</td>'
+                + '<td>' + rueHtml + '</td>'
+                + '<td class="small">' + numHtml + '</td>'
+                + '<td class="small">' + bpHtml + '</td>'
+                + '<td>' + nomHtml + '</td>'
+                + '<td class="text-muted small">' + fmtDate(item.created_at) + '</td>'
+                + '<td class="text-center" style="white-space:nowrap;">'
+                +   '<button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="' + item.id + '" title="{% trans "Modifier" %}"><i class="fas fa-pencil-alt"></i></button>'
+                +   '<button class="btn-tbl btn-tbl-delete delete-btn" data-id="' + item.id + '" data-display="' + escAttr(display) + '" title="{% trans "Supprimer" %}"><i class="fas fa-trash"></i></button>'
+                + '</td>'
+                + '</tr>';
         }).join('');
 
         renderPagination(total, totalPages);
@@ -306,7 +347,9 @@
 
     function openAdd() {
         document.getElementById('editId').value = '';
-        document.getElementById('adresseInput').value = '';
+        document.getElementById('rueInput').value = '';
+        document.getElementById('numeroPorteInput').value = '';
+        document.getElementById('bpInput').value = '';
         document.getElementById('nomInput').value = '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter une adresse" %}';
@@ -320,7 +363,9 @@
         }
         if (!item) return;
         document.getElementById('editId').value = item.id;
-        document.getElementById('adresseInput').value = item.adresse || '';
+        document.getElementById('rueInput').value = item.rue || '';
+        document.getElementById('numeroPorteInput').value = item.numero_porte || '';
+        document.getElementById('bpInput').value = item.bp || '';
         document.getElementById('nomInput').value = item.nom || '';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>' + "{% trans "Modifier l'adresse" %}";
@@ -329,9 +374,11 @@
 
     /* ── Save ── */
     document.getElementById('saveBtn').addEventListener('click', function () {
-        var val = document.getElementById('adresseInput').value.trim();
-        var nom = document.getElementById('nomInput').value.trim();
-        if (!val) { showModalError("{% trans "L'adresse est obligatoire." %}"); return; }
+        var rue         = document.getElementById('rueInput').value.trim();
+        var numeroPorte = document.getElementById('numeroPorteInput').value.trim();
+        var bp          = document.getElementById('bpInput').value.trim();
+        var nom         = document.getElementById('nomInput').value.trim();
+        if (!rue && !bp) { showModalError("{% trans "La rue ou la boîte postale est obligatoire." %}"); return; }
         document.getElementById('modalError').style.display = 'none';
         var id     = document.getElementById('editId').value;
         var isEdit = !!id;
@@ -340,11 +387,11 @@
             : '/api/acheteur/' + ACHETEUR_ID + '/adresses/';
         this.disabled = true;
         var self = this;
-        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({adresse: val, nom: nom})})
+        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify({rue: rue, numero_porte: numeroPorte, bp: bp, nom: nom})})
             .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
             .then(function(res) {
                 if (!res.ok) {
-                    showModalError(res.data.adresse ? res.data.adresse[0] : (res.data.detail || "{% trans "Erreur lors de l'opération." %}"));
+                    showModalError(res.data.rue ? res.data.rue[0] : (res.data.detail || "{% trans "Erreur lors de l'opération." %}"));
                     self.disabled = false; return;
                 }
                 window.location.reload();
@@ -353,10 +400,10 @@
     });
 
     /* ── Delete ── */
-    function deleteItem(id, adresse) {
+    function deleteItem(id, display) {
         Swal.fire({
             title: '{% trans "Supprimer cette adresse ?" %}',
-            html: '<em>' + escHtml(adresse.substring(0, 80)) + (adresse.length > 80 ? '…' : '') + '</em>',
+            html: '<em>' + escHtml(display.substring(0, 80)) + (display.length > 80 ? '…' : '') + '</em>',
             icon: 'warning', showCancelButton: true,
             confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
             confirmButtonText: '{% trans "Oui, supprimer" %}',
@@ -379,7 +426,7 @@
         var editBtn = e.target.closest('.edit-btn');
         if (editBtn) { openEdit(editBtn.dataset.id); return; }
         var delBtn = e.target.closest('.delete-btn');
-        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.adresse); return; }
+        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.display || ''); return; }
     });
 
     document.getElementById('searchInput').addEventListener('input', function() {
