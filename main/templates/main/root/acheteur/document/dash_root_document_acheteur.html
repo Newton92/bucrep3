@@ -168,7 +168,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                    <textarea class="form-control" id="addDescInput" rows="2" placeholder="{% trans 'Description du document...' %}"></textarea>
+                    <textarea class="form-control rich-editor" id="addDescInput" rows="2" placeholder="{% trans 'Description du document...' %}"></textarea>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">{% trans "Fichier" %} <span class="text-danger">*</span></label>
@@ -207,7 +207,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                    <textarea class="form-control" id="editDescInput" rows="2"></textarea>
+                    <textarea class="form-control rich-editor" id="editDescInput" rows="2"></textarea>
                 </div>
                 <div id="editModalError" class="alert alert-danger py-2 small" style="display:none;"></div>
             </div>
@@ -361,7 +361,8 @@
 
     function openAdd() {
         document.getElementById('addTitreInput').value = '';
-        document.getElementById('addDescInput').value  = '';
+        if (window.quillSetValue) window.quillSetValue('addDescInput', '');
+        else document.getElementById('addDescInput').value = '';
         document.getElementById('addFileInput').value  = '';
         document.getElementById('addModalError').style.display   = 'none';
         document.getElementById('addProgressWrap').style.display = 'none';
@@ -379,7 +380,8 @@
         if (!item) return;
         document.getElementById('editId').value         = item.id;
         document.getElementById('editTitreInput').value = item.titre || '';
-        document.getElementById('editDescInput').value  = item.description || '';
+        if (window.quillSetValue) window.quillSetValue('editDescInput', item.description || '');
+        else document.getElementById('editDescInput').value = item.description || '';
         document.getElementById('editModalError').style.display = 'none';
         document.getElementById('editSaveBtn').disabled = false;
         getEditModal().show();
@@ -421,7 +423,7 @@
                 window.location.reload();
                 return;
             }
-            var msg = '{% trans "Erreur lors de l\'opération." %}';
+            var msg = "{% trans "Erreur lors de l'opération." %}";
             try {
                 var d = JSON.parse(xhr.responseText);
                 msg = d.titre ? d.titre[0] : (d.fichier ? d.fichier[0] : (d.detail || msg));
