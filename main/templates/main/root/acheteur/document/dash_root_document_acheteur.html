@@ -1,2170 +1,503 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
-
 <style>
 :root {
-    --color-background: #fcfefe;
     --color-primary: #0a95ca;
     --color-primary-dark: #0d80be;
-    --color-secondary: #25add6;
     --color-accent: #106cb2;
-    --color-text: #2c3e50;
-    --color-text-muted: #5a6c7d;
-    --color-border: rgba(10, 149, 202, 0.1);
-    
     --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --document-gradient: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
 }
-
-/* Header Premium Élevé */
-.page-header-premium {
-    background: var(--primary-gradient);
-    padding: .75rem 1.25rem;
-    border-radius: 10px;
-    margin-bottom: .75rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.12);
-}
-
-.page-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    display: none;
-}
-
-@keyframes shimmer { 0%, 100% { opacity: 0; } }
-
-.page-title-premium {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    position: relative;
-    text-shadow: none;
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-}
-
-.page-subtitle-premium {
-    font-size: .8rem;
-    opacity: .9;
-    max-width: unset;
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-/* Carte Acheteur Premium */
-.acheteur-card-premium {
-    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
-    border-radius: 10px;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.06);
-    margin-bottom: .75rem;
-    position: relative;
-}
-
-.acheteur-header-premium {
-    background: var(--primary-gradient);
-    padding: .6rem 1rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    display: none;
-}
-
-.acheteur-title-premium {
-    font-size: .9rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    text-shadow: none;
-}
-
-.acheteur-badge-premium {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Grille d'informations acheteur */
-.acheteur-info-grid {
-    padding: 2rem;
-}
-
-.acheteur-info-item {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    border-radius: 16px;
-    padding: 1.5rem;
-    border: 1px solid var(--color-border);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-info-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
-    border-color: rgba(37, 173, 214, 0.3);
-}
-
-.acheteur-info-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-gradient);
-}
-
-.acheteur-info-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 1.75rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
-}
-
-.acheteur-info-label {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    display: block;
-}
-
-.acheteur-info-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    line-height: 1.3;
-}
-
-.acheteur-info-value.badge-value {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: inline-block;
-}
-
-/* Cartes de documents Premium */
-.document-card-premium {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 20px;
-    padding: 2rem;
-    border: 2px solid var(--color-border);
-    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.05);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-}
-
-.document-card-premium:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(10, 149, 202, 0.15);
-    border-color: rgba(10, 149, 202, 0.3);
-}
-
-.document-card-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background: var(--document-gradient);
-    border-radius: 5px 0 0 5px;
-}
-
-/* En-tête de la carte */
-.document-header-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-}
-
-.document-main-premium {
-    flex: 1;
-}
-
-.document-title-premium {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.document-subtitle-premium {
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
-}
-
-.document-icon-premium {
-    font-size: 1.75rem;
-    color: var(--color-primary);
-}
-
-.document-actions-premium {
-    display: flex;
-    gap: 0.5rem;
-}
-
-/* Badge de taille */
-.document-size-badge-premium {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--success-gradient);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-top: 0.5rem;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
-}
-
-/* Badge d'extension */
-.document-extension-badge-premium {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--warning-gradient);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-left: 0.75rem;
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
-}
-
-/* Indicateur Document */
-.document-indicator-premium {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: var(--primary-gradient);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.15);
-    z-index: 1;
-}
-
-/* Actions rapides */
-.document-actions-quick-premium {
-    display: flex;
-    gap: 1rem;
-    margin: 1.5rem 0;
-}
-
-.btn-document-premium {
-    background: var(--document-gradient);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 0.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-document-premium:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
-    color: white;
-}
-
-.btn-document-outline-premium {
-    background: transparent;
-    border: 2px solid var(--color-primary);
-    color: var(--color-primary);
-}
-
-.btn-document-outline-premium:hover {
-    background: var(--primary-gradient);
-    border-color: transparent;
-    color: white;
-}
-
-/* Informations métadonnées */
-.document-meta-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--color-border);
-    font-size: 0.9rem;
-}
-
-.meta-item-premium {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    transition: all 0.3s ease;
-}
-
-.meta-item-premium:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    transform: translateX(5px);
-}
-
-.meta-item-premium i {
-    font-size: 1.1rem;
-    color: var(--color-primary);
-}
-
-/* Statistiques Premium */
-.stats-cards-premium {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
-
-.stat-card-premium {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border-radius: 16px;
-    padding: 1.75rem;
-    text-align: center;
-    border: 1px solid var(--color-border);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card-premium:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
-    border-color: rgba(37, 173, 214, 0.3);
-}
-
-.stat-card-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: var(--primary-gradient);
-}
-
-.stat-number-premium {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.75rem;
-    line-height: 1;
-}
-
-.stat-label-premium {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-/* État vide Premium */
-.empty-state-premium {
-    padding: 5rem 3rem;
-    text-align: center;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
-    border-radius: 20px;
-    border: 3px dashed rgba(10, 149, 202, 0.3);
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.empty-state-icon-premium {
-    font-size: 5rem;
-    margin-bottom: 2rem;
-    background: var(--document-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    opacity: 0.8;
-}
-
-.empty-state-premium h4 {
-    font-weight: 800;
-    margin-bottom: 1.25rem;
-    color: var(--color-primary-dark);
-    font-size: 1.75rem;
-}
-
-.empty-state-premium p {
-    color: var(--color-text-muted);
-    max-width: 500px;
-    margin: 0 auto 2.5rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-}
-
-/* Section Actions Documents */
-.documents-section-header-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--color-border);
-    position: relative;
-}
-
-.documents-section-header-premium::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100px;
-    height: 2px;
-    background: var(--primary-gradient);
-}
-
-.documents-section-title-premium {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.documents-section-title-premium i {
-    color: var(--color-primary);
-    font-size: 2rem;
-}
-
-.documents-count-badge-premium {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
-}
-
-/* Grille des documents */
-.documents-grid-premium {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(550px, 1fr));
-    gap: 1.75rem;
-    margin-bottom: 2.5rem;
-}
-
-/* Contrôles de recherche */
-.search-controls-premium {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.search-input-premium {
-    flex: 1;
-}
-
-.search-input-premium .input-group {
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.08);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.search-input-premium .input-group-text {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    padding: 0.875rem 1.25rem;
-}
-
-.search-input-premium .form-control {
-    border: 2px solid var(--color-border);
-    border-left: none;
-    border-radius: 0 12px 12px 0;
-    padding: 0.875rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-}
-
-.search-input-premium .form-control:focus {
-    border-color: var(--color-primary);
-    box-shadow: none;
-    background: var(--color-background);
-}
-
-/* Boutons Premium */
-.btn-action-premium {
-    border-radius: 12px;
-    padding: 0.875rem 2rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-action-premium:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
-}
-
-.btn-document-action-premium {
-    background: var(--document-gradient);
-    color: white;
-}
-
-.btn-document-outline-action-premium {
-    color: var(--color-primary);
-    border: 2px solid var(--color-primary);
-    background: transparent;
-}
-
-.btn-document-outline-action-premium:hover {
-    background: var(--primary-gradient);
-    border-color: transparent;
-    color: white;
-}
-
-.btn-warning-premium {
-    background: var(--warning-gradient);
-    color: white;
-}
-
-.btn-danger-premium {
-    background: var(--danger-gradient);
-    color: white;
-}
-
-.btn-back-premium {
-    background: linear-gradient(135deg, #6c757d, #495057);
-    color: white;
-}
-
-.btn-success-premium {
-    background: var(--success-gradient);
-    color: white;
-}
-
-/* Formulaires Premium */
-.enhanced-form-premium .form-group {
-    margin-bottom: 2rem;
-    position: relative;
-}
-
-.enhanced-form-premium .form-label {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 1.1rem;
-}
-
-.enhanced-form-premium .form-label i {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10, 149, 202, 0.1);
-    color: var(--color-primary);
-    font-size: 1.5rem;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.1);
-}
-
-/* Form controls premium */
-.enhanced-form-premium .form-control,
-.enhanced-form-premium .form-select,
-.enhanced-form-premium textarea {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-    min-height: 56px;
-}
-
-.enhanced-form-premium .form-control:focus,
-.enhanced-form-premium .form-select:focus,
-.enhanced-form-premium textarea:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-    background: var(--color-background);
-}
-
-.enhanced-form-premium textarea {
-    min-height: 120px;
-    resize: vertical;
-    line-height: 1.6;
-}
-
-/* Info bulle */
-.info-tooltip-premium {
-    position: relative;
-    display: inline-block;
-    cursor: help;
-    color: var(--color-primary);
-    margin-left: 0.5rem;
-}
-
-.info-tooltip-premium:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-primary-dark);
-    color: white;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.2);
-}
-
-/* Zone de téléchargement */
-.upload-dropzone-premium {
-    border: 3px dashed var(--color-primary);
-    border-radius: 16px;
-    padding: 2.5rem;
-    text-align: center;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 1.5rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.upload-dropzone-premium:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.05));
-    border-color: var(--color-secondary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.15);
-}
-
-.upload-dropzone-premium.dz-drag-hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.15), rgba(37, 173, 214, 0.08));
-    border-color: #20c997;
-}
-
-.upload-icon-premium {
-    font-size: 3.5rem;
-    margin-bottom: 1.5rem;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.upload-text-premium {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.75rem;
-}
-
-.upload-subtext-premium {
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    margin-bottom: 1.5rem;
-}
-
-/* Prévisualisation du fichier */
-.file-preview-container-premium {
-    display: none;
-    margin-top: 1.5rem;
-}
-
-.file-preview-premium {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border-radius: 16px;
-    border: 2px solid var(--color-border);
-    transition: all 0.3s ease;
-}
-
-.file-preview-premium:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.1);
-}
-
-.file-preview-icon-premium {
-    font-size: 2.5rem;
-    color: var(--color-primary);
-}
-
-.file-preview-info-premium {
-    flex: 1;
-}
-
-.file-preview-name-premium {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.5rem;
-    word-break: break-all;
-    font-size: 1.1rem;
-}
-
-.file-preview-size-premium {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-}
-
-.file-preview-remove-premium {
-    color: #dc3545;
-    cursor: pointer;
-    font-size: 1.5rem;
-    transition: all 0.3s ease;
-    padding: 0.5rem;
-    border-radius: 8px;
-}
-
-.file-preview-remove-premium:hover {
-    background: rgba(220, 53, 69, 0.1);
-    transform: rotate(90deg);
-}
-
-/* Progress bar */
-.upload-progress-premium {
-    display: none;
-    margin-top: 1.5rem;
-}
-
-.progress-bar-premium {
-    height: 10px;
-    border-radius: 5px;
-    background: rgba(10, 149, 202, 0.1);
-    overflow: hidden;
-}
-
-.progress-bar-fill-premium {
-    height: 100%;
-    background: var(--primary-gradient);
-    border-radius: 5px;
-    transition: width 0.3s ease;
-}
-
-.progress-text-premium {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin-top: 0.75rem;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Badge d'extension par type */
-.extension-badge-pdf { background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); }
-.extension-badge-doc { background: linear-gradient(135deg, #185abd 0%, #0d8ddb 100%); }
-.extension-badge-xls { background: linear-gradient(135deg, #198754 0%, #20c997 100%); }
-.extension-badge-img { background: linear-gradient(135deg, #9b5de5 0%, #f15bb5 100%); }
-.extension-badge-archive { background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%); }
-.extension-badge-default { background: var(--document-gradient); }
-
-/* Modales Premium */
-.modal-header-premium {
-    background: var(--document-gradient);
-    color: white;
-    padding: 2rem !important;
-    border-bottom: none !important;
-    border-radius: 20px 20px 0 0 !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    animation: shimmer 2s infinite;
-}
-
-.modal-title-premium {
-    font-size: 1.5rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.modal-body-premium {
-    padding: 2.5rem !important;
-    background: var(--color-background);
-}
-
-.modal-footer-premium {
-    padding: 2rem !important;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
-    border-top: 2px solid var(--color-border) !important;
-    border-radius: 0 0 20px 20px !important;
-}
-
-.modal-content-premium {
-    border: none !important;
-    border-radius: 20px !important;
-    box-shadow: 0 25px 70px rgba(10, 149, 202, 0.3) !important;
-    overflow: hidden;
-}
-
-/* Modal danger */
-.modal-danger-header-premium {
-    background: var(--danger-gradient);
-}
-
-.modal-danger-content-premium {
-    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
-}
-
-/* Animation pour les fichiers */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.document-content-loaded {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-/* Styles pour le titre des sections modales */
-.modal-section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .page-title-premium {
-        font-size: 1.05rem;
-    }
-    
-    .acheteur-title-premium,
-    .documents-section-title-premium {
-        font-size: 1.5rem;
-    }
-    
-    .documents-grid-premium {
-        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-    }
-}
-
-@media (max-width: 992px) {
-    .documents-grid-premium {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-    
-    .documents-section-header-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
-    }
-    
-    .search-controls-premium {
-        flex-direction: column;
-    }
-    
-    .document-header-premium {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-    
-    .document-meta-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .page-header-premium {
-        padding: 1.75rem;
-    }
-    
-    .acheteur-header-premium {
-        padding: 1.5rem;
-    }
-    
-    .document-card-premium {
-        padding: 1.5rem;
-    }
-    
-    .modal-body-premium,
-    .modal-footer-premium {
-        padding: 1.5rem !important;
-    }
-    
-    .stats-cards-premium {
-        grid-template-columns: 1fr;
-    }
-    
-    .empty-state-premium {
-        padding: 3rem 1.5rem;
-    }
-    
-    .upload-dropzone-premium {
-        padding: 1.75rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .page-title-premium {
-        font-size: 1.75rem;
-    }
-    
-    .acheteur-title-premium,
-    .documents-section-title-premium {
-        font-size: 1.25rem;
-    }
-    
-    .document-title-premium {
-        font-size: 1.1rem;
-    }
-    
-    .document-actions-premium {
-        flex-direction: column;
-    }
-    
-    .document-actions-premium .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .btn-action-premium {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-    }
-    
-    .file-preview-premium {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-}
-
+.page-header { background: var(--primary-gradient); padding: .75rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; color: white; }
+.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: .8rem; opacity: .85; }
+.metric-card { background: white; border-radius: 10px; padding: .9rem 1rem; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); }
+.metric-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .4rem; }
+.metric-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(10,149,202,.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+.metric-label { font-size: .75rem; color: #5a6c7d; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.metric-value { font-size: 1.4rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1; }
+.metric-sub   { font-size: .72rem; color: #8a9ab0; margin-top: .2rem; }
+.table-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); overflow: hidden; }
+.table-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-bottom: 1px solid rgba(37,173,214,.1); }
+.search-input { border: 1px solid rgba(10,149,202,.25); border-radius: 6px; padding: .3rem .65rem; font-size: .8rem; outline: none; color: #333; }
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(10,149,202,.12); }
+.btn-add { background: var(--primary-gradient); color: white; border: none; border-radius: 6px; padding: .35rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; transition: opacity .15s; }
+.btn-add:hover { opacity: .88; }
+.modern-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.modern-table thead th { background: rgba(10,149,202,.05); padding: .55rem .75rem; font-weight: 600; color: #4a5568; border-bottom: 2px solid rgba(10,149,202,.12); white-space: nowrap; }
+.modern-table tbody td { padding: .5rem .75rem; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: rgba(10,149,202,.03); }
+.btn-tbl { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; text-decoration: none; }
+.btn-tbl-view     { background: rgba(23,162,184,.1);  color: #17a2b8; }
+.btn-tbl-download { background: rgba(40,167,69,.1);   color: #28a745; }
+.btn-tbl-edit     { background: rgba(10,149,202,.1);  color: #0a95ca; }
+.btn-tbl-delete   { background: rgba(220,53,69,.1);   color: #dc3545; }
+.btn-tbl:hover    { opacity: .75; transform: scale(1.08); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: #8a9ab0; }
+.pag-info { font-size: .75rem; color: #8a9ab0; }
+.page-link-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 4px; border: 1px solid rgba(10,149,202,.2); border-radius: 5px; font-size: .75rem; color: #4a5568; cursor: pointer; transition: all .15s; }
+.page-link-btn:hover, .page-link-btn.active { background: var(--primary-gradient); color: white; border-color: var(--color-primary); }
+.page-link-btn.disabled { opacity: .4; pointer-events: none; }
+.ext-badge { font-size: .67rem; font-weight: 700; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; display: inline-block; letter-spacing: .3px; }
+.ext-pdf   { background: rgba(220,53,69,.1); color: #dc3545; }
+.ext-word  { background: rgba(13,110,253,.1); color: #0d6efd; }
+.ext-excel { background: rgba(25,135,84,.1);  color: #198754; }
+.ext-img   { background: rgba(111,66,193,.1); color: #6f42c1; }
+.ext-other { background: rgba(108,117,125,.1); color: #6c757d; }
+.file-size { font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: .75rem; color: #6c757d; }
+.progress-wrap { height: 6px; background: rgba(10,149,202,.1); border-radius: 3px; overflow: hidden; }
+.progress-bar-custom { height: 100%; background: var(--primary-gradient); border-radius: 3px; transition: width .2s; width: 0%; }
 </style>
-<link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium Élevé -->
+
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title">
-                    <i class="fas fa-folder-open"></i>{% trans "Gestion des Documents" %}
-                </h1>
+                <h1 class="page-title"><i class="fas fa-folder-open me-2"></i>{% trans "Documents" %}</h1>
                 <p class="page-subtitle mb-0">
                     <span class="fw-semibold">{{ acheteur.nom }}</span>
                     {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
                     &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
-                    {% if acheteur.activite_principale %}&nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.activite_principale }}</span>{% endif %}
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
                 </a>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Statistiques Premium -->
-    <div class="stats-cards-premium">
-        <div class="stat-card-premium">
-            <div class="stat-number-premium">{{ documents_count }}</div>
-            <div class="stat-label-premium">{% trans "Documents" %}</div>
-        </div>
-        <div class="stat-card-premium">
-            <div class="stat-number-premium">{{ taille_totale_mb|floatformat:1 }} MB</div>
-            <div class="stat-label-premium">{% trans "Stockage total" %}</div>
-        </div>
-        <div class="stat-card-premium">
-            <div class="stat-number-premium">{{ max_file_size|filesizeformat }}</div>
-            <div class="stat-label-premium">{% trans "Limite par fichier" %}</div>
-        </div>
-    </div>
-
-    <!-- Section Documents Premium -->
-    <div class="row">
-        <div class="col-12">
-            <!-- Header Section -->
-            <div class="documents-section-header-premium">
-                <h5 class="documents-section-title-premium mb-0">
-                    <i class="fas fa-file-alt"></i>
-                    Documents Associés
-                </h5>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="documents-count-badge-premium">
-                        <i class="fas fa-file"></i>
-                        {{ documents_count }} document{{ documents_count|pluralize }}
-                    </span>
-                    <button class="btn btn-document-action-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
-                        <i class="fas fa-upload me-2"></i>{% trans "Ajouter un document" %}
-                    </button>
-                </div>
-            </div>
-
-            <!-- Contrôles de recherche -->
-            <div class="search-controls-premium mb-4">
-                <div class="search-input-premium">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="searchDocumentInput" 
-                               placeholder="Rechercher par titre ou description...">
-                    </div>
-                </div>
-                <button class="btn btn-document-outline-action-premium btn-action-premium" id="clearSearchBtn">
-                    <i class="fas fa-times me-1"></i>{% trans "Effacer la recherche" %}
+                <button class="btn-add" id="openAddModal">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
                 </button>
             </div>
-
-            {% if documents %}
-                <!-- Grille des documents Premium -->
-                <div class="documents-grid-premium" id="documentsContainer">
-                    {% for document in documents_data %}
-                        <div class="document-card-premium document-content-loaded" data-id="{{ document.id }}">
-                            <!-- Indicateur -->
-                            <span class="document-indicator-premium">
-                                <i class="fas fa-file"></i> {% trans "DOCUMENT" %}
-                            </span><br><br>
-                            
-                            <div class="document-header-premium">
-                                <div class="document-main-premium">
-                                    <div class="document-title-premium">
-                                        <i class="{{ document.icon_class }} document-icon-premium"></i>
-                                        {{ document.titre }}
-                                        <span class="document-extension-badge-premium extension-badge-{{ document.extension }}">
-                                            .{{ document.extension|upper }}
-                                        </span>
-                                    </div>
-                                    <div class="document-subtitle-premium">
-                                        {{ document.description|truncatechars:150 }}
-                                    </div>
-                                    <span class="document-size-badge-premium">
-                                        <i class="fas fa-weight-hanging"></i>
-                                        {{ document.taille }}
-                                    </span>
-                                    <br><br>
-                                    <div class="document-actions-premium">
-                                        <a href="{{ document.fichier_url }}" 
-                                        class="btn btn-sm btn-success" 
-                                        target="_blank"
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-title="Voir le document">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ document.fichier_url }}" 
-                                        class="btn btn-sm btn-primary" 
-                                        download
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-title="Télécharger">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-warning edit-document-btn" 
-                                                data-id="{{ document.id }}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger delete-document-btn" 
-                                                data-id="{{ document.id }}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Métadonnées -->
-                            <div class="document-meta-premium">
-                                <div class="meta-item-premium">
-                                    <i class="fas fa-calendar-plus"></i>
-                                    <div>
-                                        <div class="fw-medium">Ajouté le {{ document.created_at|date:"d/m/Y" }}</div>
-                                        <small class="text-muted">à {{ document.created_at|date:"H:i" }}</small>
-                                    </div>
-                                </div>
-                                <div class="meta-item-premium">
-                                    <i class="fas fa-sync-alt"></i>
-                                    <div>
-                                        <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
-                                        <small class="text-muted">{{ document.updated_at|date:"d/m/Y H:i" }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <!-- État vide premium -->
-                <div class="empty-state-premium">
-                    <i class="fas fa-folder-open empty-state-icon-premium"></i>
-                    <h4 class="fw-bold mb-3">{% trans "Aucun document associé" %}</h4>
-                    <p class="text-muted mb-4">
-                        Cet acheteur ne possède pas encore de documents associés.<br>
-                        Vous pouvez ajouter des documents importants comme des contrats, factures, justificatifs, etc.
-                    </p>
-                    <button class="btn btn-document-action-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
-                        <i class="fas fa-upload me-2"></i>{% trans "Ajouter le premier document" %}
-                    </button>
-                </div>
-            {% endif %}
         </div>
     </div>
-</div>
 
-<!-- Modal Ajout Document Premium -->
-<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content modal-content-premium">
-            <div class="modal-header modal-header-premium">
-                <h5 class="modal-title-premium text-white">
-                    <i class="fas fa-upload me-2"></i>{% trans "Ajouter un Document" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="fas fa-file-alt"></i></div>
+                    <span class="metric-label">{% trans "Total" %}</span>
+                </div>
+                <div class="metric-value">{{ documents_count }}</div>
+                <div class="metric-sub">{% trans "documents enregistrés" %}</div>
             </div>
-            <form id="addDocumentForm" class="enhanced-form-premium" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-body modal-body-premium">
-                    <!-- Section titre et description -->
-                    <h5 class="modal-section-title">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>{% trans "Informations du document" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="documentTitre" class="form-label">
-                                    <i class="fas fa-heading"></i>{% trans "Titre du document" %}
-                                    <span class="info-tooltip-premium" data-tooltip="Donnez un titre clair qui décrit le document">
-                                        <i class="fas fa-info-circle"></i>
-                                    </span>
-                                </label>
-                                <input type="text" class="form-control" id="documentTitre" name="titre" 
-                                       placeholder="Ex: Contrat de service 2024" required>
-                            </div>
-                        </div>
-                        
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="documentDescription" class="form-label">
-                                    <i class="fas fa-align-left"></i>{% trans "Description (optionnel)" %}
-                                </label>
-                                <textarea class="form-control" id="documentDescription" name="description" 
-                                          rows="4" placeholder="Description détaillée du document..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section fichier -->
-                    <h5 class="modal-section-title mt-5">
-                        <i class="fas fa-file-upload me-2 text-info"></i>{% trans "Sélection du fichier" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-file-upload"></i>{% trans "Fichier à téléverser" %}
-                                    <span class="info-tooltip-premium" data-tooltip="Formats acceptés: PDF, Word, Excel, Images (max {{ max_file_size|filesizeformat }})">
-                                        <i class="fas fa-info-circle"></i>
-                                    </span>
-                                </label>
-                                
-                                <!-- Zone de dépôt premium -->
-                                <div class="upload-dropzone-premium" id="uploadDropzone">
-                                    <div class="upload-icon-premium">
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                    </div>
-                                    <div class="upload-text-premium">
-                                        Glissez-déposez votre fichier ici
-                                    </div>
-                                    <div class="upload-subtext-premium">
-                                        ou cliquez pour sélectionner
-                                    </div>
-                                    <div class="text-muted small">
-                                        Taille max: {{ max_file_size|filesizeformat }} • Formats: {{ allowed_extensions }}
-                                    </div>
-                                    <input type="file" id="documentFile" name="fichier" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-                                </div>
-                                
-                                <!-- Prévisualisation premium -->
-                                <div class="file-preview-container-premium" id="filePreviewContainer">
-                                    <div class="file-preview-premium">
-                                        <div class="file-preview-icon-premium">
-                                            <i class="fas fa-file" id="previewIcon"></i>
-                                        </div>
-                                        <div class="file-preview-info-premium">
-                                            <div class="file-preview-name-premium" id="previewFileName"></div>
-                                            <div class="file-preview-size-premium" id="previewFileSize"></div>
-                                        </div>
-                                        <div class="file-preview-remove-premium" id="removeFileBtn">
-                                            <i class="fas fa-times"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Barre de progression premium -->
-                                <div class="upload-progress-premium" id="uploadProgress">
-                                    <div class="progress-bar-premium">
-                                        <div class="progress-bar-fill-premium" id="progressBarFill" style="width: 0%"></div>
-                                    </div>
-                                    <div class="progress-text-premium" id="progressText">0%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(23,162,184,.1);color:#17a2b8;"><i class="fas fa-database"></i></div>
+                    <span class="metric-label">{% trans "Stockage total" %}</span>
                 </div>
-                <div class="modal-footer modal-footer-premium">
-                    <button type="button" class="btn btn-document-outline-action-premium btn-action-premium" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-success-premium btn-action-premium" id="submitAddBtn" disabled>
-                        <span class="btn-text">
-                            <i class="fas fa-check me-2"></i>{% trans "Téléverser" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
+                <div class="metric-value" style="color:#17a2b8;">{{ taille_totale_mb }}</div>
+                <div class="metric-sub">{% trans "MB utilisés" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-upload"></i></div>
+                    <span class="metric-label">{% trans "Limite par fichier" %}</span>
                 </div>
-            </form>
+                <div class="metric-value" style="color:#28a745;font-size:.9rem;">{{ max_file_size }} MB</div>
+                <div class="metric-sub">{% trans "taille maximale" %}</div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Modal Modification Document Premium -->
-<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-premium">
-            <div class="modal-header modal-header-premium">
-                <h5 class="modal-title-premium text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier le Document" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editDocumentForm" class="enhanced-form-premium">
-                <input type="hidden" id="editDocumentId" name="id">
-                <div class="modal-body modal-body-premium">
-                    <!-- Section informations -->
-                    <h5 class="modal-section-title">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>{% trans "Modifier les informations" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="editDocumentTitre" class="form-label">
-                                    <i class="fas fa-heading"></i>{% trans "Titre du document" %}
-                                </label>
-                                <input type="text" class="form-control" id="editDocumentTitre" name="titre" required>
-                            </div>
-                        </div>
-                        
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="editDocumentDescription" class="form-label">
-                                    <i class="fas fa-align-left"></i>{% trans "Description" %}
-                                </label>
-                                <textarea class="form-control" id="editDocumentDescription" name="description" rows="4"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fichier actuel -->
-                    <h5 class="modal-section-title mt-5">
-                        <i class="fas fa-file me-2 text-info"></i>{% trans "Fichier actuel" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert alert-info border border-info border-2" id="currentFileInfo">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file me-3 fa-2x"></i>
-                                    <div class="flex-grow-1">
-                                        <div class="fw-bold fs-5" id="currentFileName"></div>
-                                        <div class="small text-muted" id="currentFileSize"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-text text-muted">
-                                Pour changer le fichier, veuillez supprimer ce document et en créer un nouveau.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Métadonnées -->
-                    <div class="document-meta-premium mt-4">
-                        <div class="meta-item-premium">
-                            <i class="fas fa-calendar-plus"></i>
-                            <div>
-                                <div class="fw-medium">{% trans "Créé le" %} <span id="editCreatedAtInfo"></span></div>
-                                <small class="text-muted">{% trans "Date de création" %}</small>
-                            </div>
-                        </div>
-                        <div class="meta-item-premium">
-                            <i class="fas fa-sync-alt"></i>
-                            <div>
-                                <div class="fw-medium">{% trans "Dernière Màj:" %} <span id="editUpdatedAtInfo"></span></div>
-                                <small class="text-muted">{% trans "Date de modification" %}</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer modal-footer-premium">
-                    <button type="button" class="btn btn-document-outline-action-premium btn-action-premium" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-warning-premium btn-action-premium" id="submitEditBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmation de suppression premium -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content modal-content-premium modal-danger-content-premium">
-            <div class="modal-header modal-header-premium modal-danger-header-premium">
-                <h5 class="modal-title-premium">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-5">
-                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                <h6 class="fw-bold mb-3">{% trans "Supprimer le document" %}</h6>
-                <p class="text-dark mb-0" id="deleteConfirmationText">
-                    Cette action supprimera définitivement le document.<br>
-                    Cette opération est irréversible.
-                </p>
-                <div class="mt-4">
-                    <div class="fw-bold fs-5" id="deleteDocumentTitle"></div>
-                    <div class="small text-muted" id="deleteDocumentInfo"></div>
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-document-outline-action-premium btn-action-premium" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-list me-2"></i>{% trans "Liste des documents" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Rechercher...' %}" style="width:200px;">
+                <button class="btn-add" id="openAddModal2">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
                 </button>
-                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-2"></i>{% trans "Confirmer la suppression" %}
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>{% trans "Titre" %}</th>
+                        <th style="width:80px;">{% trans "Type" %}</th>
+                        <th style="width:90px;">{% trans "Taille" %}</th>
+                        <th style="width:115px;">{% trans "Ajouté le" %}</th>
+                        <th class="text-center" style="width:135px;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-folder-open fa-3x mb-3" style="color:rgba(10,149,202,.25);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucun document enregistré" %}</h5>
+            <p class="text-muted mb-3 small">{% trans "Ajoutez le premier document pour cet acheteur." %}</p>
+            <button class="btn-add" id="openAddModal3"><i class="fas fa-plus"></i>{% trans "Ajouter un document" %}</button>
+        </div>
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,.1);">
+            <span class="pag-info" id="paginationInfo"></span>
+            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="addModalLabel"><i class="fas fa-upload me-2"></i>{% trans "Ajouter un document" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Titre" %} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="addTitreInput" placeholder="{% trans 'Ex: Bilan comptable 2024' %}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                    <textarea class="form-control" id="addDescInput" rows="2" placeholder="{% trans 'Description du document...' %}"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Fichier" %} <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="addFileInput">
+                    <div class="form-text small">{% trans "Taille max" %} : {{ max_file_size }} MB</div>
+                </div>
+                <div id="addProgressWrap" style="display:none;" class="mb-2">
+                    <div class="progress-wrap"><div class="progress-bar-custom" id="addProgressBar"></div></div>
+                    <div class="text-muted small mt-1" id="addProgressText">0%</div>
+                </div>
+                <div id="addModalError" class="alert alert-danger py-2 small" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="addSaveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="editModalLabel"><i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier le document" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Titre" %} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="editTitreInput">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                    <textarea class="form-control" id="editDescInput" rows="2"></textarea>
+                </div>
+                <div id="editModalError" class="alert alert-danger py-2 small" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="editSaveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function() {
-    // Configuration
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/documents-oneview/`;
-    let ACCESS_TOKEN = '{{ access_token }}';
-    const REFRESH_TOKEN = '{{ refresh_token }}';
-    const MAX_FILE_SIZE = '{{ max_file_size }}';
-    let currentDocumentId = null;
-    let currentFile = null;
+(function () {
+    'use strict';
 
-    // Fonction pour formater la taille
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    /* ── Données ── */
+    var ALL_ITEMS    = {{ documents_json|safe }};
+    var ACCESS_TOKEN = '{{ access_token }}';
+    var ACHETEUR_ID  = '{{ id_acheteur }}';
+    var API_BASE     = '/api/acheteur/' + ACHETEUR_ID + '/documents-oneview/';
+    var PAGE_SIZE    = 15;
+    var currentPage  = 1;
+    var currentSearch = '';
+
+    /* ── Bootstrap Modals ── */
+    var _addModal  = null;
+    var _editModal = null;
+    function getAddModal()  { if (!_addModal)  _addModal  = new bootstrap.Modal(document.getElementById('addModal'));  return _addModal; }
+    function getEditModal() { if (!_editModal) _editModal = new bootstrap.Modal(document.getElementById('editModal')); return _editModal; }
+
+    /* ── Utils ── */
+    function escHtml(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+    }
+    function apiFetch(url, opts) {
+        opts = opts || {};
+        return fetch(url, Object.assign({}, opts, {
+            headers: Object.assign({'Authorization': 'Bearer ' + ACCESS_TOKEN, 'Content-Type': 'application/json'}, opts.headers || {})
+        }));
+    }
+    function extBadgeClass(ext) {
+        ext = (ext || '').toLowerCase().replace('.', '');
+        if (ext === 'pdf') return 'ext-pdf';
+        if (ext === 'doc' || ext === 'docx') return 'ext-word';
+        if (ext === 'xls' || ext === 'xlsx' || ext === 'csv') return 'ext-excel';
+        if (ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'gif' || ext === 'webp') return 'ext-img';
+        return 'ext-other';
     }
 
-    // Gestion de la zone de dépôt premium
-    const dropzone = document.getElementById('uploadDropzone');
-    const fileInput = document.getElementById('documentFile');
-    const previewContainer = document.getElementById('filePreviewContainer');
-    const previewIcon = document.getElementById('previewIcon');
-    const previewFileName = document.getElementById('previewFileName');
-    const previewFileSize = document.getElementById('previewFileSize');
-    const removeFileBtn = document.getElementById('removeFileBtn');
-    const submitBtn = document.getElementById('submitAddBtn');
-    const uploadProgress = document.getElementById('uploadProgress');
-    const progressBarFill = document.getElementById('progressBarFill');
-    const progressText = document.getElementById('progressText');
+    /* ── Filtrage ── */
+    function getFiltered() {
+        var q = currentSearch.toLowerCase();
+        if (!q) return ALL_ITEMS;
+        return ALL_ITEMS.filter(function(i) {
+            return (i.titre || '').toLowerCase().indexOf(q) !== -1 ||
+                   (i.extension || '').toLowerCase().indexOf(q) !== -1 ||
+                   (i.description || '').toLowerCase().indexOf(q) !== -1;
+        });
+    }
 
-    // Événements pour la zone de dépôt
-    dropzone.addEventListener('click', () => {
-        fileInput.click();
-    });
+    /* ── Rendu ── */
+    function render() {
+        var filtered   = getFiltered();
+        var tableBody  = document.getElementById('tableBody');
+        var emptyState = document.getElementById('emptyState');
+        var total      = filtered.length;
+        var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
 
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.classList.add('dz-drag-hover');
-    });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('dz-drag-hover');
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('dz-drag-hover');
-        if (e.dataTransfer.files.length) {
-            handleFileSelect(e.dataTransfer.files[0]);
-        }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) {
-            handleFileSelect(e.target.files[0]);
-        }
-    });
-
-    // Gérer la sélection de fichier
-    function handleFileSelect(file) {
-        // Validation de la taille
-        if (file.size > MAX_FILE_SIZE) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Fichier trop volumineux',
-                text: `La taille maximale est de ${formatFileSize(MAX_FILE_SIZE)}. Votre fichier fait ${formatFileSize(file.size)}.`,
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
+        if (total === 0) {
+            tableBody.innerHTML = currentSearch
+                ? '<tr><td colspan="6" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
+                : '';
+            emptyState.style.display = currentSearch ? 'none' : 'block';
+            document.getElementById('paginationInfo').textContent = '';
+            document.getElementById('paginationControls').innerHTML = '';
             return;
         }
 
-        // Validation de l'extension
-        const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png'];
-        const fileName = file.name.toLowerCase();
-        const isValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
-        
-        if (!isValidExtension) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Format non supporté',
-                text: `Formats acceptés: ${allowedExtensions.join(', ')}`,
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
-            return;
-        }
+        emptyState.style.display = 'none';
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var page  = filtered.slice(start, start + PAGE_SIZE);
 
-        currentFile = file;
-        
-        // Afficher la prévisualisation
-        previewFileName.textContent = file.name;
-        previewFileSize.textContent = formatFileSize(file.size);
-        
-        // Définir l'icône
-        const extension = file.name.split('.').pop().toLowerCase();
-        const iconMap = {
-            'pdf': 'fas fa-file-pdf',
-            'doc': 'fas fa-file-word',
-            'docx': 'fas fa-file-word',
-            'xls': 'fas fa-file-excel',
-            'xlsx': 'fas fa-file-excel',
-            'jpg': 'fas fa-file-image',
-            'jpeg': 'fas fa-file-image',
-            'png': 'fas fa-file-image',
-            'txt': 'fas fa-file-alt',
-            'zip': 'fas fa-file-archive',
-            'rar': 'fas fa-file-archive'
-        };
-        previewIcon.className = iconMap[extension] || 'fas fa-file';
-        
-        previewContainer.style.display = 'block';
-        submitBtn.disabled = false;
-        
-        // Animation d'apparition
-        previewContainer.style.animation = 'fadeInUp 0.3s ease';
+        tableBody.innerHTML = page.map(function(item, i) {
+            var ext      = ((item.extension || '').replace('.', '') || '?').toUpperCase();
+            var extClass = extBadgeClass(item.extension);
+            var fileUrl  = item.fichier_url || '#';
+            var descHtml = item.description
+                ? '<div class="text-muted" style="font-size:.72rem;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escAttr(item.description) + '">' + escHtml(item.description) + '</div>'
+                : '';
+            return '<tr>' +
+                '<td class="text-muted small">' + (start + i + 1) + '</td>' +
+                '<td>' +
+                  '<div class="d-flex align-items-center gap-2">' +
+                    '<span style="width:22px;height:22px;border-radius:50%;background:rgba(10,149,202,.1);color:#0a95ca;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;"><i class="' + escHtml(item.icon_class || 'fas fa-file') + '"></i></span>' +
+                    '<div>' +
+                      '<div class="fw-semibold" style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escAttr(item.titre || '') + '">' + escHtml(item.titre || '—') + '</div>' +
+                      descHtml +
+                    '</div>' +
+                  '</div>' +
+                '</td>' +
+                '<td><span class="ext-badge ' + extClass + '">' + escHtml(ext) + '</span></td>' +
+                '<td class="file-size">' + escHtml(item.taille || '—') + '</td>' +
+                '<td class="text-muted small">' + fmtDate(item.created_at) + '</td>' +
+                '<td class="text-center" style="white-space:nowrap;">' +
+                  '<a class="btn-tbl btn-tbl-view me-1" href="' + escAttr(fileUrl) + '" target="_blank" title="{% trans "Voir" %}"><i class="fas fa-eye"></i></a>' +
+                  '<a class="btn-tbl btn-tbl-download me-1" href="' + escAttr(fileUrl) + '" download title="{% trans "Télécharger" %}"><i class="fas fa-download"></i></a>' +
+                  '<button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="' + item.id + '" title="{% trans "Modifier" %}"><i class="fas fa-pencil-alt"></i></button>' +
+                  '<button class="btn-tbl btn-tbl-delete delete-btn" data-id="' + item.id + '" data-titre="' + escAttr(item.titre || '') + '" title="{% trans "Supprimer" %}"><i class="fas fa-trash"></i></button>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+
+        renderPagination(total, totalPages);
     }
 
-    // Supprimer le fichier sélectionné
-    removeFileBtn.addEventListener('click', () => {
-        currentFile = null;
-        fileInput.value = '';
-        previewContainer.style.display = 'none';
-        submitBtn.disabled = true;
-        uploadProgress.style.display = 'none';
+    function renderPagination(total, totalPages) {
+        var from = (currentPage - 1) * PAGE_SIZE + 1;
+        var to   = Math.min(currentPage * PAGE_SIZE, total);
+        document.getElementById('paginationInfo').textContent = totalPages <= 1
+            ? total + ' {% trans "élément(s)" %}'
+            : from + '–' + to + ' / ' + total;
+        var ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+        if (totalPages <= 1) return;
+        function mkBtn(html, pg, disabled, active) {
+            var el = document.createElement('span');
+            el.className = 'page-link-btn' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+            el.innerHTML = html;
+            if (!disabled) el.onclick = function() { currentPage = pg; render(); };
+            return el;
+        }
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-left fa-xs"></i>', currentPage - 1, currentPage === 1, false));
+        for (var p = 1; p <= totalPages; p++) ctrl.appendChild(mkBtn(p, p, false, p === currentPage));
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-right fa-xs"></i>', currentPage + 1, currentPage === totalPages, false));
+    }
+
+    /* ── Modal helpers ── */
+    function showAddError(msg)  { var el = document.getElementById('addModalError');  el.textContent = msg; el.style.display = 'block'; }
+    function showEditError(msg) { var el = document.getElementById('editModalError'); el.textContent = msg; el.style.display = 'block'; }
+
+    function openAdd() {
+        document.getElementById('addTitreInput').value = '';
+        document.getElementById('addDescInput').value  = '';
+        document.getElementById('addFileInput').value  = '';
+        document.getElementById('addModalError').style.display   = 'none';
+        document.getElementById('addProgressWrap').style.display = 'none';
+        document.getElementById('addProgressBar').style.width    = '0%';
+        document.getElementById('addProgressText').textContent   = '0%';
+        document.getElementById('addSaveBtn').disabled = false;
+        getAddModal().show();
+    }
+
+    function openEdit(id) {
+        var item = null;
+        for (var j = 0; j < ALL_ITEMS.length; j++) {
+            if (String(ALL_ITEMS[j].id) === String(id)) { item = ALL_ITEMS[j]; break; }
+        }
+        if (!item) return;
+        document.getElementById('editId').value         = item.id;
+        document.getElementById('editTitreInput').value = item.titre || '';
+        document.getElementById('editDescInput').value  = item.description || '';
+        document.getElementById('editModalError').style.display = 'none';
+        document.getElementById('editSaveBtn').disabled = false;
+        getEditModal().show();
+    }
+
+    /* ── Add (multipart upload) ── */
+    document.getElementById('addSaveBtn').addEventListener('click', function () {
+        var titre = document.getElementById('addTitreInput').value.trim();
+        var desc  = document.getElementById('addDescInput').value.trim();
+        var file  = document.getElementById('addFileInput').files[0];
+        document.getElementById('addModalError').style.display = 'none';
+        if (!titre) { showAddError('{% trans "Le titre est obligatoire." %}'); return; }
+        if (!file)  { showAddError('{% trans "Veuillez sélectionner un fichier." %}'); return; }
+
+        var fd = new FormData();
+        fd.append('acheteur', ACHETEUR_ID);
+        fd.append('titre', titre);
+        fd.append('description', desc);
+        fd.append('fichier', file);
+
+        var btn = this;
+        btn.disabled = true;
+        document.getElementById('addProgressWrap').style.display = 'block';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', API_BASE);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                var pct = Math.round(e.loaded / e.total * 100);
+                document.getElementById('addProgressBar').style.width  = pct + '%';
+                document.getElementById('addProgressText').textContent = pct + '%';
+            }
+        });
+
+        xhr.addEventListener('load', function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                window.location.reload();
+                return;
+            }
+            var msg = '{% trans "Erreur lors de l\'opération." %}';
+            try {
+                var d = JSON.parse(xhr.responseText);
+                msg = d.titre ? d.titre[0] : (d.fichier ? d.fichier[0] : (d.detail || msg));
+            } catch(e) {}
+            showAddError(msg);
+            btn.disabled = false;
+            document.getElementById('addProgressWrap').style.display = 'none';
+        });
+
+        xhr.addEventListener('error', function() {
+            showAddError('{% trans "Erreur réseau." %}');
+            btn.disabled = false;
+            document.getElementById('addProgressWrap').style.display = 'none';
+        });
+
+        xhr.send(fd);
     });
 
-    // Recherche de documents
-    $('#searchDocumentInput').on('input', function() {
-        const search = $(this).val();
-        loadDocuments(search);
+    /* ── Edit ── */
+    document.getElementById('editSaveBtn').addEventListener('click', function () {
+        var titre = document.getElementById('editTitreInput').value.trim();
+        var desc  = document.getElementById('editDescInput').value.trim();
+        var id    = document.getElementById('editId').value;
+        document.getElementById('editModalError').style.display = 'none';
+        if (!titre) { showEditError('{% trans "Le titre est obligatoire." %}'); return; }
+        var btn = this;
+        btn.disabled = true;
+        apiFetch(API_BASE + id + '/', {method: 'PUT', body: JSON.stringify({titre: titre, description: desc})})
+            .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+            .then(function(res) {
+                if (!res.ok) {
+                    showEditError(res.data.titre ? res.data.titre[0] : (res.data.detail || '{% trans "Erreur lors de l\'opération." %}'));
+                    btn.disabled = false; return;
+                }
+                window.location.reload();
+            })
+            .catch(function() { showEditError('{% trans "Erreur réseau." %}'); btn.disabled = false; });
     });
-    
-    $('#clearSearchBtn').click(function() {
-        $('#searchDocumentInput').val('');
-        loadDocuments();
-    });
-    
-    // Charger les documents
-    function loadDocuments(search = '') {
-        let url = API_BASE_URL;
-        if (search) {
-            url += `?search=${encodeURIComponent(search)}`;
-        }
 
-        $.ajax({
-            url: url,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                const container = $('#documentsContainer');
-                const emptyState = $('.empty-state-premium');
-                
-                if (response.results && response.results.length > 0) {
-                    // Cache l'état vide s'il existe
-                    if (emptyState.length) {
-                        emptyState.hide();
-                    }
-                    
-                    let html = '';
-                    
-                    response.results.forEach(function(document) {
-                        const createdAt = new Date(document.created_at).toLocaleString('fr-FR');
-                        const updatedAt = new Date(document.updated_at).toLocaleString('fr-FR');
-                        const extension = document.file_extension || 'unknown';
-                        const size = formatFileSize(document.file_size || 0);
-                        
-                        // Définir l'icône
-                        const iconMap = {
-                            'pdf': 'fas fa-file-pdf',
-                            'doc': 'fas fa-file-word',
-                            'docx': 'fas fa-file-word',
-                            'xls': 'fas fa-file-excel',
-                            'xlsx': 'fas fa-file-excel',
-                            'jpg': 'fas fa-file-image',
-                            'jpeg': 'fas fa-file-image',
-                            'png': 'fas fa-file-image',
-                            'txt': 'fas fa-file-alt',
-                            'zip': 'fas fa-file-archive',
-                            'rar': 'fas fa-file-archive'
-                        };
-                        const iconClass = iconMap[extension] || 'fas fa-file';
-                        
-                        // Définir la classe du badge d'extension
-                        let extensionBadgeClass = 'extension-badge-default';
-                        if (['pdf'].includes(extension)) extensionBadgeClass = 'extension-badge-pdf';
-                        else if (['doc', 'docx'].includes(extension)) extensionBadgeClass = 'extension-badge-doc';
-                        else if (['xls', 'xlsx'].includes(extension)) extensionBadgeClass = 'extension-badge-xls';
-                        else if (['jpg', 'jpeg', 'png'].includes(extension)) extensionBadgeClass = 'extension-badge-img';
-                        else if (['zip', 'rar'].includes(extension)) extensionBadgeClass = 'extension-badge-archive';
-                        
-                        html += `
-                        <div class="document-card-premium document-content-loaded" data-id="${document.id}">
-                            <span class="document-indicator-premium">
-                                <i class="fas fa-file"></i> DOCUMENT
-                            </span><br><br>
-                            
-                            <div class="document-header-premium">
-                                <div class="document-main-premium">
-                                    <div class="document-title-premium">
-                                        <i class="${iconClass} document-icon-premium"></i>
-                                        ${document.titre}
-                                        <span class="document-extension-badge-premium ${extensionBadgeClass}">
-                                            .${extension.toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div class="document-subtitle-premium">
-                                        ${document.description || ''}
-                                    </div>
-                                    <span class="document-size-badge-premium">
-                                        <i class="fas fa-weight-hanging"></i>
-                                        ${size}
-                                    </span>
-                                    <br><br>
-                                    <div class="document-actions-premium">
-                                        <a href="${document.file_url}" 
-                                        class="btn btn-sm btn-success" 
-                                        target="_blank"
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-title="Voir le document">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="${document.file_url}" 
-                                        class="btn btn-sm btn-primary" 
-                                        download
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-title="Télécharger">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-warning edit-document-btn" 
-                                                data-id="${document.id}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger delete-document-btn" 
-                                                data-id="${document.id}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+    /* ── Delete ── */
+    function deleteItem(id, titre) {
+        Swal.fire({
+            title: '{% trans "Supprimer ce document ?" %}',
+            html: '<strong>' + escHtml(titre) + '</strong>',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: '{% trans "Oui, supprimer" %}',
+            cancelButtonText: '{% trans "Annuler" %}'
+        }).then(function(r) {
+            if (!r.isConfirmed) return;
+            apiFetch(API_BASE + id + '/', {method: 'DELETE'})
+                .then(function() { window.location.reload(); })
+                .catch(function() { Swal.fire({icon:'error', title:'{% trans "Erreur lors de la suppression." %}'}); });
+        });
+    }
 
-                            <div class="document-meta-premium">
-                                <div class="meta-item-premium">
-                                    <i class="fas fa-calendar-plus"></i>
-                                    <div>
-                                        <div class="fw-medium">Ajouté le ${createdAt.split(' ')[0]}</div>
-                                        <small class="text-muted">à ${createdAt.split(' ')[1]}</small>
-                                    </div>
-                                </div>
-                                <div class="meta-item-premium">
-                                    <i class="fas fa-sync-alt"></i>
-                                    <div>
-                                        <div class="fw-medium">Dernière mise à jour</div>
-                                        <small class="text-muted">${updatedAt}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-                    
-                    container.html(html);
-                    
-                    // Initialiser les tooltips
-                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                    
-                    // Mettre à jour le compteur
-                    $('.documents-count-badge-premium').html(`<i class="fas fa-file"></i> ${response.results.length} document${response.results.length !== 1 ? 's' : ''}`);
-                    
-                } else {
-                    if (!emptyState.length) {
-                        container.html(`
-                            <div class="empty-state-premium">
-                                <i class="fas fa-folder-open empty-state-icon-premium"></i>
-                                <h4 class="fw-bold mb-3">Aucun document trouvé</h4>
-                                <p class="text-muted mb-4">
-                                    Aucun document ne correspond à votre recherche.
-                                </p>
-                            </div>
-                        `);
-                    } else {
-                        emptyState.show();
-                    }
-                }
-            },
-            error: function(xhr) {
-                console.error('Erreur lors du chargement:', xhr);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les documents.',
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                });
-            }
-        });
-    }
-    
-    // Formulaire d'ajout
-    $('#addDocumentForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        if (!currentFile) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Fichier requis',
-                text: 'Veuillez sélectionner un fichier.',
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
-            return;
-        }
-        
-        const titre = $('#documentTitre').val();
-        if (!titre.trim()) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Titre requis',
-                text: 'Veuillez saisir un titre pour le document.',
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
-            return;
-        }
-        
-        const $btn = $('#submitAddBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        // Afficher le spinner et la barre de progression
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        uploadProgress.style.display = 'block';
-        
-        // Préparer les données du formulaire
-        const formData = new FormData();
-        formData.append('acheteur', ACHETEUR_ID);
-        formData.append('titre', titre);
-        formData.append('description', $('#documentDescription').val());
-        formData.append('fichier', currentFile);
-        
-        // Configuration AJAX avec progression
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            xhr: function() {
-                const xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = Math.round((e.loaded / e.total) * 100);
-                        progressBarFill.style.width = percentComplete + '%';
-                        progressText.textContent = percentComplete + '%';
-                    }
-                }, false);
-                return xhr;
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                uploadProgress.style.display = 'none';
-                
-                $('#addDocumentModal').modal('hide');
-                $('#addDocumentForm')[0].reset();
-                previewContainer.style.display = 'none';
-                currentFile = null;
-                fileInput.value = '';
-                submitBtn.disabled = true;
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                uploadProgress.style.display = 'none';
-                
-                let errorMessage = 'Erreur lors du téléversement du document';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.fichier) {
-                        errorMessage = Array.isArray(xhr.responseJSON.fichier) ? 
-                            xhr.responseJSON.fichier.join('\n') : xhr.responseJSON.fichier;
-                    } else if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
+    /* ── Events ── */
+    ['openAddModal', 'openAddModal2', 'openAddModal3'].forEach(function(btnId) {
+        var el = document.getElementById(btnId);
+        if (el) el.addEventListener('click', openAdd);
     });
-    
-    // Ouvrir la modale d'édition
-    $(document).on('click', '.edit-document-btn', function() {
-        const documentId = $(this).data('id');
-        currentDocumentId = documentId;
-        
-        $.ajax({
-            url: `${API_BASE_URL}${documentId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#editDocumentId').val(response.id);
-                $('#editDocumentTitre').val(response.titre);
-                $('#editDocumentDescription').val(response.description || '');
-                
-                // Afficher les informations du fichier actuel
-                $('#currentFileName').text(response.file_name || 'Non spécifié');
-                $('#currentFileSize').text(response.file_size ? formatFileSize(response.file_size) : 'Taille inconnue');
-                
-                // Afficher les dates
-                $('#editCreatedAtInfo').text(new Date(response.created_at).toLocaleDateString('fr-FR'));
-                $('#editUpdatedAtInfo').text(new Date(response.updated_at).toLocaleString('fr-FR'));
-                
-                $('#editDocumentModal').modal('show');
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les détails du document.',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
+
+    document.addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.edit-btn');
+        if (editBtn) { openEdit(editBtn.dataset.id); return; }
+        var delBtn = e.target.closest('.delete-btn');
+        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.titre); return; }
     });
-    
-    // Formulaire de modification
-    $('#editDocumentForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        if (!currentDocumentId) return;
-        
-        const titre = $('#editDocumentTitre').val();
-        if (!titre.trim()) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Titre requis',
-                text: 'Veuillez saisir un titre pour le document.',
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
-            });
-            return;
-        }
-        
-        const $btn = $('#submitEditBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        // Afficher le spinner
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentDocumentId}/`,
-            type: 'PUT',
-            data: JSON.stringify({
-                titre: titre,
-                description: $('#editDocumentDescription').val()
-            }),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#editDocumentModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Erreur lors de la modification du document';
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.titre) {
-                        errorMessage = Array.isArray(xhr.responseJSON.titre) ? 
-                            xhr.responseJSON.titre.join('\n') : xhr.responseJSON.titre;
-                    } else if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        html: errorMessage.replace(/\n/g, '<br>'),
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+        currentSearch = this.value.trim();
+        currentPage = 1;
+        render();
     });
-    
-    // Ouvrir la modale de suppression
-    $(document).on('click', '.delete-document-btn', function() {
-        const documentId = $(this).data('id');
-        const card = $(this).closest('.document-card-premium');
-        const titre = card.find('.document-title-premium').text().replace(/\.\w+\s*$/, '').trim();
-        const extension = card.find('.document-extension-badge-premium').text().trim();
-        const size = card.find('.document-size-badge-premium').text().trim();
-        
-        currentDocumentId = documentId;
-        $('#deleteDocumentTitle').text(titre);
-        $('#deleteDocumentInfo').text(`${extension} • ${size}`);
-        $('#confirmDeleteModal').modal('show');
-    });
-    
-    // Confirmer la suppression
-    $('#confirmDeleteBtn').on('click', function() {
-        if (!currentDocumentId) return;
-        
-        $.ajax({
-            url: `${API_BASE_URL}${currentDocumentId}/`,
-            type: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $('#confirmDeleteModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.detail || 'Impossible de supprimer le document',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Helper: Get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Fonction pour rafraîchir le token d'accès
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access) {
-                    ACCESS_TOKEN = response.access;
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
-        });
-    }
-    
-    // Configurer l'interception des erreurs 401
-    $(document).ajaxError(function(event, xhr) {
-        if (xhr.status === 401) {
-            refreshAccessToken();
-        }
-    });
-    
-    // Charger les documents au démarrage
-    loadDocuments();
-    
-    // Réinitialiser le modal quand il est fermé
-    $('#addDocumentModal').on('hidden.bs.modal', function () {
-        $('#addDocumentForm')[0].reset();
-        previewContainer.style.display = 'none';
-        currentFile = null;
-        fileInput.value = '';
-        submitBtn.disabled = true;
-        uploadProgress.style.display = 'none';
-    });
-});
+
+    render();
+})();
 </script>
 {% endblock %}
