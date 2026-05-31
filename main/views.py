@@ -8491,7 +8491,9 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
     registres_list = RegistreCommerce.objects.filter(
         acheteur=acheteur
     ).order_by('-created_at')
-    
+    registres_actifs_count = registres_list.filter(est_actif=True).count()
+    registres_archives_count = registres_list.filter(est_actif=False).count()
+
     # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
@@ -8526,6 +8528,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         registres_data.append({
             'id': registre.id,
             'numero': registre.numero or '',
+            'est_actif': registre.est_actif,
             'date_inscription': registre.date_inscription.isoformat() if registre.date_inscription else None,
             'date_inscription_display': registre.date_inscription.strftime('%d/%m/%Y') if registre.date_inscription else 'Non spécifiée',
             'created_at': registre.created_at.isoformat() if registre.created_at else None,
@@ -8544,6 +8547,8 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "registres": registres_list,
         "registres_count": registres_list.count(),
+        "registres_actifs": registres_actifs_count,
+        "registres_archives": registres_archives_count,
         "registres_json": registres_json or '[]',
         "coloration_list": coloration_list,
         "acheteur": acheteur,
