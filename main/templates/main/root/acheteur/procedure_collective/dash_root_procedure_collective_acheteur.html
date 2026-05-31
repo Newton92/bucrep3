@@ -287,6 +287,16 @@
         return _modal;
     }
 
+    /* select2 doit être initialisé APRÈS que la modal soit visible (sinon width:'100%' échoue sur élément caché) */
+    document.getElementById('crudModal').addEventListener('shown.bs.modal', function() {
+        initSelect2();
+        /* après init select2, déclencher change pour afficher/masquer otherTypeWrap selon valeur actuelle */
+        if (window.$ && $.fn.select2) {
+            var cur = document.getElementById('typeInput').value;
+            document.getElementById('otherTypeWrap').style.display = cur === 'Autre' ? 'block' : 'none';
+        }
+    });
+
     /* ── Utils ── */
     function escHtml(s) {
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -396,6 +406,7 @@
     }
     function resetModal() {
         document.getElementById('editId').value = '';
+        document.getElementById('typeInput').value = '';
         document.getElementById('otherTypeInput').value = '';
         document.getElementById('tribunalInput').value = '';
         document.getElementById('numeroDossierInput').value = '';
@@ -404,14 +415,17 @@
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('saveBtn').disabled = false;
         clearDatepickers();
-        if (window.$) $('#typeInput').val('').trigger('change');
+        /* Détruire select2 s'il est initialisé, pour forcer une réinit propre dans shown.bs.modal */
+        if (window.$ && $.fn.select2) {
+            var $sel = $('#typeInput');
+            if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+        }
     }
 
     function openAdd() {
         resetModal();
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter une procédure" %}';
         initDatepickers();
-        initSelect2();
         getModal().show();
     }
 
@@ -423,16 +437,14 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 initDatepickers();
-                initSelect2();
                 var typeVal = data.type_procedure || '';
-                if (window.$) {
-                    if (VALID_TYPES.indexOf(typeVal) === -1 && typeVal !== '') {
-                        $('#typeInput').val('Autre').trigger('change');
-                        document.getElementById('otherTypeInput').value = typeVal;
-                        document.getElementById('otherTypeWrap').style.display = 'block';
-                    } else {
-                        $('#typeInput').val(typeVal).trigger('change');
-                    }
+                var nativeSelect = document.getElementById('typeInput');
+                if (VALID_TYPES.indexOf(typeVal) === -1 && typeVal !== '') {
+                    nativeSelect.value = 'Autre';
+                    document.getElementById('otherTypeInput').value = typeVal;
+                    document.getElementById('otherTypeWrap').style.display = 'block';
+                } else {
+                    nativeSelect.value = typeVal;
                 }
                 setDate('dateOuvertureInput', data.date_ouverture);
                 setDate('dateClotureInput', data.date_cloture);
