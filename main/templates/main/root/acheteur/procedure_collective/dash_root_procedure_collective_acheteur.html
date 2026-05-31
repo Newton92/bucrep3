@@ -213,7 +213,6 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
 <script>
 (function () {
@@ -231,14 +230,20 @@
 
     /* ── Flatpickr ── */
     function initDatepickers() {
+        var hasFr = typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns.fr;
         ['dateOuvertureInput', 'dateClotureInput'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el && !el._flatpickr) {
-                flatpickr(el, {
-                    locale: 'fr', dateFormat: 'Y-m-d',
-                    altInput: true, altFormat: 'd/m/Y',
-                    allowInput: true, disableMobile: true
-                });
+                try {
+                    flatpickr(el, {
+                        locale: hasFr ? 'fr' : undefined,
+                        dateFormat: 'Y-m-d',
+                        altInput: true, altFormat: 'd/m/Y',
+                        allowInput: true, disableMobile: true
+                    });
+                } catch(e) {
+                    console.warn('flatpickr init error:', e);
+                }
             }
         });
     }
