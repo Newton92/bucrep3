@@ -1,2297 +1,520 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load i18n static %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
 <style>
 :root {
-    --color-background: #fcfefe;
     --color-primary: #0a95ca;
     --color-primary-dark: #0d80be;
-    --color-secondary: #25add6;
     --color-accent: #106cb2;
-    --color-text: #2c3e50;
-    --color-text-muted: #5a6c7d;
-    --color-border: rgba(10, 149, 202, 0.1);
-    
     --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --procedure-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --procedure-active: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-    --procedure-closed: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --procedure-judicial: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
 }
-
-/* Désactiver l'autofill pour les champs problématiques */
-input[data-autocomplete="off"]::-webkit-contacts-auto-fill-button,
-input[data-autocomplete="off"]::-webkit-credentials-auto-fill-button {
-    visibility: hidden;
-    display: none !important;
-    pointer-events: none;
-    height: 0;
-    width: 0;
-    margin: 0;
-}
-
-/* Empêcher la saisie automatique */
-.form-control:-webkit-autofill,
-.form-control:-webkit-autofill:hover, 
-.form-control:-webkit-autofill:focus,
-.form-control:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px var(--color-background) inset !important;
-    -webkit-text-fill-color: var(--color-text) !important;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Header Premium Élevé */
-.page-header-premium {
-    background: var(--primary-gradient);
-    padding: .75rem 1.25rem;
-    border-radius: 10px;
-    margin-bottom: .75rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.12);
-}
-
-.page-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    display: none;
-}
-
-@keyframes shimmer { 0%, 100% { opacity: 0; } }
-
-.page-title-premium {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    position: relative;
-    text-shadow: none;
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-}
-
-.page-subtitle-premium {
-    font-size: .8rem;
-    opacity: .9;
-    max-width: unset;
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-/* Carte Acheteur Premium */
-.acheteur-card-premium {
-    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
-    border-radius: 10px;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(10,149,202,.06);
-    margin-bottom: .75rem;
-    position: relative;
-}
-
-.acheteur-header-premium {
-    background: var(--primary-gradient);
-    padding: .6rem 1rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    display: none;
-}
-
-.acheteur-title-premium {
-    font-size: .9rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    text-shadow: none;
-}
-
-.acheteur-badge-premium {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Grille d'informations acheteur */
-.acheteur-info-grid {
-    padding: 2rem;
-}
-
-.acheteur-info-item {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    border-radius: 16px;
-    padding: 1.5rem;
-    border: 1px solid var(--color-border);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-info-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
-    border-color: rgba(37, 173, 214, 0.3);
-}
-
-.acheteur-info-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--primary-gradient);
-}
-
-.acheteur-info-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 1.75rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
-}
-
-.acheteur-info-label {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    display: block;
-}
-
-.acheteur-info-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    line-height: 1.3;
-}
-
-.acheteur-info-value.badge-value {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05));
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: inline-block;
-}
-
-/* Cartes de procédures Premium */
-.procedure-card-premium {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 20px;
-    padding: 2rem;
-    border: 2px solid var(--color-border);
-    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.05);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-}
-
-.procedure-card-premium:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(10, 149, 202, 0.15);
-    border-color: rgba(10, 149, 202, 0.3);
-}
-
-.procedure-card-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background: var(--procedure-gradient);
-    border-radius: 5px 0 0 5px;
-}
-
-.procedure-card-premium.en-cours::before {
-    background: var(--procedure-active);
-}
-
-.procedure-card-premium.cloturee::before {
-    background: var(--procedure-closed);
-}
-
-/* En-tête de la carte */
-.procedure-header-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--color-border);
-}
-
-.procedure-main-premium {
-    flex: 1;
-}
-
-.procedure-title-premium {
-    font-size: 1.4rem;
-    font-weight: 800;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.procedure-subtitle-premium {
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
-}
-
-.procedure-icon-premium {
-    font-size: 1.75rem;
-    color: #dc3545;
-}
-
-.procedure-actions-premium {
-    display: flex;
-    gap: 0.5rem;
-}
-
-/* Badges Premium */
-.procedure-status-badge-premium {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-left: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.badge-en-cours-premium {
-    background: var(--procedure-active);
-    color: white;
-}
-
-.badge-cloturee-premium {
-    background: var(--procedure-closed);
-    color: white;
-}
-
-.procedure-type-badge-premium {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--procedure-judicial);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-top: 0.5rem;
-    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.15);
-}
-
-.procedure-duree-badge-premium {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--info-gradient);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-left: 0.75rem;
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.15);
-}
-
-/* Indicateur Procédure */
-.procedure-indicator-premium {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: var(--procedure-gradient);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
-    z-index: 1;
-}
-
-/* Dates Premium */
-.procedure-dates-premium {
-    display: flex;
-    gap: 1.5rem;
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border-radius: 16px;
-    border: 1px solid var(--color-border);
-}
-
-.date-item-premium {
-    flex: 1;
-    text-align: center;
-    padding: 1rem;
-    border-radius: 12px;
-    background: var(--color-background);
-    transition: all 0.3s ease;
-}
-
-.date-item-premium:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.1);
-}
-
-.date-label-premium {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.date-value-premium {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    font-size: 1.1rem;
-}
-
-/* Description Premium */
-.procedure-description-premium {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.01));
-    border-radius: 16px;
-    border: 2px solid var(--color-border);
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.procedure-description-content-premium {
-    line-height: 1.7;
-    color: var(--color-text);
-    font-size: 1rem;
-}
-
-/* Informations métadonnées Premium */
-.procedure-meta-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid var(--color-border);
-    font-size: 0.9rem;
-}
-
-.meta-item-premium {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    transition: all 0.3s ease;
-}
-
-.meta-item-premium:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    transform: translateX(5px);
-}
-
-.meta-item-premium i {
-    font-size: 1.1rem;
-    color: var(--color-primary);
-}
-
-/* Statistiques Premium */
-.stats-cards-premium {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
-
-.stat-card-premium {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border-radius: 16px;
-    padding: 1.75rem;
-    text-align: center;
-    border: 1px solid var(--color-border);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card-premium:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.12);
-    border-color: rgba(37, 173, 214, 0.3);
-}
-
-.stat-card-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: var(--procedure-gradient);
-}
-
-.stat-card-premium.active::before {
-    background: var(--procedure-active);
-}
-
-.stat-card-premium.closed::before {
-    background: var(--procedure-closed);
-}
-
-.stat-number-premium {
-    font-size: 1.4rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    line-height: 1;
-}
-
-.stat-card-premium.total .stat-number-premium { 
-    color: #dc3545;
-    background: var(--procedure-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-card-premium.active .stat-number-premium { 
-    color: var(--color-primary);
-    background: var(--procedure-active);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-card-premium.closed .stat-number-premium { 
-    color: #28a745;
-    background: var(--procedure-closed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-label-premium {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-/* État vide Premium */
-.empty-state-premium {
-    padding: 5rem 3rem;
-    text-align: center;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.02));
-    border-radius: 20px;
-    border: 3px dashed rgba(10, 149, 202, 0.3);
-    min-height: 450px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.empty-state-icon-premium {
-    font-size: 5rem;
-    margin-bottom: 2rem;
-    background: var(--procedure-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    opacity: 0.8;
-}
-
-.empty-state-premium h4 {
-    font-weight: 800;
-    margin-bottom: 1.25rem;
-    color: var(--color-primary-dark);
-    font-size: 1.75rem;
-}
-
-.empty-state-premium p {
-    color: var(--color-text-muted);
-    max-width: 500px;
-    margin: 0 auto 2.5rem;
-    font-size: 1.1rem;
-    line-height: 1.6;
-}
-
-/* Section Actions Procédures */
-.procedures-section-header-premium {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--color-border);
-    position: relative;
-}
-
-.procedures-section-header-premium::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100px;
-    height: 2px;
-    background: var(--procedure-gradient);
-}
-
-.procedures-section-title-premium {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.procedures-section-title-premium i {
-    color: #dc3545;
-    font-size: 2rem;
-}
-
-.procedures-count-badge-premium {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: var(--procedure-gradient);
-    color: white;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
-}
-
-/* Grille des procédures */
-.procedures-grid-premium {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
-    gap: 1.75rem;
-    margin-bottom: 2.5rem;
-}
-
-/* Contrôles de recherche et filtres Premium */
-.search-filters-premium {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
-
-.search-input-premium {
-    flex: 1;
-    min-width: 300px;
-}
-
-.search-input-premium .input-group {
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.08);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.search-input-premium .input-group-text {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    padding: 0.875rem 1.25rem;
-}
-
-.search-input-premium .form-control {
-    border: 2px solid var(--color-border);
-    border-left: none;
-    border-radius: 0 12px 12px 0;
-    padding: 0.875rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-}
-
-.search-input-premium .form-control:focus {
-    border-color: var(--color-primary);
-    box-shadow: none;
-    background: var(--color-background);
-}
-
-.filter-group-premium {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
-
-.filter-group-premium .form-select {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    padding: 0.875rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-    min-width: 180px;
-}
-
-.filter-group-premium .form-select:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-}
-
-/* Vue toggle Premium */
-.view-toggle-premium {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-}
-
-.view-toggle-btn-premium {
-    padding: 0.75rem 1.5rem;
-    border: 2px solid var(--color-border);
-    background: var(--color-background);
-    border-radius: 12px;
-    color: var(--color-text-muted);
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.05);
-}
-
-.view-toggle-btn-premium:hover:not(.active) {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(10, 149, 202, 0.1);
-}
-
-.view-toggle-btn-premium.active {
-    background: var(--procedure-gradient);
-    border-color: transparent;
-    color: white;
-    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.2);
-}
-
-/* Timeline des procédures Premium */
-.procedure-timeline-premium {
-    position: relative;
-    padding-left: 40px;
-    margin: 2.5rem 0;
-}
-
-.procedure-timeline-premium::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
-    border-radius: 3px;
-}
-
-.timeline-item-premium {
-    position: relative;
-    margin-bottom: 2.5rem;
-    padding-left: 30px;
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 16px;
-    padding: 1.5rem;
-    border: 2px solid var(--color-border);
-    transition: all 0.3s ease;
-}
-
-.timeline-item-premium:hover {
-    transform: translateX(5px);
-    box-shadow: 0 8px 25px rgba(10, 149, 202, 0.1);
-}
-
-.timeline-item-premium::before {
-    content: '';
-    position: absolute;
-    left: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--procedure-gradient);
-    border: 4px solid var(--color-background);
-    box-shadow: 0 0 0 3px var(--color-primary);
-}
-
-.timeline-item-premium.cloturee::before {
-    background: var(--procedure-closed);
-    box-shadow: 0 0 0 3px #28a745;
-}
-
-.timeline-date-premium {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.timeline-type-premium {
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: 0.5rem;
-}
-
-/* Boutons Premium */
-.btn-action-premium {
-    border-radius: 12px;
-    padding: 0.875rem 2rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-action-premium:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
-}
-
-.btn-procedure-premium {
-    background: var(--procedure-gradient);
-    color: white;
-}
-
-.btn-procedure-outline-premium {
-    color: #dc3545;
-    border: 2px solid #dc3545;
-    background: transparent;
-}
-
-.btn-procedure-outline-premium:hover {
-    background: var(--procedure-gradient);
-    border-color: transparent;
-    color: white;
-}
-
-.btn-warning-premium {
-    background: var(--warning-gradient);
-    color: white;
-}
-
-.btn-danger-premium {
-    background: var(--danger-gradient);
-    color: white;
-}
-
-.btn-back-premium {
-    background: linear-gradient(135deg, #6c757d, #495057);
-    color: white;
-}
-
-.btn-success-premium {
-    background: var(--success-gradient);
-    color: white;
-}
-
-/* Formulaires Premium */
-.enhanced-form-premium .form-group {
-    margin-bottom: 2rem;
-    position: relative;
-}
-
-.enhanced-form-premium .form-label {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 1.1rem;
-}
-
-.enhanced-form-premium .form-label i {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-    font-size: 1.5rem;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
-}
-
-/* Form controls premium */
-.enhanced-form-premium .form-control,
-.enhanced-form-premium .form-select,
-.enhanced-form-premium textarea {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-    min-height: 56px;
-}
-
-.enhanced-form-premium .form-control:focus,
-.enhanced-form-premium .form-select:focus,
-.enhanced-form-premium textarea:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-    background: var(--color-background);
-}
-
-.enhanced-form-premium textarea {
-    min-height: 120px;
-    resize: vertical;
-    line-height: 1.6;
-}
-
-/* Info bulle */
-.info-tooltip-premium {
-    position: relative;
-    display: inline-block;
-    cursor: help;
-    color: var(--color-primary);
-    margin-left: 0.5rem;
-}
-
-.info-tooltip-premium:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-primary-dark);
-    color: white;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.2);
-}
-
-/* Modales Premium */
-.modal-header-premium {
-    background: var(--procedure-gradient);
-    color: white;
-    padding: 2rem !important;
-    border-bottom: none !important;
-    border-radius: 20px 20px 0 0 !important;
-    position: relative;
-    overflow: hidden;
-}
-
-.modal-header-premium::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    animation: shimmer 2s infinite;
-}
-
-.modal-title-premium {
-    font-size: 1.5rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.modal-body-premium {
-    padding: 2.5rem !important;
-    background: var(--color-background);
-}
-
-.modal-footer-premium {
-    padding: 2rem !important;
-    background: linear-gradient(145deg, rgba(220, 53, 69, 0.02), rgba(253, 126, 20, 0.01));
-    border-top: 2px solid var(--color-border) !important;
-    border-radius: 0 0 20px 20px !important;
-}
-
-.modal-content-premium {
-    border: none !important;
-    border-radius: 20px !important;
-    box-shadow: 0 25px 70px rgba(220, 53, 69, 0.3) !important;
-    overflow: hidden;
-}
-
-/* Modal danger */
-.modal-danger-header-premium {
-    background: var(--danger-gradient);
-}
-
-.modal-danger-content-premium {
-    box-shadow: 0 25px 70px rgba(239, 68, 68, 0.3) !important;
-}
-
-/* Animation pour les procédures */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.procedure-content-loaded {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-/* Styles pour le titre des sections modales */
-.modal-section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-/* Scrollbar personnalisée */
-.procedure-description-premium::-webkit-scrollbar {
-    width: 6px;
-}
-
-.procedure-description-premium::-webkit-scrollbar-track {
-    background: rgba(10, 149, 202, 0.05);
-    border-radius: 3px;
-}
-
-.procedure-description-premium::-webkit-scrollbar-thumb {
-    background: rgba(10, 149, 202, 0.2);
-    border-radius: 3px;
-}
-
-.procedure-description-premium::-webkit-scrollbar-thumb:hover {
-    background: rgba(10, 149, 202, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .page-title-premium {
-        font-size: 1.05rem;
-    }
-    
-    .acheteur-title-premium,
-    .procedures-section-title-premium {
-        font-size: 1.5rem;
-    }
-    
-    .procedures-grid-premium {
-        grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-    }
-}
-
-@media (max-width: 992px) {
-    .procedures-grid-premium {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-    
-    .procedures-section-header-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
-    }
-    
-    .search-filters-premium {
-        flex-direction: column;
-    }
-    
-    .procedure-header-premium {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-    
-    .procedure-dates-premium {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .procedure-meta-premium {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .procedure-timeline-premium {
-        padding-left: 30px;
-    }
-}
-
-@media (max-width: 768px) {
-    .page-header-premium {
-        padding: 1.75rem;
-    }
-    
-    .acheteur-header-premium {
-        padding: 1.5rem;
-    }
-    
-    .procedure-card-premium {
-        padding: 1.5rem;
-    }
-    
-    .modal-body-premium,
-    .modal-footer-premium {
-        padding: 1.5rem !important;
-    }
-    
-    .stats-cards-premium {
-        grid-template-columns: 1fr;
-    }
-    
-    .empty-state-premium {
-        padding: 3rem 1.5rem;
-    }
-    
-    .view-toggle-premium {
-        flex-direction: column;
-    }
-}
-
-@media (max-width: 576px) {
-    .page-title-premium {
-        font-size: 1.75rem;
-    }
-    
-    .acheteur-title-premium,
-    .procedures-section-title-premium {
-        font-size: 1.25rem;
-    }
-    
-    .procedure-title-premium {
-        font-size: 1.1rem;
-    }
-    
-    .procedure-actions-premium {
-        flex-direction: column;
-    }
-    
-    .btn-action-premium {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-    }
-    
-    .timeline-item-premium {
-        padding: 1rem;
-    }
-}
+.page-header { background: var(--primary-gradient); padding: .75rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; color: white; }
+.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: .8rem; opacity: .85; }
+.metric-card { background: white; border-radius: 10px; padding: .9rem 1rem; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); }
+.metric-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .4rem; }
+.metric-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(10,149,202,.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+.metric-label { font-size: .75rem; color: #5a6c7d; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.metric-value { font-size: 1.4rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1; }
+.metric-sub   { font-size: .72rem; color: #8a9ab0; margin-top: .2rem; }
+.table-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); overflow: hidden; }
+.table-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-bottom: 1px solid rgba(37,173,214,.1); }
+.search-input { border: 1px solid rgba(10,149,202,.25); border-radius: 6px; padding: .3rem .65rem; font-size: .8rem; outline: none; color: #333; }
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(10,149,202,.12); }
+.btn-add { background: var(--primary-gradient); color: white; border: none; border-radius: 6px; padding: .35rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; transition: opacity .15s; }
+.btn-add:hover { opacity: .88; }
+.modern-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.modern-table thead th { background: rgba(10,149,202,.05); padding: .55rem .75rem; font-weight: 600; color: #4a5568; border-bottom: 2px solid rgba(10,149,202,.12); white-space: nowrap; }
+.modern-table tbody td { padding: .5rem .75rem; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: rgba(10,149,202,.03); }
+.btn-tbl { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
+.btn-tbl-edit   { background: rgba(10,149,202,.1);  color: #0a95ca; }
+.btn-tbl-delete { background: rgba(220,53,69,.1);   color: #dc3545; }
+.btn-tbl:hover  { opacity: .75; transform: scale(1.08); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: #8a9ab0; }
+.pag-info { font-size: .75rem; color: #8a9ab0; }
+.page-link-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 4px; border: 1px solid rgba(10,149,202,.2); border-radius: 5px; font-size: .75rem; color: #4a5568; cursor: pointer; transition: all .15s; }
+.page-link-btn:hover, .page-link-btn.active { background: var(--primary-gradient); color: white; border-color: var(--color-primary); }
+.page-link-btn.disabled { opacity: .4; pointer-events: none; }
+.status-badge { font-size: .7rem; font-weight: 600; border-radius: 20px; padding: 2px 8px; display: inline-block; white-space: nowrap; }
+.status-en-cours  { background: rgba(255,193,7,.15); color: #d39e00; border: 1px solid rgba(255,193,7,.3); }
+.status-cloturee  { background: rgba(40,167,69,.1);  color: #28a745; border: 1px solid rgba(40,167,69,.2); }
+.type-text { font-weight: 600; color: var(--color-primary-dark); font-size: .8rem; }
+.date-text { font-size: .77rem; color: #5a6c7d; white-space: nowrap; }
+.duree-text { font-size: .72rem; color: #8a9ab0; }
 </style>
-
-<style>
-/* Correction pour Select2 dans le modal */
-.select2-container--bootstrap-5 .select2-selection {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    padding: 0.875rem 1.25rem;
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-}
-
-.select2-container--bootstrap-5 .select2-selection:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-}
-
-.select2-container--bootstrap-5 .select2-dropdown {
-    border: 2px solid var(--color-border);
-    border-radius: 12px;
-    margin-top: 4px;
-    box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15);
-}
-
-/* Correction spécifique pour les champs de date */
-.datepicker {
-    background-color: white !important;
-    background-image: none !important;
-}
-
-</style>
-<link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium Élevé -->
+
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title">
-                    <i class="fas fa-gavel"></i>{% trans "Procédures Collectives" %}
-                </h1>
+                <h1 class="page-title"><i class="fas fa-gavel me-2"></i>{% trans "Procédures Collectives" %}</h1>
                 <p class="page-subtitle mb-0">
                     <span class="fw-semibold">{{ acheteur.nom }}</span>
                     {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
                     &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
-                    {% if acheteur.activite_principale %}&nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.activite_principale }}</span>{% endif %}
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
                 </a>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Statistiques Premium -->
-    <div class="stats-cards-premium">
-        <div class="stat-card-premium total">
-            <div class="stat-number-premium">{{ procedures_count }}</div>
-            <div class="stat-label-premium">{% trans "Total Procédures" %}</div>
-        </div>
-        <div class="stat-card-premium active">
-            <div class="stat-number-premium">{{ procedures_actives }}</div>
-            <div class="stat-label-premium">{% trans "En Cours" %}</div>
-        </div>
-        <div class="stat-card-premium closed">
-            <div class="stat-number-premium">{{ procedures_cloturees }}</div>
-            <div class="stat-label-premium">{% trans "Clôturées" %}</div>
-        </div>
-    </div>
-
-    <!-- Toggle de vue Premium -->
-    <div class="view-toggle-premium">
-        <button class="view-toggle-btn-premium active" id="viewGridBtn">
-            <i class="fas fa-th-large"></i> {% trans "Vue Grille" %}
-        </button>
-        <button class="view-toggle-btn-premium" id="viewTimelineBtn">
-            <i class="fas fa-stream"></i> {% trans "Vue Chronologique" %}
-        </button>
-    </div>
-
-    <!-- Section Procédures Collectives Premium -->
-    <div class="row">
-        <div class="col-12">
-            <!-- Header Section -->
-            <div class="procedures-section-header-premium">
-                <h5 class="procedures-section-title-premium mb-0">
-                    <i class="fas fa-file-contract"></i>
-                    Procédures Collectives
-                </h5>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="procedures-count-badge-premium">
-                        <i class="fas fa-gavel"></i>
-                        {{ procedures_count }} procédure{{ procedures_count|pluralize }}
-                    </span>
-                    <button class="btn btn-procedure-premium btn-action-premium" id="openAddProcedureModal">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une procédure" %}
-                    </button>
-                </div>
-            </div>
-
-            <!-- Contrôles de recherche et filtres Premium -->
-            <div class="search-filters-premium mb-4">
-                <div class="search-input-premium">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="searchProcedureInput" 
-                               placeholder="Rechercher par type ou description...">
-                    </div>
-                </div>
-                <div class="filter-group-premium">
-                    <select class="form-select" id="filterStatus">
-                        <option value="">{% trans "Tous les statuts" %}</option>
-                        <option value="active">{% trans "En cours" %}</option>
-                        <option value="closed">{% trans "Clôturées" %}</option>
-                    </select>
-                    <select class="form-select" id="filterType">
-                        <option value="">{% trans "Tous les types" %}</option>
-                        {% for type in types_procedures %}
-                        <option value="{{ type }}">{{ type }}</option>
-                        {% endfor %}
-                    </select>
-                    <button class="btn btn-procedure-outline-premium btn-action-premium" id="clearFiltersBtn">
-                        <i class="fas fa-times me-1"></i>
-                    </button>
-                </div>
-            </div>
-
-            {% if procedures %}
-                <!-- Vue Grille Premium (par défaut) -->
-                <div id="gridView" class="procedures-view">
-                    <div class="procedures-grid-premium" id="proceduresContainer">
-                        {% for procedure in procedures_data %}
-                            <div class="procedure-card-premium procedure-content-loaded {% if procedure.statut == 'En cours' %}en-cours{% else %}cloturee{% endif %}" 
-                                 data-id="{{ procedure.id }}"
-                                 data-status="{% if procedure.statut == 'En cours' %}active{% else %}closed{% endif %}"
-                                 data-type="{{ procedure.type_procedure }}">
-                                <!-- Indicateur -->
-                                <span class="procedure-indicator-premium">
-                                    <i class="fas fa-gavel"></i> {% trans "PROCÉDURE" %}
-                                </span><br><br>
-                                
-                                <div class="procedure-header-premium">
-                                    <div class="procedure-main-premium">
-                                        <div class="procedure-title-premium">
-                                            <i class="{{ procedure.icon_class }} procedure-icon-premium"></i>
-                                            {{ procedure.type_procedure }}
-                                            <span class="procedure-status-badge-premium {% if procedure.statut == 'En cours' %}badge-en-cours-premium{% else %}badge-cloturee-premium{% endif %}">
-                                                <i class="fas fa-circle"></i>
-                                                {{ procedure.statut }}
-                                            </span>
-                                        </div>
-                                        <div class="procedure-subtitle-premium">
-                                            <span class="procedure-type-badge-premium">
-                                                <i class="fas fa-balance-scale"></i>
-                                                {{ procedure.type_procedure }}
-                                            </span>
-                                            {% if procedure.duree %}
-                                            <span class="procedure-duree-badge-premium">
-                                                <i class="fas fa-clock"></i>
-                                                {{ procedure.duree }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="procedure-actions-premium">
-                                        <button class="btn btn-sm btn-warning edit-procedure-btn" 
-                                                data-id="{{ procedure.id }}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger delete-procedure-btn" 
-                                                data-id="{{ procedure.id }}"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Dates -->
-                                <div class="procedure-dates-premium">
-                                    <div class="date-item-premium">
-                                        <div class="date-label-premium">
-                                            <i class="fas fa-calendar-plus"></i> {% trans "Date d'ouverture" %}
-                                        </div>
-                                        <div class="date-value-premium">
-                                            {% if procedure.date_ouverture %}
-                                                {{ procedure.date_ouverture|date:"d/m/Y" }}
-                                            {% else %}
-                                                Non spécifiée
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="date-item-premium">
-                                        <div class="date-label-premium">
-                                            <i class="fas fa-calendar-check"></i> {% trans "Date de clôture" %}
-                                        </div>
-                                        <div class="date-value-premium">
-                                            {% if procedure.date_cloture %}
-                                                {{ procedure.date_cloture|date:"d/m/Y" }}
-                                            {% else %}
-                                                En cours
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Description -->
-                                {% if procedure.description %}
-                                <div class="procedure-description-premium">
-                                    <div class="procedure-description-content-premium">
-                                        {{ procedure.description|safe }}
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                <!-- Métadonnées -->
-                                <div class="procedure-meta-premium">
-                                    <div class="meta-item-premium">
-                                        <i class="fas fa-calendar-plus"></i>
-                                        <div>
-                                            <div class="fw-medium">Créé le {{ procedure.created_at|date:"d/m/Y" }}</div>
-                                            <small class="text-muted">à {{ procedure.created_at|date:"H:i" }}</small>
-                                        </div>
-                                    </div>
-                                    <div class="meta-item-premium">
-                                        <i class="fas fa-sync-alt"></i>
-                                        <div>
-                                            <div class="fw-medium">{% trans "Dernière mise à jour" %}</div>
-                                            <small class="text-muted">{{ procedure.updated_at|date:"d/m/Y H:i" }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Vue Chronologique Premium (cachée par défaut) -->
-                <div id="timelineView" class="procedures-view" style="display: none;">
-                    <div class="procedure-timeline-premium" id="proceduresTimeline">
-                        {% for procedure in procedures_data %}
-                            <div class="timeline-item-premium {% if procedure.statut == 'Clôturée' %}cloturee{% endif %}"
-                                 data-id="{{ procedure.id }}"
-                                 data-status="{% if procedure.statut == 'En cours' %}active{% else %}closed{% endif %}"
-                                 data-type="{{ procedure.type_procedure }}">
-                                <div class="timeline-date-premium">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    {% if procedure.date_ouverture %}
-                                        {{ procedure.date_ouverture|date:"d/m/Y" }}
-                                    {% else %}
-                                        Date non spécifiée
-                                    {% endif %}
-                                    {% if procedure.date_cloture %}
-                                        <i class="fas fa-arrow-right mx-2"></i>
-                                        {{ procedure.date_cloture|date:"d/m/Y" }}
-                                    {% endif %}
-                                </div>
-                                <div class="timeline-type-premium">
-                                    <strong>{{ procedure.type_procedure }}</strong>
-                                    <span class="badge ms-2 {% if procedure.statut == 'En cours' %}bg-warning{% else %}bg-success{% endif %}">
-                                        {{ procedure.statut }}
-                                    </span>
-                                </div>
-                                {% if procedure.description %}
-                                <div class="small text-muted mt-1">
-                                    {{ procedure.description|truncatechars:100 }}
-                                </div>
-                                {% endif %}
-                                <div class="mt-3">
-                                    <button class="btn btn-sm btn-warning edit-procedure-btn" 
-                                            data-id="{{ procedure.id }}">
-                                        <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
-                                    </button>
-                                    <button class="btn btn-sm btn-danger delete-procedure-btn" 
-                                            data-id="{{ procedure.id }}">
-                                        <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
-                                    </button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% else %}
-                <!-- État vide premium -->
-                <div class="empty-state-premium">
-                    <i class="fas fa-gavel empty-state-icon-premium"></i>
-                    <h4 class="fw-bold mb-3">{% trans "Aucune procédure collective" %}</h4>
-                    <p class="text-muted mb-4">
-                        Aucune procédure collective n'a été enregistrée pour cet acheteur.<br>
-                        Les procédures collectives incluent les redressements judiciaires, liquidations, etc.
-                    </p>
-                    <button class="btn btn-procedure-premium btn-action-premium" id="openAddProcedureModal2">
-                        <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter la première procédure" %}
-                    </button>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Modal Ajout/Modification Procédure Premium -->
-<div class="modal fade" id="procedureModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content modal-content-premium">
-            <div class="modal-header modal-header-premium">
-                <h5 class="modal-title-premium text-white" id="procedureModalTitle">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Procédure Collective" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="procedureForm" class="enhanced-form-premium" autocomplete="off">
-                <input type="hidden" id="procedureId" name="id">
-                <input type="hidden" id="acheteurId" name="acheteur" value="{{ acheteur.id }}">
-                
-                <div class="modal-body modal-body-premium">
-                    <!-- Section type de procédure -->
-                    <h5 class="modal-section-title">
-                        <i class="fas fa-balance-scale me-2 text-primary"></i>{% trans "Type de procédure" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="procedureType" class="form-label">
-                                    <i class="fas fa-balance-scale"></i>{% trans "Type de procédure" %}
-                                    <span class="info-tooltip-premium" data-tooltip="Sélectionnez le type de procédure collective">
-                                        <i class="fas fa-info-circle"></i>
-                                    </span>
-                                </label>
-                                <select class="form-select select2-with-search" id="procedureType" name="type_procedure" required autocomplete="off">
-                                    <option value="">{% trans "Sélectionnez un type..." %}</option>
-                                    {% for type in types_procedures %}
-                                    <option value="{{ type }}">{{ type }}</option>
-                                    {% endfor %}
-                                    <option value="Autre">{% trans "Autre (à préciser)" %}</option>
-                                </select>
-                                <small class="form-text text-muted">
-                                    Ex: Redressement judiciaire, Liquidation, Sauvegarde, etc.
-                                </small>
-                            </div>
-                        </div>
-                        <div class="col-md-6" id="otherTypeContainer" style="display: none;">
-                            <div class="form-group">
-                                <label for="otherType" class="form-label">
-                                    <i class="fas fa-edit"></i>{% trans "Préciser le type" %}
-                                </label>
-                                <input type="text" class="form-control" id="otherType" name="type_procedure_autre" 
-                                       placeholder="Précisez le type de procédure..." autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section dates -->
-                    <h5 class="modal-section-title mt-5">
-                        <i class="fas fa-calendar-alt me-2 text-info"></i>{% trans "Dates importantes" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="dateOuverture" class="form-label">
-                                    <i class="fas fa-calendar-plus"></i>{% trans "Date d'ouverture" %}
-                                </label>
-                                <input type="text" class="form-control datepicker" id="dateOuverture" 
-                                       name="date_ouverture" placeholder="JJ/MM/AAAA" autocomplete="off" data-autocomplete="off">
-                                <small class="form-text text-muted">
-                                    Date à laquelle la procédure a été ouverte
-                                </small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="dateCloture" class="form-label">
-                                    <i class="fas fa-calendar-check"></i>{% trans "Date de clôture" %}
-                                    <span class="info-tooltip-premium" data-tooltip="Laissez vide si la procédure est toujours en cours">
-                                        <i class="fas fa-info-circle"></i>
-                                    </span>
-                                </label>
-                                <input type="text" class="form-control datepicker" id="dateCloture" 
-                                       name="date_cloture" placeholder="JJ/MM/AAAA (optionnel)" autocomplete="off" data-autocomplete="off">
-                                <small class="form-text text-muted">
-                                    Date de clôture de la procédure (optionnel)
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section informations supplémentaires -->
-                    <h5 class="modal-section-title mt-5">
-                        <i class="fas fa-info-circle me-2 text-warning"></i>{% trans "Informations supplémentaires" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="tribunal" class="form-label">
-                                    <i class="fas fa-landmark"></i>{% trans "Tribunal compétent" %}
-                                </label>
-                                <input type="text" class="form-control" id="tribunal" name="tribunal" 
-                                       placeholder="Ex: Tribunal de commerce de Paris" autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="numeroDossier" class="form-label">
-                                    <i class="fas fa-hashtag"></i>{% trans "Numéro de dossier" %}
-                                </label>
-                                <input type="text" class="form-control" id="numeroDossier" name="numero_dossier" 
-                                       placeholder="Référence officielle du dossier" autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="secteurActivite" class="form-label">
-                                    <i class="fas fa-industry"></i>{% trans "Secteur d'activité concerné" %}
-                                </label>
-                                <input type="text" class="form-control" id="secteurActivite" name="secteur_activite" 
-                                       placeholder="Ex: Industrie textile, BTP, Services..." autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="montantCreance" class="form-label">
-                                    <i class="fas fa-money-bill-wave"></i>{% trans "Montant des créances (FCFA)" %}
-                                </label>
-                                <input type="number" class="form-control" id="montantCreance" name="montant_creance" 
-                                       placeholder="0.00" step="0.01" min="0" autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section description -->
-                    <h5 class="modal-section-title mt-5">
-                        <i class="fas fa-align-left me-2 text-success"></i>{% trans "Description et impact" %}
-                    </h5>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="description" class="form-label">
-                                    <i class="fas fa-align-left"></i>{% trans "Description" %}
-                                </label>
-                                <textarea class="form-control" id="description" name="description" 
-                                          rows="4" placeholder="Description détaillée de la procédure..." autocomplete="off"></textarea>
-                                <small class="form-text text-muted">
-                                    Décrivez les circonstances, les enjeux et l'état d'avancement de la procédure.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="impactAssureur" class="form-label">
-                                    <i class="fas fa-exclamation-triangle"></i>{% trans "Impact pour l'assureur crédit" %}
-                                </label>
-                                <textarea class="form-control" id="impactAssureur" name="impact_assureur" 
-                                          rows="3" placeholder="Impact et mesures prises par l'assureur crédit..." autocomplete="off"></textarea>
-                                <small class="form-text text-muted">
-                                    Résumé de l'impact financier et des mesures de gestion du risque.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="couleurCommentaireProcedure" class="form-label">
-                                    <i class="fas fa-palette"></i>{% trans "Couleur commentaire" %}
-                                </label>
-                                <select class="form-select" id="couleurCommentaireProcedure" name="couleur_commentaire">
-                                    <option value="">{% trans "Aucune" %}</option>
-                                    {% for c in coloration_list %}
-                                    <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="commentaireProcedure" class="form-label">
-                                    <i class="fas fa-comment-dots"></i>{% trans "Commentaire interne" %}
-                                </label>
-                                <textarea class="form-control" id="commentaireProcedure" name="commentaire" rows="2"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Information importante -->
-                    <div class="alert alert-warning border border-warning border-2 mt-4">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-exclamation-triangle me-3 fa-2x text-warning"></i>
-                            <div>
-                                <h6 class="mb-1 fw-bold">{% trans "Information importante" %}</h6>
-                                <p class="mb-0 small">
-                                    Les procédures collectives sont des informations sensibles. 
-                                    Assurez-vous de leur exactitude et de leur confidentialité.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer modal-footer-premium">
-                    <button type="button" class="btn btn-procedure-outline-premium btn-action-premium" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-danger-premium btn-action-premium" id="submitProcedureBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmation de suppression premium -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content modal-content-premium modal-danger-content-premium">
-            <div class="modal-header modal-header-premium modal-danger-header-premium">
-                <h5 class="modal-title-premium">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-5">
-                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                <h6 class="fw-bold mb-3">{% trans "Supprimer la procédure" %}</h6>
-                <p class="text-dark mb-0" id="deleteConfirmationText">
-                    Cette action supprimera définitivement la procédure.<br>
-                    Cette opération est irréversible.
-                </p>
-                <div class="mt-4">
-                    <div class="fw-bold fs-5" id="deleteProcedureType"></div>
-                    <div class="small text-muted" id="deleteProcedureDates"></div>
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-procedure-outline-premium btn-action-premium" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <button class="btn-add" id="openAddModal">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
                 </button>
-                <button type="button" class="btn btn-danger-premium btn-action-premium" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="fas fa-gavel"></i></div>
+                    <span class="metric-label">{% trans "Total" %}</span>
+                </div>
+                <div class="metric-value">{{ procedures_count }}</div>
+                <div class="metric-sub">{% trans "procédures enregistrées" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(255,193,7,.1);color:#d39e00;"><i class="fas fa-spinner"></i></div>
+                    <span class="metric-label">{% trans "En cours" %}</span>
+                </div>
+                <div class="metric-value" style="color:#d39e00;">{{ procedures_actives }}</div>
+                <div class="metric-sub">{% trans "procédures actives" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-check-circle"></i></div>
+                    <span class="metric-label">{% trans "Clôturées" %}</span>
+                </div>
+                <div class="metric-value" style="color:#28a745;">{{ procedures_cloturees }}</div>
+                <div class="metric-sub">{% trans "procédures clôturées" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-list me-2"></i>{% trans "Liste des procédures" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Rechercher...' %}" style="width:200px;">
+                <button class="btn-add" id="openAddModal2">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>{% trans "Type" %}</th>
+                        <th style="width:100px;">{% trans "Statut" %}</th>
+                        <th style="width:130px;">{% trans "Durée" %}</th>
+                        <th style="width:110px;">{% trans "Ouverture" %}</th>
+                        <th style="width:110px;">{% trans "Clôture" %}</th>
+                        <th class="text-center" style="width:80px;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-gavel fa-3x mb-3" style="color:rgba(10,149,202,.25);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucune procédure collective" %}</h5>
+            <p class="text-muted mb-3 small">{% trans "Aucune procédure collective n'a été enregistrée pour cet acheteur." %}</p>
+            <button class="btn-add" id="openAddModal3"><i class="fas fa-plus"></i>{% trans "Ajouter une procédure" %}</button>
+        </div>
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,.1);">
+            <span class="pag-info" id="paginationInfo"></span>
+            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="crudModalLabel"><i class="fas fa-gavel me-2"></i>{% trans "Procédure collective" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">{% trans "Type de procédure" %} <span class="text-danger">*</span></label>
+                        <select class="form-select" id="typeInput">
+                            <option value="">{% trans "Sélectionnez un type..." %}</option>
+                            {% for type in types_procedures %}
+                            <option value="{{ type }}">{{ type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4" id="otherTypeWrap" style="display:none;">
+                        <label class="form-label fw-semibold">{% trans "Préciser le type" %}</label>
+                        <input type="text" class="form-control" id="otherTypeInput" placeholder="{% trans 'Précisez...' %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Date d'ouverture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="dateOuvertureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Date de clôture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="dateClotureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Tribunal compétent" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="tribunalInput" placeholder="{% trans 'Ex: Tribunal de commerce' %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Numéro de dossier" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="numeroDossierInput" placeholder="{% trans 'Référence du dossier' %}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control" id="descriptionInput" rows="3" placeholder="{% trans 'Description de la procédure...' %}"></textarea>
+                    </div>
+                </div>
+                <div id="modalError" class="alert alert-danger py-2 small mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function () {
-    /* =======================
-       CONFIGURATION
-    ======================= */
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/procedures-collectives-oneview/`;
-    let ACCESS_TOKEN = '{{ access_token }}';
-    const REFRESH_TOKEN = '{{ refresh_token }}';
+(function () {
+    'use strict';
 
-    let currentProcedureId = null;
-    let isEditing = false;
+    /* ── Données ── */
+    var ALL_ITEMS     = {{ procedures_json|safe }};
+    var ACCESS_TOKEN  = '{{ access_token }}';
+    var ACHETEUR_ID   = '{{ id_acheteur }}';
+    var API_BASE      = '/api/acheteur/' + ACHETEUR_ID + '/procedures-collectives-oneview/';
+    var VALID_TYPES   = [{% for type in types_procedures %}'{{ type }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var PAGE_SIZE     = 15;
+    var currentPage   = 1;
+    var currentSearch = '';
 
-    /* =======================
-       INIT FLATPICKR - CORRIGÉ
-    ======================= */
+    /* ── Flatpickr ── */
     function initDatepickers() {
-        // Détruire les instances existantes
-        $('.datepicker').each(function () {
-            if (this._flatpickr) {
-                this._flatpickr.destroy();
-            }
-        });
-        
-        // Réinitialiser les champs
-        $('.datepicker').val('').attr('readonly', false);
-        
-        // Créer de nouvelles instances avec des paramètres corrigés
-        flatpickr('.datepicker', {
-            locale: "fr",
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "d/m/Y",
-            allowInput: true,
-            disableMobile: true,
-            static: true,
-            monthSelectorType: 'static',
-            prevArrow: '<i class="fas fa-chevron-left"></i>',
-            nextArrow: '<i class="fas fa-chevron-right"></i>',
-            onReady: function(selectedDates, dateStr, instance) {
-                // S'assurer que le champ n'est pas en lecture seule
-                instance._input.removeAttribute('readonly');
-                instance._input.setAttribute('autocomplete', 'off');
-                instance._input.setAttribute('data-autocomplete', 'off');
-                
-                // Supprimer les attributs problématiques
-                instance._input.removeAttribute('inputmode');
-                instance._input.removeAttribute('data-input');
-            },
-            onOpen: function(selectedDates, dateStr, instance) {
-                // Focus sur le champ
-                instance._input.focus();
-            }
-        });
-    }
-
-    /* =======================
-       INIT SELECT2
-    ======================= */
-    function initSelect2() {
-        if ($('#procedureType').hasClass('select2-hidden-accessible')) {
-            $('#procedureType').select2('destroy');
-        }
-        
-        $('#procedureType').select2({
-            theme: 'bootstrap-5',
-            placeholder: "Sélectionnez un type...",
-            width: '100%',
-            dropdownParent: $('#procedureModal .modal-content'),
-            dropdownAutoWidth: true,
-            minimumResultsForSearch: 1
-        }).on('change', function () {
-            if ($(this).val() === 'Autre') {
-                $('#otherTypeContainer').show();
-                $('#otherType').prop('required', true);
-            } else {
-                $('#otherTypeContainer').hide();
-                $('#otherType').prop('required', false);
-            }
-        });
-    }
-
-    /* =======================
-       VIEW TOGGLE
-    ======================= */
-    $('#viewGridBtn').click(function() {
-        $('#viewGridBtn').addClass('active');
-        $('#viewTimelineBtn').removeClass('active');
-        $('#gridView').show();
-        $('#timelineView').hide();
-    });
-
-    $('#viewTimelineBtn').click(function() {
-        $('#viewTimelineBtn').addClass('active');
-        $('#viewGridBtn').removeClass('active');
-        $('#gridView').hide();
-        $('#timelineView').show();
-    });
-
-    /* =======================
-       FILTER FUNCTIONS
-    ======================= */
-    $('#searchProcedureInput').on('input', function() {
-        filterProcedures();
-    });
-
-    $('#filterStatus, #filterType').on('change', function() {
-        filterProcedures();
-    });
-
-    $('#clearFiltersBtn').click(function() {
-        $('#searchProcedureInput').val('');
-        $('#filterStatus').val('');
-        $('#filterType').val('');
-        filterProcedures();
-    });
-
-    function filterProcedures() {
-        const search = $('#searchProcedureInput').val().toLowerCase();
-        const status = $('#filterStatus').val();
-        const type = $('#filterType').val();
-        
-        // Filter grid view
-        $('.procedure-card-premium').each(function() {
-            const $card = $(this);
-            const cardStatus = $card.data('status');
-            const cardType = $card.data('type').toLowerCase();
-            const cardText = $card.text().toLowerCase();
-            
-            const matchesSearch = search === '' || cardText.includes(search);
-            const matchesStatus = status === '' || cardStatus === status;
-            const matchesType = type === '' || cardType === type.toLowerCase();
-            
-            if (matchesSearch && matchesStatus && matchesType) {
-                $card.show();
-            } else {
-                $card.hide();
-            }
-        });
-        
-        // Filter timeline view
-        $('.timeline-item-premium').each(function() {
-            const $item = $(this);
-            const itemStatus = $item.data('status');
-            const itemType = $item.data('type').toLowerCase();
-            const itemText = $item.text().toLowerCase();
-            
-            const matchesSearch = search === '' || itemText.includes(search);
-            const matchesStatus = status === '' || itemStatus === status;
-            const matchesType = type === '' || itemType === type.toLowerCase();
-            
-            if (matchesSearch && matchesStatus && matchesType) {
-                $item.show();
-            } else {
-                $item.hide();
-            }
-        });
-    }
-
-    /* =======================
-       RESET FORM
-    ======================= */
-    function resetForm() {
-        currentProcedureId = null;
-        isEditing = false;
-
-        $('#procedureForm')[0].reset();
-        $('#procedureType').val('').trigger('change');
-        $('#otherTypeContainer').hide();
-        $('#otherType').prop('required', false);
-
-        // Réinitialiser flatpickr
-        $('.datepicker').each(function () {
-            if (this._flatpickr) {
-                this._flatpickr.clear();
-            }
-        });
-    }
-
-    /* =======================
-       OPEN ADD MODAL
-    ======================= */
-    $(document).on(
-        'click',
-        '#openAddProcedureModal, #openAddProcedureModal2',
-        function (e) {
-            e.preventDefault();
-            resetForm();
-            $('#procedureModalTitle').html('<i class="fas fa-plus-circle me-2"></i>Ajouter une Procédure Collective');
-            
-            // Initialiser avant d'afficher le modal
-            setTimeout(() => {
-                initDatepickers();
-                initSelect2();
-                
-                // Forcer le focus sur le premier champ après l'affichage du modal
-                $('#procedureModal').on('shown.bs.modal', function () {
-                    $('#procedureType').select2('open');
+        ['dateOuvertureInput', 'dateClotureInput'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el && !el._flatpickr) {
+                flatpickr(el, {
+                    locale: 'fr', dateFormat: 'Y-m-d',
+                    altInput: true, altFormat: 'd/m/Y',
+                    allowInput: true, disableMobile: true
                 });
-            }, 50);
-            
-            $('#procedureModal').modal('show');
-        }
-    );
-
-    /* =======================
-       OPEN EDIT MODAL
-    ======================= */
-    $(document).on('click', '.edit-procedure-btn', function () {
-        currentProcedureId = $(this).data('id');
-        isEditing = true;
-        $('#procedureModalTitle').html('<i class="fas fa-edit me-2"></i>Modifier la Procédure Collective');
-        loadProcedureData(currentProcedureId);
-    });
-
-    /* =======================
-       LOAD PROCEDURE DATA
-    ======================= */
-    function loadProcedureData(procedureId) {
-        $.ajax({
-            url: `${API_BASE_URL}${procedureId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function (response) {
-                $('#procedureId').val(response.id);
-                
-                // Traiter le type de procédure
-                const procedureTypes = [{% for type in types_procedures %}'{{ type }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-                
-                if (response.type_procedure === 'Autre' || !procedureTypes.includes(response.type_procedure)) {
-                    $('#procedureType').val('Autre').trigger('change');
-                    $('#otherType').val(response.type_procedure);
-                    $('#otherTypeContainer').show();
-                } else {
-                    $('#procedureType').val(response.type_procedure).trigger('change');
-                    $('#otherTypeContainer').hide();
-                }
-
-                // Initialiser les datepickers avant d'injecter les dates
-                initDatepickers();
-
-                // Dates
-                if (response.date_ouverture && document.getElementById('dateOuverture')?._flatpickr) {
-                    document.getElementById('dateOuverture')._flatpickr.setDate(response.date_ouverture, false, 'Y-m-d');
-                }
-                
-                if (response.date_cloture && document.getElementById('dateCloture')?._flatpickr) {
-                    document.getElementById('dateCloture')._flatpickr.setDate(response.date_cloture, false, 'Y-m-d');
-                }
-
-                // Autres champs
-                $('#tribunal').val(response.tribunal || '');
-                $('#numeroDossier').val(response.numero_dossier || '');
-                $('#secteurActivite').val(response.secteur_activite || '');
-                $('#montantCreance').val(response.montant_creance || '');
-                $('#description').val(response.description || '');
-                $('#impactAssureur').val(response.impact_assureur || '');
-                $('#couleurCommentaireProcedure').val(response.couleur_commentaire || '');
-                $('#commentaireProcedure').val(response.commentaire || '');
-
-                // Initialiser les plugins après avoir rempli les données
-                setTimeout(() => {
-                    initSelect2();
-                }, 200);
-                
-                $('#procedureModal').modal('show');
-            },
-            error: function (xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => loadProcedureData(procedureId));
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger la procédure',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
             }
         });
     }
+    function clearDatepickers() {
+        ['dateOuvertureInput', 'dateClotureInput'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el && el._flatpickr) el._flatpickr.clear();
+        });
+    }
+    function setDate(id, val) {
+        var el = document.getElementById(id);
+        if (el && el._flatpickr && val) el._flatpickr.setDate(val, false, 'Y-m-d');
+    }
+    function getDate(id) {
+        var el = document.getElementById(id);
+        if (!el || !el._flatpickr) return null;
+        var d = el._flatpickr.selectedDates[0];
+        return d ? el._flatpickr.formatDate(d, 'Y-m-d') : null;
+    }
 
-    /* =======================
-       SUBMIT FORM
-    ======================= */
-    $('#procedureForm').on('submit', function (e) {
-        e.preventDefault();
-
-        const $btn = $('#submitProcedureBtn');
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-
-        // Formater les dates correctement
-        let dateOuverture = null;
-        let dateCloture = null;
-        
-        const dateOuvertureInput = document.getElementById('dateOuverture');
-        if (dateOuvertureInput && dateOuvertureInput._flatpickr) {
-            const selectedDate = dateOuvertureInput._flatpickr.selectedDates[0];
-            if (selectedDate) {
-                dateOuverture = dateOuvertureInput._flatpickr.formatDate(selectedDate, 'Y-m-d');
-            }
-        }
-        
-        const dateClotureInput = document.getElementById('dateCloture');
-        if (dateClotureInput && dateClotureInput._flatpickr) {
-            const selectedDate = dateClotureInput._flatpickr.selectedDates[0];
-            if (selectedDate) {
-                dateCloture = dateClotureInput._flatpickr.formatDate(selectedDate, 'Y-m-d');
-            }
-        }
-
-        const formData = {
-            acheteur: ACHETEUR_ID,
-            type_procedure: $('#procedureType').val() === 'Autre' ? $('#otherType').val() : $('#procedureType').val(),
-            date_ouverture: dateOuverture,
-            date_cloture: dateCloture,
-            tribunal: $('#tribunal').val() || null,
-            numero_dossier: $('#numeroDossier').val() || null,
-            secteur_activite: $('#secteurActivite').val() || null,
-            montant_creance: $('#montantCreance').val() || null,
-            description: $('#description').val() || null,
-            impact_assureur: $('#impactAssureur').val() || null,
-            couleur_commentaire: $('#couleurCommentaireProcedure').val() || null,
-            commentaire: $('#commentaireProcedure').val() || null
-        };
-
-        if (!formData.type_procedure) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Le type de procédure est obligatoire',
-                background: 'var(--color-background)',
-                color: 'var(--color-text)'
+    /* ── Select2 ── */
+    function initSelect2() {
+        if (window.$ && $.fn.select2) {
+            var $sel = $('#typeInput');
+            if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+            $sel.select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $('#crudModal'),
+                width: '100%',
+                minimumResultsForSearch: 1
+            }).off('change.otype').on('change.otype', function() {
+                document.getElementById('otherTypeWrap').style.display = $(this).val() === 'Autre' ? 'block' : 'none';
             });
-            $spinner.addClass('d-none');
-            $btnText.show();
-            $btn.prop('disabled', false);
+        }
+    }
+
+    /* ── Bootstrap Modal ── */
+    var _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
+    /* ── Utils ── */
+    function escHtml(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+    }
+    function apiFetch(url, opts) {
+        opts = opts || {};
+        return fetch(url, Object.assign({}, opts, {
+            headers: Object.assign({'Authorization':'Bearer '+ACCESS_TOKEN,'Content-Type':'application/json'}, opts.headers||{})
+        }));
+    }
+
+    /* ── Filtrage ── */
+    function getFiltered() {
+        var q = currentSearch.toLowerCase();
+        if (!q) return ALL_ITEMS;
+        return ALL_ITEMS.filter(function(i) {
+            return (i.type_procedure||'').toLowerCase().indexOf(q) !== -1 ||
+                   (i.statut||'').toLowerCase().indexOf(q) !== -1 ||
+                   (i.description||'').toLowerCase().indexOf(q) !== -1;
+        });
+    }
+
+    /* ── Rendu ── */
+    function render() {
+        var filtered   = getFiltered();
+        var tableBody  = document.getElementById('tableBody');
+        var emptyState = document.getElementById('emptyState');
+        var total      = filtered.length;
+        var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        if (total === 0) {
+            tableBody.innerHTML = currentSearch
+                ? '<tr><td colspan="7" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
+                : '';
+            emptyState.style.display = currentSearch ? 'none' : 'block';
+            document.getElementById('paginationInfo').textContent = '';
+            document.getElementById('paginationControls').innerHTML = '';
             return;
         }
 
-        // Validation des dates
-        if (formData.date_ouverture && formData.date_cloture) {
-            const ouverture = new Date(formData.date_ouverture);
-            const cloture = new Date(formData.date_cloture);
-            
-            if (cloture < ouverture) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Dates invalides',
-                    text: 'La date de clôture ne peut pas être antérieure à la date d\'ouverture',
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                });
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                return;
-            }
-        }
+        emptyState.style.display = 'none';
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var page  = filtered.slice(start, start + PAGE_SIZE);
 
-        const method = isEditing ? 'PUT' : 'POST';
-        const url = isEditing ? `${API_BASE_URL}${currentProcedureId}/` : API_BASE_URL;
+        tableBody.innerHTML = page.map(function(item, i) {
+            var isEnCours   = item.statut === 'En cours';
+            var statusHtml  = isEnCours
+                ? '<span class="status-badge status-en-cours">{% trans "En cours" %}</span>'
+                : '<span class="status-badge status-cloturee">{% trans "Clôturée" %}</span>';
+            var dureeHtml   = item.duree
+                ? '<span class="duree-text">' + escHtml(item.duree) + '</span>'
+                : '<span class="text-muted" style="font-size:.75rem;">—</span>';
+            return '<tr>' +
+                '<td class="text-muted small">' + (start + i + 1) + '</td>' +
+                '<td>' +
+                  '<div class="d-flex align-items-center gap-2">' +
+                    '<span style="width:22px;height:22px;border-radius:50%;background:rgba(10,149,202,.1);color:#0a95ca;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;"><i class="fas fa-gavel"></i></span>' +
+                    '<span class="type-text">' + escHtml(item.type_procedure || '—') + '</span>' +
+                  '</div>' +
+                '</td>' +
+                '<td>' + statusHtml + '</td>' +
+                '<td>' + dureeHtml + '</td>' +
+                '<td class="date-text">' + fmtDate(item.date_ouverture) + '</td>' +
+                '<td class="date-text">' + fmtDate(item.date_cloture) + '</td>' +
+                '<td class="text-center" style="white-space:nowrap;">' +
+                  '<button class="btn-tbl btn-tbl-edit me-1 edit-btn" data-id="' + item.id + '" title="{% trans "Modifier" %}"><i class="fas fa-pencil-alt"></i></button>' +
+                  '<button class="btn-tbl btn-tbl-delete delete-btn" data-id="' + item.id + '" data-type="' + escAttr(item.type_procedure || '') + '" title="{% trans "Supprimer" %}"><i class="fas fa-trash"></i></button>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
 
-        $.ajax({
-            url: url,
-            type: method,
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function (response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#procedureModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    location.reload();
-                });
-            },
-            error: function (xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.detail || xhr.responseJSON?.error || 'Échec de l\'enregistrement',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-
-    /* =======================
-       DELETE PROCEDURE
-    ======================= */
-    $(document).on('click', '.delete-procedure-btn', function () {
-        const procedureId = $(this).data('id');
-        const card = $(this).closest('.procedure-card-premium, .timeline-item-premium');
-        const type = card.find('.procedure-title-premium, strong').first().text().trim();
-        const dateOuverture = card.find('.date-value-premium').first().text().trim();
-        const dateCloture = card.find('.date-value-premium').last().text().trim();
-        
-        currentProcedureId = procedureId;
-        $('#deleteProcedureType').text(type);
-        $('#deleteProcedureDates').text(`${dateOuverture} - ${dateCloture}`);
-        $('#confirmDeleteModal').modal('show');
-    });
-
-    $('#confirmDeleteBtn').on('click', function () {
-        if (!currentProcedureId) return;
-        
-        const $btn = $(this);
-        const originalText = $btn.html();
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
-
-        $.ajax({
-            url: `${API_BASE_URL}${currentProcedureId}/`,
-            type: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function (response) {
-                $('#confirmDeleteModal').modal('hide');
-                $btn.prop('disabled', false).html(originalText);
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then(() => {
-                    location.reload();
-                });
-            },
-            error: function (xhr) {
-                $btn.prop('disabled', false).html(originalText);
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: xhr.responseJSON?.detail || 'Impossible de supprimer la procédure',
-                        background: 'var(--color-background)',
-                        color: 'var(--color-text)'
-                    });
-                }
-            }
-        });
-    });
-
-    /* =======================
-       TOKEN REFRESH
-    ======================= */
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            success: function (response) {
-                ACCESS_TOKEN = response.access;
-                if (callback) callback();
-            },
-            error: function () {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
-                    background: 'var(--color-background)',
-                    color: 'var(--color-text)'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
-        });
+        renderPagination(total, totalPages);
     }
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.startsWith(name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    function renderPagination(total, totalPages) {
+        var from = (currentPage - 1) * PAGE_SIZE + 1;
+        var to   = Math.min(currentPage * PAGE_SIZE, total);
+        document.getElementById('paginationInfo').textContent = totalPages <= 1
+            ? total + ' {% trans "élément(s)" %}'
+            : from + '–' + to + ' / ' + total;
+        var ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+        if (totalPages <= 1) return;
+        function mkBtn(html, pg, disabled, active) {
+            var el = document.createElement('span');
+            el.className = 'page-link-btn' + (disabled?' disabled':'') + (active?' active':'');
+            el.innerHTML = html;
+            if (!disabled) el.onclick = function() { currentPage = pg; render(); };
+            return el;
         }
-        return cookieValue;
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-left fa-xs"></i>', currentPage-1, currentPage===1, false));
+        for (var p=1; p<=totalPages; p++) ctrl.appendChild(mkBtn(p, p, false, p===currentPage));
+        ctrl.appendChild(mkBtn('<i class="fas fa-chevron-right fa-xs"></i>', currentPage+1, currentPage===totalPages, false));
     }
 
-    /* =======================
-       INITIALIZATION
-    ======================= */
-    // Initialiser les tooltips Bootstrap
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    /* ── Modal helpers ── */
+    function showModalError(msg) {
+        var el = document.getElementById('modalError');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    function resetModal() {
+        document.getElementById('editId').value = '';
+        document.getElementById('otherTypeInput').value = '';
+        document.getElementById('tribunalInput').value = '';
+        document.getElementById('numeroDossierInput').value = '';
+        document.getElementById('descriptionInput').value = '';
+        document.getElementById('otherTypeWrap').style.display = 'none';
+        document.getElementById('modalError').style.display = 'none';
+        document.getElementById('saveBtn').disabled = false;
+        clearDatepickers();
+        if (window.$) $('#typeInput').val('').trigger('change');
+    }
 
-    // Initialiser les gestionnaires d'événements pour le modal
-    $('#procedureModal').on('shown.bs.modal', function () {
-        // Réinitialiser les datepickers quand le modal s'ouvre
+    function openAdd() {
+        resetModal();
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter une procédure" %}';
         initDatepickers();
         initSelect2();
-        
-        // Focus sur le premier champ
-        setTimeout(() => {
-            $('#procedureType').select2('open');
-        }, 300);
+        getModal().show();
+    }
+
+    function openEdit(id) {
+        resetModal();
+        document.getElementById('editId').value = id;
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier la procédure" %}';
+        apiFetch(API_BASE + id + '/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                initDatepickers();
+                initSelect2();
+                var typeVal = data.type_procedure || '';
+                if (window.$) {
+                    if (VALID_TYPES.indexOf(typeVal) === -1 && typeVal !== '') {
+                        $('#typeInput').val('Autre').trigger('change');
+                        document.getElementById('otherTypeInput').value = typeVal;
+                        document.getElementById('otherTypeWrap').style.display = 'block';
+                    } else {
+                        $('#typeInput').val(typeVal).trigger('change');
+                    }
+                }
+                setDate('dateOuvertureInput', data.date_ouverture);
+                setDate('dateClotureInput', data.date_cloture);
+                document.getElementById('tribunalInput').value      = data.tribunal || '';
+                document.getElementById('numeroDossierInput').value = data.numero_dossier || '';
+                document.getElementById('descriptionInput').value   = data.description || '';
+                getModal().show();
+            })
+            .catch(function() { showModalError('{% trans "Erreur lors du chargement." %}'); });
+    }
+
+    /* ── Save ── */
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        var typeVal = window.$ ? $('#typeInput').val() : document.getElementById('typeInput').value;
+        if (typeVal === 'Autre') {
+            typeVal = document.getElementById('otherTypeInput').value.trim();
+        }
+        if (!typeVal) { showModalError('{% trans "Le type de procédure est obligatoire." %}'); return; }
+        document.getElementById('modalError').style.display = 'none';
+
+        var id     = document.getElementById('editId').value;
+        var isEdit = !!id;
+        var url    = isEdit ? API_BASE + id + '/' : API_BASE;
+
+        var payload = {
+            acheteur:       ACHETEUR_ID,
+            type_procedure: typeVal,
+            date_ouverture: getDate('dateOuvertureInput'),
+            date_cloture:   getDate('dateClotureInput'),
+            tribunal:       document.getElementById('tribunalInput').value.trim() || null,
+            numero_dossier: document.getElementById('numeroDossierInput').value.trim() || null,
+            description:    document.getElementById('descriptionInput').value.trim() || null
+        };
+
+        var btn = this;
+        btn.disabled = true;
+        apiFetch(url, {method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload)})
+            .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+            .then(function(res) {
+                if (!res.ok) {
+                    var msg = res.data.type_procedure ? res.data.type_procedure[0] : (res.data.detail || res.data.error || '{% trans "Erreur lors de l\'opération." %}');
+                    showModalError(msg);
+                    btn.disabled = false;
+                    return;
+                }
+                window.location.reload();
+            })
+            .catch(function() { showModalError('{% trans "Erreur réseau." %}'); btn.disabled = false; });
     });
 
-    $('#procedureModal').on('hidden.bs.modal', function () {
-        // Nettoyer quand le modal se ferme
-        resetForm();
+    /* ── Delete ── */
+    function deleteItem(id, type) {
+        Swal.fire({
+            title: '{% trans "Supprimer cette procédure ?" %}',
+            html: '<strong>' + escHtml(type) + '</strong>',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: '{% trans "Oui, supprimer" %}',
+            cancelButtonText: '{% trans "Annuler" %}'
+        }).then(function(r) {
+            if (!r.isConfirmed) return;
+            apiFetch(API_BASE + id + '/', {method: 'DELETE'})
+                .then(function() { window.location.reload(); })
+                .catch(function() { Swal.fire({icon:'error', title:'{% trans "Erreur lors de la suppression." %}'}); });
+        });
+    }
+
+    /* ── Events ── */
+    ['openAddModal','openAddModal2','openAddModal3'].forEach(function(btnId) {
+        var el = document.getElementById(btnId);
+        if (el) el.addEventListener('click', openAdd);
     });
 
-    // Désactiver l'autocomplete pour tous les champs du formulaire
-    $(document).on('focus', 'input, textarea, select', function() {
-        $(this).attr('autocomplete', 'off');
+    document.addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.edit-btn');
+        if (editBtn) { openEdit(editBtn.dataset.id); return; }
+        var delBtn = e.target.closest('.delete-btn');
+        if (delBtn) { deleteItem(delBtn.dataset.id, delBtn.dataset.type); return; }
     });
-});
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+        currentSearch = this.value.trim();
+        currentPage = 1;
+        render();
+    });
+
+    render();
+})();
 </script>
 {% endblock %}
