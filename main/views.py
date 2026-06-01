@@ -3173,7 +3173,15 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
 
     # Récupérer tous les postes pour les listes déroulantes
     poste_list = PosteEntreprise.objects.all()
-    fonction_list = [{'valeur': val[0], 'libelle': str(val[1])} for val in LISTE_NOUVELLE_FONCTION]
+    lang = get_language() or 'fr'
+    if lang.startswith('en'):
+        with translation_override('fr'):
+            fonction_list = [
+                {'valeur': str(val[0]), 'libelle': LISTE_NOUVELLE_FONCTION_EN.get(str(val[0]), str(val[0]))}
+                for val in LISTE_NOUVELLE_FONCTION
+            ]
+    else:
+        fonction_list = [{'valeur': str(val[0]), 'libelle': str(val[1])} for val in LISTE_NOUVELLE_FONCTION]
     
     # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
