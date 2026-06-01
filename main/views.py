@@ -6919,9 +6919,19 @@ def dash_root_certification_acheteur(request, acheteur_id):
         'certifications_count': certifications_list.count(),
     }
     
-    # Liste des types de certifications pour le filtre
+    # Liste des types prédéfinis
     certification_types = Certification.TYPES
-    
+    predefined_keys = [k for k, v in Certification.TYPES]
+
+    # Types personnalisés déjà créés (hors prédéfinis) — globaux, tous acheteurs
+    custom_types = list(
+        Certification.objects
+        .exclude(type_certification__in=predefined_keys)
+        .values_list('type_certification', flat=True)
+        .distinct()
+        .order_by('type_certification')
+    )
+
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
     certification_types_json = json.dumps(certification_types, default=str)
@@ -6954,6 +6964,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "certification_types": certification_types,
         "certification_types_json": certification_types_json,
+        "custom_types": custom_types,
         "certifications": certifications_list,
         "certifications_count": certifications_list.count(),
         "certifications_avec_date": certifications_avec_date,

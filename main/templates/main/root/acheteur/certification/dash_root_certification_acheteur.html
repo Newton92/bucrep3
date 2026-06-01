@@ -165,9 +165,18 @@
                         <label class="form-label fw-semibold">{% trans "Type de certification" %} <span class="text-danger">*</span></label>
                         <select class="form-select" id="typeCertifInput">
                             <option value="">{% trans "Sélectionner un type..." %}</option>
-                            {% for key, label in certification_types %}
-                            <option value="{{ key }}">{{ label }}</option>
-                            {% endfor %}
+                            <optgroup label="{% trans 'Types standards' %}">
+                                {% for key, label in certification_types %}
+                                <option value="{{ key }}">{{ label }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% if custom_types %}
+                            <optgroup label="{% trans 'Types personnalisés' %}">
+                                {% for ct in custom_types %}
+                                <option value="{{ ct }}">{{ ct }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
                         </select>
                         <div class="form-text"><i class="fas fa-lightbulb me-1 text-warning"></i>{% trans "Tapez pour créer un nouveau type personnalisé." %}</div>
                     </div>
@@ -219,7 +228,9 @@
     var ACHETEUR_ID       = '{{ id_acheteur }}';
     var API_BASE          = '/api/acheteur/' + ACHETEUR_ID + '/certifications-oneview/';
     var PREDEFINED_TYPES  = {{ certification_types_json|safe }};
-    var PREDEFINED_KEYS   = PREDEFINED_TYPES.map(function(t) { return t[0]; });
+    var CUSTOM_TYPES      = {{ custom_types|safe }};
+    /* toutes les valeurs déjà dans le select (prédéfinis + personnalisés) */
+    var KNOWN_KEYS        = PREDEFINED_TYPES.map(function(t) { return t[0]; }).concat(CUSTOM_TYPES);
     var PAGE_SIZE         = 15;
     var currentPage       = 1;
     var currentSearch     = '';
@@ -421,8 +432,8 @@
         if (!item) return;
         resetModal();
         document.getElementById('editId').value = id;
-        /* type personnalisé : l'option n'existe pas dans le select → on l'ajoute */
-        if (item.type_certification && PREDEFINED_KEYS.indexOf(item.type_certification) === -1) {
+        /* type inconnu (ni prédéfini ni déjà dans custom_types) → on l'ajoute dynamiquement */
+        if (item.type_certification && KNOWN_KEYS.indexOf(item.type_certification) === -1) {
             var label = item.type_certification_display || item.type_certification;
             if ($('#typeCertifInput option[value="' + item.type_certification.replace(/"/g, '\\"') + '"]').length === 0) {
                 $('#typeCertifInput').append(new Option(label, item.type_certification, true, true));
