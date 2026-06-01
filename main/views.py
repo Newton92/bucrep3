@@ -8273,7 +8273,9 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
     cotisations_list = Cotisation.objects.filter(
         acheteur=acheteur
     ).order_by('-created_at')
-    
+    cotisations_avec_date = cotisations_list.filter(date_affiliation__isnull=False).count()
+    cotisations_sans_date = cotisations_list.filter(date_affiliation__isnull=True).count()
+
     # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
@@ -8326,6 +8328,8 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "cotisations": cotisations_list,
         "cotisations_count": cotisations_list.count(),
+        "cotisations_avec_date": cotisations_avec_date,
+        "cotisations_sans_date": cotisations_sans_date,
         "cotisations_json": cotisations_json or '[]',
         "coloration_list": coloration_list,
         "acheteur": acheteur,
