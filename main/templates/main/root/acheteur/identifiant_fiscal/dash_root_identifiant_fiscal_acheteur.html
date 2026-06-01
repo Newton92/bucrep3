@@ -1,0 +1,572 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+:root {
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-accent: #106cb2;
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+}
+.page-header { background: var(--primary-gradient); padding: .75rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; color: white; }
+.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle { font-size: .8rem; opacity: .85; }
+.metric-card { background: white; border-radius: 10px; padding: .9rem 1rem; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); }
+.metric-header { display: flex; align-items: center; gap: .6rem; margin-bottom: .4rem; }
+.metric-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(10,149,202,.1); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+.metric-label { font-size: .75rem; color: #5a6c7d; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.metric-value { font-size: 1.4rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1; }
+.metric-sub   { font-size: .72rem; color: #8a9ab0; margin-top: .2rem; }
+.table-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); overflow: hidden; }
+.table-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-bottom: 1px solid rgba(37,173,214,.1); }
+.search-input { border: 1px solid rgba(10,149,202,.25); border-radius: 6px; padding: .3rem .65rem; font-size: .8rem; outline: none; color: #333; }
+.search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(10,149,202,.12); }
+.btn-add { background: var(--primary-gradient); color: white; border: none; border-radius: 6px; padding: .35rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; transition: opacity .15s; }
+.btn-add:hover { opacity: .88; }
+.modern-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.modern-table thead th { background: rgba(10,149,202,.05); padding: .55rem .75rem; font-weight: 600; color: #4a5568; border-bottom: 2px solid rgba(10,149,202,.12); white-space: nowrap; }
+.modern-table tbody td { padding: .5rem .75rem; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+.modern-table tbody tr:last-child td { border-bottom: none; }
+.modern-table tbody tr:hover { background: rgba(10,149,202,.03); }
+.btn-tbl { width: 26px; height: 26px; border: none; border-radius: 5px; cursor: pointer; font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
+.btn-tbl-edit   { background: rgba(10,149,202,.1);  color: #0a95ca; }
+.btn-tbl-delete { background: rgba(220,53,69,.1);   color: #dc3545; }
+.btn-tbl:hover  { opacity: .75; transform: scale(1.08); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: #8a9ab0; }
+.pag-info { font-size: .75rem; color: #8a9ab0; }
+.page-link-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 4px; border: 1px solid rgba(10,149,202,.2); border-radius: 5px; font-size: .75rem; color: #4a5568; cursor: pointer; transition: all .15s; }
+.page-link-btn:hover, .page-link-btn.active { background: var(--primary-gradient); color: white; border-color: var(--color-primary); }
+.page-link-btn.disabled { opacity: .4; pointer-events: none; }
+.status-badge { font-size: .7rem; font-weight: 600; border-radius: 20px; padding: 2px 8px; display: inline-block; white-space: nowrap; }
+.status-actif   { background: rgba(40,167,69,.1);  color: #28a745; border: 1px solid rgba(40,167,69,.2); }
+.status-archive { background: rgba(108,117,125,.1); color: #6c757d; border: 1px solid rgba(108,117,125,.2); }
+.num-id { font-family: monospace; font-size: .82rem; font-weight: 700; color: var(--color-primary-dark); letter-spacing: .3px; }
+.type-badge { font-size: .72rem; font-weight: 600; border-radius: 5px; padding: 2px 7px; display: inline-block; white-space: nowrap; background: rgba(10,149,202,.08); color: var(--color-primary-dark); border: 1px solid rgba(10,149,202,.18); }
+.date-text { font-size: .77rem; color: #5a6c7d; white-space: nowrap; }
+#crudModal .modal-body { padding-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1 class="page-title"><i class="fas fa-id-card me-2"></i>{% trans "Identifiants Fiscaux" %}</h1>
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
+                </a>
+                <button class="btn-add" id="openAddModal">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="fas fa-id-card"></i></div>
+                    <span class="metric-label">{% trans "Total" %}</span>
+                </div>
+                <div class="metric-value">{{ identifiants_count }}</div>
+                <div class="metric-sub">{% trans "identifiants enregistrés" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-check-circle"></i></div>
+                    <span class="metric-label">{% trans "En vigueur" %}</span>
+                </div>
+                <div class="metric-value" style="color:#28a745;">{{ identifiants_actifs }}</div>
+                <div class="metric-sub">{% trans "identifiant actif" %}</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(108,117,125,.1);color:#6c757d;"><i class="fas fa-archive"></i></div>
+                    <span class="metric-label">{% trans "Archivés" %}</span>
+                </div>
+                <div class="metric-value" style="color:#6c757d;">{{ identifiants_archives }}</div>
+                <div class="metric-sub">{% trans "identifiants archivés" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-list me-2"></i>{% trans "Liste des identifiants" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Rechercher...' %}" style="width:200px;">
+                <button class="btn-add" id="openAddModal2">
+                    <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th style="width:150px;">{% trans "Type" %}</th>
+                        <th>{% trans "Numéro" %}</th>
+                        <th style="width:100px;">{% trans "Statut" %}</th>
+                        <th style="width:130px;">{% trans "Date attribution" %}</th>
+                        <th style="width:120px;">{% trans "Ajouté le" %}</th>
+                        <th class="text-center" style="width:80px;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-id-card fa-3x mb-3" style="color:rgba(10,149,202,.25);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucun identifiant fiscal" %}</h5>
+            <p class="text-muted mb-3 small">{% trans "Aucun identifiant fiscal n'a été enregistré pour cet acheteur." %}</p>
+            <button class="btn-add" id="openAddModal3"><i class="fas fa-plus"></i>{% trans "Ajouter un identifiant" %}</button>
+        </div>
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,.1);">
+            <span class="pag-info" id="paginationInfo"></span>
+            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--primary-gradient);color:white;">
+                <h5 class="modal-title" id="crudModalLabel"><i class="fas fa-id-card me-2"></i>{% trans "Identifiant fiscal" %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Type d'identifiant" %} <span class="text-danger">*</span></label>
+                        <select class="form-select" id="typeInput">
+                            <option value="">{% trans "Sélectionner un type..." %}</option>
+                            <option value="nif">{% trans "NIF" %}</option>
+                            <option value="tva">{% trans "Numéro de TVA" %}</option>
+                            <option value="statistique">{% trans "Numéro statistique" %}</option>
+                            <option value="cnss_employeur">{% trans "Numéro CNSS (employeur)" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Numéro" %} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="numeroInput" placeholder="{% trans 'Ex: 123456789' %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Date d'attribution" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="dateAttributionInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input" type="checkbox" id="estActifInput" role="switch" checked>
+                            <label class="form-check-label fw-semibold small" for="estActifInput">{% trans "En vigueur" %}</label>
+                            <div class="text-muted" style="font-size:.7rem;">{% trans "Identifiant actuellement utilisé." %}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Commentaire" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="commentaireInput" rows="3" placeholder="{% trans 'Commentaire...' %}"></textarea>
+                    </div>
+                </div>
+                <div id="modalError" class="alert alert-danger py-2 small mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveBtn">
+                    <i class="fas fa-save me-1"></i>{% trans "Enregistrer" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    /* ── Données ── */
+    var ALL_ITEMS    = {{ identifiants_json|safe }};
+    var ACCESS_TOKEN = '{{ access_token }}';
+    var ACHETEUR_ID  = '{{ id_acheteur }}';
+    var API_BASE     = '/api/acheteur/' + ACHETEUR_ID + '/identifiants-fiscaux-oneview/';
+    var PAGE_SIZE    = 15;
+    var currentPage  = 1;
+    var currentSearch = '';
+
+    /* ── Flatpickr ── */
+    function initDatepicker() {
+        var el = document.getElementById('dateAttributionInput');
+        if (el && !el._flatpickr) {
+            var hasFr = typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns.fr;
+            try {
+                flatpickr(el, {
+                    locale: hasFr ? 'fr' : undefined,
+                    dateFormat: 'Y-m-d',
+                    altInput: true, altFormat: 'd/m/Y',
+                    allowInput: true, disableMobile: true
+                });
+            } catch(e) { console.warn('flatpickr init error:', e); }
+        }
+    }
+    function clearDatepicker() {
+        var el = document.getElementById('dateAttributionInput');
+        if (el && el._flatpickr) el._flatpickr.clear();
+    }
+    function setDate(val) {
+        var el = document.getElementById('dateAttributionInput');
+        if (el && el._flatpickr && val) el._flatpickr.setDate(val, false, 'Y-m-d');
+    }
+    function getDate() {
+        var el = document.getElementById('dateAttributionInput');
+        if (!el || !el._flatpickr) return null;
+        var d = el._flatpickr.selectedDates[0];
+        return d ? el._flatpickr.formatDate(d, 'Y-m-d') : null;
+    }
+
+    /* ── Bootstrap Modal ── */
+    var _modal = null;
+    function getModal() {
+        if (!_modal) _modal = new bootstrap.Modal(document.getElementById('crudModal'));
+        return _modal;
+    }
+
+    document.getElementById('crudModal').addEventListener('shown.bs.modal', function() {
+        initDatepicker();
+    });
+
+    /* ── Utils ── */
+    function escHtml(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return String(s || '').replace(/"/g, '&quot;'); }
+    function apiFetch(url, opts) {
+        opts = opts || {};
+        return fetch(url, Object.assign({}, opts, {
+            headers: Object.assign({'Authorization':'Bearer '+ACCESS_TOKEN,'Content-Type':'application/json'}, opts.headers||{})
+        }));
+    }
+    function showModalError(msg) {
+        var el = document.getElementById('modalError');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+    function hideModalError() {
+        document.getElementById('modalError').style.display = 'none';
+    }
+
+    /* ── Filtrage ── */
+    function getFiltered() {
+        var q = currentSearch.toLowerCase();
+        if (!q) return ALL_ITEMS;
+        return ALL_ITEMS.filter(function(i) {
+            return (i.numero||'').toLowerCase().indexOf(q) !== -1 ||
+                   (i.type_identifiant_display||'').toLowerCase().indexOf(q) !== -1 ||
+                   (i.type_identifiant||'').toLowerCase().indexOf(q) !== -1;
+        });
+    }
+
+    /* ── Type label map ── */
+    var TYPE_LABELS = {
+        'nif': '{% trans "NIF" %}',
+        'tva': '{% trans "Numéro de TVA" %}',
+        'statistique': '{% trans "Numéro statistique" %}',
+        'cnss_employeur': '{% trans "Numéro CNSS (employeur)" %}'
+    };
+    function getTypeLabel(type, display) {
+        return TYPE_LABELS[type] || display || type;
+    }
+
+    /* ── Rendu ── */
+    function render() {
+        var filtered   = getFiltered();
+        var tableBody  = document.getElementById('tableBody');
+        var emptyState = document.getElementById('emptyState');
+        var total      = filtered.length;
+        var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        if (total === 0) {
+            tableBody.innerHTML = currentSearch
+                ? '<tr><td colspan="7" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
+                : '';
+            emptyState.style.display = currentSearch ? 'none' : 'block';
+            document.getElementById('paginationInfo').textContent = '';
+            document.getElementById('paginationControls').innerHTML = '';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        var start = (currentPage - 1) * PAGE_SIZE;
+        var page  = filtered.slice(start, start + PAGE_SIZE);
+
+        tableBody.innerHTML = page.map(function(item, i) {
+            var isActif = item.est_actif === true;
+            var statusHtml = isActif
+                ? '<span class="status-badge status-actif">{% trans "Actif" %}</span>'
+                : '<span class="status-badge status-archive">{% trans "Archivé" %}</span>';
+            var dateHtml = item.date_attribution_display
+                ? '<span class="date-text">' + escHtml(item.date_attribution_display) + '</span>'
+                : '<span class="text-muted">—</span>';
+            var typeLabel = getTypeLabel(item.type_identifiant, item.type_identifiant_display);
+            return '<tr>' +
+                '<td class="text-muted">' + (start + i + 1) + '</td>' +
+                '<td><span class="type-badge">' + escHtml(typeLabel) + '</span></td>' +
+                '<td><span class="num-id">' + escHtml(item.numero) + '</span></td>' +
+                '<td>' + statusHtml + '</td>' +
+                '<td>' + dateHtml + '</td>' +
+                '<td><span class="date-text">' + escHtml(item.created_at_display || '—') + '</span></td>' +
+                '<td class="text-center">' +
+                    '<button class="btn-tbl btn-tbl-edit me-1" onclick="openEdit(' + item.id + ')" title="{% trans "Modifier" %}"><i class="fas fa-pencil-alt"></i></button>' +
+                    '<button class="btn-tbl btn-tbl-delete" onclick="deleteItem(' + item.id + ')" title="{% trans "Supprimer" %}"><i class="fas fa-trash-alt"></i></button>' +
+                '</td>' +
+                '</tr>';
+        }).join('');
+
+        var info = document.getElementById('paginationInfo');
+        var ctrl = document.getElementById('paginationControls');
+        var end  = Math.min(start + page.length, total);
+        info.textContent = (start + 1) + '–' + end + ' / ' + total;
+
+        if (totalPages <= 1) { ctrl.innerHTML = ''; return; }
+        var btns = '';
+        btns += '<span class="page-link-btn' + (currentPage===1?' disabled':'') + '" onclick="goPage(' + (currentPage-1) + ')"><i class="fas fa-chevron-left"></i></span>';
+        for (var p = 1; p <= totalPages; p++) {
+            btns += '<span class="page-link-btn' + (p===currentPage?' active':'') + '" onclick="goPage(' + p + ')">' + p + '</span>';
+        }
+        btns += '<span class="page-link-btn' + (currentPage===totalPages?' disabled':'') + '" onclick="goPage(' + (currentPage+1) + ')"><i class="fas fa-chevron-right"></i></span>';
+        ctrl.innerHTML = btns;
+    }
+
+    window.goPage = function(p) {
+        var filtered = getFiltered();
+        var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        if (p < 1 || p > totalPages) return;
+        currentPage = p;
+        render();
+    };
+
+    /* ── Recherche ── */
+    document.getElementById('searchInput').addEventListener('input', function() {
+        currentSearch = this.value.trim();
+        currentPage   = 1;
+        render();
+    });
+
+    /* ── Modal ── */
+    function resetModal() {
+        document.getElementById('editId').value = '';
+        document.getElementById('typeInput').value = '';
+        document.getElementById('numeroInput').value = '';
+        document.getElementById('estActifInput').checked = true;
+        clearDatepicker();
+        if (window.quillSetValue) window.quillSetValue('commentaireInput', '');
+        else document.getElementById('commentaireInput').value = '';
+        hideModalError();
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>{% trans "Ajouter un identifiant" %}';
+    }
+
+    function openAdd() {
+        resetModal();
+        getModal().show();
+    }
+
+    window.openEdit = function(id) {
+        var item = null;
+        for (var j = 0; j < ALL_ITEMS.length; j++) {
+            if (ALL_ITEMS[j].id === id) { item = ALL_ITEMS[j]; break; }
+        }
+        if (!item) return;
+        resetModal();
+        document.getElementById('editId').value = id;
+        document.getElementById('typeInput').value = item.type_identifiant || '';
+        document.getElementById('numeroInput').value = item.numero || '';
+        document.getElementById('estActifInput').checked = item.est_actif === true;
+        if (item.date_attribution) setDate(item.date_attribution);
+        if (window.quillSetValue) window.quillSetValue('commentaireInput', item.commentaire || '');
+        else document.getElementById('commentaireInput').value = item.commentaire || '';
+        document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier l\'identifiant" %}';
+        getModal().show();
+    };
+
+    /* ── Save ── */
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        hideModalError();
+        var id      = document.getElementById('editId').value;
+        var type    = document.getElementById('typeInput').value.trim();
+        var numero  = document.getElementById('numeroInput').value.trim();
+        var estActif = document.getElementById('estActifInput').checked;
+        var date    = getDate();
+        var commentaire = document.getElementById('commentaireInput').value;
+
+        if (!type) { showModalError("{% trans 'Veuillez sélectionner un type.' %}"); return; }
+        if (!numero) { showModalError("{% trans 'Le numéro est obligatoire.' %}"); return; }
+
+        document.getElementById('saveBtn').disabled = true;
+
+        var isEdit = !!id;
+        var url    = isEdit ? API_BASE + id + '/' : API_BASE;
+        var method = isEdit ? 'PUT' : 'POST';
+
+        var payload = {
+            type_identifiant: type,
+            numero: numero,
+            est_actif: estActif,
+            commentaire: commentaire
+        };
+        if (!isEdit) payload.acheteur = ACHETEUR_ID;
+        if (isEdit) {
+            payload.date_attribution_input = date || '';
+        } else {
+            payload.date_attribution = date || null;
+        }
+
+        apiFetch(url, {method: method, body: JSON.stringify(payload)})
+            .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+            .then(function(res) {
+                if (!res.ok) {
+                    var errs = res.data;
+                    var msg = '';
+                    if (typeof errs === 'object' && errs !== null) {
+                        Object.keys(errs).forEach(function(k) {
+                            msg += (Array.isArray(errs[k]) ? errs[k].join(', ') : String(errs[k])) + ' ';
+                        });
+                    } else { msg = String(errs); }
+                    showModalError(msg.trim());
+                    document.getElementById('saveBtn').disabled = false;
+                    return;
+                }
+                getModal().hide();
+                var saved = res.data.data || res.data;
+                var typeLabel = getTypeLabel(saved.type_identifiant, saved.type_identifiant_display);
+                var dateDisplay = '';
+                if (saved.date_attribution) {
+                    var dp = saved.date_attribution.split('-');
+                    if (dp.length === 3) dateDisplay = dp[2] + '/' + dp[1] + '/' + dp[0];
+                }
+                var row = {
+                    id: saved.id,
+                    type_identifiant: saved.type_identifiant,
+                    type_identifiant_display: typeLabel,
+                    numero: saved.numero,
+                    est_actif: saved.est_actif,
+                    date_attribution: saved.date_attribution || null,
+                    date_attribution_display: dateDisplay,
+                    commentaire: saved.commentaire || '',
+                    created_at_display: saved.created_at ? new Date(saved.created_at).toLocaleDateString('fr-FR') + ' ' + new Date(saved.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : ''
+                };
+                if (isEdit) {
+                    for (var j = 0; j < ALL_ITEMS.length; j++) {
+                        if (ALL_ITEMS[j].id === saved.id) { ALL_ITEMS[j] = row; break; }
+                    }
+                } else {
+                    ALL_ITEMS.unshift(row);
+                    updateCounters(1);
+                }
+                if (isEdit) refreshCounter(saved.id, saved.est_actif);
+                render();
+            })
+            .catch(function() {
+                showModalError("{% trans 'Erreur réseau. Veuillez réessayer.' %}");
+                document.getElementById('saveBtn').disabled = false;
+            });
+    });
+
+    /* ── Delete ── */
+    window.deleteItem = function(id) {
+        if (typeof Swal === 'undefined') {
+            if (!confirm("{% trans 'Supprimer cet identifiant ?' %}")) return;
+            doDelete(id);
+            return;
+        }
+        Swal.fire({
+            title: "{% trans 'Supprimer cet identifiant ?' %}",
+            text: "{% trans 'Cette action est irréversible.' %}",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: "{% trans 'Supprimer' %}",
+            cancelButtonText: "{% trans 'Annuler' %}"
+        }).then(function(result) {
+            if (result.isConfirmed) doDelete(id);
+        });
+    };
+
+    function doDelete(id) {
+        apiFetch(API_BASE + id + '/', {method: 'DELETE'})
+            .then(function(r) {
+                if (!r.ok) { alert("{% trans 'Erreur lors de la suppression.' %}"); return; }
+                var wasActif = false;
+                ALL_ITEMS = ALL_ITEMS.filter(function(i) {
+                    if (i.id === id) { wasActif = i.est_actif === true; return false; }
+                    return true;
+                });
+                updateCounters(-1);
+                if (wasActif) updateActifCounter(-1);
+                render();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({title:"{% trans 'Supprimé !' %}", icon:'success', timer:1500, showConfirmButton:false});
+                }
+            })
+            .catch(function() { alert("{% trans 'Erreur réseau.' %}"); });
+    }
+
+    /* ── Counters ── */
+    function updateCounters(delta) {
+        var el = document.querySelector('.metric-value');
+        if (el) el.textContent = Math.max(0, parseInt(el.textContent || '0') + delta);
+    }
+    function updateActifCounter(delta) {
+        var cards = document.querySelectorAll('.metric-value');
+        if (cards[1]) cards[1].textContent = Math.max(0, parseInt(cards[1].textContent || '0') + delta);
+    }
+    function refreshCounter(id, isActif) {
+        /* After edit, recompute active count from ALL_ITEMS */
+        var actif = ALL_ITEMS.filter(function(i) { return i.est_actif === true; }).length;
+        var arch  = ALL_ITEMS.filter(function(i) { return i.est_actif === false; }).length;
+        var cards = document.querySelectorAll('.metric-value');
+        if (cards[0]) cards[0].textContent = ALL_ITEMS.length;
+        if (cards[1]) cards[1].textContent = actif;
+        if (cards[2]) cards[2].textContent = arch;
+    }
+
+    /* ── Open modal buttons ── */
+    ['openAddModal','openAddModal2','openAddModal3'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('click', openAdd);
+    });
+
+    /* ── Init ── */
+    render();
+})();
+</script>
+{% endblock %}

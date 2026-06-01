@@ -8559,11 +8559,87 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         "main/root/acheteur/registre_commerce/dash_root_registre_commerce_acheteur.html",
         context,
     )
-    
-    
-    
 
 
+@login_required
+def dash_root_manage_identifiant_fiscal_acheteur(request, acheteur_id):
+    """
+    Vue pour la gestion des identifiants fiscaux d'un acheteur
+    """
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+
+    identifiants_list = IdentifiantFiscal.objects.filter(
+        acheteur=acheteur
+    ).order_by('-created_at')
+
+    identifiants_actifs_count = identifiants_list.filter(est_actif=True).count()
+    identifiants_archives_count = identifiants_list.filter(est_actif=False).count()
+
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect_to_login(request.get_full_path())
+
+    coloration_list = CouleurCommentaire.objects.all()
+
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+    }
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    identifiants_data = []
+    for identifiant in identifiants_list:
+        identifiants_data.append({
+            'id': identifiant.id,
+            'type_identifiant': identifiant.type_identifiant,
+            'type_identifiant_display': identifiant.get_type_identifiant_display(),
+            'numero': identifiant.numero or '',
+            'est_actif': identifiant.est_actif,
+            'date_attribution': identifiant.date_attribution.isoformat() if identifiant.date_attribution else None,
+            'date_attribution_display': identifiant.date_attribution.strftime('%d/%m/%Y') if identifiant.date_attribution else '',
+            'commentaire': identifiant.commentaire or '',
+            'created_at_display': identifiant.created_at.strftime('%d/%m/%Y %H:%M') if identifiant.created_at else '',
+        })
+
+    identifiants_json = json.dumps(identifiants_data, default=str)
+
+    context = {
+        "acheteurs_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "identifiants": identifiants_list,
+        "identifiants_count": identifiants_list.count(),
+        "identifiants_actifs": identifiants_actifs_count,
+        "identifiants_archives": identifiants_archives_count,
+        "identifiants_json": identifiants_json or '[]',
+        "coloration_list": coloration_list,
+        "acheteur": acheteur,
+        "id_acheteur": acheteur_id,
+        "types_identifiant": IdentifiantFiscal.TYPE_CHOICES,
+    }
+    return render(
+        request,
+        "main/root/acheteur/identifiant_fiscal/dash_root_identifiant_fiscal_acheteur.html",
+        context,
+    )
 
 
 @login_required
@@ -8571,7 +8647,7 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
     """
     Vue pour la gestion des procédures collectives d'un acheteur
     """
-    
+
     # Récupérer l'acheteur avec préfetch pour optimiser
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(

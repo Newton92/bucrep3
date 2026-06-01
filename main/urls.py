@@ -796,6 +796,11 @@ urlpatterns = [
         name="dash_root_manage_registre_commerce_acheteur",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/identifiants-fiscaux/",
+        dash_root_manage_identifiant_fiscal_acheteur,
+        name="dash_root_manage_identifiant_fiscal_acheteur",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/procedures-collectives/",
         dash_root_manage_procedure_collective_acheteur,
         name="dash_root_manage_procedure_collective_acheteur",
@@ -4068,11 +4073,18 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/registres-commerce-oneview/', 
         AcheteurRegistreCommerceListOneView.as_view(), 
         name='acheteur-registres-commerce-list-oneview'),
-    path('api/acheteur/<int:acheteur_id>/registres-commerce-oneview/<int:registre_id>/', 
-        AcheteurRegistreCommerceDetailOneView.as_view(), 
+    path('api/acheteur/<int:acheteur_id>/registres-commerce-oneview/<int:registre_id>/',
+        AcheteurRegistreCommerceDetailOneView.as_view(),
         name='acheteur-registre-commerce-detail-oneview'),
-    
-    
+    # Identifiants fiscaux
+    path('api/acheteur/<int:acheteur_id>/identifiants-fiscaux-oneview/',
+        AcheteurIdentifiantFiscalListOneView.as_view(),
+        name='acheteur-identifiants-fiscaux-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/identifiants-fiscaux-oneview/<int:identifiant_id>/',
+        AcheteurIdentifiantFiscalDetailOneView.as_view(),
+        name='acheteur-identifiant-fiscal-detail-oneview'),
+
+
     
     
     

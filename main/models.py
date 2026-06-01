@@ -5087,6 +5087,82 @@ class RegistreCommerce(Model):
         return f"Registre de commerce de {self.acheteur.nom}"
 
 
+class IdentifiantFiscal(Model):
+    """Modele metier: IdentifiantFiscal."""
+
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    TYPE_CHOICES = [
+        ('nif', _('NIF')),
+        ('tva', _('Numéro de TVA')),
+        ('statistique', _('Numéro statistique')),
+        ('cnss_employeur', _('Numéro CNSS (employeur)')),
+    ]
+
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="identifiants_fiscaux",
+        verbose_name=_("Acheteur"),
+    )
+    type_identifiant = models.CharField(
+        _("Type d'identifiant"),
+        max_length=50,
+        choices=TYPE_CHOICES,
+    )
+    numero = models.CharField(
+        _("Numéro"),
+        max_length=255,
+    )
+    date_attribution = models.DateField(
+        _("Date d'attribution"),
+        null=True,
+        blank=True,
+    )
+    est_actif = models.BooleanField(
+        _("En vigueur"),
+        default=True,
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_identifiants_fiscaux',
+        verbose_name=_("Créé par")
+    )
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_identifiants_fiscaux',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Identifiant Fiscal")
+        verbose_name_plural = _("Identifiants Fiscaux")
+
+    def __str__(self):
+        return f"{self.get_type_identifiant_display()} - {self.numero}"
+
+
 class Cotisation(Model):
     """Modele metier: Cotisation."""
     
