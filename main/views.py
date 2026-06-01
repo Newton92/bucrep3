@@ -6890,7 +6890,10 @@ def dash_root_certification_acheteur(request, acheteur_id):
     certifications_list = Certification.objects.filter(
         acheteur=acheteur
     ).order_by('-date_obtention', '-created_at')
-    
+
+    certifications_avec_date = certifications_list.filter(date_obtention__isnull=False).count()
+    certifications_sans_date = certifications_list.filter(date_obtention__isnull=True).count()
+
     # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
@@ -6953,6 +6956,8 @@ def dash_root_certification_acheteur(request, acheteur_id):
         "certification_types_json": certification_types_json,
         "certifications": certifications_list,
         "certifications_count": certifications_list.count(),
+        "certifications_avec_date": certifications_avec_date,
+        "certifications_sans_date": certifications_sans_date,
         "certifications_json": certifications_json or '[]',
         "coloration_list": coloration_list,
         "acheteur": acheteur,
