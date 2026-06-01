@@ -838,7 +838,7 @@
                 <div class="capital-header">
                     <div class="capital-title">
                         <i class="fas fa-landmark"></i>
-                        Capital Social de l'entreprise
+                        {% trans "Capital Social de l'entreprise" %}
                     </div>
                     <div class="capital-actions">
                         <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editCapitalModal">
@@ -905,14 +905,14 @@
                     <div class="info-item">
                         <div class="info-label">
                             <i class="fas fa-money-check-alt"></i>
-                            Devise
+                            {% trans "Devise" %}
                         </div>
                         <div class="info-value">
                             {% if capital.devise %}
                                 <span class="fw-bold">{{ capital.devise.nom }}</span> 
                                 <small class="text-muted">({{ capital.devise.symbole|default:"" }})</small>
                             {% else %}
-                                Non spécifiée
+                                {% trans "Non spécifiée" %}
                             {% endif %}
                         </div>
                     </div>
@@ -921,7 +921,7 @@
                     <div class="info-item">
                         <div class="info-label">
                             <i class="fas fa-palette"></i>
-                            Étiquette de couleur
+                            {% trans "Étiquette de couleur" %}
                         </div>
                         <div class="info-value">
                             <span class="color-badge">
@@ -936,7 +936,7 @@
                     <div class="info-item">
                         <div class="info-label">
                             <i class="fas fa-comment-dots"></i>
-                            Commentaire
+                            {% trans "Commentaire" %}
                         </div>
                         <div class="info-value">
                             {{ capital.commentaire|truncatechars:100 }}
@@ -947,7 +947,7 @@
                     <div class="info-item">
                         <div class="info-label">
                             <i class="fas fa-history"></i>
-                            Dernière mise à jour
+                            {% trans "Dernière mise à jour" %}
                         </div>
                         <div class="info-value">
                             <span class="fw-bold">{{ capital.updated_at|date:"d/m/Y H:i" }}</span>
@@ -958,7 +958,7 @@
                 <!-- Commentaire complet (si tronqué) -->
                 {% if capital.commentaire and capital.commentaire|length > 100 %}
                 <div class="mt-4">
-                    <button class="btn btn-link p-0 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#commentaireComplet" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    <button class="btn btn-link p-0 border-0 text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#commentaireComplet">
                         <i class="fas fa-chevron-down me-2"></i>{% trans "Voir le commentaire complet" %}
                     </button>
                     <div class="collapse mt-3" id="commentaireComplet">
@@ -975,8 +975,8 @@
                 <i class="fas fa-coins empty-state-icon"></i>
                 <h4 class="fw-bold mb-3">{% trans "Aucun capital social défini" %}</h4>
                 <p class="text-muted mb-4">
-                    Cet acheteur ne possède pas encore de capital social enregistré.<br>
-                    Ajoutez les informations du capital social pour compléter le profil.
+                    {% trans "Cet acheteur ne possède pas encore de capital social enregistré." %}<br>
+                    {% trans "Ajoutez les informations du capital social pour compléter le profil." %}
                 </p>
                 <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCapitalModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le capital social" %}
@@ -1081,8 +1081,7 @@
                         <label for="commentaire" class="form-label">
                             <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
-                                  placeholder="Informations complémentaires sur le capital social..."></textarea>
+                        <textarea class="rich-editor" id="commentaire" name="commentaire"></textarea>
                         <small class="form-text text-muted">{% trans "Optionnel: détails additionnels, remarques, etc." %}</small>
                     </div>
                 </div>
@@ -1190,7 +1189,7 @@
                         <label for="editCommentaire" class="form-label">
                             <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="rich-editor" id="editCommentaire" name="commentaire"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1224,11 +1223,10 @@
                     <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                 </div>
                 <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Supprimer le capital social
+                    {% trans "Supprimer le capital social" %}
                 </h6>
                 <p class="text-muted mb-0">
-                    Êtes-vous sûr de vouloir supprimer ces informations de capital social ? 
-                    Cette action est irréversible.
+                    {% trans "Êtes-vous sûr de vouloir supprimer ces informations de capital social ? Cette action est irréversible." %}
                 </p>
             </div>
             <div class="modal-footer justify-content-center border-0">
@@ -1307,7 +1305,7 @@ $(document).ready(function() {
         $('#editLibere').val(capitalData.libere);
         $('#editDevise').val(capitalData.devise?.id || '').trigger('change');
         $('#editCouleurCommentaire').val(capitalData.couleur_commentaire?.id || '').trigger('change');
-        $('#editCommentaire').val(capitalData.commentaire || '');
+        window.quillSetValue('editCommentaire', capitalData.commentaire || '');
         
         // Aperçu de la couleur
         if (capitalData.couleur_commentaire?.code) {
@@ -1384,6 +1382,8 @@ $(document).ready(function() {
                     'background': 'linear-gradient(145deg, #fcfefe, rgba(10, 149, 202, 0.02))',
                     'border-color': 'rgba(13, 128, 190, 0.15)'
                 });
+                window.quillSetValue('commentaire', '');
+                window.quillSetValue('editCommentaire', '');
                 
                 Swal.fire({
                     icon: 'success',
@@ -1432,7 +1432,7 @@ $(document).ready(function() {
     $('#confirmDeleteBtn').on('click', function() {
         const $btn = $(this);
         $btn.prop('disabled', true);
-        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Suppression...');
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Suppression..." %}');
         
         $.ajax({
             url: API_BASE_URL,
@@ -1457,7 +1457,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 $btn.prop('disabled', false);
-                $btn.html('<i class="fas fa-trash me-2"></i>Supprimer');
+                $btn.html('<i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}');
                 
                 if (xhr.status === 401) {
                     refreshAccessToken(() => {
@@ -1467,7 +1467,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Erreur',
-                        text: xhr.responseJSON?.message || 'Impossible de supprimer le capital social',
+                        text: xhr.responseJSON?.message || "{% trans 'Impossible de supprimer le capital social' %}",
                         background: '#fcfefe',
                         color: '#000000'
                     });
@@ -1510,11 +1510,11 @@ $(document).ready(function() {
             error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    title: "{% trans 'Session expirée' %}",
+                    text: "{% trans 'Votre session a expiré. Veuillez vous reconnecter.' %}",
                     showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
+                    confirmButtonText: "{% trans 'Se reconnecter' %}",
+                    cancelButtonText: "{% trans 'Annuler' %}",
                     background: '#fcfefe',
                     color: '#000000'
                 }).then((result) => {

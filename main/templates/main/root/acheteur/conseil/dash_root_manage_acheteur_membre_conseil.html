@@ -795,80 +795,6 @@
         </div>
     </div>
 
-    <!-- Membres Récents Premium -->
-    {% if membres_recent %}
-    <div class="mb-4" style="animation-delay: 0.3s;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0" style="color: var(--color-primary);">
-                <i class="fas fa-history me-2"></i>{% trans "Membres récemment ajoutés/modifiés" %}
-            </h5>
-            <span class="badge" style="background: linear-gradient(135deg, var(--color-primary), var(--color-accent));">
-                {{ membres_recent|length }} {% trans "membre(s)" %}
-            </span>
-        </div>
-        <div class="row g-3">
-            {% for membre in membres_recent %}
-            {% with fonction=membre.fonction_dans_le_conseil|lower %}
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="membre-card {% if 'administrateur' in fonction %}membre-card-admin
-                    {% elif 'président' in fonction %}membre-card-pres
-                    {% elif 'vice-président' in fonction %}membre-card-vp
-                    {% elif 'secrétaire' in fonction %}membre-card-sec
-                    {% else %}membre-card-membre{% endif %}">
-                    <div class="membre-avatar">
-                        {{ membre.nom|first|upper }}
-                    </div>
-                    <div class="membre-name">
-                        {{ membre.nom }}
-                    </div>
-                    <div class="membre-fonction">
-                        <i class="fas fa-briefcase"></i>
-                        {{ membre.fonction_dans_le_conseil|truncatechars:30 }}
-                    </div>
-                    
-                    {% if membre.numero_adresse or membre.rue_adresse %}
-                    <div class="membre-adresse">
-                        <i class="fas fa-map-marker-alt me-1"></i>
-                        {% if membre.numero_adresse %}{{ membre.numero_adresse }}{% endif %}
-                        {% if membre.rue_adresse %}{{ membre.rue_adresse }}{% endif %}
-                        {% if membre.code_postale_adresse %}<br>{{ membre.code_postale_adresse }}{% endif %}
-                    </div>
-                    {% endif %}
-                    
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        {% if membre.couleur_commentaire %}
-                        <span class="color-badge" style="background: {{ membre.couleur_commentaire.code_couleur|default:'#6c757d' }}">
-                            {{ membre.couleur_commentaire.couleur }}
-                        </span>
-                        {% else %}
-                        <span class="text-muted small">{% trans "Pas de couleur" %}</span>
-                        {% endif %}
-                        
-                        <div class="dropdown">
-                            <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item edit-membre-btn" href="#" data-id="{{ membre.id }}">
-                                        <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item delete-membre-btn" href="#" data-id="{{ membre.id }}">
-                                        <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Filtres et Recherche Premium -->
     <div class="card enhanced-card mb-4" style="animation-delay: 0.4s;">
@@ -1051,8 +977,7 @@
                         <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaires additionnels" %}
                         </label>
-                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="4"
-                                  placeholder="{% trans 'Informations complémentaires sur ce membre...' %}"></textarea>
+                        <textarea class="rich-editor" id="commentaire" name="commentaire"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -1169,7 +1094,7 @@
                         <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots" style="color: #28a745;"></i>{% trans "Commentaires additionnels" %}
                         </label>
-                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                        <textarea class="rich-editor" id="editCommentaire" name="commentaire"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -1309,7 +1234,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Erreur',
-                        text: 'Impossible de charger les membres du conseil',
+                        text: "{% trans 'Impossible de charger les membres du conseil' %}",
                         background: '#fcfefe'
                     });
                 }
@@ -1350,16 +1275,16 @@ $(document).ready(function() {
             if (membre.numero_adresse) adresseParts.push(membre.numero_adresse);
             if (membre.rue_adresse) adresseParts.push(membre.rue_adresse);
             if (membre.code_postale_adresse) adresseParts.push(membre.code_postale_adresse);
-            const adresseComplete = adresseParts.join(', ') || 'Non spécifiée';
+            const adresseComplete = adresseParts.join(', ') || '{% trans "Non spécifiée" %}';
             
             // Gérer la couleur
             let couleurHex = '#6c757d';
-            let couleurNom = 'Non spécifié';
+            let couleurNom = '{% trans "Non spécifié" %}';
             if (membre.couleur_commentaire) {
                 couleurHex = membre.couleur_commentaire.code_couleur || 
                             membre.couleur_commentaire.code || 
                             '#6c757d';
-                couleurNom = membre.couleur_commentaire.couleur || 'Non spécifié';
+                couleurNom = membre.couleur_commentaire.couleur || '{% trans "Non spécifié" %}';
             }
             
             // Initiales pour l'avatar
@@ -1388,7 +1313,7 @@ $(document).ready(function() {
                             </div>
                             <div>
                                 <strong class="d-block" style="color: var(--color-primary-dark);">
-                                    ${membre.nom || 'Non spécifié'}
+                                    ${membre.nom || '{% trans "Non spécifié" %}'}
                                 </strong>
                                 <div class="text-muted small mt-1">
                                     <i class="fas fa-map-marker-alt me-1"></i>
@@ -1399,7 +1324,7 @@ $(document).ready(function() {
                     </td>
                     <td>
                         <span class="fw-medium d-block" style="color: var(--color-text);">
-                            ${membre.fonction_dans_le_conseil || 'Non spécifié'}
+                            ${membre.fonction_dans_le_conseil || '{% trans "Non spécifié" %}'}
                         </span>
                         ${commentaireTronque ? `
                             <small class="text-muted d-block mt-1" style="font-size: 0.8rem;">
@@ -1444,7 +1369,7 @@ $(document).ready(function() {
         const startIndex = ((currentPage - 1) * 10) + 1;
         const endIndex = Math.min(currentPage * 10, response.count);
         $('#paginationInfo').text(
-            `Affichage ${startIndex} à ${endIndex} sur ${response.count} membres`
+            "{% trans 'Affichage' %} " + startIndex + " {% trans 'à' %} " + endIndex + " {% trans 'sur' %} " + response.count + " {% trans 'membres' %}"
         );
         
         // Bouton précédent
@@ -1577,11 +1502,13 @@ $(document).ready(function() {
                     'border-color': '#e3e6f0',
                     'box-shadow': 'none'
                 });
+                window.quillSetValue('commentaire', '');
+                window.quillSetValue('editCommentaire', '');
                 
                 Swal.fire({
                     icon: 'success',
                     title: 'Succès',
-                    text: response.message || 'Opération effectuée avec succès',
+                    text: response.message || "{% trans 'Opération effectuée avec succès' %}",
                     timer: 2000,
                     showConfirmButton: false,
                     background: '#fcfefe'
@@ -1639,7 +1566,7 @@ $(document).ready(function() {
                 $('#editRueAdresse').val(response.rue_adresse || '');
                 $('#editCodePostaleAdresse').val(response.code_postale_adresse || '');
                 $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
-                $('#editCommentaire').val(response.commentaire || '');
+                window.quillSetValue('editCommentaire', response.commentaire || '');
                 
                 // Aperçu de la couleur
                 if (response.couleur_commentaire) {
@@ -1664,7 +1591,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Erreur',
-                        text: 'Impossible de charger les données du membre',
+                        text: "{% trans 'Impossible de charger les données du membre' %}",
                         background: '#fcfefe'
                     });
                 }
@@ -1678,14 +1605,14 @@ $(document).ready(function() {
         const membreNom = $(this).closest('tr').find('strong').text().trim();
         
         Swal.fire({
-            title: 'Supprimer le membre du conseil ?',
-            html: `Êtes-vous sûr de vouloir supprimer <strong>${membreNom}</strong> ?<br>Cette action est irréversible.`,
+            title: "{% trans 'Supprimer ce membre du conseil ?' %}",
+            html: "{% trans 'Êtes-vous sûr de vouloir supprimer' %} <strong>" + membreNom + "</strong> ?<br>{% trans 'Cette action est irréversible.' %}",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Supprimer',
-            cancelButtonText: 'Annuler',
+            confirmButtonText: "{% trans 'Supprimer' %}",
+            cancelButtonText: "{% trans 'Annuler' %}",
             background: '#fcfefe'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -1699,14 +1626,14 @@ $(document).ready(function() {
         if (selectedMembres.size === 0) return;
         
         Swal.fire({
-            title: `Supprimer ${selectedMembres.size} membre(s) du conseil ?`,
-            text: 'Cette action est irréversible.',
+            title: "{% trans 'Supprimer' %} " + selectedMembres.size + " {% trans 'membre(s) du conseil ?' %}",
+            text: "{% trans 'Cette action est irréversible.' %}",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Supprimer',
-            cancelButtonText: 'Annuler',
+            confirmButtonText: "{% trans 'Supprimer' %}",
+            cancelButtonText: "{% trans 'Annuler' %}",
             background: '#fcfefe'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -1730,7 +1657,7 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'success',
                     title: 'Succès',
-                    text: response.message || 'Suppression effectuée avec succès',
+                    text: response.message || "{% trans 'Suppression effectuée avec succès' %}",
                     timer: 2000,
                     showConfirmButton: false,
                     background: '#fcfefe'
@@ -1752,7 +1679,7 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Erreur',
-                        text: 'Impossible de supprimer le(s) membre(s)',
+                        text: "{% trans 'Impossible de supprimer le(s) membre(s)' %}",
                         background: '#fcfefe'
                     });
                 }
@@ -1836,11 +1763,11 @@ $(document).ready(function() {
             error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    title: "{% trans 'Session expirée' %}",
+                    text: "{% trans 'Votre session a expiré. Veuillez vous reconnecter.' %}",
                     showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
+                    confirmButtonText: "{% trans 'Se reconnecter' %}",
+                    cancelButtonText: "{% trans 'Annuler' %}",
                     background: '#fcfefe'
                 }).then((result) => {
                     if (result.isConfirmed) {
