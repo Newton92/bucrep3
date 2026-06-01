@@ -88,9 +88,6 @@
 .info-row .val { font-weight: 600; color: #111; text-align: right; }
 .info-row .val.muted { color: #6c757d; font-weight: 400; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Color dot */
-.color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 4px; }
-
 /* ── Empty state ── */
 .empty-state {
     text-align: center;
@@ -112,12 +109,6 @@
 .modal-hdr-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); padding: .5rem .9rem; }
 .modal-hdr-warning .modal-title { font-size: .9rem; font-weight: 700; color: #fff; }
 .modal-lbl { font-size: .76rem; font-weight: 600; color: var(--cp-dark); margin-bottom: .25rem; display: block; }
-.color-preview-box {
-    height: 32px; border-radius: 6px;
-    border: 1.5px solid rgba(13,128,190,.18);
-    background: rgba(10,149,202,.04);
-    transition: background .25s, border-color .25s;
-}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -225,16 +216,6 @@
                 </span>
             </div>
 
-            {% if capital.couleur_commentaire %}
-            <div class="info-row">
-                <span class="lbl"><i class="fas fa-palette" style="color:#6c757d; width:14px;"></i>{% trans "Étiquette" %}</span>
-                <span class="val">
-                    <span class="color-dot" style="background: {{ capital.couleur_commentaire.code|default:'#6c757d' }};"></span>
-                    {{ capital.couleur_commentaire.couleur }}
-                </span>
-            </div>
-            {% endif %}
-
             {% if capital.commentaire %}
             <div class="info-row">
                 <span class="lbl"><i class="fas fa-comment-dots" style="color:#28a745; width:14px;"></i>{% trans "Commentaire" %}</span>
@@ -283,29 +264,26 @@
             <form id="addCapitalForm">
                 <div class="modal-body py-3 px-4">
 
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
                             <label for="emis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="emis" name="emis" required placeholder="0.00">
-                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant total du capital émis" %}</div>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant total émis" %}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="publie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="publie" name="publie" required placeholder="0.00">
-                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant du capital publié" %}</div>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant publié" %}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="libere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="libere" name="libere" required placeholder="0.00">
-                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant effectivement libéré" %}</div>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant libéré" %}</div>
                         </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="devise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %} <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm select2-with-search" id="devise" name="devise" required>
-                                <option value="">{% trans "Sélectionnez une devise" %}</option>
+                                <option value="">{% trans "Sélectionnez" %}</option>
                                 {% for devise in devise_list %}
                                 <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
                                     {{ devise.nom }}{% if devise.symbole %} ({{ devise.symbole }}){% endif %}
@@ -313,19 +291,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="couleur_commentaire" class="modal-lbl"><i class="fas fa-palette me-1 text-secondary"></i>{% trans "Étiquette de couleur" %}</label>
-                            <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <div class="color-preview-box" id="colorPreview"></div>
                     </div>
 
                     <div>
@@ -365,26 +330,26 @@
                 <input type="hidden" id="editCapitalId" name="id">
                 <div class="modal-body py-3 px-4">
 
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-4">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
                             <label for="editEmis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editEmis" name="emis" required>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant total émis" %}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="editPublie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editPublie" name="publie" required>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant publié" %}</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="editLibere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %} <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editLibere" name="libere" required>
+                            <div class="form-text" style="font-size:.7rem;">{% trans "Montant libéré" %}</div>
                         </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="editDevise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %} <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm select2-with-search" id="editDevise" name="devise" required>
-                                <option value="">{% trans "Sélectionnez une devise" %}</option>
+                                <option value="">{% trans "Sélectionnez" %}</option>
                                 {% for devise in devise_list %}
                                 <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
                                     {{ devise.nom }}{% if devise.symbole %} ({{ devise.symbole }}){% endif %}
@@ -392,19 +357,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="editCouleurCommentaire" class="modal-lbl"><i class="fas fa-palette me-1 text-secondary"></i>{% trans "Étiquette de couleur" %}</label>
-                            <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="mb-2">
-                        <div class="color-preview-box" id="editColorPreview"></div>
                     </div>
 
                     <div>
@@ -486,16 +438,6 @@ $(document).ready(function() {
             });
         });
 
-        // Color preview
-        $('#couleur_commentaire, #editCouleurCommentaire').on('change', function() {
-            const color = $(this).find('option:selected').data('color');
-            const previewId = this.id === 'couleur_commentaire' ? '#colorPreview' : '#editColorPreview';
-            if (color) {
-                $(previewId).css({ 'background': color, 'border-color': color });
-            } else {
-                $(previewId).css({ 'background': 'rgba(10,149,202,.04)', 'border-color': 'rgba(13,128,190,.18)' });
-            }
-        });
     }
 
     initSelect2();
@@ -509,11 +451,7 @@ $(document).ready(function() {
         $('#editPublie').val(d.publie);
         $('#editLibere').val(d.libere);
         $('#editDevise').val(d.devise?.id || '').trigger('change');
-        $('#editCouleurCommentaire').val(d.couleur_commentaire?.id || '').trigger('change');
         window.quillSetValue('editCommentaire', d.commentaire || '');
-        if (d.couleur_commentaire?.code) {
-            $('#editColorPreview').css({ 'background': d.couleur_commentaire.code, 'border-color': d.couleur_commentaire.code });
-        }
     }
     $('#editCapitalModal').on('shown.bs.modal', function() { populateEditForm(); });
     {% endif %}
@@ -556,7 +494,6 @@ $(document).ready(function() {
                 $('#' + modalId).modal('hide');
                 $(`#${modalId} form`)[0].reset();
                 $('.select2-with-search').val(null).trigger('change');
-                $('#colorPreview, #editColorPreview').css({ 'background': 'rgba(10,149,202,.04)', 'border-color': 'rgba(13,128,190,.18)' });
                 window.quillSetValue('commentaire', '');
                 window.quillSetValue('editCommentaire', '');
                 Swal.fire({
