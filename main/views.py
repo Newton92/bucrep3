@@ -11,7 +11,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _, get_language, override as translation_override
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -2622,9 +2622,14 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         refresh_token = str(refresh)
 
         # Choix de postes — labels EN si interface en anglais, FR sinon
+        # Forcer l'évaluation en 'fr' pour obtenir la clé française même en locale EN
         lang = get_language() or 'fr'
         if lang.startswith('en'):
-            poste_choices = [(str(k), LISTE_NOUVELLE_FONCTION_EN.get(str(k), str(k))) for k, v in LISTE_NOUVELLE_FONCTION]
+            poste_choices = []
+            with translation_override('fr'):
+                for k, v in LISTE_NOUVELLE_FONCTION:
+                    fr_key = str(k)
+                    poste_choices.append((fr_key, LISTE_NOUVELLE_FONCTION_EN.get(fr_key, fr_key)))
         else:
             poste_choices = [(str(k), str(v)) for k, v in LISTE_NOUVELLE_FONCTION]
         poste_choices_json = json.dumps(poste_choices, default=str)
