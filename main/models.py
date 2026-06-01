@@ -5088,57 +5088,31 @@ class RegistreCommerce(Model):
 
 
 class IdentifiantFiscal(Model):
-    """Modele metier: IdentifiantFiscal."""
+    """
+    Identifiants fiscaux et légaux d'un acheteur.
+    Un seul enregistrement par acheteur (OneToOne).
+    """
 
     safedelete_policy = SOFT_DELETE_CASCADE
 
-    TYPE_CHOICES = [
-        ('nif', _('NIF')),
-        ('tva', _('Numéro de TVA')),
-        ('statistique', _('Numéro statistique')),
-        ('cnss_employeur', _('Numéro CNSS (employeur)')),
-    ]
-
-    acheteur = models.ForeignKey(
+    acheteur = models.OneToOneField(
         "Acheteur",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name="identifiants_fiscaux",
+        related_name="identifiant_fiscal",
         verbose_name=_("Acheteur"),
     )
-    type_identifiant = models.CharField(
-        _("Type d'identifiant"),
-        max_length=50,
-        choices=TYPE_CHOICES,
-    )
-    numero = models.CharField(
-        _("Numéro"),
-        max_length=255,
-    )
-    numero_national_unique = models.CharField(
-        _("Numéro National Unique"),
-        max_length=255,
-        null=True,
-        blank=True,
-    )
-    date_attribution = models.DateField(
-        _("Date d'attribution"),
-        null=True,
-        blank=True,
-    )
-    est_actif = models.BooleanField(
-        _("En vigueur"),
-        default=True,
-    )
+
+    # — Identifiants fiscaux —
+    nif = models.CharField(_("NIF"), max_length=255, blank=True, null=True)
+    numero_tva = models.CharField(_("Numéro de TVA"), max_length=255, blank=True, null=True)
+    numero_statistique = models.CharField(_("Numéro statistique"), max_length=255, blank=True, null=True)
+    numero_cnss_employeur = models.CharField(_("Numéro CNSS (employeur)"), max_length=255, blank=True, null=True)
+    numero_national_unique = models.CharField(_("Numéro National Unique"), max_length=255, blank=True, null=True)
+
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
-    couleur_commentaire = models.ForeignKey(
-        "CouleurCommentaire",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire"),
-    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
 
@@ -5166,7 +5140,15 @@ class IdentifiantFiscal(Model):
         verbose_name_plural = _("Identifiants Fiscaux")
 
     def __str__(self):
-        return f"{self.get_type_identifiant_display()} - {self.numero}"
+        return f"Identifiants fiscaux de {self.acheteur}"
+
+    def champs_renseignes(self):
+        fields = [self.nif, self.numero_tva, self.numero_statistique,
+                  self.numero_cnss_employeur, self.numero_national_unique]
+        return sum(1 for f in fields if f)
+
+    def total_champs(self):
+        return 5
 
 
 class Cotisation(Model):

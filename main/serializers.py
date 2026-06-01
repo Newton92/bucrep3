@@ -10559,84 +10559,42 @@ class RegistreCommerceSearchSerializer(serializers.ModelSerializer):
 ###########################################################################
 
 class IdentifiantFiscalOneSerializer(serializers.ModelSerializer):
-    acheteur_info = serializers.SerializerMethodField()
-    type_identifiant_display = serializers.CharField(source='get_type_identifiant_display', read_only=True)
     created_by = UserSimpleOneSerializer(read_only=True)
     updated_by = UserSimpleOneSerializer(read_only=True)
 
     class Meta:
         model = IdentifiantFiscal
         fields = [
-            'id', 'acheteur', 'acheteur_info',
-            'type_identifiant', 'type_identifiant_display',
-            'numero', 'numero_national_unique', 'date_attribution', 'est_actif',
-            'couleur_commentaire', 'commentaire',
+            'id', 'acheteur',
+            'nif', 'numero_tva', 'numero_statistique',
+            'numero_cnss_employeur', 'numero_national_unique',
+            'commentaire',
             'created_at', 'updated_at', 'created_by', 'updated_by',
         ]
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
-
-    def get_acheteur_info(self, obj):
-        if obj.acheteur:
-            return {'id': obj.acheteur.id, 'nom': obj.acheteur.nom, 'code': obj.acheteur.code}
-        return None
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
 
 
-class AddIdentifiantFiscalOneSerializer(serializers.ModelSerializer):
-    acheteur = serializers.PrimaryKeyRelatedField(queryset=Acheteur.objects.all())
+class SaveIdentifiantFiscalOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(queryset=Acheteur.objects.all(), required=False)
 
     class Meta:
         model = IdentifiantFiscal
-        fields = ['acheteur', 'type_identifiant', 'numero', 'numero_national_unique',
-                  'date_attribution', 'est_actif', 'couleur_commentaire', 'commentaire']
+        fields = [
+            'acheteur',
+            'nif', 'numero_tva', 'numero_statistique',
+            'numero_cnss_employeur', 'numero_national_unique',
+            'commentaire',
+        ]
 
-    def create(self, validated_data):
-        instance = IdentifiantFiscal(**validated_data)
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            instance.created_by = request.user
-            instance.updated_by = request.user
-        instance.save()
-        return instance
-
-    def validate_numero(self, value):
-        if not value or not value.strip():
-            raise serializers.ValidationError("Le numéro est obligatoire.")
-        return value.strip()
-
-
-class EditIdentifiantFiscalOneSerializer(serializers.ModelSerializer):
-    date_attribution_input = serializers.CharField(
-        required=False, allow_null=True, allow_blank=True, write_only=True
-    )
-
-    class Meta:
-        model = IdentifiantFiscal
-        fields = ['type_identifiant', 'numero', 'numero_national_unique',
-                  'date_attribution', 'date_attribution_input',
-                  'est_actif', 'couleur_commentaire', 'commentaire']
-        extra_kwargs = {'date_attribution': {'read_only': True}}
+    def _clean(self, value):
+        return value.strip() if value and value.strip() else None
 
     def validate(self, data):
-        date_input = data.pop('date_attribution_input', None)
-        if date_input is not None:
-            if date_input.strip() == '':
-                data['date_attribution'] = None
-            else:
-                from datetime import date as date_type
-                try:
-                    from django.utils.dateparse import parse_date
-                    parsed = parse_date(date_input.strip())
-                    if parsed is None:
-                        raise serializers.ValidationError({'date_attribution_input': 'Format de date invalide (YYYY-MM-DD).'})
-                    data['date_attribution'] = parsed
-                except Exception:
-                    raise serializers.ValidationError({'date_attribution_input': 'Format de date invalide.'})
+        for field in ['nif', 'numero_tva', 'numero_statistique',
+                      'numero_cnss_employeur', 'numero_national_unique']:
+            if field in data:
+                data[field] = self._clean(data[field])
         return data
-
-    def validate_numero(self, value):
-        if not value or not value.strip():
-            raise serializers.ValidationError("Le numéro est obligatoire.")
-        return value.strip()
 
 
 ###########################################################################

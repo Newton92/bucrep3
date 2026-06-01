@@ -15493,116 +15493,76 @@ class AcheteurRegistreCommerceDetailOneView(APIView):
 
 class AcheteurIdentifiantFiscalListOneView(APIView):
     """
-    API pour gérer les identifiants fiscaux d'un acheteur
-    Méthodes: GET (liste), POST (création)
+    API identifiants fiscaux : un seul enregistrement par acheteur.
+    GET  → retourne l'enregistrement (ou null)
+    POST → crée l'enregistrement
+    PUT  → met à jour l'enregistrement
     """
     permission_classes = [IsAuthenticated]
-    pagination_class = StandardPagination
 
     def get_acheteur(self, acheteur_id):
         return get_object_or_404(Acheteur, id=acheteur_id)
 
     def get(self, request, acheteur_id):
         acheteur = self.get_acheteur(acheteur_id)
-        qs = IdentifiantFiscal.objects.filter(acheteur=acheteur).order_by('-created_at')
-
-        search = request.query_params.get('search', '')
-        if search:
-            qs = qs.filter(
-                Q(numero__icontains=search) |
-                Q(type_identifiant__icontains=search)
-            )
-
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(qs, request)
-        serializer = IdentifiantFiscalOneSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        try:
+            obj = IdentifiantFiscal.objects.get(acheteur=acheteur)
+            return Response(IdentifiantFiscalOneSerializer(obj).data)
+        except IdentifiantFiscal.DoesNotExist:
+            return Response(None)
 
     @transaction.atomic
     def post(self, request, acheteur_id):
         acheteur = self.get_acheteur(acheteur_id)
-        data = request.data.copy()
-        data['acheteur'] = acheteur_id
+        # Upsert : si l'enregistrement existe déjà, on met à jour
+        try:
+            obj = IdentifiantFiscal.objects.get(acheteur=acheteur)
+            serializer = SaveIdentifiantFiscalOneSerializer(obj, data=request.data, partial=True)
+        except IdentifiantFiscal.DoesNotExist:
+            data = request.data.copy()
+            data['acheteur'] = acheteur_id
+            serializer = SaveIdentifiantFiscalOneSerializer(data=data)
 
-        serializer = AddIdentifiantFiscalOneSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            identifiant = serializer.save()
+            obj = serializer.save()
+            obj.updated_by = request.user
+            if not obj.created_by:
+                obj.created_by = request.user
+            obj.save()
             ActivityLog.objects.create(
                 user=request.user,
-                action_type='CREATE_IDENTIFIANT_FISCAL',
-                object_id=identifiant.id,
+                action_type='SAVE_IDENTIFIANT_FISCAL',
+                object_id=obj.id,
                 object_type='IdentifiantFiscal',
-                details=f"Identifiant fiscal ajouté pour {acheteur.nom}: {identifiant.get_type_identifiant_display()} {identifiant.numero}",
+                details=f"Identifiants fiscaux enregistrés pour {acheteur.nom}",
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             return Response({
-                "message": "Identifiant fiscal ajouté avec succès",
-                "data": IdentifiantFiscalOneSerializer(identifiant).data
-            }, status=status.HTTP_201_CREATED)
+                "message": "Identifiants fiscaux enregistrés avec succès",
+                "data": IdentifiantFiscalOneSerializer(obj).data
+            }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AcheteurIdentifiantFiscalDetailOneView(APIView):
-    """
-    API pour gérer un identifiant fiscal spécifique
-    Méthodes: GET, PUT, DELETE
-    """
+    """Alias PUT vers la même logique upsert."""
     permission_classes = [IsAuthenticated]
 
-    def get_acheteur(self, acheteur_id):
-        return get_object_or_404(Acheteur, id=acheteur_id)
-
-    def get_identifiant(self, acheteur_id, identifiant_id):
-        acheteur = self.get_acheteur(acheteur_id)
-        return get_object_or_404(
-            IdentifiantFiscal.objects.select_related('acheteur'),
-            id=identifiant_id,
-            acheteur=acheteur
-        )
-
-    def get(self, request, acheteur_id, identifiant_id):
-        identifiant = self.get_identifiant(acheteur_id, identifiant_id)
-        return Response(IdentifiantFiscalOneSerializer(identifiant).data)
-
-    @transaction.atomic
     def put(self, request, acheteur_id, identifiant_id):
-        identifiant = self.get_identifiant(acheteur_id, identifiant_id)
-        serializer = EditIdentifiantFiscalOneSerializer(identifiant, data=request.data, partial=True)
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+        obj = get_object_or_404(IdentifiantFiscal, id=identifiant_id, acheteur=acheteur)
+        serializer = SaveIdentifiantFiscalOneSerializer(obj, data=request.data, partial=True)
         if serializer.is_valid():
-            identifiant = serializer.save()
-            identifiant.updated_by = request.user
-            identifiant.save()
-            ActivityLog.objects.create(
-                user=request.user,
-                action_type='UPDATE_IDENTIFIANT_FISCAL',
-                object_id=identifiant.id,
-                object_type='IdentifiantFiscal',
-                details=f"Identifiant fiscal modifié pour {identifiant.acheteur.nom}: {identifiant.get_type_identifiant_display()} {identifiant.numero}",
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')
-            )
+            obj = serializer.save()
+            obj.updated_by = request.user
+            obj.save()
             return Response({
-                "message": "Identifiant fiscal modifié avec succès",
-                "data": IdentifiantFiscalOneSerializer(identifiant).data
+                "message": "Identifiants fiscaux mis à jour",
+                "data": IdentifiantFiscalOneSerializer(obj).data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @transaction.atomic
-    def delete(self, request, acheteur_id, identifiant_id):
-        identifiant = self.get_identifiant(acheteur_id, identifiant_id)
-        ActivityLog.objects.create(
-            user=request.user,
-            action_type='DELETE_IDENTIFIANT_FISCAL',
-            object_id=identifiant.id,
-            object_type='IdentifiantFiscal',
-            details=f"Identifiant fiscal supprimé pour {identifiant.acheteur.nom}: {identifiant.get_type_identifiant_display()} {identifiant.numero}",
-            ip_address=request.META.get('REMOTE_ADDR'),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
-        )
-        identifiant.delete()
-        return Response({"message": "Identifiant fiscal supprimé avec succès"}, status=status.HTTP_200_OK)
 
 
 class ListAcheteurMarqueView(APIView):

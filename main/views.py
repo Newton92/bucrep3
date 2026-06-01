@@ -8577,13 +8577,6 @@ def dash_root_manage_identifiant_fiscal_acheteur(request, acheteur_id):
         id=acheteur_id
     )
 
-    identifiants_list = IdentifiantFiscal.objects.filter(
-        acheteur=acheteur
-    ).order_by('-created_at')
-
-    identifiants_actifs_count = identifiants_list.filter(est_actif=True).count()
-    identifiants_archives_count = identifiants_list.filter(est_actif=False).count()
-
     try:
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
@@ -8593,48 +8586,38 @@ def dash_root_manage_identifiant_fiscal_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect_to_login(request.get_full_path())
 
-    coloration_list = CouleurCommentaire.objects.all()
+    try:
+        identifiant = IdentifiantFiscal.objects.get(acheteur=acheteur)
+    except IdentifiantFiscal.DoesNotExist:
+        identifiant = None
 
-    acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
-    }
-    acheteur_json = json.dumps(acheteur_data, default=str)
-
-    identifiants_data = []
-    for identifiant in identifiants_list:
-        identifiants_data.append({
+    identifiant_data = None
+    if identifiant:
+        identifiant_data = {
             'id': identifiant.id,
-            'type_identifiant': identifiant.type_identifiant,
-            'type_identifiant_display': identifiant.get_type_identifiant_display(),
-            'numero': identifiant.numero or '',
+            'nif': identifiant.nif or '',
+            'numero_tva': identifiant.numero_tva or '',
+            'numero_statistique': identifiant.numero_statistique or '',
+            'numero_cnss_employeur': identifiant.numero_cnss_employeur or '',
             'numero_national_unique': identifiant.numero_national_unique or '',
-            'est_actif': identifiant.est_actif,
-            'date_attribution': identifiant.date_attribution.isoformat() if identifiant.date_attribution else None,
-            'date_attribution_display': identifiant.date_attribution.strftime('%d/%m/%Y') if identifiant.date_attribution else '',
             'commentaire': identifiant.commentaire or '',
-            'created_at_display': identifiant.created_at.strftime('%d/%m/%Y %H:%M') if identifiant.created_at else '',
-        })
+            'updated_at_display': identifiant.updated_at.strftime('%d/%m/%Y %H:%M') if identifiant.updated_at else '',
+        }
 
-    identifiants_json = json.dumps(identifiants_data, default=str)
+    identifiant_json = json.dumps(identifiant_data, default=str)
+
+    champs_renseignes = identifiant.champs_renseignes() if identifiant else 0
 
     context = {
         "acheteurs_active": "active",
         "user": request.user,
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "acheteur_json": acheteur_json,
-        "identifiants": identifiants_list,
-        "identifiants_count": identifiants_list.count(),
-        "identifiants_actifs": identifiants_actifs_count,
-        "identifiants_archives": identifiants_archives_count,
-        "identifiants_json": identifiants_json or '[]',
-        "coloration_list": coloration_list,
+        "identifiant": identifiant,
+        "identifiant_json": identifiant_json,
+        "champs_renseignes": champs_renseignes,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
-        "types_identifiant": IdentifiantFiscal.TYPE_CHOICES,
     }
     return render(
         request,
