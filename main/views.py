@@ -6935,6 +6935,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
     certification_types_json = json.dumps(certification_types, default=str)
+    custom_types_json = json.dumps(custom_types, default=str)
     
     # Préparer les données pour le template
     certifications_data = []
@@ -6965,6 +6966,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
         "certification_types": certification_types,
         "certification_types_json": certification_types_json,
         "custom_types": custom_types,
+        "custom_types_json": custom_types_json,
         "certifications": certifications_list,
         "certifications_count": certifications_list.count(),
         "certifications_avec_date": certifications_avec_date,
