@@ -11531,7 +11531,7 @@ class AcheteurCertificationListOneView(APIView):
                 action_type='CREATE_CERTIFICATION',
                 object_id=certification.id,
                 object_type='Certification',
-                details=f"Certification ajoutée pour l'acheteur {acheteur.nom} ({acheteur.code}): {certification.nom_certification or certification.get_type_certification_display()}",
+                details=f"Certification ajoutée pour l'acheteur {acheteur.nom} ({acheteur.code}): {certification.nom_certification or certification.get_type_display()}",
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
@@ -11592,7 +11592,7 @@ class AcheteurCertificationDetailOneView(APIView):
                 action_type='UPDATE_CERTIFICATION',
                 object_id=certification.id,
                 object_type='Certification',
-                details=f"Certification modifiée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_certification_display()}",
+                details=f"Certification modifiée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_display()}",
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
@@ -11615,7 +11615,7 @@ class AcheteurCertificationDetailOneView(APIView):
             action_type='DELETE_CERTIFICATION',
             object_id=certification.id,
             object_type='Certification',
-            details=f"Certification supprimée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_certification_display()}",
+            details=f"Certification supprimée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_display()}",
             ip_address=request.META.get('REMOTE_ADDR'),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )

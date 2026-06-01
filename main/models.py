@@ -5368,7 +5368,7 @@ class Certification(Model):
         "Acheteur", on_delete=models.CASCADE, related_name="certifications"
     )
     type_certification = models.CharField(
-        max_length=50, choices=TYPES, verbose_name="Type de Certification"
+        max_length=255, verbose_name="Type de Certification"
     )
     nom_certification = models.CharField(
         max_length=255,
@@ -5510,8 +5510,12 @@ class Certification(Model):
                             f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
                         )
 
+    def get_type_display(self):
+        """Retourne le label du type — prédéfini ou libre."""
+        return dict(self.TYPES).get(self.type_certification, self.type_certification)
+
     def __str__(self):
-        return f"{self.acheteur.nom} - {self.get_type_certification_display()}"
+        return f"{self.acheteur.nom} - {self.get_type_display()}"
 
 
 class InnovationDeveloppement(Model):

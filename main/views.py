@@ -6932,7 +6932,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
         certifications_data.append({
             'id': cert.id,
             'type_certification': cert.type_certification,
-            'type_certification_display': cert.get_type_certification_display(),
+            'type_certification_display': cert.get_type_display(),
             'nom_certification': cert.nom_certification or '',
             'date_obtention': cert.date_obtention.isoformat() if cert.date_obtention else None,
             'date_obtention_display': cert.date_obtention.strftime('%d/%m/%Y') if cert.date_obtention else 'Non spécifiée',

@@ -7794,17 +7794,17 @@ class SearchCertificationSerializer(serializers.ModelSerializer):
 
 class CertificationOneSerializer(serializers.ModelSerializer):
     acheteur_info = serializers.SerializerMethodField()
-    type_certification_display = serializers.CharField(source='get_type_certification_display', read_only=True)
+    type_certification_display = serializers.CharField(source='get_type_display', read_only=True)
     created_by = UserSimpleOneSerializer(read_only=True)
     updated_by = UserSimpleOneSerializer(read_only=True)
-    
+
     class Meta:
         model = Certification
         fields = [
-            'id', 
-            'acheteur', 
+            'id',
+            'acheteur',
             'acheteur_info',
-            'type_certification', 
+            'type_certification',
             'type_certification_display',
             'nom_certification', 
             'date_obtention',
@@ -7830,7 +7830,7 @@ class CertificationOneSerializer(serializers.ModelSerializer):
         return None
 
 class CertificationDetailOneSerializer(serializers.ModelSerializer):
-    type_certification_display = serializers.CharField(source='get_type_certification_display', read_only=True)
+    type_certification_display = serializers.CharField(source='get_type_display', read_only=True)
     
     class Meta:
         model = Certification
