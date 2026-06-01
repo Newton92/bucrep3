@@ -2621,8 +2621,12 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        # Choix de postes (force l'évaluation du gettext_lazy)
-        poste_choices = [(str(k), str(v)) for k, v in LISTE_NOUVELLE_FONCTION]
+        # Choix de postes — labels EN si interface en anglais, FR sinon
+        lang = get_language() or 'fr'
+        if lang.startswith('en'):
+            poste_choices = [(str(k), LISTE_NOUVELLE_FONCTION_EN.get(str(k), str(k))) for k, v in LISTE_NOUVELLE_FONCTION]
+        else:
+            poste_choices = [(str(k), str(v)) for k, v in LISTE_NOUVELLE_FONCTION]
         poste_choices_json = json.dumps(poste_choices, default=str)
 
         context = {
