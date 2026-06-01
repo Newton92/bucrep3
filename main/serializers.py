@@ -10569,7 +10569,7 @@ class IdentifiantFiscalOneSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'acheteur', 'acheteur_info',
             'type_identifiant', 'type_identifiant_display',
-            'numero', 'date_attribution', 'est_actif',
+            'numero', 'numero_national_unique', 'date_attribution', 'est_actif',
             'couleur_commentaire', 'commentaire',
             'created_at', 'updated_at', 'created_by', 'updated_by',
         ]
@@ -10586,8 +10586,8 @@ class AddIdentifiantFiscalOneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IdentifiantFiscal
-        fields = ['acheteur', 'type_identifiant', 'numero', 'date_attribution', 'est_actif',
-                  'couleur_commentaire', 'commentaire']
+        fields = ['acheteur', 'type_identifiant', 'numero', 'numero_national_unique',
+                  'date_attribution', 'est_actif', 'couleur_commentaire', 'commentaire']
 
     def create(self, validated_data):
         instance = IdentifiantFiscal(**validated_data)
@@ -10611,7 +10611,8 @@ class EditIdentifiantFiscalOneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IdentifiantFiscal
-        fields = ['type_identifiant', 'numero', 'date_attribution', 'date_attribution_input',
+        fields = ['type_identifiant', 'numero', 'numero_national_unique',
+                  'date_attribution', 'date_attribution_input',
                   'est_actif', 'couleur_commentaire', 'commentaire']
         extra_kwargs = {'date_attribution': {'read_only': True}}
 

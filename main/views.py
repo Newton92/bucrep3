@@ -8610,6 +8610,7 @@ def dash_root_manage_identifiant_fiscal_acheteur(request, acheteur_id):
             'type_identifiant': identifiant.type_identifiant,
             'type_identifiant_display': identifiant.get_type_identifiant_display(),
             'numero': identifiant.numero or '',
+            'numero_national_unique': identifiant.numero_national_unique or '',
             'est_actif': identifiant.est_actif,
             'date_attribution': identifiant.date_attribution.isoformat() if identifiant.date_attribution else None,
             'date_attribution_display': identifiant.date_attribution.strftime('%d/%m/%Y') if identifiant.date_attribution else '',

@@ -129,6 +129,7 @@
                         <th style="width:40px;">#</th>
                         <th style="width:150px;">{% trans "Type" %}</th>
                         <th>{% trans "Numéro" %}</th>
+                        <th>{% trans "N° National Unique" %}</th>
                         <th style="width:100px;">{% trans "Statut" %}</th>
                         <th style="width:130px;">{% trans "Date attribution" %}</th>
                         <th style="width:120px;">{% trans "Ajouté le" %}</th>
@@ -175,6 +176,10 @@
                     <div class="col-12">
                         <label class="form-label fw-semibold">{% trans "Numéro" %} <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="numeroInput" placeholder="{% trans 'Ex: 123456789' %}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Numéro National Unique" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="numeroNationalUniqueInput" placeholder="{% trans 'Ex: NNU-2024-XXXXX' %}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">{% trans "Date d'attribution" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
@@ -315,7 +320,7 @@
 
         if (total === 0) {
             tableBody.innerHTML = currentSearch
-                ? '<tr><td colspan="7" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
+                ? '<tr><td colspan="8" class="text-center py-3 text-muted small">{% trans "Aucun résultat pour cette recherche." %}</td></tr>'
                 : '';
             emptyState.style.display = currentSearch ? 'none' : 'block';
             document.getElementById('paginationInfo').textContent = '';
@@ -336,10 +341,14 @@
                 ? '<span class="date-text">' + escHtml(item.date_attribution_display) + '</span>'
                 : '<span class="text-muted">—</span>';
             var typeLabel = getTypeLabel(item.type_identifiant, item.type_identifiant_display);
+            var nnu = item.numero_national_unique
+                ? '<span class="num-id">' + escHtml(item.numero_national_unique) + '</span>'
+                : '<span class="text-muted">—</span>';
             return '<tr>' +
                 '<td class="text-muted">' + (start + i + 1) + '</td>' +
                 '<td><span class="type-badge">' + escHtml(typeLabel) + '</span></td>' +
                 '<td><span class="num-id">' + escHtml(item.numero) + '</span></td>' +
+                '<td>' + nnu + '</td>' +
                 '<td>' + statusHtml + '</td>' +
                 '<td>' + dateHtml + '</td>' +
                 '<td><span class="date-text">' + escHtml(item.created_at_display || '—') + '</span></td>' +
@@ -385,6 +394,7 @@
         document.getElementById('editId').value = '';
         document.getElementById('typeInput').value = '';
         document.getElementById('numeroInput').value = '';
+        document.getElementById('numeroNationalUniqueInput').value = '';
         document.getElementById('estActifInput').checked = true;
         clearDatepicker();
         if (window.quillSetValue) window.quillSetValue('commentaireInput', '');
@@ -409,6 +419,7 @@
         document.getElementById('editId').value = id;
         document.getElementById('typeInput').value = item.type_identifiant || '';
         document.getElementById('numeroInput').value = item.numero || '';
+        document.getElementById('numeroNationalUniqueInput').value = item.numero_national_unique || '';
         document.getElementById('estActifInput').checked = item.est_actif === true;
         if (item.date_attribution) setDate(item.date_attribution);
         if (window.quillSetValue) window.quillSetValue('commentaireInput', item.commentaire || '');
@@ -423,6 +434,7 @@
         var id      = document.getElementById('editId').value;
         var type    = document.getElementById('typeInput').value.trim();
         var numero  = document.getElementById('numeroInput').value.trim();
+        var numeroNationalUnique = document.getElementById('numeroNationalUniqueInput').value.trim();
         var estActif = document.getElementById('estActifInput').checked;
         var date    = getDate();
         var commentaire = document.getElementById('commentaireInput').value;
@@ -439,6 +451,7 @@
         var payload = {
             type_identifiant: type,
             numero: numero,
+            numero_national_unique: numeroNationalUnique || null,
             est_actif: estActif,
             commentaire: commentaire
         };
@@ -477,6 +490,7 @@
                     type_identifiant: saved.type_identifiant,
                     type_identifiant_display: typeLabel,
                     numero: saved.numero,
+                    numero_national_unique: saved.numero_national_unique || '',
                     est_actif: saved.est_actif,
                     date_attribution: saved.date_attribution || null,
                     date_attribution_display: dateDisplay,

@@ -5116,6 +5116,12 @@ class IdentifiantFiscal(Model):
         _("Numéro"),
         max_length=255,
     )
+    numero_national_unique = models.CharField(
+        _("Numéro National Unique"),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
     date_attribution = models.DateField(
         _("Date d'attribution"),
         null=True,
