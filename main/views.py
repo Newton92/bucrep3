@@ -2592,60 +2592,52 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         )
 
         # Récupérer les listes pour les formulaires
-        coloration_list = CouleurCommentaire.objects.all().order_by('couleur')
-
-        # Récupérer les responsables existants (limité à 5 pour les statistiques)
-        responsables = ResponsableAcheteur.objects.filter(
+        # Récupérer tous les responsables
+        responsables_qs = ResponsableAcheteur.objects.filter(
             acheteur=acheteur
-        ).select_related(
-            'couleur_commentaire',
-            'created_by',
-            'updated_by'
-        ).order_by('-created_at')[:5]
+        ).order_by('-created_at')
 
+        responsables_count    = responsables_qs.count()
+        responsables_masculin = responsables_qs.filter(Sexe='Masculin').count()
+        responsables_feminin  = responsables_qs.filter(Sexe='Feminin').count()
 
-        # Statistiques
-        stats = {
-            'total': ResponsableAcheteur.objects.filter(acheteur=acheteur).count(),
-            'masculin': ResponsableAcheteur.objects.filter(acheteur=acheteur, Sexe='Masculin').count(),
-            'feminin': ResponsableAcheteur.objects.filter(acheteur=acheteur, Sexe='Feminin').count(),
-            'avec_commentaire': ResponsableAcheteur.objects.filter(
-                acheteur=acheteur,
-                commentaire__isnull=False
-            ).exclude(commentaire='').count(),
-        }
+        # Sérialiser pour le JS
+        responsables_data = []
+        for r in responsables_qs:
+            responsables_data.append({
+                'id': r.id,
+                'nom': r.nom or '',
+                'prenom': r.prenom or '',
+                'Sexe': r.Sexe or '',
+                'poste': r.poste or '',
+                'nationalite': r.nationalite or '',
+                'commentaire': r.commentaire or '',
+                'created_at_display': r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at else '',
+            })
+        responsables_json = json.dumps(responsables_data, default=str)
 
         # Génération des tokens JWT
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        # Préparer les données pour JavaScript
-        acheteur_data = {
-            'id': acheteur.id,
-            'nom': acheteur.nom or 'Non spécifié',
-            'sigle': acheteur.sigle or '',
-            'code': acheteur.code or 'N/A',
-            'activite_principale': acheteur.activite_principale or 'Non spécifié',
-            'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
-            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
-        }
-    
-        # ⭐ AJOUT : Préparer les choix pour le template
-        poste_choices = LISTE_NOUVELLE_FONCTION
+        # Choix de postes (force l'évaluation du gettext_lazy)
+        poste_choices = [(str(k), str(v)) for k, v in LISTE_NOUVELLE_FONCTION]
+        poste_choices_json = json.dumps(poste_choices, default=str)
 
         context = {
-            "acheteur_active": "active",
+            "acheteurs_active": "active",
             "user": request.user,
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "acheteur_json": json.dumps(acheteur_data),
             "id_acheteur": acheteur_id,
             "acheteur": acheteur,
-            "coloration_list": coloration_list,
-            "responsables_recent": responsables,
-            "stats": stats,
+            "responsables_count": responsables_count,
+            "responsables_masculin": responsables_masculin,
+            "responsables_feminin": responsables_feminin,
+            "responsables_json": responsables_json,
             "poste_choices": poste_choices,
+            "poste_choices_json": poste_choices_json,
         }
         
         return render(
