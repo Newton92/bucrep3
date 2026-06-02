@@ -13,6 +13,8 @@
 .percentage-fill{height:100%;background:linear-gradient(90deg,#0a95ca,#25add6);border-radius:3px}
 .color-preview{width:100%;height:36px;border-radius:8px;border:1px solid rgba(13,128,190,.2);background:#f8f9fa;transition:background .2s}
 .avatar-sm{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#0a95ca,#106cb2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;flex-shrink:0}
+.empty-state-wrap{text-align:center;padding:2.5rem 1rem}
+.empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -324,6 +326,7 @@
 {% trans "actionnaires" as t_actionnaires %}
 {% trans "Sélectionnez une option" as t_sel_opt %}
 {% trans "Modifier" as t_edit_btn %}
+{% trans "Ajouter un actionnaire" as t_add_act %}
 
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -372,7 +375,8 @@ $(document).ready(function() {
         actionnaires: "{{ t_actionnaires|escapejs }}",
         selOpt:       "{{ t_sel_opt|escapejs }}",
         editBtn:      "{{ t_edit_btn|escapejs }}",
-        delBtn:       "{{ t_del|escapejs }}"
+        delBtn:       "{{ t_del|escapejs }}",
+        addAct:       "{{ t_add_act|escapejs }}"
     };
 
     function select2Cfg($modal) {
@@ -468,7 +472,18 @@ $(document).ready(function() {
         var tbody = $('#actionnaireTableBody');
         tbody.empty();
         if (!list || !list.length) {
-            tbody.html('<tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-people fs-2 d-block mb-2"></i>' + S.aucun + '<br><small>' + S.useFilters + '</small></td></tr>');
+            tbody.html(
+                '<tr><td colspan="6">' +
+                '<div class="empty-state-wrap">' +
+                  '<div class="esi"><i class="bi bi-people"></i></div>' +
+                  '<h6 class="text-muted mb-1">' + S.aucun + '</h6>' +
+                  '<p class="text-muted small mb-3">' + S.useFilters + '</p>' +
+                  '<button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addActionnaireModal">' +
+                    '<i class="bi bi-plus-circle-fill"></i> ' + S.addAct +
+                  '</button>' +
+                '</div>' +
+                '</td></tr>'
+            );
             return;
         }
         $.each(list, function(i, a) {
