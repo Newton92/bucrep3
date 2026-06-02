@@ -2,727 +2,26 @@
 {% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
-:root {
-    --color-background: #fcfefe;
-    --color-primary: #0a95ca;
-    --color-primary-dark: #0d80be;
-    --color-secondary: #25add6;
-    --color-accent: #106cb2;
-    --color-text: #000000;
-    --color-text-muted: #5a6c7d;
-    --color-border: rgba(13, 128, 190, 0.1);
-    
-    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
-    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-}
-
-/* Header Premium */
-.page-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: .75rem 1.25rem;
-    border-radius: 10px;
-    margin-bottom: .75rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
-}
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    display: none;
-}
-
-@keyframes shimmer { 0%, 100% { opacity: 0; } }
-
-.page-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0;
-    position: relative;
-    text-shadow: none;
-}
-
-.page-subtitle {
-    font-size: .8rem;
-    opacity: 0.95;
-    max-width: unset;
-    font-weight: 400;
-}
-
-/* Carte Acheteur Premium */
-.acheteur-card {
-    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
-    border-radius: 20px;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
-    margin-bottom: 2rem;
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.acheteur-header {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    padding: 1.75rem 2rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.acheteur-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transform: translateX(-100%);
-    animation: shimmer 2s infinite;
-}
-
-.acheteur-badge {
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-}
-
-.acheteur-info-grid {
-    padding: 2rem;
-}
-
-.acheteur-info-item {
-    display: flex;
-    align-items: center;
-    padding: 1.25rem;
-    border-radius: 12px;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    transition: all 0.3s ease;
-}
-
-.acheteur-info-item:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    transform: translateY(-2px);
-}
-
-.acheteur-info-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1.25rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    font-size: 1.5rem;
-    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
-}
-
-/* Cartes de statistiques améliorées */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
-
-.stat-card {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 16px;
-    padding: 1.75rem;
-    text-align: center;
-    border: 1px solid rgba(13, 128, 190, 0.1);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    animation: fadeInUp 0.6s ease-out;
-    animation-delay: calc(var(--stat-order, 0) * 0.1s);
-    animation-fill-mode: both;
-}
-
-.stat-card:nth-child(1) { --stat-order: 1; }
-.stat-card:nth-child(2) { --stat-order: 2; }
-.stat-card:nth-child(3) { --stat-order: 3; }
-.stat-card:nth-child(4) { --stat-order: 4; }
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    border-radius: 4px 4px 0 0;
-}
-
-.stat-total::before { background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); }
-.stat-adresse::before { background: var(--success-gradient); }
-.stat-commentaires::before { background: var(--purple-gradient); }
-.stat-structure::before { background: var(--warning-gradient); }
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-    border-color: transparent;
-}
-
-.stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.25rem;
-    font-size: 1.75rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
-}
-
-.stat-total .stat-icon { 
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-}
-
-.stat-adresse .stat-icon { 
-    background: var(--success-gradient);
-}
-
-.stat-commentaires .stat-icon { 
-    background: var(--purple-gradient);
-}
-
-.stat-structure .stat-icon { 
-    background: var(--warning-gradient);
-}
-
-.stat-value {
-    font-size: 2.25rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.95rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-}
-
-/* Cartes Filiales Premium */
-.filiale-card {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 16px;
-    padding: 1.75rem;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.filiale-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(10, 149, 202, 0.15);
-    border-color: transparent;
-}
-
-.filiale-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 5px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
-    border-radius: 5px 0 0 5px;
-}
-
-.filiale-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    background: var(--primary-gradient);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-background);
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
-}
-
-.filiale-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.75rem;
-}
-
-.filiale-type {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.05));
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: inline-block;
-    margin-bottom: 1rem;
-    border: 1px solid rgba(10, 149, 202, 0.2);
-}
-
-/* Adresse compacte premium */
-.adresse-compact {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    line-height: 1.5;
-    padding: 0.75rem;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    border-radius: 10px;
-    margin-top: 0.75rem;
-    border: 1px solid rgba(13, 128, 190, 0.1);
-}
-
-/* Badge type d'affiliation premium */
-.badge-type {
-    background: var(--primary-gradient);
-    color: white;
-    font-weight: 700;
-    padding: 0.5rem 1.25rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
-    border: none;
-}
-
-/* Table premium */
-.table-card {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 16px;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
-}
-
-.table-card .card-header {
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
-    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
-    padding: 1.5rem 2rem;
-}
-
-.table-card th {
-    background: rgba(10, 149, 202, 0.05);
-    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    padding: 1.25rem 1.5rem;
-}
-
-.table-card td {
-    padding: 1.25rem 1.5rem;
-    vertical-align: middle;
-    border-bottom: 1px solid rgba(13, 128, 190, 0.05);
-}
-
-.table-card tbody tr {
-    transition: all 0.3s ease;
-    background: var(--color-background);
-}
-
-.table-card tbody tr:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    transform: translateX(5px);
-}
-
-/* Boutons premium */
-.btn-action {
-    border-radius: 12px;
-    padding: 0.75rem 1.75rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-action::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    border-radius: 100%;
-    transform: scale(1, 1) translate(-50%);
-    transform-origin: 50% 50%;
-}
-
-.btn-action:focus:not(:active)::after {
-    animation: ripple 1s ease-out;
-}
-
-.btn-action:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
-}
-
-.btn-primary {
-    background: var(--primary-gradient);
-    color: var(--color-background);
-}
-
-.btn-outline-primary {
-    color: var(--color-primary);
-    border: 2px solid var(--color-primary);
-    background: transparent;
-}
-
-.btn-outline-primary:hover {
-    background: var(--primary-gradient);
-    border-color: transparent;
-    color: var(--color-background);
-}
-
-.btn-success {
-    background: var(--success-gradient);
-    color: white;
-}
-
-.btn-warning {
-    background: var(--warning-gradient);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--danger-gradient);
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: var(--color-text-muted);
-    border: 2px solid var(--color-text-muted);
-    background: transparent;
-}
-
-.btn-outline-secondary:hover {
-    background: linear-gradient(135deg, var(--color-text-muted), #adb5bd);
-    border-color: transparent;
-    color: white;
-}
-
-/* Formulaires premium */
-.enhanced-form .form-group {
-    margin-bottom: 1.75rem;
-    position: relative;
-}
-
-.enhanced-form .form-label {
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1rem;
-}
-
-.enhanced-form .form-label i {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10, 149, 202, 0.1);
-    color: var(--color-primary);
-    font-size: 1.25rem;
-}
-
-.enhanced-form .form-control,
-.enhanced-form .form-select,
-.enhanced-form .select2-container--bootstrap-5 .select2-selection {
-    border: 2px solid rgba(13, 128, 190, 0.15);
-    border-radius: 12px;
-    padding: 0.875rem 1.25rem;
-    font-size: 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    color: var(--color-text);
-}
-
-.enhanced-form .form-control:focus,
-.enhanced-form .form-select:focus,
-.enhanced-form .select2-container--bootstrap-5.select2-container--focus .select2-selection {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-    background: var(--color-background);
-}
-
-/* Filtres premium */
-.filter-card {
-    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
-    border-radius: 16px;
-    border: 1px solid rgba(37, 173, 214, 0.15);
-    padding: 1.5rem;
-    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
-    margin-bottom: 2rem;
-}
-
-/* Checkbox premium */
-.form-check-input:checked {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-}
-
-.form-check-input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
-}
-
-/* Animation de ripple */
-@keyframes ripple {
-    0% {
-        transform: scale(0, 0);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(40, 40);
-        opacity: 0;
-    }
-}
-
-/* Animation d'apparition */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Appliquer les animations */
-.acheteur-card, .stats-grid, .filter-card, .table-card {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-/* Avatar premium */
-.avatar-premium {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.25rem;
-    background: var(--primary-gradient);
-    color: var(--color-background);
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
-}
-
-/* Dropdown premium */
-.dropdown-menu {
-    border-radius: 12px;
-    border: 2px solid rgba(13, 128, 190, 0.1);
-    box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15);
-    padding: 0.5rem;
-}
-
-.dropdown-item {
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    margin: 0.25rem 0;
-    transition: all 0.3s ease;
-}
-
-.dropdown-item:hover {
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
-    transform: translateX(5px);
-}
-
-/* Commentaire preview */
-.commentaire-preview {
-    max-width: 200px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--color-text-muted);
-    font-size: 0.9rem;
-}
-
-/* Badge couleur premium */
-.color-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.02));
-    border: 1px solid rgba(13, 128, 190, 0.2);
-}
-
-.color-preview-small {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid var(--color-background);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Pagination premium */
-.pagination {
-    gap: 0.5rem;
-}
-
-.page-item .page-link {
-    border: 2px solid rgba(13, 128, 190, 0.1);
-    border-radius: 10px;
-    color: var(--color-primary-dark);
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    transition: all 0.3s ease;
-}
-
-.page-item.active .page-link {
-    background: var(--primary-gradient);
-    border-color: var(--color-primary);
-    color: var(--color-background);
-}
-
-.page-item .page-link:hover {
-    background: rgba(10, 149, 202, 0.1);
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .page-header {
-        padding: 1.75rem;
-    }
-    
-    .page-title {
-        font-size: 1.05rem;
-    }
-    
-    .acheteur-info-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .acheteur-info-icon {
-        margin-right: 0;
-        margin-bottom: 0.75rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-    }
-    
-    .filiale-card {
-        padding: 1.5rem;
-    }
-    
-    .table-card th,
-    .table-card td {
-        padding: 1rem;
-    }
-    
-    .btn-action {
-        padding: 0.65rem 1.25rem;
-        font-size: 0.95rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .page-title {
-        font-size: 1.75rem;
-    }
-    
-    .stat-value {
-        font-size: 1.75rem;
-    }
-    
-    .filiale-name {
-        font-size: 1.1rem;
-    }
-}
-
-/* Optimisations d'accessibilité */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Focus visible pour l'accessibilité */
-:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
+.page-header{background:linear-gradient(135deg,#0a95ca,#106cb2);padding:.75rem 1.25rem;border-radius:12px;margin-bottom:1rem;color:#fff;box-shadow:0 2px 8px rgba(13,108,178,.15)}
+.page-title{font-size:1.05rem;font-weight:700;margin:0}
+.page-subtitle{font-size:.78rem;opacity:.85;margin:0}
+.fil-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.avatar-sm{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#0a95ca,#106cb2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem;flex-shrink:0}
+.empty-state-wrap{text-align:center;padding:2.5rem 1rem}
+.empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header Premium -->
+
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1 class="page-title">
-                    <i class="fas fa-code-branch me-3"></i>{% trans "Gestion des Filiales" %}
-                </h1>
+                <h1 class="page-title"><i class="bi bi-diagram-3-fill me-2"></i>{% trans "Gestion des Filiales" %}</h1>
                 <p class="page-subtitle mb-0">
                     <span class="fw-semibold">{{ acheteur.nom }}</span>
                     {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
@@ -732,108 +31,74 @@
             </div>
             <div class="d-flex gap-2 flex-wrap align-items-center">
                 {% acheteur_page_nav 'filiale' %}
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour" %}
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-left"></i>{% trans "Retour" %}
                 </a>
-                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addFilialeModal">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une filiale" %}
+                <button class="btn btn-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addFilialeModal">
+                    <i class="bi bi-plus-circle-fill"></i>{% trans "Ajouter une filiale" %}
                 </button>
             </div>
         </div>
     </div>
 
-
-    <!-- Statistiques Premium -->
-    <div class="stats-grid">
-        <div class="stat-card stat-total">
-            <div class="stat-icon">
-                <i class="fas fa-building"></i>
+    <!-- Statistiques -->
+    <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
+                <div class="fil-stat-icon bg-primary text-white"><i class="bi bi-diagram-3-fill"></i></div>
+                <div>
+                    <div class="fw-bold fs-5 lh-1" id="statTotal">{{ stats.total }}</div>
+                    <div class="text-muted small">{% trans "Total Filiales" %}</div>
+                </div>
             </div>
-            <div class="stat-value">{{ stats.total }}</div>
-            <div class="stat-label">{% trans "Total Filiales" %}</div>
         </div>
-        <div class="stat-card stat-adresse">
-            <div class="stat-icon">
-                <i class="fas fa-map-marker-alt"></i>
+        <div class="col-6 col-md-3">
+            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
+                <div class="fil-stat-icon bg-success text-white"><i class="bi bi-geo-alt-fill"></i></div>
+                <div>
+                    <div class="fw-bold fs-5 lh-1" id="statAvecAdresse">{{ stats.avec_adresse }}</div>
+                    <div class="text-muted small">{% trans "Avec Adresse" %}</div>
+                </div>
             </div>
-            <div class="stat-value">{{ stats.avec_adresse }}</div>
-            <div class="stat-label">{% trans "Avec Adresse" %}</div>
         </div>
-        <div class="stat-card stat-commentaires">
-            <div class="stat-icon">
-                <i class="fas fa-comment"></i>
+        <div class="col-6 col-md-3">
+            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
+                <div class="fil-stat-icon text-white" style="background:#6f42c1;"><i class="bi bi-chat-text-fill"></i></div>
+                <div>
+                    <div class="fw-bold fs-5 lh-1" id="statAvecCommentaire">{{ stats.avec_commentaire }}</div>
+                    <div class="text-muted small">{% trans "Avec Commentaire" %}</div>
+                </div>
             </div>
-            <div class="stat-value">{{ stats.avec_commentaire }}</div>
-            <div class="stat-label">{% trans "Avec Commentaire" %}</div>
         </div>
-        <div class="stat-card stat-structure">
-            <div class="stat-icon">
-                <i class="fas fa-sitemap"></i>
+        <div class="col-6 col-md-3">
+            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
+                <div class="fil-stat-icon bg-warning text-white"><i class="bi bi-diagram-2-fill"></i></div>
+                <div>
+                    <div class="fw-bold fs-5 lh-1" id="statAvecStructure">{{ stats.avec_structure }}</div>
+                    <div class="text-muted small">{% trans "Structure définie" %}</div>
+                </div>
             </div>
-            <div class="stat-value">{{ stats.avec_structure }}</div>
-            <div class="stat-label">{% trans "Structure définie" %}</div>
         </div>
     </div>
 
-    <!-- Filiales Récents -->
+    <!-- Récents -->
     {% if filiales_recent %}
-    <div class="mb-4">
-        <h5 class="fw-bold mb-3" style="color: var(--color-primary-dark);">
-            <i class="fas fa-history me-2"></i>{% trans "Filiales récemment modifiées" %}
-        </h5>
-        <div class="row g-3">
+    <div class="card card-body py-2 px-3 mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-clock-history text-primary"></i>
+            <strong class="small">{% trans "Filiales récemment modifiées" %}</strong>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
             {% for filiale in filiales_recent %}
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="filiale-card">
-                    <div class="d-flex flex-column">
-                        <div class="filiale-avatar">
-                            {{ filiale.nom|first|upper }}
-                        </div>
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <div class="filiale-name">
-                                    {{ filiale.nom }}
-                                </div>
-                                <div class="filiale-type">
-                                    {{ filiale.type_affiliation }}
-                                </div>
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item edit-filiale-btn" href="#" data-id="{{ filiale.id }}">
-                                            <i class="fas fa-edit me-2"></i>{% trans "Modifier" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item delete-filiale-btn" href="#" data-id="{{ filiale.id }}">
-                                            <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        {% if filiale.numero_adresse or filiale.rue_adresse %}
-                        <div class="adresse-compact">
-                            <i class="fas fa-map-marker-alt text-muted me-2"></i>
-                            {{ filiale.numero_adresse|default:"" }} {{ filiale.rue_adresse|default:"" }}
-                            {% if filiale.code_postale_adresse %}
-                            <br><small class="text-muted">{{ filiale.code_postale_adresse }}</small>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        {% if filiale.couleur_commentaire %}
-                        <div class="mt-3">
-                            <span class="color-badge">
-                                <div class="color-preview-small" style="background-color: {{ filiale.couleur_commentaire.code_couleur|default:'#6c757d' }}"></div>
-                                {{ filiale.couleur_commentaire.couleur }}
-                            </span>
-                        </div>
-                        {% endif %}
-                    </div>
+            <div class="d-flex align-items-center gap-2 rounded border px-2 py-1 bg-light">
+                <div class="avatar-sm">{{ filiale.nom|first|upper }}</div>
+                <div>
+                    <div class="fw-semibold" style="font-size:.8rem;">{{ filiale.nom }}</div>
+                    <div class="text-muted" style="font-size:.75rem;">{{ filiale.type_affiliation }}</div>
+                </div>
+                <div class="d-flex gap-1 ms-1">
+                    <button class="btn btn-sm btn-outline-primary py-0 px-1 edit-btn" data-id="{{ filiale.id }}"><i class="bi bi-pencil" style="font-size:.7rem;"></i></button>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1 delete-btn" data-id="{{ filiale.id }}"><i class="bi bi-trash" style="font-size:.7rem;"></i></button>
                 </div>
             </div>
             {% endfor %}
@@ -841,56 +106,45 @@
     </div>
     {% endif %}
 
-    <!-- Filtres et Recherche Premium -->
-    <div class="filter-card">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-10">
-                <div class="form-group mb-0">
-                    <label class="form-label">
-                        <i class="fas fa-search" style="color: var(--color-primary);"></i>{% trans "Recherche" %}
-                    </label>
-                    <input type="text" class="form-control" id="searchInput" 
-                           placeholder="Nom, type d'affiliation, adresse, commentaire...">
-                </div>
+    <!-- Filtres -->
+    <div class="card card-body py-2 px-3 mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-10">
+                <label class="form-label small mb-1"><i class="bi bi-search text-primary me-1"></i>{% trans "Recherche" %}</label>
+                <input type="text" class="form-control form-control-sm" id="searchInput"
+                       placeholder="{% trans 'Nom, type, adresse, commentaire...' %}">
             </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100 btn-action" id="applyFilters" style="margin-top: 24px;">
-                    <i class="fas fa-filter me-2"></i>{% trans "Filtrer" %}
+            <div class="col-2">
+                <button class="btn btn-sm btn-primary w-100" id="applyFilters">
+                    <i class="bi bi-funnel-fill me-1"></i>{% trans "Filtrer" %}
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Table des Filiales Premium -->
-    <div class="table-card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0" style="color: var(--color-primary-dark);">
-                    <i class="fas fa-list me-2"></i>{% trans "Liste des Filiales" %}
-                </h5>
-                <div class="d-flex gap-2 flex-wrap align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="selectAll">
-                        <label class="form-check-label small" for="selectAll">
-                            Sélectionner tout
-                        </label>
-                    </div>
-                    <button class="btn btn-danger btn-action btn-sm" id="deleteSelected" disabled>
-                        <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
-                    </button>
+    <!-- Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center py-2"
+             style="background: linear-gradient(135deg, #0a95ca, #106cb2);">
+            <h6 class="mb-0 text-white fw-bold d-flex align-items-center gap-2">
+                <i class="bi bi-list-ul"></i>{% trans "Liste des Filiales" %}
+            </h6>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label small text-white" for="selectAll">{% trans "Sélectionner tout" %}</label>
                 </div>
+                <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="deleteSelected" disabled>
+                    <i class="bi bi-trash-fill"></i>{% trans "Supprimer sélection" %}
+                </button>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table mb-0" id="filialeTable">
-                    <thead>
+                <table class="table table-sm table-hover mb-0" id="filialeTable">
+                    <thead class="table-light">
                         <tr>
-                            <th width="50">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="toggleAll">
-                                </div>
-                            </th>
+                            <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
                             <th>{% trans "Nom" %}</th>
                             <th>{% trans "Type d'affiliation" %}</th>
                             <th>{% trans "Adresse" %}</th>
@@ -898,119 +152,82 @@
                             <th>{% trans "Actions" %}</th>
                         </tr>
                     </thead>
-                    <tbody id="filialeTableBody">
-                        <!-- Rempli par JavaScript -->
-                    </tbody>
+                    <tbody id="filialeTableBody"></tbody>
                 </table>
             </div>
-            
-            <!-- Pagination -->
-            <div class="d-flex justify-content-between align-items-center mt-4" id="paginationContainer">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2" id="paginationContainer" style="display:none;">
                 <div class="text-muted small" id="paginationInfo"></div>
-                <nav>
-                    <ul class="pagination mb-0" id="paginationControls"></ul>
-                </nav>
+                <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Ajout Filiale Premium -->
+<!-- Modal Ajout -->
 <div class="modal fade" id="addFilialeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Filiale" %}
-                </h5>
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-plus-circle me-2"></i>{% trans "Ajouter une Filiale" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addFilialeForm" class="enhanced-form">
-                <div class="modal-body bg-white">
-                    <div class="form-group">
-                        <label for="nom" class="form-label">
-                            <i class="fas fa-building"></i>{% trans "Nom de la filiale" %}
-                        </label>
-                        <input type="text" class="form-control" id="nom" name="nom" required
-                               placeholder="Ex: SUCCURSALE PARIS">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="type_affiliation" class="form-label">
-                                    <i class="fas fa-sitemap"></i>{% trans "Type d'affiliation" %}
-                                </label>
-                                <select class="form-select select2-with-search" id="type_affiliation" name="type_affiliation" required>
-                                    <option value="">{% trans "Sélectionnez un type" %}</option>
-                                    {% for value, label in type_affiliation_choices %}
-                                        <option value="{{ value }}">{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+            <form id="addFilialeForm">
+                <div class="modal-body py-3 px-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Nom de la filiale" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="nom" name="nom" required
+                                   placeholder="Ex: SUCCURSALE LIBREVILLE">
                         </div>
-                    </div>
-
-                    <div class="row">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Type d'affiliation" %}</label>
+                            <select class="form-select form-select-sm" id="type_affiliation" name="type_affiliation" required>
+                                <option value="">{% trans "Sélectionnez un type" %}</option>
+                                {% for value, label in type_affiliation_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="numero_adresse" class="form-label">
-                                    <i class="fas fa-hashtag"></i>{% trans "Numéro" %}
-                                </label>
-                                <input type="text" class="form-control" id="numero_adresse" name="numero_adresse"
-                                       placeholder="Ex: 123">
-                            </div>
+                            <label class="form-label small fw-semibold">{% trans "Numéro" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="numero_adresse" name="numero_adresse"
+                                   placeholder="Ex: 123">
                         </div>
                         <div class="col-md-8">
-                            <div class="form-group">
-                                <label for="rue_adresse" class="form-label">
-                                    <i class="fas fa-road"></i>{% trans "Rue" %}
-                                </label>
-                                <input type="text" class="form-control" id="rue_adresse" name="rue_adresse"
-                                       placeholder="Ex: Avenue des Champs-Élysées">
-                            </div>
+                            <label class="form-label small fw-semibold">{% trans "Rue" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="rue_adresse" name="rue_adresse"
+                                   placeholder="{% trans 'Nom de la rue' %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">{% trans "Code Postal" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="code_postale_adresse" name="code_postale_adresse"
+                                   placeholder="Ex: BP 1234">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">{% trans "Couleur Commentaire" %}</label>
+                            <select class="form-select form-select-sm" id="couleur_commentaire" name="couleur_commentaire">
+                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                {% for coloration in coloration_list %}
+                                <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                    {{ coloration.couleur }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
+                            <textarea class="form-control form-control-sm rich-editor" id="commentaire" name="commentaire" rows="3"
+                                      placeholder="{% trans 'Commentaires additionnels' %}..."></textarea>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="code_postale_adresse" class="form-label">
-                            <i class="fas fa-mail-bulk"></i>{% trans "Code Postal" %}
-                        </label>
-                        <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse"
-                               placeholder="Ex: 75008">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="couleur_commentaire" class="form-label">
-                            <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
-                        </label>
-                        <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="commentaire" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
-                        </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
-                                  placeholder="Commentaires sur la filiale..."></textarea>
-                    </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    <button type="submit" class="btn btn-sm btn-success" id="submitAddBtn">
+                        <span class="btn-text"><i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
             </form>
@@ -1018,852 +235,472 @@
     </div>
 </div>
 
-<!-- Modal Modification Filiale Premium -->
+<!-- Modal Modification -->
 <div class="modal fade" id="editFilialeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
-            <div class="modal-header" style="background: var(--primary-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier la Filiale" %}
-                </h5>
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-pencil-square me-2"></i>{% trans "Modifier la Filiale" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editFilialeForm" class="enhanced-form">
-                <input type="hidden" id="editFilialeId" name="id">
-                <div class="modal-body bg-white">
-                    <div class="form-group">
-                        <label for="editNom" class="form-label">
-                            <i class="fas fa-building"></i>{% trans "Nom de la filiale" %}
-                        </label>
-                        <input type="text" class="form-control" id="editNom" name="nom" required>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="editTypeAffiliation" class="form-label">
-                                    <i class="fas fa-sitemap"></i>{% trans "Type d'affiliation" %}
-                                </label>
-                                <select class="form-select select2-with-search" id="editTypeAffiliation" name="type_affiliation" required>
-                                    <option value="">{% trans "Sélectionnez un type" %}</option>
-                                    {% for value, label in type_affiliation_choices %}
-                                        <option value="{{ value }}">{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+            <form id="editFilialeForm">
+                <input type="hidden" id="editFilialeId">
+                <div class="modal-body py-3 px-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Nom de la filiale" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="editNom" name="nom" required>
                         </div>
-                    </div>
-
-                    <div class="row">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Type d'affiliation" %}</label>
+                            <select class="form-select form-select-sm" id="editTypeAffiliation" name="type_affiliation" required>
+                                <option value="">{% trans "Sélectionnez un type" %}</option>
+                                {% for value, label in type_affiliation_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="editNumeroAdresse" class="form-label">
-                                    <i class="fas fa-hashtag"></i>{% trans "Numéro" %}
-                                </label>
-                                <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
-                            </div>
+                            <label class="form-label small fw-semibold">{% trans "Numéro" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="editNumeroAdresse" name="numero_adresse">
                         </div>
                         <div class="col-md-8">
-                            <div class="form-group">
-                                <label for="editRueAdresse" class="form-label">
-                                    <i class="fas fa-road"></i>{% trans "Rue" %}
-                                </label>
-                                <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
-                            </div>
+                            <label class="form-label small fw-semibold">{% trans "Rue" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="editRueAdresse" name="rue_adresse">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">{% trans "Code Postal" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="editCodePostal" name="code_postale_adresse">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">{% trans "Couleur Commentaire" %}</label>
+                            <select class="form-select form-select-sm" id="editCouleurCommentaire" name="couleur_commentaire">
+                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
+                                {% for coloration in coloration_list %}
+                                <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
+                                    {{ coloration.couleur }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
+                            <textarea class="form-control form-control-sm rich-editor" id="editCommentaire" name="commentaire" rows="3"></textarea>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="editCodePostal" class="form-label">
-                            <i class="fas fa-mail-bulk"></i>{% trans "Code Postal" %}
-                        </label>
-                        <input type="text" class="form-control" id="editCodePostal" name="code_postale_adresse">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="editCouleurCommentaire" class="form-label">
-                            <i class="fas fa-palette"></i>{% trans "Couleur Commentaire" %}
-                        </label>
-                        <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="editCommentaire" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Commentaire" %}
-                        </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
-                    </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    <button type="submit" class="btn btn-sm btn-warning" id="submitEditBtn">
+                        <span class="btn-text"><i class="bi bi-save me-1"></i>{% trans "Mettre à jour" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmation de suppression premium -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0" style="box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
-            <div class="modal-header" style="background: var(--danger-gradient);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <div class="mb-3">
-                    <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                </div>
-                <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Supprimer le(s) filiale(s)
-                </h6>
-                <p class="text-muted mb-0" id="deleteConfirmationText">
-                    Êtes-vous sûr de vouloir supprimer cette filiale ? Cette action est irréversible.
-                </p>
-            </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                </button>
-                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-2"></i>{% trans "Supprimer" %}
-                </button>
-            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% trans "Erreur" as t_err %}
+{% trans "Succès" as t_ok %}
+{% trans "Aucune filiale trouvée" as t_aucun %}
+{% trans "Utilisez les filtres ou ajoutez une nouvelle filiale" as t_use_filters %}
+{% trans "Ajoutée le" as t_added_on %}
+{% trans "Non spécifié" as t_non_spec %}
+{% trans "Non spécifiée" as t_non_spec_f %}
+{% trans "Aucun" as t_none %}
+{% trans "Impossible de charger les filiales" as t_err_load %}
+{% trans "Impossible de charger les données de la filiale" as t_err_load_data %}
+{% trans "Impossible de supprimer le(s) filiale(s)" as t_err_del %}
+{% trans "Supprimer la filiale ?" as t_del_single %}
+{% trans "Cette action est irréversible." as t_irreversible %}
+{% trans "Supprimer" as t_del %}
+{% trans "Annuler" as t_cancel %}
+{% trans "Session expirée" as t_sess_exp %}
+{% trans "Votre session a expiré. Veuillez vous reconnecter." as t_sess_msg %}
+{% trans "Se reconnecter" as t_reconnect %}
+{% trans "Le nom doit contenir au moins 2 caractères" as t_nom_min %}
+{% trans "Le type d'affiliation est obligatoire" as t_type_req %}
+{% trans "Une erreur est survenue lors de l'ajout" as t_err_add %}
+{% trans "Filiale ajoutée avec succès" as t_fil_added %}
+{% trans "Filiale modifiée avec succès" as t_fil_edited %}
+{% trans "Une erreur est survenue" as t_err_generic %}
+{% trans "Affichage" as t_display %}
+{% trans "filiales" as t_filiales %}
+{% trans "Modifier" as t_edit_btn %}
+{% trans "Ajouter une filiale" as t_add_fil %}
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-// Ajouter l'effet de ripple sur les boutons
-$(document).on('click', '.btn-action', function(e) {
-    const $btn = $(this);
-    const btnOffset = $btn.offset();
-    const x = e.pageX - btnOffset.left;
-    const y = e.pageY - btnOffset.top;
-    
-    const $ripple = $('<span class="ripple-effect"></span>');
-    $ripple.css({
-        left: x + 'px',
-        top: y + 'px',
-        position: 'absolute',
-        borderRadius: '50%',
-        background: 'rgba(255, 255, 255, 0.7)',
-        transform: 'scale(0)',
-        animation: 'ripple 0.6s linear',
-        pointerEvents: 'none',
-        zIndex: 1
-    });
-    
-    $btn.css('position', 'relative').append($ripple);
-    
-    setTimeout(function() {
-        $ripple.remove();
-    }, 600);
-});
-
-// Le reste du script JavaScript original reste inchangé
 $(document).ready(function() {
-    // Configuration
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/filiales/`;
-    let ACCESS_TOKEN = '{{ access_token }}';
-    const REFRESH_TOKEN = '{{ refresh_token }}';
-    
-    // Variables d'état
-    let currentPage = 1;
-    let currentFilters = {};
-    let selectedFiliales = new Set();
-    
-    // Initialiser Select2
-    function initSelect2() {
-        $('.select2-with-search').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: 'Sélectionnez une option',
-            language: 'fr',
-            allowClear: true,
-            minimumResultsForSearch: 10,
-            dropdownParent: $('body')
-        });
+    var ACHETEUR_ID = '{{ acheteur.id }}';
+    var API_BASE_URL = '/api/acheteur/' + ACHETEUR_ID + '/filiales/';
+    var ACCESS_TOKEN = '{{ access_token }}';
+    var REFRESH_TOKEN = '{{ refresh_token }}';
+
+    var currentPage = 1;
+    var currentFilters = {};
+    var selectedFiliales = new Set();
+    var pendingEditData = null;
+
+    var S = {
+        err:          "{{ t_err|escapejs }}",
+        ok:           "{{ t_ok|escapejs }}",
+        aucun:        "{{ t_aucun|escapejs }}",
+        useFilters:   "{{ t_use_filters|escapejs }}",
+        addedOn:      "{{ t_added_on|escapejs }}",
+        nonSpec:      "{{ t_non_spec|escapejs }}",
+        nonSpecF:     "{{ t_non_spec_f|escapejs }}",
+        none:         "{{ t_none|escapejs }}",
+        errLoad:      "{{ t_err_load|escapejs }}",
+        errLoadData:  "{{ t_err_load_data|escapejs }}",
+        errDel:       "{{ t_err_del|escapejs }}",
+        delSingle:    "{{ t_del_single|escapejs }}",
+        irreversible: "{{ t_irreversible|escapejs }}",
+        del:          "{{ t_del|escapejs }}",
+        cancel:       "{{ t_cancel|escapejs }}",
+        sessExp:      "{{ t_sess_exp|escapejs }}",
+        sessMsg:      "{{ t_sess_msg|escapejs }}",
+        reconnect:    "{{ t_reconnect|escapejs }}",
+        nomMin:       "{{ t_nom_min|escapejs }}",
+        typeReq:      "{{ t_type_req|escapejs }}",
+        errAdd:       "{{ t_err_add|escapejs }}",
+        filAdded:     "{{ t_fil_added|escapejs }}",
+        filEdited:    "{{ t_fil_edited|escapejs }}",
+        errGeneric:   "{{ t_err_generic|escapejs }}",
+        display:      "{{ t_display|escapejs }}",
+        filiales:     "{{ t_filiales|escapejs }}",
+        editBtn:      "{{ t_edit_btn|escapejs }}",
+        delBtn:       "{{ t_del|escapejs }}",
+        addFil:       "{{ t_add_fil|escapejs }}"
+    };
+
+    function populateEditForm(d) {
+        $('#editFilialeId').val(d.id);
+        $('#editNom').val(d.nom);
+        $('#editTypeAffiliation').val(d.type_affiliation);
+        $('#editNumeroAdresse').val(d.numero_adresse || '');
+        $('#editRueAdresse').val(d.rue_adresse || '');
+        $('#editCodePostal').val(d.code_postale_adresse || '');
+        $('#editCouleurCommentaire').val(d.couleur_commentaire ? d.couleur_commentaire.id : '');
+        window.quillSetValue('editCommentaire', d.commentaire || '');
     }
 
-    // Initialisation
-    initSelect2();
-    loadFiliales();
-    
-    // Charger les filiales
-    function loadFiliales(page = 1, filters = {}) {
-        currentPage = page;
-        currentFilters = filters;
-        
-        const params = new URLSearchParams({
-            page: page,
-            ...filters
-        });
-        
-        $.ajax({
-            url: `${API_BASE_URL}?${params}`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                updateTable(response.results);
-                updatePagination(response);
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => loadFiliales(page, filters));
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les filiales',
-                        background: '#fcfefe',
-                        color: '#000000'
-                    });
-                }
-            }
-        });
-    }
-    
-    // Mettre à jour la table
-    function updateTable(filiales) {
-        const tbody = $('#filialeTableBody');
-        tbody.empty();
-        
-        if (filiales.length === 0) {
-            tbody.html(`
-                <tr>
-                    <td colspan="7" class="text-center py-5">
-                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucune filiale trouvée</h5>
-                        <p class="text-muted mb-0">Utilisez les filtres ou ajoutez une nouvelle filiale</p>
-                    </td>
-                </tr>
-            `);
-            return;
-        }
-        
-        filiales.forEach((filiale, index) => {
-            const isSelected = selectedFiliales.has(filiale.id.toString());
-            const adresse = `${filiale.numero_adresse || ''} ${filiale.rue_adresse || ''}`.trim();
-            const commentairePreview = filiale.commentaire ? 
-                (filiale.commentaire.length > 50 ? filiale.commentaire.substring(0, 50) + '...' : filiale.commentaire) : 
-                'Aucun';
-            
-            const row = `
-                <tr data-id="${filiale.id}">
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input row-checkbox" type="checkbox" 
-                                   data-id="${filiale.id}" ${isSelected ? 'checked' : ''}>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-premium me-3">
-                                ${filiale.nom ? filiale.nom.charAt(0).toUpperCase() : '?'}
-                            </div>
-                            <div>
-                                <strong>${filiale.nom}</strong>
-                                <div class="text-muted small">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    Ajoutée le ${filiale.created_at_formatted || ''}
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge-type">${filiale.type_affiliation || 'Non spécifié'}</span>
-                    </td>
-                    <td>
-                        ${adresse || 'Non spécifiée'}<br>
-                        <small class="text-muted">${filiale.code_postale_adresse || ''}</small>
-                    </td>
-                    <td>
-                        <span class="commentaire-preview" title="${filiale.commentaire || ''}">
-                            ${commentairePreview}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary edit-btn" data-id="${filiale.id}" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger delete-btn" data-id="${filiale.id}" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
-        
-        // Initialiser les tooltips
-        $('[title]').tooltip();
-    }
-    
-    // Mettre à jour la pagination
-    function updatePagination(response) {
-        const paginationControls = $('#paginationControls');
-        paginationControls.empty();
-        
-        if (response.count === 0) {
-            $('#paginationContainer').hide();
-            return;
-        }
-        
-        $('#paginationContainer').show();
-        $('#paginationInfo').text(
-            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} filiales`
-        );
-        
-        // Bouton précédent
-        if (response.previous) {
-            paginationControls.append(`
-                <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage - 1}">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-            `);
-        }
-        
-        // Pages
-        for (let i = 1; i <= response.total_pages; i++) {
-            paginationControls.append(`
-                <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                </li>
-            `);
-        }
-        
-        // Bouton suivant
-        if (response.next) {
-            paginationControls.append(`
-                <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage + 1}">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-            `);
-        }
-    }
-    
-    // Appliquer les filtres
-    $('#applyFilters').on('click', function() {
-        const filters = {
-            search: $('#searchInput').val()
-        };
-        loadFiliales(1, filters);
-    });
-    
-    // Recherche en temps réel
-    let searchTimeout;
-    $('#searchInput').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            $('#applyFilters').click();
-        }, 500);
-    });
-    
-    // Pagination
-    $(document).on('click', '.page-link', function(e) {
-        e.preventDefault();
-        const page = $(this).data('page');
-        if (page) {
-            loadFiliales(page, currentFilters);
-        }
-    });
-    
-    // Formulaire d'ajout
-    $('#addFilialeForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            nom: $('#nom').val().trim(),
-            type_affiliation: $('#type_affiliation').val(),
-            numero_adresse: $('#numero_adresse').val().trim() || '',
-            rue_adresse: $('#rue_adresse').val().trim() || '',
-            code_postale_adresse: $('#code_postale_adresse').val().trim() || '',
-            couleur_commentaire: $('#couleur_commentaire').val() || null,
-            commentaire: $('#commentaire').val().trim() || ''
-        };
-        
-        // Validation
-        if (!formData.nom || formData.nom.length < 2) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Le nom doit contenir au moins 2 caractères',
-                background: '#fcfefe',
-                color: '#000000'
-            });
-            $('#nom').focus();
-            return;
-        }
-        
-        if (!formData.type_affiliation) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'Le type d\'affiliation est obligatoire',
-                background: '#fcfefe',
-                color: '#000000'
-            });
-            $('#type_affiliation').focus();
-            return;
-        }
-        
-        // Afficher le loading
-        const $btn = $('#submitAddBtn');
-        $btn.prop('disabled', true);
-        $btn.find('.spinner-border').removeClass('d-none');
-        $btn.find('.btn-text').hide();
-        
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                // Cacher le loading
-                $btn.find('.spinner-border').addClass('d-none');
-                $btn.find('.btn-text').show();
-                $btn.prop('disabled', false);
-                
-                // Fermer le modal
-                const addModal = bootstrap.Modal.getInstance($('#addFilialeModal')[0]);
-                addModal.hide();
-                
-                // Réinitialiser le formulaire
-                $('#addFilialeForm')[0].reset();
-                $('.select2-with-search').val(null).trigger('change');
-                
-                // Afficher le succès
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Filiale ajoutée avec succès',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: '#fcfefe',
-                    color: '#000000'
-                }).then(() => {
-                    loadFiliales(currentPage, currentFilters);
-                    updateStats();
-                });
-            },
-            error: function(xhr) {
-                // Cacher le loading
-                $btn.find('.spinner-border').addClass('d-none');
-                $btn.find('.btn-text').show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    } else if (xhr.responseJSON.nom) {
-                        errorMessage = xhr.responseJSON.nom.join ? 
-                            `Nom: ${xhr.responseJSON.nom.join(', ')}` : 
-                            `Nom: ${xhr.responseJSON.nom}`;
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $('#addFilialeForm').submit();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: errorMessage,
-                        confirmButtonText: 'OK',
-                        background: '#fcfefe',
-                        color: '#000000'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Édition d'une filiale
-    $(document).on('click', '.edit-btn', function() {
-        const filialeId = $(this).data('id');
-        
-        $.ajax({
-            url: `${API_BASE_URL}${filialeId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                // Remplir le formulaire
-                $('#editFilialeId').val(response.id);
-                $('#editNom').val(response.nom);
-                $('#editTypeAffiliation').val(response.type_affiliation).trigger('change');
-                $('#editNumeroAdresse').val(response.numero_adresse || '');
-                $('#editRueAdresse').val(response.rue_adresse || '');
-                $('#editCodePostal').val(response.code_postale_adresse || '');
-                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
-                $('#editCommentaire').val(response.commentaire || '');
-                
-                $('#editFilialeModal').modal('show');
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $('.edit-btn[data-id="' + filialeId + '"]').click();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les données de la filiale',
-                        background: '#fcfefe',
-                        color: '#000000'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Formulaire de modification
-    $('#editFilialeForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            nom: $('#editNom').val().trim(),
-            type_affiliation: $('#editTypeAffiliation').val(),
-            numero_adresse: $('#editNumeroAdresse').val().trim() || '',
-            rue_adresse: $('#editRueAdresse').val().trim() || '',
-            code_postale_adresse: $('#editCodePostal').val().trim() || '',
-            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
-            commentaire: $('#editCommentaire').val().trim() || ''
-        };
-        
-        const filialeId = $('#editFilialeId').val();
-        
-        // Afficher le loading
-        const $btn = $('#submitEditBtn');
-        $btn.prop('disabled', true);
-        $btn.find('.spinner-border').removeClass('d-none');
-        $btn.find('.btn-text').hide();
-        
-        $.ajax({
-            url: `${API_BASE_URL}${filialeId}/`,
-            type: 'PUT',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                // Cacher le loading
-                $btn.find('.spinner-border').addClass('d-none');
-                $btn.find('.btn-text').show();
-                $btn.prop('disabled', false);
-                
-                // Fermer le modal
-                const editModal = bootstrap.Modal.getInstance($('#editFilialeModal')[0]);
-                editModal.hide();
-                
-                // Afficher le succès
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message || 'Filiale modifiée avec succès',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: '#fcfefe',
-                    color: '#000000'
-                }).then(() => {
-                    loadFiliales(currentPage, currentFilters);
-                });
-            },
-            error: function(xhr) {
-                $btn.find('.spinner-border').addClass('d-none');
-                $btn.find('.btn-text').show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Une erreur est survenue';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    } else if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    }
-                }
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $('#editFilialeForm').submit();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: errorMessage,
-                        background: '#fcfefe',
-                        color: '#000000'
-                    });
-                }
-            }
-        });
-    });
-    
-    // Suppression d'une filiale
-    $(document).on('click', '.delete-btn', function() {
-        const filialeId = $(this).data('id');
-        
-        Swal.fire({
-            title: 'Supprimer la filiale ?',
-            text: 'Cette action est irréversible.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Supprimer',
-            cancelButtonText: 'Annuler',
-            background: '#fcfefe',
-            color: '#000000'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                deleteFiliales([filialeId]);
-            }
-        });
-    });
-    
-    // Suppression multiple
-    $('#deleteSelected').on('click', function() {
-        if (selectedFiliales.size === 0) return;
-        
-        Swal.fire({
-            title: `Supprimer ${selectedFiliales.size} filiale(s) ?`,
-            text: 'Cette action est irréversible.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Supprimer',
-            cancelButtonText: 'Annuler',
-            background: '#fcfefe',
-            color: '#000000'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                deleteFiliales(Array.from(selectedFiliales));
-            }
-        });
-    });
-    
-    // Fonction de suppression
-    function deleteFiliales(ids) {
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'DELETE',
-            data: JSON.stringify({ ids: ids }),
-            contentType: 'application/json',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: response.message,
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: '#fcfefe',
-                    color: '#000000'
-                }).then(() => {
-                    // Réinitialiser la sélection
-                    selectedFiliales.clear();
-                    $('#deleteSelected').prop('disabled', true);
-                    $('#selectAll').prop('checked', false);
-                    
-                    // Recharger la liste et les stats
-                    loadFiliales(currentPage, currentFilters);
-                    updateStats();
-                });
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => deleteFiliales(ids));
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de supprimer le(s) filiale(s)',
-                        background: '#fcfefe',
-                        color: '#000000'
-                    });
-                }
-            }
-        });
-    }
-
-    // Sélection multiple
-    $(document).on('change', '.row-checkbox', function() {
-        const id = $(this).data('id').toString();
-        
-        if ($(this).prop('checked')) {
-            selectedFiliales.add(id);
-        } else {
-            selectedFiliales.delete(id);
-            $('#selectAll').prop('checked', false);
-        }
-        
-        updateDeleteButtonState();
-    });
-    
-    $('#toggleAll').on('change', function() {
-        const isChecked = $(this).prop('checked');
-        $('.row-checkbox').prop('checked', isChecked);
-        
-        if (isChecked) {
-            $('.row-checkbox').each(function() {
-                selectedFiliales.add($(this).data('id').toString());
-            });
-        } else {
-            selectedFiliales.clear();
-        }
-        
-        updateDeleteButtonState();
-    });
-    
-    $('#selectAll').on('change', function() {
-        $('#toggleAll').prop('checked', $(this).prop('checked'));
-        $('#toggleAll').change();
-    });
-    
-    function updateDeleteButtonState() {
-        const hasSelection = selectedFiliales.size > 0;
-        $('#deleteSelected').prop('disabled', !hasSelection);
-        $('#selectAll').prop('checked', hasSelection && 
-            selectedFiliales.size === $('.row-checkbox').length);
-    }
-    
-    // Mettre à jour les statistiques
-    function updateStats() {
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/filiales/stats/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                $('#totalFiliales').text(response.stats.total || 0);
-                // Mettre à jour d'autres statistiques si nécessaire
-            }
-        });
-    }
-    
-    // Helper: Get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Fonction pour rafraîchir le token d'accès
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access) {
-                    ACCESS_TOKEN = response.access;
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler',
-                    background: '#fcfefe',
-                    color: '#000000'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
-        });
-    }
-    
-    // Configurer l'interception des erreurs 401
-    $(document).ajaxError(function(event, xhr) {
-        if (xhr.status === 401) {
-            refreshAccessToken();
-        }
-    });
-    
-    // Initialiser les tooltips Bootstrap
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Gérer l'ouverture du modal d'ajout
+    // Modal: Add
     $('#addFilialeModal').on('shown.bs.modal', function() {
         $('#nom').focus();
+    }).on('hidden.bs.modal', function() {
+        this.querySelector('form').reset();
+        window.quillSetValue('commentaire', '');
     });
-    
-    // Gérer l'ouverture du modal d'édition
+
+    // Modal: Edit
     $('#editFilialeModal').on('shown.bs.modal', function() {
-        $('#editNom').focus();
+        if (pendingEditData) {
+            populateEditForm(pendingEditData);
+            pendingEditData = null;
+        }
+    }).on('hidden.bs.modal', function() {
+        window.quillSetValue('editCommentaire', '');
     });
+
+    // Chargement initial
+    loadFiliales();
+
+    // --- Chargement de la liste ---
+    function loadFiliales(page, filters) {
+        page = page || 1; filters = filters || {};
+        currentPage = page; currentFilters = filters;
+        var params = new URLSearchParams($.extend({ page: page }, filters));
+        $.ajax({
+            url: API_BASE_URL + '?' + params,
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(r) { updateTable(r.results); updatePagination(r); },
+            error: function(xhr) {
+                if (xhr.status === 401) refreshAccessToken(function() { loadFiliales(page, filters); });
+                else Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
+            }
+        });
+    }
+
+    function updateTable(list) {
+        var tbody = $('#filialeTableBody');
+        tbody.empty();
+        if (!list || !list.length) {
+            tbody.html(
+                '<tr><td colspan="6">' +
+                '<div class="empty-state-wrap">' +
+                  '<div class="esi"><i class="bi bi-diagram-3"></i></div>' +
+                  '<h6 class="text-muted mb-1">' + S.aucun + '</h6>' +
+                  '<p class="text-muted small mb-3">' + S.useFilters + '</p>' +
+                  '<button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addFilialeModal">' +
+                    '<i class="bi bi-plus-circle-fill"></i> ' + S.addFil +
+                  '</button>' +
+                '</div>' +
+                '</td></tr>'
+            );
+            return;
+        }
+        $.each(list, function(i, f) {
+            var initial = f.nom ? f.nom.charAt(0).toUpperCase() : '?';
+            var adresse = ((f.numero_adresse || '') + ' ' + (f.rue_adresse || '')).trim();
+            var cp = f.code_postale_adresse || '';
+            var commentTxt = f.commentaire ? (f.commentaire.length > 50 ? f.commentaire.substring(0, 50) + '...' : f.commentaire) : S.none;
+            var checked = selectedFiliales.has(String(f.id)) ? 'checked' : '';
+            tbody.append(
+                '<tr data-id="' + f.id + '">' +
+                '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + f.id + '" ' + checked + '></td>' +
+                '<td><div class="d-flex align-items-center gap-2">' +
+                  '<div class="avatar-sm">' + initial + '</div>' +
+                  '<div><strong>' + f.nom + '</strong>' +
+                  '<div class="text-muted" style="font-size:.75rem;"><i class="bi bi-calendar3 me-1"></i>' + S.addedOn + ' ' + (f.created_at_formatted || '') + '</div>' +
+                  '</div></div></td>' +
+                '<td><span class="badge bg-primary" style="font-size:.78rem;">' + (f.type_affiliation || S.nonSpec) + '</span></td>' +
+                '<td><span class="text-muted small">' + (adresse || S.nonSpecF) + (cp ? '<br><small class="text-muted">' + cp + '</small>' : '') + '</span></td>' +
+                '<td><span class="text-muted small" title="' + (f.commentaire || '').replace(/"/g, '&quot;') + '">' + commentTxt + '</span></td>' +
+                '<td><div class="btn-group btn-group-sm">' +
+                  '<button class="btn btn-outline-primary edit-btn" data-id="' + f.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil"></i></button>' +
+                  '<button class="btn btn-outline-danger delete-btn" data-id="' + f.id + '" title="' + S.delBtn + '"><i class="bi bi-trash"></i></button>' +
+                '</div></td>' +
+                '</tr>'
+            );
+        });
+    }
+
+    function updatePagination(r) {
+        var controls = $('#paginationControls');
+        controls.empty();
+        if (!r.count) { $('#paginationContainer').hide(); return; }
+        $('#paginationContainer').show();
+        $('#paginationInfo').text(S.display + ' ' + (r.start_index || 1) + '–' + (r.end_index || r.count) + ' (' + r.count + ' ' + S.filiales + ')');
+        if (r.previous) controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '"><i class="bi bi-chevron-left"></i></a></li>');
+        for (var i = 1; i <= r.total_pages; i++) {
+            controls.append('<li class="page-item' + (i === currentPage ? ' active' : '') + '"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+        }
+        if (r.next) controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '"><i class="bi bi-chevron-right"></i></a></li>');
+    }
+
+    // --- Filtres ---
+    $('#applyFilters').on('click', function() {
+        loadFiliales(1, { search: $('#searchInput').val() });
+    });
+    var searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() { $('#applyFilters').click(); }, 500);
+    });
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        var p = $(this).data('page');
+        if (p) loadFiliales(p, currentFilters);
+    });
+
+    // --- Formulaire Ajout ---
+    $('#addFilialeForm').on('submit', function(e) {
+        e.preventDefault();
+        var nom = $('#nom').val().trim().toUpperCase();
+        var typeAff = $('#type_affiliation').val();
+        if (!nom || nom.length < 2) { Swal.fire({ icon: 'error', title: S.err, text: S.nomMin }); $('#nom').focus(); return; }
+        if (!typeAff) { Swal.fire({ icon: 'error', title: S.err, text: S.typeReq }); $('#type_affiliation').focus(); return; }
+        var formData = {
+            nom: nom,
+            type_affiliation: typeAff,
+            numero_adresse: $('#numero_adresse').val().trim(),
+            rue_adresse: $('#rue_adresse').val().trim(),
+            code_postale_adresse: $('#code_postale_adresse').val().trim(),
+            couleur_commentaire: $('#couleur_commentaire').val() || null,
+            commentaire: $('#commentaire').val().trim()
+        };
+        var $btn = $('#submitAddBtn');
+        $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').hide();
+        $.ajax({
+            url: API_BASE_URL, type: 'POST',
+            data: JSON.stringify(formData), contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(r) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                bootstrap.Modal.getInstance($('#addFilialeModal')[0]).hide();
+                Swal.fire({ icon: 'success', title: S.ok, text: r.message || S.filAdded, timer: 1500, showConfirmButton: false })
+                    .then(function() { loadFiliales(currentPage, currentFilters); updateStats(); });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#addFilialeForm').submit(); }); return; }
+                var msg = S.errAdd;
+                if (xhr.responseJSON) { msg = xhr.responseJSON.error || (xhr.responseJSON.nom ? (Array.isArray(xhr.responseJSON.nom) ? xhr.responseJSON.nom.join(', ') : xhr.responseJSON.nom) : msg) || msg; }
+                Swal.fire({ icon: 'error', title: S.err, text: msg });
+            }
+        });
+    });
+
+    // --- Formulaire Modification ---
+    $('#editFilialeForm').on('submit', function(e) {
+        e.preventDefault();
+        var id = $('#editFilialeId').val();
+        var formData = {
+            nom: $('#editNom').val().trim().toUpperCase(),
+            type_affiliation: $('#editTypeAffiliation').val(),
+            numero_adresse: $('#editNumeroAdresse').val().trim(),
+            rue_adresse: $('#editRueAdresse').val().trim(),
+            code_postale_adresse: $('#editCodePostal').val().trim(),
+            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
+            commentaire: $('#editCommentaire').val().trim()
+        };
+        var $btn = $('#submitEditBtn');
+        $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-text').hide();
+        $.ajax({
+            url: API_BASE_URL + id + '/', type: 'PUT',
+            data: JSON.stringify(formData), contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(r) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                bootstrap.Modal.getInstance($('#editFilialeModal')[0]).hide();
+                Swal.fire({ icon: 'success', title: S.ok, text: r.message || S.filEdited, timer: 1500, showConfirmButton: false })
+                    .then(function() { loadFiliales(currentPage, currentFilters); updateStats(); });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-text').show();
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#editFilialeForm').submit(); }); return; }
+                var msg = S.errGeneric;
+                if (xhr.responseJSON) { msg = xhr.responseJSON.error || xhr.responseJSON.detail || msg; }
+                Swal.fire({ icon: 'error', title: S.err, text: msg });
+            }
+        });
+    });
+
+    // --- Bouton Modifier ---
+    $(document).on('click', '.edit-btn', function() {
+        var id = $(this).data('id');
+        $.ajax({
+            url: API_BASE_URL + id + '/',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(d) {
+                pendingEditData = d;
+                bootstrap.Modal.getOrCreateInstance($('#editFilialeModal')[0]).show();
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) refreshAccessToken(function() { $('[data-id="' + id + '"].edit-btn').first().click(); });
+                else Swal.fire({ icon: 'error', title: S.err, text: S.errLoadData });
+            }
+        });
+    });
+
+    // --- Bouton Supprimer (unitaire) ---
+    $(document).on('click', '.delete-btn', function() {
+        var id = $(this).data('id');
+        Swal.fire({
+            title: S.delSingle, text: S.irreversible, icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: S.del, cancelButtonText: S.cancel
+        }).then(function(r) { if (r.isConfirmed) deleteFiliales([id]); });
+    });
+
+    // --- Bouton Supprimer (multiple) ---
+    $('#deleteSelected').on('click', function() {
+        if (!selectedFiliales.size) return;
+        Swal.fire({
+            title: S.del + ' (' + selectedFiliales.size + ' ' + S.filiales + ')',
+            text: S.irreversible, icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: S.del, cancelButtonText: S.cancel
+        }).then(function(r) { if (r.isConfirmed) deleteFiliales(Array.from(selectedFiliales)); });
+    });
+
+    function deleteFiliales(ids) {
+        $.ajax({
+            url: API_BASE_URL, type: 'DELETE',
+            data: JSON.stringify({ ids: ids }), contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function(r) {
+                Swal.fire({ icon: 'success', title: S.ok, text: r.message, timer: 2000, showConfirmButton: false })
+                    .then(function() {
+                        selectedFiliales.clear();
+                        $('#deleteSelected').prop('disabled', true);
+                        $('#selectAll, #toggleAll').prop('checked', false);
+                        loadFiliales(currentPage, currentFilters);
+                        updateStats();
+                    });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) { refreshAccessToken(function() { deleteFiliales(ids); }); return; }
+                Swal.fire({ icon: 'error', title: S.err, text: S.errDel });
+            }
+        });
+    }
+
+    // --- Sélection multiple ---
+    $(document).on('change', '.row-checkbox', function() {
+        var id = String($(this).data('id'));
+        if ($(this).prop('checked')) selectedFiliales.add(id);
+        else { selectedFiliales.delete(id); $('#selectAll, #toggleAll').prop('checked', false); }
+        updateDeleteBtn();
+    });
+    $('#toggleAll').on('change', function() {
+        var checked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', checked);
+        if (checked) $('.row-checkbox').each(function() { selectedFiliales.add(String($(this).data('id'))); });
+        else selectedFiliales.clear();
+        updateDeleteBtn();
+    });
+    $('#selectAll').on('change', function() {
+        $('#toggleAll').prop('checked', $(this).prop('checked')).trigger('change');
+    });
+    function updateDeleteBtn() {
+        $('#deleteSelected').prop('disabled', !selectedFiliales.size);
+        var allChecked = selectedFiliales.size > 0 && selectedFiliales.size === $('.row-checkbox').length;
+        $('#selectAll, #toggleAll').prop('checked', allChecked);
+    }
+
+    // --- Statistiques ---
+    function updateStats() {
+        $.ajax({
+            url: '/api/acheteur/' + ACHETEUR_ID + '/filiales/stats/',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(r) {
+                var s = r.stats || r;
+                $('#statTotal').text(s.total || 0);
+                $('#statAvecAdresse').text(s.avec_adresse || 0);
+                $('#statAvecCommentaire').text(s.avec_commentaire || 0);
+                $('#statAvecStructure').text(s.avec_structure || 0);
+            }
+        });
+    }
+
+    // --- Helpers ---
+    function getCookie(name) {
+        var v = null;
+        if (document.cookie) {
+            document.cookie.split(';').forEach(function(c) {
+                c = c.trim();
+                if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+            });
+        }
+        return v;
+    }
+
+    function refreshAccessToken(cb) {
+        $.ajax({
+            url: '/api/token/refresh/', type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
+            success: function(r) { if (r.access) { ACCESS_TOKEN = r.access; if (cb) cb(); } },
+            error: function() {
+                Swal.fire({
+                    icon: 'error', title: S.sessExp, text: S.sessMsg,
+                    showCancelButton: true, confirmButtonText: S.reconnect, cancelButtonText: S.cancel
+                }).then(function(r) { if (r.isConfirmed) window.location.href = '/login/'; });
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
