@@ -7,7 +7,7 @@
 .page-title{font-size:1.05rem;font-weight:700;margin:0}
 .page-subtitle{font-size:.78rem;opacity:.85;margin:0}
 .ant-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
-.ant-badge{display:inline-flex;align-items:center;padding:.2rem .45rem;border-radius:4px;font-size:.7rem;font-weight:700;color:#fff;line-height:1.2}
+.ant-badge{display:inline-flex;align-items:center;padding:.2rem .45rem;border-radius:4px;font-size:.7rem;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap}
 .ant-badge.faillite{background:#dc3545}
 .ant-badge.jugement{background:#28a745}
 .ant-badge.redressement{background:#0a95ca}
@@ -99,7 +99,7 @@
                         {% if a.antecedant_redressement %}<span class="ant-badge redressement">ANTR</span>{% endif %}
                         {% if a.Autre %}<span class="ant-badge autre">AUTR</span>{% endif %}
                     </div>
-                    <div class="flex-grow-1 small text-truncate text-muted">
+                    <div class="flex-grow-1 small text-muted text-truncate">
                         {{ a.dossier_faillite|default:a.jugement_cour|default:a.antecedant_redressement|default:a.Autre|truncatechars:70 }}
                     </div>
                     <span class="text-muted flex-shrink-0" style="font-size:.72rem;">{{ a.created_at|date:"d/m/Y" }}</span>
@@ -162,10 +162,8 @@
                         <tr>
                             <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
                             <th>{% trans "Type" %}</th>
-                            <th>{% trans "Dossier Faillite" %}</th>
-                            <th>{% trans "Jugement" %}</th>
-                            <th>{% trans "Redressement" %}</th>
-                            <th>{% trans "Autre" %}</th>
+                            <th>{% trans "Contenu principal" %}</th>
+                            <th>{% trans "Commentaire" %}</th>
                             <th>{% trans "Date" %}</th>
                             <th width="90">{% trans "Actions" %}</th>
                         </tr>
@@ -228,9 +226,7 @@
                             <select class="form-select form-select-sm" id="couleur_commentaire" name="couleur_commentaire">
                                 <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                 {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                    {{ coloration.couleur }}
-                                </option>
+                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -296,9 +292,7 @@
                             <select class="form-select form-select-sm" id="editCouleurCommentaire" name="couleur_commentaire">
                                 <option value="">{% trans "Sélectionnez une couleur" %}</option>
                                 {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                    {{ coloration.couleur }}
-                                </option>
+                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -382,7 +376,6 @@ $(document).ready(function() {
         display:     "{{ t_display|escapejs }}",
         antecedents: "{{ t_antecedents|escapejs }}",
         editBtn:     "{{ t_edit_btn|escapejs }}",
-        delBtn:      "{{ t_del|escapejs }}",
         addBtn:      "{{ t_add_btn|escapejs }}"
     };
 
@@ -396,7 +389,7 @@ $(document).ready(function() {
         window.quillSetValue('editCommentaire', d.commentaire || '');
     }
 
-    // Modal: Add
+    // Modal Add
     $('#addAntecedentModal').on('shown.bs.modal', function() {
         $('#dossier_faillite').focus();
     }).on('hidden.bs.modal', function() {
@@ -404,20 +397,16 @@ $(document).ready(function() {
         window.quillSetValue('commentaire', '');
     });
 
-    // Modal: Edit
+    // Modal Edit
     $('#editAntecedentModal').on('shown.bs.modal', function() {
-        if (pendingEditData) {
-            populateEditForm(pendingEditData);
-            pendingEditData = null;
-        }
+        if (pendingEditData) { populateEditForm(pendingEditData); pendingEditData = null; }
     }).on('hidden.bs.modal', function() {
         window.quillSetValue('editCommentaire', '');
     });
 
-    // Chargement initial
     loadAntecedents();
 
-    // --- Chargement de la liste ---
+    // --- Chargement ---
     function loadAntecedents(page, filters) {
         page = page || 1; filters = filters || {};
         currentPage = page; currentFilters = filters;
@@ -433,13 +422,23 @@ $(document).ready(function() {
         });
     }
 
-    function getAntecedentType(a) {
-        if (a.dossier_faillite && a.dossier_faillite.trim()) return 'faillite';
-        if (a.jugement_cour && a.jugement_cour.trim()) return 'jugement';
-        if (a.antecedant_redressement && a.antecedant_redressement.trim()) return 'redressement';
+    function getMainContent(a) {
+        if (a.dossier_faillite && a.dossier_faillite.trim()) return '<span class="ant-badge faillite me-1">DFLT</span>' + a.dossier_faillite;
+        if (a.jugement_cour && a.jugement_cour.trim()) return '<span class="ant-badge jugement me-1">JGMT</span>' + a.jugement_cour;
+        if (a.antecedant_redressement && a.antecedant_redressement.trim()) return '<span class="ant-badge redressement me-1">ANTR</span>' + a.antecedant_redressement;
         var autre = a.Autre || a.autre || '';
-        if (autre.trim()) return 'autre';
-        return 'autre';
+        if (autre.trim()) return '<span class="ant-badge autre me-1">AUTR</span>' + autre;
+        return '<span class="text-muted">—</span>';
+    }
+
+    function getTypeBadges(a) {
+        var badges = '';
+        if (a.dossier_faillite && a.dossier_faillite.trim()) badges += '<span class="ant-badge faillite me-1">DFLT</span>';
+        if (a.jugement_cour && a.jugement_cour.trim()) badges += '<span class="ant-badge jugement me-1">JGMT</span>';
+        if (a.antecedant_redressement && a.antecedant_redressement.trim()) badges += '<span class="ant-badge redressement me-1">ANTR</span>';
+        var autre = a.Autre || a.autre || '';
+        if (autre.trim()) badges += '<span class="ant-badge autre">AUTR</span>';
+        return badges || '<span class="text-muted">—</span>';
     }
 
     function updateTable(list) {
@@ -447,13 +446,13 @@ $(document).ready(function() {
         tbody.empty();
         if (!list || !list.length) {
             tbody.html(
-                '<tr><td colspan="8">' +
+                '<tr><td colspan="6">' +
                 '<div class="empty-state-wrap">' +
                   '<div class="esi"><i class="bi bi-gavel"></i></div>' +
                   '<h6 class="text-muted mb-1">' + S.aucun + '</h6>' +
                   '<p class="text-muted small mb-3">' + S.useFilters + '</p>' +
-                  '<button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">' +
-                    '<i class="bi bi-plus-circle-fill"></i> ' + S.addBtn +
+                  '<button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">' +
+                    '<i class="bi bi-plus-circle-fill"></i>&nbsp;' + S.addBtn +
                   '</button>' +
                 '</div>' +
                 '</td></tr>'
@@ -461,27 +460,18 @@ $(document).ready(function() {
             return;
         }
         $.each(list, function(i, a) {
-            var type = getAntecedentType(a);
-            var badges = '';
-            if (a.dossier_faillite && a.dossier_faillite.trim()) badges += '<span class="ant-badge faillite me-1">DFLT</span>';
-            if (a.jugement_cour && a.jugement_cour.trim()) badges += '<span class="ant-badge jugement me-1">JGMT</span>';
-            if (a.antecedant_redressement && a.antecedant_redressement.trim()) badges += '<span class="ant-badge redressement me-1">ANTR</span>';
-            var autre = a.Autre || a.autre || '';
-            if (autre.trim()) badges += '<span class="ant-badge autre">AUTR</span>';
             var checked = selectedAntecedents.has(String(a.id)) ? 'checked' : '';
-            var trunc = function(s, n) { return s ? (s.length > n ? s.substring(0, n) + '…' : s) : '<span class="text-muted">—</span>'; };
+            var commentTxt = a.commentaire ? (a.commentaire.length > 50 ? a.commentaire.substring(0, 50) + '…' : a.commentaire) : '<span class="text-muted">—</span>';
             tbody.append(
                 '<tr data-id="' + a.id + '">' +
                 '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + a.id + '" ' + checked + '></td>' +
-                '<td>' + (badges || '<span class="text-muted">—</span>') + '</td>' +
-                '<td class="small">' + trunc(a.dossier_faillite, 40) + '</td>' +
-                '<td class="small">' + trunc(a.jugement_cour, 40) + '</td>' +
-                '<td class="small">' + trunc(a.antecedant_redressement, 40) + '</td>' +
-                '<td class="small">' + trunc(autre, 40) + '</td>' +
-                '<td class="small text-muted">' + (a.created_at_formatted || '') + '</td>' +
+                '<td>' + getTypeBadges(a) + '</td>' +
+                '<td class="small" style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + getMainContent(a) + '</td>' +
+                '<td class="small text-muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + commentTxt + '</td>' +
+                '<td class="small text-muted" style="white-space:nowrap;"><i class="bi bi-calendar3 me-1"></i>' + (a.created_at_formatted || '') + '</td>' +
                 '<td><div class="btn-group btn-group-sm">' +
                   '<button class="btn btn-outline-primary edit-btn" data-id="' + a.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil"></i></button>' +
-                  '<button class="btn btn-outline-danger delete-btn" data-id="' + a.id + '" title="' + S.delBtn + '"><i class="bi bi-trash"></i></button>' +
+                  '<button class="btn btn-outline-danger delete-btn" data-id="' + a.id + '" title="' + S.del + '"><i class="bi bi-trash"></i></button>' +
                 '</div></td>' +
                 '</tr>'
             );
@@ -555,10 +545,7 @@ $(document).ready(function() {
                 $btn.find('.btn-text').show();
                 if (xhr.status === 401) { refreshAccessToken(function() { $('#addAntecedentForm').submit(); }); return; }
                 var msg = S.errGeneric;
-                if (xhr.responseJSON) {
-                    msg = xhr.responseJSON.error || xhr.responseJSON.non_field_errors || msg;
-                    if (Array.isArray(msg)) msg = msg.join(', ');
-                }
+                if (xhr.responseJSON) { msg = xhr.responseJSON.error || (xhr.responseJSON.non_field_errors ? (Array.isArray(xhr.responseJSON.non_field_errors) ? xhr.responseJSON.non_field_errors.join(', ') : xhr.responseJSON.non_field_errors) : msg) || msg; }
                 Swal.fire({ icon: 'error', title: S.err, text: msg });
             }
         });
