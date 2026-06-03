@@ -168,7 +168,20 @@
                             <th width="90">{% trans "Actions" %}</th>
                         </tr>
                     </thead>
-                    <tbody id="antecedentTableBody"></tbody>
+                    <tbody id="antecedentTableBody">
+                        {% if stats.total == 0 %}
+                        <tr><td colspan="6">
+                            <div class="empty-state-wrap">
+                                <div class="esi"><i class="bi bi-gavel"></i></div>
+                                <h6 class="text-muted mb-1">{% trans "Aucun antécédent trouvé" %}</h6>
+                                <p class="text-muted small mb-3">{% trans "Utilisez les filtres ou ajoutez un nouvel antécédent" %}</p>
+                                <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">
+                                    <i class="bi bi-plus-circle-fill"></i>&nbsp;{% trans "Ajouter un antécédent" %}
+                                </button>
+                            </div>
+                        </td></tr>
+                        {% endif %}
+                    </tbody>
                 </table>
             </div>
             <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="paginationContainer">
@@ -220,15 +233,6 @@
                             </label>
                             <input type="text" class="form-control form-control-sm" id="autre" name="autre"
                                    placeholder="{% trans 'Autres informations' %}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold">{% trans "Couleur Commentaire" %}</label>
-                            <select class="form-select form-select-sm" id="couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
@@ -286,15 +290,6 @@
                                 <span class="ant-badge autre me-1">AUTR</span>{% trans "Autre" %}
                             </label>
                             <input type="text" class="form-control form-control-sm" id="editAutre" name="autre">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold">{% trans "Couleur Commentaire" %}</label>
-                            <select class="form-select form-select-sm" id="editCouleurCommentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
@@ -385,7 +380,6 @@ $(document).ready(function() {
         $('#editJugementCour').val(d.jugement_cour || '');
         $('#editAntecedantRedressement').val(d.antecedant_redressement || '');
         $('#editAutre').val(d.Autre || d.autre || '');
-        $('#editCouleurCommentaire').val(d.couleur_commentaire_id || d.couleur_commentaire || '');
         window.quillSetValue('editCommentaire', d.commentaire || '');
     }
 
@@ -411,17 +405,13 @@ $(document).ready(function() {
         page = page || 1; filters = filters || {};
         currentPage = page; currentFilters = filters;
         var params = new URLSearchParams($.extend({ page: page }, filters));
-        $('#antecedentTableBody').html('<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>');
         $.ajax({
             url: API_BASE_URL + '?' + params,
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) { updateTable(r.results); updatePagination(r); },
             error: function(xhr) {
                 if (xhr.status === 401) refreshAccessToken(function() { loadAntecedents(page, filters); });
-                else {
-                    $('#antecedentTableBody').empty();
-                    Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
-                }
+                else Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
             }
         });
     }
@@ -527,7 +517,6 @@ $(document).ready(function() {
             jugement_cour: jugement,
             antecedant_redressement: redress,
             Autre: autre,
-            couleur_commentaire: $('#couleur_commentaire').val() || null,
             commentaire: $('#commentaire').val().trim(),
             acheteur: ACHETEUR_ID
         };
@@ -565,7 +554,6 @@ $(document).ready(function() {
             jugement_cour: $('#editJugementCour').val().trim(),
             antecedant_redressement: $('#editAntecedantRedressement').val().trim(),
             autre: $('#editAutre').val().trim(),
-            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
             commentaire: $('#editCommentaire').val().trim()
         };
         var $btn = $('#submitEditBtn');
