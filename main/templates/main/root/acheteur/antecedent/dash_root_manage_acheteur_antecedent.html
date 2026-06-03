@@ -385,7 +385,7 @@ $(document).ready(function() {
         $('#editJugementCour').val(d.jugement_cour || '');
         $('#editAntecedantRedressement').val(d.antecedant_redressement || '');
         $('#editAutre').val(d.Autre || d.autre || '');
-        $('#editCouleurCommentaire').val(d.couleur_commentaire ? d.couleur_commentaire.id : '');
+        $('#editCouleurCommentaire').val(d.couleur_commentaire_id || d.couleur_commentaire || '');
         window.quillSetValue('editCommentaire', d.commentaire || '');
     }
 
@@ -411,13 +411,17 @@ $(document).ready(function() {
         page = page || 1; filters = filters || {};
         currentPage = page; currentFilters = filters;
         var params = new URLSearchParams($.extend({ page: page }, filters));
+        $('#antecedentTableBody').html('<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>');
         $.ajax({
             url: API_BASE_URL + '?' + params,
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) { updateTable(r.results); updatePagination(r); },
             error: function(xhr) {
                 if (xhr.status === 401) refreshAccessToken(function() { loadAntecedents(page, filters); });
-                else Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
+                else {
+                    $('#antecedentTableBody').empty();
+                    Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
+                }
             }
         });
     }
@@ -461,7 +465,8 @@ $(document).ready(function() {
         }
         $.each(list, function(i, a) {
             var checked = selectedAntecedents.has(String(a.id)) ? 'checked' : '';
-            var commentTxt = a.commentaire ? (a.commentaire.length > 50 ? a.commentaire.substring(0, 50) + '…' : a.commentaire) : '<span class="text-muted">—</span>';
+            var rawComment = (a.commentaire_preview || '').replace(/<[^>]+>/g, '').trim();
+            var commentTxt = rawComment ? (rawComment.length > 50 ? rawComment.substring(0, 50) + '…' : rawComment) : '<span class="text-muted">—</span>';
             tbody.append(
                 '<tr data-id="' + a.id + '">' +
                 '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + a.id + '" ' + checked + '></td>' +
