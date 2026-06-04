@@ -3,49 +3,18 @@
 
 {% block styles %}
 <style>
-/* ── Header ── */
 .page-header{background:linear-gradient(135deg,#0a95ca,#106cb2);padding:.75rem 1.25rem;border-radius:12px;margin-bottom:1rem;color:#fff;box-shadow:0 2px 8px rgba(13,108,178,.15)}
 .page-title{font-size:1.05rem;font-weight:700;margin:0}
 .page-subtitle{font-size:.78rem;opacity:.85;margin:0}
-
-/* ── Stat cards ── */
-.ps-stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-
-/* ── Badges produit / service ── */
-.ps-badge{display:inline-flex;align-items:center;padding:.2rem .5rem;border-radius:4px;font-size:.68rem;font-weight:700;line-height:1.2;white-space:nowrap}
-.ps-badge.prod{background:#fd7e14;color:#fff}
-.ps-badge.serv{background:#0dcaf0;color:#000}
-
-/* ── Table card header ── */
-.tbl-header{background:linear-gradient(135deg,#0a95ca,#106cb2)}
-
-/* ── Empty state ── */
+.ps-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.ps-badge{display:inline-flex;align-items:center;padding:.2rem .45rem;border-radius:4px;font-size:.7rem;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap}
+.ps-badge.prod{background:#fd7e14}
+.ps-badge.serv{background:#0d9eb5}
 .empty-state-wrap{text-align:center;padding:2.5rem 1rem}
-.empty-state-wrap .esi{width:60px;height:60px;border-radius:50%;margin:0 auto .85rem;background:linear-gradient(135deg,#e8f4fd,#d1ecf9);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#0a95ca}
-
-/* ── Record card (liste) ── */
-.ps-record-card{border:1px solid #e9ecef;border-radius:10px;padding:.85rem 1rem;margin-bottom:.6rem;transition:box-shadow .15s,border-color .15s;position:relative}
-.ps-record-card:hover{box-shadow:0 2px 10px rgba(10,149,202,.12);border-color:#bee3f8}
-.ps-record-card .ps-left-bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px;background:linear-gradient(135deg,#fd7e14,#0dcaf0)}
-.ps-record-body{padding-left:.5rem}
-.ps-record-preview{font-size:.82rem;color:#4a5568;line-height:1.45;max-height:3.5rem;overflow:hidden;text-overflow:ellipsis}
-.ps-record-meta{font-size:.72rem;color:#6c757d;margin-top:.4rem}
-
-/* ── Quill editors ── */
-.ql-container.ql-snow{min-height:90px;border-bottom-left-radius:6px;border-bottom-right-radius:6px}
-.ql-toolbar.ql-snow{border-top-left-radius:6px;border-top-right-radius:6px;background:#f8f9fa}
+.empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
+.ql-container.ql-snow{min-height:90px}
 .ql-editor{min-height:90px}
 .ql-editor.ql-blank::before{font-style:normal;color:#adb5bd;font-size:.85rem}
-.ql-editor.tall{min-height:130px}
-
-/* ── Modal ── */
-.modal-hdr-ps{background:linear-gradient(135deg,#0a95ca,#106cb2)}
-
-/* ── Section label ── */
-.section-lbl{display:flex;align-items:center;gap:.4rem;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem}
-.section-lbl.prod-lbl{color:#fd7e14}
-.section-lbl.serv-lbl{color:#0b9cbb}
-.section-lbl.comm-lbl{color:#6c757d}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -53,7 +22,7 @@
 {% block body %}
 <div class="container-fluid">
 
-    {# ══ Header ══ #}
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
@@ -69,101 +38,78 @@
                 <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
                     <i class="bi bi-arrow-left"></i>{% trans "Retour" %}
                 </a>
-                <button class="btn btn-success btn-sm d-flex align-items-center gap-1"
-                        data-bs-toggle="modal" data-bs-target="#addPSModal">
+                <button class="btn btn-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addPSModal">
                     <i class="bi bi-plus-circle-fill"></i>{% trans "Ajouter" %}
                 </button>
             </div>
         </div>
     </div>
 
-    {# ══ Statistiques ══ #}
+    <!-- Statistiques -->
     <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-4">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ps-stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-box-seam"></i></div>
+                <div class="ps-stat-icon bg-primary text-white"><i class="bi bi-box-seam"></i></div>
                 <div>
                     <div class="fw-bold fs-5 lh-1" id="statTotal">{{ produits_services_count }}</div>
                     <div class="text-muted small">{% trans "Total Enregistrements" %}</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-4">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ps-stat-icon" style="background:rgba(253,126,20,.12);color:#fd7e14;"><i class="bi bi-bag"></i></div>
+                <div class="ps-stat-icon text-white" style="background:#fd7e14;"><i class="bi bi-bag"></i></div>
                 <div>
-                    <div class="fw-bold fs-5 lh-1">
-                        {% with cnt=produits_services|length %}
-                        {% with c=0 %}
-                        {{ produits_services|length }}
-                        {% endwith %}{% endwith %}
-                        <span id="statAvecProduits">—</span>
-                    </div>
+                    <div class="fw-bold fs-5 lh-1" id="statAvecProduits">—</div>
                     <div class="text-muted small">{% trans "Avec Produits" %}</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-4">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ps-stat-icon" style="background:rgba(13,202,240,.12);color:#0b9cbb;"><i class="bi bi-gear"></i></div>
+                <div class="ps-stat-icon text-white" style="background:#0d9eb5;"><i class="bi bi-gear"></i></div>
                 <div>
-                    <div class="fw-bold fs-5 lh-1"><span id="statAvecServices">—</span></div>
+                    <div class="fw-bold fs-5 lh-1" id="statAvecServices">—</div>
                     <div class="text-muted small">{% trans "Avec Services" %}</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ps-stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check2-circle"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1"><span id="statComplets">—</span></div>
-                    <div class="text-muted small">{% trans "Complets" %}</div>
-                </div>
-            </div>
-        </div>
     </div>
 
-    {# ══ Enregistrements récents ══ #}
+    <!-- Enregistrements récents -->
     {% if produits_services %}
     <div class="card mb-3">
-        <div class="card-header py-2 px-3 d-flex align-items-center gap-2 bg-white border-bottom">
-            <i class="bi bi-clock-history text-primary" style="font-size:.9rem;"></i>
-            <strong class="small">{% trans "Enregistrements récents" %}</strong>
-        </div>
         <div class="card-body py-2 px-3">
-            {% for ps in produits_services|slice:":3" %}
-            <div class="ps-record-card">
-                <div class="ps-left-bar"></div>
-                <div class="ps-record-body">
-                    <div class="d-flex align-items-center gap-2 mb-1">
+            <strong class="small">{% trans "Enregistrements récents" %}</strong>
+            <div class="mt-2 d-flex flex-column gap-1">
+                {% for ps in produits_services|slice:":3" %}
+                <div class="d-flex align-items-center gap-2 py-1 border-bottom">
+                    <div class="d-flex gap-1 flex-shrink-0">
                         {% if ps.produits %}<span class="ps-badge prod">PROD</span>{% endif %}
                         {% if ps.services %}<span class="ps-badge serv">SERV</span>{% endif %}
-                        <span class="ps-record-meta ms-auto"><i class="bi bi-calendar3 me-1"></i>{{ ps.created_at|date:"d/m/Y" }}</span>
                     </div>
-                    <div class="ps-record-preview">
-                        {{ ps.produits|default:ps.services|striptags|truncatechars:120 }}
+                    <div class="flex-grow-1 small text-muted text-truncate">
+                        {{ ps.produits|default:ps.services|striptags|truncatechars:70 }}
                     </div>
+                    <span class="text-muted flex-shrink-0" style="font-size:.72rem;">{{ ps.created_at|date:"d/m/Y" }}</span>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
     {% endif %}
 
-    {# ══ Filtres ══ #}
+    <!-- Filtres -->
     <div class="card mb-3">
         <div class="card-body py-2 px-3">
             <div class="row g-2 align-items-end">
                 <div class="col-md-10">
-                    <label class="form-label small mb-1">
-                        <i class="bi bi-search text-primary me-1"></i>{% trans "Recherche" %}
-                    </label>
+                    <label class="form-label small mb-1"><i class="bi bi-search text-primary me-1"></i>{% trans "Recherche" %}</label>
                     <input type="text" class="form-control form-control-sm" id="searchInput"
                            placeholder="{% trans 'Produits, services...' %}">
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-                            id="applyFilters">
+                    <button class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1" id="applyFilters">
                         <i class="bi bi-funnel-fill"></i>{% trans "Filtrer" %}
                     </button>
                 </div>
@@ -171,9 +117,10 @@
         </div>
     </div>
 
-    {# ══ Carte table ══ #}
-    <div class="card shadow-sm">
-        <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center tbl-header">
+    <!-- Table -->
+    <div class="card">
+        <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center"
+             style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
             <span class="text-white fw-semibold small">
                 <i class="bi bi-list-ul me-1"></i>{% trans "Liste des Produits & Services" %}
             </span>
@@ -189,14 +136,14 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle mb-0" id="psTable">
+                <table class="table table-sm table-hover mb-0" id="psTable">
                     <thead class="table-light">
                         <tr>
                             <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
                             <th width="80">{% trans "Type" %}</th>
                             <th>{% trans "Produits" %}</th>
                             <th>{% trans "Services" %}</th>
-                            <th width="100">{% trans "Date" %}</th>
+                            <th>{% trans "Date" %}</th>
                             <th width="90">{% trans "Actions" %}</th>
                         </tr>
                     </thead>
@@ -225,14 +172,12 @@
     </div>
 </div>
 
-{# ══ Modal Ajout ══ #}
+<!-- Modal Ajout -->
 <div class="modal fade" id="addPSModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3 modal-hdr-ps">
-                <h6 class="modal-title text-white mb-0">
-                    <i class="bi bi-plus-circle me-2"></i>{% trans "Ajouter des Produits & Services" %}
-                </h6>
+            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-plus-circle me-2"></i>{% trans "Ajouter des Produits & Services" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addPSForm">
@@ -240,26 +185,26 @@
                     <div class="alert alert-info py-2 small mb-3">
                         <i class="bi bi-info-circle me-1"></i>{% trans "Renseignez au moins un produit ou un service" %}
                     </div>
-                    <div class="mb-3">
-                        <div class="section-lbl prod-lbl">
-                            <span class="ps-badge prod">PROD</span>{% trans "Produits" %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">
+                                <span class="ps-badge prod me-1">PROD</span>{% trans "Produits" %}
+                            </label>
+                            <textarea class="form-control form-control-sm rich-editor" id="addProduits" name="produits"
+                                      placeholder="{% trans 'Liste des produits fabriqués ou commercialisés...' %}"></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="addProduits" name="produits"
-                                  placeholder="{% trans 'Liste des produits fabriqués ou commercialisés...' %}"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <div class="section-lbl serv-lbl">
-                            <span class="ps-badge serv">SERV</span>{% trans "Services" %}
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">
+                                <span class="ps-badge serv me-1">SERV</span>{% trans "Services" %}
+                            </label>
+                            <textarea class="form-control form-control-sm rich-editor" id="addServices" name="services"
+                                      placeholder="{% trans 'Liste des services offerts...' %}"></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="addServices" name="services"
-                                  placeholder="{% trans 'Liste des services offerts...' %}"></textarea>
-                    </div>
-                    <div class="mb-1">
-                        <div class="section-lbl comm-lbl">
-                            <i class="bi bi-chat-left-text"></i>{% trans "Commentaire" %}
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
+                            <textarea class="form-control form-control-sm rich-editor" id="addCommentaire" name="commentaire"
+                                      placeholder="{% trans 'Commentaires supplémentaires' %}..."></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="addCommentaire" name="commentaire"
-                                  placeholder="{% trans 'Commentaires supplémentaires' %}..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -276,36 +221,34 @@
     </div>
 </div>
 
-{# ══ Modal Modification ══ #}
+<!-- Modal Modification -->
 <div class="modal fade" id="editPSModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3 modal-hdr-ps">
-                <h6 class="modal-title text-white mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>{% trans "Modifier les Produits & Services" %}
-                </h6>
+            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <h6 class="modal-title text-white mb-0"><i class="bi bi-pencil-square me-2"></i>{% trans "Modifier les Produits & Services" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editPSForm">
                 <input type="hidden" id="editPSId">
                 <div class="modal-body py-3 px-4">
-                    <div class="mb-3">
-                        <div class="section-lbl prod-lbl">
-                            <span class="ps-badge prod">PROD</span>{% trans "Produits" %}
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">
+                                <span class="ps-badge prod me-1">PROD</span>{% trans "Produits" %}
+                            </label>
+                            <textarea class="form-control form-control-sm rich-editor" id="editProduits" name="produits"></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="editProduits" name="produits"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <div class="section-lbl serv-lbl">
-                            <span class="ps-badge serv">SERV</span>{% trans "Services" %}
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">
+                                <span class="ps-badge serv me-1">SERV</span>{% trans "Services" %}
+                            </label>
+                            <textarea class="form-control form-control-sm rich-editor" id="editServices" name="services"></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="editServices" name="services"></textarea>
-                    </div>
-                    <div class="mb-1">
-                        <div class="section-lbl comm-lbl">
-                            <i class="bi bi-chat-left-text"></i>{% trans "Commentaire" %}
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">{% trans "Commentaire" %}</label>
+                            <textarea class="form-control form-control-sm rich-editor" id="editCommentaire" name="commentaire"></textarea>
                         </div>
-                        <textarea class="form-control form-control-sm rich-editor" id="editCommentaire" name="commentaire"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -344,9 +287,6 @@
 {% trans "Affichage" as t_display %}
 {% trans "enregistrements" as t_enregs %}
 {% trans "Modifier" as t_edit_btn %}
-{% trans "Avec Produits" as t_avec_prod %}
-{% trans "Avec Services" as t_avec_serv %}
-{% trans "Complets" as t_complets %}
 
 <script>
 $(document).ready(function() {
@@ -382,13 +322,9 @@ $(document).ready(function() {
         errGeneric:  "{{ t_err_generic|escapejs }}",
         display:     "{{ t_display|escapejs }}",
         enregs:      "{{ t_enregs|escapejs }}",
-        editBtn:     "{{ t_edit_btn|escapejs }}",
-        avecProd:    "{{ t_avec_prod|escapejs }}",
-        avecServ:    "{{ t_avec_serv|escapejs }}",
-        complets:    "{{ t_complets|escapejs }}"
+        editBtn:     "{{ t_edit_btn|escapejs }}"
     };
 
-    // ── populateEditForm ──
     function populateEditForm(d) {
         $('#editPSId').val(d.id);
         window.quillSetValue('editProduits', d.produits || '');
@@ -396,13 +332,13 @@ $(document).ready(function() {
         window.quillSetValue('editCommentaire', d.commentaire || '');
     }
 
-    // ── Modals ──
     $('#addPSModal').on('hidden.bs.modal', function() {
         this.querySelector('form').reset();
         window.quillSetValue('addProduits', '');
         window.quillSetValue('addServices', '');
         window.quillSetValue('addCommentaire', '');
     });
+
     $('#editPSModal').on('shown.bs.modal', function() {
         if (pendingEditData) { populateEditForm(pendingEditData); pendingEditData = null; }
     }).on('hidden.bs.modal', function() {
@@ -411,10 +347,8 @@ $(document).ready(function() {
         window.quillSetValue('editCommentaire', '');
     });
 
-    // ── Initial load ──
     loadPS();
 
-    // ── loadPS ──
     function loadPS(page, filters) {
         page = page || 1; filters = filters || {};
         currentPage = page; currentFilters = filters;
@@ -425,7 +359,8 @@ $(document).ready(function() {
             success: function(r) {
                 updateTable(r.results);
                 updatePagination(r);
-                updateStats(r.results, r.count);
+                if (r.count !== undefined) { $('#statTotal').text(r.count); }
+                computeStats(r.results);
             },
             error: function(xhr) {
                 if (xhr.status === 401) refreshAccessToken(function() { loadPS(page, filters); });
@@ -434,29 +369,21 @@ $(document).ready(function() {
         });
     }
 
-    // ── Stats from results ──
-    function updateStats(list, total) {
-        if (total !== undefined) { $('#statTotal').text(total); }
+    function computeStats(list) {
         if (!list) return;
-        var avecProd = 0, avecServ = 0, complets = 0;
+        var avecProd = 0, avecServ = 0;
         $.each(list, function(i, ps) {
-            var hasProd = !!(ps.produits && ps.produits.replace(/<[^>]+>/g,'').trim());
-            var hasServ = !!(ps.services && ps.services.replace(/<[^>]+>/g,'').trim());
-            if (hasProd) avecProd++;
-            if (hasServ) avecServ++;
-            if (hasProd && hasServ) complets++;
+            if (ps.produits && ps.produits.replace(/<[^>]+>/g, '').trim()) avecProd++;
+            if (ps.services && ps.services.replace(/<[^>]+>/g, '').trim()) avecServ++;
         });
         $('#statAvecProduits').text(avecProd);
         $('#statAvecServices').text(avecServ);
-        $('#statComplets').text(complets);
     }
 
-    // ── stripHtml ──
     function stripHtml(html) {
         return (html || '').replace(/<[^>]+>/g, '').trim();
     }
 
-    // ── updateTable ──
     function updateTable(list) {
         var tbody = $('#psTableBody');
         tbody.empty();
@@ -467,11 +394,11 @@ $(document).ready(function() {
                   '<div class="esi"><i class="bi bi-box-seam"></i></div>' +
                   '<h6 class="text-muted mb-1">' + S.aucun + '</h6>' +
                   '<p class="text-muted small mb-3">' + S.useFilters + '</p>' +
-                  '<button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" ' +
-                          'data-bs-toggle="modal" data-bs-target="#addPSModal">' +
+                  '<button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addPSModal">' +
                     '<i class="bi bi-plus-circle-fill"></i>&nbsp;' + S.addBtn +
                   '</button>' +
-                '</div></td></tr>'
+                '</div>' +
+                '</td></tr>'
             );
             return;
         }
@@ -479,15 +406,19 @@ $(document).ready(function() {
             var checked  = selectedItems.has(String(ps.id)) ? 'checked' : '';
             var hasProd  = !!(ps.produits && stripHtml(ps.produits));
             var hasServ  = !!(ps.services && stripHtml(ps.services));
-            var badges   = (hasProd ? '<span class="ps-badge prod me-1">PROD</span>' : '') +
-                           (hasServ ? '<span class="ps-badge serv">SERV</span>' : '');
-            var prodTxt  = hasProd ? stripHtml(ps.produits).substring(0, 55) + (stripHtml(ps.produits).length > 55 ? '…' : '') : '<span class="text-muted">—</span>';
-            var servTxt  = hasServ ? stripHtml(ps.services).substring(0, 55) + (stripHtml(ps.services).length > 55 ? '…' : '') : '<span class="text-muted">—</span>';
-            var dateStr  = ps.created_at ? ps.created_at.substring(0,10).split('-').reverse().join('/') : '—';
+            var badges   = '';
+            if (hasProd) badges += '<span class="ps-badge prod me-1">PROD</span>';
+            if (hasServ) badges += '<span class="ps-badge serv">SERV</span>';
+            if (!badges) badges = '<span class="text-muted small">—</span>';
+            var prodRaw  = hasProd ? stripHtml(ps.produits) : '';
+            var servRaw  = hasServ ? stripHtml(ps.services) : '';
+            var prodTxt  = prodRaw ? (prodRaw.length > 50 ? prodRaw.substring(0, 50) + '…' : prodRaw) : '<span class="text-muted">—</span>';
+            var servTxt  = servRaw ? (servRaw.length > 50 ? servRaw.substring(0, 50) + '…' : servRaw) : '<span class="text-muted">—</span>';
+            var dateStr  = ps.created_at ? ps.created_at.substring(0, 10).split('-').reverse().join('/') : '—';
             tbody.append(
                 '<tr data-id="' + ps.id + '">' +
                 '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + ps.id + '" ' + checked + '></td>' +
-                '<td>' + (badges || '<span class="text-muted small">—</span>') + '</td>' +
+                '<td>' + badges + '</td>' +
                 '<td class="small" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + prodTxt + '</td>' +
                 '<td class="small" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + servTxt + '</td>' +
                 '<td class="small text-muted" style="white-space:nowrap;"><i class="bi bi-calendar3 me-1"></i>' + dateStr + '</td>' +
@@ -500,7 +431,6 @@ $(document).ready(function() {
         });
     }
 
-    // ── Pagination ──
     function updatePagination(r) {
         var controls = $('#paginationControls');
         controls.empty();
@@ -509,19 +439,14 @@ $(document).ready(function() {
         var start = (currentPage - 1) * PAGE_SIZE + 1;
         var end   = Math.min(currentPage * PAGE_SIZE, r.count);
         $('#paginationInfo').text(S.display + ' ' + start + '–' + end + ' (' + r.count + ' ' + S.enregs + ')');
-        if (r.previous) {
-            controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '"><i class="bi bi-chevron-left"></i></a></li>');
-        }
+        if (r.previous) controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage - 1) + '"><i class="bi bi-chevron-left"></i></a></li>');
         var totalPages = Math.ceil(r.count / PAGE_SIZE);
         for (var i = 1; i <= totalPages; i++) {
             controls.append('<li class="page-item' + (i === currentPage ? ' active' : '') + '"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
         }
-        if (r.next) {
-            controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '"><i class="bi bi-chevron-right"></i></a></li>');
-        }
+        if (r.next) controls.append('<li class="page-item"><a class="page-link" href="#" data-page="' + (currentPage + 1) + '"><i class="bi bi-chevron-right"></i></a></li>');
     }
 
-    // ── Filtres ──
     $('#applyFilters').on('click', function() {
         loadPS(1, { search: $('#searchInput').val() });
     });
@@ -536,12 +461,11 @@ $(document).ready(function() {
         if (p) loadPS(p, currentFilters);
     });
 
-    // ── Ajout ──
     $('#addPSForm').on('submit', function(e) {
         e.preventDefault();
-        var produits     = $('#addProduits').val().trim();
-        var services     = $('#addServices').val().trim();
-        var commentaire  = $('#addCommentaire').val().trim();
+        var produits    = $('#addProduits').val().trim();
+        var services    = $('#addServices').val().trim();
+        var commentaire = $('#addCommentaire').val().trim();
         if (!stripHtml(produits) && !stripHtml(services)) {
             Swal.fire({ icon: 'warning', title: S.err, text: S.atLeastOne });
             return;
@@ -572,7 +496,6 @@ $(document).ready(function() {
         });
     });
 
-    // ── Modification ──
     $('#editPSForm').on('submit', function(e) {
         e.preventDefault();
         var id = $('#editPSId').val();
@@ -606,7 +529,6 @@ $(document).ready(function() {
         });
     });
 
-    // ── Bouton Modifier ──
     $(document).on('click', '.edit-btn', function() {
         var id = $(this).data('id');
         $.ajax({
@@ -623,7 +545,6 @@ $(document).ready(function() {
         });
     });
 
-    // ── Supprimer (unitaire) ──
     $(document).on('click', '.delete-btn', function() {
         var id = $(this).data('id');
         Swal.fire({
@@ -633,7 +554,6 @@ $(document).ready(function() {
         }).then(function(r) { if (r.isConfirmed) deleteOne(id); });
     });
 
-    // ── Supprimer (multiple) ──
     $('#deleteSelected').on('click', function() {
         if (!selectedItems.size) return;
         Swal.fire({
@@ -677,7 +597,6 @@ $(document).ready(function() {
         });
     }
 
-    // ── Sélection ──
     $(document).on('change', '.row-checkbox', function() {
         var id = String($(this).data('id'));
         if ($(this).prop('checked')) selectedItems.add(id);
@@ -700,7 +619,6 @@ $(document).ready(function() {
         $('#selectAll, #toggleAll').prop('checked', allChecked);
     }
 
-    // ── Helpers ──
     function getCookie(name) {
         var v = null;
         if (document.cookie) {
