@@ -9,9 +9,9 @@
 .pa-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
 .empty-state-wrap{text-align:center;padding:2.5rem 1rem}
 .empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
-.local-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600;background:linear-gradient(135deg,#6610f2,#6f42c1);color:#fff;margin:.2rem}
+.local-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:20px;font-size:.75rem;font-weight:600;background:linear-gradient(135deg,#6610f2,#6f42c1);color:#fff;margin:.2rem}
 .pa-section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6c757d;margin-bottom:.3rem}
-.pa-section-value{font-size:.92rem;color:#212529}
+.pa-section-value{font-size:.9rem;color:#212529}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -40,25 +40,25 @@
         </div>
     </div>
 
-    <!-- Statistique -->
+    <!-- Statistiques -->
     <div class="row g-2 mb-3">
         <div class="col-6 col-md-3">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="pa-stat-icon text-white" id="statIcon"
+                <div class="pa-stat-icon text-white"
                      style="background:{% if has_propriete_actif %}#28a745{% else %}#fd7e14{% endif %};">
                     <i class="bi bi-{% if has_propriete_actif %}check-circle-fill{% else %}exclamation-circle{% endif %}"></i>
                 </div>
                 <div>
-                    <div class="fw-bold lh-1 small" id="statStatus">
+                    <div class="fw-bold small lh-1 mt-1" id="statStatus">
                         {% if has_propriete_actif %}{% trans "Enregistrée" %}{% else %}{% trans "Non enregistrée" %}{% endif %}
                     </div>
-                    <div class="text-muted small">{% trans "Propriétés & Actifs" %}</div>
+                    <div class="text-muted small">{% trans "Statut" %}</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="pa-stat-icon bg-primary text-white"><i class="bi bi-geo-alt"></i></div>
+                <div class="pa-stat-icon bg-primary text-white"><i class="bi bi-geo-alt-fill"></i></div>
                 <div>
                     <div class="fw-bold fs-5 lh-1" id="statLocaux">
                         {% if propriete_actif %}{{ propriete_actif.locaux.count }}{% else %}0{% endif %}
@@ -76,12 +76,73 @@
             <span class="text-white fw-semibold small">
                 <i class="bi bi-building me-1"></i>{% trans "Propriétés & Actifs" %}
             </span>
-            <div id="headerActions"></div>
+            <div id="headerActions">
+                {% if has_propriete_actif %}
+                <div class="d-flex gap-2">
+                    <button class="btn btn-warning btn-sm d-flex align-items-center gap-1" id="btnEdit">
+                        <i class="bi bi-pencil"></i>{% trans "Modifier" %}
+                    </button>
+                    <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="btnDelete">
+                        <i class="bi bi-trash"></i>{% trans "Supprimer" %}
+                    </button>
+                </div>
+                {% else %}
+                <button class="btn btn-success btn-sm d-flex align-items-center gap-1" id="btnCreate">
+                    <i class="bi bi-plus-circle-fill"></i>{% trans "Ajouter une Propriété/Actif" %}
+                </button>
+                {% endif %}
+            </div>
         </div>
         <div class="card-body" id="contentBody">
-            <div class="text-center py-4">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            {% if has_propriete_actif %}
+            <!-- Contenu rendu côté serveur -->
+            <div class="row g-3 py-1" id="paRecord">
+                <div class="col-md-6">
+                    <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branche d'activité" %}</div>
+                    <div class="pa-section-value">
+                        {% if propriete_actif.branche %}
+                            {{ propriete_actif.branche }}
+                        {% else %}
+                            <span class="text-muted small">{% trans "Aucune branche spécifiée" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Locaux associés" %}</div>
+                    <div class="pa-section-value" id="locauxDisplay">
+                        {% if propriete_actif.locaux.all %}
+                            {% for local in propriete_actif.locaux.all %}
+                            <span class="local-badge"><i class="bi bi-geo-alt-fill" style="font-size:.65rem;"></i>{{ local.nom }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted small">{% trans "Aucun local associé" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-12 border-top pt-3 mt-1">
+                    <div class="d-flex gap-4">
+                        <div>
+                            <div class="pa-section-label"><i class="bi bi-calendar3 me-1"></i>{% trans "Ajouté le" %}</div>
+                            <div class="text-muted small">{{ propriete_actif.created_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div>
+                            <div class="pa-section-label"><i class="bi bi-clock-history me-1"></i>{% trans "Dernière mise à jour" %}</div>
+                            <div class="text-muted small">{{ propriete_actif.updated_at|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+            {% else %}
+            <!-- État vide -->
+            <div class="empty-state-wrap">
+                <div class="esi"><i class="bi bi-building"></i></div>
+                <h6 class="text-muted mb-1">{% trans "Aucune propriété/actif enregistrée" %}</h6>
+                <p class="text-muted small mb-3">{% trans "Créer la propriété/actif" %}</p>
+                <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" id="btnCreateBody">
+                    <i class="bi bi-plus-circle-fill"></i>&nbsp;{% trans "Ajouter une Propriété/Actif" %}
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -104,13 +165,19 @@
                                 <i class="bi bi-diagram-3 me-1 text-primary"></i>{% trans "Branche d'activité" %}
                             </label>
                             <input type="text" class="form-control form-control-sm" id="brancheInput"
-                                   placeholder="{% trans 'Branche non spécifiée' %}">
+                                   placeholder="{% trans 'Aucune branche spécifiée' %}">
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Locaux associés" %}
                             </label>
-                            <select multiple class="form-select form-select-sm" id="locauxSelect" style="min-height:120px;">
+                            <select multiple class="form-select form-select-sm" id="locauxSelect"
+                                    style="min-height:120px;">
+                                {% for local in locaux %}
+                                <option value="{{ local.id }}">{{ local.nom }}</option>
+                                {% empty %}
+                                <option disabled>{% trans "Aucun local disponible" %}</option>
+                                {% endfor %}
                             </select>
                             <div class="form-text small">
                                 <i class="bi bi-info-circle me-1"></i>{% trans "Maintenez Ctrl pour sélectionner plusieurs locaux" %}
@@ -131,10 +198,11 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 {% trans "Erreur" as t_err %}
 {% trans "Succès" as t_ok %}
-{% trans "Propriétés & Actifs" as t_titre %}
 {% trans "Enregistrée" as t_enregistre %}
 {% trans "Non enregistrée" as t_non_enregistre %}
 {% trans "Ajouter une Propriété/Actif" as t_ajouter %}
@@ -160,199 +228,87 @@
 {% trans "Créer la propriété/actif" as t_creer %}
 {% trans "Ajouté le" as t_ajoute_le %}
 {% trans "Dernière mise à jour" as t_maj %}
-{% trans "Locaux" as t_locaux_label %}
 
-{% endblock %}
-
-{% block scripts %}
 <script>
 $(document).ready(function() {
-    var ACHETEUR_ID = '{{ acheteur.id }}';
-    var API_URL     = '/api/acheteur/' + ACHETEUR_ID + '/propriete-actif/';
+    var ACHETEUR_ID  = '{{ acheteur.id }}';
+    var API_URL      = '/api/acheteur/' + ACHETEUR_ID + '/propriete-actif/';
     var ACCESS_TOKEN  = '{{ access_token }}';
     var REFRESH_TOKEN = '{{ refresh_token }}';
-    var LOCAUX_ALL  = {{ locaux_json|safe }};
-    var isEditMode  = false;
+    var HAS_RECORD   = {% if has_propriete_actif %}true{% else %}false{% endif %};
+    var isEditMode   = HAS_RECORD;
 
     var S = {
-        err:         "{{ t_err|escapejs }}",
-        ok:          "{{ t_ok|escapejs }}",
-        titre:       "{{ t_titre|escapejs }}",
-        enregistre:  "{{ t_enregistre|escapejs }}",
-        nonEnreg:    "{{ t_non_enregistre|escapejs }}",
-        ajouter:     "{{ t_ajouter|escapejs }}",
-        modifier:    "{{ t_modifier|escapejs }}",
-        delConfirm:  "{{ t_del_confirm|escapejs }}",
-        irreversible:"{{ t_irreversible|escapejs }}",
-        del:         "{{ t_del|escapejs }}",
-        cancel:      "{{ t_cancel|escapejs }}",
-        edit:        "{{ t_edit|escapejs }}",
-        cree:        "{{ t_cree|escapejs }}",
-        modif:       "{{ t_modif|escapejs }}",
-        supprime:    "{{ t_supprime|escapejs }}",
-        errLoad:     "{{ t_err_load|escapejs }}",
-        errGeneric:  "{{ t_err_generic|escapejs }}",
-        sessExp:     "{{ t_sess_exp|escapejs }}",
-        sessMsg:     "{{ t_sess_msg|escapejs }}",
-        reconnect:   "{{ t_reconnect|escapejs }}",
-        branche:     "{{ t_branche|escapejs }}",
-        locaux:      "{{ t_locaux|escapejs }}",
-        aucunLocal:  "{{ t_aucun_local|escapejs }}",
-        aucuneBranch:"{{ t_aucune_branche|escapejs }}",
-        aucunePA:    "{{ t_aucune_pa|escapejs }}",
-        creer:       "{{ t_creer|escapejs }}",
-        ajouteLe:    "{{ t_ajoute_le|escapejs }}",
-        maj:         "{{ t_maj|escapejs }}",
-        locauxLabel: "{{ t_locaux_label|escapejs }}"
+        err:          "{{ t_err|escapejs }}",
+        ok:           "{{ t_ok|escapejs }}",
+        enregistre:   "{{ t_enregistre|escapejs }}",
+        nonEnreg:     "{{ t_non_enregistre|escapejs }}",
+        ajouter:      "{{ t_ajouter|escapejs }}",
+        modifier:     "{{ t_modifier|escapejs }}",
+        delConfirm:   "{{ t_del_confirm|escapejs }}",
+        irreversible: "{{ t_irreversible|escapejs }}",
+        del:          "{{ t_del|escapejs }}",
+        cancel:       "{{ t_cancel|escapejs }}",
+        edit:         "{{ t_edit|escapejs }}",
+        cree:         "{{ t_cree|escapejs }}",
+        modif:        "{{ t_modif|escapejs }}",
+        supprime:     "{{ t_supprime|escapejs }}",
+        errLoad:      "{{ t_err_load|escapejs }}",
+        errGeneric:   "{{ t_err_generic|escapejs }}",
+        sessExp:      "{{ t_sess_exp|escapejs }}",
+        sessMsg:      "{{ t_sess_msg|escapejs }}",
+        reconnect:    "{{ t_reconnect|escapejs }}",
+        branche:      "{{ t_branche|escapejs }}",
+        locaux:       "{{ t_locaux|escapejs }}",
+        aucunLocal:   "{{ t_aucun_local|escapejs }}",
+        aucuneBranch: "{{ t_aucune_branche|escapejs }}",
+        aucunePA:     "{{ t_aucune_pa|escapejs }}",
+        creer:        "{{ t_creer|escapejs }}",
+        ajouteLe:     "{{ t_ajoute_le|escapejs }}",
+        maj:          "{{ t_maj|escapejs }}"
     };
 
-    // ── Peupler le select locaux ──
-    function populateLocauxSelect(selectedIds) {
-        var sel = $('#locauxSelect');
-        sel.empty();
-        if (!LOCAUX_ALL || !LOCAUX_ALL.length) {
-            sel.append('<option disabled>{{ t_aucun_local|escapejs }}</option>');
-            return;
-        }
-        $.each(LOCAUX_ALL, function(i, l) {
-            var opt = $('<option>').val(l.id).text(l.nom);
-            if (selectedIds && selectedIds.indexOf(l.id) !== -1) opt.prop('selected', true);
-            sel.append(opt);
-        });
-    }
+    // ── Ouvrir modal Ajout ──
+    $(document).on('click', '#btnCreate, #btnCreateBody', function() {
+        isEditMode = false;
+        $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
+        $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
+        $('#brancheInput').val('');
+        $('#locauxSelect option').prop('selected', false);
+        bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
+    });
 
-    // ── Chargement initial ──
-    loadRecord();
+    // ── Ouvrir modal Modification ──
+    $(document).on('click', '#btnEdit', function() {
+        isEditMode = true;
+        $('#paModalTitle').html('<i class="bi bi-pencil-square me-2"></i>' + S.modifier);
+        $('#submitPABtn .btn-text').html('<i class="bi bi-save me-1"></i>{% trans "Mettre à jour" %}');
 
-    function loadRecord() {
         $.ajax({
             url: API_URL,
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
-                if (r.exists === false) { renderEmpty(); }
-                else { renderRecord(r); }
+                if (r.exists === false) return;
+                $('#brancheInput').val(r.branche || '');
+                var ids = (r.locaux_list || []).map(function(l) { return String(l.id); });
+                $('#locauxSelect option').each(function() {
+                    $(this).prop('selected', ids.indexOf($(this).val()) !== -1);
+                });
+                bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
             },
             error: function(xhr) {
-                if (xhr.status === 401) refreshAccessToken(loadRecord);
-                else {
-                    $('#contentBody').html('<div class="alert alert-danger m-3 small"><i class="bi bi-exclamation-triangle me-1"></i>' + S.errLoad + '</div>');
-                    $('#headerActions').empty();
-                }
+                if (xhr.status === 401) refreshAccessToken(function() { $('#btnEdit').click(); });
+                else Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
             }
         });
-    }
-
-    // ── Rendu vide ──
-    function renderEmpty() {
-        $('#statIcon').css('background', '#fd7e14').html('<i class="bi bi-exclamation-circle"></i>');
-        $('#statStatus').text(S.nonEnreg);
-        $('#statLocaux').text('0');
-        $('#headerActions').html(
-            '<button class="btn btn-success btn-sm d-flex align-items-center gap-1" id="btnCreate">' +
-            '<i class="bi bi-plus-circle-fill"></i>' + S.ajouter +
-            '</button>'
-        );
-        $('#contentBody').html(
-            '<div class="empty-state-wrap">' +
-              '<div class="esi"><i class="bi bi-building"></i></div>' +
-              '<h6 class="text-muted mb-1">' + S.aucunePA + '</h6>' +
-              '<p class="text-muted small mb-3">{{ t_creer|escapejs }}</p>' +
-              '<button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" id="btnCreateBody">' +
-                '<i class="bi bi-plus-circle-fill"></i>&nbsp;' + S.ajouter +
-              '</button>' +
-            '</div>'
-        );
-        $(document).on('click', '#btnCreate, #btnCreateBody', function() { openModal(false, null); });
-    }
-
-    // ── Rendu enregistrement ──
-    function renderRecord(r) {
-        $('#statIcon').css('background', '#28a745').html('<i class="bi bi-check-circle-fill"></i>');
-        $('#statStatus').text(S.enregistre);
-        var locauxCount = (r.locaux_list && r.locaux_list.length) ? r.locaux_list.length : 0;
-        $('#statLocaux').text(locauxCount);
-
-        // Badges locaux
-        var locauxHtml = '';
-        if (r.locaux_list && r.locaux_list.length) {
-            $.each(r.locaux_list, function(i, l) {
-                locauxHtml += '<span class="local-badge"><i class="bi bi-geo-alt-fill" style="font-size:.65rem;"></i>' + l.nom + '</span>';
-            });
-        } else {
-            locauxHtml = '<span class="text-muted small">' + S.aucunLocal + '</span>';
-        }
-
-        var brancheVal = (r.branche && r.branche.trim()) ? r.branche : '<span class="text-muted small">' + S.aucuneBranch + '</span>';
-        var dateCreated = r.created_at_formatted || '';
-        var dateUpdated = r.updated_at_formatted || '';
-
-        $('#contentBody').html(
-            '<div class="row g-3 py-2">' +
-              '<div class="col-md-6">' +
-                '<div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>' + S.branche + '</div>' +
-                '<div class="pa-section-value">' + brancheVal + '</div>' +
-              '</div>' +
-              '<div class="col-md-6">' +
-                '<div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>' + S.locaux + '</div>' +
-                '<div class="pa-section-value">' + locauxHtml + '</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="row mt-3 pt-3 border-top">' +
-              '<div class="col-md-6">' +
-                '<div class="pa-section-label"><i class="bi bi-calendar3 me-1"></i>' + S.ajouteLe + '</div>' +
-                '<div class="text-muted small">' + dateCreated + '</div>' +
-              '</div>' +
-              '<div class="col-md-6">' +
-                '<div class="pa-section-label"><i class="bi bi-clock-history me-1"></i>' + S.maj + '</div>' +
-                '<div class="text-muted small">' + dateUpdated + '</div>' +
-              '</div>' +
-            '</div>'
-        );
-
-        // Boutons header
-        $('#headerActions').html(
-            '<div class="d-flex gap-2">' +
-            '<button class="btn btn-warning btn-sm d-flex align-items-center gap-1" id="btnEdit">' +
-            '<i class="bi bi-pencil"></i>' + S.edit +
-            '</button>' +
-            '<button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="btnDelete">' +
-            '<i class="bi bi-trash"></i>' + S.del +
-            '</button>' +
-            '</div>'
-        );
-
-        // Événements des boutons (délégation)
-        $(document).off('click', '#btnEdit #btnDelete');
-        $(document).on('click', '#btnEdit', function() { openModal(true, r); });
-        $(document).on('click', '#btnDelete', function() { confirmDelete(); });
-    }
-
-    // ── Ouvrir modal ──
-    function openModal(editMode, r) {
-        isEditMode = editMode;
-        if (editMode) {
-            $('#paModalTitle').html('<i class="bi bi-pencil-square me-2"></i>' + S.modifier);
-            $('#submitPABtn .btn-text').html('<i class="bi bi-save me-1"></i>{% trans "Mettre à jour" %}');
-            var selectedIds = (r.locaux_list || []).map(function(l) { return l.id; });
-            $('#brancheInput').val(r.branche || '');
-            populateLocauxSelect(selectedIds);
-        } else {
-            $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
-            $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
-            $('#brancheInput').val('');
-            populateLocauxSelect([]);
-        }
-        bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
-    }
+    });
 
     // ── Soumission formulaire ──
     $('#paForm').on('submit', function(e) {
         e.preventDefault();
-        var branche = $('#brancheInput').val().trim();
-        var locauxIds = $('#locauxSelect').val() || [];
-        locauxIds = $.map(locauxIds, function(v) { return parseInt(v); });
-
-        var formData = { branche: branche, locaux: locauxIds };
+        var branche   = $('#brancheInput').val().trim();
+        var locauxIds = $.map($('#locauxSelect').val() || [], function(v) { return parseInt(v); });
+        var formData  = { branche: branche, locaux: locauxIds };
         if (!isEditMode) { formData.acheteur = ACHETEUR_ID; }
 
         var $btn = $('#submitPABtn');
@@ -360,17 +316,15 @@ $(document).ready(function() {
         $btn.find('.btn-text').hide();
 
         $.ajax({
-            url: API_URL,
-            type: isEditMode ? 'PUT' : 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
+            url: API_URL, type: isEditMode ? 'PUT' : 'POST',
+            data: JSON.stringify(formData), contentType: 'application/json',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
             success: function(r) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
                 bootstrap.Modal.getInstance($('#paModal')[0]).hide();
                 Swal.fire({ icon: 'success', title: S.ok, text: r.message || (isEditMode ? S.modif : S.cree), timer: 1500, showConfirmButton: false })
-                    .then(function() { loadRecord(); });
+                    .then(function() { window.location.reload(); });
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
@@ -384,7 +338,7 @@ $(document).ready(function() {
     });
 
     // ── Suppression ──
-    function confirmDelete() {
+    $(document).on('click', '#btnDelete', function() {
         Swal.fire({
             title: S.delConfirm, text: S.irreversible, icon: 'warning',
             showCancelButton: true, confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
@@ -396,20 +350,20 @@ $(document).ready(function() {
                 headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
                 success: function() {
                     Swal.fire({ icon: 'success', title: S.ok, text: S.supprime, timer: 1500, showConfirmButton: false })
-                        .then(function() { loadRecord(); });
+                        .then(function() { window.location.reload(); });
                 },
                 error: function(xhr) {
-                    if (xhr.status === 401) { refreshAccessToken(confirmDelete); return; }
+                    if (xhr.status === 401) { refreshAccessToken(function() { $('#btnDelete').click(); }); return; }
                     Swal.fire({ icon: 'error', title: S.err, text: S.errGeneric });
                 }
             });
         });
-    }
+    });
 
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
         $('#paForm')[0].reset();
-        $('#locauxSelect').empty();
+        $('#locauxSelect option').prop('selected', false);
     });
 
     // ── Helpers ──
@@ -440,4 +394,3 @@ $(document).ready(function() {
 });
 </script>
 {% endblock %}
-
