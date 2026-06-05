@@ -7,7 +7,14 @@
 .page-title{font-size:1.05rem;font-weight:700;margin:0}
 .page-subtitle{font-size:.78rem;opacity:.85;margin:0}
 .adv-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
-.adv-section{border-radius:8px;border:1px solid #e9ecef;padding:.85rem 1rem;margin-bottom:.75rem}
+
+/* Section cards (vue) */
+.adv-section{border-radius:8px;border-left:4px solid #dee2e6;padding:.85rem 1rem .75rem;background:#f8f9fa;margin-bottom:0}
+.adv-section.strengths{border-left-color:#28a745;background:rgba(40,167,69,.04)}
+.adv-section.weaknesses{border-left-color:#dc3545;background:rgba(220,53,69,.04)}
+.adv-section.dynamics-short{border-left-color:#0a95ca;background:rgba(10,149,202,.04)}
+.adv-section.dynamics-long{border-left-color:#6f42c1;background:rgba(111,66,193,.04)}
+.adv-section.risks{border-left-color:#fd7e14;background:rgba(253,126,20,.04)}
 .adv-section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem}
 .adv-section-label.strengths{color:#28a745}
 .adv-section-label.weaknesses{color:#dc3545}
@@ -15,10 +22,22 @@
 .adv-section-label.dynamics-long{color:#6f42c1}
 .adv-section-label.risks{color:#fd7e14}
 .adv-section-value{font-size:.87rem;color:#212529;line-height:1.5}
+
+/* État vide */
 .empty-state-wrap{text-align:center;padding:2.5rem 1rem}
 .empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
-.ql-container.ql-snow{height:auto !important;min-height:80px}
-.ql-editor{min-height:80px !important}
+
+/* Label de champ dans le formulaire */
+.form-field-label{font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem}
+.form-field-label.strengths{color:#28a745}
+.form-field-label.weaknesses{color:#dc3545}
+.form-field-label.dynamics-short{color:#0a95ca}
+.form-field-label.dynamics-long{color:#6f42c1}
+.form-field-label.risks{color:#fd7e14}
+
+/* Quill */
+.ql-container.ql-snow{height:auto !important;min-height:90px}
+.ql-editor{min-height:90px !important}
 .ql-editor.ql-blank::before{font-style:normal;color:#adb5bd;font-size:.85rem}
 .quill-wrapper{display:block}
 </style>
@@ -49,7 +68,7 @@
         </div>
     </div>
 
-    <!-- Statistiques -->
+    <!-- Stat -->
     <div class="row g-2 mb-3">
         <div class="col-6 col-md-3">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
@@ -58,7 +77,7 @@
                     <i class="bi bi-{% if advice %}check-circle-fill{% else %}exclamation-circle{% endif %}"></i>
                 </div>
                 <div>
-                    <div class="fw-bold small lh-1 mt-1">
+                    <div class="fw-bold small lh-1 mt-1" id="statStatus">
                         {% if advice %}{% trans "Enregistré" %}{% else %}{% trans "Non enregistré" %}{% endif %}
                     </div>
                     <div class="text-muted small">{% trans "Statut" %}</div>
@@ -67,188 +86,167 @@
         </div>
     </div>
 
-    <!-- Carte principale -->
-    <div class="card">
-        <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center"
-             style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
-            <span class="text-white fw-semibold small">
-                <i class="bi bi-lightbulb me-1"></i>{% trans "Conseils" %}
-            </span>
-            <div class="d-flex gap-2">
-                {% if advice %}
-                <button class="btn btn-warning btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#adviceModal">
-                    <i class="bi bi-pencil"></i>{% trans "Modifier" %}
-                </button>
-                <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="btnDelete">
-                    <i class="bi bi-trash"></i>{% trans "Supprimer" %}
-                </button>
-                {% else %}
-                <button class="btn btn-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#adviceModal">
-                    <i class="bi bi-plus-circle-fill"></i>{% trans "Ajouter / Modifier le Conseil" %}
-                </button>
-                {% endif %}
+    {# ══ SECTION VUE ══ #}
+    <div id="viewSection" {% if not advice %}class="d-none"{% endif %}>
+        {% if advice %}
+        <div class="card mb-3">
+            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center"
+                 style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <span class="text-white fw-semibold small">
+                    <i class="bi bi-lightbulb me-1"></i>{% trans "Conseils" %}
+                </span>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-warning btn-sm d-flex align-items-center gap-1" id="btnToggleEdit">
+                        <i class="bi bi-pencil"></i>{% trans "Modifier" %}
+                    </button>
+                    <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="btnDelete">
+                        <i class="bi bi-trash"></i>{% trans "Supprimer" %}
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="card-body">
-            {% if advice %}
-            <!-- Contenu rendu côté serveur -->
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="adv-section">
-                        <div class="adv-section-label strengths">
-                            <i class="bi bi-hand-thumbs-up-fill"></i>{% trans "Points forts" %}
-                        </div>
-                        <div class="adv-section-value">
-                            {% if advice.points_forts %}
-                                {{ advice.points_forts|safe }}
-                            {% else %}
-                                <span class="text-muted small fst-italic">—</span>
-                            {% endif %}
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="adv-section strengths">
+                            <div class="adv-section-label strengths">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>{% trans "Points forts" %}
+                            </div>
+                            <div class="adv-section-value">
+                                {% if advice.points_forts %}{{ advice.points_forts|safe }}{% else %}<span class="text-muted fst-italic small">—</span>{% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="adv-section">
-                        <div class="adv-section-label weaknesses">
-                            <i class="bi bi-hand-thumbs-down-fill"></i>{% trans "Points faibles" %}
-                        </div>
-                        <div class="adv-section-value">
-                            {% if advice.points_faibles %}
-                                {{ advice.points_faibles|safe }}
-                            {% else %}
-                                <span class="text-muted small fst-italic">—</span>
-                            {% endif %}
+                    <div class="col-md-6">
+                        <div class="adv-section weaknesses">
+                            <div class="adv-section-label weaknesses">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>{% trans "Points faibles" %}
+                            </div>
+                            <div class="adv-section-value">
+                                {% if advice.points_faibles %}{{ advice.points_faibles|safe }}{% else %}<span class="text-muted fst-italic small">—</span>{% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="adv-section">
-                        <div class="adv-section-label dynamics-short">
-                            <i class="bi bi-lightning-charge-fill"></i>{% trans "Dynamisme à court terme" %}
-                        </div>
-                        <div class="adv-section-value">
-                            {% if advice.dynamisme_court_terme %}
-                                {{ advice.dynamisme_court_terme|safe }}
-                            {% else %}
-                                <span class="text-muted small fst-italic">—</span>
-                            {% endif %}
+                    <div class="col-md-6">
+                        <div class="adv-section dynamics-short">
+                            <div class="adv-section-label dynamics-short">
+                                <i class="bi bi-lightning-charge-fill"></i>{% trans "Dynamisme à court terme" %}
+                            </div>
+                            <div class="adv-section-value">
+                                {% if advice.dynamisme_court_terme %}{{ advice.dynamisme_court_terme|safe }}{% else %}<span class="text-muted fst-italic small">—</span>{% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="adv-section">
-                        <div class="adv-section-label dynamics-long">
-                            <i class="bi bi-graph-up-arrow"></i>{% trans "Dynamisme à long terme" %}
-                        </div>
-                        <div class="adv-section-value">
-                            {% if advice.dynamisme_long_terme %}
-                                {{ advice.dynamisme_long_terme|safe }}
-                            {% else %}
-                                <span class="text-muted small fst-italic">—</span>
-                            {% endif %}
+                    <div class="col-md-6">
+                        <div class="adv-section dynamics-long">
+                            <div class="adv-section-label dynamics-long">
+                                <i class="bi bi-graph-up-arrow"></i>{% trans "Dynamisme à long terme" %}
+                            </div>
+                            <div class="adv-section-value">
+                                {% if advice.dynamisme_long_terme %}{{ advice.dynamisme_long_terme|safe }}{% else %}<span class="text-muted fst-italic small">—</span>{% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-12">
-                    <div class="adv-section">
-                        <div class="adv-section-label risks">
-                            <i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risques potentiels à court terme" %}
-                        </div>
-                        <div class="adv-section-value">
-                            {% if advice.risque_potentiel_court_terme %}
-                                {{ advice.risque_potentiel_court_terme|safe }}
-                            {% else %}
-                                <span class="text-muted small fst-italic">—</span>
-                            {% endif %}
+                    <div class="col-12">
+                        <div class="adv-section risks">
+                            <div class="adv-section-label risks">
+                                <i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risques potentiels à court terme" %}
+                            </div>
+                            <div class="adv-section-value">
+                                {% if advice.risque_potentiel_court_terme %}{{ advice.risque_potentiel_court_terme|safe }}{% else %}<span class="text-muted fst-italic small">—</span>{% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-12">
-                    <div class="d-flex gap-4 pt-1 border-top">
-                        <div>
+                    <div class="col-12 border-top pt-2">
+                        <div class="d-flex gap-4 flex-wrap">
                             <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{% trans "Ajouté le" %} {{ advice.created_at|date:"d/m/Y H:i" }}</span>
-                        </div>
-                        <div>
                             <span class="text-muted small"><i class="bi bi-clock-history me-1"></i>{% trans "Dernière mise à jour" %} {{ advice.updated_at|date:"d/m/Y H:i" }}</span>
                         </div>
                     </div>
                 </div>
             </div>
-            {% else %}
-            <!-- État vide -->
-            <div class="empty-state-wrap">
-                <div class="esi"><i class="bi bi-lightbulb"></i></div>
-                <h6 class="text-muted mb-1">{% trans "Aucun conseil enregistré" %}</h6>
-                <p class="text-muted small mb-3">{% trans "Ajouter / Modifier le Conseil" %}</p>
-                <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
-                        data-bs-toggle="modal" data-bs-target="#adviceModal">
-                    <i class="bi bi-plus-circle-fill"></i>&nbsp;{% trans "Ajouter / Modifier le Conseil" %}
-                </button>
-            </div>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
-</div>
 
-<!-- Modal Ajout / Modification -->
-<div class="modal fade" id="adviceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
-                <h6 class="modal-title text-white mb-0">
-                    <i class="bi bi-lightbulb me-2"></i>{% trans "Ajouter / Modifier le Conseil" %}
-                </h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    {# ══ SECTION FORMULAIRE ══ #}
+    <div id="editSection" {% if advice %}class="d-none"{% endif %}>
+        <div class="card">
+            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center"
+                 style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+                <span class="text-white fw-semibold small">
+                    <i class="bi bi-pencil-square me-1"></i>
+                    {% if advice %}{% trans "Modifier le Conseil" %}{% else %}{% trans "Ajouter / Modifier le Conseil" %}{% endif %}
+                </span>
+                {% if advice %}
+                <button type="button" class="btn btn-outline-light btn-sm d-flex align-items-center gap-1" id="btnCancelEdit">
+                    <i class="bi bi-x-lg"></i>{% trans "Annuler" %}
+                </button>
+                {% endif %}
             </div>
             <form id="adviceForm">
-                <div class="modal-body py-3 px-4">
+                <div class="card-body">
 
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold mb-2">
-                            <i class="bi bi-hand-thumbs-up-fill text-success me-1"></i>{% trans "Points forts" %}
-                        </label>
-                        <textarea class="form-control form-control-sm rich-editor" id="fPoints_forts"
-                                  placeholder="{% trans 'Saisir les points forts...' %}">{% if advice %}{{ advice.points_forts|default:'' }}{% endif %}</textarea>
+                    {% if not advice %}
+                    <!-- État vide : petit message d'intro -->
+                    <div class="alert alert-info py-2 small mb-4">
+                        <i class="bi bi-info-circle me-1"></i>{% trans "Aucun conseil enregistré" %} — {% trans "Ajouter / Modifier le Conseil" %}
                     </div>
+                    {% endif %}
 
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold mb-2">
-                            <i class="bi bi-hand-thumbs-down-fill text-danger me-1"></i>{% trans "Points faibles" %}
-                        </label>
-                        <textarea class="form-control form-control-sm rich-editor" id="fPoints_faibles"
-                                  placeholder="{% trans 'Saisir les points faibles...' %}">{% if advice %}{{ advice.points_faibles|default:'' }}{% endif %}</textarea>
+                    <div class="row g-4">
+                        <!-- Points forts -->
+                        <div class="col-md-6">
+                            <div class="form-field-label strengths mb-2">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>{% trans "Points forts" %}
+                            </div>
+                            <textarea class="form-control form-control-sm rich-editor" id="fPoints_forts"
+                                      placeholder="{% trans 'Saisir les points forts...' %}">{% if advice %}{{ advice.points_forts|default:'' }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Points faibles -->
+                        <div class="col-md-6">
+                            <div class="form-field-label weaknesses mb-2">
+                                <i class="bi bi-hand-thumbs-down-fill"></i>{% trans "Points faibles" %}
+                            </div>
+                            <textarea class="form-control form-control-sm rich-editor" id="fPoints_faibles"
+                                      placeholder="{% trans 'Saisir les points faibles...' %}">{% if advice %}{{ advice.points_faibles|default:'' }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Dynamisme court terme -->
+                        <div class="col-md-6">
+                            <div class="form-field-label dynamics-short mb-2">
+                                <i class="bi bi-lightning-charge-fill"></i>{% trans "Dynamisme à court terme" %}
+                            </div>
+                            <textarea class="form-control form-control-sm rich-editor" id="fDynamisme_court"
+                                      placeholder="{% trans 'Saisir le dynamisme à court terme...' %}">{% if advice %}{{ advice.dynamisme_court_terme|default:'' }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Dynamisme long terme -->
+                        <div class="col-md-6">
+                            <div class="form-field-label dynamics-long mb-2">
+                                <i class="bi bi-graph-up-arrow"></i>{% trans "Dynamisme à long terme" %}
+                            </div>
+                            <textarea class="form-control form-control-sm rich-editor" id="fDynamisme_long"
+                                      placeholder="{% trans 'Saisir le dynamisme à long terme...' %}">{% if advice %}{{ advice.dynamisme_long_terme|default:'' }}{% endif %}</textarea>
+                        </div>
+
+                        <!-- Risques -->
+                        <div class="col-12">
+                            <div class="form-field-label risks mb-2">
+                                <i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risques potentiels à court terme" %}
+                            </div>
+                            <textarea class="form-control form-control-sm rich-editor" id="fRisques"
+                                      placeholder="{% trans 'Saisir les risques potentiels...' %}">{% if advice %}{{ advice.risque_potentiel_court_terme|default:'' }}{% endif %}</textarea>
+                        </div>
                     </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold mb-2">
-                            <i class="bi bi-lightning-charge-fill text-primary me-1"></i>{% trans "Dynamisme à court terme" %}
-                        </label>
-                        <textarea class="form-control form-control-sm rich-editor" id="fDynamisme_court"
-                                  placeholder="{% trans 'Saisir le dynamisme à court terme...' %}">{% if advice %}{{ advice.dynamisme_court_terme|default:'' }}{% endif %}</textarea>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold mb-2">
-                            <i class="bi bi-graph-up-arrow me-1" style="color:#6f42c1;"></i>{% trans "Dynamisme à long terme" %}
-                        </label>
-                        <textarea class="form-control form-control-sm rich-editor" id="fDynamisme_long"
-                                  placeholder="{% trans 'Saisir le dynamisme à long terme...' %}">{% if advice %}{{ advice.dynamisme_long_terme|default:'' }}{% endif %}</textarea>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold mb-2">
-                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>{% trans "Risques potentiels à court terme" %}
-                        </label>
-                        <textarea class="form-control form-control-sm rich-editor" id="fRisques"
-                                  placeholder="{% trans 'Saisir les risques potentiels...' %}">{% if advice %}{{ advice.risque_potentiel_court_terme|default:'' }}{% endif %}</textarea>
-                    </div>
-
                 </div>
-                <div class="modal-footer py-2 mt-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg me-1"></i>{% trans "Annuler" %}
+                <div class="card-footer py-3 d-flex justify-content-end gap-2 bg-white border-top">
+                    {% if advice %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" id="btnCancelEditFooter">
+                        <i class="bi bi-x-lg"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-sm btn-success" id="submitAdviceBtn">
+                    {% endif %}
+                    <button type="submit" class="btn btn-success btn-sm d-flex align-items-center gap-1" id="submitAdviceBtn">
                         <span class="btn-text"><i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}</span>
                         <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
@@ -256,6 +254,7 @@
             </form>
         </div>
     </div>
+
 </div>
 {% endblock %}
 
@@ -264,7 +263,6 @@
 {% trans "Succès" as t_ok %}
 {% trans "Conseil enregistré avec succès" as t_saved %}
 {% trans "Conseil supprimé avec succès" as t_deleted %}
-{% trans "Impossible de charger le conseil" as t_err_load %}
 {% trans "Une erreur est survenue" as t_err_generic %}
 {% trans "Supprimer le conseil ?" as t_del_confirm %}
 {% trans "Cette action est irréversible." as t_irreversible %}
@@ -286,7 +284,6 @@ $(document).ready(function() {
         ok:          "{{ t_ok|escapejs }}",
         saved:       "{{ t_saved|escapejs }}",
         deleted:     "{{ t_deleted|escapejs }}",
-        errLoad:     "{{ t_err_load|escapejs }}",
         errGeneric:  "{{ t_err_generic|escapejs }}",
         delConfirm:  "{{ t_del_confirm|escapejs }}",
         irreversible:"{{ t_irreversible|escapejs }}",
@@ -297,23 +294,29 @@ $(document).ready(function() {
         reconnect:   "{{ t_reconnect|escapejs }}"
     };
 
-    // Initialiser les éditeurs Quill avec les valeurs existantes au shown.bs.modal
-    $('#adviceModal').on('shown.bs.modal', function() {
-        // Quill est déjà initialisé avec le contenu HTML du textarea (via dangerouslyPasteHTML)
-        // Rien de spécial à faire
-    }).on('hidden.bs.modal', function() {
-        // Ne pas vider les editors — ils contiennent les données actuelles
-    });
+    // ── Toggle vue / formulaire ──
+    function showEdit() {
+        $('#viewSection').addClass('d-none');
+        $('#editSection').removeClass('d-none');
+        $('html, body').animate({ scrollTop: $('#editSection').offset().top - 80 }, 200);
+    }
+    function showView() {
+        $('#editSection').addClass('d-none');
+        $('#viewSection').removeClass('d-none');
+    }
 
-    // Soumission formulaire
+    $('#btnToggleEdit').on('click', showEdit);
+    $('#btnCancelEdit, #btnCancelEditFooter').on('click', showView);
+
+    // ── Soumission formulaire ──
     $('#adviceForm').on('submit', function(e) {
         e.preventDefault();
         var formData = {
-            points_forts:                  $('#fPoints_forts').val().trim(),
-            points_faibles:                $('#fPoints_faibles').val().trim(),
-            dynamisme_court_terme:         $('#fDynamisme_court').val().trim(),
-            dynamisme_long_terme:          $('#fDynamisme_long').val().trim(),
-            risque_potentiel_court_terme:  $('#fRisques').val().trim(),
+            points_forts:                 $('#fPoints_forts').val().trim(),
+            points_faibles:               $('#fPoints_faibles').val().trim(),
+            dynamisme_court_terme:        $('#fDynamisme_court').val().trim(),
+            dynamisme_long_terme:         $('#fDynamisme_long').val().trim(),
+            risque_potentiel_court_terme: $('#fRisques').val().trim(),
             acheteur: ACHETEUR_ID
         };
         var $btn = $('#submitAdviceBtn');
@@ -326,7 +329,6 @@ $(document).ready(function() {
             success: function() {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
-                bootstrap.Modal.getInstance($('#adviceModal')[0]).hide();
                 Swal.fire({ icon: 'success', title: S.ok, text: S.saved, timer: 1500, showConfirmButton: false })
                     .then(function() { window.location.reload(); });
             },
@@ -341,7 +343,7 @@ $(document).ready(function() {
         });
     });
 
-    // Suppression
+    // ── Suppression ──
     $('#btnDelete').on('click', function() {
         Swal.fire({
             title: S.delConfirm, text: S.irreversible, icon: 'warning',
@@ -364,6 +366,7 @@ $(document).ready(function() {
         });
     });
 
+    // ── Helpers ──
     function getCookie(name) {
         var v = null;
         if (document.cookie) {
