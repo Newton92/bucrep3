@@ -2632,22 +2632,30 @@ $(document).ready(function() {
   var BTN = document.getElementById('btn-basculer-annees');
   if (!BTN) return;
 
+  /* TOKEN injecté ici — let du script précédent n'est pas accessible cross-script */
+  var _TOKEN = '{{ access_token }}';
+
+  function getCsrf() {
+    var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
   function hdrs() {
     return {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + ACCESS_TOKEN,
-      'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+      'Authorization': 'Bearer ' + _TOKEN,
+      'X-CSRFToken': getCsrf()
     };
   }
 
   BTN.addEventListener('click', function() {
     {% if compte_financier %}
-    var dateN   = "{{ compte_financier.date_compte|date:'d/m/Y'|default:'—' }}";
-    var dateFinN= "{{ compte_financier.date_fin|date:'d/m/Y'|default:'—' }}";
-    var dateN1  = "{{ compte_financier.date_compte_n_moins_un|date:'d/m/Y'|default:'—' }}";
-    var dateFinN1="{{ compte_financier.date_fin_n_moins_un|date:'d/m/Y'|default:'—' }}";
-    var dateN2  = "{{ compte_financier.date_compte_n_moins_deux|date:'d/m/Y'|default:'—' }}";
-    var dateFinN2="{{ compte_financier.date_fin_n_moins_deux|date:'d/m/Y'|default:'—' }}";
+    var dateN    = "{{ compte_financier.date_compte|date:'d/m/Y'|default:'—' }}";
+    var dateFinN = "{{ compte_financier.date_fin|date:'d/m/Y'|default:'—' }}";
+    var dateN1   = "{{ compte_financier.date_compte_n_moins_un|date:'d/m/Y'|default:'—' }}";
+    var dateFinN1= "{{ compte_financier.date_fin_n_moins_un|date:'d/m/Y'|default:'—' }}";
+    var dateN2   = "{{ compte_financier.date_compte_n_moins_deux|date:'d/m/Y'|default:'—' }}";
+    var dateFinN2= "{{ compte_financier.date_fin_n_moins_deux|date:'d/m/Y'|default:'—' }}";
     {% else %}
     var dateN='—', dateFinN='—', dateN1='—', dateFinN1='—', dateN2='—', dateFinN2='—';
     {% endif %}
