@@ -16,6 +16,7 @@ ACHETEUR_PAGES = [
     ('scoring',              'dash_root_manage_acheteur_scoring',             'Scoring sans bilan'),
     ('scoring_with_bilan',   'dash_root_manage_acheteur_scoring_with_bilan',  'Scoring avec bilan'),
     ('scoring_manuel',       'dash_root_manage_acheteur_scoring_manuel',      'Scoring manuel'),
+    ('scoring_delphi',       'dash_root_manage_acheteur_scoring_delphi',      'Score Delphi'),
     ('advice',               'dash_root_manage_acheteur_advice',              'Conseils'),
     ('responsable',          'dash_root_manage_acheteur_responsable',         'Responsables'),
     ('membre_conseil',       'dash_root_manage_acheteur_membre_conseil',      'Conseil d\'administration'),

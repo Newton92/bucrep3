@@ -53,6 +53,7 @@ from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
 from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
+from main.api.views_scoring_delphi import ScoringDelphiAcheteurView, simuler_score_delphi
 from main.api.views_solvency_reporting_system import *
 from main.api.views_reporting import *
 from main.api.views_api_emailling import *
@@ -865,6 +866,11 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/scoring-avec-bilan/",
         dash_root_manage_acheteur_scoring_with_bilan,
         name="dash_root_manage_acheteur_scoring_with_bilan",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/score-delphi/",
+        dash_root_manage_acheteur_scoring_delphi,
+        name="dash_root_manage_acheteur_scoring_delphi",
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-rapports/",
@@ -5172,7 +5178,11 @@ urlpatterns = [
     
     path('api/scoring/bilan-ifrs/calculer-score/', calculer_score_bilan_ifrs, name='calculer_score_bilan_ifrs'),
     path('api/scoring/bilan-ifrs/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_ifrs, name='get_annees_bilan_ifrs'),
-    
+
+    # Score Commercial Delphi ACREMAC
+    path('api/scoring/delphi/acheteur/<int:acheteur_id>/', ScoringDelphiAcheteurView.as_view(), name='api_scoring_delphi_acheteur'),
+    path('api/scoring/delphi/acheteur/<int:acheteur_id>/simuler/', simuler_score_delphi, name='api_scoring_delphi_simuler'),
+
     path('api/reporting/annees/', liste_annees, name='liste_annees'),
     path('api/reporting/devises/', liste_devises, name='liste_devises'),
     path('api/reporting/commandes/acheteur/<int:acheteur_id>/', liste_commandes_acheteur, name='liste_commandes_acheteur'),

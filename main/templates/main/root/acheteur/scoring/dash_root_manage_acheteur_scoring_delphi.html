@@ -1,0 +1,617 @@
+{% extends "main/root/base.html" %}
+{% load i18n %}
+{% load acheteur_navigation %}
+
+{% block title %}{% trans "Score Delphi" %} — {{ acheteur.nom }}{% endblock %}
+
+{% block styles %}
+<style>
+  /* ---- Gauge visuelle ---- */
+  .delphi-gauge-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .delphi-score-circle {
+    width:140px; height:140px; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:700; font-size:2.6rem; line-height:1;
+    border:6px solid currentColor;
+    background:#fff;
+  }
+  .delphi-score-circle small { font-size:.75rem; font-weight:400; margin-top:2px; }
+  .delphi-bande-pill {
+    display:inline-block; padding:4px 18px; border-radius:20px;
+    font-size:.95rem; font-weight:700; letter-spacing:.5px;
+  }
+  .delphi-stars { font-size:1.3rem; letter-spacing:2px; }
+  .band-A { color:#198754; border-color:#198754; }
+  .band-B { color:#20c997; border-color:#20c997; }
+  .band-C { color:#0dcaf0; border-color:#0dcaf0; }
+  .band-D { color:#ffc107; border-color:#ffc107; }
+  .band-E { color:#fd7e14; border-color:#fd7e14; }
+  .band-F { color:#dc3545; border-color:#dc3545; }
+  .band-G { color:#6f1a1a; border-color:#6f1a1a; }
+  .band-dash { color:#6c757d; border-color:#6c757d; }
+  .bg-band-A { background:#198754; color:#fff; }
+  .bg-band-B { background:#20c997; color:#fff; }
+  .bg-band-C { background:#0dcaf0; color:#000; }
+  .bg-band-D { background:#ffc107; color:#000; }
+  .bg-band-E { background:#fd7e14; color:#fff; }
+  .bg-band-F { background:#dc3545; color:#fff; }
+  .bg-band-G { background:#6f1a1a; color:#fff; }
+  .bg-band-dash { background:#6c757d; color:#fff; }
+
+  /* ---- Section inputs ---- */
+  .delphi-section-title {
+    font-size:.8rem; font-weight:700; letter-spacing:.8px;
+    text-transform:uppercase; color:#6c757d;
+    border-bottom:2px solid #dee2e6; padding-bottom:6px; margin-bottom:12px;
+  }
+  .delphi-bar-row { display:flex; align-items:center; gap:8px; font-size:.88rem; }
+  .delphi-bar-fill {
+    height:8px; border-radius:4px; transition:width .4s ease;
+    min-width:4px;
+  }
+  .delphi-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
+  .delphi-detail-item { font-size:.83rem; }
+  .delphi-detail-label { color:#6c757d; }
+  .delphi-detail-val { font-weight:600; }
+
+  /* ---- Progress bar de score ---- */
+  .score-bar-track {
+    height:14px; background:#f0f0f0; border-radius:7px; overflow:hidden;
+    position:relative;
+  }
+  .score-bar-fill {
+    height:100%; border-radius:7px; transition:width .6s ease;
+    background: linear-gradient(to right, #dc3545 0%, #fd7e14 25%, #ffc107 45%, #20c997 70%, #198754 100%);
+  }
+  .score-bar-labels { display:flex; justify-content:space-between; font-size:.7rem; color:#999; margin-top:2px; }
+
+  /* ---- Formulaire ---- */
+  .form-range-val { font-weight:600; min-width:32px; text-align:right; }
+  .preview-badge { font-size:1.1rem; padding:6px 14px; border-radius:20px; font-weight:700; }
+  .bool-switch-group { display:flex; gap:12px; flex-wrap:wrap; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-3">
+
+  {# ---- En-tête acheteur ---- #}
+  <div class="page-header d-flex align-items-center gap-3 mb-3 p-3 rounded-3"
+       style="background:linear-gradient(135deg,#0a2342 0%,#1a4e8f 100%);">
+    <div class="flex-grow-1">
+      <h5 class="fw-bold text-white mb-0">{{ acheteur.nom }}</h5>
+      <small class="text-white-50">{{ acheteur.code }}{% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}</small>
+    </div>
+    <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}"
+       class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+    </a>
+  </div>
+
+  {# ---- Navigation pages ---- #}
+  {% acheteur_page_nav "scoring_delphi" %}
+
+  <div class="row g-3">
+
+    {# ======== Colonne gauche : résultat + détail par catégorie ======== #}
+    <div class="col-lg-4">
+
+      {# Carte score principal #}
+      <div class="card shadow-sm border-0 mb-3" id="card-score-actuel">
+        <div class="card-header bg-white border-bottom py-2">
+          <span class="fw-bold">
+            <i class="bi bi-speedometer2 me-2 text-primary"></i>{% trans "Score Delphi actuel" %}
+          </span>
+        </div>
+        <div class="card-body text-center py-4" id="score-display-wrap">
+          <div class="delphi-gauge-wrap">
+            <div class="delphi-score-circle band-dash" id="score-circle">
+              <span id="score-val">—</span>
+              <small>/100</small>
+            </div>
+            <div class="delphi-bande-pill bg-band-dash mt-2" id="bande-pill">—</div>
+            <div class="delphi-stars mt-1" id="stars-display">☆☆☆☆☆</div>
+            <div class="text-muted small mt-1" id="niveau-display">{% trans "Aucune donnée" %}</div>
+          </div>
+          <div class="mt-3 px-2">
+            <div class="score-bar-track">
+              <div class="score-bar-fill" id="score-bar" style="width:0%"></div>
+            </div>
+            <div class="score-bar-labels">
+              <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+            </div>
+          </div>
+          <p class="text-muted small mt-3 mb-0" id="date-maj-txt"></p>
+        </div>
+      </div>
+
+      {# Carte répartition par catégorie #}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white border-bottom py-2">
+          <span class="fw-bold">
+            <i class="bi bi-bar-chart-steps me-2 text-primary"></i>{% trans "Contribution par catégorie" %}
+          </span>
+        </div>
+        <div class="card-body pb-3" id="cat-bars-wrap">
+          <div id="cat-bars-inner">
+            <p class="text-muted text-center small mt-2">{% trans "Calculez un score pour voir la répartition." %}</p>
+          </div>
+        </div>
+      </div>
+
+      {# Commentaire analyste #}
+      <div class="card shadow-sm border-0 mb-3" id="card-commentaire">
+        <div class="card-header bg-white border-bottom py-2">
+          <span class="fw-bold">
+            <i class="bi bi-chat-left-text me-2 text-primary"></i>{% trans "Commentaire analyste" %}
+          </span>
+        </div>
+        <div class="card-body">
+          <p class="mb-0 small text-muted fst-italic" id="commentaire-display">{% trans "Aucun commentaire enregistré." %}</p>
+        </div>
+      </div>
+
+    </div>
+
+    {# ======== Colonne droite : formulaire de saisie ======== #}
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+          <span class="fw-bold">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>{% trans "Saisie des données Delphi" %}
+          </span>
+          <span class="badge bg-secondary small" id="preview-score-badge" style="display:none!important"></span>
+        </div>
+        <div class="card-body">
+          <form id="form-delphi" novalidate>
+
+            {# A — Comportement de paiement #}
+            <div class="delphi-section-title">
+              A — {% trans "Comportement de paiement" %} <span class="text-muted fw-normal">(max 35 pts)</span>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">
+                  {% trans "DBT — jours de retard" %}
+                  <span class="text-muted fw-normal ms-1">(Days Beyond Terms)</span>
+                </label>
+                <div class="input-group input-group-sm">
+                  <input type="number" min="0" step="0.5" class="form-control" id="f-dbt" value="0" placeholder="0">
+                  <span class="input-group-text">{% trans "jours" %}</span>
+                </div>
+                <div class="form-text">
+                  ≤5j → +35 pts &nbsp;|&nbsp; ≤15j → +20 pts &nbsp;|&nbsp; ≤30j → +5 pts
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "Montants contestés (FCFA)" %}</label>
+                <input type="number" min="0" step="1000" class="form-control form-control-sm"
+                       id="f-montants-contestes" placeholder="0">
+                <div class="form-text">{% trans "Volume de factures impayées signalées" %}</div>
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="f-tendance-dbt-hausse">
+                  <label class="form-check-label small" for="f-tendance-dbt-hausse">
+                    {% trans "Tendance DBT en hausse (–5 pts de pénalité)" %}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {# B — Événements légaux #}
+            <div class="delphi-section-title">
+              B — {% trans "Événements légaux & contentieux" %} <span class="text-muted fw-normal">(max 30 pts)</span>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">{% trans "Procédures collectives" %}</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm"
+                       id="f-nb-procedures" value="0" placeholder="0">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">{% trans "Inscriptions de privilèges" %}</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm"
+                       id="f-nb-privileges" value="0" placeholder="0">
+                <div class="form-text">{% trans "TVA, charges sociales…" %}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">{% trans "Jugements non réglés" %}</label>
+                <input type="number" min="0" step="1" class="form-control form-control-sm"
+                       id="f-nb-jugements" value="0" placeholder="0">
+              </div>
+              <div class="col-12">
+                <div class="alert alert-danger py-2 small mb-0" id="alert-exclusion" style="display:none">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                  <span id="alert-exclusion-txt"></span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="f-petition-faillite">
+                  <label class="form-check-label small text-danger fw-semibold" for="f-petition-faillite">
+                    {% trans "Pétition de faillite en cours (score → 1)" %}
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="f-en-liquidation">
+                  <label class="form-check-label small text-danger fw-semibold" for="f-en-liquidation">
+                    {% trans "En liquidation / dissoute (score → 0)" %}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {# C — Données financières #}
+            <div class="delphi-section-title">
+              C — {% trans "Données financières" %} <span class="text-muted fw-normal">(max 20 pts)</span>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "Ratio de liquidité" %}</label>
+                <input type="number" min="0" step="0.01" class="form-control form-control-sm"
+                       id="f-ratio-liquidite" placeholder="ex: 1.25">
+                <div class="form-text">
+                  ≥1.5 → +20 pts &nbsp;|&nbsp; ≥1.0 → +10 pts &nbsp;|&nbsp; &lt;1.0 → 0 pt
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "Marge nette (%)" %}</label>
+                <input type="number" step="0.1" class="form-control form-control-sm"
+                       id="f-marge-nette" placeholder="ex: 8.5">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "EBITDA / CA (%)" %}</label>
+                <input type="number" step="0.1" class="form-control form-control-sm"
+                       id="f-ebitda-ratio" placeholder="ex: 15.0">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "Ratio endettement (FP / Total bilan)" %}</label>
+                <input type="number" min="0" step="0.01" class="form-control form-control-sm"
+                       id="f-ratio-endettement" placeholder="ex: 0.40">
+              </div>
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="f-retard-depot-bilan">
+                  <label class="form-check-label small" for="f-retard-depot-bilan">
+                    {% trans "Dépôt des comptes annuels en retard (–5 pts de pénalité)" %}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {# D — Démographie #}
+            <div class="delphi-section-title">
+              D — {% trans "Données démographiques" %} <span class="text-muted fw-normal">(max 15 pts)</span>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">{% trans "Âge de l'entreprise (années)" %}</label>
+                <input type="number" min="0" step="0.5" class="form-control form-control-sm"
+                       id="f-age-entreprise" placeholder="{% trans "Laissez vide = calcul auto" %}">
+                <div class="form-text">
+                  &gt;5 ans → +15 pts &nbsp;|&nbsp; &gt;2 ans → +8 pts &nbsp;|&nbsp; sinon → +2 pts
+                </div>
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="f-dirigeants-negatif">
+                  <label class="form-check-label small" for="f-dirigeants-negatif">
+                    {% trans "Dirigeants avec antécédents de faillite (–10 pts de pénalité)" %}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {# Commentaire #}
+            <div class="delphi-section-title">{% trans "Commentaire analyste" %}</div>
+            <div class="mb-4">
+              <textarea class="form-control form-control-sm" id="f-commentaire" rows="3"
+                        placeholder="{% trans "Observations, contexte, sources utilisées…" %}"></textarea>
+            </div>
+
+            {# Boutons #}
+            <div class="d-flex gap-2 flex-wrap">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-simuler">
+                <i class="bi bi-lightning me-1"></i>{% trans "Simuler (aperçu)" %}
+              </button>
+              <button type="submit" class="btn btn-primary btn-sm" id="btn-enregistrer">
+                <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer le score" %}
+              </button>
+              <span class="ms-auto" id="save-spinner" style="display:none">
+                <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+              </span>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>{# /row #}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% trans "Erreur lors du chargement du score" as t_erreur_chargement %}
+{% trans "Score simulé — non enregistré" as t_simule %}
+{% trans "Score enregistré avec succès" as t_enregistre %}
+{% trans "Erreur lors de l'enregistrement" as t_erreur_enreg %}
+{% trans "Simulation en cours…" as t_simulation %}
+{% trans "Enregistrement…" as t_enregistrement %}
+{% trans "Pétition de faillite — score figé à 1 (Bande G)" as t_petition %}
+{% trans "Entreprise en liquidation — score figé à 0" as t_liquidation %}
+{% trans "Aucune donnée enregistrée pour cet acheteur." as t_no_data %}
+{% trans "Mise à jour :" as t_maj %}
+{% trans "Bande A — Risque très faible" as t_bande_A %}
+{% trans "Bande B — Faible risque" as t_bande_B %}
+{% trans "Bande C — Risque inférieur à la moyenne" as t_bande_C %}
+{% trans "Bande D — Risque supérieur à la moyenne" as t_bande_D %}
+{% trans "Bande E — Risque élevé" as t_bande_E %}
+{% trans "Bande F — Risque maximal" as t_bande_F %}
+{% trans "Bande G — Faillite imminente" as t_bande_G %}
+{% trans "— Dissoute / Liquidée" as t_bande_dash %}
+{% trans "Comportement paiement" as t_cat_a %}
+{% trans "Événements légaux" as t_cat_b %}
+{% trans "Données financières" as t_cat_c %}
+{% trans "Démographie" as t_cat_d %}
+
+<script>
+(function() {
+  var ACCESS_TOKEN = "{{ access_token }}";
+  var ACHETEUR_ID  = {{ id_acheteur }};
+  var API_BASE     = "/api/scoring/delphi/acheteur/" + ACHETEUR_ID + "/";
+  var API_SIMULER  = API_BASE + "simuler/";
+
+  var BANDE_LABELS = {
+    'A': '{{ t_bande_A }}', 'B': '{{ t_bande_B }}', 'C': '{{ t_bande_C }}',
+    'D': '{{ t_bande_D }}', 'E': '{{ t_bande_E }}', 'F': '{{ t_bande_F }}',
+    'G': '{{ t_bande_G }}', '-': '{{ t_bande_dash }}'
+  };
+
+  /* ---- Helpers ---- */
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACCESS_TOKEN };
+  }
+
+  function getVal(id) { return document.getElementById(id).value.trim(); }
+  function getBool(id) { return document.getElementById(id).checked; }
+  function getFloat(id) {
+    var v = getVal(id);
+    return v === '' ? null : parseFloat(v);
+  }
+  function getInt(id) {
+    var v = getVal(id);
+    return v === '' ? 0 : parseInt(v, 10) || 0;
+  }
+
+  function collectFormData() {
+    return {
+      dbt:                         getFloat('f-dbt') || 0,
+      tendance_dbt_hausse:         getBool('f-tendance-dbt-hausse'),
+      montants_contestes:          getFloat('f-montants-contestes'),
+      est_en_liquidation:          getBool('f-en-liquidation'),
+      petition_faillite:           getBool('f-petition-faillite'),
+      nb_procedures_collectives:   getInt('f-nb-procedures'),
+      nb_inscriptions_privileges:  getInt('f-nb-privileges'),
+      nb_jugements_tribunaux:      getInt('f-nb-jugements'),
+      ratio_liquidite:             getFloat('f-ratio-liquidite'),
+      marge_nette:                 getFloat('f-marge-nette'),
+      ebitda_ratio:                getFloat('f-ebitda-ratio'),
+      ratio_endettement:           getFloat('f-ratio-endettement'),
+      retard_depot_bilan:          getBool('f-retard-depot-bilan'),
+      age_entreprise:              getFloat('f-age-entreprise'),
+      historique_dirigeants_negatif: getBool('f-dirigeants-negatif'),
+      commentaire:                 getVal('f-commentaire')
+    };
+  }
+
+  /* ---- Affichage du résultat ---- */
+  function afficherScore(data) {
+    var score   = data.score_delphi !== undefined ? data.score_delphi : data.score;
+    var bande   = data.bande || '-';
+    var etoiles = data.etoiles !== undefined ? data.etoiles : 0;
+    var niveau  = data.niveau_risque || '';
+
+    var circle  = document.getElementById('score-circle');
+    var pill    = document.getElementById('bande-pill');
+    var barFill = document.getElementById('score-bar');
+
+    // Retire toutes les classes band-*
+    circle.className = circle.className.replace(/band-\S+/g, '').trim();
+    pill.className   = pill.className.replace(/bg-band-\S+/g, '').trim();
+
+    var bandKey = bande === '-' ? 'dash' : bande;
+    circle.classList.add('band-' + bandKey);
+    pill.classList.add('bg-band-' + bandKey);
+
+    document.getElementById('score-val').textContent    = score;
+    pill.textContent = BANDE_LABELS[bande] || bande;
+    document.getElementById('niveau-display').textContent = niveau;
+    document.getElementById('score-bar').style.width    = score + '%';
+
+    // Étoiles
+    var starsFull  = '★';
+    var starsEmpty = '☆';
+    var s = '';
+    for (var i = 0; i < 5; i++) { s += (i < etoiles) ? starsFull : starsEmpty; }
+    document.getElementById('stars-display').textContent = s;
+
+    afficherBarsCategories(collectFormData(), score);
+  }
+
+  /* ---- Barres catégories ---- */
+  function afficherBarsCategories(form, score) {
+    if (score === 0 || score === 1) {
+      document.getElementById('cat-bars-inner').innerHTML =
+        '<p class="text-muted text-center small mt-2">Score figé par filtre d\'exclusion.</p>';
+      return;
+    }
+    var dbt    = form.dbt || 0;
+    var ptA    = dbt <= 5 ? 35 : (dbt <= 15 ? 20 : (dbt <= 30 ? 5 : 0));
+    if (form.tendance_dbt_hausse) ptA = Math.max(0, ptA - 5);
+
+    var totalL = (form.nb_inscriptions_privileges||0) + (form.nb_jugements_tribunaux||0) + (form.nb_procedures_collectives||0);
+    var ptB    = totalL === 0 ? 30 : (totalL === 1 ? 10 : 0);
+
+    var ptC = 0;
+    if (form.ratio_liquidite !== null && form.ratio_liquidite !== undefined) {
+      ptC = form.ratio_liquidite >= 1.5 ? 20 : (form.ratio_liquidite >= 1.0 ? 10 : 0);
+    }
+    if (form.retard_depot_bilan) ptC = Math.max(0, ptC - 5);
+
+    var age    = form.age_entreprise !== null ? form.age_entreprise : 0;
+    var ptD    = age > 5 ? 15 : (age > 2 ? 8 : 2);
+    if (form.historique_dirigeants_negatif) ptD = Math.max(0, ptD - 10);
+
+    function bar(label, val, max, color) {
+      var pct = Math.round((val / max) * 100);
+      return '<div class="mb-2">' +
+        '<div class="d-flex justify-content-between small mb-1">' +
+          '<span>' + label + '</span>' +
+          '<span class="fw-bold">' + val + ' / ' + max + ' pts</span>' +
+        '</div>' +
+        '<div class="score-bar-track"><div class="delphi-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '</div>';
+    }
+
+    document.getElementById('cat-bars-inner').innerHTML =
+      bar('{{ t_cat_a }}', ptA, 35, '#0a2342') +
+      bar('{{ t_cat_b }}', ptB, 30, '#1a4e8f') +
+      bar('{{ t_cat_c }}', ptC, 20, '#2980b9') +
+      bar('{{ t_cat_d }}', ptD, 15, '#74b9ff');
+  }
+
+  /* ---- Alerte exclusion ---- */
+  function majAlerteExclusion() {
+    var alertDiv = document.getElementById('alert-exclusion');
+    var alertTxt = document.getElementById('alert-exclusion-txt');
+    var liq  = getBool('f-en-liquidation');
+    var pet  = getBool('f-petition-faillite');
+    if (liq) {
+      alertDiv.style.display = '';
+      alertTxt.textContent = '{{ t_liquidation }}';
+    } else if (pet) {
+      alertDiv.style.display = '';
+      alertTxt.textContent = '{{ t_petition }}';
+    } else {
+      alertDiv.style.display = 'none';
+    }
+  }
+
+  /* ---- Chargement initial ---- */
+  function chargerScore() {
+    fetch(API_BASE, { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.exists && res.data) {
+          var d = res.data;
+          remplirFormulaire(d);
+          afficherScore(d);
+          var dateMaj = d.updated_at ? new Date(d.updated_at).toLocaleDateString('fr-FR') : '';
+          if (dateMaj) document.getElementById('date-maj-txt').textContent = '{{ t_maj }} ' + dateMaj;
+          var comm = d.commentaire || '';
+          document.getElementById('commentaire-display').textContent = comm || '{% trans "Aucun commentaire enregistré." %}';
+        } else {
+          document.getElementById('score-val').textContent = '—';
+          document.getElementById('date-maj-txt').textContent = '{{ t_no_data }}';
+        }
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: '{{ t_erreur_chargement }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      });
+  }
+
+  function remplirFormulaire(d) {
+    document.getElementById('f-dbt').value = d.dbt || 0;
+    document.getElementById('f-tendance-dbt-hausse').checked = !!d.tendance_dbt_hausse;
+    document.getElementById('f-montants-contestes').value    = d.montants_contestes || '';
+    document.getElementById('f-en-liquidation').checked      = !!d.est_en_liquidation;
+    document.getElementById('f-petition-faillite').checked   = !!d.petition_faillite;
+    document.getElementById('f-nb-procedures').value         = d.nb_procedures_collectives || 0;
+    document.getElementById('f-nb-privileges').value         = d.nb_inscriptions_privileges || 0;
+    document.getElementById('f-nb-jugements').value          = d.nb_jugements_tribunaux || 0;
+    document.getElementById('f-ratio-liquidite').value       = d.ratio_liquidite !== null ? d.ratio_liquidite : '';
+    document.getElementById('f-marge-nette').value           = d.marge_nette !== null ? d.marge_nette : '';
+    document.getElementById('f-ebitda-ratio').value          = d.ebitda_ratio !== null ? d.ebitda_ratio : '';
+    document.getElementById('f-ratio-endettement').value     = d.ratio_endettement !== null ? d.ratio_endettement : '';
+    document.getElementById('f-retard-depot-bilan').checked  = !!d.retard_depot_bilan;
+    document.getElementById('f-age-entreprise').value        = d.age_entreprise !== null ? d.age_entreprise : '';
+    document.getElementById('f-dirigeants-negatif').checked  = !!d.historique_dirigeants_negatif;
+    document.getElementById('f-commentaire').value           = d.commentaire || '';
+    majAlerteExclusion();
+  }
+
+  /* ---- Simuler ---- */
+  document.getElementById('btn-simuler').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ t_simulation }}';
+    var form = collectFormData();
+    fetch(API_SIMULER, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(form)
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        afficherScore({ score_delphi: res.score, bande: res.bande, etoiles: res.etoiles, niveau_risque: res.niveau_risque });
+        Swal.fire({ icon: 'info', title: '{{ t_simule }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: '{{ t_erreur_enreg }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-lightning me-1"></i>{% trans "Simuler (aperçu)" %}';
+      });
+  });
+
+  /* ---- Enregistrer ---- */
+  document.getElementById('form-delphi').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var btn     = document.getElementById('btn-enregistrer');
+    var spinner = document.getElementById('save-spinner');
+    btn.disabled = true;
+    spinner.style.display = '';
+    btn.innerHTML = '<i class="bi bi-floppy me-1"></i>{{ t_enregistrement }}';
+
+    fetch(API_BASE, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(collectFormData())
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          afficherScore(res.data);
+          var comm = res.data.commentaire || '';
+          document.getElementById('commentaire-display').textContent = comm || '{% trans "Aucun commentaire enregistré." %}';
+          var dateMaj = res.data.updated_at ? new Date(res.data.updated_at).toLocaleDateString('fr-FR') : '';
+          if (dateMaj) document.getElementById('date-maj-txt').textContent = '{{ t_maj }} ' + dateMaj;
+          Swal.fire({ icon: 'success', title: '{{ t_enregistre }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
+        } else {
+          Swal.fire({ icon: 'error', title: '{{ t_erreur_enreg }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+        }
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: '{{ t_erreur_enreg }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      })
+      .finally(function() {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btn.innerHTML = '<i class="bi bi-floppy me-1"></i>{% trans "Enregistrer le score" %}';
+      });
+  });
+
+  /* ---- Écoute cases à cocher pour alerte ---- */
+  document.getElementById('f-en-liquidation').addEventListener('change', majAlerteExclusion);
+  document.getElementById('f-petition-faillite').addEventListener('change', majAlerteExclusion);
+
+  /* ---- Init ---- */
+  chargerScore();
+})();
+</script>
+{% endblock %}

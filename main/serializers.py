@@ -13657,10 +13657,68 @@ class ScoringSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
-    
+
     def update(self, instance, validated_data):
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
+
+
+class ScoringDelphiSerializer(serializers.ModelSerializer):
+    """Sérialiseur pour le Score Commercial Delphi ACREMAC."""
+    acheteur_nom = serializers.SerializerMethodField(read_only=True)
+    created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
+    updated_by_details = UserSimpleSerializer(source='updated_by', read_only=True)
+    bande_display = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ScoringDelphi
+        fields = [
+            'id', 'acheteur', 'acheteur_nom',
+            # A — Paiement
+            'dbt', 'tendance_dbt_hausse', 'montants_contestes',
+            # B — Légal
+            'est_en_liquidation', 'petition_faillite',
+            'nb_procedures_collectives', 'nb_inscriptions_privileges', 'nb_jugements_tribunaux',
+            # C — Finances
+            'ratio_liquidite', 'marge_nette', 'ebitda_ratio', 'ratio_endettement', 'retard_depot_bilan',
+            # D — Démographie
+            'age_entreprise', 'historique_dirigeants_negatif',
+            # Résultats
+            'score_delphi', 'bande', 'bande_display', 'etoiles', 'niveau_risque',
+            # Méta
+            'commentaire', 'created_at', 'updated_at',
+            'created_by', 'created_by_details',
+            'updated_by', 'updated_by_details',
+        ]
+        read_only_fields = [
+            'score_delphi', 'bande', 'etoiles', 'niveau_risque',
+            'created_at', 'updated_at', 'created_by', 'updated_by',
+        ]
+
+    def get_acheteur_nom(self, obj):
+        return str(obj.acheteur) if obj.acheteur else None
+
+    def get_bande_display(self, obj):
+        bande_labels = {
+            'A': 'A — Risque très faible',
+            'B': 'B — Faible risque',
+            'C': 'C — Risque inférieur à la moyenne',
+            'D': 'D — Risque supérieur à la moyenne',
+            'E': 'E — Risque élevé',
+            'F': 'F — Risque maximal',
+            'G': 'G — Faillite imminente',
+            '-': '— Dissoute / Liquidée',
+        }
+        return bande_labels.get(obj.bande, obj.bande)
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data['updated_by'] = self.context['request'].user
+        return super().update(instance, validated_data)
+
 
 # CORRECTION 2: ScoringListView - amélioration des filtres
 class ScoringListView(ListAPIView):

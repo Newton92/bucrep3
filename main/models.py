@@ -7358,9 +7358,253 @@ class Scoring(SafeDeleteModel):  # Changez Model en SafeDeleteModel
             })
 
 
+class ScoringDelphi(SafeDeleteModel):
+    """
+    Score ACREMAC Commercial Delphi.
+    Système de notation de crédit commercial 0-100 prédit la probabilité
+    de défaillance à 12 mois. Un score plus élevé = risque plus faible.
+    """
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    acheteur = models.OneToOneField(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        related_name="scoring_delphi",
+        verbose_name=_("Acheteur"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  A — Comportement de paiement (poids ~35%)
+    # ------------------------------------------------------------------ #
+    dbt = models.FloatField(
+        default=0,
+        verbose_name=_("DBT – jours de retard de paiement"),
+        help_text=_("Days Beyond Terms : nombre moyen de jours après échéance"),
+    )
+    tendance_dbt_hausse = models.BooleanField(
+        default=False,
+        verbose_name=_("Tendance DBT en hausse"),
+        help_text=_("Les retards de paiement augmentent sur les 3 derniers mois"),
+    )
+    montants_contestes = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("Montants contestés (FCFA)"),
+        help_text=_("Volume de factures impayées signalées par les fournisseurs"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  B — Événements légaux et contentieux (poids ~30%)
+    # ------------------------------------------------------------------ #
+    est_en_liquidation = models.BooleanField(
+        default=False,
+        verbose_name=_("En liquidation"),
+        help_text=_("Entreprise dissoute, liquidée ou radiée"),
+    )
+    petition_faillite = models.BooleanField(
+        default=False,
+        verbose_name=_("Pétition de faillite en cours"),
+        help_text=_("Procédure légale officielle en cours"),
+    )
+    nb_procedures_collectives = models.IntegerField(
+        default=0,
+        verbose_name=_("Nombre de procédures collectives"),
+        help_text=_("Redressements, liquidations, plans de sauvegarde"),
+    )
+    nb_inscriptions_privileges = models.IntegerField(
+        default=0,
+        verbose_name=_("Nombre d'inscriptions de privilèges"),
+        help_text=_("Retards TVA, charges sociales, etc."),
+    )
+    nb_jugements_tribunaux = models.IntegerField(
+        default=0,
+        verbose_name=_("Nombre de jugements de tribunaux non réglés"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  C — Données financières officielles (poids ~20%)
+    # ------------------------------------------------------------------ #
+    ratio_liquidite = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("Ratio de liquidité (Actif circ. / Passif circ.)"),
+    )
+    marge_nette = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("Marge nette (%)"),
+    )
+    ebitda_ratio = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("EBITDA / Chiffre d'affaires (%)"),
+    )
+    ratio_endettement = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("Ratio d'endettement (Fonds propres / Total bilan)"),
+    )
+    retard_depot_bilan = models.BooleanField(
+        default=False,
+        verbose_name=_("Dépôt des comptes annuels en retard"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  D — Données démographiques et dirigeants (poids ~15%)
+    # ------------------------------------------------------------------ #
+    age_entreprise = models.FloatField(
+        null=True, blank=True,
+        verbose_name=_("Âge de l'entreprise (années)"),
+        help_text=_("Laissez vide pour calculer automatiquement depuis la date de création"),
+    )
+    historique_dirigeants_negatif = models.BooleanField(
+        default=False,
+        verbose_name=_("Dirigeants avec antécédents de faillite"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Résultats calculés (auto-remplis à la sauvegarde)
+    # ------------------------------------------------------------------ #
+    score_delphi = models.IntegerField(
+        null=True, blank=True,
+        verbose_name=_("Score Delphi (0-100)"),
+        db_index=True,
+    )
+    bande = models.CharField(
+        max_length=2, null=True, blank=True,
+        verbose_name=_("Bande de risque (A-G ou -)"),
+    )
+    etoiles = models.IntegerField(
+        null=True, blank=True,
+        verbose_name=_("Évaluation en étoiles (0-5)"),
+    )
+    niveau_risque = models.CharField(
+        max_length=120, null=True, blank=True,
+        verbose_name=_("Niveau de risque"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Méta
+    # ------------------------------------------------------------------ #
+    commentaire = models.TextField(
+        null=True, blank=True,
+        verbose_name=_("Commentaire analyste"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"), db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="scoring_delphi_create", verbose_name=_("Créé par"),
+    )
+    updated_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="scoring_delphi_update", verbose_name=_("Mis à jour par"),
+    )
+    history = HistoricalRecords()
+
+    # ------------------------------------------------------------------ #
+    #  Algorithme
+    # ------------------------------------------------------------------ #
+    def _calculer_age(self):
+        """Retourne l'âge en années depuis date_creation si non renseigné."""
+        if self.age_entreprise is not None:
+            return self.age_entreprise
+        if self.acheteur_id and self.acheteur.date_creation:
+            from datetime import date
+            delta = date.today() - self.acheteur.date_creation
+            return delta.days / 365.25
+        return 0
+
+    def calculer_score(self):
+        """Algorithme Delphi — retourne un score 0-100."""
+        if self.est_en_liquidation:
+            return 0
+        if self.petition_faillite:
+            return 1
+
+        score = 0
+
+        # A — DBT (max 35 pts)
+        dbt = self.dbt or 0
+        if dbt <= 5:
+            score += 35
+        elif dbt <= 15:
+            score += 20
+        elif dbt <= 30:
+            score += 5
+        if self.tendance_dbt_hausse:
+            score = max(0, score - 5)
+
+        # B — Événements légaux (max 30 pts)
+        total_legal = (
+            (self.nb_inscriptions_privileges or 0)
+            + (self.nb_jugements_tribunaux or 0)
+            + (self.nb_procedures_collectives or 0)
+        )
+        if total_legal == 0:
+            score += 30
+        elif total_legal == 1:
+            score += 10
+
+        # C — Finances (max 20 pts)
+        if self.ratio_liquidite is not None:
+            if self.ratio_liquidite >= 1.5:
+                score += 20
+            elif self.ratio_liquidite >= 1.0:
+                score += 10
+        if self.retard_depot_bilan:
+            score = max(0, score - 5)
+
+        # D — Démographie (max 15 pts)
+        age = self._calculer_age()
+        if age > 5:
+            score += 15
+        elif age > 2:
+            score += 8
+        else:
+            score += 2
+        if self.historique_dirigeants_negatif:
+            score = max(0, score - 10)
+
+        return max(2, min(100, score))
+
+    @staticmethod
+    def determiner_bande_et_risque(score):
+        """Retourne (bande, etoiles, niveau_risque) selon le score Delphi."""
+        if score == 0:
+            return '-', 0, _('Dissoute / Liquidée')
+        elif score == 1:
+            return 'G', 0, _('Faillite imminente')
+        elif score <= 15:
+            return 'F', 0, _('Risque maximal')
+        elif score <= 25:
+            return 'E', 1, _('Risque élevé')
+        elif score <= 50:
+            return 'D', 2, _('Risque supérieur à la moyenne')
+        elif score <= 80:
+            return 'C', 3, _('Risque inférieur à la moyenne')
+        elif score <= 90:
+            return 'B', 4, _('Faible risque')
+        else:
+            return 'A', 5, _('Risque très faible')
+
+    def save(self, *args, **kwargs):
+        score = self.calculer_score()
+        self.score_delphi = score
+        self.bande, self.etoiles, self.niveau_risque = self.determiner_bande_et_risque(score)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = _("Scoring Delphi")
+        verbose_name_plural = _("Scorings Delphi")
+        ordering = ("-updated_at",)
+        indexes = [
+            models.Index(fields=["score_delphi"]),
+            models.Index(fields=["bande"]),
+        ]
+
+    def __str__(self):
+        return f"{self.acheteur} — Delphi {self.score_delphi or 'N/A'} ({self.bande or '-'})"
+
+
 class Banquier(Model):
     """Modele metier: Banquier."""
-    
+
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     acheteur = models.ForeignKey(

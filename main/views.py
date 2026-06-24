@@ -2226,8 +2226,56 @@ def dash_root_manage_acheteur_scoring(request, acheteur_id):
         "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring.html",
         context,
     )
-    
-    
+
+
+@login_required
+def dash_root_manage_acheteur_scoring_delphi(request, acheteur_id):
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'
+        ),
+        id=acheteur_id,
+    )
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur JWT scoring delphi: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect_to_login(request.get_full_path())
+
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'email': acheteur.email or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+    }
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    context = {
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "acheteur": acheteur,
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring_delphi.html",
+        context,
+    )
+
+
 # views.py - Ajoutez cette vue
 @login_required
 def dash_root_manage_acheteur_scoring_manuel(request, acheteur_id):
