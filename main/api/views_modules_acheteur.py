@@ -4821,6 +4821,63 @@ class BasculerAnneesCompteFinancierView(APIView):
         })
 
 
+class AnnulerBasculerAnneesView(APIView):
+    """
+    Annule la dernière bascule des années en restaurant les 6 dates fournies.
+    Le client envoie les anciennes dates (stockées côté client après la bascule).
+    """
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+
+        try:
+            cf = CompteFinancier.objects.get(acheteur=acheteur)
+        except CompteFinancier.DoesNotExist:
+            return Response(
+                {"success": False, "error": "Aucun compte financier trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        d = request.data
+
+        def parse_date(val):
+            if not val:
+                return None
+            from datetime import date as date_type
+            import datetime
+            try:
+                return datetime.date.fromisoformat(str(val))
+            except (ValueError, TypeError):
+                return None
+
+        cf.date_compte              = parse_date(d.get('date_compte'))
+        cf.date_fin                 = parse_date(d.get('date_fin'))
+        cf.date_compte_n_moins_un   = parse_date(d.get('date_compte_n_moins_un'))
+        cf.date_fin_n_moins_un      = parse_date(d.get('date_fin_n_moins_un'))
+        cf.date_compte_n_moins_deux = parse_date(d.get('date_compte_n_moins_deux'))
+        cf.date_fin_n_moins_deux    = parse_date(d.get('date_fin_n_moins_deux'))
+        cf.updated_by               = request.user
+        cf.save()
+
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='UPDATE_COMPTE_FINANCIER',
+            object_id=cf.id,
+            object_type='CompteFinancier',
+            details=f"Annulation de bascule des années pour {acheteur.nom} ({acheteur.code}).",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
+
+        return Response({
+            "success": True,
+            "message": "Bascule annulée avec succès.",
+            "data": GetCompteFinancierSerializer(cf).data,
+        })
+
+
 class ListAcheteurOperationHistoriqueView(APIView):
     permission_classes = [IsAuthenticated]
 

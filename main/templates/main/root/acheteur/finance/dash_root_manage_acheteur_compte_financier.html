@@ -1581,10 +1581,17 @@
         <div class="cf-section">
             <div class="cf-section-title d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <span><i class="fas fa-calendar-alt"></i>{% trans "Périodes Comptables" %}</span>
-                <button type="button" id="btn-basculer-annees" class="btn btn-sm btn-warning"
-                        title="{% trans "Décaler N→N-1, N-1→N-2 et vider N pour saisir le nouvel exercice" %}">
-                    <i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}
-                </button>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" id="btn-annuler-bascule" class="btn btn-sm btn-outline-danger"
+                            style="display:none"
+                            title="{% trans "Restaurer les périodes telles qu'elles étaient avant la bascule" %}">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Annuler la bascule" %}
+                    </button>
+                    <button type="button" id="btn-basculer-annees" class="btn btn-sm btn-warning"
+                            title="{% trans "Décaler N→N-1, N-1→N-2 et vider N pour saisir le nouvel exercice" %}">
+                        <i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}
+                    </button>
+                </div>
             </div>
             <div class="cf-periods-grid">
 
@@ -2619,112 +2626,214 @@ $(document).ready(function() {
 });
 </script>
 
-{# ──────────────────────────────────────────────────────────────── #}
-{# Bascule des années                                               #}
-{# ──────────────────────────────────────────────────────────────── #}
-{% trans "Basculer les années" as t_bascule_title %}
-{% trans "Opération irréversible" as t_irreversible %}
-{% trans "Bascule effectuée" as t_bascule_ok %}
-{% trans "Erreur lors de la bascule" as t_bascule_err %}
-{% trans "Annulé" as t_annule %}
+{# ──────────────────────────────────────────────────────────────────────── #}
+{# Bascule des années + Annulation                                          #}
+{# ──────────────────────────────────────────────────────────────────────── #}
 <script>
 (function() {
-  var BTN = document.getElementById('btn-basculer-annees');
-  if (!BTN) return;
+  /* ── Variables ───────────────────────────────────────────────────────── */
+  var ACHETEUR_ID = {{ acheteur.id }};
+  var _TOKEN      = '{{ access_token }}';
+  var UNDO_KEY    = 'cf_bascule_undo_' + ACHETEUR_ID;
 
-  /* TOKEN injecté ici — let du script précédent n'est pas accessible cross-script */
-  var _TOKEN = '{{ access_token }}';
+  var URL_BASCULE = '/api/acheteur/' + ACHETEUR_ID + '/compte-financier/basculer-annees/';
+  var URL_ANNULER = '/api/acheteur/' + ACHETEUR_ID + '/compte-financier/annuler-bascule/';
 
+  var BTN_BASCULE = document.getElementById('btn-basculer-annees');
+  var BTN_ANNULER = document.getElementById('btn-annuler-bascule');
+
+  /* ── Helpers ─────────────────────────────────────────────────────────── */
   function getCsrf() {
     var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
     return m ? m[1] : '';
   }
-
   function hdrs() {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + _TOKEN,
-      'X-CSRFToken': getCsrf()
-    };
+    return { 'Content-Type': 'application/json',
+             'Authorization': 'Bearer ' + _TOKEN,
+             'X-CSRFToken': getCsrf() };
   }
 
-  BTN.addEventListener('click', function() {
-    {% if compte_financier %}
-    var dateN    = "{{ compte_financier.date_compte|date:'d/m/Y'|default:'—' }}";
-    var dateFinN = "{{ compte_financier.date_fin|date:'d/m/Y'|default:'—' }}";
-    var dateN1   = "{{ compte_financier.date_compte_n_moins_un|date:'d/m/Y'|default:'—' }}";
-    var dateFinN1= "{{ compte_financier.date_fin_n_moins_un|date:'d/m/Y'|default:'—' }}";
-    var dateN2   = "{{ compte_financier.date_compte_n_moins_deux|date:'d/m/Y'|default:'—' }}";
-    var dateFinN2= "{{ compte_financier.date_fin_n_moins_deux|date:'d/m/Y'|default:'—' }}";
-    {% else %}
-    var dateN='—', dateFinN='—', dateN1='—', dateFinN1='—', dateN2='—', dateFinN2='—';
-    {% endif %}
+  /* ── Afficher/masquer le bouton annuler selon localStorage ───────────── */
+  function checkUndoState() {
+    var undo = null;
+    try { undo = JSON.parse(localStorage.getItem(UNDO_KEY)); } catch(e) {}
+    if (undo && BTN_ANNULER) {
+      BTN_ANNULER.style.display = '';
+    }
+  }
+  checkUndoState();
 
-    var htmlInfo = '<div style="text-align:left;font-size:.85rem;line-height:1.8">' +
-      '<p class="mb-1">{% trans "Cette opération décale les périodes :" %}</p>' +
-      '<table style="width:100%;border-collapse:collapse">' +
-      '<tr style="background:#f8f9fa"><td style="padding:4px 8px;font-weight:700">{% trans "Période N actuelle" %}</td>' +
-        '<td style="padding:4px 8px">' + dateN + ' → ' + dateFinN + '</td>' +
-        '<td style="padding:4px 8px;color:#0a2342;font-weight:700">→ N-1</td></tr>' +
-      '<tr><td style="padding:4px 8px;font-weight:700">{% trans "Période N-1 actuelle" %}</td>' +
-        '<td style="padding:4px 8px">' + dateN1 + ' → ' + dateFinN1 + '</td>' +
-        '<td style="padding:4px 8px;color:#0a2342;font-weight:700">→ N-2</td></tr>' +
-      '<tr style="background:#fff3cd"><td style="padding:4px 8px;font-weight:700">{% trans "Période N-2 actuelle" %}</td>' +
-        '<td style="padding:4px 8px">' + dateN2 + ' → ' + dateFinN2 + '</td>' +
-        '<td style="padding:4px 8px;color:#856404;font-weight:700">{% trans "archivée" %}</td></tr>' +
-      '<tr style="background:#d1ecf1"><td style="padding:4px 8px;font-weight:700">{% trans "Nouvelle période N" %}</td>' +
-        '<td colspan="2" style="padding:4px 8px;color:#0c5460">{% trans "vide — à remplir après bascule" %}</td></tr>' +
-      '</table>' +
-      '<p class="mt-2 mb-0 text-muted" style="font-size:.78rem">' +
-        '<i class="fas fa-info-circle me-1"></i>' +
-        '{% trans "Les données de bilan (Actif/Passif/Résultat) restent intactes. Seules les dates de période sont mises à jour." %}' +
-      '</p></div>';
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* Bouton BASCULE                                                          */
+  /* ────────────────────────────────────────────────────────────────────── */
+  if (BTN_BASCULE) {
+    BTN_BASCULE.addEventListener('click', function() {
+      {% if compte_financier %}
+      var dateN    = "{{ compte_financier.date_compte|date:'d/m/Y'|default:'—' }}";
+      var dateFinN = "{{ compte_financier.date_fin|date:'d/m/Y'|default:'—' }}";
+      var dateN1   = "{{ compte_financier.date_compte_n_moins_un|date:'d/m/Y'|default:'—' }}";
+      var dateFinN1= "{{ compte_financier.date_fin_n_moins_un|date:'d/m/Y'|default:'—' }}";
+      var dateN2   = "{{ compte_financier.date_compte_n_moins_deux|date:'d/m/Y'|default:'—' }}";
+      var dateFinN2= "{{ compte_financier.date_fin_n_moins_deux|date:'d/m/Y'|default:'—' }}";
+      {% else %}
+      var dateN='—',dateFinN='—',dateN1='—',dateFinN1='—',dateN2='—',dateFinN2='—';
+      {% endif %}
 
-    Swal.fire({
-      title: '{{ t_bascule_title }}',
-      html: htmlInfo,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '<i class="fas fa-arrow-repeat me-1"></i>{% trans "Confirmer la bascule" %}',
-      cancelButtonText: '{% trans "Annuler" %}',
-      confirmButtonColor: '#fd7e14',
-      cancelButtonColor: '#6c757d',
-      reverseButtons: true,
-      width: '520px',
-    }).then(function(result) {
-      if (!result.isConfirmed) return;
+      var htmlInfo =
+        '<div style="text-align:left;font-size:.85rem;line-height:1.8">' +
+        '<p class="mb-2">{% trans "Cette opération décale les périodes :" %}</p>' +
+        '<table style="width:100%;border-collapse:collapse">' +
+        '<tr style="background:#f8f9fa"><td style="padding:4px 8px;font-weight:700">{% trans "Période N actuelle" %}</td>' +
+          '<td style="padding:4px 8px">' + dateN + ' → ' + dateFinN + '</td>' +
+          '<td style="padding:4px 8px;color:#0a2342;font-weight:700">→ N-1</td></tr>' +
+        '<tr><td style="padding:4px 8px;font-weight:700">{% trans "Période N-1 actuelle" %}</td>' +
+          '<td style="padding:4px 8px">' + dateN1 + ' → ' + dateFinN1 + '</td>' +
+          '<td style="padding:4px 8px;color:#0a2342;font-weight:700">→ N-2</td></tr>' +
+        '<tr style="background:#fff3cd"><td style="padding:4px 8px;font-weight:700">{% trans "Période N-2 actuelle" %}</td>' +
+          '<td style="padding:4px 8px">' + dateN2 + ' → ' + dateFinN2 + '</td>' +
+          '<td style="padding:4px 8px;color:#856404;font-weight:700">{% trans "archivée" %}</td></tr>' +
+        '<tr style="background:#d1ecf1"><td style="padding:4px 8px;font-weight:700">{% trans "Nouvelle période N" %}</td>' +
+          '<td colspan="2" style="padding:4px 8px;color:#0c5460">{% trans "vide — à remplir après bascule" %}</td></tr>' +
+        '</table>' +
+        '<p class="mt-2 mb-0 text-muted" style="font-size:.78rem">' +
+          '<i class="fas fa-info-circle me-1"></i>' +
+          '{% trans "Les données de bilan (Actif/Passif/Résultat) restent intactes. Seules les dates de période sont mises à jour." %}' +
+        '</p></div>';
 
-      BTN.disabled = true;
-      BTN.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Bascule en cours…" %}';
+      Swal.fire({
+        title: '{% trans "Basculer les années" %}',
+        html: htmlInfo,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-arrow-repeat me-1"></i>{% trans "Confirmer la bascule" %}',
+        cancelButtonText: '{% trans "Annuler" %}',
+        confirmButtonColor: '#fd7e14',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+        width: '540px',
+      }).then(function(result) {
+        if (!result.isConfirmed) return;
 
-      fetch('/api/acheteur/{{ acheteur.id }}/compte-financier/basculer-annees/', {
-        method: 'POST',
-        headers: hdrs(),
-        body: JSON.stringify({}),
-      })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-          if (res.success) {
-            Swal.fire({
-              icon: 'success',
-              title: '{{ t_bascule_ok }}',
-              html: '<p>{% trans "La période N est maintenant vide. Vous pouvez saisir le nouvel exercice." %}</p>',
-              confirmButtonText: '{% trans "Recharger la page" %}',
-              confirmButtonColor: '#0a2342',
-            }).then(function() { window.location.reload(); });
-          } else {
-            Swal.fire({ icon: 'error', title: '{{ t_bascule_err }}', text: res.error || '' });
-            BTN.disabled = false;
-            BTN.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}';
-          }
-        })
-        .catch(function() {
-          Swal.fire({ icon: 'error', title: '{{ t_bascule_err }}' });
-          BTN.disabled = false;
-          BTN.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}';
-        });
+        BTN_BASCULE.disabled = true;
+        BTN_BASCULE.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Bascule en cours…" %}';
+
+        fetch(URL_BASCULE, { method: 'POST', headers: hdrs(), body: '{}' })
+          .then(function(r) { return r.json(); })
+          .then(function(res) {
+            if (res.success) {
+              /* Sauvegarder les anciennes dates pour permettre l'annulation */
+              var dec = res.decalage || {};
+              var undoData = {
+                date_compte:              dec.nouveau_n1  ? dec.nouveau_n1.debut  : null,
+                date_fin:                 dec.nouveau_n1  ? dec.nouveau_n1.fin    : null,
+                date_compte_n_moins_un:   dec.nouveau_n2  ? dec.nouveau_n2.debut  : null,
+                date_fin_n_moins_un:      dec.nouveau_n2  ? dec.nouveau_n2.fin    : null,
+                date_compte_n_moins_deux: dec.archive_n2  ? dec.archive_n2.debut  : null,
+                date_fin_n_moins_deux:    dec.archive_n2  ? dec.archive_n2.fin    : null,
+              };
+              try { localStorage.setItem(UNDO_KEY, JSON.stringify(undoData)); } catch(e) {}
+
+              Swal.fire({
+                icon: 'success',
+                title: '{% trans "Bascule effectuée" %}',
+                html: '<p>{% trans "La période N est maintenant vide. Vous pouvez saisir le nouvel exercice." %}</p>' +
+                      '<p class="text-muted small">{% trans "Le bouton &laquo;&nbsp;Annuler la bascule&nbsp;&raquo; apparaîtra si vous souhaitez revenir en arrière." %}</p>',
+                confirmButtonText: '{% trans "Recharger la page" %}',
+                confirmButtonColor: '#0a2342',
+              }).then(function() { window.location.reload(); });
+            } else {
+              Swal.fire({ icon: 'error', title: '{% trans "Erreur lors de la bascule" %}', text: res.error || '' });
+              BTN_BASCULE.disabled = false;
+              BTN_BASCULE.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}';
+            }
+          })
+          .catch(function() {
+            Swal.fire({ icon: 'error', title: '{% trans "Erreur lors de la bascule" %}' });
+            BTN_BASCULE.disabled = false;
+            BTN_BASCULE.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>{% trans "Basculer les années" %}';
+          });
+      });
     });
-  });
+  }
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* Bouton ANNULER LA BASCULE                                              */
+  /* ────────────────────────────────────────────────────────────────────── */
+  if (BTN_ANNULER) {
+    BTN_ANNULER.addEventListener('click', function() {
+      var undoData = null;
+      try { undoData = JSON.parse(localStorage.getItem(UNDO_KEY)); } catch(e) {}
+
+      if (!undoData) {
+        Swal.fire({ icon: 'warning', title: '{% trans "Aucune bascule récente à annuler." %}',
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+        BTN_ANNULER.style.display = 'none';
+        return;
+      }
+
+      /* Construire le tableau de restauration */
+      function fmtDate(iso) {
+        if (!iso) return '—';
+        var p = iso.split('-');
+        return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
+      }
+
+      var htmlUndo =
+        '<div style="text-align:left;font-size:.85rem;line-height:1.8">' +
+        '<p class="mb-2">{% trans "Les périodes seront restaurées comme suit :" %}</p>' +
+        '<table style="width:100%;border-collapse:collapse">' +
+        '<tr style="background:#f8f9fa"><td style="padding:4px 8px;font-weight:700">{% trans "Période N" %}</td>' +
+          '<td style="padding:4px 8px">' + fmtDate(undoData.date_compte) + ' → ' + fmtDate(undoData.date_fin) + '</td></tr>' +
+        '<tr><td style="padding:4px 8px;font-weight:700">{% trans "Période N-1" %}</td>' +
+          '<td style="padding:4px 8px">' + fmtDate(undoData.date_compte_n_moins_un) + ' → ' + fmtDate(undoData.date_fin_n_moins_un) + '</td></tr>' +
+        '<tr style="background:#f8f9fa"><td style="padding:4px 8px;font-weight:700">{% trans "Période N-2" %}</td>' +
+          '<td style="padding:4px 8px">' + fmtDate(undoData.date_compte_n_moins_deux) + ' → ' + fmtDate(undoData.date_fin_n_moins_deux) + '</td></tr>' +
+        '</table></div>';
+
+      Swal.fire({
+        title: '{% trans "Annuler la bascule" %}',
+        html: htmlUndo,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Confirmer l\'annulation" %}',
+        cancelButtonText: '{% trans "Laisser tel quel" %}',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+        width: '500px',
+      }).then(function(result) {
+        if (!result.isConfirmed) return;
+
+        BTN_ANNULER.disabled = true;
+        BTN_ANNULER.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Restauration…" %}';
+
+        fetch(URL_ANNULER, { method: 'POST', headers: hdrs(), body: JSON.stringify(undoData) })
+          .then(function(r) { return r.json(); })
+          .then(function(res) {
+            if (res.success) {
+              try { localStorage.removeItem(UNDO_KEY); } catch(e) {}
+              Swal.fire({
+                icon: 'success',
+                title: '{% trans "Bascule annulée" %}',
+                html: '<p>{% trans "Les périodes ont été restaurées." %}</p>',
+                confirmButtonText: '{% trans "Recharger la page" %}',
+                confirmButtonColor: '#0a2342',
+              }).then(function() { window.location.reload(); });
+            } else {
+              Swal.fire({ icon: 'error', title: '{% trans "Erreur lors de l\'annulation" %}', text: res.error || '' });
+              BTN_ANNULER.disabled = false;
+              BTN_ANNULER.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Annuler la bascule" %}';
+            }
+          })
+          .catch(function() {
+            Swal.fire({ icon: 'error', title: '{% trans "Erreur lors de l\'annulation" %}' });
+            BTN_ANNULER.disabled = false;
+            BTN_ANNULER.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Annuler la bascule" %}';
+          });
+      });
+    });
+  }
+
 })();
 </script>
 {% endblock %}
