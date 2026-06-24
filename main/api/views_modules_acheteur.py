@@ -4746,6 +4746,81 @@ class AcheteurCompteFinancierView(APIView):
 
 
 
+class BasculerAnneesCompteFinancierView(APIView):
+    """
+    Décale les périodes N/N-1/N-2 du CompteFinancier d'un acheteur :
+      - Ancien N  → nouveau N-1
+      - Ancien N-1 → nouveau N-2
+      - Ancien N-2 → archivé (perdu, données bilan conservées via FK Annee)
+      - Nouveau N  → vide (à remplir)
+    Ne touche PAS aux enregistrements ActifC/PassifC/ResultatC qui restent
+    liés à leurs années respectives.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+
+        try:
+            cf = CompteFinancier.objects.get(acheteur=acheteur)
+        except CompteFinancier.DoesNotExist:
+            return Response(
+                {"success": False, "error": "Aucun compte financier trouvé pour cet acheteur."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Mémoriser les périodes actuelles avant décalage
+        old_n = {
+            'debut': cf.date_compte.isoformat() if cf.date_compte else None,
+            'fin':   cf.date_fin.isoformat()     if cf.date_fin    else None,
+        }
+        old_n1 = {
+            'debut': cf.date_compte_n_moins_un.isoformat() if cf.date_compte_n_moins_un else None,
+            'fin':   cf.date_fin_n_moins_un.isoformat()    if cf.date_fin_n_moins_un    else None,
+        }
+        old_n2 = {
+            'debut': cf.date_compte_n_moins_deux.isoformat() if cf.date_compte_n_moins_deux else None,
+            'fin':   cf.date_fin_n_moins_deux.isoformat()    if cf.date_fin_n_moins_deux    else None,
+        }
+
+        # Décalage
+        cf.date_compte_n_moins_deux = cf.date_compte_n_moins_un
+        cf.date_fin_n_moins_deux    = cf.date_fin_n_moins_un
+        cf.date_compte_n_moins_un   = cf.date_compte
+        cf.date_fin_n_moins_un      = cf.date_fin
+        cf.date_compte              = None
+        cf.date_fin                 = None
+        cf.updated_by               = request.user
+        cf.save()
+
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='UPDATE_COMPTE_FINANCIER',
+            object_id=cf.id,
+            object_type='CompteFinancier',
+            details=(
+                f"Bascule des années effectuée pour {acheteur.nom} ({acheteur.code}). "
+                f"Ancien N ({old_n['debut']}→{old_n['fin']}) → N-1 ; "
+                f"Ancien N-1 ({old_n1['debut']}→{old_n1['fin']}) → N-2 ; "
+                f"Ancien N-2 archivé."
+            ),
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        )
+
+        return Response({
+            "success": True,
+            "message": "Bascule des années effectuée avec succès.",
+            "decalage": {
+                "archive_n2": old_n2,
+                "nouveau_n1": old_n,
+                "nouveau_n2": old_n1,
+            },
+            "data": GetCompteFinancierSerializer(cf).data,
+        })
+
+
 class ListAcheteurOperationHistoriqueView(APIView):
     permission_classes = [IsAuthenticated]
 

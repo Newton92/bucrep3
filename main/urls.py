@@ -2185,8 +2185,9 @@ urlpatterns = [
         name="delete-compte-financier-acheteur",
     ),
     path('api/acheteur/<int:acheteur_id>/compte-financier/',  AcheteurCompteFinancierView.as_view(), name='acheteur-compte-financier'),
-    
-    
+    path('api/acheteur/<int:acheteur_id>/compte-financier/basculer-annees/', BasculerAnneesCompteFinancierView.as_view(), name='acheteur-compte-financier-basculer'),
+
+
     
     
     
