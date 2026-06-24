@@ -1,0 +1,608 @@
+{% extends "main/root/base.html" %}
+{% load i18n %}
+{% load acheteur_navigation %}
+
+{% block title %}{% trans "Score Rating" %} — {{ acheteur.nom }}{% endblock %}
+
+{% block styles %}
+<style>
+  /* ---- Tableau de scoring ---- */
+  .rating-table th  { font-size:.78rem; font-weight:600; background:#f8f9fa; white-space:nowrap; }
+  .rating-table td  { font-size:.83rem; vertical-align:middle; }
+  .pilier-header td { font-weight:700; font-size:.78rem; text-transform:uppercase;
+                      letter-spacing:.6px; background:#e9ecef; color:#495057; }
+  .note-input { width:80px; }
+  .note-cell  { font-weight:700; color:#0a2342; }
+  .pondere-cell { font-weight:700; color:#1a4e8f; }
+  .auto-badge { font-size:.65rem; padding:1px 5px; border-radius:3px;
+                background:#e3f2fd; color:#1565c0; font-weight:600; }
+
+  /* ---- Résultat final ---- */
+  .score-result-card { border-left:6px solid #0a2342; }
+  .score-big   { font-size:3rem; font-weight:900; line-height:1; }
+  .rating-chip { font-size:1.1rem; font-weight:700; padding:6px 18px;
+                 border-radius:20px; letter-spacing:.5px; }
+  .rating-AAA { background:#198754; color:#fff; }
+  .rating-A   { background:#20c997; color:#fff; }
+  .rating-BB  { background:#ffc107; color:#000; }
+  .rating-CCC { background:#fd7e14; color:#fff; }
+  .rating-D   { background:#dc3545; color:#fff; }
+  .red-flag-alert { border:2px solid #dc3545; border-radius:6px; }
+
+  /* ---- Bilan preview ---- */
+  .bilan-ratio-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .bilan-ratio-chip { font-size:.75rem; padding:2px 8px; border-radius:12px;
+                      background:#f1f3f5; border:1px solid #dee2e6; }
+
+  /* ---- Années selector ---- */
+  .year-btn { font-size:.8rem; padding:4px 12px; }
+  .year-btn.active { background:#0a2342; color:#fff; border-color:#0a2342; }
+
+  /* ---- Historique scorings ---- */
+  .hist-table td, .hist-table th { font-size:.8rem; padding:4px 8px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-3">
+
+  {# ---- En-tête acheteur ---- #}
+  <div class="page-header d-flex align-items-center gap-3 mb-3 p-3 rounded-3"
+       style="background:linear-gradient(135deg,#0a2342 0%,#1a4e8f 100%);">
+    <div class="flex-grow-1">
+      <h5 class="fw-bold text-white mb-0">{{ acheteur.nom }}</h5>
+      <small class="text-white-50">{{ acheteur.code }}{% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}</small>
+    </div>
+    <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}"
+       class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+    </a>
+  </div>
+
+  {% acheteur_page_nav "scoring_rating" %}
+
+  {# ---- Sélection d'année ---- #}
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-header bg-white border-bottom py-2">
+      <span class="fw-bold">
+        <i class="bi bi-calendar3 me-2 text-primary"></i>{% trans "Sélectionnez une année de bilan" %}
+      </span>
+    </div>
+    <div class="card-body py-3">
+      <div id="years-loading" class="text-muted small">
+        <span class="spinner-border spinner-border-sm me-1"></span>{% trans "Chargement des années…" %}
+      </div>
+      <div id="years-container" class="d-flex gap-2 flex-wrap" style="display:none!important"></div>
+      <div id="years-empty" class="text-muted small" style="display:none">
+        <i class="bi bi-exclamation-circle me-1"></i>
+        {% trans "Aucun bilan trouvé pour cet acheteur." %}
+        <a href="{% url 'dash_root_manage_acheteur_compte_financier' acheteur.id %}" class="ms-2">
+          {% trans "Ajouter des comptes financiers" %} →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {# ---- Contenu principal (visible après sélection d'année) ---- #}
+  <div id="main-content" style="display:none">
+    <div class="row g-3">
+
+      {# ======== Formulaire de scoring ======== #}
+      <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold">
+              <i class="bi bi-table me-2 text-primary"></i>
+              {% trans "Tableau de calcul du Score Rating" %}
+            </span>
+            <span class="text-muted small" id="annee-titre"></span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-bordered rating-table mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:30%">{% trans "Critère" %}</th>
+                    <th style="width:18%">{% trans "Valeur brute" %}</th>
+                    <th style="width:15%">{% trans "Note (0-10)" %}</th>
+                    <th style="width:12%">{% trans "Pondération" %}</th>
+                    <th style="width:13%">{% trans "Note pondérée" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {# ---- Pilier Financier ---- #}
+                  <tr class="pilier-header">
+                    <td colspan="5">
+                      <i class="bi bi-bank me-1"></i>{% trans "Pilier Financier" %} — 40%
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Solvabilité" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Fonds propres / Total bilan" %}</div>
+                      <span class="auto-badge">{% trans "Auto" %}</span>
+                    </td>
+                    <td id="solv-ratio-cell">—</td>
+                    <td class="note-cell" id="solv-note-cell">—</td>
+                    <td class="text-center">15%</td>
+                    <td class="pondere-cell" id="solv-pondere-cell">—</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Rentabilité (Marge EBITDA)" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "EBE / Chiffre d'affaires" %}</div>
+                      <span class="auto-badge">{% trans "Auto" %}</span>
+                    </td>
+                    <td id="ebitda-ratio-cell">—</td>
+                    <td class="note-cell" id="ebitda-note-cell">—</td>
+                    <td class="text-center">15%</td>
+                    <td class="pondere-cell" id="ebitda-pondere-cell">—</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Liquidité générale" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Actif circulant / Passif circulant" %}</div>
+                      <span class="auto-badge">{% trans "Auto" %}</span>
+                    </td>
+                    <td id="liq-ratio-cell">—</td>
+                    <td class="note-cell" id="liq-note-cell">—</td>
+                    <td class="text-center">10%</td>
+                    <td class="pondere-cell" id="liq-pondere-cell">—</td>
+                  </tr>
+
+                  {# ---- Pilier Comportemental ---- #}
+                  <tr class="pilier-header">
+                    <td colspan="5">
+                      <i class="bi bi-clock-history me-1"></i>{% trans "Pilier Comportemental" %} — 30%
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Historique de paiement" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Retards de paiement sur l'année" %}</div>
+                      <span class="badge bg-danger" style="font-size:.6rem">Red Flag si 0</span>
+                    </td>
+                    <td>
+                      <input type="number" min="0" max="10" step="0.5"
+                             class="form-control form-control-sm note-input" id="f-hist-paiement" value="5">
+                    </td>
+                    <td class="note-cell" id="hist-note-cell">5</td>
+                    <td class="text-center">20%</td>
+                    <td class="pondere-cell" id="hist-pondere-cell">—</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Ancienneté / Relation bancaire" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Âge de l'entreprise" %}</div>
+                      <span class="auto-badge">{% trans "Auto" %}</span>
+                    </td>
+                    <td id="anc-duree-cell">—</td>
+                    <td class="note-cell" id="anc-note-cell">—</td>
+                    <td class="text-center">10%</td>
+                    <td class="pondere-cell" id="anc-pondere-cell">—</td>
+                  </tr>
+
+                  {# ---- Pilier Qualitatif ---- #}
+                  <tr class="pilier-header">
+                    <td colspan="5">
+                      <i class="bi bi-graph-up-arrow me-1"></i>{% trans "Pilier Qualitatif" %} — 30%
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Secteur d'activité" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Dynamique sectorielle & risque" %}</div>
+                    </td>
+                    <td>
+                      <input type="number" min="0" max="10" step="0.5"
+                             class="form-control form-control-sm note-input" id="f-secteur" value="5">
+                    </td>
+                    <td class="note-cell" id="secteur-note-cell">5</td>
+                    <td class="text-center">15%</td>
+                    <td class="pondere-cell" id="secteur-pondere-cell">—</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      {% trans "Gouvernance & Management" %}
+                      <div class="text-muted" style="font-size:.72rem">{% trans "Qualité du management" %}</div>
+                    </td>
+                    <td>
+                      <input type="number" min="0" max="10" step="0.5"
+                             class="form-control form-control-sm note-input" id="f-management" value="5">
+                    </td>
+                    <td class="note-cell" id="mgmt-note-cell">5</td>
+                    <td class="text-center">15%</td>
+                    <td class="pondere-cell" id="mgmt-pondere-cell">—</td>
+                  </tr>
+
+                  {# ---- Total ---- #}
+                  <tr class="table-dark">
+                    <td colspan="2" class="text-end fw-bold">{% trans "Score Global Final" %}</td>
+                    <td colspan="1" class="text-center text-warning fw-bold" id="total-label">—</td>
+                    <td class="text-center fw-bold">100%</td>
+                    <td class="text-warning fw-bold" id="total-pondere">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">{% trans "Commentaire analyste" %}</label>
+              <textarea class="form-control form-control-sm" id="f-commentaire" rows="2"
+                        placeholder="{% trans "Observations, contexte, décision…" %}"></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-recalculer">
+                <i class="bi bi-arrow-clockwise me-1"></i>{% trans "Recalculer" %}
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="btn-enregistrer">
+                <i class="bi bi-floppy me-1"></i>{% trans "Enregistrer le rating" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ======== Résultat + histogramme ======== #}
+      <div class="col-lg-4">
+
+        {# Résultat courant #}
+        <div class="card shadow-sm border-0 mb-3 score-result-card">
+          <div class="card-body text-center py-4">
+            <div id="red-flag-warn" class="alert alert-danger py-2 small mb-3 red-flag-alert" style="display:none">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <strong>Red Flag</strong> — {% trans "Historique de paiement nul. Refus automatique." %}
+            </div>
+            <div class="score-big text-primary mb-1" id="score-big">—</div>
+            <div class="text-muted small mb-2">/10</div>
+            <div class="rating-chip d-inline-block mb-2" id="rating-chip">—</div>
+            <div class="fw-semibold small" id="classe-risque-txt"></div>
+            <hr class="my-2">
+            <div class="small text-muted mb-1">{% trans "Décision" %}</div>
+            <div class="fw-bold small" id="decision-txt"></div>
+          </div>
+        </div>
+
+        {# Grille de correspondance #}
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-white border-bottom py-2">
+            <span class="fw-bold small">
+              <i class="bi bi-list-check me-1 text-primary"></i>{% trans "Grille de correspondance" %}
+            </span>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0 small hist-table">
+              <tr class="table-success">
+                <td>8,5 – 10</td><td>AAA/AA</td><td>{% trans "Risque Excellent" %}</td>
+              </tr>
+              <tr class="table-info">
+                <td>7,0 – 8,4</td><td>A/BBB</td><td>{% trans "Risque Faible" %}</td>
+              </tr>
+              <tr class="table-warning">
+                <td>5,5 – 6,9</td><td>BB/B</td><td>{% trans "Risque Modéré" %}</td>
+              </tr>
+              <tr class="table-orange" style="background:#fff3e0">
+                <td>4,0 – 5,4</td><td>CCC</td><td>{% trans "Risque Élevé" %}</td>
+              </tr>
+              <tr class="table-danger">
+                <td>&lt; 4,0</td><td>D</td><td>{% trans "Risque Critique" %}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        {# Historique des ratings enregistrés #}
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom py-2">
+            <span class="fw-bold small">
+              <i class="bi bi-clock-history me-1 text-primary"></i>{% trans "Historique des ratings" %}
+            </span>
+          </div>
+          <div class="card-body p-0">
+            <div id="hist-loading" class="p-3 text-muted small text-center">
+              <span class="spinner-border spinner-border-sm"></span>
+            </div>
+            <div id="hist-list"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>{# /row #}
+  </div>{# /main-content #}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% trans "Chargement des années…" as t_load_years %}
+{% trans "Chargement du bilan…" as t_load_bilan %}
+{% trans "Recalcul…" as t_recalc %}
+{% trans "Enregistrement…" as t_saving %}
+{% trans "Rating enregistré avec succès" as t_saved %}
+{% trans "Erreur lors de l'enregistrement" as t_err_save %}
+{% trans "Erreur de chargement" as t_err_load %}
+{% trans "Aucun rating enregistré" as t_no_hist %}
+{% trans "Bilan non disponible pour cette année" as t_no_bilan %}
+{% trans "Données bilan disponibles" as t_bilan_ok %}
+{% trans "Bilan indisponible — saisie manuelle requise" as t_bilan_ko %}
+{% trans "ans" as t_ans %}
+
+<script>
+(function() {
+  var ACCESS_TOKEN = "{{ access_token }}";
+  var ACHETEUR_ID  = {{ id_acheteur }};
+  var ANNEE_CHOISIE = null;
+
+  var API_ANNEES   = "/api/scoring/rating/acheteur/" + ACHETEUR_ID + "/annees/";
+  var API_BASE     = "/api/scoring/rating/acheteur/" + ACHETEUR_ID + "/";
+
+  function hdrs() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACCESS_TOKEN };
+  }
+
+  function pct(v) { return v !== null && v !== undefined ? (parseFloat(v) * 100).toFixed(1) + "%" : "—"; }
+  function note(v) { return v !== null && v !== undefined ? parseFloat(v).toFixed(2) : "—"; }
+  function pond(v, coeff) {
+    if (v === null || v === undefined) return "—";
+    return (parseFloat(v) * coeff).toFixed(4);
+  }
+  function getInput(id) { var el = document.getElementById(id); return el ? parseFloat(el.value) || 0 : 0; }
+  function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+
+  // ---- Chargement des années ----------------------------------------
+  fetch(API_ANNEES, { headers: hdrs() })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      document.getElementById('years-loading').style.display = 'none';
+      var years = res.years || [];
+      var avecRating = res.annees_avec_rating || [];
+      if (years.length === 0) {
+        document.getElementById('years-empty').style.display = '';
+        return;
+      }
+      var cont = document.getElementById('years-container');
+      cont.style.display = '';
+      years.forEach(function(y) {
+        var btn = document.createElement('button');
+        btn.className = 'btn btn-outline-secondary year-btn';
+        btn.textContent = y + (avecRating.indexOf(y) >= 0 ? ' ✓' : '');
+        btn.setAttribute('data-year', y);
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.year-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          selectionnerAnnee(y);
+        });
+        cont.appendChild(btn);
+      });
+    })
+    .catch(function() {
+      document.getElementById('years-loading').textContent = '{{ t_err_load }}';
+    });
+
+  // ---- Sélection d'une année ----------------------------------------
+  function selectionnerAnnee(annee) {
+    ANNEE_CHOISIE = annee;
+    document.getElementById('annee-titre').textContent = annee;
+    document.getElementById('main-content').style.display = '';
+
+    var url = API_BASE + "annees/" + annee + "/precharger/";
+    fetch(url, { headers: hdrs() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        var bilan = res.bilan || {};
+        var existing = res.existing;
+        var ancNote = res.anciennete_note;
+
+        // Remplir champs financiers auto
+        remplirBilan(bilan, ancNote);
+
+        // Si un rating existe déjà, pré-remplir les champs manuels
+        if (existing) {
+          document.getElementById('f-hist-paiement').value = existing.historique_paiement_note || 5;
+          document.getElementById('f-secteur').value        = existing.secteur_activite_note || 5;
+          document.getElementById('f-management').value     = existing.management_note || 5;
+          document.getElementById('f-commentaire').value    = existing.commentaire || '';
+          afficherResultat(existing.score_final, existing.rating, existing.classe_risque, existing.decision, existing.red_flag);
+        }
+        recalculer();
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: '{{ t_err_load }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      });
+  }
+
+  // ---- Remplir les cellules bilan -----------------------------------
+  function remplirBilan(b, ancNote) {
+    // Solvabilité
+    setText('solv-ratio-cell', b.solvabilite_ratio !== null ? pct(b.solvabilite_ratio) : '—');
+    setText('solv-note-cell',  b.solvabilite_note  !== null ? note(b.solvabilite_note)  : '—');
+
+    // EBITDA
+    setText('ebitda-ratio-cell', b.ebitda_ratio !== null ? pct(b.ebitda_ratio) : '—');
+    setText('ebitda-note-cell',  b.ebitda_note  !== null ? note(b.ebitda_note)  : '—');
+
+    // Liquidité
+    setText('liq-ratio-cell', b.liquidite_ratio !== null ? parseFloat(b.liquidite_ratio).toFixed(2) : '—');
+    setText('liq-note-cell',  b.liquidite_note  !== null ? note(b.liquidite_note)  : '—');
+
+    // Ancienneté
+    setText('anc-note-cell',  ancNote !== null ? parseFloat(ancNote).toFixed(1) : '—');
+    setText('anc-duree-cell', '');
+
+    if (!b.bilan_disponible) {
+      Swal.fire({ icon: 'warning', title: '{{ t_no_bilan }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 4000 });
+    }
+  }
+
+  // ---- Recalcul temps réel ------------------------------------------
+  function recalculer() {
+    var solv  = parseFloat(document.getElementById('solv-note-cell').textContent) || 0;
+    var ebitda= parseFloat(document.getElementById('ebitda-note-cell').textContent) || 0;
+    var liq   = parseFloat(document.getElementById('liq-note-cell').textContent) || 0;
+    var anc   = parseFloat(document.getElementById('anc-note-cell').textContent) || 0;
+    var hist  = getInput('f-hist-paiement');
+    var sect  = getInput('f-secteur');
+    var mgmt  = getInput('f-management');
+
+    // Mettre à jour les cellules note
+    document.getElementById('hist-note-cell').textContent = hist.toFixed(2);
+    document.getElementById('secteur-note-cell').textContent = sect.toFixed(2);
+    document.getElementById('mgmt-note-cell').textContent = mgmt.toFixed(2);
+
+    // Notes pondérées
+    document.getElementById('solv-pondere-cell').textContent   = (solv  * 0.15).toFixed(4);
+    document.getElementById('ebitda-pondere-cell').textContent = (ebitda* 0.15).toFixed(4);
+    document.getElementById('liq-pondere-cell').textContent    = (liq   * 0.10).toFixed(4);
+    document.getElementById('hist-pondere-cell').textContent   = (hist  * 0.20).toFixed(4);
+    document.getElementById('anc-pondere-cell').textContent    = (anc   * 0.10).toFixed(4);
+    document.getElementById('secteur-pondere-cell').textContent= (sect  * 0.15).toFixed(4);
+    document.getElementById('mgmt-pondere-cell').textContent   = (mgmt  * 0.15).toFixed(4);
+
+    // Score final
+    var score;
+    var redFlag = false;
+    if (hist === 0) {
+      score = 0;
+      redFlag = true;
+    } else {
+      score = solv*0.15 + ebitda*0.15 + liq*0.10 + hist*0.20 + anc*0.10 + sect*0.15 + mgmt*0.15;
+      score = Math.round(score * 100) / 100;
+    }
+
+    var rating, classe, decision;
+    if (redFlag) {
+      rating = 'D'; classe = '{% trans "Risque Critique" %}';
+      decision = '{% trans "Refus automatique" %}';
+    } else if (score >= 8.5) {
+      rating = 'AAA/AA'; classe = '{% trans "Risque Excellent" %}';
+      decision = '{% trans "Approbation immédiate (Conditions premium)" %}';
+    } else if (score >= 7.0) {
+      rating = 'A/BBB'; classe = '{% trans "Risque Faible / Bon" %}';
+      decision = '{% trans "Approbation (Conditions standards)" %}';
+    } else if (score >= 5.5) {
+      rating = 'BB/B'; classe = '{% trans "Risque Modéré" %}';
+      decision = '{% trans "Analyse humaine requise (Comité de crédit)" %}';
+    } else if (score >= 4.0) {
+      rating = 'CCC'; classe = '{% trans "Risque Élevé" %}';
+      decision = '{% trans "Garanties obligatoires (Caution, nantissement)" %}';
+    } else {
+      rating = 'D'; classe = '{% trans "Risque Critique" %}';
+      decision = '{% trans "Refus automatique" %}';
+    }
+
+    setText('total-pondere', score.toFixed(2));
+    setText('total-label',   score.toFixed(2) + " / 10");
+    afficherResultat(score, rating, classe, decision, redFlag);
+  }
+
+  function afficherResultat(score, rating, classe, decision, redFlag) {
+    var scoreEl  = document.getElementById('score-big');
+    var chipEl   = document.getElementById('rating-chip');
+    var rfWarn   = document.getElementById('red-flag-warn');
+
+    scoreEl.textContent = parseFloat(score).toFixed(2);
+    chipEl.textContent  = rating || '—';
+    setText('classe-risque-txt', classe || '');
+    setText('decision-txt', decision || '');
+
+    chipEl.className = 'rating-chip d-inline-block mb-2 ';
+    if (!rating || rating === 'D')      chipEl.className += 'rating-D';
+    else if (rating.indexOf('AAA') >= 0) chipEl.className += 'rating-AAA';
+    else if (rating.indexOf('A') >= 0)   chipEl.className += 'rating-A';
+    else if (rating.indexOf('BB') >= 0)  chipEl.className += 'rating-BB';
+    else if (rating.indexOf('CCC') >= 0) chipEl.className += 'rating-CCC';
+
+    rfWarn.style.display = redFlag ? '' : 'none';
+  }
+
+  // ---- Charger historique -------------------------------------------
+  function chargerHistorique() {
+    fetch(API_BASE, { headers: hdrs() })
+      .then(function(r) { return r.json(); })
+      .then(function(list) {
+        var cont = document.getElementById('hist-list');
+        document.getElementById('hist-loading').style.display = 'none';
+        if (!list.length) {
+          cont.innerHTML = '<p class="text-muted text-center small p-3">{{ t_no_hist }}</p>';
+          return;
+        }
+        var html = '<table class="table table-sm mb-0 hist-table"><thead><tr>' +
+          '<th>{% trans "Année" %}</th><th>{% trans "Score" %}</th><th>{% trans "Rating" %}</th>' +
+          '<th>{% trans "Classe" %}</th></tr></thead><tbody>';
+        list.forEach(function(r) {
+          var ratingClass = r.rating && r.rating.indexOf('AAA') >= 0 ? 'success' :
+                            r.rating && r.rating.indexOf('A') >= 0   ? 'info'    :
+                            r.rating && r.rating.indexOf('BB') >= 0  ? 'warning' :
+                            r.rating && r.rating.indexOf('CCC') >= 0 ? 'orange'  : 'danger';
+          html += '<tr><td>' + (r.annee_val || '—') + '</td>' +
+            '<td class="fw-bold">' + (r.score_final ? parseFloat(r.score_final).toFixed(2) : '—') + '</td>' +
+            '<td><span class="badge bg-' + (ratingClass === 'orange' ? 'warning text-dark' : ratingClass) + '">' +
+              (r.rating || '—') + '</span></td>' +
+            '<td class="text-muted" style="font-size:.72rem">' + (r.classe_risque || '—') + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        cont.innerHTML = html;
+      })
+      .catch(function() {
+        document.getElementById('hist-loading').textContent = '{{ t_err_load }}';
+      });
+  }
+
+  // ---- Listeners ----------------------------------------------------
+  document.getElementById('btn-recalculer').addEventListener('click', recalculer);
+
+  ['f-hist-paiement', 'f-secteur', 'f-management'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', recalculer);
+  });
+
+  document.getElementById('btn-enregistrer').addEventListener('click', function() {
+    if (!ANNEE_CHOISIE) {
+      Swal.fire({ icon: 'warning', title: "{% trans "Veuillez choisir une année." %}", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      return;
+    }
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ t_saving }}';
+
+    var payload = {
+      annee_int:               ANNEE_CHOISIE,
+      historique_paiement_note: getInput('f-hist-paiement'),
+      secteur_activite_note:    getInput('f-secteur'),
+      management_note:          getInput('f-management'),
+      commentaire:              document.getElementById('f-commentaire').value,
+    };
+
+    fetch(API_BASE, {
+      method: 'POST', headers: hdrs(), body: JSON.stringify(payload)
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          Swal.fire({ icon: 'success', title: '{{ t_saved }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
+          chargerHistorique();
+          // Mettre à jour le bouton d'année avec ✓
+          document.querySelectorAll('.year-btn').forEach(function(b) {
+            if (parseInt(b.getAttribute('data-year')) === ANNEE_CHOISIE && b.textContent.indexOf('✓') < 0) {
+              b.textContent += ' ✓';
+            }
+          });
+        } else {
+          Swal.fire({ icon: 'error', title: "{{ t_err_save }}", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+        }
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: "{{ t_err_save }}", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-floppy me-1"></i>{% trans "Enregistrer le rating" %}';
+      });
+  });
+
+  // ---- Init ---------------------------------------------------------
+  chargerHistorique();
+})();
+</script>
+{% endblock %}

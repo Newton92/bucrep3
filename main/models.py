@@ -7358,6 +7358,139 @@ class Scoring(SafeDeleteModel):  # Changez Model en SafeDeleteModel
             })
 
 
+class ScoringRating(SafeDeleteModel):
+    """
+    Score / Rating ACREMAC basé sur états financiers (bilan classique).
+    Pondération : Financier 40% | Comportemental 30% | Qualitatif 30%.
+    Score sur 10. Red Flag si historique_paiement = 0.
+    """
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        related_name="scorings_rating",
+        verbose_name=_("Acheteur"),
+    )
+    annee = models.ForeignKey(
+        "Annee",
+        on_delete=models.DO_NOTHING,
+        related_name="scorings_rating",
+        verbose_name=_("Année du bilan"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Pilier A — Financier (40%) — auto-calculé depuis bilan classique
+    # ------------------------------------------------------------------ #
+    solvabilite_ratio = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name=_("Ratio de solvabilité brut (FP / Total bilan)"),
+    )
+    solvabilite_note = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Note solvabilité (0-10)"),
+    )
+    ebitda_ratio = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name=_("Ratio EBITDA brut (EBE / CA)"),
+    )
+    ebitda_note = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Note EBITDA / Rentabilité (0-10)"),
+    )
+    liquidite_ratio = models.DecimalField(
+        max_digits=10, decimal_places=4, null=True, blank=True,
+        verbose_name=_("Ratio de liquidité générale brut (AC / PC)"),
+    )
+    liquidite_note = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Note liquidité (0-10)"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Pilier B — Comportemental (30%)
+    # ------------------------------------------------------------------ #
+    historique_paiement_note = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5,
+        verbose_name=_("Note historique de paiement (0-10)"),
+        help_text=_("0 = cessation de paiements (Red Flag automatique)"),
+    )
+    anciennete_note = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Note ancienneté / relation bancaire (0-10)"),
+        help_text=_("Calculée automatiquement depuis la date de création"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Pilier C — Qualitatif (30%)
+    # ------------------------------------------------------------------ #
+    secteur_activite_note = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5,
+        verbose_name=_("Note secteur d'activité (0-10)"),
+    )
+    management_note = models.DecimalField(
+        max_digits=5, decimal_places=2, default=5,
+        verbose_name=_("Note gouvernance & management (0-10)"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Résultats calculés
+    # ------------------------------------------------------------------ #
+    score_final = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Score final (0-10)"),
+        db_index=True,
+    )
+    rating = models.CharField(
+        max_length=20, null=True, blank=True,
+        verbose_name=_("Rating (AAA/AA, A/BBB, BB/B, CCC, D)"),
+    )
+    classe_risque = models.CharField(
+        max_length=100, null=True, blank=True,
+        verbose_name=_("Classe de risque"),
+    )
+    decision = models.CharField(
+        max_length=200, null=True, blank=True,
+        verbose_name=_("Décision automatique"),
+    )
+    red_flag = models.BooleanField(
+        default=False,
+        verbose_name=_("Red Flag — historique de paiement nul"),
+    )
+
+    # ------------------------------------------------------------------ #
+    #  Méta
+    # ------------------------------------------------------------------ #
+    commentaire = models.TextField(
+        null=True, blank=True,
+        verbose_name=_("Commentaire analyste"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"), db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="scoring_rating_create", verbose_name=_("Créé par"),
+    )
+    updated_by = models.ForeignKey(
+        "User", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="scoring_rating_update", verbose_name=_("Mis à jour par"),
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Scoring Rating")
+        verbose_name_plural = _("Scorings Rating")
+        unique_together = [("acheteur", "annee")]
+        ordering = ["-annee__annee"]
+        indexes = [
+            models.Index(fields=["score_final"]),
+            models.Index(fields=["rating"]),
+        ]
+
+    def __str__(self):
+        return f"{self.acheteur} — Rating {self.annee} : {self.rating or 'N/A'} ({self.score_final or '—'}/10)"
+
+
 class ScoringDelphi(SafeDeleteModel):
     """
     Score ACREMAC Commercial Delphi.

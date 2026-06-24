@@ -54,6 +54,10 @@ from main.api.views_scoring_bancaire import *
 from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
 from main.api.views_scoring_delphi import ScoringDelphiAcheteurView, simuler_score_delphi
+from main.api.views_scoring_rating import (
+    get_annees_rating, precharger_bilan_rating,
+    ScoringRatingCalculerView, ScoringRatingSauvegarderView,
+)
 from main.api.views_solvency_reporting_system import *
 from main.api.views_reporting import *
 from main.api.views_api_emailling import *
@@ -871,6 +875,11 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/score-delphi/",
         dash_root_manage_acheteur_scoring_delphi,
         name="dash_root_manage_acheteur_scoring_delphi",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/scoring-rating/",
+        dash_root_manage_acheteur_scoring_rating,
+        name="dash_root_manage_acheteur_scoring_rating",
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-rapports/",
@@ -5182,6 +5191,12 @@ urlpatterns = [
     # Score Commercial Delphi ACREMAC
     path('api/scoring/delphi/acheteur/<int:acheteur_id>/', ScoringDelphiAcheteurView.as_view(), name='api_scoring_delphi_acheteur'),
     path('api/scoring/delphi/acheteur/<int:acheteur_id>/simuler/', simuler_score_delphi, name='api_scoring_delphi_simuler'),
+
+    # Score / Rating ACREMAC (basé états financiers)
+    path('api/scoring/rating/acheteur/<int:acheteur_id>/annees/', get_annees_rating, name='api_rating_annees'),
+    path('api/scoring/rating/acheteur/<int:acheteur_id>/annees/<int:annee>/precharger/', precharger_bilan_rating, name='api_rating_precharger'),
+    path('api/scoring/rating/acheteur/<int:acheteur_id>/calculer/', ScoringRatingCalculerView.as_view(), name='api_rating_calculer'),
+    path('api/scoring/rating/acheteur/<int:acheteur_id>/', ScoringRatingSauvegarderView.as_view(), name='api_rating_sauvegarder'),
 
     path('api/reporting/annees/', liste_annees, name='liste_annees'),
     path('api/reporting/devises/', liste_devises, name='liste_devises'),
