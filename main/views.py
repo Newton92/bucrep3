@@ -5210,11 +5210,26 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     id_acheteur = acheteur_id
 
     # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.all().order_by('annee')
 
-    # Récupérer tous les actifs
-    passifs_classiques = PassifC.objects.filter(acheteur=acheteur)
-    print("[ACHETEUR][CLASSIQUE][PASSIFS] "f"passifs={passifs_classiques}")
+    # Années du Compte Financier (N, N-1, N-2) → colonnes par défaut
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+    cf_annees_json = json.dumps(cf_annees)
 
     context = {
         "acheteur_active": "active",
@@ -5227,6 +5242,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": cf_annees_json,
     }
     return render(
         request,
@@ -5282,11 +5298,26 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
     id_acheteur = acheteur_id
 
     # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.all().order_by('annee')
 
-    # Récupérer tous les actifs
-    resultats_classiques = ResultatC.objects.filter(acheteur=acheteur)
-    print("[ACHETEUR][CLASSIQUE][RESULTATS] "f"resultats={resultats_classiques}")
+    # Années du Compte Financier (N, N-1, N-2) → colonnes par défaut
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+    cf_annees_json = json.dumps(cf_annees)
 
     context = {
         "acheteur_active": "active",
@@ -5299,6 +5330,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": cf_annees_json,
     }
     return render(
         request,

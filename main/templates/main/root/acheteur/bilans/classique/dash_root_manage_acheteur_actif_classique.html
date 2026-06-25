@@ -491,16 +491,18 @@ var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee
        st=sous-total, tot=total section, grand=total général
    ========================================================= */
 var ROWS = [
-    /* ---- ACTIF IMMOBILISÉ ---- */
+    /* ---- CAPITAL SOUSCRIT NON APPELÉ (poste isolé, hors ACTIF IMMOBILISÉ) ---- */
+    {t:'f', f:'capital_souscrit_non_app', label:'{% trans "Capital Souscrit Non Appelé" %}'},
+
+    /* ---- ACTIF IMMOBILISÉ (I) ---- */
     {t:'h1', label:'{% trans "ACTIF IMMOBILISÉ" %}'},
     {t:'h2', label:'{% trans "Immobilisations Incorporelles" %}'},
-    {t:'f', f:'capital_souscrit_non_app',               label:'{% trans "Capital Souscrit Non Appelé" %}'},
     {t:'f', f:'frais_recherche_developpement',           label:'{% trans "Frais de Recherche & Développement" %}'},
     {t:'f', f:'brevet_licence_logiciels',                label:'{% trans "Brevets, Licences & Logiciels" %}'},
     {t:'f', f:'fonds_commercial',                        label:'{% trans "Fonds Commercial" %}'},
     {t:'f', f:'autres_immobilisations_incorporelles',    label:'{% trans "Autres Immobilisations Incorporelles" %}'},
     {t:'st', label:'{% trans "Sous-total Incorporelles" %}',
-     fs:['capital_souscrit_non_app','frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles']},
+     fs:['frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles']},
 
     {t:'h2', label:'{% trans "Immobilisations Corporelles" %}'},
     {t:'f', f:'terrains',               label:'{% trans "Terrains" %}'},
@@ -521,11 +523,11 @@ var ROWS = [
      fs:['participations','prets','autres']},
 
     {t:'tot', cls:'row-total', label:'{% trans "TOTAL ACTIF IMMOBILISÉ (I)" %}', id:'tot_I',
-     fs:['capital_souscrit_non_app','frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles',
+     fs:['frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles',
          'terrains','constructions','materiels_et_outils','materiel_de_transport','autres_immos_corp','immos_en_cours','avances_et_acptes',
          'participations','prets','autres']},
 
-    /* ---- ACTIF CIRCULANT ---- */
+    /* ---- ACTIF CIRCULANT (II) ---- */
     {t:'h1', label:'{% trans "ACTIF CIRCULANT" %}'},
     {t:'h2', label:'{% trans "Stocks et Encours" %}'},
     {t:'f', f:'stocks_mp',               label:'{% trans "Stocks Matières Premières" %}'},
@@ -541,45 +543,48 @@ var ROWS = [
     {t:'f', f:'avances_acptes_verses',       label:'{% trans "Avances et Acomptes Versés" %}'},
     {t:'f', f:'clients_et_cptes_rattaches',  label:'{% trans "Clients et Comptes Rattachés" %}'},
     {t:'f', f:'autres_creances',             label:'{% trans "Autres Créances" %}'},
-    {t:'f', f:'valeurs_a_encaisser',         label:'{% trans "Valeurs à Encaisser" %}'},
-    {t:'f', f:'cca',                         label:'{{ t_cca_lbl|escapejs }}'},
     {t:'st', label:'{% trans "Sous-total Créances" %}',
-     fs:['avances_acptes_verses','clients_et_cptes_rattaches','autres_creances','valeurs_a_encaisser','cca']},
+     fs:['avances_acptes_verses','clients_et_cptes_rattaches','autres_creances']},
+
+    {t:'h2', label:'{% trans "Disponibilités" %}'},
+    {t:'f', f:'valeurs_a_encaisser',           label:'{% trans "Valeurs à Encaisser" %}'},
+    {t:'f', f:'banques_cheques_postaux_caisse', label:'{% trans "Banques, Chèques Postaux, Caisse" %}'},
 
     {t:'tot', cls:'row-total-green', label:'{% trans "TOTAL ACTIF CIRCULANT (II)" %}', id:'tot_II',
      fs:['stocks_mp','stocks_encours_mp','stocks_pf','stocks_encours_pf','stocks_encours_services','stocks_mses',
-         'avances_acptes_verses','clients_et_cptes_rattaches','autres_creances','valeurs_a_encaisser','cca']},
+         'avances_acptes_verses','clients_et_cptes_rattaches','autres_creances',
+         'valeurs_a_encaisser','banques_cheques_postaux_caisse']},
 
-    /* ---- TRÉSORERIE ---- */
-    {t:'h1', label:'{% trans "TRÉSORERIE-ACTIF (III)" %}'},
-    {t:'f', f:'banques_cheques_postaux_caisse', label:'{% trans "Banques, Chèques Postaux, Caisse" %}'},
+    /* ---- COMPTE DE RÉGULARISATION (III) ---- */
+    {t:'h1', label:'{% trans "COMPTE DE RÉGULARISATION" %}'},
+    {t:'f', f:'cca',                                      label:'{{ t_cca_lbl|escapejs }}'},
+    {t:'f', f:'charges_a_repartir_et_frais_etablissement', label:'{{ t_charges_repartir|escapejs }}'},
+    {t:'f', f:'primes_de_rbt',  label:'{% trans "Primes de Remboursement" %}'},
+    {t:'f', f:'eca',            label:'{% trans "Écarts de Conversion Actif (ECA)" %}'},
+    {t:'tot', cls:'row-total', label:'{% trans "TOTAL RÉGULARISATION (III)" %}', id:'tot_III',
+     fs:['cca','charges_a_repartir_et_frais_etablissement','primes_de_rbt','eca']},
 
-    /* ---- AMORTISSEMENTS ---- */
-    {t:'h1', label:'{% trans "AMORTISSEMENTS & PROVISIONS" %}'},
+    /* ---- TOTAL GÉNÉRAL ---- */
+    {t:'grand', label:'{% trans "TOTAL GÉNÉRAL ACTIF" %}',
+     fs:['capital_souscrit_non_app',
+         'frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles',
+         'terrains','constructions','materiels_et_outils','materiel_de_transport','autres_immos_corp','immos_en_cours','avances_et_acptes',
+         'participations','prets','autres',
+         'stocks_mp','stocks_encours_mp','stocks_pf','stocks_encours_pf','stocks_encours_services','stocks_mses',
+         'avances_acptes_verses','clients_et_cptes_rattaches','autres_creances',
+         'valeurs_a_encaisser','banques_cheques_postaux_caisse',
+         'cca','charges_a_repartir_et_frais_etablissement','primes_de_rbt','eca']},
+
+    /* ---- INFORMATIONS COMPLÉMENTAIRES (hors total général) ---- */
+    {t:'h1', label:'{% trans "INFORMATIONS COMPLÉMENTAIRES" %}'},
+    {t:'f', f:'eene',           label:'{{ t_eene_lbl|escapejs }}'},
+    {t:'h2', label:'{% trans "Amortissements & Provisions" %}'},
     {t:'f', f:'amortissements',    label:'{% trans "Amortissements" %}'},
     {t:'f', f:'provisions_stocks', label:'{% trans "Provisions Stocks" %}'},
     {t:'f', f:'provisions_creances', label:'{% trans "Provisions Créances" %}'},
     {t:'f', f:'provisions_vmp',    label:'{% trans "Provisions Valeurs Mobilières" %}'},
-
-    /* ---- RÉGULARISATION ---- */
-    {t:'h1', label:'{% trans "RÉGULARISATION & DIVERS" %}'},
-    {t:'f', f:'charges_a_repartir_et_frais_etablissement', label:'{{ t_charges_repartir|escapejs }}'},
-    {t:'f', f:'primes_de_rbt',  label:'{% trans "Primes de Remboursement" %}'},
-    {t:'f', f:'eca',            label:'{% trans "Écarts de Conversion Actif (ECA)" %}'},
-    {t:'f', f:'eene',           label:'{{ t_eene_lbl|escapejs }}'},
-
-    /* ---- DONNÉES SOCIALES ---- */
-    {t:'h1', label:'{% trans "DONNÉES SOCIALES" %}'},
-    {t:'f', f:'effectif', label:'{% trans "Effectif (nombre de salariés)" %}', int:true},
-
-    /* ---- TOTAL GÉNÉRAL ---- */
-    {t:'grand', label:'{% trans "TOTAL GÉNÉRAL ACTIF" %}',
-     fs:['capital_souscrit_non_app','frais_recherche_developpement','brevet_licence_logiciels','fonds_commercial','autres_immobilisations_incorporelles',
-         'terrains','constructions','materiels_et_outils','materiel_de_transport','autres_immos_corp','immos_en_cours','avances_et_acptes',
-         'participations','prets','autres',
-         'stocks_mp','stocks_encours_mp','stocks_pf','stocks_encours_pf','stocks_encours_services','stocks_mses',
-         'avances_acptes_verses','clients_et_cptes_rattaches','autres_creances','valeurs_a_encaisser','cca',
-         'banques_cheques_postaux_caisse']}
+    {t:'h2', label:'{% trans "Données Sociales" %}'},
+    {t:'f', f:'effectif', label:'{% trans "Effectif (nombre de salariés)" %}', int:true}
 ];
 
 /* =========================================================
