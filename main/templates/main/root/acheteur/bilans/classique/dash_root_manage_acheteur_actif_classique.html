@@ -305,6 +305,19 @@ html { overflow: hidden; }
 }
 .btn-year-hide:hover { color: #ffc107; }
 
+/* Bouton supprimer bilan (année avec données en base) */
+.btn-year-del {
+    font-size: .62rem;
+    padding: 1px 6px;
+    background: rgba(220,53,69,.25);
+    border: 1px solid rgba(220,53,69,.5);
+    color: #ffb3bb;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.btn-year-del:hover { background: rgba(220,53,69,.6); color: #fff; }
+
 /* ---- Colonne "+" ---- */
 .col-add-head {
     background: var(--app-mid) !important;
@@ -417,15 +430,12 @@ html { overflow: hidden; }
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-(function () {
-'use strict';
-
 /* =========================================================
-   CONFIGURATION
+   CONFIGURATION  — PAS D'IIFE : fonctions globales pour onclick
    ========================================================= */
 var ACHETEUR_ID  = {{ id_acheteur }};
 var ACCESS_TOKEN = '{{ access }}';
-var CF_ANNEES    = {{ cf_annees_json|safe }};  /* [{id, annee}, ...] issus du Compte Financier */
+var CF_ANNEES    = {{ cf_annees_json|safe }};
 var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
 
 /* =========================================================
@@ -549,45 +559,60 @@ function fmtNum(v) {
    INITIALISATION
    ========================================================= */
 function init() {
-    loadExistingData();
+    loadAllPages(1, []);
 }
 
-function loadExistingData() {
+/* Charge toutes les pages pour éviter de rater des _id (page fixe = 10) */
+function loadAllPages(page, accumulated) {
     setStatus('{% trans "Chargement des données..." %}', 'info');
     $.ajax({
-        url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-actifs/?page=1',
+        url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-actifs/?page=' + page,
         headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN},
         success: function(resp) {
-            /* Réinitialiser l'état pour éviter toute duplication */
-            yearData    = {};
-            activeYears = [];
-
-            /* 1. Ajouter les années présentes en base */
-            var results = resp.results || resp;
-            results.forEach(function(actif) {
-                var aid = parseInt(actif.annee, 10);
-                yearData[aid] = $.extend({}, actif, {_id: actif.id, _status: 'saved'});
-                activeYears.push(aid);
-            });
-
-            /* 2. Ajouter les années du Compte Financier absentes de la base */
-            CF_ANNEES.forEach(function(a) {
-                if (a.id && activeYears.indexOf(a.id) === -1) {
-                    activeYears.push(a.id);
-                    yearData[a.id] = {_id: null, _status: 'new'};
-                }
-            });
-
-            /* 3. Trier par année croissante */
-            activeYears.sort(function(a, b) { return (anneeMap[b]||0) - (anneeMap[a]||0); });
-            renderAll();
-            setStatus('{% trans "Données chargées" %} — ' + results.length + ' {% trans "enregistrement(s)" %}', 'success');
+            var results = resp.results || (Array.isArray(resp) ? resp : []);
+            accumulated = accumulated.concat(results);
+            /* S'il y a une page suivante, la charger aussi */
+            if (resp.next) {
+                loadAllPages(page + 1, accumulated);
+            } else {
+                buildGridFromResults(accumulated);
+            }
         },
         error: function(xhr) {
-            if (xhr.status === 401) refreshToken(loadExistingData);
-            else { renderAll(); setStatus('{% trans "Erreur de chargement" %}', 'error'); }
+            if (xhr.status === 401) { refreshToken(function() { loadAllPages(page, accumulated); }); return; }
+            /* En cas d'erreur : afficher la grille avec CF par défaut */
+            buildGridFromResults(accumulated);
+            setStatus('{% trans "Erreur de chargement" %}', 'error');
         }
     });
+}
+
+function buildGridFromResults(results) {
+    /* Réinitialiser l'état — seule source de vérité */
+    yearData    = {};
+    activeYears = [];
+
+    /* 1. Années présentes en base → status 'saved', _id connu */
+    results.forEach(function(actif) {
+        var aid = parseInt(actif.annee, 10);
+        yearData[aid] = $.extend({}, actif, {_id: actif.id, _status: 'saved'});
+        activeYears.push(aid);
+    });
+
+    /* 2. CF_ANNEES : colonnes par défaut SEULEMENT si la base est vide */
+    if (results.length === 0) {
+        CF_ANNEES.forEach(function(a) {
+            if (a.id && activeYears.indexOf(a.id) === -1) {
+                activeYears.push(a.id);
+                yearData[a.id] = {_id: null, _status: 'new'};
+            }
+        });
+    }
+
+    /* 3. Tri décroissant : N, N-1, N-2… */
+    activeYears.sort(function(a, b) { return (anneeMap[b]||0) - (anneeMap[a]||0); });
+    renderAll();
+    setStatus('{% trans "Données chargées" %} — ' + results.length + ' {% trans "enregistrement(s)" %}', 'success');
 }
 
 /* =========================================================
@@ -605,6 +630,7 @@ function renderHead() {
     activeYears.forEach(function(aid) {
         var an  = anneeMap[aid] || '?';
         var st  = yearData[aid] ? yearData[aid]._status : 'new';
+        var hasDb = yearData[aid] && yearData[aid]._id;
         h += '<th class="year-head-cell">' +
              '<div class="yh-top">' +
              '<span class="yh-year">' + an + '</span>' +
@@ -612,7 +638,10 @@ function renderHead() {
              '</div>' +
              '<div class="yh-actions">' +
              '<button class="btn-year-save" onclick="saveYear(' + aid + ')"><i class="fas fa-save me-1"></i>{% trans "Enreg." %}</button>' +
-             '<button class="btn-year-hide" onclick="hideYearCol(' + aid + ')" title="{% trans "Masquer cette colonne" %}"><i class="fas fa-times"></i></button>' +
+             (hasDb
+               ? '<button class="btn-year-del" onclick="supprimerAnnee(' + aid + ')" title="{% trans "Supprimer ce bilan" %}"><i class="fas fa-trash-alt"></i></button>'
+               : '<button class="btn-year-hide" onclick="masquerAnnee(' + aid + ')" title="{% trans "Masquer cette colonne" %}"><i class="fas fa-times"></i></button>'
+             ) +
              '</div>' +
              '</th>';
     });
@@ -871,11 +900,52 @@ function addYear(aid) {
     renderAll();
 }
 
-/* X = masquer la colonne (les données en base sont conservées) */
-function hideYearCol(aid) {
+/* Masquer colonne non enregistrée (aucune donnée en base) */
+function masquerAnnee(aid) {
     var i = activeYears.indexOf(aid);
     if (i > -1) activeYears.splice(i, 1);
+    delete yearData[aid];
     renderAll();
+}
+
+/* Supprimer bilan d'une année (avec confirmation + DELETE API) */
+function supprimerAnnee(aid) {
+    var an  = anneeMap[aid] || aid;
+    var data = yearData[aid];
+    if (!data || !data._id) { masquerAnnee(aid); return; }
+    Swal.fire({
+        title: '{% trans "Supprimer le bilan" %} ' + an + ' ?',
+        html:  '<p class="text-muted" style="font-size:.85rem;">{% trans "Cette action est irréversible. Les données du bilan pour l\'exercice" %} <strong>' + an + '</strong> {% trans "seront définitivement supprimées." %}</p>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-trash-alt me-1"></i>{% trans "Supprimer définitivement" %}',
+        cancelButtonText: '{{ t_cancel }}'
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        setBadge(aid, 'saving');
+        $.ajax({
+            url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/supprimer-des-actifs/',
+            type: 'DELETE',
+            data: JSON.stringify({ids: [data._id]}),
+            contentType: 'application/json',
+            headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCsrf()},
+            success: function() {
+                var i = activeYears.indexOf(aid);
+                if (i > -1) activeYears.splice(i, 1);
+                delete yearData[aid];
+                renderAll();
+                Swal.fire({icon:'success', title:'{{ t_del_ok }}', timer:1500, showConfirmButton:false});
+                setStatus('{% trans "Bilan" %} ' + an + ' {% trans "supprimé" %}', 'success');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) { refreshToken(function() { supprimerAnnee(aid); }); return; }
+                updateBadge(aid);
+                Swal.fire({icon:'error', title:'{{ t_del_err }}', timer:2000, showConfirmButton:false});
+            }
+        });
+    });
 }
 
 /* =========================================================
@@ -966,12 +1036,6 @@ function adjustGridHeight() {
 }
 
 /* =========================================================
-   EXPOSITION AU SCOPE GLOBAL (pour les onclick inline)
-   ========================================================= */
-window.saveYear     = saveYear;
-window.hideYearCol  = hideYearCol;
-
-/* =========================================================
    DÉMARRAGE
    ========================================================= */
 $(document).ready(function() {
@@ -979,7 +1043,5 @@ $(document).ready(function() {
     init();
 });
 window.addEventListener('resize', adjustGridHeight);
-
-})();
 </script>
 {% endblock %}
