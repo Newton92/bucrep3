@@ -1,5 +1,183 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static humanize %}
+{% load static humanize i18n %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --app-blue:   #0a95ca;
+    --app-mid:    #0d80be;
+    --app-dark:   #106cb2;
+    --app-accent: #25add6;
+    --app-light:  #e6f4fb;
+    --app-xlight: #f0f8fd;
+}
+html { overflow: hidden; }
+.page-actif-header {
+    background: linear-gradient(135deg, var(--app-dark) 0%, var(--app-blue) 100%);
+    padding: 7px 16px; display: flex; align-items: center;
+    justify-content: space-between; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(16,108,178,.35); z-index: 100; position: relative;
+}
+.page-actif-header h6 { margin:0; color:#fff; font-size:.92rem; }
+.page-actif-header .info-badge {
+    background: rgba(255,255,255,.2); color:#fff; border-radius:20px;
+    font-size:.7rem; padding:2px 9px; margin-left:7px;
+    border: 1px solid rgba(255,255,255,.25);
+}
+.bilan-outer { display: flex; flex-direction: column; }
+.bilan-toolbar {
+    background: var(--app-xlight); border-bottom: 1px solid #c8e4f5;
+    padding: 5px 12px; display: flex; align-items: center;
+    gap: 6px; flex-shrink: 0; flex-wrap: wrap;
+}
+.bilan-toolbar .toolbar-label {
+    font-size: .72rem; color: var(--app-dark); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.bilan-grid-scroll { flex: 1; overflow: auto; position: relative; }
+.bg-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: .82rem; }
+.bg-table thead tr th {
+    position: sticky; top: 0; z-index: 20; background: var(--app-dark);
+    color: #fff; border: 1px solid rgba(255,255,255,.15); padding: 0; white-space: nowrap;
+}
+.bg-table thead tr th.col-label-head {
+    left: 0; z-index: 30; min-width: 280px; max-width: 280px; padding: 0 10px;
+    text-align: left; font-size: .74rem; text-transform: uppercase;
+    letter-spacing: .07em; line-height: 34px; background: var(--app-dark);
+}
+.bg-table td.col-label {
+    position: sticky; left: 0; background: #fff; z-index: 10;
+    min-width: 280px; max-width: 280px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    border-right: 3px solid var(--app-blue); padding: 3px 8px;
+}
+.bg-table tr.row-h1 td {
+    background: var(--app-dark); color: #fff; font-weight: 700;
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .07em;
+    padding: 4px 10px; border-top: 2px solid var(--app-mid);
+}
+.bg-table tr.row-h1 td.col-label { background: var(--app-dark); color: #fff; border-right-color: var(--app-mid); }
+.bg-table tr.row-h2 td {
+    background: var(--app-mid); color: #e8f5ff; font-weight: 600;
+    font-size: .76rem; padding: 3px 10px 3px 18px;
+}
+.bg-table tr.row-h2 td.col-label { background: var(--app-mid); color: #e8f5ff; border-right-color: var(--app-accent); }
+.bg-table tr.row-field td { border-bottom: 1px solid #e8f0f5; padding: 0; }
+.bg-table tr.row-field td.col-label {
+    padding: 2px 8px 2px 26px; color: #2c3e50;
+    font-size: .81rem; border-bottom: 1px solid #e8f0f5;
+}
+.bg-table tr.row-field:hover td { background: var(--app-xlight); }
+.bg-table tr.row-field:hover td.col-label { background: var(--app-xlight); }
+.bg-table tr.row-subtotal td {
+    background: var(--app-light); font-weight: 600; font-style: italic;
+    color: var(--app-dark); font-size: .79rem; padding: 2px 8px;
+    border-top: 1px dashed var(--app-accent);
+}
+.bg-table tr.row-subtotal td.col-label { background: var(--app-light); color: var(--app-dark); padding-left: 26px; }
+.bg-table tr.row-total td {
+    background: #c5e3f5; color: var(--app-dark); font-weight: 700;
+    font-size: .83rem; padding: 4px 8px; border-top: 2px solid var(--app-blue);
+}
+.bg-table tr.row-total td.col-label { background: #c5e3f5; color: var(--app-dark); }
+.bg-table tr.row-total-green td {
+    background: #d4efde; color: #1a5c33; border-top: 2px solid #7ec8a0;
+    font-weight: 700; font-size: .83rem; padding: 4px 8px;
+}
+.bg-table tr.row-total-green td.col-label { background: #d4efde; color: #1a5c33; }
+.bg-table tr.row-total-blue td {
+    background: #1a6ea8; color: #fff; font-weight: 700;
+    font-size: .85rem; padding: 5px 8px; border-top: 3px solid var(--app-blue);
+}
+.bg-table tr.row-total-blue td.col-label { background: #1a6ea8; color: #fff; border-right-color: var(--app-accent); }
+.bg-table tr.row-grand td {
+    background: var(--app-dark); color: #fff; font-weight: 700;
+    font-size: .88rem; padding: 5px 8px; border-top: 3px solid var(--app-mid);
+}
+.bg-table tr.row-grand td.col-label { background: var(--app-dark); color: #fff; border-right-color: var(--app-accent); }
+.year-head-cell {
+    text-align: center; min-width: 155px; max-width: 155px;
+    vertical-align: middle; padding: 4px 6px !important;
+    border-left: 2px solid rgba(255,255,255,.2) !important;
+}
+.yh-top { display: flex; align-items: center; justify-content: center; gap: 5px; line-height: 1; }
+.yh-year { font-size: .95rem; font-weight: 800; letter-spacing: .03em; }
+.yh-actions { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; }
+.status-badge {
+    display: inline-block; font-size: .58rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+    padding: 1px 5px; border-radius: 20px; line-height: 1.5;
+}
+.status-new    { background: #fff3cd; color: #7a5600; }
+.status-saved  { background: #c9f0d8; color: #145a32; }
+.status-dirty  { background: #d0e8ff; color: var(--app-dark); }
+.status-saving { background: #fde8c0; color: #7a3e00; }
+.bg-table td.year-cell {
+    text-align: right; padding: 0; border-left: 1px solid #daeaf5;
+    min-width: 155px; max-width: 155px;
+}
+.bg-table tr.row-field td.year-cell { border-bottom: 1px solid #e8f0f5; }
+.cell-input {
+    width: 100%; border: none; background: transparent;
+    text-align: right; font-size: .82rem; padding: 2px 8px;
+    line-height: 1.65; color: #1a2533; display: block;
+}
+.cell-input:focus {
+    background: #fffbe6; outline: 2px solid var(--app-accent);
+    outline-offset: -2px; border-radius: 0; color: var(--app-dark); font-weight: 600;
+}
+.cell-input::-webkit-inner-spin-button,
+.cell-input::-webkit-outer-spin-button { opacity: 0; }
+.cell-computed { padding: 2px 8px; display: block; text-align: right; font-size: .82rem; }
+.btn-year-save {
+    font-size: .62rem; padding: 1px 7px; background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.4); color: #fff;
+    border-radius: 3px; cursor: pointer; transition: background .15s;
+}
+.btn-year-save:hover { background: rgba(255,255,255,.4); }
+.btn-year-hide {
+    font-size: .7rem; padding: 1px 4px; color: rgba(255,255,255,.55);
+    background: transparent; border: none; cursor: pointer;
+    line-height: 1; transition: color .15s;
+}
+.btn-year-hide:hover { color: #ffc107; }
+.btn-year-del {
+    font-size: .62rem; padding: 1px 6px; background: rgba(220,53,69,.25);
+    border: 1px solid rgba(220,53,69,.5); color: #ffb3bb;
+    border-radius: 3px; cursor: pointer; transition: background .15s;
+}
+.btn-year-del:hover { background: rgba(220,53,69,.6); color: #fff; }
+.col-add-head {
+    background: var(--app-mid) !important; text-align: center;
+    padding: 4px 10px !important; cursor: pointer;
+    transition: background .2s; min-width: 36px;
+}
+.col-add-head:hover { background: var(--app-accent) !important; }
+.grid-loader-overlay {
+    position: absolute; inset: 0; background: rgba(236,246,253,.97);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; z-index: 50; gap: 16px;
+}
+.grid-loader-overlay.hidden { display: none; }
+.loader-spinner {
+    width: 52px; height: 52px; border: 5px solid var(--app-light);
+    border-top-color: var(--app-blue); border-radius: 50%;
+    animation: bilan-spin .8s linear infinite;
+}
+@keyframes bilan-spin { to { transform: rotate(360deg); } }
+.loader-text { color: var(--app-mid); font-size: .9rem; font-weight: 600; margin: 0; letter-spacing: .03em; }
+.loader-error { color: #dc3545; font-size: .85rem; font-weight: 600; margin: 0; }
+@media print {
+    .page-actif-header, .bilan-toolbar { display: none; }
+    .bilan-outer { height: auto !important; }
+    .bilan-grid-scroll { overflow: visible; }
+    .bg-table { font-size: .7rem; }
+    .bg-table thead tr th { position: static; }
+    .bg-table td.col-label { position: static; }
+}
+</style>
+{% endblock %}
 
 {% trans "Annuler" as t_cancel %}
 {% trans "Confirmer" as t_confirmer %}
@@ -12,182 +190,97 @@
 {% trans "Supprimer ce compte de résultats" as t_suppr_bilan %}
 {% trans "Action irréversible. Ce compte de résultats sera supprimé définitivement." as t_suppr_msg %}
 
-{% block styles %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-:root { --app-blue: #0a95ca; --app-mid: #0d80be; --app-dark: #106cb2; --app-accent: #25add6; --app-light: #e6f4fb; --app-xlight: #f0f8fd; }
-html { overflow: hidden; }
-body { overflow: hidden; }
-.page-actif-header { background: linear-gradient(135deg, var(--app-dark) 0%, var(--app-blue) 100%); padding: 7px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 2px 8px rgba(16,108,178,.35); z-index: 100; position: relative; }
-.page-actif-header h6 { margin:0; color:#fff; font-size:.92rem; }
-.page-actif-header .info-badge { background: rgba(255,255,255,.2); color:#fff; border-radius:20px; font-size:.7rem; padding:2px 9px; margin-left:7px; border: 1px solid rgba(255,255,255,.25); }
-.bilan-outer { display: flex; flex-direction: column; }
-.bilan-toolbar { background: var(--app-xlight); border-bottom: 1px solid #c8e4f5; padding: 5px 12px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
-.bilan-toolbar .toolbar-label { font-size: .72rem; color: var(--app-dark); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
-.bilan-grid-scroll { flex: 1; overflow: auto; position: relative; }
-.bg-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: .82rem; }
-.bg-table thead tr th { position: sticky; top: 0; z-index: 20; background: var(--app-dark); color: #fff; border: 1px solid rgba(255,255,255,.15); padding: 0; white-space: nowrap; }
-.bg-table thead tr th.col-label-head { left: 0; z-index: 30; min-width: 265px; max-width: 265px; padding: 0 10px; text-align: left; font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; line-height: 34px; background: var(--app-dark); }
-.bg-table td.col-label { position: sticky; left: 0; background: #fff; z-index: 10; min-width: 265px; max-width: 265px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 3px solid var(--app-blue); padding: 3px 8px; }
-.bg-table tr.row-h1 td { background: var(--app-dark); color: #fff; font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; padding: 4px 10px; border-top: 2px solid var(--app-mid); }
-.bg-table tr.row-h1 td.col-label { background: var(--app-dark); color: #fff; border-right-color: var(--app-mid); }
-.bg-table tr.row-h2 td { background: var(--app-mid); color: #e8f5ff; font-weight: 600; font-size: .76rem; padding: 3px 10px 3px 18px; }
-.bg-table tr.row-h2 td.col-label { background: var(--app-mid); color: #e8f5ff; border-right-color: var(--app-accent); }
-.bg-table tr.row-field td { border-bottom: 1px solid #e8f0f5; padding: 0; }
-.bg-table tr.row-field td.col-label { padding: 2px 8px 2px 26px; color: #2c3e50; font-size: .81rem; border-bottom: 1px solid #e8f0f5; }
-.bg-table tr.row-field:hover td { background: var(--app-xlight); }
-.bg-table tr.row-field:hover td.col-label { background: var(--app-xlight); }
-.bg-table tr.row-subtotal td { background: var(--app-light); font-weight: 600; font-style: italic; color: var(--app-dark); font-size: .79rem; padding: 2px 8px; border-top: 1px dashed var(--app-accent); }
-.bg-table tr.row-subtotal td.col-label { background: var(--app-light); color: var(--app-dark); padding-left: 26px; }
-.bg-table tr.row-total td { background: #c5e3f5; color: var(--app-dark); font-weight: 700; font-size: .83rem; padding: 4px 8px; border-top: 2px solid var(--app-blue); }
-.bg-table tr.row-total td.col-label { background: #c5e3f5; color: var(--app-dark); }
-.bg-table tr.row-total-green td { background: #d4efde; color: #1a5c33; border-top: 2px solid #7ec8a0; font-weight: 700; font-size: .83rem; padding: 4px 8px; }
-.bg-table tr.row-total-green td.col-label { background: #d4efde; color: #1a5c33; }
-.bg-table tr.row-total-blue td { background: #1a6ea8; color: #fff; font-weight: 700; font-size: .85rem; padding: 5px 8px; border-top: 3px solid var(--app-blue); }
-.bg-table tr.row-total-blue td.col-label { background: #1a6ea8; color: #fff; border-right-color: var(--app-accent); }
-.bg-table tr.row-grand td { background: var(--app-dark); color: #fff; font-weight: 700; font-size: .88rem; padding: 5px 8px; border-top: 3px solid var(--app-mid); }
-.bg-table tr.row-grand td.col-label { background: var(--app-dark); color: #fff; border-right-color: var(--app-accent); }
-.year-head-cell { text-align: center; min-width: 155px; max-width: 155px; vertical-align: middle; padding: 4px 6px !important; border-left: 2px solid rgba(255,255,255,.2) !important; }
-.yh-top { display: flex; align-items: center; justify-content: center; gap: 5px; line-height: 1; }
-.yh-year { font-size: .95rem; font-weight: 800; letter-spacing: .03em; }
-.yh-actions { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; }
-.status-badge { display: inline-block; font-size: .58rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 1px 5px; border-radius: 20px; line-height: 1.5; }
-.status-new { background: #fff3cd; color: #7a5600; }
-.status-saved { background: #c9f0d8; color: #145a32; }
-.status-dirty { background: #d0e8ff; color: var(--app-dark); }
-.status-saving { background: #fde8c0; color: #7a3e00; }
-.bg-table td.year-cell { text-align: right; padding: 0; border-left: 1px solid #daeaf5; min-width: 155px; max-width: 155px; }
-.bg-table tr.row-field td.year-cell { border-bottom: 1px solid #e8f0f5; }
-.cell-input { width: 100%; border: none; background: transparent; text-align: right; font-size: .82rem; padding: 2px 8px; line-height: 1.65; color: #1a2533; display: block; }
-.cell-input:focus { background: #fffbe6; outline: 2px solid var(--app-accent); outline-offset: -2px; border-radius: 0; color: var(--app-dark); font-weight: 600; }
-.cell-input::-webkit-inner-spin-button, .cell-input::-webkit-outer-spin-button { opacity: 0; }
-.cell-computed { padding: 2px 8px; display: block; text-align: right; font-size: .82rem; }
-.btn-year-save { font-size: .62rem; padding: 1px 7px; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); color: #fff; border-radius: 3px; cursor: pointer; transition: background .15s; }
-.btn-year-save:hover { background: rgba(255,255,255,.4); }
-.btn-year-hide { font-size: .7rem; padding: 1px 4px; color: rgba(255,255,255,.55); background: transparent; border: none; cursor: pointer; line-height: 1; transition: color .15s; }
-.btn-year-hide:hover { color: #ffc107; }
-.btn-year-del { font-size: .62rem; padding: 1px 6px; background: rgba(220,53,69,.25); border: 1px solid rgba(220,53,69,.5); color: #ffb3bb; border-radius: 3px; cursor: pointer; transition: background .15s; }
-.btn-year-del:hover { background: rgba(220,53,69,.6); color: #fff; }
-.col-add-head { background: var(--app-mid) !important; text-align: center; padding: 4px 10px !important; cursor: pointer; transition: background .2s; min-width: 36px; }
-.col-add-head:hover { background: var(--app-accent) !important; }
-.grid-loader-overlay { position: absolute; inset: 0; background: rgba(236,246,253,.97); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; gap: 16px; }
-.grid-loader-overlay.hidden { display: none; }
-.loader-spinner { width: 52px; height: 52px; border: 5px solid var(--app-light); border-top-color: var(--app-blue); border-radius: 50%; animation: bilan-spin .8s linear infinite; }
-@keyframes bilan-spin { to { transform: rotate(360deg); } }
-.loader-text { color: var(--app-mid); font-size: .9rem; font-weight: 600; margin: 0; letter-spacing: .03em; }
-.loader-error { color: #dc3545; font-size: .85rem; font-weight: 600; margin: 0; }
-@media print { .page-actif-header, .bilan-toolbar { display: none; } .bilan-outer { height: auto !important; } .bilan-grid-scroll { overflow: visible; } .bg-table { font-size: .7rem; } .bg-table thead tr th { position: static; } .bg-table td.col-label { position: static; } }
-</style>
-{% endblock %}
-
 {% block body %}
-<div class="bilan-outer" id="bilanOuter" style="height:100vh;">
-
-    <!-- En-tête de page -->
-    <div class="page-actif-header">
-        <div class="d-flex align-items-center">
-            <h6><i class="fas fa-chart-line me-2"></i>{% trans "Compte de Résultats Classique" %}</h6>
-            <span class="info-badge">{{ acheteur.nom }}</span>
-            <span class="info-badge">{{ acheteur.code }}</span>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-light" onclick="window.print()">
-                <i class="fas fa-print me-1"></i>{% trans "Imprimer" %}
-            </button>
-            <button class="btn btn-sm btn-success fw-semibold" id="btnSaveAll">
-                <i class="fas fa-save me-1"></i>{% trans "Tout enregistrer" %}
-            </button>
-            <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-warning">
-                <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
-            </a>
-        </div>
+<div class="page-actif-header">
+    <div class="d-flex align-items-center">
+        <h6><i class="fas fa-chart-line me-2"></i>{% trans "Compte de Résultats — Bilan Classique" %}</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
     </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-light" onclick="window.print()">
+            <i class="fas fa-print me-1"></i>{% trans "Imprimer" %}
+        </button>
+        <button class="btn btn-sm btn-success fw-semibold" id="btnSaveAll">
+            <i class="fas fa-save me-1"></i>{% trans "Tout enregistrer" %}
+        </button>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}"
+           class="btn btn-sm btn-warning">
+            <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+        </a>
+    </div>
+</div>
 
-    <!-- Barre d'outils -->
+<div class="bilan-outer">
+
     <div class="bilan-toolbar">
-        <span class="toolbar-label">{% trans "Compte de Résultats" %}</span>
-        <span class="text-muted" style="font-size:.7rem;">— {{ acheteur.nom }}</span>
-        <div class="ms-auto d-flex align-items-center gap-2">
-            <span style="font-size:.7rem;color:#888;">{% trans "Cliquez sur + pour ajouter une année" %}</span>
-        </div>
+        <span class="toolbar-label">{% trans "Années affichées" %} :</span>
+        <div id="yearPills" class="d-flex gap-1 flex-wrap"></div>
+        <button class="btn btn-sm btn-outline-primary ms-2" id="btnAddYear"
+                data-bs-toggle="modal" data-bs-target="#modalAddYear">
+            <i class="fas fa-plus me-1"></i>{% trans "Ajouter une année" %}
+        </button>
+        <span class="ms-auto text-muted" style="font-size:.72rem;" id="gridStatus">{% trans "Chargement..." %}</span>
     </div>
 
-    <!-- Zone de défilement de la grille -->
-    <div class="bilan-grid-scroll" id="bilanGridScroll">
-
-        <!-- Indicateur de chargement -->
-        <div class="grid-loader-overlay" id="gridLoader">
+    <div class="bilan-grid-scroll">
+        <div id="gridLoader" class="grid-loader-overlay hidden">
             <div class="loader-spinner"></div>
             <p class="loader-text">{% trans "Chargement des données..." %}</p>
-            <p class="loader-error hidden" id="loaderError"></p>
         </div>
-
-        <table class="bg-table" id="bgTable">
-            <thead id="bgThead"></thead>
-            <tbody id="bgTbody"></tbody>
+        <table class="bg-table" id="bilanGrid">
+            <thead id="bilanHead"></thead>
+            <tbody id="bilanBody"></tbody>
         </table>
     </div>
 </div>
 
-<!-- Modal Ajout Année -->
 <div class="modal fade" id="modalAddYear" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background:linear-gradient(135deg,var(--app-dark),var(--app-blue));color:#fff;">
-                <h6 class="modal-title mb-0"><i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une année" %}</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0">
+                    <i class="fas fa-calendar-plus me-2 text-primary"></i>{% trans "Ajouter une année" %}
+                </h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <label class="form-label fw-semibold">{% trans "Sélectionnez l'année" %}</label>
-                <select class="form-select" id="selectAddYear">
-                    <option value="">{% trans "Choisissez une année..." %}</option>
-                    {% for annee in annee_list %}
-                        <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                <label class="form-label text-muted" style="font-size:.8rem;">{% trans "Sélectionner l'année fiscale" %}</label>
+                <select class="form-select form-select-sm" id="selectAddYear">
+                    <option value="">— {% trans "choisir" %} —</option>
+                    {% for a in annee_list %}
+                    <option value="{{ a.id }}" data-annee="{{ a.annee }}">{{ a.annee }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
-                <button class="btn btn-primary btn-sm" id="btnConfirmAddYear">
-                    <i class="fas fa-plus me-1"></i>{% trans "Ajouter" %}
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnConfirmAddYear">
+                    <i class="fas fa-check me-1"></i>{% trans "Ajouter" %}
                 </button>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
-/* ============================================================
-   CONFIGURATION
-============================================================ */
-var ACHETEUR_ID = {{ id_acheteur|safe }};
-var CF_ANNEES   = {{ cf_annees_json|safe }};
+var ACHETEUR_ID  = {{ id_acheteur }};
+var ACCESS_TOKEN = '{{ access }}';
+var CF_ANNEES    = {{ cf_annees_json|safe }};
+var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
 
-var API_LIST = '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-resultats/';
-var API_ADD  = '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/ajouter-un-resultat/';
-var API_EDIT = '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/editer-un-resultat/';
-var API_DEL  = '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/supprimer-des-resultats/';
-
-var T_CANCEL      = '{{ t_cancel|escapejs }}';
-var T_CONFIRMER   = '{{ t_confirmer|escapejs }}';
-var T_ENR_COURS   = '{{ t_enr_cours|escapejs }}';
-var T_SUCCES      = '{{ t_succes|escapejs }}';
-var T_ERR_ENR     = '{{ t_err_enr|escapejs }}';
-var T_DEL_ERR     = '{{ t_del_err|escapejs }}';
-var T_DEL_OK      = '{{ t_del_ok|escapejs }}';
-var T_SUPPR_DEF   = '{{ t_suppr_def|escapejs }}';
-var T_SUPPR_BILAN = '{{ t_suppr_bilan|escapejs }}';
-var T_SUPPR_MSG   = '{{ t_suppr_msg|escapejs }}';
-
-/* ============================================================
+/* =========================================================
    DÉFINITION DES LIGNES DU COMPTE DE RÉSULTATS
-============================================================ */
+   t : h1=section, h2=sous-section, f=champ saisie,
+       st=sous-total, tot=total section, grand=total général
+   fs=champs additionnés, fs_neg=champs soustraits
+   ========================================================= */
 var ROWS = [
-    /* ---- CHARGES D'EXPLOITATION ---- */
+    /* ============================================================
+       CHARGES D'EXPLOITATION
+    ============================================================ */
     {t:'h1', label:'{% trans "CHARGES D\'EXPLOITATION" %}'},
 
     {t:'h2', label:'{% trans "Achats de Marchandises" %}'},
@@ -214,7 +307,9 @@ var ROWS = [
     {t:'f', f:'dotation_aux_provisions',       label:'{% trans "Dotations aux Provisions" %}'},
     {t:'f', f:'autres_charges_excedent_brute', label:'{% trans "Autres Charges (EBE)" %}'},
 
-    /* ---- PRODUITS D'EXPLOITATION ---- */
+    /* ============================================================
+       PRODUITS D'EXPLOITATION
+    ============================================================ */
     {t:'h1', label:'{% trans "PRODUITS D\'EXPLOITATION" %}'},
 
     {t:'h2', label:'{% trans "Chiffre d\'Affaires" %}'},
@@ -235,20 +330,22 @@ var ROWS = [
     {t:'st', label:'{% trans "Total Autres Produits" %}',
      fs:['production_imblise','subventions_exploitations','production_stockee','reprises_de_provision','transferts_charges','autres_produits']},
 
-    /* ---- SOLDES INTERMÉDIAIRES D'EXPLOITATION ---- */
+    /* ============================================================
+       SOLDES INTERMÉDIAIRES D'EXPLOITATION
+    ============================================================ */
     {t:'h1', label:'{% trans "SOLDES INTERMÉDIAIRES D\'EXPLOITATION" %}'},
 
-    {t:'st', cls:'row-subtotal', label:'{% trans "Marge Brute sur Marchandises" %}',
+    {t:'st', label:'{% trans "Marge Brute sur Marchandises" %}',
      fs:['vente_de_mdses'],
      fs_neg:['achat_mdses','variation_stock_mdses']},
 
-    {t:'st', cls:'row-subtotal', label:'{% trans "Valeur Ajoutée (VA)" %}',
+    {t:'st', label:'{% trans "Valeur Ajoutée (VA)" %}',
      fs:['vente_de_mdses','ventes_de_produits_fabriques','travaux_services_vendus','produit_accessoires',
          'production_imblise','subventions_exploitations','production_stockee','reprises_de_provision','transferts_charges','autres_produits'],
      fs_neg:['achat_mdses','variation_stock_mdses','achat_mp_autres_appro','var_stk_mp_app','autres_achats','variation_de_stocks_autres_appro',
              'transports','services_ext','impots_taxes','autres_charges_valeur_ajoutee']},
 
-    {t:'st', cls:'row-subtotal', label:'{% trans "Excédent Brut d\'Exploitation (EBE)" %}',
+    {t:'st', label:'{% trans "Excédent Brut d\'Exploitation (EBE)" %}',
      fs:['vente_de_mdses','ventes_de_produits_fabriques','travaux_services_vendus','produit_accessoires',
          'production_imblise','subventions_exploitations','production_stockee','reprises_de_provision','transferts_charges','autres_produits'],
      fs_neg:['achat_mdses','variation_stock_mdses','achat_mp_autres_appro','var_stk_mp_app','autres_achats','variation_de_stocks_autres_appro',
@@ -261,7 +358,9 @@ var ROWS = [
              'transports','services_ext','impots_taxes','autres_charges_valeur_ajoutee','charges_personnel',
              'dotation_aux_amorts','dotation_aux_provisions','autres_charges_excedent_brute']},
 
-    /* ---- ACTIVITÉ FINANCIÈRE ---- */
+    /* ============================================================
+       ACTIVITÉ FINANCIÈRE
+    ============================================================ */
     {t:'h1', label:'{% trans "ACTIVITÉ FINANCIÈRE" %}'},
 
     {t:'h2', label:'{% trans "Produits Financiers" %}'},
@@ -271,7 +370,7 @@ var ROWS = [
     {t:'f', f:'reprise_prov_et_transfert',  label:'{% trans "Reprises Provisions & Transferts (Fin.)" %}'},
     {t:'f', f:'diff_positive_de_change',    label:'{% trans "Différences Positives de Change" %}'},
     {t:'f', f:'prod_nets_cessions_vmp',     label:'{% trans "Produits Nets Cessions VMP" %}'},
-    {t:'st', cls:'row-subtotal', label:'{% trans "Sous-total Produits Financiers" %}',
+    {t:'st', label:'{% trans "Sous-total Produits Financiers" %}',
      fs:['revenus_fin_assimiles','prof_vmp_et_cre_actif_immo','interets_produit_assim','reprise_prov_et_transfert','diff_positive_de_change','prod_nets_cessions_vmp']},
 
     {t:'h2', label:'{% trans "Charges Financières" %}'},
@@ -279,14 +378,13 @@ var ROWS = [
     {t:'f', f:'frais_fin_charges_assi',   label:'{% trans "Frais Financiers & Charges Assimilées" %}'},
     {t:'f', f:'diff_negatives_de_change', label:'{% trans "Différences Négatives de Change" %}'},
     {t:'f', f:'ch_nettes_cessions_vmp',   label:'{% trans "Charges Nettes Cessions VMP" %}'},
-    {t:'st', cls:'row-subtotal', label:'{% trans "Sous-total Charges Financières" %}',
+    {t:'st', label:'{% trans "Sous-total Charges Financières" %}',
      fs:['dap','frais_fin_charges_assi','diff_negatives_de_change','ch_nettes_cessions_vmp']},
 
     {t:'tot', cls:'row-total', label:'{% trans "RÉSULTAT FINANCIER" %}', id:'res_financier',
      fs:['revenus_fin_assimiles','prof_vmp_et_cre_actif_immo','interets_produit_assim','reprise_prov_et_transfert','diff_positive_de_change','prod_nets_cessions_vmp'],
      fs_neg:['dap','frais_fin_charges_assi','diff_negatives_de_change','ch_nettes_cessions_vmp']},
 
-    /* ---- RÉSULTAT COURANT AVANT IMPÔTS ---- */
     {t:'tot', cls:'row-total-blue', label:'{% trans "RÉSULTAT COURANT AVANT IMPÔTS" %}', id:'res_courant',
      fs:['vente_de_mdses','ventes_de_produits_fabriques','travaux_services_vendus','produit_accessoires',
          'production_imblise','subventions_exploitations','production_stockee','reprises_de_provision','transferts_charges','autres_produits',
@@ -296,29 +394,33 @@ var ROWS = [
              'dotation_aux_amorts','dotation_aux_provisions','autres_charges_excedent_brute',
              'dap','frais_fin_charges_assi','diff_negatives_de_change','ch_nettes_cessions_vmp']},
 
-    /* ---- ACTIVITÉ EXCEPTIONNELLE ---- */
+    /* ============================================================
+       ACTIVITÉ EXCEPTIONNELLE
+    ============================================================ */
     {t:'h1', label:'{% trans "ACTIVITÉ EXCEPTIONNELLE" %}'},
 
     {t:'h2', label:'{% trans "Produits Exceptionnels" %}'},
     {t:'f', f:'sur_op_gestion_prod_except',    label:'{% trans "Produits sur Opérations de Gestion" %}'},
     {t:'f', f:'sur_op_en_capital_prod_except', label:'{% trans "Produits sur Opérations en Capital" %}'},
     {t:'f', f:'reprise_prov_transfert',        label:'{% trans "Reprises Provisions & Transferts (Excep.)" %}'},
-    {t:'st', cls:'row-subtotal', label:'{% trans "Sous-total Produits Exceptionnels" %}',
+    {t:'st', label:'{% trans "Sous-total Produits Exceptionnels" %}',
      fs:['sur_op_gestion_prod_except','sur_op_en_capital_prod_except','reprise_prov_transfert']},
 
     {t:'h2', label:'{% trans "Charges Exceptionnelles" %}'},
     {t:'f', f:'sur_op_gestion_charg_except',    label:'{% trans "Charges sur Opérations de Gestion" %}'},
     {t:'f', f:'sur_op_en_capital_charg_except', label:'{% trans "Charges sur Opérations en Capital" %}'},
     {t:'f', f:'dap_et_transfert_charg_except',  label:'{% trans "Dotations & Transferts Charges (Excep.)" %}'},
-    {t:'st', cls:'row-subtotal', label:'{% trans "Sous-total Charges Exceptionnelles" %}',
+    {t:'st', label:'{% trans "Sous-total Charges Exceptionnelles" %}',
      fs:['sur_op_gestion_charg_except','sur_op_en_capital_charg_except','dap_et_transfert_charg_except']},
 
     {t:'tot', cls:'row-total', label:'{% trans "RÉSULTAT EXCEPTIONNEL" %}', id:'res_excep',
      fs:['sur_op_gestion_prod_except','sur_op_en_capital_prod_except','reprise_prov_transfert'],
      fs_neg:['sur_op_gestion_charg_except','sur_op_en_capital_charg_except','dap_et_transfert_charg_except']},
 
-    /* ---- RÉSULTAT NET ---- */
-    {t:'h1', label:'{% trans "RÉSULTAT NET" %}'},
+    /* ============================================================
+       RÉSULTAT NET
+    ============================================================ */
+    {t:'h1', label:'{% trans "RÉSULTAT NET DE L\'EXERCICE" %}'},
     {t:'f', f:'participation_salairies', label:'{% trans "Participation des Salariés" %}'},
     {t:'f', f:'impot_sur_benefices',     label:'{% trans "Impôts sur les Bénéfices" %}'},
 
@@ -335,57 +437,207 @@ var ROWS = [
              'participation_salairies','impot_sur_benefices']}
 ];
 
-/* ============================================================
+/* =========================================================
    ÉTAT GLOBAL
-============================================================ */
-var yearData    = {};  // aid -> {_id, _status, champ:valeur, ...}
-var activeYears = [];  // liste des aids affichés
+   ========================================================= */
+var yearData    = {};
+var activeYears = [];
+var anneeMap    = {};
 
-/* ============================================================
-   UTILITAIRES
-============================================================ */
+ALL_ANNEES.forEach(function(a) { anneeMap[a.id] = a.annee; });
+
 function getCsrf() {
-    var cookies = document.cookie.split(';');
-    for (var i = 0; i < cookies.length; i++) {
-        var c = cookies[i].trim();
-        if (c.indexOf('csrftoken=') === 0) return c.substring('csrftoken='.length);
-    }
-    return '';
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
 }
 
-function getAnneeLabel(aid) {
-    for (var i = 0; i < CF_ANNEES.length; i++) {
-        if (parseInt(CF_ANNEES[i].id, 10) === parseInt(aid, 10)) return CF_ANNEES[i].annee;
-    }
-    return aid;
-}
-
-function fmtNum(val) {
-    var n = parseFloat(val);
+function fmtNum(v) {
+    var n = parseFloat(v);
     if (isNaN(n) || n === 0) return '—';
     return n.toLocaleString('fr-FR', {minimumFractionDigits:0, maximumFractionDigits:0});
 }
 
-function getVal(aid, field) {
-    if (!yearData[aid]) return 0;
-    var v = parseFloat(yearData[aid][field]);
-    return isNaN(v) ? 0 : v;
+/* =========================================================
+   LOADER
+   ========================================================= */
+function showLoader(msg, isError) {
+    var el = document.getElementById('gridLoader');
+    if (!el) return;
+    var txt = el.querySelector('.loader-text');
+    var spinner = el.querySelector('.loader-spinner');
+    el.classList.remove('hidden');
+    if (txt) {
+        txt.className = isError ? 'loader-error' : 'loader-text';
+        txt.textContent = msg || '{% trans "Chargement des données..." %}';
+    }
+    if (spinner) spinner.style.display = isError ? 'none' : '';
 }
 
-function statusBadge(status) {
-    var map = {
-        'new':    ['{% trans "Nouveau" %}',       'status-new'],
-        'saved':  ['{% trans "Enregistré" %}',    'status-saved'],
-        'dirty':  ['{% trans "Modifié" %}',       'status-dirty'],
-        'saving': ['{% trans "Sauvegarde..." %}', 'status-saving']
-    };
-    var info = map[status] || ['?', ''];
-    return '<span class="status-badge ' + info[1] + '">' + info[0] + '</span>';
+function hideLoader() {
+    var el = document.getElementById('gridLoader');
+    if (el) el.classList.add('hidden');
 }
 
-/* ============================================================
-   RECALCUL DES LIGNES CALCULÉES (supporte fs et fs_neg)
-============================================================ */
+/* =========================================================
+   INITIALISATION
+   ========================================================= */
+function init() {
+    showLoader();
+    fetchPage(1, []);
+}
+
+function fetchPage(page, accumulated) {
+    fetch('/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-resultats/?page=' + page, {
+        headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN }
+    })
+    .then(function(r) {
+        if (r.status === 401) {
+            return refreshAccessToken().then(function() { fetchPage(page, accumulated); });
+        }
+        if (!r.ok) { throw new Error('HTTP ' + r.status); }
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data) return;
+        var pageResults = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
+        var all = accumulated.concat(pageResults);
+        if (data.next === true) {
+            fetchPage(page + 1, all);
+        } else {
+            buildGridFromResults(all);
+        }
+    })
+    .catch(function(err) {
+        if (accumulated.length > 0) {
+            buildGridFromResults(accumulated);
+        } else {
+            showLoader('{% trans "Erreur de chargement" %} : ' + err.message, true);
+        }
+        setStatus('{% trans "Erreur de chargement" %}', 'error');
+    });
+}
+
+function buildGridFromResults(results) {
+    yearData    = {};
+    activeYears = [];
+
+    results.forEach(function(resultat) {
+        var rawAnnee = resultat.annee;
+        var aid = (rawAnnee !== null && typeof rawAnnee === 'object')
+                  ? parseInt(rawAnnee.id, 10)
+                  : parseInt(rawAnnee, 10);
+        if (!aid || isNaN(aid)) return;
+
+        yearData[aid] = $.extend({}, resultat, {_id: resultat.id, _status: 'saved'});
+        if (activeYears.indexOf(aid) === -1) {
+            activeYears.push(aid);
+        }
+    });
+
+    if (results.length === 0) {
+        CF_ANNEES.forEach(function(a) {
+            if (a.id && activeYears.indexOf(a.id) === -1) {
+                activeYears.push(a.id);
+                yearData[a.id] = {_id: null, _status: 'new'};
+            }
+        });
+    }
+
+    activeYears.sort(function(a, b) { return (anneeMap[b]||0) - (anneeMap[a]||0); });
+
+    hideLoader();
+    renderAll();
+    setStatus('{% trans "Données chargées" %} — ' + results.length + ' {% trans "enregistrement(s)" %}', 'success');
+
+    if (activeYears.length === 0) {
+        showLoader('{% trans "Aucune donnée. Cliquez sur « Ajouter une année » pour commencer." %}', true);
+    }
+}
+
+/* =========================================================
+   RENDU
+   ========================================================= */
+function renderAll() {
+    renderHead();
+    renderBody();
+    renderYearPills();
+}
+
+function renderHead() {
+    var h = '<tr>';
+    h += '<th class="col-label-head">{% trans "POSTES DU COMPTE DE RÉSULTATS" %}</th>';
+    activeYears.forEach(function(aid) {
+        var an  = anneeMap[aid] || '?';
+        var st  = yearData[aid] ? yearData[aid]._status : 'new';
+        var hasDb = yearData[aid] && yearData[aid]._id;
+        h += '<th class="year-head-cell">' +
+             '<div class="yh-top">' +
+             '<span class="yh-year">' + an + '</span>' +
+             '<span id="stbadge_' + aid + '">' + statusBadge(st) + '</span>' +
+             '</div>' +
+             '<div class="yh-actions">' +
+             '<button class="btn-year-save" onclick="saveYear(' + aid + ')"><i class="fas fa-save me-1"></i>{% trans "Enreg." %}</button>' +
+             (hasDb
+               ? '<button class="btn-year-del" onclick="supprimerAnnee(' + aid + ')" title="{% trans "Supprimer" %}"><i class="fas fa-trash-alt"></i></button>'
+               : '<button class="btn-year-hide" onclick="masquerAnnee(' + aid + ')" title="{% trans "Masquer" %}"><i class="fas fa-times"></i></button>'
+             ) +
+             '</div>' +
+             '</th>';
+    });
+    h += '<th class="col-add-head" onclick="$(\'#modalAddYear\').modal(\'show\')" title="{% trans "Ajouter une année" %}"><i class="fas fa-plus"></i></th>';
+    h += '</tr>';
+    document.getElementById('bilanHead').innerHTML = h;
+}
+
+function renderBody() {
+    var b = '';
+    ROWS.forEach(function(row, idx) {
+        b += buildRow(row, idx);
+    });
+    document.getElementById('bilanBody').innerHTML = b;
+    recalcAll();
+}
+
+function buildRow(row, idx) {
+    var isComputed = (row.t === 'st' || row.t === 'tot' || row.t === 'grand');
+    var rowCls = {
+        'h1': 'row-h1', 'h2': 'row-h2', 'f': 'row-field',
+        'st': row.cls || 'row-subtotal',
+        'tot': row.cls || 'row-total',
+        'grand': 'row-grand'
+    }[row.t] || 'row-field';
+
+    var html = '<tr class="' + rowCls + '" data-ridx="' + idx + '">';
+    html += '<td class="col-label">' + escHtml(row.label) + '</td>';
+
+    activeYears.forEach(function(aid) {
+        html += '<td class="year-cell">';
+        if (row.t === 'f') {
+            var val = (yearData[aid] && yearData[aid][row.f] != null) ? yearData[aid][row.f] : '';
+            html += '<input type="number" class="cell-input"' +
+                    ' data-year="' + aid + '"' +
+                    ' data-field="' + row.f + '"' +
+                    ' data-ridx="' + idx + '"' +
+                    ' value="' + (val !== '' ? val : '') + '"' +
+                    ' placeholder="0" step="0.01">';
+        } else if (isComputed) {
+            html += '<span class="cell-computed" id="cc_' + idx + '_' + aid + '">—</span>';
+        }
+        html += '</td>';
+    });
+
+    html += '<td></td></tr>';
+    return html;
+}
+
+/* =========================================================
+   CALCULS — supporte fs_neg pour les soldes intermédiaires
+   Les valeurs négatives s'affichent en rouge
+   ========================================================= */
+function recalcAll() {
+    activeYears.forEach(function(aid) { recalcYear(aid); });
+}
+
 function recalcYear(aid) {
     ROWS.forEach(function(row, idx) {
         if (row.t !== 'st' && row.t !== 'tot' && row.t !== 'grand') return;
@@ -405,349 +657,340 @@ function recalcYear(aid) {
     });
 }
 
-function recalcAll() {
-    activeYears.forEach(function(aid) { recalcYear(aid); });
+function getVal(aid, field) {
+    var $inp = $('[data-year="' + aid + '"][data-field="' + field + '"]');
+    var v = $inp.length ? parseFloat($inp.val()) : 0;
+    return isNaN(v) ? 0 : v;
 }
 
-/* ============================================================
-   RENDU DE L'EN-TÊTE DU TABLEAU
-============================================================ */
-function renderHead() {
-    var h = '<tr>';
-    h += '<th class="col-label-head">{% trans "POSTES DU COMPTE DE RÉSULTATS" %}</th>';
-    activeYears.forEach(function(aid) {
-        var d = yearData[aid] || {};
-        var status = d._status || 'new';
-        h += '<th class="year-head-cell" id="yhead_' + aid + '">';
-        h += '<div class="yh-top">';
-        h += '<span class="yh-year">' + getAnneeLabel(aid) + '</span>';
-        h += statusBadge(status);
-        h += '</div>';
-        h += '<div class="yh-actions">';
-        h += '<button class="btn-year-save" onclick="saveYear(' + aid + ')" title="{% trans "Enregistrer" %}"><i class="fas fa-save"></i></button>';
-        h += '<button class="btn-year-hide" onclick="masquerAnnee(' + aid + ')" title="{% trans "Masquer" %}"><i class="fas fa-eye-slash"></i></button>';
-        h += '<button class="btn-year-del"  onclick="supprimerAnnee(' + aid + ')" title="{% trans "Supprimer" %}"><i class="fas fa-trash"></i></button>';
-        h += '</div>';
-        h += '</th>';
-    });
-    h += '<th class="col-add-head" onclick="openAddYear()" title="{% trans "Ajouter une année" %}"><i class="fas fa-plus" style="color:#fff;font-size:.85rem;"></i></th>';
-    h += '</tr>';
-    document.getElementById('bgThead').innerHTML = h;
-}
-
-/* ============================================================
-   RENDU DU CORPS DU TABLEAU
-============================================================ */
-var ROW_TYPE_CLASS = {
-    'h1':    'row-h1',
-    'h2':    'row-h2',
-    'f':     'row-field',
-    'st':    'row-subtotal',
-    'tot':   'row-total',
-    'grand': 'row-grand'
-};
-
-function buildRow(row, idx) {
-    var typeClass = row.cls || ROW_TYPE_CLASS[row.t] || '';
-    var tr = '<tr class="' + typeClass + '" id="tr_' + idx + '">';
-
-    /* Colonne libellé (sticky) */
-    tr += '<td class="col-label">' + row.label + '</td>';
-
-    /* Colonnes par année */
-    activeYears.forEach(function(aid) {
-        if (row.t === 'h1' || row.t === 'h2') {
-            tr += '<td class="year-cell"></td>';
-        } else if (row.t === 'f') {
-            var val = (yearData[aid] && yearData[aid][row.f] !== undefined) ? yearData[aid][row.f] : '';
-            tr += '<td class="year-cell">';
-            tr += '<input type="number" class="cell-input"'
-                + ' id="ci_' + idx + '_' + aid + '"'
-                + ' value="' + (val !== '' ? val : '') + '"'
-                + ' data-aid="' + aid + '"'
-                + ' data-field="' + row.f + '"'
-                + ' data-idx="' + idx + '"'
-                + ' oninput="onCellInput(this)"'
-                + ' onchange="onCellChange(this)">';
-            tr += '</td>';
-        } else {
-            /* Lignes calculées : st, tot, grand */
-            tr += '<td class="year-cell"><span class="cell-computed" id="cc_' + idx + '_' + aid + '">—</span></td>';
-        }
-    });
-
-    /* Colonne "+" vide */
-    tr += '<td style="min-width:36px;background:#f8f9fa;border-left:1px solid #daeaf5;"></td>';
-    tr += '</tr>';
-    return tr;
-}
-
-function renderBody() {
-    var html = '';
-    ROWS.forEach(function(row, idx) {
-        html += buildRow(row, idx);
-    });
-    document.getElementById('bgTbody').innerHTML = html;
-    recalcAll();
-}
-
-/* ============================================================
+/* =========================================================
    ÉVÉNEMENTS CELLULES
-============================================================ */
-function onCellInput(input) {
-    var aid   = parseInt(input.dataset.aid, 10);
-    var field = input.dataset.field;
-    var val   = parseFloat(input.value) || 0;
-    if (!yearData[aid]) yearData[aid] = {_status: 'new'};
-    yearData[aid][field] = val;
+   ========================================================= */
+$(document).on('input', '.cell-input', function() {
+    var aid   = +$(this).data('year');
+    var field = $(this).data('field');
+    if (!yearData[aid]) yearData[aid] = {_id: null, _status: 'new'};
+    yearData[aid][field] = parseFloat($(this).val()) || 0;
     if (yearData[aid]._status === 'saved') {
         yearData[aid]._status = 'dirty';
-        updateHeadStatus(aid);
+        updateBadge(aid);
     }
     recalcYear(aid);
-}
+});
 
-function onCellChange(input) {
-    /* Réservé pour validation ou formatage ultérieur */
-}
+$(document).on('keydown', '.cell-input', function(e) {
+    var $this = $(this);
+    var aid   = +$this.data('year');
+    var ridx  = +$this.data('ridx');
+    var aidIdx = activeYears.indexOf(aid);
 
-function updateHeadStatus(aid) {
-    var d = yearData[aid] || {};
-    var th = document.getElementById('yhead_' + aid);
-    if (!th) return;
-    var badge = th.querySelector('.status-badge');
-    if (badge) {
-        var tmp = document.createElement('span');
-        tmp.innerHTML = statusBadge(d._status || 'new');
-        badge.parentNode.replaceChild(tmp.firstChild, badge);
-    }
-}
-
-/* ============================================================
-   AJOUT D'UNE ANNÉE
-============================================================ */
-function openAddYear() {
-    var modal = new bootstrap.Modal(document.getElementById('modalAddYear'));
-    modal.show();
-}
-
-/* ============================================================
-   MASQUER UNE ANNÉE (sans suppression)
-============================================================ */
-function masquerAnnee(aid) {
-    var idx = activeYears.indexOf(aid);
-    if (idx !== -1) activeYears.splice(idx, 1);
-    renderHead();
-    renderBody();
-}
-
-/* ============================================================
-   ENREGISTREMENT D'UNE SEULE ANNÉE
-============================================================ */
-function saveYear(aid) {
-    var d = yearData[aid];
-    if (!d) return;
-    var isNew = !d._id;
-
-    /* Construction du payload */
-    var payload = {annee: aid};
-    ROWS.forEach(function(row) {
-        if (row.t === 'f') {
-            payload[row.f] = parseFloat(d[row.f]) || 0;
+    if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        var nextAid = activeYears[aidIdx + 1];
+        if (nextAid) {
+            $('[data-ridx="' + ridx + '"][data-year="' + nextAid + '"]').focus();
+        } else {
+            var nextRidx = findNextFieldRow(ridx);
+            if (nextRidx >= 0) $('[data-ridx="' + nextRidx + '"][data-year="' + activeYears[0] + '"]').focus();
         }
+    } else if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        var prevAid = activeYears[aidIdx - 1];
+        if (prevAid) {
+            $('[data-ridx="' + ridx + '"][data-year="' + prevAid + '"]').focus();
+        } else {
+            var prevRidx = findPrevFieldRow(ridx);
+            if (prevRidx >= 0) $('[data-ridx="' + prevRidx + '"][data-year="' + activeYears[activeYears.length - 1] + '"]').focus();
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        var nextR = findNextFieldRow(ridx);
+        if (nextR >= 0) $('[data-ridx="' + nextR + '"][data-year="' + aid + '"]').focus();
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        var nr = findNextFieldRow(ridx);
+        if (nr >= 0) $('[data-ridx="' + nr + '"][data-year="' + aid + '"]').focus();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        var pr = findPrevFieldRow(ridx);
+        if (pr >= 0) $('[data-ridx="' + pr + '"][data-year="' + aid + '"]').focus();
+    }
+});
+
+function findNextFieldRow(from) {
+    for (var i = from + 1; i < ROWS.length; i++) { if (ROWS[i].t === 'f') return i; }
+    return -1;
+}
+function findPrevFieldRow(from) {
+    for (var i = from - 1; i >= 0; i--) { if (ROWS[i].t === 'f') return i; }
+    return -1;
+}
+
+/* =========================================================
+   SAUVEGARDE
+   ========================================================= */
+function collectYearPayload(aid) {
+    var payload = {acheteur: ACHETEUR_ID, annee: aid};
+    ROWS.forEach(function(row) {
+        if (row.t !== 'f') return;
+        var $inp = $('[data-year="' + aid + '"][data-field="' + row.f + '"]');
+        payload[row.f] = parseFloat($inp.val()) || 0;
     });
+    return payload;
+}
 
-    d._status = 'saving';
-    updateHeadStatus(aid);
+function saveYear(aid) {
+    var data = yearData[aid] || {_id: null, _status: 'new'};
+    var payload = collectYearPayload(aid);
+    var isNew = !data._id;
+    var url = isNew
+        ? '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/ajouter-un-resultat/'
+        : '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/editer-un-resultat/' + data._id + '/';
 
-    var url    = isNew ? API_ADD : (API_EDIT + d._id + '/');
-    var method = isNew ? 'POST' : 'PUT';
+    setBadge(aid, 'saving');
+    setStatus('{{ t_enr_cours }}…', 'info');
 
     $.ajax({
         url: url,
-        method: method,
-        contentType: 'application/json',
-        headers: {'X-CSRFToken': getCsrf()},
+        type: isNew ? 'POST' : 'PUT',
         data: JSON.stringify(payload),
+        contentType: 'application/json',
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN,
+            'X-CSRFToken': getCsrf()
+        },
         success: function(resp) {
-            yearData[aid]._id     = resp.id || d._id;
+            if (!yearData[aid]) yearData[aid] = {};
+            yearData[aid]._id = resp.id;
             yearData[aid]._status = 'saved';
-            updateHeadStatus(aid);
-            Swal.fire({icon:'success', title:T_SUCCES, timer:1500, showConfirmButton:false});
+            updateBadge(aid);
+            setStatus('{{ t_succes }} (' + (anneeMap[aid]||aid) + ')', 'success');
         },
         error: function(xhr) {
-            yearData[aid]._status = d._id ? 'dirty' : 'new';
-            updateHeadStatus(aid);
-            var msg = T_ERR_ENR;
-            try {
-                var j = JSON.parse(xhr.responseText);
-                if (j && typeof j === 'object') msg += ' — ' + JSON.stringify(j);
-            } catch(e) {}
-            Swal.fire({icon:'error', title:T_ERR_ENR, text:msg});
+            yearData[aid]._status = 'dirty';
+            updateBadge(aid);
+            if (xhr.status === 401) { refreshToken(function() { saveYear(aid); }); return; }
+            var errLabel = '{{ t_err_enr|escapejs }}';
+            var msg = errLabel;
+            if (xhr.responseJSON) {
+                var errs = [];
+                $.each(xhr.responseJSON, function(k, v) { errs.push(k + ': ' + (Array.isArray(v) ? v.join(', ') : v)); });
+                msg += ' — ' + errs.join(' | ');
+            }
+            Swal.fire({icon:'error', title: errLabel, text: msg, timer:5000, showConfirmButton:true});
+            setStatus(errLabel, 'error');
         }
     });
 }
 
-/* ============================================================
-   ENREGISTREMENT GLOBAL
-============================================================ */
 function saveAll() {
     var toSave = activeYears.filter(function(aid) {
-        return yearData[aid] && (yearData[aid]._status === 'new' || yearData[aid]._status === 'dirty');
+        return !yearData[aid] || yearData[aid]._status !== 'saved';
     });
-    if (toSave.length === 0) {
-        Swal.fire({icon:'info', title:T_SUCCES, text:'{% trans "Aucune modification à enregistrer." %}', timer:1500, showConfirmButton:false});
+    if (!toSave.length) {
+        Swal.fire({icon:'info', title:'{% trans "Tout est déjà enregistré" %}', timer:1500, showConfirmButton:false});
         return;
     }
-    toSave.forEach(function(aid) { saveYear(aid); });
+    var idx = 0;
+    function next() {
+        if (idx >= toSave.length) {
+            setStatus('{% trans "Tout enregistré avec succès" %}', 'success');
+            return;
+        }
+        var aid = toSave[idx++];
+        var data = yearData[aid] || {};
+        var payload = collectYearPayload(aid);
+        var isNew = !data._id;
+        var url = isNew
+            ? '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/ajouter-un-resultat/'
+            : '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/editer-un-resultat/' + data._id + '/';
+
+        setBadge(aid, 'saving');
+        $.ajax({
+            url: url, type: isNew ? 'POST' : 'PUT',
+            data: JSON.stringify(payload), contentType: 'application/json',
+            headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCsrf()},
+            success: function(resp) {
+                if (!yearData[aid]) yearData[aid] = {};
+                yearData[aid]._id = resp.id;
+                yearData[aid]._status = 'saved';
+                updateBadge(aid);
+                next();
+            },
+            error: function(xhr) {
+                yearData[aid]._status = 'dirty';
+                updateBadge(aid);
+                if (xhr.status === 401) { refreshToken(function() { saveAll(); }); return; }
+                next();
+            }
+        });
+    }
+    next();
 }
 
-/* ============================================================
-   SUPPRESSION D'UNE ANNÉE
-============================================================ */
-function supprimerAnnee(aid) {
-    var d = yearData[aid];
-    /* Si non encore sauvegardé : masquer simplement */
-    if (!d || !d._id) {
-        masquerAnnee(aid);
+/* =========================================================
+   GESTION COLONNES
+   ========================================================= */
+function addYear(aid) {
+    if (activeYears.indexOf(aid) !== -1) {
+        Swal.fire({icon:'info', title:'{% trans "Cette année est déjà affichée" %}', timer:1200, showConfirmButton:false});
         return;
     }
+    if (!yearData[aid]) yearData[aid] = {_id: null, _status: 'new'};
+    activeYears.push(aid);
+    activeYears.sort(function(a, b) { return (anneeMap[b]||0) - (anneeMap[a]||0); });
+    renderAll();
+}
+
+function masquerAnnee(aid) {
+    var i = activeYears.indexOf(aid);
+    if (i > -1) activeYears.splice(i, 1);
+    delete yearData[aid];
+    renderAll();
+}
+
+function supprimerAnnee(aid) {
+    var an   = anneeMap[aid] || aid;
+    var data = yearData[aid];
+    if (!data || !data._id) { masquerAnnee(aid); return; }
+
+    var htmlConf = '<p class="text-muted mb-0" style="font-size:.85rem;">'
+                 + '{{ t_suppr_msg|escapejs }} '
+                 + '{% trans "Exercice" %} : <strong>' + an + '</strong>'
+                 + '</p>';
+
     Swal.fire({
-        title: T_SUPPR_BILAN,
-        text:  T_SUPPR_MSG,
-        icon:  'warning',
-        showCancelButton:   true,
+        title: '{% trans "Supprimer" %} ' + an + ' ?',
+        html:  htmlConf,
+        icon: 'warning',
+        showCancelButton: true,
         confirmButtonColor: '#dc3545',
-        cancelButtonColor:  '#6c757d',
-        confirmButtonText:  T_SUPPR_DEF,
-        cancelButtonText:   T_CANCEL
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-trash-alt me-1"></i>{{ t_suppr_def|escapejs }}',
+        cancelButtonText: '{{ t_cancel|escapejs }}'
     }).then(function(result) {
         if (!result.isConfirmed) return;
+        setBadge(aid, 'saving');
         $.ajax({
-            url: API_DEL,
-            method: 'DELETE',
+            url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/supprimer-des-resultats/',
+            type: 'DELETE',
+            data: JSON.stringify({ids: [data._id]}),
             contentType: 'application/json',
-            headers: {'X-CSRFToken': getCsrf()},
-            data: JSON.stringify({ids: [d._id]}),
+            headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCsrf()},
             success: function() {
+                var i = activeYears.indexOf(aid);
+                if (i > -1) activeYears.splice(i, 1);
                 delete yearData[aid];
-                masquerAnnee(aid);
-                Swal.fire({icon:'success', title:T_DEL_OK, timer:1500, showConfirmButton:false});
+                renderAll();
+                Swal.fire({icon:'success', title:'{{ t_del_ok|escapejs }}', timer:1500, showConfirmButton:false});
+                setStatus('{% trans "Exercice" %} ' + an + ' {% trans "supprimé" %}', 'success');
             },
-            error: function() {
-                Swal.fire({icon:'error', title:T_DEL_ERR});
+            error: function(xhr) {
+                if (xhr.status === 401) { refreshToken(function() { supprimerAnnee(aid); }); return; }
+                updateBadge(aid);
+                Swal.fire({icon:'error', title:'{{ t_del_err|escapejs }}', timer:2000, showConfirmButton:false});
             }
         });
     });
 }
 
-/* ============================================================
-   CHARGEMENT DES DONNÉES (pagination automatique)
-============================================================ */
-function loadAllPages(url, accumulated, callback) {
-    $.ajax({
-        url: url,
-        method: 'GET',
-        headers: {'X-CSRFToken': getCsrf()},
-        success: function(data) {
-            var results = data.results || data;
-            if (Array.isArray(results)) accumulated = accumulated.concat(results);
-            if (data.next) {
-                loadAllPages(data.next, accumulated, callback);
-            } else {
-                callback(null, accumulated);
-            }
-        },
-        error: function(xhr) {
-            callback(xhr, accumulated);
-        }
-    });
+/* =========================================================
+   BADGES & PILLS
+   ========================================================= */
+function statusBadge(st) {
+    var map = {
+        'new':    ['status-new',    '{% trans "Nouveau" %}'],
+        'saved':  ['status-saved',  '{% trans "Enregistré" %}'],
+        'dirty':  ['status-dirty',  '{% trans "Modifié" %}'],
+        'saving': ['status-saving', '{% trans "En cours..." %}']
+    };
+    var info = map[st] || map['new'];
+    return '<span class="status-badge ' + info[0] + '">' + info[1] + '</span>';
 }
 
-function buildGridFromResults(results) {
-    results.forEach(function(resultat) {
-        var rawAnnee = resultat.annee;
-        var aid = (rawAnnee !== null && typeof rawAnnee === 'object')
-                  ? parseInt(rawAnnee.id, 10)
-                  : parseInt(rawAnnee, 10);
-        if (!aid || isNaN(aid)) return;
-        yearData[aid] = $.extend({}, resultat, {_id: resultat.id, _status: 'saved'});
-        if (activeYears.indexOf(aid) === -1) {
-            activeYears.push(aid);
-        }
-    });
+function setBadge(aid, st) {
+    var el = document.getElementById('stbadge_' + aid);
+    if (el) el.innerHTML = statusBadge(st);
+}
+function updateBadge(aid) {
+    var st = (yearData[aid] && yearData[aid]._status) || 'new';
+    setBadge(aid, st);
 }
 
-function showLoader(show, errMsg) {
-    var overlay = document.getElementById('gridLoader');
-    var errEl   = document.getElementById('loaderError');
-    if (show) {
-        overlay.classList.remove('hidden');
-        if (errMsg) {
-            errEl.textContent = errMsg;
-            errEl.classList.remove('hidden');
-        } else {
-            errEl.classList.add('hidden');
-        }
-    } else {
-        overlay.classList.add('hidden');
-    }
+function renderYearPills() {
+    var html = '';
+    activeYears.forEach(function(aid) {
+        var an = anneeMap[aid] || '?';
+        var st = (yearData[aid] && yearData[aid]._status) || 'new';
+        html += '<span class="badge ' + (st==='saved'?'bg-success':st==='dirty'?'bg-primary':'bg-warning text-dark') + '">' + an + '</span>';
+    });
+    if (!activeYears.length) html = '<span class="text-muted" style="font-size:.75rem;">{% trans "Aucune année sélectionnée" %}</span>';
+    document.getElementById('yearPills').innerHTML = html;
 }
 
-/* ============================================================
-   HAUTEUR DYNAMIQUE DE LA GRILLE
-============================================================ */
-function adjustGridHeight() {
-    var header = document.querySelector('.page-actif-header');
-    var tb     = document.querySelector('.bilan-toolbar');
-    var hh     = (header ? header.offsetHeight : 0) + (tb ? tb.offsetHeight : 0);
-    var scroll = document.getElementById('bilanGridScroll');
-    if (scroll) scroll.style.height = (window.innerHeight - hh) + 'px';
+/* =========================================================
+   STATUT
+   ========================================================= */
+function setStatus(msg, type) {
+    var el = document.getElementById('gridStatus');
+    if (!el) return;
+    var colors = {info:'#0d6efd', success:'#198754', error:'#dc3545'};
+    el.textContent = msg;
+    el.style.color = colors[type] || '#6c757d';
 }
 
-/* ============================================================
-   INITIALISATION
-============================================================ */
-$(document).ready(function() {
+/* =========================================================
+   UTILITAIRES
+   ========================================================= */
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-    /* Hauteur initiale et redimensionnement */
-    adjustGridHeight();
-    window.addEventListener('resize', adjustGridHeight);
+function refreshAccessToken() {
+    return fetch('/api/token/refresh/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({'refresh': '{{ refresh }}'})
+    })
+    .then(function(r) {
+        if (!r.ok) { window.location.href = '/'; throw new Error('Token expiré'); }
+        return r.json();
+    })
+    .then(function(data) { ACCESS_TOKEN = data.access; });
+}
 
-    /* Bouton "Tout enregistrer" */
-    document.getElementById('btnSaveAll').addEventListener('click', saveAll);
+function refreshToken(cb) {
+    refreshAccessToken().then(function() { if (cb) cb(); }).catch(function() {});
+}
 
-    /* Bouton de confirmation d'ajout d'année */
-    document.getElementById('btnConfirmAddYear').addEventListener('click', function() {
-        var sel = document.getElementById('selectAddYear');
-        var aid = parseInt(sel.value, 10);
-        if (!aid) return;
-        if (activeYears.indexOf(aid) === -1) {
-            activeYears.push(aid);
-            if (!yearData[aid]) yearData[aid] = {_status: 'new'};
-        }
-        bootstrap.Modal.getInstance(document.getElementById('modalAddYear')).hide();
-        sel.value = '';
-        renderHead();
-        renderBody();
-        adjustGridHeight();
-    });
+/* =========================================================
+   BOUTONS PAGE
+   ========================================================= */
+document.getElementById('btnSaveAll').addEventListener('click', saveAll);
 
-    /* Chargement initial */
-    showLoader(true);
-    loadAllPages(API_LIST + '?page=1', [], function(err, results) {
-        if (err) {
-            showLoader(true, '{% trans "Erreur lors du chargement des données." %}');
-            return;
-        }
-        buildGridFromResults(results);
-        /* Tri chronologique */
-        activeYears.sort(function(a, b) { return a - b; });
-        renderHead();
-        renderBody();
-        adjustGridHeight();
-        showLoader(false);
-    });
+document.getElementById('btnConfirmAddYear').addEventListener('click', function() {
+    var sel = document.getElementById('selectAddYear');
+    var aid = parseInt(sel.value);
+    if (!aid) return;
+    $('#modalAddYear').modal('hide');
+    sel.value = '';
+    addYear(aid);
 });
+
+/* =========================================================
+   HAUTEUR DYNAMIQUE
+   ========================================================= */
+function adjustGridHeight() {
+    var outer = document.querySelector('.bilan-outer');
+    if (!outer) return;
+    var rect = outer.getBoundingClientRect();
+    outer.style.height = (window.innerHeight - rect.top) + 'px';
+}
+
+$(document).ready(function() {
+    adjustGridHeight();
+    init();
+});
+window.addEventListener('resize', adjustGridHeight);
 </script>
 {% endblock %}
