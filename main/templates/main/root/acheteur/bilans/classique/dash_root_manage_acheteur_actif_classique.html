@@ -667,11 +667,20 @@ function buildGridFromResults(results) {
     yearData    = {};
     activeYears = [];
 
-    /* 1. Années présentes en base → status 'saved', _id connu */
+    /* 1. Années présentes en base → status 'saved', _id connu
+          ActifCSerializer retourne annee comme objet nested {id, annee, ...}
+          → extraire l'id explicitement */
     results.forEach(function(actif) {
-        var aid = parseInt(actif.annee, 10);
+        var rawAnnee = actif.annee;
+        var aid = (rawAnnee !== null && typeof rawAnnee === 'object')
+                  ? parseInt(rawAnnee.id, 10)
+                  : parseInt(rawAnnee, 10);
+        if (!aid || isNaN(aid)) return; /* enregistrement invalide, on ignore */
+
         yearData[aid] = $.extend({}, actif, {_id: actif.id, _status: 'saved'});
-        activeYears.push(aid);
+        if (activeYears.indexOf(aid) === -1) {
+            activeYears.push(aid);
+        }
     });
 
     /* 2. CF_ANNEES : colonnes par défaut SEULEMENT si la base est vide */
