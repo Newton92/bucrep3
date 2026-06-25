@@ -329,6 +329,45 @@ html { overflow: hidden; }
 }
 .col-add-head:hover { background: var(--app-accent) !important; }
 
+/* ---- Loader overlay centré ---- */
+.grid-loader-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(236,246,253,.97);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    gap: 16px;
+}
+.grid-loader-overlay.hidden { display: none; }
+
+.loader-spinner {
+    width: 52px;
+    height: 52px;
+    border: 5px solid var(--app-light);
+    border-top-color: var(--app-blue);
+    border-radius: 50%;
+    animation: bilan-spin .8s linear infinite;
+}
+@keyframes bilan-spin { to { transform: rotate(360deg); } }
+
+.loader-text {
+    color: var(--app-mid);
+    font-size: .9rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: .03em;
+}
+
+.loader-error {
+    color: #dc3545;
+    font-size: .85rem;
+    font-weight: 600;
+    margin: 0;
+}
+
 /* ---- Print ---- */
 @media print {
     .page-actif-header, .bilan-toolbar { display: none; }
@@ -390,6 +429,13 @@ html { overflow: hidden; }
 
     <!-- Grille scrollable -->
     <div class="bilan-grid-scroll">
+
+        <!-- Loader centré -->
+        <div id="gridLoader" class="grid-loader-overlay">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">{% trans "Chargement des données..." %}</p>
+        </div>
+
         <table class="bg-table" id="bilanGrid">
             <thead id="bilanHead"></thead>
             <tbody id="bilanBody"></tbody>
@@ -428,10 +474,9 @@ html { overflow: hidden; }
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 /* =========================================================
-   CONFIGURATION  — PAS D'IIFE : fonctions globales pour onclick
+   CONFIGURATION  — fonctions globales (pas d'IIFE) pour onclick
    ========================================================= */
 var ACHETEUR_ID  = {{ id_acheteur }};
 var ACCESS_TOKEN = '{{ access }}';
@@ -556,39 +601,66 @@ function fmtNum(v) {
 }
 
 /* =========================================================
+   LOADER OVERLAY
+   ========================================================= */
+function showLoader(msg, isError) {
+    var el = document.getElementById('gridLoader');
+    if (!el) return;
+    var txt = el.querySelector('.loader-text');
+    var spinner = el.querySelector('.loader-spinner');
+    el.classList.remove('hidden');
+    if (txt) {
+        txt.className = isError ? 'loader-error' : 'loader-text';
+        txt.textContent = msg || '{% trans "Chargement des données..." %}';
+    }
+    if (spinner) spinner.style.display = isError ? 'none' : '';
+}
+
+function hideLoader() {
+    var el = document.getElementById('gridLoader');
+    if (el) el.classList.add('hidden');
+}
+
+/* =========================================================
    INITIALISATION
    ========================================================= */
 function init() {
+    showLoader();
     loadAllPages(1, []);
 }
 
-/* Charge toutes les pages pour éviter de rater des _id (page fixe = 10) */
+/* Charge toutes les pages (page_size fixe = 10 côté serveur) */
 function loadAllPages(page, accumulated) {
-    setStatus('{% trans "Chargement des données..." %}', 'info');
     $.ajax({
         url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-actifs/?page=' + page,
         headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN},
         success: function(resp) {
             var results = resp.results || (Array.isArray(resp) ? resp : []);
             accumulated = accumulated.concat(results);
-            /* S'il y a une page suivante, la charger aussi */
-            if (resp.next) {
+            if (resp.next === true) {
+                /* Il y a une page suivante — la charger */
                 loadAllPages(page + 1, accumulated);
             } else {
                 buildGridFromResults(accumulated);
             }
         },
         error: function(xhr) {
-            if (xhr.status === 401) { refreshToken(function() { loadAllPages(page, accumulated); }); return; }
-            /* En cas d'erreur : afficher la grille avec CF par défaut */
-            buildGridFromResults(accumulated);
+            if (xhr.status === 401) {
+                refreshToken(function() { loadAllPages(page, accumulated); });
+                return;
+            }
+            /* Autre erreur : afficher grille avec données déjà accumulées */
+            if (accumulated.length > 0) {
+                buildGridFromResults(accumulated);
+            } else {
+                showLoader('{% trans "Erreur de chargement des données. Veuillez recharger la page." %}', true);
+            }
             setStatus('{% trans "Erreur de chargement" %}', 'error');
         }
     });
 }
 
 function buildGridFromResults(results) {
-    /* Réinitialiser l'état — seule source de vérité */
     yearData    = {};
     activeYears = [];
 
@@ -611,8 +683,14 @@ function buildGridFromResults(results) {
 
     /* 3. Tri décroissant : N, N-1, N-2… */
     activeYears.sort(function(a, b) { return (anneeMap[b]||0) - (anneeMap[a]||0); });
+
+    hideLoader();
     renderAll();
     setStatus('{% trans "Données chargées" %} — ' + results.length + ' {% trans "enregistrement(s)" %}', 'success');
+
+    if (activeYears.length === 0) {
+        showLoader('{% trans "Aucune donnée. Cliquez sur « Ajouter une année » pour commencer." %}', true);
+    }
 }
 
 /* =========================================================
