@@ -430,8 +430,8 @@ html { overflow: hidden; }
     <!-- Grille scrollable -->
     <div class="bilan-grid-scroll">
 
-        <!-- Loader centré -->
-        <div id="gridLoader" class="grid-loader-overlay">
+        <!-- Loader centré (caché par défaut — JS l'affiche) -->
+        <div id="gridLoader" class="grid-loader-overlay hidden">
             <div class="loader-spinner"></div>
             <p class="loader-text">{% trans "Chargement des données..." %}</p>
         </div>
@@ -626,37 +626,38 @@ function hideLoader() {
    ========================================================= */
 function init() {
     showLoader();
-    loadAllPages(1, []);
+    fetchPage(1, []);
 }
 
-/* Charge toutes les pages (page_size fixe = 10 côté serveur) */
-function loadAllPages(page, accumulated) {
-    $.ajax({
-        url: '/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-actifs/?page=' + page,
-        headers: {'Authorization': 'Bearer ' + ACCESS_TOKEN},
-        success: function(resp) {
-            var results = resp.results || (Array.isArray(resp) ? resp : []);
-            accumulated = accumulated.concat(results);
-            if (resp.next === true) {
-                /* Il y a une page suivante — la charger */
-                loadAllPages(page + 1, accumulated);
-            } else {
-                buildGridFromResults(accumulated);
-            }
-        },
-        error: function(xhr) {
-            if (xhr.status === 401) {
-                refreshToken(function() { loadAllPages(page, accumulated); });
-                return;
-            }
-            /* Autre erreur : afficher grille avec données déjà accumulées */
-            if (accumulated.length > 0) {
-                buildGridFromResults(accumulated);
-            } else {
-                showLoader('{% trans "Erreur de chargement des données. Veuillez recharger la page." %}', true);
-            }
-            setStatus('{% trans "Erreur de chargement" %}', 'error');
+/* Chargement via fetch() natif — sans dépendance jQuery */
+function fetchPage(page, accumulated) {
+    fetch('/api/acheteur/' + ACHETEUR_ID + '/bilan-classique/liste-des-actifs/?page=' + page, {
+        headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN }
+    })
+    .then(function(r) {
+        if (r.status === 401) {
+            return refreshAccessToken().then(function() { fetchPage(page, accumulated); });
         }
+        if (!r.ok) { throw new Error('HTTP ' + r.status); }
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data) return;
+        var pageResults = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
+        var all = accumulated.concat(pageResults);
+        if (data.next === true) {
+            fetchPage(page + 1, all);
+        } else {
+            buildGridFromResults(all);
+        }
+    })
+    .catch(function(err) {
+        if (accumulated.length > 0) {
+            buildGridFromResults(accumulated);
+        } else {
+            showLoader('{% trans "Erreur de chargement" %} : ' + err.message, true);
+        }
+        setStatus('{% trans "Erreur de chargement" %}', 'error');
     });
 }
 
@@ -1078,15 +1079,21 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function refreshAccessToken() {
+    return fetch('/api/token/refresh/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({'refresh': '{{ refresh }}'})
+    })
+    .then(function(r) {
+        if (!r.ok) { window.location.href = '/'; throw new Error('Token expiré'); }
+        return r.json();
+    })
+    .then(function(data) { ACCESS_TOKEN = data.access; });
+}
+
 function refreshToken(cb) {
-    $.ajax({
-        url: '/api/token/refresh/',
-        type: 'POST',
-        data: JSON.stringify({'refresh': '{{ refresh }}'}),
-        contentType: 'application/json',
-        success: function(r) { ACCESS_TOKEN = r.access; if (cb) cb(); },
-        error: function() { window.location.href = '/login/'; }
-    });
+    refreshAccessToken().then(function() { if (cb) cb(); }).catch(function() {});
 }
 
 /* =========================================================
