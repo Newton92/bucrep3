@@ -212,6 +212,33 @@ body { background: var(--c-bg); }
 .bl i { font-size:.7rem; }
 .bl-synth { background:rgba(10,149,202,.12); font-style:italic; }
 
+/* ── Bilan mini-panel ratios ── */
+.bc-ratios {
+    margin-top:.3rem; border-top:1px solid var(--c-border);
+    padding:.4rem .5rem .25rem;
+}
+.bc-balance {
+    display:flex; align-items:center; gap:.3rem;
+    font-size:.72rem; font-weight:700; margin-bottom:.35rem;
+    padding:.22rem .5rem; border-radius:5px;
+}
+.bc-balance.ok  { background:rgba(34,197,94,.12); color:#16a34a; }
+.bc-balance.nok { background:rgba(239,68,68,.1);  color:#dc2626; }
+.bc-balance i   { font-size:.75rem; }
+.bc-ratio-row {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:.69rem; padding:.12rem 0; border-bottom:1px solid rgba(10,149,202,.06);
+}
+.bc-ratio-row:last-child { border-bottom:none; }
+.bc-ratio-lbl { color:#6b7280; }
+.bc-ratio-val { font-weight:600; color:#1e3a5f; }
+.bc-ratio-val.pos { color:#16a34a; }
+.bc-ratio-val.neg { color:#dc2626; }
+.bc-year-tag {
+    display:inline-block; font-size:.64rem; color:#94a3b8;
+    margin-bottom:.25rem;
+}
+
 /* ── Finance row (comptes/banking) ── */
 .fin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; }
 .fin-card {
@@ -402,6 +429,41 @@ body { background: var(--c-bg); }
                         <a href="{% url 'dash_root_manage_acheteur_actif_classique'    id_acheteur %}" class="bl"><i class="bi bi-arrow-right-circle"></i> {% trans "Actifs" %}</a>
                         <a href="{% url 'dash_root_manage_acheteur_passif_classique'   id_acheteur %}" class="bl"><i class="bi bi-arrow-right-circle"></i> {% trans "Passifs" %}</a>
                         <a href="{% url 'dash_root_manage_acheteur_resultat_classique' id_acheteur %}" class="bl"><i class="bi bi-arrow-right-circle"></i> {% trans "Résultats" %}</a>
+
+                        {% if classique_summary %}
+                        <div class="bc-ratios">
+                            <span class="bc-year-tag"><i class="bi bi-calendar3"></i> {{ classique_summary.annee }}</span>
+                            {% if classique_summary.balanced %}
+                            <div class="bc-balance ok"><i class="bi bi-check-circle-fill"></i> {% trans "États équilibrés" %}</div>
+                            {% else %}
+                            <div class="bc-balance nok"><i class="bi bi-exclamation-triangle-fill"></i> {% trans "États non équilibrés" %} (Δ {{ classique_summary.diff|floatformat:0 }})</div>
+                            {% endif %}
+                            {% if classique_summary.frng is not None %}
+                            <div class="bc-ratio-row">
+                                <span class="bc-ratio-lbl">{% trans "FRNG" %}</span>
+                                <span class="bc-ratio-val {% if classique_summary.frng >= 0 %}pos{% else %}neg{% endif %}">{{ classique_summary.frng|floatformat:0 }}</span>
+                            </div>
+                            {% endif %}
+                            {% if classique_summary.autonomie_fin is not None %}
+                            <div class="bc-ratio-row">
+                                <span class="bc-ratio-lbl">{% trans "Autonomie fin." %}</span>
+                                <span class="bc-ratio-val {% if classique_summary.autonomie_fin >= 30 %}pos{% else %}neg{% endif %}">{{ classique_summary.autonomie_fin|floatformat:1 }} %</span>
+                            </div>
+                            {% endif %}
+                            {% if classique_summary.rentabilite_eco is not None %}
+                            <div class="bc-ratio-row">
+                                <span class="bc-ratio-lbl">{% trans "Rentabilité éco." %}</span>
+                                <span class="bc-ratio-val {% if classique_summary.rentabilite_eco >= 0 %}pos{% else %}neg{% endif %}">{{ classique_summary.rentabilite_eco|floatformat:1 }} %</span>
+                            </div>
+                            {% endif %}
+                            {% if classique_summary.solvabilite is not None %}
+                            <div class="bc-ratio-row">
+                                <span class="bc-ratio-lbl">{% trans "Solvabilité" %}</span>
+                                <span class="bc-ratio-val {% if classique_summary.solvabilite >= 20 %}pos{% else %}neg{% endif %}">{{ classique_summary.solvabilite|floatformat:1 }} %</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 

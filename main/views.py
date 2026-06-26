@@ -56,7 +56,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur
+from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur, RatiosClassique
 from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
 
 import json
@@ -1956,6 +1956,43 @@ def dash_root_manage_acheteur(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
 
+    # --- Résumé bilan Classique (dernière année disponible) ---
+    from decimal import Decimal, InvalidOperation
+
+    def _ratio_fmt(val, as_pct=False, decimals=1):
+        if val is None:
+            return None
+        try:
+            v = float(val) * (100 if as_pct else 1)
+            return round(v, decimals)
+        except (TypeError, ValueError, InvalidOperation):
+            return None
+
+    cl_actif   = ActifC.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+    cl_passif  = PassifC.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+    cl_resultat = ResultatC.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+
+    classique_summary = None
+    if cl_actif and cl_passif and cl_resultat:
+        try:
+            ratios = RatiosClassique(cl_actif, cl_passif, cl_resultat)
+            actif_total  = cl_actif.general_total  or Decimal('0')
+            passif_total = cl_passif.total_general or Decimal('0')
+            diff = abs(actif_total - passif_total)
+            classique_summary = {
+                'annee':          cl_actif.annee.annee if cl_actif.annee else '—',
+                'balanced':       diff < Decimal('1'),
+                'diff':           _ratio_fmt(diff, decimals=0),
+                'actif_total':    _ratio_fmt(actif_total, decimals=0),
+                'passif_total':   _ratio_fmt(passif_total, decimals=0),
+                'frng':           _ratio_fmt(ratios.fonds_de_roulement, decimals=0),
+                'autonomie_fin':  _ratio_fmt(ratios.autonomie_fin, as_pct=True),
+                'rentabilite_eco': _ratio_fmt(ratios.rentabilite_economique, as_pct=True),
+                'solvabilite':    _ratio_fmt(ratios.solvabilite, as_pct=True),
+            }
+        except Exception:
+            classique_summary = None
+
     context = {
         "acheteur_active": "active",
         "user": user,
@@ -1971,6 +2008,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "pays_list": pays_list,
         "province_list": province_list,
         "ville_list": ville_list,
+        "classique_summary": classique_summary,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
