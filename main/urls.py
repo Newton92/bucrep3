@@ -591,6 +591,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_resultat_classique",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/ratios/",
+        dash_root_manage_acheteur_ratio_classique,
+        name="dash_root_manage_acheteur_ratio_classique",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-syscohada/actifs/",
         dash_root_manage_acheteur_actif_syscohada,
         name="dash_root_manage_acheteur_actif_syscohada",

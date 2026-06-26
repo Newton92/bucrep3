@@ -5455,7 +5455,103 @@ def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
         request,
         "main/root/acheteur/bilans/classique/dash_root_manage_acheteur_bilan_classique.html",
         context,
-    ) 
+    )
+
+
+@login_required
+def dash_root_manage_acheteur_ratio_classique(request, acheteur_id):
+    from decimal import Decimal, InvalidOperation
+
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
+        id=acheteur_id
+    )
+    refresh = RefreshToken.for_user(request.user)
+
+    def _fmt(val, pct=False, decimals=2, unit=''):
+        if val is None:
+            return '—'
+        try:
+            v = float(val) * (100 if pct else 1)
+            formatted = f"{v:,.{decimals}f}"
+            return f"{formatted} {unit}".strip() if unit else formatted
+        except (TypeError, ValueError, InvalidOperation):
+            return '—'
+
+    actifs_qs   = ActifC.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+    passifs_map  = {p.annee_id: p for p in PassifC.objects.filter(acheteur=acheteur).select_related('annee')}
+    resultats_map = {r.annee_id: r for r in ResultatC.objects.filter(acheteur=acheteur).select_related('annee')}
+
+    years_data = []
+    for actif in actifs_qs:
+        annee_id = actif.annee_id
+        if annee_id not in passifs_map or annee_id not in resultats_map:
+            continue
+        passif   = passifs_map[annee_id]
+        resultat = resultats_map[annee_id]
+        try:
+            r = RatiosClassique(actif, passif, resultat)
+            actif_total  = actif.general_total  or Decimal('0')
+            passif_total = passif.total_general or Decimal('0')
+            diff = abs(actif_total - passif_total)
+            balanced = diff < Decimal('1')
+            years_data.append({
+                'annee':          actif.annee.annee if actif.annee else '—',
+                'balanced':       balanced,
+                'actif_total':    _fmt(actif_total,  decimals=0),
+                'passif_total':   _fmt(passif_total, decimals=0),
+                'diff':           _fmt(diff,          decimals=0),
+                # Structure
+                'frng':           _fmt(r.fonds_de_roulement,         decimals=0),
+                'frng_raw':       float(r.fonds_de_roulement or 0),
+                'frno':           _fmt(r.fonds_de_roulement_normatif),
+                'autonomie_fin':  _fmt(r.autonomie_fin,  pct=True,   unit='%'),
+                'auto_raw':       float(r.autonomie_fin  or 0) * 100,
+                # Liquidité
+                'liq_reduite':    _fmt(r.liquidite_reduite),
+                'liq_red_raw':    float(r.liquidite_reduite  or 0),
+                'liq_immed':      _fmt(r.liquidite_immediat),
+                'liq_im_raw':     float(r.liquidite_immediat or 0),
+                # Rentabilité
+                'ca':             _fmt(r.chiffre_d_affaires,  decimals=0),
+                'rent_eco':       _fmt(r.rentabilite_economique, pct=True, unit='%'),
+                'rent_eco_raw':   float(r.rentabilite_economique or 0) * 100,
+                'rent_fin':       _fmt(r.rentabilite_fin,         pct=True, unit='%'),
+                'rent_fin_raw':   float(r.rentabilite_fin         or 0) * 100,
+                'rop':            _fmt(r.rentabilite_de_loutil_de_production, pct=True, unit='%'),
+                'couv_ff':        _fmt(r.couverture_des_frais_financiers),
+                # Gestion
+                'rot_mp':         _fmt(r.rotation_des_stock_de_mp,          decimals=0, unit='j'),
+                'rot_pf':         _fmt(r.rotation_des_stock_de_pf,          decimals=0, unit='j'),
+                'rot_mses':       _fmt(r.rotation_des_stock_de_marchandises, decimals=0, unit='j'),
+                'rot_serv':       _fmt(r.rotation_des_stock_de_services,     decimals=0, unit='j'),
+                'rot_stocks':     _fmt(r.delai_rotation_stocks,              decimals=0, unit='j'),
+                'credit_cli':     _fmt(r.credit_clients,   decimals=0, unit='j'),
+                'credit_fourn':   _fmt(r.credits_fournisseurs, decimals=0, unit='j'),
+                # Solvabilité
+                'solvabilite':    _fmt(r.solvabilite, pct=True, unit='%'),
+                'solv_raw':       float(r.solvabilite or 0) * 100,
+                'roe':            _fmt(r.rendement_capitaux_propres, pct=True, unit='%'),
+                'roe_raw':        float(r.rendement_capitaux_propres or 0) * 100,
+                'levier':         _fmt(r.levier_financier),
+                'levier_raw':     float(r.levier_financier or 0),
+                'cap_remb':       _fmt(r.capacite_remboursement),
+                'bfr':            _fmt(r.besoin_en_fond_roulement, decimals=0),
+                'bfr_exploit':    _fmt(r.bfr_exploitation,         decimals=0),
+            })
+        except Exception:
+            continue
+
+    context = {
+        'acheteur_active': 'active',
+        'user': request.user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'id_acheteur': acheteur_id,
+        'acheteur': acheteur,
+        'years_data': years_data,
+    }
+    return render(request, 'main/root/acheteur/bilans/classique/dash_root_manage_acheteur_ratio_classique.html', context)
 
 
 
