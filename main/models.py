@@ -8985,7 +8985,7 @@ class PassifC(Model):
         decimal_places=5,
         null=True,
         blank=True,
-        verbose_name=_("Subventions investies"),
+        verbose_name=_("Subventions investissement"),
     )
     provision_regl = models.DecimalField(
         max_digits=100,
