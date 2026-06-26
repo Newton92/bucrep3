@@ -379,14 +379,61 @@ html { overflow: hidden; }
     margin: 0;
 }
 
+/* ---- Navigation bilans ---- */
+.bilan-nav-tabs { display: flex; gap: 2px; }
+.bilan-nav-tab {
+    display: inline-flex; align-items: center; padding: 3px 14px;
+    border-radius: 4px; font-size: .78rem; font-weight: 600;
+    text-decoration: none; color: rgba(255,255,255,.6);
+    border: 1px solid transparent; transition: all .15s; white-space: nowrap;
+}
+.bilan-nav-tab:hover { color:#fff; background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.3); text-decoration:none; }
+.bilan-nav-tab.active { color:#fff; background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.45); }
+
+/* ---- En-tête impression uniquement ---- */
+.print-header { display:none; padding:8px 10px 10px; border-bottom:2px solid #111; margin-bottom:8px; }
+.print-title  { font-size:1rem; font-weight:700; color:#000; }
+.print-sub    { font-size:.78rem; color:#333; margin-top:3px; }
+
 /* ---- Print ---- */
 @media print {
-    .page-actif-header, .bilan-toolbar { display: none; }
-    .bilan-outer { height: auto !important; }
-    .bilan-grid-scroll { overflow: visible; }
-    .bg-table { font-size: .7rem; }
-    .bg-table thead tr th { position: static; }
-    .bg-table td.col-label { position: static; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    @page { size: A4 landscape; margin: 0.8cm 0.6cm; }
+
+    .navbar, .app-sidebar-col,
+    .page-actif-header, .bilan-nav-tabs, .bilan-toolbar,
+    .btn-year-save, .btn-year-del, .btn-year-hide,
+    .col-add-head, .grid-loader-overlay { display: none !important; }
+
+    .print-header { display: block !important; }
+
+    html, body { overflow: visible !important; height: auto !important; }
+    .app-content-col { padding: 0 !important; }
+    .bilan-outer { height: auto !important; overflow: visible !important; }
+    .bilan-grid-scroll { overflow: visible !important; height: auto !important; }
+
+    .bg-table thead tr th { position: static !important; }
+    .bg-table td.col-label { position: static !important; min-width: 200px; max-width: 200px; }
+    .bg-table td.year-cell { min-width: 100px; max-width: 100px; }
+    .bg-table { font-size: .65rem; width: 100%; }
+
+    .bg-table tr.row-h1 td,
+    .bg-table tr.row-h1 td.col-label { background:#1a1a1a !important; color:#fff !important; border-right-color:#555 !important; border-top-color:#555 !important; }
+    .bg-table tr.row-h2 td,
+    .bg-table tr.row-h2 td.col-label { background:#555 !important; color:#fff !important; border-right-color:#888 !important; }
+    .bg-table tr.row-subtotal td,
+    .bg-table tr.row-subtotal td.col-label { background:#eee !important; color:#111 !important; }
+    .bg-table tr.row-total td,
+    .bg-table tr.row-total td.col-label { background:#ccc !important; color:#000 !important; border-top-color:#666 !important; }
+    .bg-table tr.row-total-blue td,
+    .bg-table tr.row-total-blue td.col-label { background:#666 !important; color:#fff !important; }
+    .bg-table tr.row-total-green td,
+    .bg-table tr.row-total-green td.col-label { background:#bbb !important; color:#000 !important; border-top-color:#666 !important; }
+    .bg-table tr.row-grand td,
+    .bg-table tr.row-grand td.col-label { background:#000 !important; color:#fff !important; border-top-color:#444 !important; }
+
+    .year-head-cell .yh-actions { display: none !important; }
+    .cell-input { background:transparent !important; border:none !important; box-shadow:none !important; padding:1px 4px !important; }
 }
 </style>
 {% endblock %}
@@ -398,6 +445,11 @@ html { overflow: hidden; }
         <h6><i class="fas fa-table me-2"></i>{% trans "Passif — Bilan Classique" %}</h6>
         <span class="info-badge">{{ acheteur.nom }}</span>
         <span class="info-badge">{{ acheteur.code }}</span>
+    </div>
+    <div class="bilan-nav-tabs">
+        <a href="{% url 'dash_root_manage_acheteur_actif_classique' id_acheteur %}" class="bilan-nav-tab">{% trans "Actif" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_passif_classique' id_acheteur %}" class="bilan-nav-tab active">{% trans "Passif" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_resultat_classique' id_acheteur %}" class="bilan-nav-tab">{% trans "Résultat" %}</a>
     </div>
     <div class="d-flex gap-2">
         <button class="btn btn-sm btn-outline-light" onclick="window.print()">
@@ -411,6 +463,12 @@ html { overflow: hidden; }
             <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
         </a>
     </div>
+</div>
+
+<!-- En-tête visible uniquement en impression -->
+<div class="print-header">
+    <div class="print-title">{% trans "Passif — Bilan Classique" %}</div>
+    <div class="print-sub">{{ acheteur.nom }} — {{ acheteur.code }}</div>
 </div>
 
 <!-- Zone principale -->
