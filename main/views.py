@@ -5605,8 +5605,23 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
 
-    # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.all().order_by('annee')
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
 
     context = {
         "acheteur_active": "active",
@@ -5619,6 +5634,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -5629,52 +5645,44 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
-    # Récupérer l'acheteur avec préfetch pour optimiser
     acheteur = get_object_or_404(
-        Acheteur.objects.select_related(
-            'statut_entreprise',
-            'forme_juridique',
-            'pays',
-            'province',
-            'ville'
-        ).prefetch_related('banquier_set'),
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
         id=acheteur_id
     )
-    
-    # Préparer les données de l'acheteur pour le template
     acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
+        'id': acheteur.id, 'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '', 'code': acheteur.code or 'N/A',
         'activite_principale': acheteur.activite_principale or 'Non spécifié',
         'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
         'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
     }
-    
-    # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
-        
-    # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
     except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
-        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        logger.error(f"Erreur JWT: {e}")
         return redirect_to_login(request.get_full_path())
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
-
-    # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.all().order_by('annee')
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
 
     context = {
         "acheteur_active": "active",
@@ -5687,6 +5695,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -5697,52 +5706,44 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
-    # Récupérer l'acheteur avec préfetch pour optimiser
     acheteur = get_object_or_404(
-        Acheteur.objects.select_related(
-            'statut_entreprise',
-            'forme_juridique',
-            'pays',
-            'province',
-            'ville'
-        ).prefetch_related('banquier_set'),
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
         id=acheteur_id
     )
-    
-    # Préparer les données de l'acheteur pour le template
     acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
+        'id': acheteur.id, 'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '', 'code': acheteur.code or 'N/A',
         'activite_principale': acheteur.activite_principale or 'Non spécifié',
         'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
         'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
     }
-    
-    # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
-        
-    # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
     except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
-        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        logger.error(f"Erreur JWT: {e}")
         return redirect_to_login(request.get_full_path())
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
-
-    # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.all().order_by('annee')
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
 
     context = {
         "acheteur_active": "active",
@@ -5755,6 +5756,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
