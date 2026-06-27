@@ -57,6 +57,7 @@ from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur, RatiosClassique
+from main.models import ActifS, PassifS, ResultatS, RatiosSyscohada
 from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
 
 import json
@@ -1993,6 +1994,26 @@ def dash_root_manage_acheteur(request, acheteur_id):
         except Exception:
             classique_summary = None
 
+    # --- Résumé bilan SYSCOHADA (dernière année disponible) ---
+    sy_actif   = ActifS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+    sy_passif  = PassifS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+    sy_resultat = ResultatS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+
+    syscohada_summary = None
+    if sy_actif and sy_passif and sy_resultat:
+        try:
+            sy_ratios = RatiosSyscohada(sy_actif, sy_passif, sy_resultat)
+            sy_actif_total  = sy_actif.total_actif  or Decimal('0')
+            sy_passif_total = sy_passif.total_passifs or Decimal('0')
+            sy_diff = abs(sy_actif_total - sy_passif_total)
+            syscohada_summary = {
+                'annee':    sy_actif.annee.annee if sy_actif.annee else '—',
+                'balanced': sy_diff < Decimal('1'),
+                'diff':     _ratio_fmt(sy_diff, decimals=0),
+            }
+        except Exception:
+            syscohada_summary = None
+
     context = {
         "acheteur_active": "active",
         "user": user,
@@ -2009,6 +2030,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "province_list": province_list,
         "ville_list": ville_list,
         "classique_summary": classique_summary,
+        "syscohada_summary": syscohada_summary,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
@@ -5557,6 +5579,101 @@ def dash_root_manage_acheteur_ratio_classique(request, acheteur_id):
 
 
 
+
+
+@login_required
+def dash_root_manage_acheteur_ratio_syscohada(request, acheteur_id):
+    from decimal import Decimal, InvalidOperation
+
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
+        id=acheteur_id
+    )
+    refresh = RefreshToken.for_user(request.user)
+
+    def _fmt(val, pct=False, decimals=2, unit=''):
+        if val is None:
+            return '—'
+        try:
+            v = float(val) * (100 if pct else 1)
+            formatted = f"{v:,.{decimals}f}"
+            return f"{formatted} {unit}".strip() if unit else formatted
+        except (TypeError, ValueError, InvalidOperation):
+            return '—'
+
+    actifs_qs    = ActifS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+    passifs_map  = {p.annee_id: p for p in PassifS.objects.filter(acheteur=acheteur).select_related('annee')}
+    resultats_map = {r.annee_id: r for r in ResultatS.objects.filter(acheteur=acheteur).select_related('annee')}
+
+    years_data = []
+    for actif in actifs_qs:
+        annee_id = actif.annee_id
+        if annee_id not in passifs_map or annee_id not in resultats_map:
+            continue
+        passif   = passifs_map[annee_id]
+        resultat = resultats_map[annee_id]
+        try:
+            r = RatiosSyscohada(actif, passif, resultat)
+            actif_total  = actif.total_actif   or Decimal('0')
+            passif_total = passif.total_passifs or Decimal('0')
+            diff = abs(actif_total - passif_total)
+            balanced = diff < Decimal('1')
+            years_data.append({
+                'annee':        actif.annee.annee if actif.annee else '—',
+                'balanced':     balanced,
+                'actif_total':  _fmt(actif_total,  decimals=0),
+                'passif_total': _fmt(passif_total, decimals=0),
+                'diff':         _fmt(diff,          decimals=0),
+                # Équilibre
+                'frng':         _fmt(r.fonds_de_roulement,       decimals=0),
+                'frng_raw':     float(r.fonds_de_roulement or 0),
+                'bfr':          _fmt(r.besoin_fonds_de_roulement, decimals=0),
+                'bfr_raw':      float(r.besoin_fonds_de_roulement or 0),
+                'tnt':          _fmt(r.position_net_de_tresorerie, decimals=0),
+                'tnt_raw':      float(r.position_net_de_tresorerie or 0),
+                # Structure
+                'autonomie':    _fmt(r.autonomie_financiere, pct=True, unit='%'),
+                'auto_raw':     float(r.autonomie_financiere or 0) * 100,
+                'rotation_dendettement': _fmt(r.rotation_dendettement),
+                'dette_cap':    _fmt(r.rotation_dette_capitaux_propres),
+                'ratio_dette':  _fmt(r.ratio_de_la_dette, pct=True, unit='%'),
+                # Liquidité
+                'liq_gen':      _fmt(r.liquidite_general),
+                'liq_gen_raw':  float(r.liquidite_general or 0),
+                'liq_red':      _fmt(r.liquidite_reduite),
+                'liq_red_raw':  float(r.liquidite_reduite or 0),
+                'liq_imm':      _fmt(r.liquidite_immediate),
+                'liq_imm_raw':  float(r.liquidite_immediate or 0),
+                # Rentabilité
+                'ca':           _fmt(resultat.chiffre_affaires, decimals=0),
+                'marge_nette':  _fmt(r.benefice_net_chiffre_affaire, unit='%'),
+                'ebitda_ca':    _fmt(r.ebitda_chiffre_affaire, pct=True, unit='%'),
+                'turnover':     _fmt(r.turnover),
+                'rot_actif':    _fmt(r.rotation_actif),
+                # Gestion
+                'rot_stocks':   _fmt(r.rotation_stock, decimals=0, unit='j'),
+                'credit_cli':   _fmt(r.jour_collecte_moyens, decimals=0, unit='j'),
+                'credit_fourn': _fmt(r.moyen_paiement,       decimals=0, unit='j'),
+                'rotation_creances': _fmt(r.compte_debiteur),
+                # Solvabilité
+                'caf':          _fmt(r.cafsys, decimals=0),
+                'couv_int':     _fmt(r.ratio_des_couverture_des_interets),
+                'pct_cp':       _fmt(r.passif_court_terme_par_rapport_valeur_net),
+                'ratio_fin':    _fmt(r.ratio_financier, pct=True, unit='%'),
+            })
+        except Exception:
+            continue
+
+    context = {
+        'acheteur_active': 'active',
+        'user': request.user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'id_acheteur': acheteur_id,
+        'acheteur': acheteur,
+        'years_data': years_data,
+    }
+    return render(request, 'main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_ratio_syscohada.html', context)
 
 
 @login_required

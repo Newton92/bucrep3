@@ -1,0 +1,205 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block styles %}
+<style>
+:root{--app-blue:#0a95ca;--app-mid:#0d80be;--app-dark:#106cb2;}
+.ratio-header{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--app-dark) 0%,var(--app-blue) 100%);border-radius:10px;padding:.65rem 1.1rem;margin-bottom:.9rem;color:#fff;}
+.ratio-header h6{margin:0;font-size:.92rem;font-weight:700;}
+.info-badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:6px;padding:.18rem .65rem;font-size:.75rem;margin-left:.4rem;}
+.ratio-wrap{border-radius:10px;overflow:hidden;border:1px solid #dde4ed;box-shadow:0 2px 10px rgba(10,149,202,.07);}
+.ratio-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.ratio-table thead tr th{background:var(--app-dark);color:#fff;padding:.55rem .75rem;text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);}
+.ratio-table thead tr th.col-label{text-align:left;min-width:240px;}
+.ratio-table thead tr th:last-child{border-right:none;}
+.ratio-table tr.row-group td{background:#1e3a5f;color:#fff;font-weight:700;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding:.38rem .75rem;}
+.ratio-table tr.row-balance td{background:#f0f9ff;}
+.ratio-table tr.row-data td{padding:.42rem .75rem;border-bottom:1px solid #edf0f5;text-align:center;}
+.ratio-table tr.row-data td.col-label{text-align:left;color:#374151;}
+.ratio-table tr.row-data:last-child td{border-bottom:none;}
+.ratio-table tr.row-data:hover td{background:rgba(10,149,202,.04);}
+.badge-ok{display:inline-flex;align-items:center;gap:.3rem;background:#dcfce7;color:#16a34a;border-radius:5px;padding:.2rem .55rem;font-weight:700;font-size:.75rem;}
+.badge-nok{display:inline-flex;align-items:center;gap:.3rem;background:#fee2e2;color:#dc2626;border-radius:5px;padding:.2rem .55rem;font-weight:700;font-size:.75rem;}
+.pos{color:#16a34a;font-weight:600;}
+.neg{color:#dc2626;font-weight:600;}
+.neu{color:#374151;font-weight:500;}
+.dash{color:#9ca3af;}
+.ratio-empty{text-align:center;padding:2.5rem 1rem;color:#6b7280;font-size:.87rem;}
+.ratio-empty i{font-size:2rem;display:block;margin-bottom:.5rem;color:#d1d5db;}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="ratio-header">
+    <div class="d-flex align-items-center flex-wrap gap-1">
+        <h6><i class="bi bi-graph-up-arrow me-2"></i>{% trans "Ratios Financiers — SYSCOHADA" %}</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dash_root_manage_acheteur_actif_syscohada' id_acheteur %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-table me-1"></i>{% trans "Bilan" %}
+        </a>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-light">
+            <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+        </a>
+    </div>
+</div>
+
+{% if years_data %}
+<div class="ratio-wrap">
+<table class="ratio-table">
+    <thead>
+        <tr>
+            <th class="col-label">{% trans "Ratio" %}</th>
+            {% for y in years_data %}
+            <th>{{ y.annee }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+
+        <!-- ══ ÉQUILIBRE DU BILAN ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Équilibre du Bilan" %}</td></tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Total Actif" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.actif_total }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Total Passif" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.passif_total }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "État du bilan" %}</td>
+            {% for y in years_data %}
+            <td>
+                {% if y.balanced %}
+                <span class="badge-ok"><i class="bi bi-check-circle-fill"></i> {% trans "Équilibré" %}</span>
+                {% else %}
+                <span class="badge-nok"><i class="bi bi-exclamation-triangle-fill"></i> {% trans "Non équilibré" %} (Δ {{ y.diff }})</span>
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Fonds de Roulement Net Global (FRNG)" %} <small class="text-muted">(Ressources stables – Emplois stables)</small></td>
+            {% for y in years_data %}<td class="{% if y.frng_raw >= 0 %}pos{% else %}neg{% endif %}">{{ y.frng }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Besoin en Fonds de Roulement (BFR)" %} <small class="text-muted">(Actif circ. – Passif circ.)</small></td>
+            {% for y in years_data %}<td class="{% if y.bfr_raw >= 0 %}neg{% else %}pos{% endif %}">{{ y.bfr }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Position Nette de Trésorerie (TNT)" %} <small class="text-muted">(Trés. actif – Trés. passif)</small></td>
+            {% for y in years_data %}<td class="{% if y.tnt_raw >= 0 %}pos{% else %}neg{% endif %}">{{ y.tnt }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ STRUCTURE FINANCIÈRE ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Structure Financière" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Autonomie Financière" %} <small class="text-muted">(CP / Dettes totales)</small></td>
+            {% for y in years_data %}<td class="{% if y.auto_raw >= 100 %}pos{% else %}neu{% endif %}">{{ y.autonomie }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Ratio d'Endettement" %} <small class="text-muted">(Dettes fin. / CP)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.rotation_dendettement }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Dettes / Capitaux Propres" %} <small class="text-muted">(Dettes totales / CP)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.dette_cap }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Ratio de la Dette" %} <small class="text-muted">(Dettes totales / Actif total)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.ratio_dette }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ LIQUIDITÉ ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Liquidité" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Liquidité Générale (Current Ratio)" %} <small class="text-muted">(seuil ≥ 1)</small></td>
+            {% for y in years_data %}<td class="{% if y.liq_gen_raw >= 1 %}pos{% else %}neg{% endif %}">{{ y.liq_gen }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Liquidité Réduite (Quick Ratio)" %} <small class="text-muted">(seuil ≥ 1)</small></td>
+            {% for y in years_data %}<td class="{% if y.liq_red_raw >= 1 %}pos{% else %}neg{% endif %}">{{ y.liq_red }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Liquidité Immédiate (Cash Ratio)" %} <small class="text-muted">(seuil ≥ 0.2)</small></td>
+            {% for y in years_data %}<td class="{% if y.liq_imm_raw >= 0.2 %}pos{% else %}neg{% endif %}">{{ y.liq_imm }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ RENTABILITÉ ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Rentabilité" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Chiffre d'Affaires (CA)" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.ca }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Marge Nette" %} <small class="text-muted">(Résultat net / CA)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.marge_nette }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "EBE / Chiffre d'Affaires" %} <small class="text-muted">(EBITDA margin)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.ebitda_ca }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Rotation de l'Actif" %} <small class="text-muted">(CA / Actif total)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.rot_actif }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Turnover" %} <small class="text-muted">(CA / Actif total)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.turnover }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ GESTION ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Gestion" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Rotation des Stocks" %} <small class="text-muted">(Stocks / Coût ventes × 360)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.rot_stocks }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Crédit Clients (DSO)" %} <small class="text-muted">(Créances / CA × 360)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.credit_cli }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Crédit Fournisseurs (DPO)" %} <small class="text-muted">(Dettes fourn. / Achats × 360)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.credit_fourn }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Rotation des Créances" %} <small class="text-muted">(CA / Créances clients)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.rotation_creances }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ SOLVABILITÉ ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Solvabilité & Capacité de Remboursement" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Capacité d'Autofinancement (CAF)" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.caf }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Couverture des Intérêts" %} <small class="text-muted">(Résultat exploit. / Charges fin.)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.couv_int }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Passif CT / Capitaux Propres" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.pct_cp }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">{% trans "Ratio Financier" %} <small class="text-muted">(Immo. fin. / Actif total)</small></td>
+            {% for y in years_data %}<td class="neu">{{ y.ratio_fin }}</td>{% endfor %}
+        </tr>
+
+    </tbody>
+</table>
+</div>
+
+{% else %}
+<div class="ratio-empty">
+    <i class="bi bi-inbox"></i>
+    {% trans "Aucune donnée disponible. Veuillez d'abord saisir les états financiers SYSCOHADA (Actif, Passif, Résultats) pour la même année." %}
+</div>
+{% endif %}
+
+{% endblock %}
