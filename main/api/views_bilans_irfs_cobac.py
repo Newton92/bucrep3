@@ -430,14 +430,19 @@ class AddActifIFRSOneView(APIView):
             # Ajouter l'acheteur aux données
             data = request.data.copy()
             data['acheteur'] = acheteur_id
-            
+
+            # Pour un bilan annuel, semestre doit être explicitement null
+            # avant la validation du serializer
+            if data.get('type_bilan') == 'annuel' or 'semestre' not in data:
+                data['semestre'] = None
+
             serializer = AddActifIFRSOneSerializer(data=data)
             if serializer.is_valid():
                 # Vérifier l'unicité (acheteur, année, semestre)
                 annee_id = data.get('annee')
                 semestre = data.get('semestre')
                 type_bilan = data.get('type_bilan')
-                
+
                 # Si bilan annuel, semestre doit être None
                 if type_bilan == 'annuel':
                     semestre = None
@@ -667,14 +672,17 @@ class AddPassifIFRSOneView(APIView):
             # Ajouter l'acheteur aux données
             data = request.data.copy()
             data['acheteur'] = acheteur_id
-            
+
+            if data.get('type_bilan') == 'annuel' or 'semestre' not in data:
+                data['semestre'] = None
+
             serializer = AddPassifIFRSOneSerializer(data=data)
             if serializer.is_valid():
                 # Vérifier l'unicité (acheteur, année, semestre)
                 annee_id = data.get('annee')
                 semestre = data.get('semestre')
                 type_bilan = data.get('type_bilan')
-                
+
                 # Si bilan annuel, semestre doit être None
                 if type_bilan == 'annuel':
                     semestre = None
@@ -908,7 +916,10 @@ class AddResultatIFRSOneView(APIView):
             # Ajouter l'acheteur aux données
             data = request.data.copy()
             data['acheteur'] = acheteur_id
-            
+
+            if data.get('type_bilan') == 'annuel' or 'semestre' not in data:
+                data['semestre'] = None
+
             serializer = AddResultatIFRSOneSerializer(data=data)
             if serializer.is_valid():
                 # Vérifier l'unicité (acheteur, année, semestre)
