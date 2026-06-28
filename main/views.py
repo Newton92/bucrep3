@@ -2014,6 +2014,25 @@ def dash_root_manage_acheteur(request, acheteur_id):
         except Exception:
             syscohada_summary = None
 
+    # --- Résumé bilan Bancaire (dernière année avec Actif + Passif) ---
+    bk_asset = Assets.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+    bk_liab  = None
+    bancaire_summary = None
+    if bk_asset:
+        bk_liab = Liabilities.objects.filter(acheteur=acheteur, annee=bk_asset.annee).first()
+    if bk_asset and bk_liab:
+        try:
+            bk_actif_total  = Decimal(str(bk_asset.total_assets  or 0))
+            bk_passif_total = Decimal(str(bk_liab.total_liabilities or 0))
+            bk_diff = abs(bk_actif_total - bk_passif_total)
+            bancaire_summary = {
+                'annee':    bk_asset.annee.annee if bk_asset.annee else '—',
+                'balanced': bk_diff < Decimal('1'),
+                'diff':     _ratio_fmt(bk_diff, decimals=0),
+            }
+        except Exception:
+            bancaire_summary = None
+
     context = {
         "acheteur_active": "active",
         "user": user,
@@ -2031,6 +2050,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "ville_list": ville_list,
         "classique_summary": classique_summary,
         "syscohada_summary": syscohada_summary,
+        "bancaire_summary": bancaire_summary,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
