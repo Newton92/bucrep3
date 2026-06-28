@@ -5939,6 +5939,23 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -5950,6 +5967,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -6009,9 +6027,26 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 
     # Convertir la liste des années en JSON
     annee_list_json = json.dumps([
-        {'id': annee.id, 'annee': annee.annee} 
+        {'id': annee.id, 'annee': annee.annee}
         for annee in annee_list
     ])
+
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
 
     context = {
         "acheteur_active": "active",
@@ -6025,6 +6060,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "annee_list_json": annee_list_json,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -6088,6 +6124,23 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
         for annee in annee_list
     ])
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -6100,6 +6153,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "annee_list_json": annee_list_json,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -6163,6 +6217,23 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
         for annee in annee_list
     ])
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -6175,6 +6246,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "annee_list_json": annee_list_json,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -6238,6 +6310,23 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
         for annee in annee_list
     ])
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -6250,6 +6339,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "annee_list_json": annee_list_json,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
