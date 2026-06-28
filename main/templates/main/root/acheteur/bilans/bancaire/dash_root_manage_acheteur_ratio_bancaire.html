@@ -1,0 +1,219 @@
+{% extends 'main/root/base.html' %}
+{% load static i18n %}
+
+{% block styles %}
+<style>
+:root{--app-blue:#0a95ca;--app-mid:#0d80be;--app-dark:#106cb2;}
+.ratio-header{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--app-dark) 0%,var(--app-blue) 100%);border-radius:10px;padding:.65rem 1.1rem;margin-bottom:.9rem;color:#fff;}
+.ratio-header h6{margin:0;font-size:.92rem;font-weight:700;}
+.info-badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:6px;padding:.18rem .65rem;font-size:.75rem;margin-left:.4rem;}
+.ratio-wrap{border-radius:10px;overflow:hidden;border:1px solid #dde4ed;box-shadow:0 2px 10px rgba(10,149,202,.07);margin-bottom:1.2rem;}
+.ratio-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.ratio-table thead tr th{background:var(--app-dark);color:#fff;padding:.55rem .75rem;text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);}
+.ratio-table thead tr th.col-label{text-align:left;min-width:280px;}
+.ratio-table thead tr th:last-child{border-right:none;}
+.ratio-table tr.row-group td{background:#1e3a5f;color:#fff;font-weight:700;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;padding:.38rem .75rem;}
+.ratio-table tr.row-balance td{background:#f0f9ff;}
+.ratio-table tr.row-data td{padding:.42rem .75rem;border-bottom:1px solid #edf0f5;text-align:center;}
+.ratio-table tr.row-data td.col-label{text-align:left;color:#374151;}
+.ratio-table tr.row-data:last-child td{border-bottom:none;}
+.ratio-table tr.row-data:hover td{background:rgba(10,149,202,.04);}
+.badge-ok{display:inline-flex;align-items:center;gap:.3rem;background:#dcfce7;color:#16a34a;border-radius:5px;padding:.2rem .55rem;font-weight:700;font-size:.75rem;}
+.badge-nok{display:inline-flex;align-items:center;gap:.3rem;background:#fee2e2;color:#dc2626;border-radius:5px;padding:.2rem .55rem;font-weight:700;font-size:.75rem;}
+.badge-warn{display:inline-flex;align-items:center;gap:.3rem;background:#fef9c3;color:#854d0e;border-radius:5px;padding:.2rem .55rem;font-weight:700;font-size:.75rem;}
+.pos{color:#16a34a;font-weight:600;}
+.neg{color:#dc2626;font-weight:600;}
+.warn{color:#b45309;font-weight:600;}
+.neu{color:#374151;font-weight:500;}
+.dash-val{color:#9ca3af;}
+.ratio-empty{text-align:center;padding:3rem 1rem;color:#6b7280;font-size:.87rem;}
+.ratio-empty i{font-size:2.5rem;display:block;margin-bottom:.6rem;color:#d1d5db;}
+.seuil-badge{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:4px;font-size:.65rem;padding:.1rem .45rem;margin-left:.35rem;font-weight:600;}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="ratio-header">
+    <div class="d-flex align-items-center flex-wrap gap-1">
+        <h6><i class="fas fa-chart-line me-2"></i>{% trans "Ratios Financiers — Bilan Bancaire" %}</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dash_root_manage_acheteur_asset_bancaire' id_acheteur %}" class="btn btn-sm btn-outline-light">
+            <i class="fas fa-table me-1"></i>{% trans "Actif" %}
+        </a>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-light">
+            <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+        </a>
+    </div>
+</div>
+
+{% if years_data %}
+<div class="ratio-wrap">
+<table class="ratio-table">
+    <thead>
+        <tr>
+            <th class="col-label">{% trans "Indicateur" %}</th>
+            {% for y in years_data %}<th>{{ y.annee }}</th>{% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+
+        <!-- ══ ÉQUILIBRE DU BILAN ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Équilibre du Bilan Bancaire" %}</td></tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Total Actif" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.actif_total }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Total Passif" %}</td>
+            {% for y in years_data %}<td class="neu">{{ y.passif_total }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "État du bilan" %}</td>
+            {% for y in years_data %}
+            <td>{% if y.balanced %}<span class="badge-ok"><i class="fas fa-check-circle"></i> {% trans "Équilibré" %}</span>{% else %}<span class="badge-nok"><i class="fas fa-exclamation-triangle"></i> {% trans "Non équilibré" %} (Δ {{ y.diff }})</span>{% endif %}</td>
+            {% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Capitaux Propres" %}</td>
+            {% for y in years_data %}<td class="{% if y.r_solv_raw and y.r_solv_raw >= 0 %}pos{% else %}neg{% endif %}">{{ y.cap_propres }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data row-balance">
+            <td class="col-label">{% trans "Résultat Net" %}</td>
+            {% for y in years_data %}<td class="{% if y.r_roa_raw and y.r_roa_raw >= 0 %}pos{% else %}neg{% endif %}">{{ y.resultat_net }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ STRUCTURE FINANCIÈRE ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Structure Financière & Solvabilité" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Ratio de Solvabilité (Fonds Propres / Actif)" %}
+                <span class="seuil-badge text-success">{% trans "seuil COBAC ≥ 8 %" %}</span>
+                <small class="text-muted d-block">{% trans "Capitaux Propres / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}
+            <td class="{% if y.r_solv_raw is not None %}{% if y.r_solv_raw >= 8 %}pos{% elif y.r_solv_raw >= 4 %}warn{% else %}neg{% endif %}{% else %}dash-val{% endif %}">
+                {{ y.r_solv }}
+                {% if y.r_solv_raw is not None %}{% if y.r_solv_raw >= 8 %}<i class="fas fa-check-circle text-success ms-1" title="{% trans "Conforme COBAC" %}"></i>{% elif y.r_solv_raw < 8 %}<i class="fas fa-exclamation-triangle text-danger ms-1" title="{% trans "Sous le seuil COBAC" %}"></i>{% endif %}{% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Ratio de Levier Financier" %}
+                <small class="text-muted d-block">{% trans "Total Actif / Capitaux Propres" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_lev_raw is not None %}{% if y.r_lev_raw <= 12 %}pos{% elif y.r_lev_raw <= 20 %}warn{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_lev }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ LIQUIDITÉ ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Liquidité & Transformation" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Ratio de Liquidité" %}
+                <span class="seuil-badge text-success">{% trans "seuil ≥ 100 %" %}</span>
+                <small class="text-muted d-block">{% trans "Actifs Liquides / Dettes Court Terme × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_liq_raw is not None %}{% if y.r_liq_raw >= 100 %}pos{% elif y.r_liq_raw >= 75 %}warn{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_liq }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Taux de Transformation" %}
+                <small class="text-muted d-block">{% trans "Crédits Clientèle / Dépôts Clientèle × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_trans_raw is not None %}{% if y.r_trans_raw <= 120 %}pos{% elif y.r_trans_raw <= 150 %}warn{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_trans }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ QUALITÉ DES ACTIFS ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Qualité des Actifs" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Part Créances Clientèle" %}
+                <small class="text-muted d-block">{% trans "Créances sur Clientèle / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="neu">{{ y.r_qa }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Part Créances Interbancaires" %}
+                <small class="text-muted d-block">{% trans "Prêts Interbancaires / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="neu">{{ y.r_ib }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ RENTABILITÉ ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Rentabilité" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "ROA — Rentabilité des Actifs" %}
+                <small class="text-muted d-block">{% trans "Résultat Net / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_roa_raw is not None %}{% if y.r_roa_raw > 0 %}pos{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_roa }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "ROE — Rentabilité des Capitaux Propres" %}
+                <small class="text-muted d-block">{% trans "Résultat Net / Capitaux Propres × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_roe_raw is not None %}{% if y.r_roe_raw > 0 %}pos{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_roe }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "NIM — Marge Nette d'Intérêt" %}
+                <small class="text-muted d-block">{% trans "(Intérêts Produits − Intérêts Charges) / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_nim_raw is not None %}{% if y.r_nim_raw > 0 %}pos{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_nim }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ EFFICIENCE ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Efficience Opérationnelle" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Coefficient d'Exploitation" %}
+                <span class="seuil-badge text-success">{% trans "seuil < 65 %" %}</span>
+                <small class="text-muted d-block">{% trans "Total Charges / Total Produits × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_eff_raw is not None %}{% if y.r_eff_raw < 65 %}pos{% elif y.r_eff_raw < 80 %}warn{% else %}neg{% endif %}{% else %}dash-val{% endif %}">{{ y.r_eff }}</td>{% endfor %}
+        </tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Taux de Diversification des Revenus" %}
+                <small class="text-muted d-block">{% trans "Revenus Non-Intérêts / Total Produits × 100" %}</small>
+            </td>
+            {% for y in years_data %}<td class="{% if y.r_div_raw is not None %}{% if y.r_div_raw >= 20 %}pos{% else %}warn{% endif %}{% else %}dash-val{% endif %}">{{ y.r_div }}</td>{% endfor %}
+        </tr>
+
+        <!-- ══ ENGAGEMENTS HORS-BILAN ══ -->
+        <tr class="row-group"><td colspan="{{ years_data|length|add:1 }}">{% trans "Engagements Hors-Bilan" %}</td></tr>
+        <tr class="row-data">
+            <td class="col-label">
+                {% trans "Engagements Donnés / Total Actif" %}
+                <small class="text-muted d-block">{% trans "Engagements de financement et garantie donnés / Total Actif × 100" %}</small>
+            </td>
+            {% for y in years_data %}
+            <td class="{% if y.has_hbs %}neu{% else %}dash-val{% endif %}">
+                {% if y.has_hbs %}{{ y.r_hbs }}{% else %}—{% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+
+    </tbody>
+</table>
+</div>
+
+<div class="text-muted" style="font-size:.72rem;padding:.3rem .5rem;">
+    <i class="fas fa-info-circle me-1"></i>
+    {% trans "Seuils de référence : COBAC (Commission Bancaire de l'Afrique Centrale) — Règlement COBAC R-2009/02" %}
+</div>
+
+{% else %}
+<div class="ratio-empty">
+    <i class="fas fa-chart-bar"></i>
+    {% trans "Aucune donnée disponible. Veuillez saisir les états financiers bancaires (Actif, Passif, Produits et Charges) pour au moins une même année." %}
+</div>
+{% endif %}
+
+{% endblock %}

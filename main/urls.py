@@ -666,6 +666,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_offbalancesheet_bancaire",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/ratios/",
+        dash_root_manage_acheteur_ratio_bancaire,
+        name="dash_root_manage_acheteur_ratio_bancaire",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/comptes-financiers/",
         dash_root_manage_acheteur_compte_financier_irfs,
         name="dash_root_manage_acheteur_compte_financier_irfs",

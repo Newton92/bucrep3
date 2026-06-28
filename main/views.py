@@ -6365,6 +6365,156 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
 
 
 @login_required
+def dash_root_manage_acheteur_ratio_bancaire(request, acheteur_id):
+    from decimal import Decimal, InvalidOperation
+
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'),
+        id=acheteur_id,
+    )
+    refresh = RefreshToken.for_user(request.user)
+
+    def _d(val):
+        try:
+            return float(val or 0)
+        except (TypeError, ValueError, InvalidOperation):
+            return 0.0
+
+    def _fmt(val, decimals=2, unit=''):
+        if val is None:
+            return '—'
+        try:
+            v = float(val)
+            s = f"{v:,.{decimals}f}"
+            return f"{s} {unit}".strip() if unit else s
+        except (TypeError, ValueError):
+            return '—'
+
+    def _ratio(num, den, mult=1, decimals=2, unit='%'):
+        try:
+            d = float(den or 0)
+            if d == 0:
+                return None, '—'
+            v = (float(num or 0) / d) * float(mult)
+            return v, _fmt(v, decimals=decimals, unit=unit)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None, '—'
+
+    assets_qs = Assets.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+    liab_map  = {l.annee_id: l for l in Liabilities.objects.filter(acheteur=acheteur).select_related('annee')}
+    prod_map  = {p.annee_id: p for p in Products.objects.filter(acheteur=acheteur).select_related('annee')}
+    exp_map   = {e.annee_id: e for e in Expenses.objects.filter(acheteur=acheteur).select_related('annee')}
+    hbs_map   = {h.annee_id: h for h in OffBalanceSheet.objects.filter(acheteur=acheteur).select_related('annee')}
+
+    years_data = []
+    for asset in assets_qs:
+        aid  = asset.annee_id
+        liab = liab_map.get(aid)
+        prod = prod_map.get(aid)
+        exp  = exp_map.get(aid)
+        hbs  = hbs_map.get(aid)
+        if not (liab and prod and exp):
+            continue
+
+        total_actif   = _d(asset.total_assets)
+        total_passif  = _d(liab.total_liabilities)
+        total_produit = _d(prod.total_produit)
+        total_charges = _d(exp.total_des_charges)
+
+        cap_propres = (
+            _d(liab.capital_ou_dotation) +
+            _d(liab.primes_liees_reserve_capital) +
+            _d(liab.ecarts_reevaluation) +
+            _d(liab.benefices_non_distribue) +
+            _d(liab.resultat_net_exercie)
+        )
+        actifs_liquides = _d(asset.caisse) + _d(asset.pret_interbancaire) + _d(asset.titres_placement)
+        dettes_ct = (
+            _d(liab.tresorerie_ccp) +
+            _d(liab.autres_etablissement_credit) +
+            _d(liab.comptes_epargne_court_terme) +
+            _d(liab.autres_dette_a_vue)
+        )
+        depots_clientele   = _d(liab.dette_envers_clientelle)
+        creances_clientele = _d(asset.creance_sur_la_clientele)
+        resultat_net       = total_produit - total_charges
+        interets_prod      = _d(prod.interet_produit_assimile)
+        interets_charg     = (
+            _d(exp.interet_charges_assimilee_dette_interbancaire) +
+            _d(exp.interet_charge_assimilee_dette_clientele) +
+            _d(exp.interet_charge_assimilee_titre_creance)
+        )
+        hbs_donnes = 0.0
+        if hbs:
+            hbs_donnes = (
+                _d(hbs.en_faveur_des_ets_credit) +
+                _d(hbs.en_faveur_clientele) +
+                _d(hbs.pour_compte_ets_credit) +
+                _d(hbs.pour_compte_clientele) +
+                _d(hbs.engagement_sur_titre)
+            )
+
+        diff     = abs(total_actif - total_passif)
+        balanced = diff < 1.0
+
+        r_solv_raw,   r_solv   = _ratio(cap_propres,               total_actif,      100)
+        r_lev_raw,    r_lev    = _ratio(total_actif,                cap_propres,        1, decimals=2, unit='x')
+        r_liq_raw,    r_liq    = _ratio(actifs_liquides,            dettes_ct,        100)
+        r_trans_raw,  r_trans  = _ratio(creances_clientele,         depots_clientele, 100)
+        r_qa_raw,     r_qa     = _ratio(creances_clientele,         total_actif,      100)
+        r_ib_raw,     r_ib     = _ratio(_d(asset.pret_interbancaire), total_actif,    100)
+        r_roa_raw,    r_roa    = _ratio(resultat_net,               total_actif,      100)
+        r_roe_raw,    r_roe    = _ratio(resultat_net,               cap_propres,      100)
+        nim = interets_prod - interets_charg
+        r_nim_raw,    r_nim    = _ratio(nim,                         total_actif,      100)
+        r_eff_raw,    r_eff    = _ratio(total_charges,              total_produit,    100)
+        produits_ni  = total_produit - interets_prod
+        r_div_raw,    r_div    = _ratio(produits_ni,                total_produit,    100)
+        r_hbs_raw,    r_hbs    = _ratio(hbs_donnes,                 total_actif,      100)
+
+        years_data.append({
+            'annee':        asset.annee.annee if asset.annee else '—',
+            # Bilan
+            'actif_total':  _fmt(total_actif,  decimals=0),
+            'passif_total': _fmt(total_passif, decimals=0),
+            'balanced':     balanced,
+            'diff':         _fmt(diff, decimals=0),
+            # Structure
+            'cap_propres':  _fmt(cap_propres, decimals=0),
+            'r_solv':       r_solv,  'r_solv_raw':  r_solv_raw,
+            'r_lev':        r_lev,   'r_lev_raw':   r_lev_raw,
+            # Liquidité
+            'r_liq':        r_liq,   'r_liq_raw':   r_liq_raw,
+            'r_trans':      r_trans, 'r_trans_raw':  r_trans_raw,
+            # Qualité actifs
+            'r_qa':         r_qa,    'r_qa_raw':    r_qa_raw,
+            'r_ib':         r_ib,    'r_ib_raw':    r_ib_raw,
+            # Rentabilité
+            'resultat_net': _fmt(resultat_net, decimals=0),
+            'r_roa':        r_roa,   'r_roa_raw':   r_roa_raw,
+            'r_roe':        r_roe,   'r_roe_raw':   r_roe_raw,
+            'r_nim':        r_nim,   'r_nim_raw':   r_nim_raw,
+            # Efficience
+            'r_eff':        r_eff,   'r_eff_raw':   r_eff_raw,
+            'r_div':        r_div,   'r_div_raw':   r_div_raw,
+            # Hors-bilan
+            'r_hbs':        r_hbs,   'r_hbs_raw':   r_hbs_raw,
+            'has_hbs':      hbs is not None,
+        })
+
+    context = {
+        'acheteur_active': 'active',
+        'user': request.user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'id_acheteur': acheteur_id,
+        'acheteur': acheteur,
+        'years_data': years_data,
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_ratio_bancaire.html', context)
+
+
+@login_required
 def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
