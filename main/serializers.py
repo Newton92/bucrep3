@@ -13899,6 +13899,7 @@ class AddActifIFRSOneSerializer(serializers.ModelSerializer):
             'matieres_premieres', 'produits_finis', 'creances_a_court_terme',
             'avances_et_acomptes', 'creances_diverses', 'disponibilites_bancaires'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Validation pour s'assurer que le semestre est fourni si type est semestriel
@@ -13930,6 +13931,7 @@ class EditActifIFRSOneSerializer(serializers.ModelSerializer):
             'matieres_premieres', 'produits_finis', 'creances_a_court_terme',
             'avances_et_acomptes', 'creances_diverses', 'disponibilites_bancaires'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Reprendre la même validation que pour l'ajout
@@ -14005,6 +14007,7 @@ class AddPassifIFRSOneSerializer(serializers.ModelSerializer):
             'cotisations_sociales', 'emprunts_bancaires_court_terme',
             'dettes_diverses', 'dividendes_a_payer'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Validation pour s'assurer que le semestre est fourni si type est semestriel
@@ -14039,6 +14042,7 @@ class EditPassifIFRSOneSerializer(serializers.ModelSerializer):
             'cotisations_sociales', 'emprunts_bancaires_court_terme',
             'dettes_diverses', 'dividendes_a_payer'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Reprendre la même validation que pour l'ajout
@@ -14132,6 +14136,7 @@ class AddResultatIFRSOneSerializer(serializers.ModelSerializer):
             'provisions_pour_risques_et_charges', 'charges_financieres',
             'impot_sur_les_societes'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Validation pour s'assurer que le semestre est fourni si type est semestriel
@@ -14164,6 +14169,7 @@ class EditResultatIFRSOneSerializer(serializers.ModelSerializer):
             'provisions_pour_risques_et_charges', 'charges_financieres',
             'impot_sur_les_societes'
         ]
+        extra_kwargs = {'semestre': {'required': False, 'allow_null': True}}
     
     def validate(self, data):
         # Reprendre la même validation que pour l'ajout
