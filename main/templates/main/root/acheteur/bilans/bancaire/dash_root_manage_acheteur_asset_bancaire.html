@@ -1,2911 +1,335 @@
 {% extends 'main/root/base.html' %}
-
-{% load i18n static %}
+{% load static i18n %}
 
 {% block styles %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
 <style>
-:root {
-    --color-primary: #0A95CA;
-    --color-primary-dark: #0d80be;
-    --color-primary-light: rgba(10, 149, 202, 0.1);
-    --color-secondary: #25add6;
-    --color-success: #28a745;
-    --color-danger: #dc3545;
-    --color-warning: #ffc107;
-    --color-info: #17a2b8;
-    --color-background: #f8fafc;
-    --color-card: #ffffff;
-    --color-text: #2d3748;
-    --color-text-light: #718096;
-    --color-border: #e2e8f0;
-    
-    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
-    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
-    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
-    --warning-gradient: linear-gradient(135deg, var(--color-warning) 0%, #e0a800 100%);
-    --info-gradient: linear-gradient(135deg, var(--color-info) 0%, #138496 100%);
-    
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
-    
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-}
-
-/* Header Premium */
-.dashboard-header {
-    background: var(--primary-gradient);
-    padding: 2rem;
-    border-radius: var(--radius-lg);
-    margin-bottom: 2rem;
-    color: white;
-    box-shadow: var(--shadow-lg);
-}
-
-.dashboard-title {
-    font-size: 2rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-.dashboard-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.95;
-    font-weight: 400;
-}
-
-/* Carte Acheteur */
-.acheteur-summary-card {
-    background: var(--color-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    margin-bottom: 2rem;
-    transition: all 0.3s ease;
-}
-
-.acheteur-summary-card:hover {
-    box-shadow: var(--shadow-lg);
-}
-
-.acheteur-summary-header {
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    padding: 1.5rem;
-    border-bottom: 2px solid var(--color-border);
-}
-
-.acheteur-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    background: var(--primary-gradient);
-    color: white;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: var(--shadow-sm);
-}
-
-.acheteur-info {
-    padding: 1.5rem;
-}
-
-.acheteur-info-item {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
-    margin-bottom: 0.75rem;
-    transition: all 0.3s ease;
-}
-
-.acheteur-info-item:hover {
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    transform: translateX(5px);
-}
-
-.acheteur-info-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-    background: var(--primary-gradient);
-    color: white;
-    font-size: 1.25rem;
-    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
-}
-
-/* Cartes de résumé */
-.summary-card {
-    background: var(--color-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-}
-
-.summary-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    color: white;
-    font-size: 1.25rem;
-}
-
-.summary-value {
-    font-size: 1.75rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-}
-
-/* Boutons améliorés */
-.btn-enhanced {
-    border-radius: var(--radius-md);
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.btn-enhanced:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.btn-primary-enhanced {
-    background: var(--primary-gradient);
-    color: white;
-}
-
-.btn-success-enhanced {
-    background: var(--success-gradient);
-    color: white;
-}
-
-.btn-danger-enhanced {
-    background: var(--danger-gradient);
-    color: white;
-}
-
-.btn-warning-enhanced {
-    background: var(--warning-gradient);
-    color: #000;
-}
-
-.btn-info-enhanced {
-    background: var(--info-gradient);
-    color: white;
-}
-
-/* Modal amélioré */
-.enhanced-modal .modal-content {
-    border-radius: var(--radius-lg);
-    border: none;
-    box-shadow: var(--shadow-xl);
-}
-
-.enhanced-modal .modal-header {
-    background: var(--primary-gradient);
-    color: white;
-    padding: 1.5rem;
-    border-bottom: none;
-}
-
-.enhanced-modal .modal-body {
-    padding: 1.5rem;
-    background: var(--color-background);
-}
-
-/* Formulaires améliorés */
-.enhanced-form .form-label {
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.enhanced-form .form-label i {
-    color: var(--color-primary);
-    font-size: 1rem;
-}
-
-.enhanced-form .form-control,
-.enhanced-form .form-select {
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.enhanced-form .form-control:focus,
-.enhanced-form .form-select:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
-}
-
-/* Section de légende */
-.legend-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: white;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    transition: all 0.2s ease;
-}
-
-.legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-
-.legend-code {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    min-width: 50px;
-    font-size: 0.9rem;
-}
-
-.legend-name {
-    font-size: 0.85rem;
-    color: var(--color-text);
-    flex: 1;
-}
-
-/* Tableau modernisé */
-.modern-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.modern-table th {
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
-    padding: 1rem 0.75rem;
-    text-align: left;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    border-bottom: 3px solid var(--color-primary);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.modern-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--color-border);
-    transition: all 0.2s ease;
-}
-
-.modern-table tbody tr:hover {
-    background: rgba(10, 149, 202, 0.03);
-}
-
-.value-cell {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    text-align: right;
-    font-size: 0.85rem;
-    min-width: 80px;
-}
-
-.value-positive {
-    color: var(--color-success);
-}
-
-.value-negative {
-    color: var(--color-danger);
-}
-
-/* Badges pour les catégories */
-.category-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    margin-right: 0.5rem;
-}
-
-.badge-incorporel {
-    background: rgba(10, 149, 202, 0.1);
-    color: #0A95CA;
-    border: 1px solid rgba(10, 149, 202, 0.3);
-}
-
-.badge-corporel {
-    background: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.3);
-}
-
-.badge-financier {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ffc107;
-    border: 1px solid rgba(255, 193, 7, 0.3);
-}
-
-.badge-circulant {
-    background: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.3);
-}
-
-.badge-disponibilite {
-    background: rgba(23, 162, 184, 0.1);
-    color: #17a2b8;
-    border: 1px solid rgba(23, 162, 184, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .dashboard-header {
-        padding: 1.5rem;
-    }
-    
-    .dashboard-title {
-        font-size: 1.5rem;
-    }
-    
-    .legend-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .acheteur-info-item {
-        flex-direction: column;
-        text-align: center;
-        padding: 1rem 0.75rem;
-    }
-    
-    .acheteur-info-icon {
-        margin-right: 0;
-        margin-bottom: 0.75rem;
-    }
-    
-    .btn-enhanced {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.8rem;
-    }
-    
-    .modern-table {
-        display: block;
-        overflow-x: auto;
-    }
-    
-    .value-cell {
-        min-width: 70px;
-    }
-}
-
-/* Pagination améliorée */
-.pagination-enhanced .page-link {
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    color: var(--color-primary-dark);
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    margin: 0 0.25rem;
-    transition: all 0.2s ease;
-}
-
-.pagination-enhanced .page-item.active .page-link {
-    background: var(--primary-gradient);
-    border-color: var(--color-primary);
-    color: white;
-}
-
-/* Animation */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-in {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.delay-1 {
-    animation-delay: 0.1s;
-}
-
-.delay-2 {
-    animation-delay: 0.2s;
-}
-
-/* Alertes personnalisées */
-.custom-alert {
-    border-radius: var(--radius-md);
-    border: 2px solid transparent;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-.custom-alert-info {
-    background: rgba(23, 162, 184, 0.1);
-    border-color: var(--color-info);
-    color: var(--color-info);
-}
-
-.custom-alert-warning {
-    background: rgba(255, 193, 7, 0.1);
-    border-color: var(--color-warning);
-    color: var(--color-warning);
-}
-
-/* Style pour les selects améliorés */
-.select2-enhanced {
-    width: 100%;
-}
-
-.select2-container--bootstrap-5 .select2-selection {
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-}
-
-.select2-container--bootstrap-5 .select2-selection:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
-}
-
-.select2-container--bootstrap-5.select2-container--focus .select2-selection {
-    border-color: var(--color-primary) !important;
-}
-
-.select2-container--bootstrap-5 .select2-dropdown {
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    background-color: white;
-    z-index: 1060 !important;
-}
-
-/* Détails des actifs */
-.detail-section {
-    background: white;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.detail-section h6 {
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.detail-row:last-child {
-    border-bottom: none;
-}
-
-.detail-label {
-    color: var(--color-text-light);
-    font-weight: 500;
-}
-
-.detail-value {
-    font-weight: 600;
-    font-family: 'Courier New', monospace;
-}
-
-/* Indicateurs */
-.indicateur-card {
-    background: white;
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    border: 1px solid var(--color-border);
-    margin-bottom: 1rem;
-}
-
-.indicateur-value {
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin-bottom: 0.25rem;
-}
-
-.indicateur-label {
-    font-size: 0.875rem;
-    color: var(--color-text-light);
-}
-
-/* Badge pour année */
-.year-badge {
-    background: linear-gradient(135deg, #0A95CA, #25add6);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-/* Actions group */
-.actions-group {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: nowrap;
-}
-
-.action-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    background: white;
-    color: var(--color-text);
-    transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-}
-
-.action-btn.view {
-    color: var(--color-info);
-    border-color: var(--color-info);
-}
-
-.action-btn.edit {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-}
-
-.action-btn.delete {
-    color: var(--color-danger);
-    border-color: var(--color-danger);
-}
-
-/* Section totaux calculés */
-.totaux-section {
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--color-border);
-}
-
-.total-item {
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    background: white;
-    margin-bottom: 0.75rem;
-    border: 1px solid var(--color-border);
-}
-
-.total-label {
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.total-montant {
-    font-family: 'Courier New', monospace;
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.montant-positif {
-    color: var(--color-success);
-}
-
-.montant-negatif {
-    color: var(--color-danger);
-}
-
-/* Ajustement pour table large */
-.compact-table th,
-.compact-table td {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
-}
-
-.compact-table .value-cell {
-    font-size: 0.8rem;
-}
-
-/* Table responsive wrapper */
-.table-responsive-wrapper {
-    position: relative;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.table-responsive-wrapper::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 30px;
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.9));
-    pointer-events: none;
-    z-index: 5;
-}
-
-/* Progress bars */
-.progress-bar-custom {
-    height: 8px;
-    border-radius: 4px;
-    background-color: var(--color-border);
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-/* Ratios display */
-.ratio-display {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.ratio-value {
-    font-weight: 700;
-    font-size: 1.1rem;
-    min-width: 60px;
-}
-
-.ratio-label {
-    color: var(--color-text-light);
-    font-size: 0.875rem;
-}
-
-/* Stat cards */
-.stat-card {
-    text-align: center;
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    background: white;
-    border: 1px solid var(--color-border);
-}
-
-.stat-number {
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: var(--color-text-light);
+:root{--app-blue:#0a95ca;--app-mid:#0d80be;--app-dark:#106cb2;--app-accent:#25add6;--app-light:#e6f4fb;--app-xlight:#f0f8fd;}
+html{overflow:hidden;}
+.page-bk-header{background:linear-gradient(135deg,var(--app-dark) 0%,var(--app-blue) 100%);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 8px rgba(16,108,178,.35);z-index:100;position:relative;}
+.page-bk-header h6{margin:0;color:#fff;font-size:.92rem;}
+.page-bk-header .info-badge{background:rgba(255,255,255,.2);color:#fff;border-radius:20px;font-size:.7rem;padding:2px 9px;margin-left:7px;border:1px solid rgba(255,255,255,.25);}
+.bilan-outer{display:flex;flex-direction:column;}
+.bilan-toolbar{background:var(--app-xlight);border-bottom:1px solid #c8e4f5;padding:5px 12px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.bilan-toolbar .toolbar-label{font-size:.72rem;color:var(--app-dark);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.bilan-grid-scroll{flex:1;overflow:auto;position:relative;}
+.bg-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:.82rem;}
+.bg-table thead tr th{position:sticky;top:0;z-index:20;background:var(--app-dark);color:#fff;border:1px solid rgba(255,255,255,.15);padding:0;white-space:nowrap;}
+.bg-table thead tr th.col-label-head{left:0;z-index:30;min-width:290px;max-width:290px;padding:0 10px;text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;line-height:34px;background:var(--app-dark);}
+.bg-table td.col-label{position:sticky;left:0;background:#fff;z-index:10;min-width:290px;max-width:290px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:3px solid var(--app-blue);padding:3px 8px;}
+.bg-table tr.row-h1 td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;padding:4px 10px;border-top:2px solid var(--app-mid);}
+.bg-table tr.row-h1 td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-mid);}
+.bg-table tr.row-h2 td{background:var(--app-mid);color:#e8f5ff;font-weight:600;font-size:.76rem;padding:3px 10px 3px 18px;}
+.bg-table tr.row-h2 td.col-label{background:var(--app-mid);color:#e8f5ff;border-right-color:var(--app-accent);}
+.bg-table tr.row-field td{border-bottom:1px solid #e8f0f5;padding:0;}
+.bg-table tr.row-field td.col-label{padding:2px 8px 2px 26px;color:#2c3e50;font-size:.81rem;border-bottom:1px solid #e8f0f5;}
+.bg-table tr.row-field:hover td{background:var(--app-xlight);}
+.bg-table tr.row-field:hover td.col-label{background:var(--app-xlight);}
+.bg-table tr.row-subtotal td{background:var(--app-light);font-weight:600;font-style:italic;color:var(--app-dark);font-size:.79rem;padding:2px 8px;border-top:1px dashed var(--app-accent);}
+.bg-table tr.row-subtotal td.col-label{background:var(--app-light);color:var(--app-dark);padding-left:26px;}
+.bg-table tr.row-total td{background:#c5e3f5;color:var(--app-dark);font-weight:700;font-size:.83rem;padding:4px 8px;border-top:2px solid var(--app-blue);}
+.bg-table tr.row-total td.col-label{background:#c5e3f5;color:var(--app-dark);}
+.bg-table tr.row-total-green td{background:#d4efde;color:#1a5c33;border-top:2px solid #7ec8a0;font-weight:700;font-size:.83rem;padding:4px 8px;}
+.bg-table tr.row-total-green td.col-label{background:#d4efde;color:#1a5c33;}
+.bg-table tr.row-grand td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.88rem;padding:5px 8px;border-top:3px solid var(--app-mid);}
+.bg-table tr.row-grand td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-accent);}
+.year-head-cell{text-align:center;min-width:155px;max-width:155px;vertical-align:middle;padding:4px 6px !important;border-left:2px solid rgba(255,255,255,.2) !important;}
+.yh-top{display:flex;align-items:center;justify-content:center;gap:5px;line-height:1;}
+.yh-year{font-size:.95rem;font-weight:800;letter-spacing:.03em;}
+.yh-actions{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;}
+.status-badge{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:20px;line-height:1.5;}
+.status-new{background:#fff3cd;color:#7a5600;}.status-saved{background:#c9f0d8;color:#145a32;}.status-dirty{background:#d0e8ff;color:var(--app-dark);}.status-saving{background:#fde8c0;color:#7a3e00;}
+.bg-table td.year-cell{text-align:right;padding:0;border-left:1px solid #daeaf5;min-width:155px;max-width:155px;}
+.bg-table tr.row-field td.year-cell{border-bottom:1px solid #e8f0f5;}
+.cell-input{width:100%;border:none;background:transparent;text-align:right;font-size:.82rem;padding:2px 8px;line-height:1.65;color:#1a2533;display:block;}
+.cell-input:focus{background:#fffbe6;outline:2px solid var(--app-accent);outline-offset:-2px;border-radius:0;color:var(--app-dark);font-weight:600;}
+.cell-input::-webkit-inner-spin-button,.cell-input::-webkit-outer-spin-button{opacity:0;}
+.cell-computed{padding:2px 8px;display:block;text-align:right;font-size:.82rem;}
+.btn-year-save{font-size:.62rem;padding:1px 7px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:3px;cursor:pointer;}
+.btn-year-save:hover{background:rgba(255,255,255,.4);}
+.btn-year-hide{font-size:.7rem;padding:1px 4px;color:rgba(255,255,255,.55);background:transparent;border:none;cursor:pointer;line-height:1;}
+.btn-year-hide:hover{color:#ffc107;}
+.btn-year-del{font-size:.62rem;padding:1px 6px;background:rgba(220,53,69,.25);border:1px solid rgba(220,53,69,.5);color:#ffb3bb;border-radius:3px;cursor:pointer;}
+.btn-year-del:hover{background:rgba(220,53,69,.6);color:#fff;}
+.col-add-head{background:var(--app-mid) !important;text-align:center;padding:4px 10px !important;cursor:pointer;min-width:36px;}
+.col-add-head:hover{background:var(--app-accent) !important;}
+.grid-loader-overlay{position:absolute;inset:0;background:rgba(236,246,253,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;gap:16px;}
+.grid-loader-overlay.hidden{display:none;}
+.loader-spinner{width:52px;height:52px;border:5px solid var(--app-light);border-top-color:var(--app-blue);border-radius:50%;animation:bilan-spin .8s linear infinite;}
+@keyframes bilan-spin{to{transform:rotate(360deg);}}
+.loader-text{color:var(--app-mid);font-size:.9rem;font-weight:600;margin:0;}.loader-error{color:#dc3545;font-size:.85rem;font-weight:600;margin:0;}
+.bilan-nav-tabs{display:flex;gap:2px;}
+.bilan-nav-tab{display:inline-flex;align-items:center;padding:3px 14px;border-radius:4px;font-size:.78rem;font-weight:600;text-decoration:none;color:rgba(255,255,255,.6);border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.bilan-nav-tab:hover{color:#fff;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);text-decoration:none;}
+.bilan-nav-tab.active{color:#fff;background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  @page{size:A4 landscape;margin:.8cm .6cm;}
+  .navbar,.app-sidebar-col,.page-bk-header,.bilan-toolbar,.btn-year-save,.btn-year-del,.btn-year-hide,.col-add-head,.grid-loader-overlay{display:none !important;}
+  html,body{overflow:visible !important;height:auto !important;}
+  .bilan-outer{height:auto !important;overflow:visible !important;}
+  .bilan-grid-scroll{overflow:visible !important;height:auto !important;}
+  .bg-table thead tr th{position:static !important;}
+  .bg-table td.col-label{position:static !important;min-width:230px;max-width:230px;}
+  .bg-table td.year-cell{min-width:110px;max-width:110px;}
+  .bg-table{font-size:.65rem;width:100%;}
+  .bg-table tr.row-h1 td,.bg-table tr.row-h1 td.col-label{background:#1a1a1a !important;color:#fff !important;}
+  .bg-table tr.row-h2 td,.bg-table tr.row-h2 td.col-label{background:#555 !important;color:#fff !important;}
+  .bg-table tr.row-subtotal td{background:#eee !important;color:#111 !important;}
+  .bg-table tr.row-total td{background:#ccc !important;color:#000 !important;}
+  .bg-table tr.row-total-green td{background:#bbb !important;color:#000 !important;}
+  .bg-table tr.row-grand td{background:#000 !important;color:#fff !important;}
+  .year-head-cell .yh-actions{display:none !important;}
+  .cell-input{background:transparent !important;border:none !important;padding:1px 4px !important;}
 }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="dashboard-header animate-in">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="dashboard-title text-white">
-                    <i class="fas fa-building-columns me-3"></i>{% trans "Bilan Bancaire - Actifs de l'Acheteur" %}
-                </h1>
-                <p class="dashboard-subtitle">
-                    Module de gestion complète des actifs selon le système bancaire
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}?token={{ user.reset_token }}" 
-                   class="btn-enhanced btn-warning-enhanced">
-                    <i class="fas fa-arrow-left me-2"></i>{% trans "Retour à l'acheteur" %}
-                </a>
-            </div>
-        </div>
+<div class="page-bk-header">
+    <div class="d-flex align-items-center">
+        <h6><i class="fas fa-university me-2"></i>{% trans "Actif — Bilan Bancaire" %}</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
     </div>
-
-    <!-- Carte Acheteur -->
-    <div class="acheteur-summary-card animate-in delay-1">
-        <div class="acheteur-summary-header">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h4 class="mb-1 fw-bold text-success" id="editNom">{{ acheteur.nom }}</h4>
-                    <p class="mb-0 text-muted" id="editSigle">{{ acheteur.sigle|default:"" }}</p>
-                </div>
-                <div>
-                    <span class="acheteur-badge">
-                        <i class="fas fa-hashtag"></i>
-                        Code: <span id="editCode" class="text-warning">{{ acheteur.code }}</span>
-                    </span>
-                </div>
-            </div>
-        </div>
-        <div class="acheteur-info">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">{% trans "Date de création" %}</small>
-                            <div class="fw-bold" id="editDateCreation">
-                                {% if acheteur.date_creation %}
-                                    {{ acheteur.date_creation|date:"d/m/Y" }}
-                                {% else %}
-                                    Non spécifié
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">{% trans "Activité principale" %}</small>
-                            <div class="fw-bold" id="editActivitePrincipale">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <div class="acheteur-info-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">{% trans "Statut" %}</small>
-                            <div class="fw-bold text-success" id="editStatutEntreprise">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="bilan-nav-tabs">
+        <a href="{% url 'dash_root_manage_acheteur_asset_bancaire'           id_acheteur %}" class="bilan-nav-tab active">{% trans "Actif" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_liabilitie_bancaire'      id_acheteur %}" class="bilan-nav-tab">{% trans "Passif" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_product_bancaire'         id_acheteur %}" class="bilan-nav-tab">{% trans "Produits" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_expense_bancaire'         id_acheteur %}" class="bilan-nav-tab">{% trans "Charges" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_offbalancesheet_bancaire' id_acheteur %}" class="bilan-nav-tab">{% trans "Hors-Bilan" %}</a>
     </div>
-
-    <!-- Cartes de résumé par catégorie -->
-    <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="summary-card animate-in delay-2">
-                <div class="summary-icon" style="background: linear-gradient(135deg, #0A95CA 0%, #106cb2 100%);">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h5 class="fw-bold">{% trans "Actifs Incorporels" %}</h5>
-                <div class="summary-value text-primary" id="totalIncorporel">0</div>
-                <p class="text-muted mb-0">{% trans "FDP, BLL, DPCB, AII" %}</p>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="summary-card animate-in delay-2">
-                <div class="summary-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <i class="fas fa-industry"></i>
-                </div>
-                <h5 class="fw-bold">{% trans "Actifs Corporels" %}</h5>
-                <div class="summary-value text-success" id="totalCorporel">0</div>
-                <p class="text-muted mb-0">{% trans "T, DIN, B, AAI, MMAB, MT" %}</p>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="summary-card animate-in delay-2">
-                <div class="summary-icon" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h5 class="fw-bold">{% trans "Actifs Financiers" %}</h5>
-                <div class="summary-value text-warning" id="totalFinancier">0</div>
-                <p class="text-muted mb-0">{% trans "TP, AIF, ACH" %}</p>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="summary-card animate-in delay-2">
-                <div class="summary-icon" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <h5 class="fw-bold">{% trans "Actifs Circulants" %}</h5>
-                <div class="summary-value text-danger" id="totalCirculant">0</div>
-                <p class="text-muted mb-0">{% trans "SEC, FAV, C, AC" %}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section Légende & Information -->
-    <div class="acheteur-summary-card animate-in delay-1">
-        <div class="p-4">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="fw-bold mb-3">
-                        <i class="fas fa-key text-primary me-2"></i>{% trans "Légende des Abréviations Bancaires" %}
-                    </h6>
-                    <div class="legend-grid">
-                        <!-- Actifs Incorporels -->
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #0A95CA;"></div>
-                            <span class="legend-code">FDP</span>
-                            <span class="legend-name">{% trans "Frais de Développement et Prospection" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #0A95CA;"></div>
-                            <span class="legend-code">BLL</span>
-                            <span class="legend-name">{% trans "Brevets, Licences et Logiciels" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #0A95CA;"></div>
-                            <span class="legend-code">{% trans "DPCB" %}</span>
-                            <span class="legend-name">{% trans "Droits de Propriété Commerciale et Baux" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #0A95CA;"></div>
-                            <span class="legend-code">AII</span>
-                            <span class="legend-name">{% trans "Autres Immobilisations Incorporelles" %}</span>
-                        </div>
-                        
-                        <!-- Actifs Corporels -->
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span class="legend-code">T</span>
-                            <span class="legend-name">{% trans "Terrains" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span class="legend-code">DIN</span>
-                            <span class="legend-name">{% trans "Dons et Investissements Nets" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span class="legend-code">B</span>
-                            <span class="legend-name">{% trans "Bâtiments" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #28a745;"></div>
-                            <span class="legend-code">AAI</span>
-                            <span class="legend-name">{% trans "Agencements, Aménagements et Installations" %}</span>
-                        </div>
-                        
-                        <!-- Actifs Financiers -->
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #ffc107;"></div>
-                            <span class="legend-code">TP</span>
-                            <span class="legend-name">{% trans "Titres de Participation" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #ffc107;"></div>
-                            <span class="legend-code">AIF</span>
-                            <span class="legend-name">{% trans "Autres Immobilisations Financières" %}</span>
-                        </div>
-                        
-                        <!-- Actifs Circulants -->
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #dc3545;"></div>
-                            <span class="legend-code">SEC</span>
-                            <span class="legend-name">{% trans "Stock et En-cours" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #dc3545;"></div>
-                            <span class="legend-code">C</span>
-                            <span class="legend-name">{% trans "Clients" %}</span>
-                        </div>
-                        
-                        <!-- Disponibilités -->
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #17a2b8;"></div>
-                            <span class="legend-code">D</span>
-                            <span class="legend-name">{% trans "Disponibilités" %}</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #17a2b8;"></div>
-                            <span class="legend-code">{% trans "BCPCA" %}</span>
-                            <span class="legend-name">{% trans "Banque, Chèque Postal, Caisse et Assimilés" %}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <div class="custom-alert custom-alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>{% trans "Note :" %}</strong> Cliquez sur le nom de l'acheteur dans l'en-tête pour retourner à la page de gestion.
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <!-- Statistiques rapides -->
-                    <div class="mb-4">
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-chart-pie text-primary me-2"></i>{% trans "Statistiques des Actifs" %}
-                        </h6>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-number text-primary" id="countActifs">0</div>
-                                    <div class="stat-label">{% trans "Actifs total" %}</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-number text-success" id="countAnnees">0</div>
-                                    <div class="stat-label">{% trans "Années couvertes" %}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Totaux par catégorie -->
-                    <div class="totaux-section">
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-calculator text-primary me-2"></i>{% trans "Totaux par Catégorie" %}
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="total-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label">{% trans "Actifs Incorporels" %}</span>
-                                        <span class="total-montant montant-positif" id="calculIncorporel">0</span>
-                                    </div>
-                                </div>
-                                <div class="total-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label">{% trans "Actifs Corporels" %}</span>
-                                        <span class="total-montant montant-positif" id="calculCorporel">0</span>
-                                    </div>
-                                </div>
-                                <div class="total-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label">{% trans "Actifs Financiers" %}</span>
-                                        <span class="total-montant montant-positif" id="calculFinancier">0</span>
-                                    </div>
-                                </div>
-                                <div class="total-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label">{% trans "Actifs Circulants" %}</span>
-                                        <span class="total-montant montant-positif" id="calculCirculant">0</span>
-                                    </div>
-                                </div>
-                                <div class="total-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label">{% trans "Disponibilités" %}</span>
-                                        <span class="total-montant montant-positif" id="calculDisponibilites">0</span>
-                                    </div>
-                                </div>
-                                <div class="total-item bg-light">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="total-label fw-bold">{% trans "Total Général des Actifs" %}</span>
-                                        <span class="total-montant fw-bold montant-positif" id="calculTotalGeneral">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Ratios -->
-                    <div>
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-percentage text-primary me-2"></i>{% trans "Ratios Clés" %}
-                        </h6>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="indicateur-card">
-                                    <div class="indicateur-value text-success" id="ratioLiquidite">0%</div>
-                                    <div class="indicateur-label">{% trans "Ratio de liquidité" %}</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="indicateur-card">
-                                    <div class="indicateur-value text-primary" id="ratioActifsFixes">0%</div>
-                                    <div class="indicateur-label">{% trans "Ratio actifs fixes" %}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tableau des Actifs (Simplifié avec totaux) -->
-    <div class="card border-0 shadow-sm mb-4 animate-in delay-2">
-        <div class="card-header bg-white border-0 py-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h5 class="card-title mb-0 fw-bold">
-                        <i class="fas fa-table me-2"></i>{% trans "Liste des Actifs Bancaires" %}
-                    </h5>
-                </div>
-                <div class="col-md-6">
-                    <div class="row g-2">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                                <input type="search" class="form-control border-start-0" id="searchInput" 
-                                       placeholder="Rechercher par année...">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
-                                    data-bs-toggle="modal" data-bs-target="#addActifModal">
-                                <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter Actif" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="modern-table compact-table">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="border-0 rounded-start">#</th>
-                            <th scope="col" class="border-0">{% trans "Année" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Actifs Incorporels">{% trans "Incorporels" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Actifs Corporels">{% trans "Corporels" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Actifs Financiers">{% trans "Financiers" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Créances">{% trans "Créances" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Disponibilités">{% trans "Disponibilités" %}</th>
-                            <th scope="col" class="border-0 text-end" title="Total Actif">{% trans "Total" %}</th>
-                            <th scope="col" class="border-0 rounded-end text-center">{% trans "Actions" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="actifTableBody">
-                        <!-- Rempli par JavaScript -->
-                    </tbody>
-                    <tfoot id="actifTableFooter" style="display: none;">
-                        <tr class="bg-light fw-bold">
-                            <td colspan="2" class="text-end">{% trans "TOTAUX" %}</td>
-                            <td class="text-end text-primary" id="footerIncorporel">0</td>
-                            <td class="text-end text-success" id="footerCorporel">0</td>
-                            <td class="text-end text-warning" id="footerFinancier">0</td>
-                            <td class="text-end text-danger" id="footerCirculant">0</td>
-                            <td class="text-end text-info" id="footerDisponibilites">0</td>
-                            <td class="text-end text-primary" id="footerTotal">0</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            
-            <!-- Aucun résultat -->
-            <div id="noResults" class="text-center py-5" style="display: none;">
-                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
-                <h5 class="text-muted">{% trans "Aucun actif trouvé" %}</h5>
-                <p class="text-muted mb-0">Cliquez sur "Ajouter Actif" pour commencer à enregistrer</p>
-            </div>
-        </div>
-        
-        <!-- Pagination -->
-        <div class="card-footer bg-white border-0">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="mb-0 text-muted small" id="paginationInfo">
-                        Chargement des données...
-                    </p>
-                </div>
-                <div class="col-md-6">
-                    <nav class="d-flex justify-content-md-end">
-                        <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-light" onclick="window.print()"><i class="fas fa-print me-1"></i>{% trans "Imprimer" %}</button>
+        <button class="btn btn-sm btn-success fw-semibold" id="btnSaveAll"><i class="fas fa-save me-1"></i>{% trans "Tout enregistrer" %}</button>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-warning"><i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}</a>
     </div>
 </div>
 
-<!-- Modal Ajout Actif -->
-<div class="modal fade enhanced-modal" id="addActifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter un Nouvel Actif Bancaire" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addActifForm" class="enhanced-form">
-                <input type="hidden" value="{{ acheteur.id }}" name="acheteur" />
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Remplissez tous les champs ci-dessous pour ajouter un nouvel actif selon le système bancaire.
-                    </div>
-                    
-                    <div class="row">
-                        <!-- Année -->
-                        <div class="col-md-12 mb-3">
-                            <label for="annee" class="form-label">
-                                <i class="fas fa-calendar-alt"></i>Année *
-                            </label>
-                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
-                                <option value="">{% trans "Sélectionnez une année..." %}</option>
-                                {% for annee in annee_list %}
-                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Type de bilan -->
-                        <div class="col-md-6 mb-3">
-                            <label for="type_bilan" class="form-label">
-                                <i class="fas fa-file-invoice"></i>Type de bilan *
-                            </label>
-                            <select class="form-select" id="type_bilan" name="type_bilan" required>
-                                <option value="annuel">{% trans "Bilan annuel" %}</option>
-                                <option value="semestriel">{% trans "Bilan semestriel" %}</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Semestre (si semestriel) -->
-                        <div class="col-md-6 mb-3" id="semestreField" style="display: none;">
-                            <label for="semestre" class="form-label">
-                                <i class="fas fa-calendar-week"></i>Semestre *
-                            </label>
-                            <select class="form-select" id="semestre" name="semestre">
-                                <option value="">{% trans "Sélectionnez un semestre..." %}</option>
-                                <option value="1">1er semestre (Janvier - Juin)</option>
-                                <option value="2">2e semestre (Juillet - Décembre)</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Section Caisse et Disponibilités -->
-                        <div class="col-12">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">
-                                <i class="fas fa-money-bill-wave text-info me-2"></i>{% trans "Caisse et Disponibilités" %}
-                            </h6>
-                        </div>
-                        
-                        <!-- Caisse -->
-                        <div class="col-md-6 mb-3">
-                            <label for="caisse" class="form-label">
-                                <span class="badge badge-disponibilite">{% trans "Caisse" %}</span> Caisse *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="caisse" 
-                                       name="caisse" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Banques Centrales -->
-                        <div class="col-md-6 mb-3">
-                            <label for="banques_centrales" class="form-label">
-                                <span class="badge badge-disponibilite">BC</span> Banques centrales *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="banques_centrales" 
-                                       name="banques_centrales" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Trésorerie CCP -->
-                        <div class="col-md-6 mb-3">
-                            <label for="tresorerie_cpp" class="form-label">
-                                <span class="badge badge-disponibilite">CCP</span> Trésorerie, CCP *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="tresorerie_cpp" 
-                                       name="tresorerie_cpp" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres établissements de crédit -->
-                        <div class="col-md-6 mb-3">
-                            <label for="autres_ets_credit" class="form-label">
-                                <span class="badge badge-disponibilite">AEC</span> Autres établissements de crédit *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="autres_ets_credit" 
-                                       name="autres_ets_credit" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- A Terme -->
-                        <div class="col-md-6 mb-3">
-                            <label for="a_terme" class="form-label">
-                                <span class="badge badge-financier">AT</span> A Terme *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="a_terme" 
-                                       name="a_terme" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Section Actifs Incorporels -->
-                        <div class="col-12">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">
-                                <i class="fas fa-brain text-primary me-2"></i>{% trans "Actifs Incorporels" %}
-                            </h6>
-                        </div>
-                        
-                        <!-- Immobilisations incorporelles -->
-                        <div class="col-md-6 mb-3">
-                            <label for="immobilisation_incorporelle" class="form-label">
-                                <span class="badge badge-incorporel">II</span> Immobilisations Incorporelles *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="immobilisation_incorporelle" 
-                                       name="immobilisation_incorporelle" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Section Actifs Corporels -->
-                        <div class="col-12">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">
-                                <i class="fas fa-industry text-success me-2"></i>{% trans "Actifs Corporels" %}
-                            </h6>
-                        </div>
-                        
-                        <!-- Immobilisations corporelles -->
-                        <div class="col-md-6 mb-3">
-                            <label for="immobilisation_corporelle" class="form-label">
-                                <span class="badge badge-corporel">IC</span> Immobilisations Corporelles *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="immobilisation_corporelle" 
-                                       name="immobilisation_corporelle" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Section Actifs Financiers -->
-                        <div class="col-12">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">
-                                <i class="fas fa-chart-line text-warning me-2"></i>{% trans "Actifs Financiers" %}
-                            </h6>
-                        </div>
-                        
-                        <!-- Immobilisations financières -->
-                        <div class="col-md-6 mb-3">
-                            <label for="immobilisation_fin" class="form-label">
-                                <span class="badge badge-financier">IF</span> Immobilisations Financières *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="immobilisation_fin" 
-                                       name="immobilisation_fin" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Titres de placement -->
-                        <div class="col-md-6 mb-3">
-                            <label for="titres_placement" class="form-label">
-                                <span class="badge badge-financier">TP</span> Titres de Placement *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="titres_placement" 
-                                       name="titres_placement" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Section Créances -->
-                        <div class="col-12">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">
-                                <i class="fas fa-file-invoice-dollar text-danger me-2"></i>{% trans "Créances" %}
-                            </h6>
-                        </div>
-                        
-                        <!-- Créances ordinaires -->
-                        <div class="col-md-6 mb-3">
-                            <label for="creances_ordinaires" class="form-label">
-                                <span class="badge badge-circulant">CO</span> Créances Ordinaires *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="creances_ordinaires" 
-                                       name="creances_ordinaires" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Affacturage -->
-                        <div class="col-md-6 mb-3">
-                            <label for="affacturage" class="form-label">
-                                <span class="badge badge-circulant">AF</span> Affacturage *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="affacturage" 
-                                       name="affacturage" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Crédits de campagne -->
-                        <div class="col-md-6 mb-3">
-                            <label for="credits_campagne" class="form-label">
-                                <span class="badge badge-circulant">CC</span> Crédits de campagne *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="credits_campagne" 
-                                       name="credits_campagne" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Crédits ordinaires -->
-                        <div class="col-md-6 mb-3">
-                            <label for="credits_ordinaire" class="form-label">
-                                <span class="badge badge-circulant">CO</span> Crédits ordinaires *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="credits_ordinaire" 
-                                       name="credits_ordinaire" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Opérations de crédit-bail -->
-                        <div class="col-md-6 mb-3">
-                            <label for="operation_credit_bail" class="form-label">
-                                <span class="badge badge-financier">CB</span> Opérations de crédit-bail *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="operation_credit_bail" 
-                                       name="operation_credit_bail" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Autres actifs -->
-                        <div class="col-md-6 mb-3">
-                            <label for="autres_actifs" class="form-label">
-                                <span class="badge badge-circulant">AA</span> Autres actifs *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="autres_actifs" 
-                                       name="autres_actifs" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Actionnaires ou associés -->
-                        <div class="col-md-6 mb-3">
-                            <label for="actionnaire_ou_associe" class="form-label">
-                                <span class="badge badge-financier">AA</span> Actionnaires ou associés *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="actionnaire_ou_associe" 
-                                       name="actionnaire_ou_associe" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Comptes de commandes et divers -->
-                        <div class="col-md-6 mb-3">
-                            <label for="comptes_commande_divers" class="form-label">
-                                <span class="badge badge-circulant">CCD</span> Comptes de commandes et divers *
-                            </label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="comptes_commande_divers" 
-                                       name="comptes_commande_divers" step="0.01" min="0" value="0" required>
-                                <span class="input-group-text">{% trans "FCFA" %}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Résumé calculé -->
-                        <div class="col-md-12">
-                            <div class="card bg-light border">
-                                <div class="card-body">
-                                    <h6 class="fw-bold mb-3">
-                                        <i class="fas fa-calculator text-primary me-2"></i>{% trans "Résumé par Catégorie" %}
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Disponibilités:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryDisponibilites">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Actifs Incorporels:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryIncorporel">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Actifs Corporels:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCorporel">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Actifs Financiers:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryFinancier">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Créances:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryCreances">0 FCFA</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <span class="text-muted">{% trans "Autres actifs:" %}</span>
-                                                <span class="fw-bold float-end" id="summaryAutres">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="pt-2 border-top">
-                                                <span class="text-primary fw-bold fs-5">{% trans "Total général:" %}</span>
-                                                <span class="fw-bold text-primary float-end fs-5" id="summaryTotal">0 FCFA</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
-                                    style="background: #ffc107; color: #000;">
-                                <i class="fas fa-broom me-2"></i>{% trans "Effacer" %}
-                            </button>
-                            <button type="submit" class="btn-enhanced btn-success-enhanced">
-                                <i class="fas fa-check me-2"></i>{% trans "Enregistrer" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
+<div class="bilan-outer">
+    <div class="bilan-toolbar">
+        <span class="toolbar-label">{% trans "Années affichées" %} :</span>
+        <div id="yearPills" class="d-flex gap-1 flex-wrap"></div>
+        <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#modalAddYear">
+            <i class="fas fa-plus me-1"></i>{% trans "Ajouter une année" %}
+        </button>
+        <span class="ms-auto text-muted" style="font-size:.72rem;" id="gridStatus">{% trans "Chargement..." %}</span>
+    </div>
+    <div class="bilan-grid-scroll">
+        <div id="gridLoader" class="grid-loader-overlay hidden">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">{% trans "Chargement des données..." %}</p>
         </div>
+        <table class="bg-table" id="bilanGrid">
+            <thead id="bilanHead"></thead>
+            <tbody id="bilanBody"></tbody>
+        </table>
     </div>
 </div>
 
-<!-- Modal Détails Actif -->
-<div class="modal fade enhanced-modal" id="detailActifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+<div class="modal fade" id="modalAddYear" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-eye me-2"></i>{% trans "Détails de l'Actif" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-calendar-plus me-2 text-primary"></i>{% trans "Ajouter une année" %}</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="custom-alert custom-alert-info mb-4">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Détails complets de l'actif pour l'année sélectionnée.
-                </div>
-                
-                <!-- Info année -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card bg-primary bg-opacity-10 border-primary">
-                            <div class="card-body">
-                                <h6 class="fw-bold text-primary mb-2">{% trans "Année" %}</h6>
-                                <div class="fs-4 fw-bold" id="detailAnnee">-</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-success bg-opacity-10 border-success">
-                            <div class="card-body">
-                                <h6 class="fw-bold text-success mb-2">{% trans "Total Actif" %}</h6>
-                                <div class="fs-4 fw-bold" id="detailTotal">0 FCFA</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Actifs Incorporels -->
-                <div class="detail-section">
-                    <h6 class="fw-bold text-primary">
-                        <i class="fas fa-brain me-2"></i>{% trans "Actifs Incorporels" %}
-                        <span class="float-end" id="detailTotalIncorporel">0 FCFA</span>
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Frais de Développement et Prospection (FDP):" %}</span>
-                                <span class="detail-value" id="detailFDP">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Brevets, Licences et Logiciels (BLL):" %}</span>
-                                <span class="detail-value" id="detailBLL">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Droits de Propriété Commerciale et Baux (DPCB):" %}</span>
-                                <span class="detail-value" id="detailDPCB">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Autres Immobilisations Incorporelles (AII):" %}</span>
-                                <span class="detail-value" id="detailAII">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Actifs Corporels -->
-                <div class="detail-section">
-                    <h6 class="fw-bold text-success">
-                        <i class="fas fa-industry me-2"></i>{% trans "Actifs Corporels" %}
-                        <span class="float-end" id="detailTotalCorporel">0 FCFA</span>
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Terrains (T):" %}</span>
-                                <span class="detail-value" id="detailT">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Dons et Investissements Nets (DIN):" %}</span>
-                                <span class="detail-value" id="detailDIN">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Bâtiments (B):" %}</span>
-                                <span class="detail-value" id="detailB">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Agencements, Aménagements et Installations (AAI):" %}</span>
-                                <span class="detail-value" id="detailAAI">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Matériel, Mobilier et Actifs Biologiques (MMAB):" %}</span>
-                                <span class="detail-value" id="detailMMAB">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Matériel de Transport (MT):" %}</span>
-                                <span class="detail-value" id="detailMT">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Actifs Financiers -->
-                <div class="detail-section">
-                    <h6 class="fw-bold text-warning">
-                        <i class="fas fa-chart-line me-2"></i>{% trans "Actifs Financiers" %}
-                        <span class="float-end" id="detailTotalFinancier">0 FCFA</span>
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Titres de Participation (TP):" %}</span>
-                                <span class="detail-value" id="detailTP">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Autres Immobilisations Financières (AIF):" %}</span>
-                                <span class="detail-value" id="detailAIF">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Actif Circulant HAO (ACH):" %}</span>
-                                <span class="detail-value" id="detailACH">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Actifs Circulants -->
-                <div class="detail-section">
-                    <h6 class="fw-bold text-danger">
-                        <i class="fas fa-money-bill-wave me-2"></i>{% trans "Actifs Circulants" %}
-                        <span class="float-end" id="detailTotalCirculant">0 FCFA</span>
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Stock et En-cours (SEC):" %}</span>
-                                <span class="detail-value" id="detailSEC">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Fournisseurs, Avances Versées (FAV):" %}</span>
-                                <span class="detail-value" id="detailFAV">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Clients (C):" %}</span>
-                                <span class="detail-value" id="detailC">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Autres Créances (AC):" %}</span>
-                                <span class="detail-value" id="detailAC">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Disponibilités -->
-                <div class="detail-section">
-                    <h6 class="fw-bold text-info">
-                        <i class="fas fa-university me-2"></i>{% trans "Disponibilités" %}
-                        <span class="float-end" id="detailTotalDisponibilites">0 FCFA</span>
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Disponibilités (D):" %}</span>
-                                <span class="detail-value" id="detailD">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Banque, Chèque Postal, Caisse et Assimilés (BCPCA):" %}</span>
-                                <span class="detail-value" id="detailBCPCA">0</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">{% trans "Écart de Conversion Actif (ECA):" %}</span>
-                                <span class="detail-value" id="detailECA">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Résumé -->
-                <div class="card bg-light border">
-                    <div class="card-body">
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-calculator text-primary me-2"></i>{% trans "Récapitulatif" %}
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-row">
-                                    <span class="detail-label">{% trans "Actifs Incorporels:" %}</span>
-                                    <span class="detail-value" id="recapIncorporel">0 FCFA</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">{% trans "Actifs Corporels:" %}</span>
-                                    <span class="detail-value" id="recapCorporel">0 FCFA</span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-row">
-                                    <span class="detail-label">{% trans "Actifs Financiers:" %}</span>
-                                    <span class="detail-value" id="recapFinancier">0 FCFA</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">{% trans "Actifs Circulants:" %}</span>
-                                    <span class="detail-value" id="recapCirculant">0 FCFA</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="detail-label">{% trans "Disponibilités:" %}</span>
-                                    <span class="detail-value" id="recapDisponibilites">0 FCFA</span>
-                                </div>
-                                <div class="detail-row pt-2 border-top mt-2">
-                                    <span class="detail-label fw-bold fs-5">{% trans "Total Général:" %}</span>
-                                    <span class="detail-value fw-bold fs-5 text-primary" id="recapTotal">0 FCFA</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <label class="form-label text-muted" style="font-size:.8rem;">{% trans "Sélectionner l'année fiscale" %}</label>
+                <select class="form-select form-select-sm" id="selectAddYear">
+                    <option value="">— {% trans "choisir" %} —</option>
+                    {% for a in annee_list %}<option value="{{ a.id }}" data-annee="{{ a.annee }}">{{ a.annee }}</option>{% endfor %}
+                </select>
             </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                        style="background: #6c757d; color: white;">
-                    <i class="fas fa-times me-2"></i>{% trans "Fermer" %}
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnConfirmAddYear">
+                    <i class="fas fa-check me-1"></i>{% trans "Ajouter" %}
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Édition Actif -->
-<div class="modal fade enhanced-modal" id="editActifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Actif" %}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editActifForm" class="enhanced-form">
-                <input type="hidden" id="editActifId" name="id">
-                
-                <div class="modal-body">
-                    <div class="custom-alert custom-alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Modifiez les champs ci-dessous pour mettre à jour l'actif selon le système bancaire.
-                    </div>
-                    
-                    <!-- Le contenu sera injecté ici par JavaScript -->
-                    <div id="editFormContent">
-                        <!-- Formulaire d'édition généré dynamiquement -->
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <div class="d-flex justify-content-between w-100">
-                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
-                                style="background: #6c757d; color: white;">
-                            <i class="fas fa-times me-2"></i>{% trans "Annuler" %}
-                        </button>
-                        <button type="submit" class="btn-enhanced btn-success-enhanced">
-                            <i class="fas fa-save me-2"></i>{% trans "Mettre à jour" %}
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+{% trans "Annuler" as t_cancel %}
+{% trans "Supprimer définitivement" as t_suppr_def %}
+{% trans "Action irréversible. Ce bilan sera supprimé définitivement." as t_suppr_msg %}
+{% trans "Enregistrement en cours" as t_enr_cours %}
+{% trans "Données enregistrées avec succès" as t_succes %}
+{% trans "Erreur lors de l'enregistrement" as t_err_enr %}
+{% trans "Suppression impossible" as t_del_err %}
+{% trans "Données supprimées" as t_del_ok %}
 <script>
-$(document).ready(function() {
-    // Variables globales
-    let currentPage = 1;
-    let currentSearch = '';
-    let selectedActifId = null;
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const ACCESS_TOKEN = '{{ access }}';
-    const REFRESH_TOKEN = '{{ refresh }}';
+var ACHETEUR_ID  = {{ id_acheteur }};
+var ACCESS_TOKEN = '{{ access }}';
+var CF_ANNEES    = [];
+var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
 
-    // Gestion du champ semestre en fonction du type de bilan
-    $('#type_bilan').on('change', function() {
-        if ($(this).val() === 'semestriel') {
-            $('#semestreField').show();
-            $('#semestre').prop('required', true);
-        } else {
-            $('#semestreField').hide();
-            $('#semestre').prop('required', false);
-            $('#semestre').val('');
-        }
+var ROWS = [
+    {t:'h1', label:'{% trans "VALEURS EN CAISSE" %}'},
+    {t:'f', f:'caisse', label:'{% trans "Caisse" %}'},
+
+    {t:'h1', label:'{% trans "CRÉANCES INTERBANCAIRES ET ASSIMILÉES" %}'},
+    {t:'h2', label:'{% trans "À Vue" %}'},
+    {t:'f', f:'banques_centrales', label:'{% trans "Banques centrales" %}'},
+    {t:'f', f:'tresorerie_cpp',    label:'{% trans "Trésorerie CCP" %}'},
+    {t:'f', f:'autres_ets_credit', label:'{% trans "Autres établissements de crédit" %}'},
+    {t:'st', label:'{% trans "Sous-total À Vue" %}', fs:['banques_centrales','tresorerie_cpp','autres_ets_credit']},
+
+    {t:'h2', label:'{% trans "À Terme" %}'},
+    {t:'f', f:'a_terme', label:'{% trans "À terme" %}'},
+
+    {t:'tot', cls:'row-total', label:'{% trans "TOTAL CRÉANCES INTERBANCAIRES" %}',
+     fs:['banques_centrales','tresorerie_cpp','autres_ets_credit','a_terme']},
+
+    {t:'h1', label:'{% trans "CRÉANCES SUR LA CLIENTÈLE" %}'},
+    {t:'f', f:'credits_campagne',      label:'{% trans "Crédits de campagne" %}'},
+    {t:'f', f:'credits_ordinaire',     label:'{% trans "Crédits ordinaires" %}'},
+    {t:'f', f:'credits_campagne_acc',  label:'{% trans "Crédits de campagne accordés" %}'},
+    {t:'f', f:'credits_ordinaire_acc', label:'{% trans "Crédits ordinaires accordés" %}'},
+    {t:'f', f:'creances_ordinaires',   label:'{% trans "Créances ordinaires" %}'},
+    {t:'f', f:'affacturage',           label:'{% trans "Affacturage" %}'},
+    {t:'tot', cls:'row-total-green', label:'{% trans "TOTAL CRÉANCES SUR LA CLIENTÈLE" %}',
+     fs:['credits_campagne','credits_ordinaire','credits_campagne_acc','credits_ordinaire_acc','creances_ordinaires','affacturage']},
+
+    {t:'h1', label:'{% trans "PORTEFEUILLE TITRES ET EMPLOIS ASSIMILÉS" %}'},
+    {t:'f', f:'titres_placement',      label:'{% trans "Titres de placement" %}'},
+    {t:'f', f:'immobilisation_fin',    label:'{% trans "Immobilisations financières" %}'},
+    {t:'f', f:'operation_credit_bail', label:'{% trans "Opérations de crédit-bail" %}'},
+    {t:'st', label:'{% trans "Sous-total Portefeuille Titres" %}',
+     fs:['titres_placement','immobilisation_fin','operation_credit_bail']},
+
+    {t:'h1', label:'{% trans "VALEURS IMMOBILISÉES" %}'},
+    {t:'f', f:'immobilisation_incorporelle', label:'{% trans "Immobilisations incorporelles" %}'},
+    {t:'f', f:'immobilisation_corporelle',   label:'{% trans "Immobilisations corporelles" %}'},
+    {t:'st', label:'{% trans "Sous-total Valeurs Immobilisées" %}',
+     fs:['immobilisation_incorporelle','immobilisation_corporelle']},
+
+    {t:'h1', label:"{% trans "AUTRES POSTES DE L'ACTIF" %}"},
+    {t:'f', f:'actionnaire_ou_associe',  label:'{% trans "Actionnaires ou associés" %}'},
+    {t:'f', f:'autres_actifs',           label:'{% trans "Autres actifs" %}'},
+    {t:'f', f:'comptes_commande_divers', label:'{% trans "Comptes de commande et divers" %}'},
+
+    {t:'grand', label:'{% trans "TOTAL GÉNÉRAL ACTIF" %}',
+     fs:['caisse',
+         'banques_centrales','tresorerie_cpp','autres_ets_credit','a_terme',
+         'credits_campagne','credits_ordinaire','credits_campagne_acc','credits_ordinaire_acc','creances_ordinaires','affacturage',
+         'titres_placement','immobilisation_fin','operation_credit_bail',
+         'immobilisation_incorporelle','immobilisation_corporelle',
+         'actionnaire_ou_associe','autres_actifs','comptes_commande_divers']}
+];
+
+var yearData={}, activeYears=[], anneeMap={};
+ALL_ANNEES.forEach(function(a){ anneeMap[a.id]=a.annee; });
+function getCsrf(){ var m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:''; }
+function fmtNum(v){ var n=parseFloat(v); if(isNaN(n)||n===0)return '—'; return n.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showLoader(msg,isErr){ var el=document.getElementById('gridLoader'); if(!el)return; var txt=el.querySelector('.loader-text'); var sp=el.querySelector('.loader-spinner'); el.classList.remove('hidden'); if(txt){txt.className=isErr?'loader-error':'loader-text';txt.textContent=msg||'{% trans "Chargement des données..." %}';} if(sp)sp.style.display=isErr?'none':''; }
+function hideLoader(){ var el=document.getElementById('gridLoader'); if(el)el.classList.add('hidden'); }
+function setStatus(msg,type){ var el=document.getElementById('gridStatus'); if(!el)return; el.textContent=msg; el.style.color={info:'#0d6efd',success:'#198754',error:'#dc3545'}[type]||'#6c757d'; }
+function statusBadge(st){ var m={new:['status-new','{% trans "Nouveau" %}'],saved:['status-saved','{% trans "Enregistré" %}'],dirty:['status-dirty','{% trans "Modifié" %}'],saving:['status-saving','{% trans "En cours..." %}']}; var i=m[st]||m['new']; return '<span class="status-badge '+i[0]+'">'+i[1]+'</span>'; }
+function setBadge(aid,st){ var el=document.getElementById('stbadge_'+aid); if(el)el.innerHTML=statusBadge(st); }
+function updateBadge(aid){ setBadge(aid,(yearData[aid]&&yearData[aid]._status)||'new'); }
+
+function init(){ showLoader(); fetchPage(1,[]); }
+
+function fetchPage(page,acc){
+    fetch('/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/liste-des-actifs/?page='+page,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
+    .then(function(r){ if(r.status===401)return refreshAccessToken().then(function(){ fetchPage(page,acc); }); if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){ if(!data)return; var res=Array.isArray(data.results)?data.results:(Array.isArray(data)?data:[]); var all=acc.concat(res); if(data.next===true){ fetchPage(page+1,all); }else{ buildGrid(all); } })
+    .catch(function(err){ if(acc.length>0){buildGrid(acc);}else{showLoader('{% trans "Erreur de chargement" %}: '+err.message,true);} setStatus('{% trans "Erreur de chargement" %}','error'); });
+}
+
+function buildGrid(results){
+    yearData={}; activeYears=[];
+    results.forEach(function(o){ var ra=o.annee; var aid=(ra!==null&&typeof ra==='object')?parseInt(ra.id,10):parseInt(ra,10); if(!aid||isNaN(aid))return; yearData[aid]=$.extend({},o,{_id:o.id,_status:'saved'}); if(activeYears.indexOf(aid)===-1)activeYears.push(aid); });
+    if(results.length===0){ CF_ANNEES.forEach(function(a){ if(a.id&&activeYears.indexOf(a.id)===-1){activeYears.push(a.id); yearData[a.id]={_id:null,_status:'new'};} }); }
+    activeYears.sort(function(a,b){return (anneeMap[b]||0)-(anneeMap[a]||0);});
+    hideLoader(); renderAll(); setStatus('{% trans "Données chargées" %} — '+results.length+' {% trans "enregistrement(s)" %}','success');
+    if(activeYears.length===0) showLoader('{% trans "Aucune donnée. Cliquez sur « Ajouter une année » pour commencer." %}',true);
+}
+
+function renderAll(){ renderHead(); renderBody(); renderYearPills(); }
+
+function renderHead(){
+    var h='<tr><th class="col-label-head">{% trans "POSTES DU BILAN — ACTIF BANCAIRE" %}</th>';
+    activeYears.forEach(function(aid){ var an=anneeMap[aid]||'?'; var st=yearData[aid]?yearData[aid]._status:'new'; var hasDb=yearData[aid]&&yearData[aid]._id;
+        h+='<th class="year-head-cell"><div class="yh-top"><span class="yh-year">'+an+'</span><span id="stbadge_'+aid+'">'+statusBadge(st)+'</span></div><div class="yh-actions"><button class="btn-year-save" onclick="saveYear('+aid+')"><i class="fas fa-save me-1"></i>{% trans "Enreg." %}</button>'+(hasDb?'<button class="btn-year-del" onclick="supprimerAnnee('+aid+')" title="{% trans "Supprimer" %}"><i class="fas fa-trash-alt"></i></button>':'<button class="btn-year-hide" onclick="masquerAnnee('+aid+')" title="{% trans "Masquer" %}"><i class="fas fa-times"></i></button>')+'</div></th>';
     });
-    
-    // Formater les nombres
-    function formatNumber(num, decimals = 2) {
-        if (num === null || num === undefined || num === '') return '-';
-        const number = parseFloat(num);
-        if (isNaN(number)) return '-';
-        return number.toLocaleString('fr-FR', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-        });
-    }
-    
-    // Formater en devise
-    function formatCurrency(num) {
-        return formatNumber(num) + ' FCFA';
-    }
-    
-    // Calculer les totaux par catégorie pour un actif
-    // Mettez à jour la fonction calculateTotals
-    function calculateTotals(actif) {
-        logDebug("Calcul des totaux pour:", actif);
-        
-        // Disponibilités (à vue)
-        const disponibilites = (parseFloat(actif.caisse) || 0) +
-                            (parseFloat(actif.banques_centrales) || 0) +
-                            (parseFloat(actif.tresorerie_cpp) || 0) +
-                            (parseFloat(actif.autres_ets_credit) || 0);
-        
-        // Actifs Incorporels
-        const inc = parseFloat(actif.immobilisation_incorporelle) || 0;
-        
-        // Actifs Corporels
-        const cor = parseFloat(actif.immobilisation_corporelle) || 0;
-        
-        // Actifs Financiers
-        const fin = (parseFloat(actif.immobilisation_fin) || 0) +
-                    (parseFloat(actif.titres_placement) || 0) +
-                    (parseFloat(actif.a_terme) || 0) +
-                    (parseFloat(actif.operation_credit_bail) || 0) +
-                    (parseFloat(actif.actionnaire_ou_associe) || 0);
-        
-        // Créances
-        const creances = (parseFloat(actif.creances_ordinaires) || 0) +
-                        (parseFloat(actif.affacturage) || 0) +
-                        (parseFloat(actif.credits_campagne) || 0) +
-                        (parseFloat(actif.credits_ordinaire) || 0) +
-                        (parseFloat(actif.credits_campagne_acc) || 0) +
-                        (parseFloat(actif.credits_ordinaire_acc) || 0);
-        
-        // Autres actifs
-        const autres = (parseFloat(actif.autres_actifs) || 0) +
-                    (parseFloat(actif.comptes_commande_divers) || 0);
-        
-        // Total général
-        const total = disponibilites + inc + cor + fin + creances + autres;
-        
-        logDebug("Totaux calculés:", {
-            disponibilites,
-            inc,
-            cor,
-            fin,
-            creances,
-            autres,
-            total
-        });
-        
-        return {
-            disp: disponibilites,
-            inc: inc,
-            cor: cor,
-            fin: fin,
-            creances: creances,
-            autres: autres,
-            total: total
-        };
-    }
+    h+='<th class="col-add-head" onclick="$(\'#modalAddYear\').modal(\'show\')" title="{% trans "Ajouter une année" %}"><i class="fas fa-plus"></i></th></tr>';
+    document.getElementById('bilanHead').innerHTML=h;
+}
 
-    // Calculer les indicateurs
-    function calculateIndicators(actifs) {
-        if (!actifs || actifs.length === 0) {
-            updateIndicatorCards(0, 0, 0, 0, 0, 0, 0);
-            return;
-        }
-        
-        let totalIncorporel = 0;
-        let totalCorporel = 0;
-        let totalFinancier = 0;
-        let totalCirculant = 0;
-        let totalDisponibilites = 0;
-        let totalGeneral = 0;
-        
-        actifs.forEach(actif => {
-            const totals = calculateTotals(actif);
-            totalIncorporel += totals.inc;
-            totalCorporel += totals.cor;
-            totalFinancier += totals.fin;
-            totalCirculant += totals.circ;
-            totalDisponibilites += totals.disp;
-            totalGeneral += totals.total;
-        });
-        
-        // Calculer les ratios
-        const ratioLiquidite = totalGeneral > 0 ? 
-            ((totalDisponibilites / totalGeneral) * 100).toFixed(2) : 0;
-        const ratioActifsFixes = totalGeneral > 0 ?
-            (((totalIncorporel + totalCorporel) / totalGeneral) * 100).toFixed(2) : 0;
-        
-        // Mettre à jour les indicateurs
-        updateIndicatorCards(
-            totalIncorporel,
-            totalCorporel,
-            totalFinancier,
-            totalCirculant,
-            totalDisponibilites,
-            totalGeneral,
-            actifs.length,
-            ratioLiquidite,
-            ratioActifsFixes
-        );
-    }
-    
-    // Mettre à jour les cartes d'indicateurs
-    function updateIndicatorCards(inc, cor, fin, circ, disp, total, countActifs, ratioLiquidite, ratioActifsFixes) {
-        $('#totalIncorporel').text(formatNumber(inc));
-        $('#totalCorporel').text(formatNumber(cor));
-        $('#totalFinancier').text(formatNumber(fin));
-        $('#totalCirculant').text(formatNumber(circ));
-        $('#countActifs').text(countActifs);
-        
-        // Mettre à jour les totaux calculés
-        $('#calculIncorporel').text(formatCurrency(inc));
-        $('#calculCorporel').text(formatCurrency(cor));
-        $('#calculFinancier').text(formatCurrency(fin));
-        $('#calculCirculant').text(formatCurrency(circ));
-        $('#calculDisponibilites').text(formatCurrency(disp));
-        $('#calculTotalGeneral').text(formatCurrency(total));
-        
-        // Mettre à jour les ratios
-        $('#ratioLiquidite').text(ratioLiquidite + '%');
-        $('#ratioActifsFixes').text(ratioActifsFixes + '%');
-    }
-    
+function renderBody(){ var b=''; ROWS.forEach(function(row,idx){b+=buildRow(row,idx);}); document.getElementById('bilanBody').innerHTML=b; recalcAll(); }
 
-    // Fonction de log
-    function logDebug(message, data = null) {
-        console.log(`[DEBUG] ${message}`, data || '');
-    }
-
-    // Charger les actifs
-    function loadActifs() {
-        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/liste-des-actifs/?page=${currentPage}&search=${currentSearch}`;
-        logDebug(`Chargement des actifs: ${url}`);
-        
-        $.ajax({
-            url: url,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            beforeSend: function() {
-                logDebug("Envoi de la requête...");
-                $('#actifTableBody').html(`
-                    <tr>
-                        <td colspan="9" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Chargement des données...</p>
-                        </td>
-                    </tr>
-                `);
-            },
-            success: function(response) {
-                logDebug("Réponse reçue:", response);
-                logDebug(`Nombre d'éléments: ${response.results.length}`);
-                logDebug(`Total: ${response.count}`);
-                
-                if (response.results.length > 0) {
-                    logDebug("Premier élément:", response.results[0]);
-                    // Vérifier les champs disponibles
-                    logDebug("Champs du premier élément:", Object.keys(response.results[0]));
-                }
-                
-                updateTable(response.results);
-                updatePagination(response);
-                calculateIndicators(response.results);
-                updateStatistics(response.results);
-            },
-            error: function(xhr) {
-                logDebug(`Erreur: ${status} - ${error}`, xhr.responseText);
-
-                $('#actifTableBody').html(`
-                    <tr>
-                        <td colspan="9" class="text-center py-4">
-                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
-                            <h5 class="text-warning">Erreur de chargement</h5>
-                            <p class="text-muted">Impossible de charger les données. Veuillez réessayer.</p>
-                        </td>
-                    </tr>
-                `);
-                
-                if (xhr.status === 401) {
-                    logDebug("Token expiré, tentative de rafraîchissement...");
-
-                    refreshAccessToken(loadActifs);
-                }
-            }
-        });
-    }
-    
-    // Mettre à jour le tableau simplifié
-    // Mettez à jour votre tableau HTML dans updateTable
-    function updateTable(actifs) {
-        logDebug(`Mise à jour du tableau avec ${actifs.length} actifs`);
-        
-        const tbody = $('#actifTableBody');
-        tbody.empty();
-        
-        if (actifs.length === 0) {
-            logDebug("Aucun actif trouvé");
-            $('#noResults').show();
-            $('#actifTableFooter').hide();
-            return;
-        }
-        
-        $('#noResults').hide();
-        
-        let totalIncorporel = 0;
-        let totalCorporel = 0;
-        let totalFinancier = 0;
-        let totalCreances = 0;
-        let totalDisponibilites = 0;
-        let totalGeneral = 0;
-        const anneesSet = new Set();
-        
-        actifs.forEach((actif, index) => {
-            const startIndex = (currentPage - 1) * actifs.length;
-            const rowNumber = startIndex + index + 1;
-            const annee = actif.annee?.annee || 'N/A';
-            anneesSet.add(annee);
-            
-            // Calculer les totaux par catégorie
-            const totals = calculateTotals(actif);
-            
-            // Accumuler les totaux globaux
-            totalIncorporel += totals.inc;
-            totalCorporel += totals.cor;
-            totalFinancier += totals.fin;
-            totalCreances += totals.creances;
-            totalDisponibilites += totals.disp;
-            totalGeneral += totals.total;
-            
-            const row = `
-                <tr data-id="${actif.id}" class="actif-row">
-                    <td>${rowNumber}</td>
-                    <td>
-                        <span class="year-badge text-white">
-                            ${annee}
-                        </span>
-                    </td>
-                    <!-- Totaux par catégorie -->
-                    <td class="value-cell text-primary">${formatNumber(totals.inc)}</td>
-                    <td class="value-cell text-success">${formatNumber(totals.cor)}</td>
-                    <td class="value-cell text-warning">${formatNumber(totals.fin)}</td>
-                    <td class="value-cell text-danger">${formatNumber(totals.creances)}</td>
-                    <td class="value-cell text-info">${formatNumber(totals.disp)}</td>
-                    <!-- Total général -->
-                    <td class="value-cell fw-bold text-primary">${formatNumber(totals.total)}</td>
-                    
-                    <!-- Actions -->
-                    <td class="text-center">
-                        <div class="actions-group">
-                            <button class="action-btn view" data-id="${actif.id}" 
-                                    data-bs-toggle="tooltip" title="Consulter">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="action-btn edit" data-id="${actif.id}" 
-                                    data-bs-toggle="tooltip" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete" data-id="${actif.id}" 
-                                    data-bs-toggle="tooltip" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
-        
-        // Mettre à jour le footer du tableau
-        $('#footerIncorporel').text(formatNumber(totalIncorporel));
-        $('#footerCorporel').text(formatNumber(totalCorporel));
-        $('#footerFinancier').text(formatNumber(totalFinancier));
-        $('#footerCirculant').text(formatNumber(totalCreances));
-        $('#footerDisponibilites').text(formatNumber(totalDisponibilites));
-        $('#footerTotal').text(formatNumber(totalGeneral));
-        $('#actifTableFooter').show();
-        
-        // Mettre à jour le compteur d'années
-        $('#countAnnees').text(anneesSet.size);
-    }
-
-    // Mettre à jour les statistiques
-    function updateStatistics(actifs) {
-        let totalIncorporel = 0;
-        let totalCorporel = 0;
-        let totalFinancier = 0;
-        let totalCirculant = 0;
-        let totalDisponibilites = 0;
-        let totalGeneral = 0;
-        
-        actifs.forEach(actif => {
-            const totals = calculateTotals(actif);
-            totalIncorporel += totals.inc;
-            totalCorporel += totals.cor;
-            totalFinancier += totals.fin;
-            totalCirculant += totals.circ;
-            totalDisponibilites += totals.disp;
-            totalGeneral += totals.total;
-        });
-        
-        // Mettre à jour les cartes de résumé
-        $('#totalIncorporel').text(formatNumber(totalIncorporel));
-        $('#totalCorporel').text(formatNumber(totalCorporel));
-        $('#totalFinancier').text(formatNumber(totalFinancier));
-        $('#totalCirculant').text(formatNumber(totalCirculant));
-    }
-    
-    // Mettre à jour la pagination
-    function updatePagination(response) {
-        const controls = $('#paginationControls');
-        controls.empty();
-        
-        $('#paginationInfo').text(
-            `Affichage ${response.start_index || 1} à ${response.end_index || response.count} sur ${response.count} actifs`
-        );
-        
-        if (response.previous) {
-            controls.append(`
-                <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage - 1}">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                </li>
-            `);
-        } else {
-            controls.append(`
-                <li class="page-item disabled">
-                    <span class="page-link">
-                        <i class="fas fa-chevron-left"></i>
-                    </span>
-                </li>
-            `);
-        }
-        
-        for (let i = 1; i <= response.total_pages; i++) {
-            controls.append(`
-                <li class="page-item ${i === currentPage ? 'active' : ''}>
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                </li>
-            `);
-        }
-        
-        if (response.next) {
-            controls.append(`
-                <li class="page-item">
-                    <a class="page-link" href="#" data-page="${currentPage + 1}">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                </li>
-            `);
-        } else {
-            controls.append(`
-                <li class="page-item disabled">
-                    <span class="page-link">
-                        <i class="fas fa-chevron-right"></i>
-                    </span>
-                </li>
-            `);
-        }
-    }
-    
-    // Recherche avec debounce
-    let searchTimeout;
-    $('#searchInput').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            currentSearch = $(this).val();
-            currentPage = 1;
-            loadActifs();
-        }, 500);
+function buildRow(row,idx){
+    var isComp=(row.t==='st'||row.t==='tot'||row.t==='grand');
+    var cls={h1:'row-h1',h2:'row-h2',f:'row-field',st:'row-subtotal',tot:row.cls||'row-total',grand:'row-grand'}[row.t]||'row-field';
+    var h='<tr class="'+cls+'" data-ridx="'+idx+'"><td class="col-label">'+escHtml(row.label)+'</td>';
+    activeYears.forEach(function(aid){ h+='<td class="year-cell">';
+        if(row.t==='f'){ var val=(yearData[aid]&&yearData[aid][row.f]!=null)?yearData[aid][row.f]:''; h+='<input type="number" class="cell-input" data-year="'+aid+'" data-field="'+row.f+'" data-ridx="'+idx+'" value="'+(val!==''?val:'')+'" placeholder="0" step="0.01">'; }
+        else if(isComp){ h+='<span class="cell-computed" id="cc_'+idx+'_'+aid+'">—</span>'; }
+        h+='</td>';
     });
-    
-    // Pagination
-    $(document).on('click', '.page-link', function(e) {
-        e.preventDefault();
-        const page = $(this).data('page');
-        if (page) {
-            currentPage = page;
-            loadActifs();
-            $('html, body').animate({
-                scrollTop: $('#actifTableBody').offset().top - 100
-            }, 500);
-        }
-    });
-    
-    // Consulter un actif
-    $(document).on('click', '.view', function() {
-        const actifId = $(this).data('id');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/editer-un-actif/${actifId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                // Mettre à jour les détails dans le modal
-                $('#detailAnnee').text(response.annee?.annee || 'N/A');
-                
-                // Actifs Incorporels
-                $('#detailFDP').text(formatNumber(response.frais_developpement_prospection));
-                $('#detailBLL').text(formatNumber(response.brevets_licences_logiciels));
-                $('#detailDPCB').text(formatNumber(response.droits_propriete_commerciale_baux));
-                $('#detailAII').text(formatNumber(response.autres_immo_incorporelles));
-                
-                // Actifs Corporels
-                $('#detailT').text(formatNumber(response.terrains));
-                $('#detailDIN').text(formatNumber(response.dons_investissements_net));
-                $('#detailB').text(formatNumber(response.batiments));
-                $('#detailAAI').text(formatNumber(response.agencements_amenagements_installations));
-                $('#detailMMAB').text(formatNumber(response.materiel_mobilier_actif_biologiques));
-                $('#detailMT').text(formatNumber(response.materiel_transport));
-                
-                // Actifs Financiers
-                $('#detailTP').text(formatNumber(response.titres_participation));
-                $('#detailAIF').text(formatNumber(response.autres_immobilisations_financieres));
-                $('#detailACH').text(formatNumber(response.actif_circulant_hao));
-                
-                // Actifs Circulants
-                $('#detailSEC').text(formatNumber(response.stock_encours));
-                $('#detailFAV').text(formatNumber(response.fournisseurs_avances_versee));
-                $('#detailC').text(formatNumber(response.clients));
-                $('#detailAC').text(formatNumber(response.autres_creances));
-                
-                // Disponibilités
-                $('#detailD').text(formatNumber(response.disponibilites));
-                $('#detailBCPCA').text(formatNumber(response.banque_cheque_postal_caisse_assimiles));
-                $('#detailECA').text(formatNumber(response.ecart_conversion_actif));
-                
-                // Calculer les totaux
-                const totals = calculateTotals(response);
-                
-                // Mettre à jour les totaux dans le modal
-                $('#detailTotalIncorporel').text(formatCurrency(totals.inc));
-                $('#detailTotalCorporel').text(formatCurrency(totals.cor));
-                $('#detailTotalFinancier').text(formatCurrency(totals.fin));
-                $('#detailTotalCirculant').text(formatCurrency(totals.circ));
-                $('#detailTotalDisponibilites').text(formatCurrency(totals.disp));
-                $('#detailTotal').text(formatCurrency(totals.total));
-                
-                // Mettre à jour le récapitulatif
-                $('#recapIncorporel').text(formatCurrency(totals.inc));
-                $('#recapCorporel').text(formatCurrency(totals.cor));
-                $('#recapFinancier').text(formatCurrency(totals.fin));
-                $('#recapCirculant').text(formatCurrency(totals.circ));
-                $('#recapDisponibilites').text(formatCurrency(totals.disp));
-                $('#recapTotal').text(formatCurrency(totals.total));
-                
-                $('#detailActifModal').modal('show');
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les détails de l\'actif.'
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $(`.view[data-id="${actifId}"]`).click();
-                    });
-                }
-            }
-        });
-    });
-    
-    // Mettre à jour les résumés dans le formulaire d'ajout
-    // Mettez à jour updateAddFormSummaries
-    function updateAddFormSummaries() {
-        const totals = calculateTotals({
-            caisse: $('#caisse').val(),
-            banques_centrales: $('#banques_centrales').val(),
-            tresorerie_cpp: $('#tresorerie_cpp').val(),
-            autres_ets_credit: $('#autres_ets_credit').val(),
-            immobilisation_incorporelle: $('#immobilisation_incorporelle').val(),
-            immobilisation_corporelle: $('#immobilisation_corporelle').val(),
-            immobilisation_fin: $('#immobilisation_fin').val(),
-            titres_placement: $('#titres_placement').val(),
-            a_terme: $('#a_terme').val(),
-            operation_credit_bail: $('#operation_credit_bail').val(),
-            actionnaire_ou_associe: $('#actionnaire_ou_associe').val(),
-            creances_ordinaires: $('#creances_ordinaires').val(),
-            affacturage: $('#affacturage').val(),
-            credits_campagne: $('#credits_campagne').val(),
-            credits_ordinaire: $('#credits_ordinaire').val(),
-            credits_campagne_acc: $('#credits_campagne_acc').val() || 0,
-            credits_ordinaire_acc: $('#credits_ordinaire_acc').val() || 0,
-            autres_actifs: $('#autres_actifs').val(),
-            comptes_commande_divers: $('#comptes_commande_divers').val()
-        });
-        
-        // Mise à jour des résumés
-        $('#summaryDisponibilites').text(formatCurrency(totals.disp));
-        $('#summaryIncorporel').text(formatCurrency(totals.inc));
-        $('#summaryCorporel').text(formatCurrency(totals.cor));
-        $('#summaryFinancier').text(formatCurrency(totals.fin));
-        $('#summaryCreances').text(formatCurrency(totals.creances));
-        $('#summaryAutres').text(formatCurrency(totals.autres));
-        $('#summaryTotal').text(formatCurrency(totals.total));
-    }
+    h+='<td></td></tr>'; return h;
+}
 
-    // Écouter les changements dans les champs du formulaire d'ajout
-    $('#addActifForm input[type="number"]').on('input', updateAddFormSummaries);
-    
-    // Effacer le formulaire d'ajout
-    $('#clearAddFormBtn').on('click', function() {
-        Swal.fire({
-            title: 'Confirmer l\'effacement',
-            text: 'Êtes-vous sûr de vouloir effacer tous les champs du formulaire ?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ffc107',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Oui, effacer',
-            cancelButtonText: 'Annuler'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#addActifForm')[0].reset();
-                $('#annee').val(null).trigger('change');
-                updateAddFormSummaries();
-            }
-        });
-    });
-    
-    // Soumettre le formulaire d'ajout
-    $('#addActifForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#addActifForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/ajouter-un-actif/`,
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#addActifModal').modal('hide');
-                $('#addActifForm')[0].reset();
-                $('#annee').val(null).trigger('change');
-                updateAddFormSummaries();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Actif ajouté avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadActifs();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#addActifForm').submit());
-                }
-            }
-        });
-    });
-    
-    // Éditer un actif
-    $(document).on('click', '.edit', function() {
-        const actifId = $(this).data('id');
-        selectedActifId = actifId;
-        logDebug(`Édition de l'actif ID: ${actifId}`);
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/editer-un-actif/${actifId}/`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                logDebug("Données de l'actif récupérées:", response);
-                
-                // Vérifier la structure de l'année
-                logDebug("Données année:", response.annee);
-                logDebug("ID année:", response.annee?.id);
-                logDebug("Année valeur:", response.annee?.annee);
-                
-                // Générer le formulaire d'édition
-                generateEditForm(response);
-                
-                // Initialiser Select2 POUR l'année
-                $('#editAnnee').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    dropdownParent: $('#editActifModal')
-                });
-                
-                // Définir la valeur de l'année CORRECTEMENT
-                const anneeId = response.annee?.id;
-                if (anneeId) {
-                    $('#editAnnee').val(anneeId).trigger('change');
-                    logDebug(`Année définie sur ID: ${anneeId}`);
-                } else {
-                    logDebug("Aucun ID d'année trouvé");
-                }
-                
-                // Mettre à jour les résumés
-                updateEditFormSummaries();
-                
-                $('#editActifModal').modal('show');
-            },
-            error: function(xhr, status, error) {
-                logDebug(`Erreur lors de la récupération: ${status} - ${error}`, xhr.responseText);
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les données de l\'actif.'
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => {
-                        $(`.edit[data-id="${actifId}"]`).click();
-                    });
-                }
-            }
-        });
-    });
+function recalcAll(){ activeYears.forEach(function(aid){ recalcYear(aid); }); }
+function recalcYear(aid){ ROWS.forEach(function(row,idx){ if(row.t!=='st'&&row.t!=='tot'&&row.t!=='grand')return; var t=0; row.fs.forEach(function(f){t+=getVal(aid,f);}); var c=document.getElementById('cc_'+idx+'_'+aid); if(c)c.textContent=fmtNum(t); }); }
+function getVal(aid,field){ var $i=$('[data-year="'+aid+'"][data-field="'+field+'"]'); var v=$i.length?parseFloat($i.val()):0; return isNaN(v)?0:v; }
 
-    // Générer le formulaire d'édition
-    // Générer le formulaire d'édition avec gestion correcte de l'année
-    function generateEditForm(actif) {
-        logDebug("Génération du formulaire d'édition", actif);
-        
-        // Récupérer l'ID et la valeur de l'année
-        const anneeId = actif.annee?.id;
-        const anneeValue = actif.annee?.annee;
-        logDebug(`Année ID: ${anneeId}, Valeur: ${anneeValue}`);
-        
-        // Créer un select pour l'année avec TOUTES les options
-        let anneeOptions = `<option value="">Sélectionnez une année...</option>`;
-        
-        // Si vous avez les années disponibles, les ajouter toutes
-        // Sinon, juste l'option sélectionnée
-        if (anneeId && anneeValue) {
-            anneeOptions += `<option value="${anneeId}" selected>${anneeValue}</option>`;
-        }
-        
-        // Liste complète des champs de votre modèle Assets
-        const modelFields = [
-            { 
-                id: 'type_bilan', 
-                label: 'Type de bilan', 
-                type: 'select', 
-                options: [
-                    {value: 'annuel', label: 'Bilan annuel'},
-                    {value: 'semestriel', label: 'Bilan semestriel'}
-                ] 
-            },
-            { 
-                id: 'semestre', 
-                label: 'Semestre', 
-                type: 'select', 
-                options: [
-                    {value: '', label: 'Sélectionnez un semestre...'},
-                    {value: '1', label: '1er semestre (Janvier - Juin)'},
-                    {value: '2', label: '2e semestre (Juillet - Décembre)'}
-                ] 
-            },
-            { id: 'caisse', label: 'Caisse', type: 'number', value: actif.caisse || 0 },
-            { id: 'banques_centrales', label: 'Banques centrales', type: 'number', value: actif.banques_centrales || 0 },
-            { id: 'tresorerie_cpp', label: 'Trésorerie CCP', type: 'number', value: actif.tresorerie_cpp || 0 },
-            { id: 'autres_ets_credit', label: 'Autres établissements de crédit', type: 'number', value: actif.autres_ets_credit || 0 },
-            { id: 'a_terme', label: 'A Terme', type: 'number', value: actif.a_terme || 0 },
-            { id: 'immobilisation_incorporelle', label: 'Immobilisations Incorporelles', type: 'number', value: actif.immobilisation_incorporelle || 0 },
-            { id: 'immobilisation_corporelle', label: 'Immobilisations Corporelles', type: 'number', value: actif.immobilisation_corporelle || 0 },
-            { id: 'immobilisation_fin', label: 'Immobilisations Financières', type: 'number', value: actif.immobilisation_fin || 0 },
-            { id: 'titres_placement', label: 'Titres de Placement', type: 'number', value: actif.titres_placement || 0 },
-            { id: 'creances_ordinaires', label: 'Créances Ordinaires', type: 'number', value: actif.creances_ordinaires || 0 },
-            { id: 'affacturage', label: 'Affacturage', type: 'number', value: actif.affacturage || 0 },
-            { id: 'credits_campagne', label: 'Crédits de campagne', type: 'number', value: actif.credits_campagne || 0 },
-            { id: 'credits_ordinaire', label: 'Crédits ordinaires', type: 'number', value: actif.credits_ordinaire || 0 },
-            { id: 'operation_credit_bail', label: 'Opérations de crédit-bail', type: 'number', value: actif.operation_credit_bail || 0 },
-            { id: 'actionnaire_ou_associe', label: 'Actionnaires ou associés', type: 'number', value: actif.actionnaire_ou_associe || 0 },
-            { id: 'autres_actifs', label: 'Autres actifs', type: 'number', value: actif.autres_actifs || 0 },
-            { id: 'comptes_commande_divers', label: 'Comptes de commandes et divers', type: 'number', value: actif.comptes_commande_divers || 0 }
-        ];
-        
-        // Commencer le formulaire
-        let formHTML = `
-            <div class="row">
-                <!-- Année -->
-                <div class="col-md-12 mb-3">
-                    <label for="editAnnee" class="form-label">
-                        <i class="fas fa-calendar-alt"></i>Année *
-                    </label>
-                    <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
-                        ${anneeOptions}
-                    </select>
-                </div>
-        `;
-        
-        // Générer les champs
-        let currentSection = '';
-        
-        modelFields.forEach((field, index) => {
-            const value = field.value;
-            const colClass = 'col-md-6 mb-3';
-            
-            // Ajouter des sections
-            if (field.id === 'caisse') {
-                formHTML += `
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-info">
-                            <i class="fas fa-money-bill-wave me-2"></i>Caisse et Disponibilités
-                        </h6>
-                    </div>
-                `;
-            } else if (field.id === 'immobilisation_incorporelle') {
-                formHTML += `
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary">
-                            <i class="fas fa-brain me-2"></i>Actifs Incorporels
-                        </h6>
-                    </div>
-                `;
-            } else if (field.id === 'immobilisation_corporelle') {
-                formHTML += `
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-success">
-                            <i class="fas fa-industry me-2"></i>Actifs Corporels
-                        </h6>
-                    </div>
-                `;
-            } else if (field.id === 'immobilisation_fin') {
-                formHTML += `
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-warning">
-                            <i class="fas fa-chart-line me-2"></i>Actifs Financiers
-                        </h6>
-                    </div>
-                `;
-            } else if (field.id === 'creances_ordinaires') {
-                formHTML += `
-                    <div class="col-12">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-danger">
-                            <i class="fas fa-file-invoice-dollar me-2"></i>Créances
-                        </h6>
-                    </div>
-                `;
-            }
-            
-            if (field.type === 'select') {
-                let optionsHTML = '';
-                field.options.forEach(opt => {
-                    const selected = value == opt.value ? 'selected' : '';
-                    optionsHTML += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
-                });
-                
-                formHTML += `
-                    <div class="${colClass}">
-                        <label for="edit${field.id}" class="form-label">
-                            ${field.label} *
-                        </label>
-                        <select class="form-select" id="edit${field.id}" name="${field.id}">
-                            ${optionsHTML}
-                        </select>
-                    </div>
-                `;
-            } else {
-                // Pour les champs numériques
-                formHTML += `
-                    <div class="${colClass}">
-                        <label for="edit${field.id}" class="form-label">
-                            ${field.label} *
-                        </label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="edit${field.id}" 
-                                name="${field.id}" value="${value}" step="0.01" min="0" required>
-                            <span class="input-group-text">FCFA</span>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-        
-        // Ajouter le bouton de soumission caché pour référence
-        formHTML += `
-            </div>
-            <input type="hidden" name="acheteur" value="${ACHETEUR_ID}">
-        `;
-        
-        $('#editFormContent').html(formHTML);
-        logDebug("Formulaire généré avec succès");
-        
-        // Initialiser Select2 pour l'année après l'insertion
-        setTimeout(() => {
-            $('#editAnnee').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                dropdownParent: $('#editActifModal')
-            });
-            
-            // Définir la valeur
-            if (anneeId) {
-                $('#editAnnee').val(anneeId).trigger('change');
-                logDebug(`Année définie sur ID: ${anneeId}`);
-            }
-        }, 100);
-    }
-
-    // Mettre à jour les résumés dans le formulaire d'édition
-    function updateEditFormSummaries() {
-        const totals = calculateTotals({
-            frais_developpement_prospection: $('#editfraisdeveloppementprospection').val(),
-            brevets_licences_logiciels: $('#editbrevetslicenceslogiciels').val(),
-            droits_propriete_commerciale_baux: $('#editdroitsproprietecommercialebaux').val(),
-            autres_immo_incorporelles: $('#editautresimmoincorporelles').val(),
-            terrains: $('#editterrains').val(),
-            dons_investissements_net: $('#editdonsinvestissementsnet').val(),
-            batiments: $('#editbatiments').val(),
-            agencements_amenagements_installations: $('#editagencementsamenagementsinstallations').val(),
-            materiel_mobilier_actif_biologiques: $('#editmaterielmobilieractifbiologiques').val(),
-            materiel_transport: $('#editmaterieltransport').val(),
-            avances_acompte_immobilisations: $('#editavancesacompteimmobilisations').val(),
-            titres_participation: $('#edittitresparticipation').val(),
-            autres_immobilisations_financieres: $('#editautresimmobilisationsfinancieres').val(),
-            actif_circulant_hao: $('#editactifcirculanthao').val(),
-            stock_encours: $('#editstockencours').val(),
-            fournisseurs_avances_versee: $('#editfournisseursavancesversee').val(),
-            clients: $('#editclients').val(),
-            autres_creances: $('#editautrescreances').val(),
-            valeurs_mobilieres_placement: $('#editvaleursmobilieresplacement').val(),
-            disponibilites: $('#editdisponibilites').val(),
-            banque_cheque_postal_caisse_assimiles: $('#editbanquechequepostalcaisseassimiles').val(),
-            ecart_conversion_actif: $('#editecartconversionactif').val()
-        });
-        
-        // Mise à jour des résumés
-        $('#editSummaryIncorporel').text(formatCurrency(totals.inc));
-        $('#editSummaryCorporel').text(formatCurrency(totals.cor));
-        $('#editSummaryFinancier').text(formatCurrency(totals.fin));
-        $('#editSummaryCirculant').text(formatCurrency(totals.circ));
-        $('#editSummaryDisponibilites').text(formatCurrency(totals.disp));
-        $('#editSummaryTotal').text(formatCurrency(totals.total));
-    }
-    
-    // Écouter les changements dans les champs du formulaire d'édition
-    $(document).on('input', '#editActifForm input[type="number"]', updateEditFormSummaries);
-    
-    // Soumettre le formulaire d'édition
-    $('#editActifForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = $(this).serialize();
-        const $btn = $('#editActifForm button[type="submit"]');
-        const originalText = $btn.html();
-        
-        $btn.prop('disabled', true);
-        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
-        
-        $.ajax({
-            url: `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/editer-un-actif/${selectedActifId}/`,
-            type: 'PUT',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                $('#editActifModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Actif mis à jour avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                loadActifs();
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false);
-                $btn.html(originalText);
-                
-                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
-                
-                if (xhr.responseJSON) {
-                    if (xhr.responseJSON.detail) {
-                        errorMessage = xhr.responseJSON.detail;
-                    } else if (xhr.responseJSON.error) {
-                        errorMessage = xhr.responseJSON.error;
-                    } else if (xhr.responseJSON.non_field_errors) {
-                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
-                    }
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage
-                });
-                
-                if (xhr.status === 401) {
-                    refreshAccessToken(() => $('#editActifForm').submit());
-                }
-            }
-        });
-    });
-    
-    // Supprimer un actif
-    $(document).on('click', '.delete', function() {
-        const actifId = $(this).data('id');
-        
-        Swal.fire({
-            title: 'Confirmer la suppression',
-            text: 'Êtes-vous sûr de vouloir supprimer cet actif ? Cette action est irréversible.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Oui, supprimer',
-            cancelButtonText: 'Annuler'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: `/api/acheteur/${ACHETEUR_ID}/bilan-bancaire/supprimer-des-actifs/`,
-                    type: 'DELETE',
-                    data: JSON.stringify({ ids: [actifId] }),
-                    contentType: 'application/json',
-                    headers: {
-                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    success: function() {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Supprimé',
-                            text: 'Actif supprimé avec succès',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                        loadActifs();
-                    },
-                    error: function(xhr) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erreur',
-                            text: 'Impossible de supprimer l\'actif.'
-                        });
-                        
-                        if (xhr.status === 401) {
-                            refreshAccessToken(() => {
-                                $(`.delete[data-id="${actifId}"]`).click();
-                            });
-                        }
-                    }
-                });
-            }
-        });
-    });
-    
-    // Rafraîchir le token d'accès
-    function refreshAccessToken(callback) {
-        $.ajax({
-            url: '/api/token/refresh/',
-            type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
-            contentType: 'application/json',
-            success: function(response) {
-                if (response.access) {
-                    console.log('Token rafraîchi');
-                    if (callback && typeof callback === 'function') {
-                        callback();
-                    }
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Session expirée',
-                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                    showCancelButton: true,
-                    confirmButtonText: 'Se reconnecter',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login/';
-                    }
-                });
-            }
-        });
-    }
-    
-    // Helper: Get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    // Initialisation
-    function init() {
-        logDebug("Initialisation du module actifs");
-        logDebug(`Acheteur ID: ${ACHETEUR_ID}`);
-        logDebug(`Access Token: ${ACCESS_TOKEN ? 'Présent' : 'Absent'}`);
-
-        // Initialiser les tooltips
-        $('[data-bs-toggle="tooltip"]').tooltip();
-        
-        // Initialiser Select2
-        $('#annee').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Sélectionnez une année...',
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#addActifModal')
-        });
-        
-        // Charger les données initiales
-        loadActifs();
-        updateAddFormSummaries();
-
-        logDebug("Initialisation terminée");
-    }
-    
-    init();
+$(document).on('input','.cell-input',function(){ var aid=+$(this).data('year'); var f=$(this).data('field'); if(!yearData[aid])yearData[aid]={_id:null,_status:'new'}; yearData[aid][f]=parseFloat($(this).val())||0; if(yearData[aid]._status==='saved'){yearData[aid]._status='dirty'; updateBadge(aid);} recalcYear(aid); });
+$(document).on('keydown','.cell-input',function(e){ var $t=$(this); var aid=+$t.data('year'); var ridx=+$t.data('ridx'); var aidIdx=activeYears.indexOf(aid);
+    if(e.key==='Tab'&&!e.shiftKey){e.preventDefault(); var naid=activeYears[aidIdx+1]; if(naid){$('[data-ridx="'+ridx+'"][data-year="'+naid+'"]').focus();}else{var nr=findNextF(ridx); if(nr>=0)$('[data-ridx="'+nr+'"][data-year="'+activeYears[0]+'"]').focus();} }
+    else if(e.key==='Tab'&&e.shiftKey){e.preventDefault(); var paid=activeYears[aidIdx-1]; if(paid){$('[data-ridx="'+ridx+'"][data-year="'+paid+'"]').focus();}else{var pr=findPrevF(ridx); if(pr>=0)$('[data-ridx="'+pr+'"][data-year="'+activeYears[activeYears.length-1]+'"]').focus();} }
+    else if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault(); var nr2=findNextF(ridx); if(nr2>=0)$('[data-ridx="'+nr2+'"][data-year="'+aid+'"]').focus(); }
+    else if(e.key==='ArrowUp'){e.preventDefault(); var pr2=findPrevF(ridx); if(pr2>=0)$('[data-ridx="'+pr2+'"][data-year="'+aid+'"]').focus(); }
 });
+function findNextF(from){for(var i=from+1;i<ROWS.length;i++){if(ROWS[i].t==='f')return i;}return -1;}
+function findPrevF(from){for(var i=from-1;i>=0;i--){if(ROWS[i].t==='f')return i;}return -1;}
+
+function collectPayload(aid){ var p={acheteur:ACHETEUR_ID,annee:aid,type_bilan:'annuel'}; ROWS.forEach(function(row){if(row.t!=='f')return; var $i=$('[data-year="'+aid+'"][data-field="'+row.f+'"]'); p[row.f]=parseFloat($i.val())||0;}); return p; }
+
+function saveYear(aid){
+    var d=yearData[aid]||{_id:null,_status:'new'}; var p=collectPayload(aid); var isNew=!d._id;
+    var url=isNew?'/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/ajouter-un-actif/':'/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/editer-un-actif/'+d._id+'/';
+    setBadge(aid,'saving'); setStatus('{{ t_enr_cours }}…','info');
+    $.ajax({url:url,type:isNew?'POST':'PUT',data:JSON.stringify(p),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},
+        success:function(resp){if(!yearData[aid])yearData[aid]={}; yearData[aid]._id=resp.id; yearData[aid]._status='saved'; updateBadge(aid); setStatus('{{ t_succes }} ('+(anneeMap[aid]||aid)+')','success');},
+        error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveYear(aid);});return;} Swal.fire({icon:'error',title:'{{ t_err_enr|escapejs }}',text:'{{ t_err_enr|escapejs }}',timer:4000,showConfirmButton:true});}
+    });
+}
+
+function saveAll(){
+    var ts=activeYears.filter(function(aid){return !yearData[aid]||yearData[aid]._status!=='saved';}); if(!ts.length){Swal.fire({icon:'info',title:'{% trans "Tout est déjà enregistré" %}',timer:1500,showConfirmButton:false});return;}
+    var idx=0; function next(){ if(idx>=ts.length){setStatus('{% trans "Tout enregistré avec succès" %}','success');return;} var aid=ts[idx++]; var d=yearData[aid]||{}; var p=collectPayload(aid); var isNew=!d._id; var url=isNew?'/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/ajouter-un-actif/':'/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/editer-un-actif/'+d._id+'/'; setBadge(aid,'saving'); $.ajax({url:url,type:isNew?'POST':'PUT',data:JSON.stringify(p),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},success:function(resp){if(!yearData[aid])yearData[aid]={}; yearData[aid]._id=resp.id; yearData[aid]._status='saved'; updateBadge(aid); next();},error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveAll();});return;} next();}}); }
+    next();
+}
+
+function addYear(aid){ if(activeYears.indexOf(aid)!==-1){Swal.fire({icon:'info',title:'{% trans "Cette année est déjà affichée" %}',timer:1200,showConfirmButton:false});return;} if(!yearData[aid])yearData[aid]={_id:null,_status:'new'}; activeYears.push(aid); activeYears.sort(function(a,b){return (anneeMap[b]||0)-(anneeMap[a]||0);}); renderAll(); }
+function masquerAnnee(aid){ var i=activeYears.indexOf(aid); if(i>-1)activeYears.splice(i,1); delete yearData[aid]; renderAll(); }
+function supprimerAnnee(aid){
+    var an=anneeMap[aid]||aid; var d=yearData[aid]; if(!d||!d._id){masquerAnnee(aid);return;}
+    Swal.fire({title:'{% trans "Supprimer le bilan" %} '+an+' ?',html:'<p class="text-muted mb-0" style="font-size:.85rem;">{{ t_suppr_msg|escapejs }} {% trans "Exercice" %} : <strong>'+an+'</strong></p>',icon:'warning',showCancelButton:true,confirmButtonColor:'#dc3545',cancelButtonColor:'#6c757d',confirmButtonText:'<i class="fas fa-trash-alt me-1"></i>{{ t_suppr_def|escapejs }}',cancelButtonText:'{{ t_cancel|escapejs }}'})
+    .then(function(r){ if(!r.isConfirmed)return; setBadge(aid,'saving');
+        $.ajax({url:'/api/acheteur/'+ACHETEUR_ID+'/bilan-bancaire/supprimer-des-actifs/',type:'DELETE',data:JSON.stringify({ids:[d._id]}),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},
+            success:function(){ var i=activeYears.indexOf(aid); if(i>-1)activeYears.splice(i,1); delete yearData[aid]; renderAll(); Swal.fire({icon:'success',title:'{{ t_del_ok|escapejs }}',timer:1500,showConfirmButton:false}); },
+            error:function(xhr){ if(xhr.status===401){refreshToken(function(){supprimerAnnee(aid);});return;} updateBadge(aid); Swal.fire({icon:'error',title:'{{ t_del_err|escapejs }}',timer:2000,showConfirmButton:false}); }
+        });
+    });
+}
+
+function renderYearPills(){ var h=''; activeYears.forEach(function(aid){var an=anneeMap[aid]||'?'; var st=(yearData[aid]&&yearData[aid]._status)||'new'; h+='<span class="badge '+(st==='saved'?'bg-success':st==='dirty'?'bg-primary':'bg-warning text-dark')+'">'+an+'</span>';}); if(!activeYears.length)h='<span class="text-muted" style="font-size:.75rem;">{% trans "Aucune année sélectionnée" %}</span>'; document.getElementById('yearPills').innerHTML=h; }
+
+function refreshAccessToken(){ return fetch('/api/token/refresh/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({'refresh':'{{ refresh }}'})}).then(function(r){if(!r.ok){window.location.href='/';throw new Error('expired');} return r.json();}).then(function(d){ACCESS_TOKEN=d.access;}); }
+function refreshToken(cb){ refreshAccessToken().then(function(){if(cb)cb();}).catch(function(){}); }
+
+document.getElementById('btnSaveAll').addEventListener('click', saveAll);
+document.getElementById('btnConfirmAddYear').addEventListener('click', function(){ var sel=document.getElementById('selectAddYear'); var aid=parseInt(sel.value); if(!aid)return; $('#modalAddYear').modal('hide'); sel.value=''; addYear(aid); });
+
+function adjustGridHeight(){ var outer=document.querySelector('.bilan-outer'); if(!outer)return; var rect=outer.getBoundingClientRect(); outer.style.height=(window.innerHeight-rect.top)+'px'; }
+$(document).ready(function(){ adjustGridHeight(); init(); });
+window.addEventListener('resize', adjustGridHeight);
 </script>
 {% endblock %}
