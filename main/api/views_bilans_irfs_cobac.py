@@ -442,24 +442,26 @@ class AddActifIFRSOneView(APIView):
                 if type_bilan == 'annuel':
                     semestre = None
                 
-                existing = ActifIFRS.objects.filter(
+                existing_actif = ActifIFRS.objects.filter(
                     acheteur_id=acheteur_id,
                     annee_id=annee_id,
                     semestre=semestre
-                ).exists()
-                
-                if existing:
-                    return Response(
-                        {"error": "Un bilan IFRS existe déjà pour cette période."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
+                ).first()
+
+                if existing_actif:
+                    # Upsert : mettre à jour l'enregistrement existant
+                    upd_serializer = EditActifIFRSOneSerializer(existing_actif, data=data, partial=False)
+                    if upd_serializer.is_valid():
+                        actif = upd_serializer.save(updated_by=request.user)
+                        return Response(ActifIFRSOneSerializer(actif).data, status=status.HTTP_200_OK)
+                    return Response(upd_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 # Sauvegarder avec l'utilisateur connecté
                 actif = serializer.save(
                     created_by=request.user,
                     updated_by=request.user
                 )
-                
+
                 # Retourner l'objet créé
                 return Response(
                     ActifIFRSOneSerializer(actif).data,
@@ -677,24 +679,25 @@ class AddPassifIFRSOneView(APIView):
                 if type_bilan == 'annuel':
                     semestre = None
                 
-                existing = PassifIFRS.objects.filter(
+                existing_passif = PassifIFRS.objects.filter(
                     acheteur_id=acheteur_id,
                     annee_id=annee_id,
                     semestre=semestre
-                ).exists()
-                
-                if existing:
-                    return Response(
-                        {"error": "Un bilan IFRS (passif) existe déjà pour cette période."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
+                ).first()
+
+                if existing_passif:
+                    upd_serializer = EditPassifIFRSOneSerializer(existing_passif, data=data, partial=False)
+                    if upd_serializer.is_valid():
+                        passif = upd_serializer.save(updated_by=request.user)
+                        return Response(PassifIFRSOneSerializer(passif).data, status=status.HTTP_200_OK)
+                    return Response(upd_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 # Sauvegarder avec l'utilisateur connecté
                 passif = serializer.save(
                     created_by=request.user,
                     updated_by=request.user
                 )
-                
+
                 # Retourner l'objet créé
                 return Response(
                     PassifIFRSOneSerializer(passif).data,
@@ -917,24 +920,25 @@ class AddResultatIFRSOneView(APIView):
                 if type_bilan == 'annuel':
                     semestre = None
                 
-                existing = ResultatIFRS.objects.filter(
+                existing_resultat = ResultatIFRS.objects.filter(
                     acheteur_id=acheteur_id,
                     annee_id=annee_id,
                     semestre=semestre
-                ).exists()
-                
-                if existing:
-                    return Response(
-                        {"error": "Un compte de résultat IFRS existe déjà pour cette période."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
+                ).first()
+
+                if existing_resultat:
+                    upd_serializer = EditResultatIFRSOneSerializer(existing_resultat, data=data, partial=False)
+                    if upd_serializer.is_valid():
+                        resultat = upd_serializer.save(updated_by=request.user)
+                        return Response(ResultatIFRSOneSerializer(resultat).data, status=status.HTTP_200_OK)
+                    return Response(upd_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
                 # Sauvegarder avec l'utilisateur connecté
                 resultat = serializer.save(
                     created_by=request.user,
                     updated_by=request.user
                 )
-                
+
                 # Retourner l'objet créé
                 return Response(
                     ResultatIFRSOneSerializer(resultat).data,

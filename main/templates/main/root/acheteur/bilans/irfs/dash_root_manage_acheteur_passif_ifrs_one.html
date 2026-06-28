@@ -284,7 +284,7 @@ function saveYear(aid){
     setBadge(aid,'saving'); setStatus('{{ t_enr_cours }}…','info');
     $.ajax({url:url,type:isNew?'POST':'PUT',data:JSON.stringify(p),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},
         success:function(resp){if(!yearData[aid])yearData[aid]={}; yearData[aid]._id=resp.id; yearData[aid]._status='saved'; updateBadge(aid); setStatus('{{ t_succes }} ('+(anneeMap[aid]||aid)+')','success');},
-        error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveYear(aid);});return;} Swal.fire({icon:'error',title:'{{ t_err_enr|escapejs }}',text:'{{ t_err_enr|escapejs }}',timer:4000,showConfirmButton:true});}
+        error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveYear(aid);});return;} var msg=''; try{var r=JSON.parse(xhr.responseText);msg=r.error||r.detail||JSON.stringify(r);}catch(e){msg=xhr.responseText||'';} Swal.fire({icon:'error',title:'{{ t_err_enr|escapejs }}'+' (HTTP '+xhr.status+')',text:msg||'Erreur inconnue',timer:8000,showConfirmButton:true});}
     });
 }
 
