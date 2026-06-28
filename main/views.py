@@ -8277,19 +8277,37 @@ def dash_root_manage_acheteur_actif_ifrs_one(request, acheteur_id):
     
     # Récupérer toutes les années
     annee_list = Annee.objects.all()
-    
+
+    # Années du CompteFinancier (pré-remplissage grille)
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     # Options pour le type de bilan
     type_bilan_choices = [
         {'value': 'annuel', 'label': 'Bilan annuel'},
         {'value': 'semestriel', 'label': 'Bilan semestriel'},
     ]
-    
+
     # Options pour les semestres
     semestre_choices = [
         {'value': 1, 'label': '1er semestre (Janvier - Juin)'},
         {'value': 2, 'label': '2e semestre (Juillet - Décembre)'},
     ]
-    
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -8301,10 +8319,11 @@ def dash_root_manage_acheteur_actif_ifrs_one(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": acheteur_id,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
         "type_bilan_choices": json.dumps(type_bilan_choices),
         "semestre_choices": json.dumps(semestre_choices),
     }
-    
+
     return render(
         request,
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_actif_ifrs_one.html",
@@ -8367,6 +8386,24 @@ def dash_root_manage_acheteur_passif_ifrs_one(request, acheteur_id):
         {'value': 2, 'label': '2e semestre (Juillet - Décembre)'},
     ]
     
+    # Années du CompteFinancier (pré-remplissage grille)
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -8378,10 +8415,11 @@ def dash_root_manage_acheteur_passif_ifrs_one(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": acheteur_id,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
         "type_bilan_choices": json.dumps(type_bilan_choices),
         "semestre_choices": json.dumps(semestre_choices),
     }
-    
+
     return render(
         request,
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_passif_ifrs_one.html",
@@ -8445,6 +8483,24 @@ def dash_root_manage_acheteur_resultat_ifrs_one(request, acheteur_id):
         {'value': 2, 'label': '2e semestre (Juillet - Décembre)'},
     ]
     
+    # Années du CompteFinancier (pré-remplissage grille)
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        ao = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': ao.id, 'annee': ao.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -8456,10 +8512,11 @@ def dash_root_manage_acheteur_resultat_ifrs_one(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "id_acheteur": acheteur_id,
         "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
         "type_bilan_choices": json.dumps(type_bilan_choices),
         "semestre_choices": json.dumps(semestre_choices),
     }
-    
+
     return render(
         request,
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_resultat_ifrs_one.html",
