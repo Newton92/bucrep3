@@ -2033,6 +2033,24 @@ def dash_root_manage_acheteur(request, acheteur_id):
         except Exception:
             bancaire_summary = None
 
+    # --- Résumé bilan IFRS COBAC (dernière année avec Actif + Passif) ---
+    ifrs_summary = None
+    try:
+        ifrs_actif = ActifIFRS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+        if ifrs_actif:
+            ifrs_passif = PassifIFRS.objects.filter(acheteur=acheteur, annee=ifrs_actif.annee).first()
+            if ifrs_passif:
+                _ia = Decimal(str(ifrs_actif.total_actif or 0))
+                _ip = Decimal(str(ifrs_passif.total_passif or 0))
+                _id = abs(_ia - _ip)
+                ifrs_summary = {
+                    'annee':    ifrs_actif.annee.annee if ifrs_actif.annee else '—',
+                    'balanced': _id < Decimal('1'),
+                    'diff':     _ratio_fmt(_id, decimals=0),
+                }
+    except Exception:
+        ifrs_summary = None
+
     context = {
         "acheteur_active": "active",
         "user": user,
@@ -2051,6 +2069,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "classique_summary": classique_summary,
         "syscohada_summary": syscohada_summary,
         "bancaire_summary": bancaire_summary,
+        "ifrs_summary": ifrs_summary,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
@@ -8522,8 +8541,179 @@ def dash_root_manage_acheteur_resultat_ifrs_one(request, acheteur_id):
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_resultat_ifrs_one.html",
         context,
     )
-    
-    
+
+
+@login_required
+def dash_root_manage_acheteur_ratio_ifrs(request, acheteur_id):
+    acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+    except Exception:
+        return redirect_to_login(request.get_full_path())
+
+    from decimal import Decimal, InvalidOperation
+
+    def _d(v):
+        try:
+            return Decimal(str(v)) if v is not None else Decimal('0')
+        except (InvalidOperation, TypeError):
+            return Decimal('0')
+
+    def _fmt(v, pct=False, decimals=2):
+        if v is None:
+            return '—'
+        try:
+            n = float(v) * (100 if pct else 1)
+            if pct:
+                return f"{round(n, decimals)} %"
+            return f"{round(n, decimals):.{decimals}f}x"
+        except Exception:
+            return '—'
+
+    def _pct(v, decimals=2):
+        if v is None:
+            return '—'
+        try:
+            return f"{round(float(v) * 100, decimals)} %"
+        except Exception:
+            return '—'
+
+    def _ratio(num, den):
+        try:
+            num = _d(num)
+            den = _d(den)
+            if den == 0:
+                return None
+            return float(num / den)
+        except Exception:
+            return None
+
+    actifs = {a.annee_id: a for a in ActifIFRS.objects.filter(acheteur=acheteur).select_related('annee')}
+    passifs = {p.annee_id: p for p in PassifIFRS.objects.filter(acheteur=acheteur).select_related('annee')}
+    resultats = {r.annee_id: r for r in ResultatIFRS.objects.filter(acheteur=acheteur).select_related('annee')}
+
+    all_annee_ids = sorted(set(actifs) | set(passifs) | set(resultats),
+                           key=lambda aid: (actifs.get(aid) or passifs.get(aid) or resultats.get(aid)).annee.annee if (actifs.get(aid) or passifs.get(aid) or resultats.get(aid)) else 0,
+                           reverse=True)
+
+    years_data = []
+    for aid in all_annee_ids:
+        a = actifs.get(aid)
+        p = passifs.get(aid)
+        r = resultats.get(aid)
+        annee_obj = (a or p or r).annee if (a or p or r) else None
+        if not annee_obj:
+            continue
+
+        actif_total   = _d(a.total_actif if a else 0)
+        passif_total  = _d(p.total_passif if p else 0)
+        cap_propres   = _d(p.total_capitaux_propres if p else 0)
+        passif_nc     = _d(p.total_passif_non_courant if p else 0)
+        passif_c      = _d(p.total_passif_courant if p else 0)
+        actif_c       = _d(a.total_actif_courant if a else 0)
+        stocks        = _d(((_d(a.matieres_premieres) + _d(a.produits_finis)) if a else 0))
+        total_produits = _d(r.total_produits if r else 0)
+        total_charges  = _d(r.total_charges if r else 0)
+        chiffre_aff   = _d(r.chiffre_affaires if r else 0)
+        resultat_op   = _d(r.resultat_operationnel if r else 0)
+        resultat_net  = _d(r.resultat_net if r else 0)
+
+        diff = abs(actif_total - passif_total)
+        balanced = diff < Decimal('1')
+
+        # Solvabilité
+        r_solv_raw = _ratio(cap_propres, actif_total)
+        # Levier
+        r_lev_raw = _ratio(actif_total, cap_propres)
+        # Liquidité générale
+        r_liqg_raw = _ratio(actif_c, passif_c)
+        # Liquidité réduite
+        r_liqr_raw = _ratio(actif_c - stocks, passif_c)
+        # Autonomie financière
+        r_auto_raw = _ratio(cap_propres, passif_total)
+        # Endettement net
+        r_endet_raw = _ratio(passif_nc + passif_c, cap_propres)
+        # ROA
+        r_roa_raw = _ratio(resultat_net, actif_total)
+        # ROE
+        r_roe_raw = _ratio(resultat_net, cap_propres)
+        # Marge nette
+        r_mnet_raw = _ratio(resultat_net, total_produits)
+        # Marge opérationnelle
+        r_mop_raw = _ratio(resultat_op, chiffre_aff)
+        # Coefficient d'exploitation
+        r_eff_raw = _ratio(total_charges, total_produits)
+
+        def fmt_pct(v):
+            if v is None:
+                return '—'
+            return f"{round(v * 100, 2)} %"
+
+        def fmt_x(v):
+            if v is None:
+                return '—'
+            return f"{round(v, 2)}x"
+
+        def fmt_money(v):
+            try:
+                return f"{int(float(v)):,}".replace(',', ' ')
+            except Exception:
+                return '—'
+
+        years_data.append({
+            'annee':        annee_obj.annee,
+            'balanced':     balanced,
+            'diff':         fmt_money(diff),
+            'actif_total':  fmt_money(actif_total),
+            'passif_total': fmt_money(passif_total),
+            'cap_propres':  fmt_money(cap_propres),
+            'passif_nc':    fmt_money(passif_nc),
+            'passif_c':     fmt_money(passif_c),
+            'actif_c':      fmt_money(actif_c),
+            'resultat_net': fmt_money(resultat_net),
+            'total_produits': fmt_money(total_produits),
+            'total_charges':  fmt_money(total_charges),
+            # ratios formatés
+            'r_solv':     fmt_pct(r_solv_raw),
+            'r_solv_raw': r_solv_raw * 100 if r_solv_raw is not None else None,
+            'r_lev':      fmt_x(r_lev_raw),
+            'r_lev_raw':  r_lev_raw,
+            'r_liqg':     fmt_x(r_liqg_raw),
+            'r_liqg_raw': r_liqg_raw,
+            'r_liqr':     fmt_x(r_liqr_raw),
+            'r_liqr_raw': r_liqr_raw,
+            'r_auto':     fmt_pct(r_auto_raw),
+            'r_auto_raw': r_auto_raw * 100 if r_auto_raw is not None else None,
+            'r_endet':    fmt_x(r_endet_raw),
+            'r_endet_raw': r_endet_raw,
+            'r_roa':      fmt_pct(r_roa_raw),
+            'r_roa_raw':  r_roa_raw * 100 if r_roa_raw is not None else None,
+            'r_roe':      fmt_pct(r_roe_raw),
+            'r_roe_raw':  r_roe_raw * 100 if r_roe_raw is not None else None,
+            'r_mnet':     fmt_pct(r_mnet_raw),
+            'r_mnet_raw': r_mnet_raw * 100 if r_mnet_raw is not None else None,
+            'r_mop':      fmt_pct(r_mop_raw),
+            'r_mop_raw':  r_mop_raw * 100 if r_mop_raw is not None else None,
+            'r_eff':      fmt_pct(r_eff_raw),
+            'r_eff_raw':  r_eff_raw * 100 if r_eff_raw is not None else None,
+        })
+
+    context = {
+        "acheteur_active": "active",
+        "user": request.user,
+        "refresh": str(refresh),
+        "access": access_token,
+        "acheteur": acheteur,
+        "id_acheteur": acheteur_id,
+        "years_data": years_data,
+    }
+    return render(request, "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_ratio_ifrs.html", context)
+
+
 # Dans votre fichier views.py
  
     
