@@ -250,9 +250,7 @@ class UpdateProvinceSerializer(serializers.ModelSerializer):
 
 
 class VilleSerializer(serializers.ModelSerializer):
-    province = (
-        ProvinceSerializer()
-    )  # Utilisez le sérialiseur pour inclure les détails du pays
+    pays = PaysSerializer(read_only=True)
 
     class Meta:
         model = Ville
@@ -260,7 +258,7 @@ class VilleSerializer(serializers.ModelSerializer):
             "id",
             "nom",
             "code",
-            "province",
+            "pays",
             "date_creation",
             "date_modification",
             "is_active",
@@ -294,7 +292,7 @@ class AddVilleSerializer(serializers.ModelSerializer):
             "id",
             "nom",
             "code",
-            "province",
+            "pays",
             "date_creation",
             "date_modification",
             "is_active",
@@ -309,7 +307,7 @@ class UpdateVilleSerializer(serializers.ModelSerializer):
             "id",
             "nom",
             "code",
-            "province",
+            "pays",
             "date_creation",
             "date_modification",
             "is_active",

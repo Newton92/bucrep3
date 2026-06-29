@@ -76,7 +76,6 @@
                                 <th scope="col" class="border-0">Code</th>
                                 <th scope="col" class="border-0">Libellé</th>
                                 <th scope="col" class="border-0">Pays</th>
-                                <th scope="col" class="border-0">Province</th>
                                 <th scope="col" class="border-0">{% trans "Statut" %}</th>
                                 <th scope="col" class="border-0 rounded-end">{% trans "Action" %}</th>
                             </tr>
@@ -128,11 +127,11 @@
                         <input type="text" class="form-control" id="code" name="code" required>
                     </div>
                     <div class="mb-3">
-                        <label for="province" class="form-label">Province</label>
-                        <select class="form-select" id="province" name="province" required>
-                            <option value="">Sélectionnez une province</option>
-                            {% for province in province_list %}
-                                <option value="{{ province.id }}">{{ province.nom }} - ({{ province.pays.code }})</option>
+                        <label for="pays" class="form-label">Pays</label>
+                        <select class="form-select" id="pays" name="pays" required>
+                            <option value="">Sélectionnez un pays</option>
+                            {% for p in pays_list %}
+                                <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -171,10 +170,11 @@
                         <input type="text" class="form-control" id="editCode" name="code" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editProvince" class="form-label">Province</label>
-                        <select class="form-select" id="editProvince" name="province" required>
-                            {% for province in province_list %}
-                                <option value="{{ province.id }}">{{ province.nom }} - ({{ province.pays.code }})</option>
+                        <label for="editPays" class="form-label">Pays</label>
+                        <select class="form-select" id="editPays" name="pays" required>
+                            <option value="">Sélectionnez un pays</option>
+                            {% for p in pays_list %}
+                                <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -232,14 +232,13 @@
                     response.results.forEach(function(ville, index) {
                         // Dans la fonction loadVilles, modifiez cette partie :
                         $('#villeTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + (index + 1 + (page - 1) * 10) + '</td>' +
                             '<td>' + ville.code + '</td>' +
                             '<td>' + ville.nom + '</td>' +
-                            '<td>' + (ville.province && ville.province.pays ? ville.province.pays.nom : 'Non défini') + '</td>' +
-                            '<td>' + (ville.province ? ville.province.nom : 'Non défini') + '</td>' +
+                            '<td>' + (ville.pays ? ville.pays.nom : 'Non défini') + '</td>' +
                             '<td>' + (ville.is_active ? 'Actif' : 'Inactif') + '</td>' +
                             '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + ville.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + ville.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{% trans 'Supprimer' %}"><i class="bi bi-trash"></i></button></td>' +
+                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + ville.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{% trans "Supprimer" %}"><i class="bi bi-trash"></i></button></td>' +
                             '</tr>');
                     });
                 },
@@ -320,7 +319,7 @@
                     $('#editVilleId').val(response.id);
                     $('#editNom').val(response.nom);
                     $('#editCode').val(response.code);
-                    $('#editProvince').val(response.province.id);
+                    $('#editPays').val(response.pays ? response.pays.id : '');
                     $('#editIsActive').val(response.is_active ? 'true' : 'false');
                     $('#editVilleModal').modal('show');
                 },

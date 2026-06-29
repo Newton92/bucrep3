@@ -1126,19 +1126,14 @@ def dash_root_ville(request):
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
 
-    # Récupérer tous les pays
-    # pays_list = Pays.objects.all()
-
-    # Récupérer tous les pays
-    province_list = Province.objects.all()
+    pays_list = Pays.objects.all().order_by("nom")
 
     context = {
         "locations_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
-        # 'pays_list': pays_list,  # Ajouter la liste des pays au contexte
-        "province_list": province_list,  # Ajouter la liste des pays au contexte
+        "pays_list": pays_list,
     }
     return render(request, "main/root/ville/dash_root_ville.html", context)
 
