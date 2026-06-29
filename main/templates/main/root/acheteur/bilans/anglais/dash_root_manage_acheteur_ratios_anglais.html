@@ -219,18 +219,27 @@ function init(){
 
 function processData(actifs, passifs, resultats){
     actifData={}; passifData={}; resultData={};
+    actifs.forEach(function(o){   var aid=getAid(o); if(aid){ actifData[aid]=o; }});
+    passifs.forEach(function(o){  var aid=getAid(o); if(aid){ passifData[aid]=o; }});
+    resultats.forEach(function(o){var aid=getAid(o); if(aid){ resultData[aid]=o; }});
+
+    /* Only include years where BOTH Assets and Equity & Liabilities data exist.
+       Income Statement is optional (ROA/ROE show — if missing). */
     var yearSet={};
-    actifs.forEach(function(o){   var aid=getAid(o); if(aid){ actifData[aid]=o;  yearSet[aid]=true; }});
-    passifs.forEach(function(o){  var aid=getAid(o); if(aid){ passifData[aid]=o; yearSet[aid]=true; }});
-    resultats.forEach(function(o){var aid=getAid(o); if(aid){ resultData[aid]=o; yearSet[aid]=true; }});
-    CF_ANNEES.forEach(function(a){ if(a.id) yearSet[a.id]=true; });
+    Object.keys(actifData).forEach(function(aid){
+        if(passifData[aid]) yearSet[aid]=true;
+    });
+
     activeYears=Object.keys(yearSet).map(Number);
     activeYears.sort(function(a,b){ return (anneeMap[b]||0)-(anneeMap[a]||0); });
     hideLoader();
     renderAll();
     var na=actifs.length, np=passifs.length, nr=resultats.length;
     setStatus('Assets: '+na+' · Equity: '+np+' · Income: '+nr+' record(s)', 'success');
-    if(activeYears.length===0) showLoader('No data available. Please enter balance sheet data first.',true);
+    if(activeYears.length===0) showLoader(
+        'No complete data found. Enter both Assets and Equity & Liabilities for the same fiscal year, then come back here.',
+        true
+    );
 }
 
 /* ── Ratio computation ────────────────────────────────────────── */

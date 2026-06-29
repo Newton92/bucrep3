@@ -2052,12 +2052,13 @@ def dash_root_manage_acheteur(request, acheteur_id):
     except Exception:
         ifrs_summary = None
 
-    # --- Résumé bilan Anglais (dernière année avec Actif + Passif) ---
+    # --- Résumé bilan Anglais (actif requis ; passif si disponible) ---
     anglais_summary = None
     try:
         en_actif = ActifA.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
         if en_actif:
             en_passif = PassifA.objects.filter(acheteur=acheteur, annee=en_actif.annee).first()
+            annee_label = en_actif.annee.annee if en_actif.annee else '—'
             if en_passif:
                 def _d(v): return Decimal(str(v or 0))
                 en_actif_total = (
@@ -2082,9 +2083,17 @@ def dash_root_manage_acheteur(request, acheteur_id):
                 )
                 en_diff = abs(en_actif_total - en_passif_total)
                 anglais_summary = {
-                    'annee':    en_actif.annee.annee if en_actif.annee else '—',
-                    'balanced': en_diff < Decimal('1'),
-                    'diff':     _ratio_fmt(en_diff, decimals=0),
+                    'annee':      annee_label,
+                    'has_passif': True,
+                    'balanced':   en_diff < Decimal('1'),
+                    'diff':       _ratio_fmt(en_diff, decimals=0),
+                }
+            else:
+                anglais_summary = {
+                    'annee':      annee_label,
+                    'has_passif': False,
+                    'balanced':   False,
+                    'diff':       None,
                 }
     except Exception:
         anglais_summary = None
