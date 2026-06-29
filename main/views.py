@@ -5139,6 +5139,72 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     )
 
 
+@login_required
+def dash_root_manage_acheteur_ratios_anglais(request, acheteur_id):
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise', 'forme_juridique', 'pays', 'province', 'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id,
+    )
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+    }
+    acheteur_json = json.dumps(acheteur_data, default=str)
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect_to_login(request.get_full_path())
+
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    id_acheteur = acheteur_id
+    annee_list = Annee.objects.all()
+
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
+    context = {
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
+        "id_acheteur": id_acheteur,
+        "annee_list": annee_list,
+        "cf_annees_json": json.dumps(cf_annees),
+    }
+    return render(
+        request,
+        "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_ratios_anglais.html",
+        context,
+    )
+
+
 def _bilan_anglais_base_context(request, acheteur_id):
     """Shared context builder for all bilan anglais add/edit views."""
     acheteur = get_object_or_404(

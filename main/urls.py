@@ -546,6 +546,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_resultat_anglais",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/ratios/",
+        dash_root_manage_acheteur_ratios_anglais,
+        name="dash_root_manage_acheteur_ratios_anglais",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/actifs/ajouter/",
         dash_root_manage_acheteur_add_actif_anglais,
         name="dash_root_manage_acheteur_add_actif_anglais",

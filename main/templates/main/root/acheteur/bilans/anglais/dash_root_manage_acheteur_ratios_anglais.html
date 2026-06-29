@@ -1,0 +1,385 @@
+{% extends 'main/root/base.html' %}
+{% load static i18n %}
+
+{% block styles %}
+<style>
+:root{--app-blue:#0a95ca;--app-mid:#0d80be;--app-dark:#106cb2;--app-accent:#25add6;--app-light:#e6f4fb;--app-xlight:#f0f8fd;}
+html{overflow:hidden;}
+.page-bk-header{background:linear-gradient(135deg,var(--app-dark) 0%,var(--app-blue) 100%);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 8px rgba(16,108,178,.35);z-index:100;position:relative;}
+.page-bk-header h6{margin:0;color:#fff;font-size:.92rem;}
+.page-bk-header .info-badge{background:rgba(255,255,255,.2);color:#fff;border-radius:20px;font-size:.7rem;padding:2px 9px;margin-left:7px;border:1px solid rgba(255,255,255,.25);}
+.bilan-outer{display:flex;flex-direction:column;}
+.bilan-toolbar{background:var(--app-xlight);border-bottom:1px solid #c8e4f5;padding:5px 12px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.bilan-toolbar .toolbar-label{font-size:.72rem;color:var(--app-dark);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.bilan-grid-scroll{flex:1;overflow:auto;position:relative;}
+.bg-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:.82rem;}
+.bg-table thead tr th{position:sticky;top:0;z-index:20;background:var(--app-dark);color:#fff;border:1px solid rgba(255,255,255,.15);padding:0;white-space:nowrap;}
+.bg-table thead tr th.col-label-head{left:0;z-index:30;min-width:300px;max-width:300px;padding:0 10px;text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;line-height:34px;background:var(--app-dark);}
+.bg-table td.col-label{position:sticky;left:0;background:#fff;z-index:10;min-width:300px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:3px solid var(--app-blue);padding:3px 8px;}
+.bg-table tr.row-h1 td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;padding:4px 10px;border-top:2px solid var(--app-mid);}
+.bg-table tr.row-h1 td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-mid);}
+.bg-table tr.row-field td{border-bottom:1px solid #e8f0f5;padding:0;}
+.bg-table tr.row-field td.col-label{padding:2px 8px 2px 26px;color:#2c3e50;font-size:.81rem;border-bottom:1px solid #e8f0f5;}
+.bg-table tr.row-field:hover td{background:var(--app-xlight);}
+.bg-table tr.row-field:hover td.col-label{background:var(--app-xlight);}
+.bg-table tr.row-total td{background:#c5e3f5;color:var(--app-dark);font-weight:700;font-size:.83rem;padding:4px 8px;border-top:2px solid var(--app-blue);}
+.bg-table tr.row-total td.col-label{background:#c5e3f5;color:var(--app-dark);}
+.bg-table tr.row-grand td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.88rem;padding:5px 8px;border-top:3px solid var(--app-mid);}
+.bg-table tr.row-grand td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-accent);}
+.year-head-cell{text-align:center;min-width:155px;max-width:155px;vertical-align:middle;padding:6px 6px !important;border-left:2px solid rgba(255,255,255,.2) !important;}
+.yh-top{display:flex;align-items:center;justify-content:center;gap:5px;line-height:1;}
+.yh-year{font-size:.95rem;font-weight:800;letter-spacing:.03em;}
+.bg-table td.year-cell{text-align:right;padding:0;border-left:1px solid #daeaf5;min-width:155px;max-width:155px;}
+.cell-computed{padding:3px 12px;display:block;text-align:right;font-size:.83rem;}
+.grid-loader-overlay{position:absolute;inset:0;background:rgba(236,246,253,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;gap:16px;}
+.grid-loader-overlay.hidden{display:none;}
+.loader-spinner{width:52px;height:52px;border:5px solid var(--app-light);border-top-color:var(--app-blue);border-radius:50%;animation:bilan-spin .8s linear infinite;}
+@keyframes bilan-spin{to{transform:rotate(360deg);}}
+.loader-text{color:var(--app-mid);font-size:.9rem;font-weight:600;margin:0;}.loader-error{color:#dc3545;font-size:.85rem;font-weight:600;margin:0;}
+.bilan-nav-tabs{display:flex;gap:2px;}
+.bilan-nav-tab{display:inline-flex;align-items:center;padding:3px 14px;border-radius:4px;font-size:.78rem;font-weight:600;text-decoration:none;color:rgba(255,255,255,.6);border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.bilan-nav-tab:hover{color:#fff;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);text-decoration:none;}
+.bilan-nav-tab.active{color:#fff;background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);}
+/* Ratio colour coding */
+.ratio-good{background:#d1e7dd !important;color:#0a3622 !important;font-weight:700;}
+.ratio-ok{background:#fff3cd !important;color:#664d03 !important;font-weight:700;}
+.ratio-bad{background:#f8d7da !important;color:#58151c !important;font-weight:700;}
+.ratio-na{background:#f8f9fa !important;color:#9aabb8 !important;font-style:italic;}
+.balance-ok{background:#198754 !important;color:#fff !important;font-weight:700;}
+.balance-err{background:#dc3545 !important;color:#fff !important;font-weight:700;}
+.balance-na{background:#6c757d !important;color:#fff !important;}
+/* Legend */
+.ratio-legend{display:flex;gap:10px;align-items:center;font-size:.7rem;margin-left:auto;}
+.ratio-legend span{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:3px;font-weight:600;}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  @page{size:A4 landscape;margin:.8cm .6cm;}
+  .navbar,.app-sidebar-col,.page-bk-header,.bilan-toolbar,.grid-loader-overlay{display:none !important;}
+  html,body{overflow:visible !important;height:auto !important;}
+  .bilan-outer{height:auto !important;overflow:visible !important;}
+  .bilan-grid-scroll{overflow:visible !important;height:auto !important;}
+  .bg-table thead tr th{position:static !important;}
+  .bg-table td.col-label{position:static !important;min-width:240px;max-width:240px;}
+  .bg-table td.year-cell{min-width:110px;max-width:110px;}
+  .bg-table{font-size:.68rem;width:100%;}
+  .bg-table tr.row-h1 td{background:#1a1a1a !important;color:#fff !important;}
+  .bg-table tr.row-total td{background:#ccc !important;color:#000 !important;}
+  .bg-table tr.row-grand td{background:#000 !important;color:#fff !important;}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-bk-header">
+    <div class="d-flex align-items-center">
+        <h6><i class="fas fa-chart-bar me-2"></i>Ratios &amp; Analysis — English Balance Sheet</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
+    </div>
+    <div class="bilan-nav-tabs">
+        <a href="{% url 'dash_root_manage_acheteur_actif_anglais'    id_acheteur %}" class="bilan-nav-tab">Assets</a>
+        <a href="{% url 'dash_root_manage_acheteur_passif_anglais'   id_acheteur %}" class="bilan-nav-tab">Equity &amp; Liabilities</a>
+        <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' id_acheteur %}" class="bilan-nav-tab">Income Statement</a>
+        <a href="{% url 'dash_root_manage_acheteur_ratios_anglais'   id_acheteur %}" class="bilan-nav-tab active">Ratios &amp; Analysis</a>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-light" onclick="window.print()"><i class="fas fa-print me-1"></i>Print</button>
+        <button class="btn btn-sm btn-info fw-semibold text-white" id="btnRefresh"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-warning"><i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}</a>
+    </div>
+</div>
+
+<div class="bilan-outer">
+    <div class="bilan-toolbar">
+        <span class="toolbar-label">Years :</span>
+        <div id="yearPills" class="d-flex gap-1 flex-wrap"></div>
+        <div class="ratio-legend ms-auto">
+            <span class="ratio-good"><i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Good</span>
+            <span class="ratio-ok"><i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Acceptable</span>
+            <span class="ratio-bad"><i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Caution</span>
+        </div>
+        <span id="gridStatus" class="ms-3" style="font-size:.73rem;color:#6c757d;"></span>
+    </div>
+    <div class="bilan-grid-scroll">
+        <div class="grid-loader-overlay" id="gridLoader">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Loading data…</p>
+        </div>
+        <table class="bg-table" id="ratioGrid">
+            <thead id="ratioHead"></thead>
+            <tbody id="ratioBody"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var ACHETEUR_ID  = {{ id_acheteur }};
+var ACCESS_TOKEN = '{{ access }}';
+var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
+var CF_ANNEES    = {{ cf_annees_json|safe }};
+
+var anneeMap = {};
+ALL_ANNEES.forEach(function(a){ anneeMap[a.id] = a.annee; });
+
+var actifData  = {};
+var passifData = {};
+var resultData = {};
+var activeYears = [];
+
+/* ── Row definitions ──────────────────────────────────────────── */
+var RATIO_ROWS = [
+    /* BALANCE SHEET CHECK */
+    {t:'h1',  label:'BALANCE SHEET CHECK'},
+    {t:'val', key:'total_assets',       label:'Total Assets',                     fmt:'num', cls:'row-total'},
+    {t:'val', key:'total_eq_liab',      label:'Total Equity & Liabilities',        fmt:'num', cls:'row-total'},
+    {t:'chk', key:'balance_diff',       label:'Balance (Difference)',              fmt:'diff',cls:'row-grand'},
+
+    /* LIQUIDITY RATIOS */
+    {t:'h1',  label:'LIQUIDITY RATIOS'},
+    {t:'rat', key:'current_ratio',      label:'Current Ratio  (CA / CL)',          fmt:'x',
+     good:[1.5,null], ok:[1.0,1.5], bad:[null,1.0],
+     note:'> 1.5 good · 1.0–1.5 acceptable · < 1.0 caution'},
+    {t:'rat', key:'quick_ratio',        label:'Quick Ratio  ((CA − Inv) / CL)',    fmt:'x',
+     good:[1.0,null], ok:[0.5,1.0], bad:[null,0.5],
+     note:'> 1.0 good · 0.5–1.0 acceptable · < 0.5 caution'},
+
+    /* LEVERAGE RATIOS */
+    {t:'h1',  label:'LEVERAGE RATIOS'},
+    {t:'rat', key:'debt_to_equity',     label:'Debt-to-Equity  (TL / Equity)',     fmt:'x',
+     good:[null,1.0], ok:[1.0,2.0], bad:[2.0,null],
+     note:'< 1.0 good · 1.0–2.0 acceptable · > 2.0 caution'},
+    {t:'rat', key:'solvency_ratio',     label:'Solvency Ratio  (TA / TL)',         fmt:'x',
+     good:[2.0,null], ok:[1.0,2.0], bad:[null,1.0],
+     note:'> 2.0 good · 1.0–2.0 acceptable · < 1.0 caution'},
+
+    /* PROFITABILITY RATIOS */
+    {t:'h1',  label:'PROFITABILITY RATIOS  (requires Income Statement data)'},
+    {t:'rat', key:'return_on_assets',   label:'Return on Assets  (NP / TA × 100)', fmt:'pct',
+     good:[5,null],  ok:[1,5],  bad:[null,1],
+     note:'> 5% good · 1–5% acceptable · < 1% caution'},
+    {t:'rat', key:'return_on_equity',   label:'Return on Equity  (NP / Eq × 100)', fmt:'pct',
+     good:[10,null], ok:[5,10], bad:[null,5],
+     note:'> 10% good · 5–10% acceptable · < 5% caution'},
+];
+
+/* ── Utility ──────────────────────────────────────────────────── */
+function showLoader(msg,isErr){
+    var el=document.getElementById('gridLoader'); if(!el)return;
+    var txt=el.querySelector('.loader-text'); var sp=el.querySelector('.loader-spinner');
+    el.classList.remove('hidden');
+    if(txt){txt.className=isErr?'loader-error':'loader-text'; txt.textContent=msg||'Loading data…';}
+    if(sp)sp.style.display=isErr?'none':'';
+}
+function hideLoader(){ var el=document.getElementById('gridLoader'); if(el)el.classList.add('hidden'); }
+function setStatus(msg,type){ var el=document.getElementById('gridStatus'); if(!el)return; el.textContent=msg; el.style.color={info:'#0d6efd',success:'#198754',error:'#dc3545'}[type]||'#6c757d'; }
+
+function refreshAccessToken(){
+    return fetch('/api/token/refresh/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({'refresh':'{{ refresh }}'})})
+    .then(function(r){if(!r.ok){window.location.href='/';throw new Error('expired');} return r.json();})
+    .then(function(d){ACCESS_TOKEN=d.access;});
+}
+
+/* ── Fetch helpers ────────────────────────────────────────────── */
+function fetchAll(url, resolve){
+    (function loop(page, acc){
+        fetch(url+'?page='+page, {headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
+        .then(function(r){
+            if(r.status===401) return refreshAccessToken().then(function(){ loop(page, acc); });
+            if(!r.ok) throw new Error('HTTP '+r.status);
+            return r.json();
+        })
+        .then(function(data){
+            var res=Array.isArray(data.results)?data.results:(Array.isArray(data)?data:[]);
+            var all=acc.concat(res);
+            if(data.next===true){ loop(page+1, all); } else { resolve(all); }
+        })
+        .catch(function(){ resolve(acc); });
+    })(1, []);
+}
+
+function getAid(o){
+    var ra=o.annee;
+    var aid=(ra!==null&&typeof ra==='object')?parseInt(ra.id,10):parseInt(ra,10);
+    return (!aid||isNaN(aid))?null:aid;
+}
+
+/* ── Init & data loading ──────────────────────────────────────── */
+function init(){
+    showLoader('Loading data from 3 statements…');
+    setStatus('','info');
+    var p1=new Promise(function(res){ fetchAll('/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/liste-des-actifs/',    res); });
+    var p2=new Promise(function(res){ fetchAll('/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/liste-des-passifs/',   res); });
+    var p3=new Promise(function(res){ fetchAll('/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/liste-des-resultats/', res); });
+    Promise.all([p1,p2,p3])
+    .then(function(all){ processData(all[0], all[1], all[2]); })
+    .catch(function(e){ showLoader('Error: '+e.message, true); setStatus('Load error','error'); });
+}
+
+function processData(actifs, passifs, resultats){
+    actifData={}; passifData={}; resultData={};
+    var yearSet={};
+    actifs.forEach(function(o){   var aid=getAid(o); if(aid){ actifData[aid]=o;  yearSet[aid]=true; }});
+    passifs.forEach(function(o){  var aid=getAid(o); if(aid){ passifData[aid]=o; yearSet[aid]=true; }});
+    resultats.forEach(function(o){var aid=getAid(o); if(aid){ resultData[aid]=o; yearSet[aid]=true; }});
+    CF_ANNEES.forEach(function(a){ if(a.id) yearSet[a.id]=true; });
+    activeYears=Object.keys(yearSet).map(Number);
+    activeYears.sort(function(a,b){ return (anneeMap[b]||0)-(anneeMap[a]||0); });
+    hideLoader();
+    renderAll();
+    var na=actifs.length, np=passifs.length, nr=resultats.length;
+    setStatus('Assets: '+na+' · Equity: '+np+' · Income: '+nr+' record(s)', 'success');
+    if(activeYears.length===0) showLoader('No data available. Please enter balance sheet data first.',true);
+}
+
+/* ── Ratio computation ────────────────────────────────────────── */
+function fld(obj, field){ return obj?(parseFloat(obj[field])||0):0; }
+
+function computeRatios(aid){
+    var a=actifData[aid], p=passifData[aid], r=resultData[aid];
+    var hasA=!!a, hasP=!!p, hasR=!!r;
+
+    /* Actif totals */
+    var nonCurrA = hasA
+        ? fld(a,'biens_installations_equipements')+fld(a,'droit_utilisation')+fld(a,'immobilisations_incorporelles')
+          +fld(a,'goodwill')+fld(a,'actif_impot_differe')+fld(a,'investissements_associes')
+          +fld(a,'creances_pret_non_courant')+fld(a,'actifs_financiers_juste_valeur_resultat')
+        : 0;
+    var currA = hasA
+        ? fld(a,'inventaire')+fld(a,'creances_commerciales_autres_creances')+fld(a,'actif_impots_courant')
+          +fld(a,'creances_pret_courant')+fld(a,'caisses_banques')+fld(a,'actifs_financiers_derives')
+        : 0;
+    var totalA = hasA ? nonCurrA+currA : null;
+    var inv    = hasA ? fld(a,'inventaire') : 0;
+
+    /* Passif totals */
+    var equity = hasP
+        ? fld(p,'capital_social')+fld(p,'prime_emission')+fld(p,'reserve_couverture_tresorerie')
+          +fld(p,'reserve_cout_couverture')+fld(p,'reserve_conversion_devise')
+          +fld(p,'benefices_non_distribues')+fld(p,'resultat_net_exercice')+fld(p,'reserve_distribuable')
+        : 0;
+    var nonCurrL = hasP
+        ? fld(p,'dettes_financieres_pret_bancaire')+fld(p,'dettes_commerciales_long_terme')
+          +fld(p,'compte_courant_administrateurs')+fld(p,'provisions_long_terme')+fld(p,'autres_passifs_long_terme')
+        : 0;
+    var currL = hasP
+        ? fld(p,'dettes_commerciales_autres_dettes')+fld(p,'dettes_location')
+          +fld(p,'avantages_employes')+fld(p,'impots')+fld(p,'passifs_financiers_derives')
+        : 0;
+    var totalL  = hasP ? nonCurrL+currL : null;
+    var totalEL = hasP ? equity+(totalL||0) : null;
+
+    /* Résultat — PROFIT FOR THE YEAR (algebraic sum of 16 income statement fields) */
+    var netProfit = hasR
+        ? fld(r,'chiffre_affaires')+fld(r,'cout_des_ventes')+fld(r,'charges_exploitation')
+          +fld(r,'autres_revenus')+fld(r,'charges_administratives')+fld(r,'depreciation_amortissement')
+          +fld(r,'couts_occupation')+fld(r,'couts_personnel')+fld(r,'autres_couts')
+          +fld(r,'perte_cession_immobilisations')+fld(r,'profit_cession_activite')
+          +fld(r,'revenus_financiers')+fld(r,'charges_financieres')+fld(r,'charge_nette_financement')
+          +fld(r,'charge_impot_sur_revenu')+fld(r,'quote_part_perte_associes')
+        : null;
+
+    return {
+        total_assets:     totalA,
+        total_eq_liab:    totalEL,
+        balance_diff:     (totalA!==null&&totalEL!==null) ? totalA-totalEL : null,
+        current_ratio:    (hasA&&hasP&&currL!==0)          ? currA/currL                    : null,
+        quick_ratio:      (hasA&&hasP&&currL!==0)          ? (currA-inv)/currL              : null,
+        debt_to_equity:   (hasP&&equity!==0)               ? (totalL||0)/equity             : null,
+        solvency_ratio:   (hasA&&hasP&&totalL&&totalL!==0) ? (totalA||0)/totalL             : null,
+        return_on_assets: (hasA&&hasR&&totalA&&totalA!==0) ? (netProfit/totalA)*100         : null,
+        return_on_equity: (hasP&&hasR&&equity!==0)         ? (netProfit/equity)*100         : null,
+    };
+}
+
+function getRatioClass(val, row){
+    if(val===null||isNaN(val)||!isFinite(val)) return 'ratio-na';
+    if(row.good){ var g0=row.good[0],g1=row.good[1]; if((g0===null||val>=g0)&&(g1===null||val<=g1)) return 'ratio-good'; }
+    if(row.bad){  var b0=row.bad[0], b1=row.bad[1];  if((b0===null||val>=b0)&&(b1===null||val<=b1)) return 'ratio-bad';  }
+    return 'ratio-ok';
+}
+
+function fmtVal(val, fmt){
+    if(val===null||isNaN(val)||!isFinite(val)) return '—';
+    if(fmt==='x')   return val.toFixed(2)+'x';
+    if(fmt==='pct') return val.toFixed(2)+'%';
+    if(fmt==='num'){
+        var v=parseFloat(val);
+        if(isNaN(v)||v===0) return '—';
+        return v.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0});
+    }
+    return String(val);
+}
+
+/* ── Render ───────────────────────────────────────────────────── */
+function renderAll(){ renderHead(); renderBody(); renderYearPills(); }
+
+function renderHead(){
+    var h='<tr><th class="col-label-head">FINANCIAL RATIOS — ENGLISH BALANCE SHEET</th>';
+    activeYears.forEach(function(aid){
+        var an=anneeMap[aid]||'?';
+        h+='<th class="year-head-cell"><div class="yh-top"><span class="yh-year">'+an+'</span></div></th>';
+    });
+    h+='</tr>';
+    document.getElementById('ratioHead').innerHTML=h;
+}
+
+function renderBody(){
+    var html='';
+    RATIO_ROWS.forEach(function(row){
+        if(row.t==='h1'){
+            html+='<tr class="row-h1"><td class="col-label">'+row.label+'</td>';
+            activeYears.forEach(function(){ html+='<td class="year-cell"></td>'; });
+            html+='</tr>';
+            return;
+        }
+
+        var rowCls = row.cls || 'row-field';
+        var labelCell = row.label+(row.note?'<span class="text-muted" style="font-size:.68rem;font-weight:400;display:block;font-style:italic;padding-left:4px;">'+row.note+'</span>':'');
+        html+='<tr class="'+rowCls+'"><td class="col-label" style="'+(rowCls==='row-field'?'padding-left:20px;':'')+'">'+labelCell+'</td>';
+
+        activeYears.forEach(function(aid){
+            var ratios=computeRatios(aid);
+            var val=ratios[row.key];
+
+            if(row.t==='val'){
+                var numTxt=fmtVal(val,'num');
+                html+='<td class="year-cell"><span class="cell-computed">'+numTxt+'</span></td>';
+
+            } else if(row.t==='chk'){
+                var diff=val;
+                var cls2, txt;
+                if(diff===null){                      cls2='balance-na';  txt='—'; }
+                else if(Math.abs(diff)<1){             cls2='balance-ok';  txt='✓ Balanced'; }
+                else{                                  cls2='balance-err'; txt='✗ '+fmtVal(diff,'num'); }
+                html+='<td class="year-cell '+cls2+'"><span class="cell-computed fw-bold">'+txt+'</span></td>';
+
+            } else if(row.t==='rat'){
+                var cls2=getRatioClass(val, row);
+                html+='<td class="year-cell '+cls2+'"><span class="cell-computed">'+fmtVal(val,row.fmt)+'</span></td>';
+            }
+        });
+        html+='</tr>';
+    });
+    document.getElementById('ratioBody').innerHTML=html;
+}
+
+function renderYearPills(){
+    var h='';
+    activeYears.forEach(function(aid){ var an=anneeMap[aid]||'?'; h+='<span class="badge bg-secondary">'+an+'</span>'; });
+    if(!activeYears.length) h='<span class="text-muted" style="font-size:.75rem;">No year data</span>';
+    document.getElementById('yearPills').innerHTML=h;
+}
+
+/* ── Bootstrap ────────────────────────────────────────────────── */
+function adjustGridHeight(){
+    var outer=document.querySelector('.bilan-outer'); if(!outer)return;
+    var rect=outer.getBoundingClientRect();
+    outer.style.height=(window.innerHeight-rect.top)+'px';
+}
+document.getElementById('btnRefresh').addEventListener('click', init);
+$(document).ready(function(){ adjustGridHeight(); init(); });
+window.addEventListener('resize', adjustGridHeight);
+</script>
+{% endblock %}
