@@ -174,8 +174,14 @@ class ListAcheteurView(APIView):
         
         # Appliquer la recherche
         if search_query:
+            id_q = Q()
+            try:
+                id_q = Q(id=int(search_query))
+            except (TypeError, ValueError):
+                pass
             acheteur_list = acheteur_list.filter(
-                Q(code__icontains=search_query)
+                id_q
+                | Q(code__icontains=search_query)
                 | Q(nom__icontains=search_query)
                 | Q(sigle__icontains=search_query)
                 | Q(email__icontains=search_query)
@@ -183,7 +189,7 @@ class ListAcheteurView(APIView):
                 | Q(site_internet__icontains=search_query)
                 | Q(rue_adresse__icontains=search_query)
                 | Q(activite_principale__icontains=search_query)
-                                | Q(forme_juridique__libelle__icontains=search_query)
+                | Q(forme_juridique__libelle__icontains=search_query)
                 | Q(statut_entreprise__libelle__icontains=search_query)
                 | Q(pays__nom__icontains=search_query)
                 | Q(province__nom__icontains=search_query)
