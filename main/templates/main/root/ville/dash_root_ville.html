@@ -128,7 +128,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="pays" class="form-label">Pays</label>
-                        <select class="form-select" id="pays" name="pays" required>
+                        <select class="form-select select2-pays-add" id="pays" name="pays" required>
                             <option value="">Sélectionnez un pays</option>
                             {% for p in pays_list %}
                                 <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
@@ -171,7 +171,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="editPays" class="form-label">Pays</label>
-                        <select class="form-select" id="editPays" name="pays" required>
+                        <select class="form-select select2-pays-edit" id="editPays" name="pays" required>
                             <option value="">Sélectionnez un pays</option>
                             {% for p in pays_list %}
                                 <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
@@ -252,6 +252,14 @@
             });
         }
 
+        // Select2 — init dans shown.bs.modal
+        $('#addVilleModal').on('shown.bs.modal', function() {
+            $('.select2-pays-add').select2({ dropdownParent: $('#addVilleModal'), theme: 'bootstrap-5', width: '100%', placeholder: 'Sélectionnez un pays', allowClear: true });
+        });
+        $('#editVilleModal').on('shown.bs.modal', function() {
+            $('.select2-pays-edit').select2({ dropdownParent: $('#editVilleModal'), theme: 'bootstrap-5', width: '100%', placeholder: 'Sélectionnez un pays', allowClear: true });
+        });
+
         // Initial load
         loadVilles();
 
@@ -319,7 +327,7 @@
                     $('#editVilleId').val(response.id);
                     $('#editNom').val(response.nom);
                     $('#editCode').val(response.code);
-                    $('#editPays').val(response.pays ? response.pays.id : '');
+                    $('#editPays').val(response.pays ? response.pays.id : '').trigger('change');
                     $('#editIsActive').val(response.is_active ? 'true' : 'false');
                     $('#editVilleModal').modal('show');
                 },
