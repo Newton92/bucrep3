@@ -58,6 +58,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur, RatiosClassique
 from main.models import ActifS, PassifS, ResultatS, RatiosSyscohada
+from main.models import ActifA, PassifA
 from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
 
 import json
@@ -2051,6 +2052,43 @@ def dash_root_manage_acheteur(request, acheteur_id):
     except Exception:
         ifrs_summary = None
 
+    # --- Résumé bilan Anglais (dernière année avec Actif + Passif) ---
+    anglais_summary = None
+    try:
+        en_actif = ActifA.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+        if en_actif:
+            en_passif = PassifA.objects.filter(acheteur=acheteur, annee=en_actif.annee).first()
+            if en_passif:
+                def _d(v): return Decimal(str(v or 0))
+                en_actif_total = (
+                    _d(en_actif.biens_installations_equipements) + _d(en_actif.droit_utilisation)
+                    + _d(en_actif.immobilisations_incorporelles) + _d(en_actif.goodwill)
+                    + _d(en_actif.actif_impot_differe) + _d(en_actif.investissements_associes)
+                    + _d(en_actif.creances_pret_non_courant) + _d(en_actif.actifs_financiers_juste_valeur_resultat)
+                    + _d(en_actif.inventaire) + _d(en_actif.creances_commerciales_autres_creances)
+                    + _d(en_actif.actif_impots_courant) + _d(en_actif.creances_pret_courant)
+                    + _d(en_actif.caisses_banques) + _d(en_actif.actifs_financiers_derives)
+                )
+                en_passif_total = (
+                    _d(en_passif.capital_social) + _d(en_passif.prime_emission)
+                    + _d(en_passif.reserve_couverture_tresorerie) + _d(en_passif.reserve_cout_couverture)
+                    + _d(en_passif.reserve_conversion_devise) + _d(en_passif.benefices_non_distribues)
+                    + _d(en_passif.resultat_net_exercice) + _d(en_passif.reserve_distribuable)
+                    + _d(en_passif.dettes_financieres_pret_bancaire) + _d(en_passif.dettes_commerciales_long_terme)
+                    + _d(en_passif.compte_courant_administrateurs) + _d(en_passif.provisions_long_terme)
+                    + _d(en_passif.autres_passifs_long_terme) + _d(en_passif.dettes_commerciales_autres_dettes)
+                    + _d(en_passif.dettes_location) + _d(en_passif.avantages_employes)
+                    + _d(en_passif.impots) + _d(en_passif.passifs_financiers_derives)
+                )
+                en_diff = abs(en_actif_total - en_passif_total)
+                anglais_summary = {
+                    'annee':    en_actif.annee.annee if en_actif.annee else '—',
+                    'balanced': en_diff < Decimal('1'),
+                    'diff':     _ratio_fmt(en_diff, decimals=0),
+                }
+    except Exception:
+        anglais_summary = None
+
     context = {
         "acheteur_active": "active",
         "user": user,
@@ -2070,6 +2108,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "syscohada_summary": syscohada_summary,
         "bancaire_summary": bancaire_summary,
         "ifrs_summary": ifrs_summary,
+        "anglais_summary": anglais_summary,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
