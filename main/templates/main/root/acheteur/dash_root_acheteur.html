@@ -12,7 +12,9 @@
     }
     /* Tableau */
     .table-hover tbody tr:hover { background-color: rgba(10,149,202,.07); cursor:pointer; }
-    .table thead th { background: rgba(10,149,202,.04); border-bottom: 2px solid var(--cp-lt); color: var(--cp-dk); font-weight:600; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+    .table thead th { background: rgba(10,149,202,.04); border-bottom: 2px solid rgba(10,149,202,.25); color: #5a7fa0; font-weight:600; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; padding:.65rem .75rem; vertical-align:middle; }
+    .cell-nom { max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+    .cell-loc { max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     /* Actions */
     .action-buttons { display:flex; gap:6px; flex-wrap:nowrap; }
     .action-btn { width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:all .2s; border:1px solid transparent; padding:0; }
@@ -139,21 +141,27 @@
             <div class="card-body p-0" id="acheteursContent">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0" id="acheteursTable">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
-                                <th class="ps-3" style="width:46px;">#</th>
-                                <th style="min-width:110px;">
-                                    {% trans "Code" %}
-                                    <button class="btn btn-link btn-sm p-0 ms-1 sort-btn" data-sort="code"><i class="bi bi-arrow-down-up text-primary" style="font-size:.75rem;"></i></button>
+                                <th class="ps-3" style="width:42px;">#</th>
+                                <th style="width:110px;">
+                                    <span class="sort-btn d-inline-flex align-items-center gap-1" data-sort="code" style="cursor:pointer;">
+                                        {% trans "Code" %} <i class="bi bi-arrow-down-up" style="font-size:.7rem;opacity:.6;"></i>
+                                    </span>
                                 </th>
-                                <th style="min-width:200px;">{% trans "Nom / Raison sociale" %}</th>
-                                <th style="min-width:90px;">{% trans "Sigle" %}</th>
-                                <th style="min-width:140px;">
-                                    {% trans "Ville" %}
-                                    <button class="btn btn-link btn-sm p-0 ms-1 sort-btn" data-sort="ville"><i class="bi bi-arrow-down-up text-primary" style="font-size:.75rem;"></i></button>
+                                <th style="min-width:200px;">
+                                    <span class="sort-btn d-inline-flex align-items-center gap-1" data-sort="nom" style="cursor:pointer;">
+                                        {% trans "Raison sociale" %} <i class="bi bi-arrow-down-up" style="font-size:.7rem;opacity:.6;"></i>
+                                    </span>
+                                </th>
+                                <th style="width:100px;">{% trans "Sigle" %}</th>
+                                <th style="min-width:160px;">
+                                    <span class="sort-btn d-inline-flex align-items-center gap-1" data-sort="ville" style="cursor:pointer;">
+                                        {% trans "Ville · Pays" %} <i class="bi bi-arrow-down-up" style="font-size:.7rem;opacity:.6;"></i>
+                                    </span>
                                 </th>
                                 <th style="min-width:130px;">{% trans "Statut" %}</th>
-                                <th class="text-end pe-3" style="min-width:140px;">{% trans "Actions" %}</th>
+                                <th class="text-end pe-3" style="width:150px;">{% trans "Actions" %}</th>
                             </tr>
                         </thead>
 
@@ -413,35 +421,22 @@ $(document).ready(function () {
         var startIdx = (currentPage - 1) * pageSize;
 
         $.each(acheteurs, function (i, a) {
-            var rowNum   = startIdx + i + 1;
-            var nom      = truncate(a.nom, 30);
-            var sigle    = a.sigle ? truncate(a.sigle, 15) : '';
-            var ville    = (a.ville && a.ville.nom) ? a.ville.nom : '--';
-            var pays     = (a.pays  && a.pays.nom)  ? a.pays.nom  : '';
-            var statut   = (a.statut_entreprise && a.statut_entreprise.libelle) ? a.statut_entreprise.libelle : T.undefined;
-            var actif    = a.statut_entreprise ? 'on' : 'off';
-            var sigleBadge = sigle
-                ? '<span class="badge bg-info" title="' + escHtml(a.sigle) + '">' + escHtml(sigle) + '</span>'
-                : '<span class="text-muted">--</span>';
+            var rowNum  = startIdx + i + 1;
+            var ville   = (a.ville && a.ville.nom) ? a.ville.nom : '--';
+            var pays    = (a.pays  && a.pays.nom)  ? a.pays.nom  : '';
+            var loc     = ville + (pays ? ' · ' + pays : '');
+            var statut  = (a.statut_entreprise && a.statut_entreprise.libelle) ? a.statut_entreprise.libelle : T.undefined;
+            var actif   = a.statut_entreprise ? 'on' : 'off';
+            var sigle   = a.sigle ? '<span class="badge bg-info" title="' + escHtml(a.sigle) + '">' + escHtml(a.sigle) + '</span>' : '<span class="text-muted small">—</span>';
 
             var row = '<tr data-id="' + a.id + '" class="acheteur-row">'
-                + '<td class="ps-3 fw-medium text-muted">' + rowNum + '</td>'
-                + '<td><span class="badge bg-primary">' + escHtml(a.code || '--') + '</span></td>'
-                + '<td>'
-                +   '<div class="d-flex align-items-center">'
-                +     '<div class="bg-primary-soft p-2 rounded-circle me-2 flex-shrink-0"><i class="bi bi-building text-primary"></i></div>'
-                +     '<div><h6 class="mb-0">' + escHtml(nom) + '</h6></div>'
-                +   '</div>'
-                + '</td>'
-                + '<td>' + sigleBadge + '</td>'
-                + '<td>'
-                +   '<div><i class="bi bi-geo-alt me-1 text-primary"></i>' + escHtml(ville) + '</div>'
-                +   '<small class="text-muted">' + escHtml(pays) + '</small>'
-                + '</td>'
-                + '<td>'
-                +   '<span class="status-dot ' + actif + '"></span>' + escHtml(statut)
-                + '</td>'
-                + '<td class="pe-4">'
+                + '<td class="ps-3 text-muted small">' + rowNum + '</td>'
+                + '<td><span class="badge bg-primary fw-normal">' + escHtml(a.code || '—') + '</span></td>'
+                + '<td class="cell-nom" title="' + escHtml(a.nom || '') + '">' + escHtml(a.nom || '—') + '</td>'
+                + '<td>' + sigle + '</td>'
+                + '<td class="cell-loc text-muted small" title="' + escHtml(loc) + '">' + escHtml(loc) + '</td>'
+                + '<td class="small"><span class="status-dot ' + actif + '"></span>' + escHtml(statut) + '</td>'
+                + '<td class="pe-3">'
                 +   '<div class="action-buttons justify-content-end">'
                 +     '<button class="btn btn-sm btn-outline-primary action-btn manage-btn" data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="' + T.view + '"><i class="bi bi-eye"></i></button>'
                 +     '<button class="btn btn-sm btn-outline-warning action-btn edit-btn"   data-id="' + a.id + '" data-nom="' + escHtml(a.nom) + '" title="' + T.edit + '"><i class="bi bi-pencil"></i></button>'
