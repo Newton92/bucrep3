@@ -1,547 +1,320 @@
 {% extends 'main/root/base.html' %}
-{% load i18n static %}
+{% load static i18n %}
 
 {% block styles %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-:root {
-    --color-background: #fcfefe;
-    --color-primary: #0a95ca;
-    --color-primary-dark: #0d80be;
-    --color-secondary: #25add6;
-    --color-accent: #106cb2;
-    --color-text: #000000;
-    --color-text-muted: #5a6c7d;
-    --color-border: #e2e8f0;
-    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-}
-
-/* Header compact */
-.page-header {
-    background: var(--primary-gradient);
-    padding: 0.75rem 1.25rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-    color: white;
-}
-.page-title  { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
-.page-subtitle { font-size: 0.8rem; opacity: 0.85; }
-
-/* Metric cards */
-.metric-card {
-    background: var(--color-background);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    border: 1px solid rgba(37,173,214,0.12);
-    box-shadow: 0 2px 8px rgba(10,149,202,0.06);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 3px; height: 100%;
-}
-.metric-card.mc-primary::before   { background: var(--color-primary); }
-.metric-card.mc-success::before   { background: #28a745; }
-.metric-card.mc-info::before      { background: #17a2b8; }
-.metric-card.mc-accent::before    { background: var(--color-accent); }
-
-.metric-header {
-    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
-}
-.metric-icon {
-    width: 26px; height: 26px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem;
-    background: rgba(10,149,202,0.1); color: var(--color-primary); flex-shrink: 0;
-}
-.metric-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted); font-weight: 600; }
-.metric-value { font-size: 1.15rem; font-weight: 700; color: var(--color-primary-dark); line-height: 1.3; }
-.metric-sub   { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 0.15rem; }
-
-/* Table card */
-.table-card {
-    background: var(--color-background);
-    border-radius: 12px;
-    border: 1px solid rgba(37,173,214,0.12);
-    box-shadow: 0 2px 8px rgba(10,149,202,0.06);
-    overflow: hidden;
-}
-.table-card-header {
-    padding: 0.75rem 1.25rem;
-    background: linear-gradient(135deg, rgba(10,149,202,0.04), rgba(37,173,214,0.04));
-    border-bottom: 1px solid rgba(37,173,214,0.1);
-    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-}
-.modern-table { width: 100%; border-collapse: collapse; }
-.modern-table thead th {
-    background: linear-gradient(135deg, rgba(10,149,202,0.08), rgba(37,173,214,0.08));
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-weight: 700;
-    color: var(--color-primary-dark);
-    border-bottom: 2px solid rgba(10,149,202,0.15);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
-.modern-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(37,173,214,0.07); vertical-align: middle; }
-.modern-table tbody tr:hover { background: rgba(10,149,202,0.02); }
-.modern-table tbody tr:last-child td { border-bottom: none; }
-.val-cell {
-    font-family: 'Courier New', monospace; font-weight: 600;
-    text-align: right; font-size: 0.88rem; color: #2d5a7b;
-}
-.val-total { color: var(--color-primary-dark); font-weight: 700; font-size: 0.92rem; }
-.tfoot-row td {
-    background: linear-gradient(135deg, rgba(10,149,202,0.06), rgba(37,173,214,0.06));
-    font-weight: 700; font-size: 0.85rem;
-    border-top: 2px solid rgba(10,149,202,0.2);
-    padding: 0.7rem 1rem;
-}
-
-/* Year badge */
-.year-badge {
-    display: inline-flex; align-items: center;
-    padding: 0.25rem 0.65rem;
-    background: var(--primary-gradient);
-    color: white; border-radius: 20px;
-    font-size: 0.8rem; font-weight: 700;
-}
-
-/* Action buttons */
-.btn-tbl {
-    width: 28px; height: 28px; border-radius: 6px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; border: none; cursor: pointer;
-    transition: all 0.2s; text-decoration: none;
-}
-.btn-tbl-edit   { background: rgba(10,149,202,0.1); color: var(--color-primary); }
-.btn-tbl-edit:hover   { background: var(--color-primary); color: white; transform: translateY(-1px); }
-.btn-tbl-delete { background: rgba(220,53,69,0.1);  color: #dc3545; }
-.btn-tbl-delete:hover { background: #dc3545; color: white; transform: translateY(-1px); }
-
-/* Search */
-.search-input {
-    border: 1.5px solid var(--color-border); border-radius: 8px;
-    padding: 0.4rem 0.85rem; font-size: 0.875rem;
-    transition: border-color 0.2s;
-}
-.search-input:focus { border-color: var(--color-primary); outline: none; box-shadow: 0 0 0 3px rgba(10,149,202,0.12); }
-
-/* Add button */
-.btn-add {
-    background: var(--success-gradient); color: white;
-    border: none; border-radius: 8px; padding: 0.4rem 0.9rem;
-    font-weight: 600; font-size: 0.875rem;
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    text-decoration: none; transition: all 0.2s;
-}
-.btn-add:hover { color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
-
-/* Empty state */
-.empty-state {
-    padding: 2.5rem 1.5rem; text-align: center;
-    background: linear-gradient(145deg, rgba(10,149,202,0.02), rgba(37,173,214,0.02));
-    border-radius: 10px; border: 2px dashed rgba(13,128,190,0.2);
-}
-
-/* Pagination */
-.pag-info { font-size: 0.78rem; color: var(--color-text-muted); }
-.page-link-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 30px; height: 30px; border-radius: 7px;
-    font-size: 0.78rem; font-weight: 600; cursor: pointer;
-    border: 1.5px solid var(--color-border); background: white;
-    color: var(--color-primary-dark); margin: 0 2px;
-    text-decoration: none; transition: all 0.2s;
-}
-.page-link-btn:hover, .page-link-btn.active {
-    background: var(--primary-gradient); color: white; border-color: var(--color-primary);
-}
-.page-link-btn.disabled { opacity: 0.4; pointer-events: none; }
-
-@media (max-width: 768px) {
-    .page-header { padding: 0.75rem 1rem; }
-    .modern-table { font-size: 0.8rem; }
+:root{--app-blue:#0a95ca;--app-mid:#0d80be;--app-dark:#106cb2;--app-accent:#25add6;--app-light:#e6f4fb;--app-xlight:#f0f8fd;}
+html{overflow:hidden;}
+.page-bk-header{background:linear-gradient(135deg,var(--app-dark) 0%,var(--app-blue) 100%);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 8px rgba(16,108,178,.35);z-index:100;position:relative;}
+.page-bk-header h6{margin:0;color:#fff;font-size:.92rem;}
+.page-bk-header .info-badge{background:rgba(255,255,255,.2);color:#fff;border-radius:20px;font-size:.7rem;padding:2px 9px;margin-left:7px;border:1px solid rgba(255,255,255,.25);}
+.bilan-outer{display:flex;flex-direction:column;}
+.bilan-toolbar{background:var(--app-xlight);border-bottom:1px solid #c8e4f5;padding:5px 12px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.bilan-toolbar .toolbar-label{font-size:.72rem;color:var(--app-dark);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.bilan-grid-scroll{flex:1;overflow:auto;position:relative;}
+.bg-table{border-collapse:collapse;width:max-content;min-width:100%;font-size:.82rem;}
+.bg-table thead tr th{position:sticky;top:0;z-index:20;background:var(--app-dark);color:#fff;border:1px solid rgba(255,255,255,.15);padding:0;white-space:nowrap;}
+.bg-table thead tr th.col-label-head{left:0;z-index:30;min-width:300px;max-width:300px;padding:0 10px;text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;line-height:34px;background:var(--app-dark);}
+.bg-table td.col-label{position:sticky;left:0;background:#fff;z-index:10;min-width:300px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:3px solid var(--app-blue);padding:3px 8px;}
+.bg-table tr.row-h1 td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;padding:4px 10px;border-top:2px solid var(--app-mid);}
+.bg-table tr.row-h1 td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-mid);}
+.bg-table tr.row-field td{border-bottom:1px solid #e8f0f5;padding:0;}
+.bg-table tr.row-field td.col-label{padding:2px 8px 2px 26px;color:#2c3e50;font-size:.81rem;border-bottom:1px solid #e8f0f5;}
+.bg-table tr.row-field:hover td{background:var(--app-xlight);}
+.bg-table tr.row-field:hover td.col-label{background:var(--app-xlight);}
+.bg-table tr.row-total td{background:#c5e3f5;color:var(--app-dark);font-weight:700;font-size:.83rem;padding:4px 8px;border-top:2px solid var(--app-blue);}
+.bg-table tr.row-total td.col-label{background:#c5e3f5;color:var(--app-dark);}
+.bg-table tr.row-total-green td{background:#d4efde;color:#1a5c33;border-top:2px solid #7ec8a0;font-weight:700;font-size:.83rem;padding:4px 8px;}
+.bg-table tr.row-total-green td.col-label{background:#d4efde;color:#1a5c33;}
+.bg-table tr.row-grand td{background:var(--app-dark);color:#fff;font-weight:700;font-size:.88rem;padding:5px 8px;border-top:3px solid var(--app-mid);}
+.bg-table tr.row-grand td.col-label{background:var(--app-dark);color:#fff;border-right-color:var(--app-accent);}
+.year-head-cell{text-align:center;min-width:155px;max-width:155px;vertical-align:middle;padding:4px 6px !important;border-left:2px solid rgba(255,255,255,.2) !important;}
+.yh-top{display:flex;align-items:center;justify-content:center;gap:5px;line-height:1;}
+.yh-year{font-size:.95rem;font-weight:800;letter-spacing:.03em;}
+.yh-actions{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;}
+.status-badge{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:20px;line-height:1.5;}
+.status-new{background:#fff3cd;color:#7a5600;}.status-saved{background:#c9f0d8;color:#145a32;}.status-dirty{background:#d0e8ff;color:var(--app-dark);}.status-saving{background:#fde8c0;color:#7a3e00;}
+.bg-table td.year-cell{text-align:right;padding:0;border-left:1px solid #daeaf5;min-width:155px;max-width:155px;}
+.bg-table tr.row-field td.year-cell{border-bottom:1px solid #e8f0f5;}
+.cell-input{width:100%;border:none;background:transparent;text-align:right;font-size:.82rem;padding:2px 8px;line-height:1.65;color:#1a2533;display:block;}
+.cell-input:focus{background:#fffbe6;outline:2px solid var(--app-accent);outline-offset:-2px;border-radius:0;color:var(--app-dark);font-weight:600;}
+.cell-input::-webkit-inner-spin-button,.cell-input::-webkit-outer-spin-button{opacity:0;}
+.cell-computed{padding:2px 8px;display:block;text-align:right;font-size:.82rem;}
+.btn-year-save{font-size:.62rem;padding:1px 7px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:3px;cursor:pointer;}
+.btn-year-save:hover{background:rgba(255,255,255,.4);}
+.btn-year-hide{font-size:.7rem;padding:1px 4px;color:rgba(255,255,255,.55);background:transparent;border:none;cursor:pointer;line-height:1;}
+.btn-year-hide:hover{color:#ffc107;}
+.btn-year-del{font-size:.62rem;padding:1px 6px;background:rgba(220,53,69,.25);border:1px solid rgba(220,53,69,.5);color:#ffb3bb;border-radius:3px;cursor:pointer;}
+.btn-year-del:hover{background:rgba(220,53,69,.6);color:#fff;}
+.col-add-head{background:var(--app-mid) !important;text-align:center;padding:4px 10px !important;cursor:pointer;min-width:36px;}
+.col-add-head:hover{background:var(--app-accent) !important;}
+.grid-loader-overlay{position:absolute;inset:0;background:rgba(236,246,253,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;gap:16px;}
+.grid-loader-overlay.hidden{display:none;}
+.loader-spinner{width:52px;height:52px;border:5px solid var(--app-light);border-top-color:var(--app-blue);border-radius:50%;animation:bilan-spin .8s linear infinite;}
+@keyframes bilan-spin{to{transform:rotate(360deg);}}
+.loader-text{color:var(--app-mid);font-size:.9rem;font-weight:600;margin:0;}.loader-error{color:#dc3545;font-size:.85rem;font-weight:600;margin:0;}
+.bilan-nav-tabs{display:flex;gap:2px;}
+.bilan-nav-tab{display:inline-flex;align-items:center;padding:3px 14px;border-radius:4px;font-size:.78rem;font-weight:600;text-decoration:none;color:rgba(255,255,255,.6);border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.bilan-nav-tab:hover{color:#fff;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);text-decoration:none;}
+.bilan-nav-tab.active{color:#fff;background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  @page{size:A4 landscape;margin:.8cm .6cm;}
+  .navbar,.app-sidebar-col,.page-bk-header,.bilan-toolbar,.btn-year-save,.btn-year-del,.btn-year-hide,.col-add-head,.grid-loader-overlay{display:none !important;}
+  html,body{overflow:visible !important;height:auto !important;}
+  .bilan-outer{height:auto !important;overflow:visible !important;}
+  .bilan-grid-scroll{overflow:visible !important;height:auto !important;}
+  .bg-table thead tr th{position:static !important;}
+  .bg-table td.col-label{position:static !important;min-width:230px;max-width:230px;}
+  .bg-table td.year-cell{min-width:110px;max-width:110px;}
+  .bg-table{font-size:.65rem;width:100%;}
+  .bg-table tr.row-h1 td,.bg-table tr.row-h1 td.col-label{background:#1a1a1a !important;color:#fff !important;}
+  .bg-table tr.row-total td{background:#ccc !important;color:#000 !important;}
+  .bg-table tr.row-total-green td{background:#bbb !important;color:#000 !important;}
+  .bg-table tr.row-grand td{background:#000 !important;color:#fff !important;}
+  .year-head-cell .yh-actions{display:none !important;}
+  .cell-input{background:transparent !important;border:none !important;padding:1px 4px !important;}
 }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
+<div class="page-bk-header">
+    <div class="d-flex align-items-center">
+        <h6><i class="fas fa-flag me-2"></i>Equity &amp; Liabilities — English Balance Sheet</h6>
+        <span class="info-badge">{{ acheteur.nom }}</span>
+        <span class="info-badge">{{ acheteur.code }}</span>
+    </div>
+    <div class="bilan-nav-tabs">
+        <a href="{% url 'dash_root_manage_acheteur_actif_anglais'    id_acheteur %}" class="bilan-nav-tab">{% trans "Assets" %}</a>
+        <a href="{% url 'dash_root_manage_acheteur_passif_anglais'   id_acheteur %}" class="bilan-nav-tab active">Equity &amp; Liabilities</a>
+        <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' id_acheteur %}" class="bilan-nav-tab">Income Statement</a>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-light" onclick="window.print()"><i class="fas fa-print me-1"></i>Print</button>
+        <button class="btn btn-sm btn-success fw-semibold" id="btnSaveAll"><i class="fas fa-save me-1"></i>Save All</button>
+        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-sm btn-warning"><i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}</a>
+    </div>
+</div>
 
-    <!-- Header -->
-    <div class="page-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
-            <div>
-                <h1 class="page-title"><i class="fas fa-balance-scale me-2"></i>{% trans "Liabilities — English Balance Sheet" %}</h1>
-                <p class="page-subtitle mb-0">
-                    <span class="fw-semibold">{{ acheteur.nom }}</span>
-                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
-                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
-                </p>
+<div class="bilan-outer">
+    <div class="bilan-toolbar">
+        <span class="toolbar-label">{% trans "Années affichées" %} :</span>
+        <div id="yearPills" class="d-flex gap-1 flex-wrap"></div>
+        <button class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#modalAddYear">
+            <i class="fas fa-plus me-1"></i>{% trans "Ajouter une année" %}
+        </button>
+        <span class="ms-auto text-muted" style="font-size:.72rem;" id="gridStatus">{% trans "Chargement..." %}</span>
+    </div>
+    <div class="bilan-grid-scroll">
+        <div id="gridLoader" class="grid-loader-overlay hidden">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">{% trans "Chargement des données..." %}</p>
+        </div>
+        <table class="bg-table" id="bilanGrid">
+            <thead id="bilanHead"></thead>
+            <tbody id="bilanBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAddYear" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="fas fa-calendar-plus me-2 text-primary"></i>{% trans "Ajouter une année" %}</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
-                    <i class="fas fa-arrow-left"></i>{% trans "Back" %}
-                </a>
-                <a href="{% url 'dash_root_manage_acheteur_add_passif_anglais' acheteur.id %}" class="btn-add">
-                    <i class="fas fa-plus"></i>{% trans "Add Liability" %}
-                </a>
+            <div class="modal-body">
+                <label class="form-label text-muted" style="font-size:.8rem;">{% trans "Sélectionner l'année fiscale" %}</label>
+                <select class="form-select form-select-sm" id="selectAddYear">
+                    <option value="">— {% trans "choisir" %} —</option>
+                    {% for a in annee_list %}<option value="{{ a.id }}" data-annee="{{ a.annee }}">{{ a.annee }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnConfirmAddYear">
+                    <i class="fas fa-check me-1"></i>{% trans "Ajouter" %}
+                </button>
             </div>
         </div>
     </div>
-
-    <!-- Metric Cards -->
-    <div class="row g-3 mb-3">
-        <div class="col-sm-6 col-xl-3">
-            <div class="metric-card mc-primary">
-                <div class="metric-header">
-                    <div class="metric-icon"><i class="fas fa-file-alt"></i></div>
-                    <span class="metric-label">{% trans "Records" %}</span>
-                </div>
-                <div class="metric-value" id="mc-count">—</div>
-                <div class="metric-sub" id="mc-years">{% trans "loading..." %}</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="metric-card mc-info">
-                <div class="metric-header">
-                    <div class="metric-icon" style="background:rgba(23,162,184,.1);color:#17a2b8;"><i class="fas fa-landmark"></i></div>
-                    <span class="metric-label">{% trans "Total Equity" %}</span>
-                </div>
-                <div class="metric-value" id="mc-equity" style="color:#17a2b8;">—</div>
-                <div class="metric-sub">{% trans "Sum across all years" %}</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="metric-card mc-success">
-                <div class="metric-header">
-                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="fas fa-file-invoice-dollar"></i></div>
-                    <span class="metric-label">{% trans "Total Liabilities" %}</span>
-                </div>
-                <div class="metric-value" id="mc-liabilities" style="color:#28a745;">—</div>
-                <div class="metric-sub">{% trans "Sum across all years" %}</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="metric-card mc-accent">
-                <div class="metric-header">
-                    <div class="metric-icon" style="background:rgba(16,108,178,.1);color:var(--color-accent);"><i class="fas fa-calculator"></i></div>
-                    <span class="metric-label">{% trans "Grand Total" %}</span>
-                </div>
-                <div class="metric-value" id="mc-total" style="color:var(--color-accent);">—</div>
-                <div class="metric-sub">{% trans "Equity + Liabilities" %}</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Table -->
-    <div class="table-card">
-        <div class="table-card-header">
-            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
-                <i class="fas fa-list me-2"></i>{% trans "Liability List" %}
-            </h6>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <input type="search" class="search-input" id="searchInput" placeholder="{% trans 'Search by year...' %}" style="width:180px;">
-                <a href="{% url 'dash_root_manage_acheteur_add_passif_anglais' acheteur.id %}" class="btn-add">
-                    <i class="fas fa-plus"></i>{% trans "Add" %}
-                </a>
-            </div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>{% trans "Year" %}</th>
-                        <th class="text-end">{% trans "Equity" %}</th>
-                        <th class="text-end">{% trans "Non-Current Liab." %}</th>
-                        <th class="text-end">{% trans "Current Liab." %}</th>
-                        <th class="text-end">{% trans "Total" %}</th>
-                        <th class="text-center">{% trans "Actions" %}</th>
-                    </tr>
-                </thead>
-                <tbody id="passifTableBody">
-                    <tr>
-                        <td colspan="7" class="text-center py-4">
-                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                            <span class="text-muted small">{% trans "Loading..." %}</span>
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot id="passifTableFooter" style="display:none;">
-                    <tr class="tfoot-row">
-                        <td colspan="2" class="text-uppercase small" style="letter-spacing:.5px;">{% trans "Total" %}</td>
-                        <td class="text-end val-cell" id="footerEquity">—</td>
-                        <td class="text-end val-cell" id="footerNCL">—</td>
-                        <td class="text-end val-cell" id="footerCL">—</td>
-                        <td class="text-end val-cell val-total" id="footerTotal">—</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Empty state -->
-        <div id="noResults" class="empty-state mx-3 my-3" style="display:none;">
-            <i class="fas fa-balance-scale fa-3x mb-3" style="color:rgba(10,149,202,0.3);"></i>
-            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "No liabilities found" %}</h5>
-            <p class="text-muted mb-3">{% trans "Click the button below to create the first entry." %}</p>
-            <a href="{% url 'dash_root_manage_acheteur_add_passif_anglais' acheteur.id %}" class="btn-add">
-                <i class="fas fa-plus"></i>{% trans "Add Liability" %}
-            </a>
-        </div>
-
-        <!-- Footer pagination -->
-        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-top:1px solid rgba(37,173,214,0.1);">
-            <span class="pag-info" id="paginationInfo">—</span>
-            <div id="paginationControls" class="d-flex align-items-center gap-1"></div>
-        </div>
-    </div>
-
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% trans "Annuler" as t_cancel %}
+{% trans "Supprimer définitivement" as t_suppr_def %}
+{% trans "Action irréversible. Ce bilan sera supprimé définitivement." as t_suppr_msg %}
+{% trans "Enregistrement en cours" as t_enr_cours %}
+{% trans "Données enregistrées avec succès" as t_succes %}
+{% trans "Erreur lors de l'enregistrement" as t_err_enr %}
+{% trans "Suppression impossible" as t_del_err %}
+{% trans "Données supprimées" as t_del_ok %}
 <script>
-(function () {
-    'use strict';
+var ACHETEUR_ID  = {{ id_acheteur }};
+var ACCESS_TOKEN = '{{ access }}';
+var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
 
-    const ACHETEUR_ID   = '{{ acheteur.id }}';
-    const ACCESS_TOKEN  = '{{ access }}';
-    const REFRESH_TOKEN = '{{ refresh }}';
-    const DEVISE        = '{{ devise_acheteur }}';
-    let currentPage = 1, currentSearch = '', allData = [];
+var ROWS = [
+    {t:'h1', label:'CAPITAL & RESERVES'},
+    {t:'f', f:'capital_social',                label:'Share capital'},
+    {t:'f', f:'prime_emission',                label:'Share premium'},
+    {t:'f', f:'reserve_couverture_tresorerie', label:'Cash flow hedge reserve'},
+    {t:'f', f:'reserve_cout_couverture',       label:'Cost of hedging reserve'},
+    {t:'f', f:'reserve_conversion_devise',     label:'Foreign currency translation reserve'},
+    {t:'f', f:'benefices_non_distribues',      label:'Retained earnings'},
+    {t:'f', f:'resultat_net_exercice',         label:'Net result of the year'},
+    {t:'f', f:'reserve_distribuable',          label:'Distributable reserve'},
+    {t:'tot', cls:'row-total-green', label:'TOTAL EQUITY',
+     fs:['capital_social','prime_emission','reserve_couverture_tresorerie','reserve_cout_couverture',
+         'reserve_conversion_devise','benefices_non_distribues','resultat_net_exercice','reserve_distribuable']},
 
-    /* ── Formatting ── */
-    function fmt(val, dec) {
-        const n = parseFloat(val) || 0;
-        return n.toLocaleString('fr-FR', { minimumFractionDigits: dec ?? 0, maximumFractionDigits: dec ?? 0 });
-    }
-    function fmtK(val) {
-        const n = parseFloat(val) || 0;
-        if (Math.abs(n) >= 1e9) return fmt(n / 1e9, 1) + ' G';
-        if (Math.abs(n) >= 1e6) return fmt(n / 1e6, 1) + ' M';
-        if (Math.abs(n) >= 1e3) return fmt(n / 1e3, 1) + ' k';
-        return fmt(n, 0);
-    }
-    function fmtFull(val) { return fmt(val, 0) + (DEVISE ? ' ' + DEVISE : ''); }
+    {t:'h1', label:'NON-CURRENT LIABILITIES'},
+    {t:'f', f:'dettes_financieres_pret_bancaire', label:'Financial debts (bank loan)'},
+    {t:'f', f:'dettes_commerciales_long_terme',   label:'Long term trade liabilities'},
+    {t:'f', f:'compte_courant_administrateurs',   label:'Directors current account'},
+    {t:'f', f:'provisions_long_terme',            label:'Long term provisions'},
+    {t:'f', f:'autres_passifs_long_terme',        label:'Other long term liabilities'},
+    {t:'tot', cls:'row-total', label:'TOTAL NON-CURRENT LIABILITIES',
+     fs:['dettes_financieres_pret_bancaire','dettes_commerciales_long_terme',
+         'compte_courant_administrateurs','provisions_long_terme','autres_passifs_long_terme']},
 
-    /* ── Load ── */
-    function loadPassifs() {
-        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-anglais/liste-des-passifs/?page=${currentPage}&search=${encodeURIComponent(currentSearch)}`;
-        document.getElementById('passifTableBody').innerHTML = `
-            <tr><td colspan="7" class="text-center py-4">
-                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                <span class="text-muted small">{% trans "Loading..." %}</span>
-            </td></tr>`;
+    {t:'h1', label:'CURRENT LIABILITIES'},
+    {t:'f', f:'dettes_commerciales_autres_dettes', label:'Trade and other payables'},
+    {t:'f', f:'dettes_location',                   label:'Lease liabilities'},
+    {t:'f', f:'avantages_employes',                label:'Employee benefits'},
+    {t:'f', f:'impots',                            label:'Income tax payable'},
+    {t:'f', f:'passifs_financiers_derives',        label:'Derivative financial liabilities'},
+    {t:'tot', cls:'row-total', label:'TOTAL CURRENT LIABILITIES',
+     fs:['dettes_commerciales_autres_dettes','dettes_location','avantages_employes',
+         'impots','passifs_financiers_derives']},
 
-        fetch(url, { headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN } })
-            .then(r => { if (!r.ok) throw r; return r.json(); })
-            .then(data => {
-                allData = data.results || [];
-                renderTable(allData);
-                renderPagination(data);
-                updateMetrics(allData);
-            })
-            .catch(err => {
-                if (err.status === 401) { refreshToken(loadPassifs); return; }
-                document.getElementById('passifTableBody').innerHTML = `
-                    <tr><td colspan="7" class="text-center py-4 text-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Error loading data." %}
-                    </td></tr>`;
-            });
-    }
+    {t:'tot', cls:'row-total', label:'TOTAL LIABILITIES',
+     fs:['dettes_financieres_pret_bancaire','dettes_commerciales_long_terme',
+         'compte_courant_administrateurs','provisions_long_terme','autres_passifs_long_terme',
+         'dettes_commerciales_autres_dettes','dettes_location','avantages_employes',
+         'impots','passifs_financiers_derives']},
 
-    /* ── Render table ── */
-    function renderTable(passifs) {
-        const tbody  = document.getElementById('passifTableBody');
-        const noRes  = document.getElementById('noResults');
-        const footer = document.getElementById('passifTableFooter');
+    {t:'grand', label:'TOTAL EQUITY AND LIABILITIES',
+     fs:['capital_social','prime_emission','reserve_couverture_tresorerie','reserve_cout_couverture',
+         'reserve_conversion_devise','benefices_non_distribues','resultat_net_exercice','reserve_distribuable',
+         'dettes_financieres_pret_bancaire','dettes_commerciales_long_terme',
+         'compte_courant_administrateurs','provisions_long_terme','autres_passifs_long_terme',
+         'dettes_commerciales_autres_dettes','dettes_location','avantages_employes',
+         'impots','passifs_financiers_derives']}
+];
 
-        if (!passifs.length) {
-            tbody.innerHTML = '';
-            noRes.style.display = '';
-            footer.style.display = 'none';
-            return;
-        }
-        noRes.style.display = 'none';
-        footer.style.display = '';
+var yearData={}, activeYears=[], anneeMap={};
+ALL_ANNEES.forEach(function(a){ anneeMap[a.id]=a.annee; });
+function getCsrf(){ var m=document.cookie.match(/csrftoken=([^;]+)/); return m?m[1]:''; }
+function fmtNum(v){ var n=parseFloat(v); if(isNaN(n)||n===0)return '—'; return n.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showLoader(msg,isErr){ var el=document.getElementById('gridLoader'); if(!el)return; var txt=el.querySelector('.loader-text'); var sp=el.querySelector('.loader-spinner'); el.classList.remove('hidden'); if(txt){txt.className=isErr?'loader-error':'loader-text';txt.textContent=msg||'{% trans "Chargement des données..." %}';} if(sp)sp.style.display=isErr?'none':''; }
+function hideLoader(){ var el=document.getElementById('gridLoader'); if(el)el.classList.add('hidden'); }
+function setStatus(msg,type){ var el=document.getElementById('gridStatus'); if(!el)return; el.textContent=msg; el.style.color={info:'#0d6efd',success:'#198754',error:'#dc3545'}[type]||'#6c757d'; }
+function statusBadge(st){ var m={new:['status-new','{% trans "Nouveau" %}'],saved:['status-saved','{% trans "Enregistré" %}'],dirty:['status-dirty','{% trans "Modifié" %}'],saving:['status-saving','{% trans "En cours..." %}']}; var i=m[st]||m['new']; return '<span class="status-badge '+i[0]+'">'+i[1]+'</span>'; }
+function setBadge(aid,st){ var el=document.getElementById('stbadge_'+aid); if(el)el.innerHTML=statusBadge(st); }
+function updateBadge(aid){ setBadge(aid,(yearData[aid]&&yearData[aid]._status)||'new'); }
 
-        let sumEq = 0, sumNCL = 0, sumCL = 0;
-        const offset = (currentPage - 1) * passifs.length;
+function init(){ showLoader(); fetchPage(1,[]); }
 
-        tbody.innerHTML = passifs.map((p, i) => {
-            const annee = p.annee?.annee || '—';
-            const eq    = parseFloat(p.total_fonds_propres)      || 0;
-            const ncl   = parseFloat(p.total_passif_long_terme)  || 0;
-            const cl    = parseFloat(p.total_passif_circulant)   || 0;
-            const total = parseFloat(p.total_capitaux_propres_et_passif) || (eq + ncl + cl);
-            sumEq += eq; sumNCL += ncl; sumCL += cl;
-            return `
-            <tr>
-                <td class="text-muted small">${offset + i + 1}</td>
-                <td><span class="year-badge">${annee}</span></td>
-                <td class="val-cell text-end">${fmtFull(eq)}</td>
-                <td class="val-cell text-end" style="color:#17a2b8;">${fmtFull(ncl)}</td>
-                <td class="val-cell text-end" style="color:#28a745;">${fmtFull(cl)}</td>
-                <td class="val-cell val-total text-end">${fmtFull(total)}</td>
-                <td class="text-center">
-                    <div class="d-flex justify-content-center gap-1">
-                        <a href="/root-dashboard/acheteurs/manager-un-acheteur/${ACHETEUR_ID}/bilan-anglais/passifs/${p.id}/modifier/"
-                           class="btn-tbl btn-tbl-edit" title="{% trans 'Edit' %}">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button class="btn-tbl btn-tbl-delete delete-btn" data-id="${p.id}" title="{% trans 'Delete' %}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>`;
-        }).join('');
+function fetchPage(page,acc){
+    fetch('/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/liste-des-passifs/?page='+page,{headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
+    .then(function(r){ if(r.status===401)return refreshAccessToken().then(function(){ fetchPage(page,acc); }); if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){ if(!data)return; var res=Array.isArray(data.results)?data.results:(Array.isArray(data)?data:[]); var all=acc.concat(res); if(data.next===true){ fetchPage(page+1,all); }else{ buildGrid(all); } })
+    .catch(function(err){ if(acc.length>0){buildGrid(acc);}else{showLoader('{% trans "Erreur de chargement" %}: '+err.message,true);} setStatus('{% trans "Erreur de chargement" %}','error'); });
+}
 
-        document.getElementById('footerEquity').textContent = fmtFull(sumEq);
-        document.getElementById('footerNCL').textContent    = fmtFull(sumNCL);
-        document.getElementById('footerCL').textContent     = fmtFull(sumCL);
-        document.getElementById('footerTotal').textContent  = fmtFull(sumEq + sumNCL + sumCL);
-    }
+function buildGrid(results){
+    yearData={}; activeYears=[];
+    results.forEach(function(o){ var ra=o.annee; var aid=(ra!==null&&typeof ra==='object')?parseInt(ra.id,10):parseInt(ra,10); if(!aid||isNaN(aid))return; yearData[aid]=$.extend({},o,{_id:o.id,_status:'saved'}); if(activeYears.indexOf(aid)===-1)activeYears.push(aid); });
+    activeYears.sort(function(a,b){return (anneeMap[b]||0)-(anneeMap[a]||0);});
+    hideLoader(); renderAll(); setStatus('{% trans "Données chargées" %} — '+results.length+' {% trans "enregistrement(s)" %}','success');
+    if(activeYears.length===0) showLoader('{% trans "Aucune donnée. Cliquez sur « Ajouter une année » pour commencer." %}',true);
+}
 
-    /* ── Metric cards ── */
-    function updateMetrics(passifs) {
-        const count = passifs.length;
-        const years = new Set(passifs.map(p => p.annee?.annee).filter(Boolean));
-        let sumEq = 0, sumLiab = 0, sumTotal = 0;
-        passifs.forEach(p => {
-            sumEq    += parseFloat(p.total_fonds_propres) || 0;
-            sumLiab  += parseFloat(p.total_passif) || 0;
-            sumTotal += parseFloat(p.total_capitaux_propres_et_passif) || 0;
-        });
+function renderAll(){ renderHead(); renderBody(); renderYearPills(); }
 
-        document.getElementById('mc-count').textContent      = count;
-        document.getElementById('mc-years').textContent      = years.size + ' {% trans "year(s)" %}';
-        document.getElementById('mc-equity').textContent      = fmtK(sumEq)    + (DEVISE ? ' ' + DEVISE : '');
-        document.getElementById('mc-liabilities').textContent = fmtK(sumLiab)  + (DEVISE ? ' ' + DEVISE : '');
-        document.getElementById('mc-total').textContent       = fmtK(sumTotal) + (DEVISE ? ' ' + DEVISE : '');
-    }
-
-    /* ── Pagination ── */
-    function renderPagination(data) {
-        const total = data.count || 0;
-        const pages = data.total_pages || 1;
-        const start = (currentPage - 1) * (allData.length) + 1;
-        const end   = Math.min(start + allData.length - 1, total);
-        document.getElementById('paginationInfo').textContent = total
-            ? `${start}–${end} / ${total}`
-            : '{% trans "No results" %}';
-
-        const ctrl = document.getElementById('paginationControls');
-        ctrl.innerHTML = '';
-        const prev = document.createElement('a');
-        prev.className = 'page-link-btn' + (data.previous ? '' : ' disabled');
-        prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
-        prev.href = '#'; prev.dataset.page = currentPage - 1;
-        ctrl.appendChild(prev);
-
-        for (let p = 1; p <= pages; p++) {
-            const a = document.createElement('a');
-            a.className = 'page-link-btn' + (p === currentPage ? ' active' : '');
-            a.textContent = p; a.href = '#'; a.dataset.page = p;
-            ctrl.appendChild(a);
-        }
-
-        const next = document.createElement('a');
-        next.className = 'page-link-btn' + (data.next ? '' : ' disabled');
-        next.innerHTML = '<i class="fas fa-chevron-right"></i>';
-        next.href = '#'; next.dataset.page = currentPage + 1;
-        ctrl.appendChild(next);
-    }
-
-    /* ── Events ── */
-    document.getElementById('paginationControls').addEventListener('click', function (e) {
-        const a = e.target.closest('.page-link-btn');
-        if (!a || a.classList.contains('disabled') || a.classList.contains('active')) { e.preventDefault(); return; }
-        e.preventDefault();
-        currentPage = parseInt(a.dataset.page);
-        loadPassifs();
+function renderHead(){
+    var h='<tr><th class="col-label-head">STATEMENT OF FINANCIAL POSITION — EQUITY & LIABILITIES</th>';
+    activeYears.forEach(function(aid){ var an=anneeMap[aid]||'?'; var st=yearData[aid]?yearData[aid]._status:'new'; var hasDb=yearData[aid]&&yearData[aid]._id;
+        h+='<th class="year-head-cell"><div class="yh-top"><span class="yh-year">'+an+'</span><span id="stbadge_'+aid+'">'+statusBadge(st)+'</span></div><div class="yh-actions"><button class="btn-year-save" onclick="saveYear('+aid+')"><i class="fas fa-save me-1"></i>{% trans "Enreg." %}</button>'+(hasDb?'<button class="btn-year-del" onclick="supprimerAnnee('+aid+')" title="{% trans "Supprimer" %}"><i class="fas fa-trash-alt"></i></button>':'<button class="btn-year-hide" onclick="masquerAnnee('+aid+')" title="{% trans "Masquer" %}"><i class="fas fa-times"></i></button>')+'</div></th>';
     });
+    h+='<th class="col-add-head" onclick="$(\'#modalAddYear\').modal(\'show\')" title="{% trans "Ajouter une année" %}"><i class="fas fa-plus"></i></th></tr>';
+    document.getElementById('bilanHead').innerHTML=h;
+}
 
-    let searchTimer;
-    document.getElementById('searchInput').addEventListener('input', function () {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            currentSearch = this.value;
-            currentPage = 1;
-            loadPassifs();
-        }, 450);
+function renderBody(){ var b=''; ROWS.forEach(function(row,idx){b+=buildRow(row,idx);}); document.getElementById('bilanBody').innerHTML=b; recalcAll(); }
+
+function buildRow(row,idx){
+    var isComp=(row.t==='st'||row.t==='tot'||row.t==='grand');
+    var cls={h1:'row-h1',f:'row-field',st:'row-subtotal',tot:row.cls||'row-total',grand:'row-grand'}[row.t]||'row-field';
+    var h='<tr class="'+cls+'" data-ridx="'+idx+'"><td class="col-label">'+escHtml(row.label)+'</td>';
+    activeYears.forEach(function(aid){ h+='<td class="year-cell">';
+        if(row.t==='f'){ var val=(yearData[aid]&&yearData[aid][row.f]!=null)?yearData[aid][row.f]:''; h+='<input type="number" class="cell-input" data-year="'+aid+'" data-field="'+row.f+'" data-ridx="'+idx+'" value="'+(val!==''?val:'')+'" placeholder="0" step="0.01">'; }
+        else if(isComp){ h+='<span class="cell-computed" id="cc_'+idx+'_'+aid+'">—</span>'; }
+        h+='</td>';
     });
+    h+='<td></td></tr>'; return h;
+}
 
-    document.getElementById('passifTableBody').addEventListener('click', function (e) {
-        const btn = e.target.closest('.delete-btn');
-        if (!btn) return;
-        const id = btn.dataset.id;
-        Swal.fire({
-            title: '{% trans "Delete this liability?" %}',
-            text: '{% trans "This action is irreversible." %}',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '{% trans "Delete" %}',
-            cancelButtonText: '{% trans "Cancel" %}',
-            background: '#fcfefe'
-        }).then(result => {
-            if (!result.isConfirmed) return;
-            fetch(`/api/acheteur/${ACHETEUR_ID}/bilan-anglais/supprimer-des-passifs/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ ids: [id] })
-            }).then(r => {
-                if (r.ok) {
-                    Swal.fire({ icon: 'success', title: '{% trans "Deleted" %}', timer: 1600, showConfirmButton: false, background: '#fcfefe' });
-                    loadPassifs();
-                } else if (r.status === 401) {
-                    refreshToken(() => document.querySelector(`.delete-btn[data-id="${id}"]`)?.click());
-                } else {
-                    Swal.fire({ icon: 'error', title: '{% trans "Error" %}', text: '{% trans "Could not delete." %}', background: '#fcfefe' });
-                }
-            });
+function recalcAll(){ activeYears.forEach(function(aid){ recalcYear(aid); }); }
+function recalcYear(aid){ ROWS.forEach(function(row,idx){ if(row.t!=='st'&&row.t!=='tot'&&row.t!=='grand')return; var t=0; row.fs.forEach(function(f){t+=getVal(aid,f);}); var c=document.getElementById('cc_'+idx+'_'+aid); if(c)c.textContent=fmtNum(t); }); }
+function getVal(aid,field){ var $i=$('[data-year="'+aid+'"][data-field="'+field+'"]'); var v=$i.length?parseFloat($i.val()):0; return isNaN(v)?0:v; }
+
+$(document).on('input','.cell-input',function(){ var aid=+$(this).data('year'); var f=$(this).data('field'); if(!yearData[aid])yearData[aid]={_id:null,_status:'new'}; yearData[aid][f]=parseFloat($(this).val())||0; if(yearData[aid]._status==='saved'){yearData[aid]._status='dirty'; updateBadge(aid);} recalcYear(aid); });
+$(document).on('keydown','.cell-input',function(e){ var $t=$(this); var aid=+$t.data('year'); var ridx=+$t.data('ridx'); var aidIdx=activeYears.indexOf(aid);
+    if(e.key==='Tab'&&!e.shiftKey){e.preventDefault(); var naid=activeYears[aidIdx+1]; if(naid){$('[data-ridx="'+ridx+'"][data-year="'+naid+'"]').focus();}else{var nr=findNextF(ridx); if(nr>=0)$('[data-ridx="'+nr+'"][data-year="'+activeYears[0]+'"]').focus();} }
+    else if(e.key==='Tab'&&e.shiftKey){e.preventDefault(); var paid=activeYears[aidIdx-1]; if(paid){$('[data-ridx="'+ridx+'"][data-year="'+paid+'"]').focus();}else{var pr=findPrevF(ridx); if(pr>=0)$('[data-ridx="'+pr+'"][data-year="'+activeYears[activeYears.length-1]+'"]').focus();} }
+    else if(e.key==='Enter'||e.key==='ArrowDown'){e.preventDefault(); var nr2=findNextF(ridx); if(nr2>=0)$('[data-ridx="'+nr2+'"][data-year="'+aid+'"]').focus(); }
+    else if(e.key==='ArrowUp'){e.preventDefault(); var pr2=findPrevF(ridx); if(pr2>=0)$('[data-ridx="'+pr2+'"][data-year="'+aid+'"]').focus(); }
+});
+function findNextF(from){for(var i=from+1;i<ROWS.length;i++){if(ROWS[i].t==='f')return i;}return -1;}
+function findPrevF(from){for(var i=from-1;i>=0;i--){if(ROWS[i].t==='f')return i;}return -1;}
+
+function collectPayload(aid){ var p={acheteur:ACHETEUR_ID,annee:aid}; ROWS.forEach(function(row){if(row.t!=='f')return; var $i=$('[data-year="'+aid+'"][data-field="'+row.f+'"]'); p[row.f]=parseFloat($i.val())||0;}); return p; }
+
+function saveYear(aid){
+    var d=yearData[aid]||{_id:null,_status:'new'}; var p=collectPayload(aid); var isNew=!d._id;
+    var url=isNew?'/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/ajouter-un-passif/':'/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/editer-un-passif/'+d._id+'/';
+    setBadge(aid,'saving'); setStatus('{{ t_enr_cours }}…','info');
+    $.ajax({url:url,type:isNew?'POST':'PUT',data:JSON.stringify(p),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},
+        success:function(resp){if(!yearData[aid])yearData[aid]={}; yearData[aid]._id=resp.id; yearData[aid]._status='saved'; updateBadge(aid); setStatus('{{ t_succes }} ('+(anneeMap[aid]||aid)+')','success');},
+        error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveYear(aid);});return;} var msg=''; try{var r=JSON.parse(xhr.responseText);msg=r.error||r.detail||JSON.stringify(r);}catch(e){msg=xhr.responseText||'';} Swal.fire({icon:'error',title:'{{ t_err_enr|escapejs }}'+' (HTTP '+xhr.status+')',text:msg||'Erreur inconnue',timer:8000,showConfirmButton:true});}
+    });
+}
+
+function saveAll(){
+    var ts=activeYears.filter(function(aid){return !yearData[aid]||yearData[aid]._status!=='saved';}); if(!ts.length){Swal.fire({icon:'info',title:'{% trans "Tout est déjà enregistré" %}',timer:1500,showConfirmButton:false});return;}
+    var idx=0; function next(){ if(idx>=ts.length){setStatus('{% trans "Tout enregistré avec succès" %}','success');return;} var aid=ts[idx++]; var d=yearData[aid]||{}; var p=collectPayload(aid); var isNew=!d._id; var url=isNew?'/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/ajouter-un-passif/':'/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/editer-un-passif/'+d._id+'/'; setBadge(aid,'saving'); $.ajax({url:url,type:isNew?'POST':'PUT',data:JSON.stringify(p),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},success:function(resp){if(!yearData[aid])yearData[aid]={}; yearData[aid]._id=resp.id; yearData[aid]._status='saved'; updateBadge(aid); next();},error:function(xhr){yearData[aid]._status='dirty'; updateBadge(aid); if(xhr.status===401){refreshToken(function(){saveAll();});return;} next();}}); }
+    next();
+}
+
+function addYear(aid){ if(activeYears.indexOf(aid)!==-1){Swal.fire({icon:'info',title:'{% trans "Cette année est déjà affichée" %}',timer:1200,showConfirmButton:false});return;} if(!yearData[aid])yearData[aid]={_id:null,_status:'new'}; activeYears.push(aid); activeYears.sort(function(a,b){return (anneeMap[b]||0)-(anneeMap[a]||0);}); renderAll(); }
+function masquerAnnee(aid){ var i=activeYears.indexOf(aid); if(i>-1)activeYears.splice(i,1); delete yearData[aid]; renderAll(); }
+function supprimerAnnee(aid){
+    var an=anneeMap[aid]||aid; var d=yearData[aid]; if(!d||!d._id){masquerAnnee(aid);return;}
+    Swal.fire({title:'Delete '+an+' ?',html:'<p class="text-muted mb-0" style="font-size:.85rem;">{{ t_suppr_msg|escapejs }} Year: <strong>'+an+'</strong></p>',icon:'warning',showCancelButton:true,confirmButtonColor:'#dc3545',cancelButtonColor:'#6c757d',confirmButtonText:'<i class="fas fa-trash-alt me-1"></i>{{ t_suppr_def|escapejs }}',cancelButtonText:'{{ t_cancel|escapejs }}'})
+    .then(function(r){ if(!r.isConfirmed)return; setBadge(aid,'saving');
+        $.ajax({url:'/api/acheteur/'+ACHETEUR_ID+'/bilan-anglais/supprimer-des-passifs/',type:'DELETE',data:JSON.stringify({ids:[d._id]}),contentType:'application/json',headers:{'Authorization':'Bearer '+ACCESS_TOKEN,'X-CSRFToken':getCsrf()},
+            success:function(){ var i=activeYears.indexOf(aid); if(i>-1)activeYears.splice(i,1); delete yearData[aid]; renderAll(); Swal.fire({icon:'success',title:'{{ t_del_ok|escapejs }}',timer:1500,showConfirmButton:false}); },
+            error:function(xhr){ if(xhr.status===401){refreshToken(function(){supprimerAnnee(aid);});return;} updateBadge(aid); Swal.fire({icon:'error',title:'{{ t_del_err|escapejs }}',timer:2000,showConfirmButton:false}); }
         });
     });
+}
 
-    /* ── Helpers ── */
-    function getCookie(name) {
-        let v = null;
-        document.cookie.split(';').forEach(c => {
-            c = c.trim();
-            if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
-        });
-        return v;
-    }
-    function refreshToken(cb) {
-        fetch('/api/token/refresh/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh: REFRESH_TOKEN })
-        }).then(r => r.json()).then(d => { if (d.access && cb) cb(); })
-          .catch(() => Swal.fire({ icon: 'error', title: '{% trans "Session expired" %}', text: '{% trans "Please log in again." %}', background: '#fcfefe' })
-              .then(() => { window.location.href = '/login/'; }));
-    }
+function renderYearPills(){ var h=''; activeYears.forEach(function(aid){var an=anneeMap[aid]||'?'; var st=(yearData[aid]&&yearData[aid]._status)||'new'; h+='<span class="badge '+(st==='saved'?'bg-success':st==='dirty'?'bg-primary':'bg-warning text-dark')+'">'+an+'</span>';}); if(!activeYears.length)h='<span class="text-muted" style="font-size:.75rem;">{% trans "Aucune année sélectionnée" %}</span>'; document.getElementById('yearPills').innerHTML=h; }
 
-    loadPassifs();
-})();
+function refreshAccessToken(){ return fetch('/api/token/refresh/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({'refresh':'{{ refresh }}'})}).then(function(r){if(!r.ok){window.location.href='/';throw new Error('expired');} return r.json();}).then(function(d){ACCESS_TOKEN=d.access;}); }
+function refreshToken(cb){ refreshAccessToken().then(function(){if(cb)cb();}).catch(function(){}); }
+
+document.getElementById('btnSaveAll').addEventListener('click', saveAll);
+document.getElementById('btnConfirmAddYear').addEventListener('click', function(){ var sel=document.getElementById('selectAddYear'); var aid=parseInt(sel.value); if(!aid)return; $('#modalAddYear').modal('hide'); sel.value=''; addYear(aid); });
+
+function adjustGridHeight(){ var outer=document.querySelector('.bilan-outer'); if(!outer)return; var rect=outer.getBoundingClientRect(); outer.style.height=(window.innerHeight-rect.top)+'px'; }
+$(document).ready(function(){ adjustGridHeight(); init(); });
+window.addEventListener('resize', adjustGridHeight);
 </script>
 {% endblock %}

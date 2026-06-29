@@ -7633,9 +7633,17 @@ class AddAcheteurActifAnglaisView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
         data["acheteur"] = acheteur_id
+        annee_id = data.get("annee")
+        existing = ActifA.objects.filter(acheteur_id=acheteur_id, annee_id=annee_id).first()
+        if existing:
+            serializer = EditActifASerializer(existing, data=data, partial=False, context={"request": request})
+            if serializer.is_valid():
+                serializer.save(updated_by=request.user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer = AddActifASerializer(data=data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by=request.user, updated_by=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -7800,9 +7808,17 @@ class AddAcheteurPassifAnglaisView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
         data["acheteur"] = acheteur_id
+        annee_id = data.get("annee")
+        existing = PassifA.objects.filter(acheteur_id=acheteur_id, annee_id=annee_id).first()
+        if existing:
+            serializer = EditPassifASerializer(existing, data=data, partial=False, context={"request": request})
+            if serializer.is_valid():
+                serializer.save(updated_by=request.user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer = AddPassifASerializer(data=data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by=request.user, updated_by=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -7979,9 +7995,17 @@ class AddAcheteurResultatAnglaisView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
         data["acheteur"] = acheteur_id
+        annee_id = data.get("annee")
+        existing = ResultatA.objects.filter(acheteur_id=acheteur_id, annee_id=annee_id).first()
+        if existing:
+            serializer = EditResultatASerializer(existing, data=data, partial=False, context={"request": request})
+            if serializer.is_valid():
+                serializer.save(updated_by=request.user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer = AddResultatASerializer(data=data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by=request.user, updated_by=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
