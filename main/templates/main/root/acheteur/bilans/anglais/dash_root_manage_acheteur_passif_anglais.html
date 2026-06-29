@@ -156,6 +156,7 @@ html{overflow:hidden;}
 var ACHETEUR_ID  = {{ id_acheteur }};
 var ACCESS_TOKEN = '{{ access }}';
 var ALL_ANNEES   = [{% for a in annee_list %}{"id":{{ a.id }},"annee":{{ a.annee }}},{% endfor %}];
+var CF_ANNEES    = {{ cf_annees_json|safe }};
 
 var ROWS = [
     {t:'h1', label:'CAPITAL & RESERVES'},
@@ -230,6 +231,7 @@ function fetchPage(page,acc){
 function buildGrid(results){
     yearData={}; activeYears=[];
     results.forEach(function(o){ var ra=o.annee; var aid=(ra!==null&&typeof ra==='object')?parseInt(ra.id,10):parseInt(ra,10); if(!aid||isNaN(aid))return; yearData[aid]=$.extend({},o,{_id:o.id,_status:'saved'}); if(activeYears.indexOf(aid)===-1)activeYears.push(aid); });
+    if(results.length===0){ CF_ANNEES.forEach(function(a){ if(a.id&&activeYears.indexOf(a.id)===-1){activeYears.push(a.id); yearData[a.id]={_id:null,_status:'new'};} }); }
     activeYears.sort(function(a,b){return (anneeMap[b]||0)-(anneeMap[a]||0);});
     hideLoader(); renderAll(); setStatus('{% trans "Données chargées" %} — '+results.length+' {% trans "enregistrement(s)" %}','success');
     if(activeYears.length===0) showLoader('{% trans "Aucune donnée. Cliquez sur « Ajouter une année » pour commencer." %}',true);

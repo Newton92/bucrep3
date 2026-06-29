@@ -4921,6 +4921,23 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
     devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -4933,6 +4950,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "devise_acheteur": devise_acheteur,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -4993,6 +5011,23 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
     devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -5005,6 +5040,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "devise_acheteur": devise_acheteur,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
@@ -5065,6 +5101,23 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
     devise_acheteur = (compte_financier.devise or '') if compte_financier else ''
 
+    cf_annees = []
+    try:
+        cf = CompteFinancier.objects.filter(acheteur=acheteur).first()
+        if cf:
+            for date_attr in ['date_fin', 'date_fin_n_moins_un', 'date_fin_n_moins_deux']:
+                date_val = getattr(cf, date_attr, None)
+                if date_val:
+                    try:
+                        annee_obj = Annee.objects.get(annee=date_val.year)
+                        entry = {'id': annee_obj.id, 'annee': annee_obj.annee}
+                        if entry not in cf_annees:
+                            cf_annees.append(entry)
+                    except Annee.DoesNotExist:
+                        pass
+    except Exception:
+        pass
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -5077,6 +5130,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "devise_acheteur": devise_acheteur,
+        "cf_annees_json": json.dumps(cf_annees),
     }
     return render(
         request,
