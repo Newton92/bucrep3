@@ -23,26 +23,7 @@
     /* ── Layout ── */
     .edit-wrapper { width: 100%; }
 
-    /* ── Page header ── */
-    .page-hdr {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 0 14px;
-    }
-    .page-hdr-left h6 { font-size: .95rem; font-weight: 700; color: var(--cp-dk); margin: 0; }
-    .page-hdr-left small { color: #6c757d; font-size: .78rem; }
-    .edit-badge {
-        font-size: .75rem; font-weight: 600; padding: 4px 12px; border-radius: 20px;
-        background: linear-gradient(135deg, var(--cp-lt), var(--cp)); color: white;
-    }
-    #acheteurCodeBadge { font-size: .78rem; }
-
-    /* ── Info strip ── */
-    .info-strip {
-        display: none; background: var(--bg-tint); border: 1px solid var(--border);
-        border-radius: 8px; padding: 8px 16px; margin-bottom: 12px;
-    }
-    .info-strip .info-item small { font-size: .7rem; color: #6c757d; display: block; }
-    .info-strip .info-item strong { font-size: .82rem; color: #2c3e50; }
+    #acheteurCodeBadge { font-size: .72rem; background: rgba(255,255,255,.18); color: white; border: 1px solid rgba(255,255,255,.3); }
 
     /* ── Card ── */
     .card-form {
@@ -50,33 +31,42 @@
         background: white; box-shadow: 0 2px 12px rgba(10,149,202,.07);
     }
 
-    /* ── Step indicator ── */
+    /* ── Step bar fusionné ── */
     .step-bar {
-        display: flex; counter-reset: step; padding: 14px 20px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        padding: 8px 16px;
         background: linear-gradient(135deg, var(--cp) 0%, var(--cp-dk) 100%);
         align-items: center;
     }
-    .step { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; }
+    .step-bar-info { display: flex; flex-direction: column; justify-content: center; }
+    .step-bar-title { font-size: .82rem; font-weight: 700; color: white; white-space: nowrap; }
+    .step-bar-sub { font-size: .68rem; color: rgba(255,255,255,.72); margin-top: 1px; }
+    .steps-center { display: flex; align-items: center; counter-reset: step; justify-content: center; }
+    .step-bar-actions { display: flex; align-items: center; gap: 6px; }
+
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; min-width: 56px; }
     .step + .step::before {
-        content: ''; position: absolute; top: 14px; left: calc(-50%);
+        content: ''; position: absolute; top: 13px; left: calc(-50%);
         width: 100%; height: 2px; background: rgba(255,255,255,.25); z-index: 0;
     }
     .step-circle {
-        width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35);
+        width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35);
         background: rgba(255,255,255,.15); color: rgba(255,255,255,.75);
-        font-size: .78rem; font-weight: 700; display: flex; align-items: center;
-        justify-content: center; margin-bottom: 4px; transition: all .25s;
+        font-size: .72rem; font-weight: 700; display: flex; align-items: center;
+        justify-content: center; margin-bottom: 3px; transition: all .25s;
         position: relative; z-index: 1;
         counter-increment: step;
     }
     .step-circle::before { content: counter(step); }
     .step.active .step-circle {
         background: white; color: var(--cp); border-color: white;
-        box-shadow: 0 0 0 4px rgba(255,255,255,.25);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.25);
     }
     .step.completed .step-circle { background: rgba(255,255,255,.9); color: #22c55e; border-color: rgba(255,255,255,.9); }
     .step.completed .step-circle::before { content: '✓'; }
-    .step-lbl { font-size: .7rem; color: rgba(255,255,255,.65); font-weight: 500; }
+    .step-lbl { font-size: .65rem; color: rgba(255,255,255,.65); font-weight: 500; }
     .step.active .step-lbl { color: white; font-weight: 700; }
     .step.completed .step-lbl { color: rgba(255,255,255,.85); }
 
@@ -187,9 +177,15 @@
     @media (max-width: 768px) {
         .form-body { padding: 14px 16px; }
         .nav-bar { padding: 10px 16px; }
-        .step-bar { padding: 12px 10px; }
+        .step-bar { grid-template-columns: auto 1fr auto; gap: 6px; padding: 8px 10px; }
         .step-lbl { display: none; }
+        .step-bar-sub { display: none; }
         .btn-save { width: 100%; }
+    }
+    @media (max-width: 480px) {
+        .step-bar-title { font-size: .75rem; }
+        .step-bar-info { display: none; }
+        .steps-center { justify-content: flex-start; }
     }
 </style>
 {% endblock %}
@@ -205,50 +201,43 @@
 
 <div class="edit-wrapper">
 
-    <!-- En-tête page -->
-    <div class="page-hdr">
-        <div class="page-hdr-left">
-            <h6><i class="bi bi-pencil-square me-1"></i>{% trans "Modification d'un acheteur" %}</h6>
-            <small>{% trans "Remplissez les étapes puis enregistrez." %}</small>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="edit-badge"><i class="bi bi-pencil me-1"></i>{% trans "Édition" %}</span>
-            <span id="acheteurCodeBadge" class="badge bg-secondary">—</span>
-            <a href="/root-dashboard/acheteurs/liste-des-acheteurs" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
-            </a>
-        </div>
-    </div>
-
-    <!-- Bandeau info acheteur -->
-    <div class="info-strip" id="acheteurInfoCard">
-        <div class="row g-2">
-            <div class="col-auto info-item"><small>{% trans "Code" %}</small><strong id="infoCode">—</strong></div>
-            <div class="col-auto info-item ms-3"><small>{% trans "Statut" %}</small><strong id="infoStatut">—</strong></div>
-            <div class="col-auto info-item ms-3"><small>{% trans "Création" %}</small><strong id="infoDateCreation">—</strong></div>
-        </div>
-    </div>
-
     <!-- Carte principale -->
     <div class="card-form">
 
-        <!-- Indicateur d'étapes (dans l'en-tête de la carte) -->
+        <!-- En-tête fusionné : titre + étapes + actions -->
         <div class="step-bar">
-            <div class="step active" data-step="1">
-                <div class="step-circle"></div>
-                <span class="step-lbl">{% trans "Généralités" %}</span>
+            <!-- Gauche : titre -->
+            <div class="step-bar-info">
+                <span class="step-bar-title"><i class="bi bi-pencil-square me-1"></i>{% trans "Modifier l'acheteur" %}</span>
+                <span class="step-bar-sub" id="acheteurNameSub">{% trans "Chargement..." %}</span>
             </div>
-            <div class="step" data-step="2">
-                <div class="step-circle"></div>
-                <span class="step-lbl">{% trans "Contacts" %}</span>
+
+            <!-- Centre : étapes -->
+            <div class="steps-center">
+                <div class="step active" data-step="1">
+                    <div class="step-circle"></div>
+                    <span class="step-lbl">{% trans "Généralités" %}</span>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-circle"></div>
+                    <span class="step-lbl">{% trans "Contacts" %}</span>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-circle"></div>
+                    <span class="step-lbl">{% trans "Localisation" %}</span>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-circle"></div>
+                    <span class="step-lbl">{% trans "Opinion" %}</span>
+                </div>
             </div>
-            <div class="step" data-step="3">
-                <div class="step-circle"></div>
-                <span class="step-lbl">{% trans "Localisation" %}</span>
-            </div>
-            <div class="step" data-step="4">
-                <div class="step-circle"></div>
-                <span class="step-lbl">{% trans "Opinion" %}</span>
+
+            <!-- Droite : code + retour -->
+            <div class="step-bar-actions">
+                <span id="acheteurCodeBadge" class="badge">—</span>
+                <a href="/root-dashboard/acheteurs/liste-des-acheteurs" class="btn btn-sm" style="background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.3);">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
             </div>
         </div>
 
@@ -828,10 +817,7 @@ $(document).ready(function() {
 
     function updateAcheteurInfo(a) {
         $('#acheteurCodeBadge').text(a.code || '--');
-        $('#infoCode').text(a.code || '--');
-        $('#infoStatut').text(a.statut_entreprise ? a.statut_entreprise.libelle : '--');
-        $('#infoDateCreation').text(a.date_creation || '--');
-        $('#acheteurInfoCard').show();
+        $('#acheteurNameSub').text(a.nom || '');
     }
 
     // ── Soumission (unique PUT à l'étape 4) ──
