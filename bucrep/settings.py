@@ -227,6 +227,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# Autorise le chargement des pages dans un iframe sur le même domaine (split-panel manager acheteur)
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 ROOT_URLCONF = "bucrep.urls"
 
 TEMPLATES = [
