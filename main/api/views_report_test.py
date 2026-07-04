@@ -122,7 +122,7 @@ def render_html_template(report_data):
         raise FileNotFoundError(f"Le dossier {template_dir} n'existe pas.")
 
     env = Environment(loader=FileSystemLoader(template_dir))
-    template = env.get_template('report_deep_seek_test.html')
+    template = env.get_template('report_acremac_template.html')
 
     # Rendu du template avec des valeurs par défaut
     html = template.render(
@@ -1063,7 +1063,7 @@ class GenerateReport(APIView):
             if format_report.upper() == 'PDF':
                 print("Génération du PDF...")  # Debug
                 # Rendre le template HTML
-                html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+                html_string = render_to_string('main/report_acremac_template.html', report_data)
                 
                 # Conversion en PDF avec WeasyPrint
                 response = HttpResponse(content_type='application/pdf')

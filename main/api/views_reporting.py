@@ -780,7 +780,8 @@ def generer_rapport_solvabilite(request):
     print("🔗 Chemin:", request.path)
     print("🌐 URL complète:", request.build_absolute_uri())
     
-    serializer = RapportSolvabiliteSerializer(data=request.data)
+    data_input = request.data if request.method == 'POST' else request.query_params
+    serializer = RapportSolvabiliteSerializer(data=data_input)
     if serializer.is_valid():
         data = serializer.validated_data
         acheteur_id = data.get('acheteur_id')
@@ -3041,7 +3042,7 @@ def exporter_pdf_old(report_data, form_data, request=None):
         
         # activer la langue et choisir template si nécessaire
         _activate_language(report_data.get('lang'))
-        template = _choose_template('main/report_deep_seek_test.html', report_data.get('lang'))
+        template = _choose_template('main/report_acremac_template.html', report_data.get('lang'))
         # Rendre le template HTML
         html_string = render_to_string(template, report_data)
         

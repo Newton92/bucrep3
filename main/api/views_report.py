@@ -518,11 +518,11 @@ def render_html_template(report_data):
     certaines données (comme le scoring) d'apparaître dans l'aperçu HTML. En
     privilégiant le moteur Django on bénéficie également de l'auto-escaping
     et de la compatibilité avec les tags/filtres utilisés dans
-    `report_deep_seek_test.html`.
+    `report_acremac_template.html`.
     """
     # utilisation de render_to_string garantit que tout `report_data` est
     # rendu et que les filtres `{% load %}` fonctionnent.
-    return render_to_string('main/report_deep_seek_test.html', report_data)
+    return render_to_string('main/report_acremac_template.html', report_data)
 
 
 def generate_pdf_weasyprint(report_data):
@@ -618,7 +618,7 @@ def generate_html(report_data):
     """Génère un rapport HTML complet et le force en téléchargement"""
     try:
         # Utiliser render_to_string pour générer le HTML à partir du template
-        html_content = render_to_string('main/report_deep_seek_test.html', report_data)
+        html_content = render_to_string('main/report_acremac_template.html', report_data)
         
         # Créer une réponse HTTP avec le contenu HTML
         response = HttpResponse(html_content, content_type='text/html')
@@ -3079,7 +3079,7 @@ class GenerateReport(APIView):
             if format_report.upper() == 'PDF':
                 print("Génération du PDF...")  # Debug
                 # Rendre le template HTML
-                html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+                html_string = render_to_string('main/report_acremac_template.html', report_data)
                 
                 # Générer le PDF en mémoire
                 pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
@@ -4524,7 +4524,7 @@ class GenerateReportCommandeAcheteur(APIView):
             if format_report.upper() == 'PDF':
                 print("Génération du PDF...")  # Debug
                 # Rendre le template HTML
-                html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+                html_string = render_to_string('main/report_acremac_template.html', report_data)
                 
                 # Générer le PDF en mémoire
                 pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()

@@ -57,12 +57,14 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
     annee_n2 = serializers.IntegerField(required=False, allow_null=True)
     inclure_commande = serializers.ChoiceField(
         choices=[('oui', 'Oui'), ('non', 'Non')],
-        required=True
+        required=False,
+        default='non'
     )
     commande_id = serializers.IntegerField(required=False, allow_null=True)
     langue = serializers.ChoiceField(
         choices=[('fr', 'Français'), ('en', 'English')],
-        required=True
+        required=False,
+        default='fr'
     )
     devise = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     type_bilan = serializers.ChoiceField(

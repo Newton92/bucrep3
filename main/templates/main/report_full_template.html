@@ -1,139 +1,1017 @@
-{% load i18n %}
-
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>{% trans "Rapport ACREMAC" %}</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 10mm 15mm;
-        }
-        body { font-family: Arial, sans-serif; font-size: 11pt; margin:0; padding:0; }
-        header, footer { width:100%; }
-        header { display:flex; justify-content:space-between; align-items:center;
-                 border-bottom:2px solid #004080; padding-bottom:3mm; margin-bottom:5mm; }
-        header img { width:40mm; }
-        header .info { text-align:right; font-size:9pt; color:#333; }
-        h1 { text-align:center; color:#004080; font-size:14pt; margin:4mm 0; }
-        .section { border:1px solid #004080; margin-bottom:5mm; }
-        .section-title { background:#004080; color:white; padding:3px 6px; font-weight:bold; font-size:11pt; }
-        .section-content { padding:6px; }
-        .two-col { display:flex; gap:5mm; }
-        .two-col > div { flex:1; border:1px solid #ccc; padding:5px; font-size:10pt; }
-        table { width:100%; border-collapse:collapse; font-size:10pt; margin-top:3mm; }
-        table th, table td { border:1px solid #ccc; padding:5px; text-align:left; }
-        .analysis { display:flex; gap:10mm; align-items:center; }
-        .analysis img { width:60mm; height:auto; }
-        footer { font-size:8pt; color:#666; text-align:center; border-top:1px solid #ccc;
-                 margin-top:10mm; padding-top:2mm; }
-    </style>
+  <meta charset="UTF-8">
+  <title>{% trans "Rapport ACREMAC" %}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 12mm 10mm 18mm 10mm;
+      @bottom-left {
+        content: "Nos renseignements sont confidentiels et ne peuvent être divulgués sous peine de dommages et intérêts.";
+        font-size: 7pt; color: #666;
+      }
+      @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-size: 8pt; color: #003366;
+      }
+    }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; margin:0; padding:0; line-height:1.45; color:#000; }
+    .container { width:100%; margin:0 auto; }
+    h1 { font-weight:800; font-size:18pt; margin:0; text-transform:uppercase; }
+    /* Section headers (dark blue, white text) */
+    .sec-hdr {
+      background-color: #003366;
+      color: white;
+      border-radius: 6px;
+      text-align: center;
+      padding: 5px 10px;
+      margin: 10px 0 4px 0;
+      page-break-after: avoid;
+    }
+    .sec-hdr h3 { font-size: 13pt; font-weight: bold; margin: 0; }
+    /* Sub-section headers (light blue, left yellow border) */
+    .sub-hdr {
+      font-size: 11pt;
+      font-weight: bold;
+      margin: 8px 0 4px 0;
+      padding: 4px 8px;
+      background-color: #e6f2ff;
+      border-left: 4px solid #F5C400;
+      border-radius: 3px;
+      page-break-after: avoid;
+    }
+    /* Content boxes with yellow border (old style) */
+    .box {
+      border: 1px solid #e4c010;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      page-break-inside: avoid;
+    }
+    /* Data tables */
+    table.dtbl {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6px;
+      page-break-inside: avoid;
+    }
+    table.dtbl td { padding: 3px 6px; vertical-align: top; }
+    table.dtbl td.lbl { width: 28%; text-align: right; padding-right: 8px; font-weight: bold; }
+    /* Financial tables */
+    table.ftbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      page-break-inside: avoid;
+    }
+    table.ftbl th {
+      background-color: #003366;
+      color: white;
+      padding: 3px 5px;
+      text-align: center;
+      border: 1px solid #002244;
+    }
+    table.ftbl td {
+      padding: 2px 5px;
+      border: 1px solid #cce4ff;
+      vertical-align: top;
+    }
+    table.ftbl tr.bold-row td { font-weight: bold; background-color: #e6f2ff; }
+    /* Comment label (yellow-orange) */
+    .cmt-lbl { color: #c49a00; font-weight: bold; }
+    /* Score/chart images */
+    .score-img { width: 100%; max-width: 420px; height: auto; display: block; margin: 4px auto; }
+    .chart-img { width: 100%; max-width: 600px; height: auto; display: block; margin: 4px auto; }
+    /* Positive/negative variation */
+    .pos { color: #007700; } .neg { color: #cc0000; }
+    /* Two-column header layout */
+    .hdr-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .hdr-right { text-align: right; font-size: 9pt; }
+  </style>
 </head>
 <body>
+<div class="container">
 
-<header>
-    <img src="" alt="ACREMAC Logo">
-    <div class="info">
-        {{ report_data.header_report.acremac_services }} <br>
-        {{ report_data.header_report.acremac_mail }} <br>
-        {{ report_data.header_report.date_today }}
+  <!-- ══════════════ EN-TÊTE ══════════════ -->
+  <div class="hdr-row">
+    <div>
+      {% if logo_data %}<img src="{{ logo_data }}" alt="ACREMAC" style="height:55px;">
+      {% elif logo_path %}<img src="{{ logo_path }}" alt="ACREMAC" style="height:55px;">{% endif %}
     </div>
-</header>
-
-<h1>{% trans "RAPPORT DE SOLVABILITÉ" %}</h1>
-
-<!-- ===================== DETAILS COMMANDE ===================== -->
-<div class="section">
-    <div class="section-title">{{ report_data.commande.title_1 }}</div>
-    <div class="section-content two-col">
-        <div>
-            <p><b>{% trans "Client:" %}</b> {{ report_data.commande.client }}</p>
-            <p><b>{% trans "Réf. Client:" %}</b> {{ report_data.commande.ref_client }}</p>
-            <p><b>{% trans "Notre Réf.:" %}</b> {{ report_data.commande.notre_ref }}</p>
-        </div>
-        <div>
-            <p><b>{% trans "Date réception:" %}</b> {{ report_data.commande.date_recept_commande }}</p>
-            <p><b>{% trans "Date rapport:" %}</b> {{ report_data.commande.date_rapport }}</p>
-            <p><b>{% trans "Délai:" %}</b> {{ report_data.commande.delais }}</p>
-            <p><b>{% trans "Priorité:" %}</b> {{ report_data.commande.priorite }}</p>
-            <p><b>{% trans "Type:" %}</b> {{ report_data.commande.type_rapport }}</p>
-        </div>
+    <div class="hdr-right">
+      © ACREMAC Services {{ header_report.acremac_branche_country }}<br>
+      email : credit.report@acremac.com<br>
+      {{ header_report.date_today }} (GMT)
     </div>
+  </div>
+
+  <div class="sec-hdr"><h1>{% trans "RAPPORT DE SOLVABILITÉ" %}</h1></div>
+  <br>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  1. DÉTAILS COMMANDE              -->
+  <!-- ══════════════════════════════════ -->
+  {% if commande.client != "Non spécifié" %}
+  <div class="box">
+    <table class="dtbl">
+      <tr>
+        <td class="lbl"><b>{% trans "Nom du client" %} :</b></td>
+        <td>{{ commande.client }}</td>
+        <td class="lbl"><b>{% trans "Date réception demande" %} :</b></td>
+        <td>{{ commande.date_recept_commande }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Référence client" %} :</b></td>
+        <td>{{ commande.ref_client }}</td>
+        <td class="lbl"><b>{% trans "Date du rapport" %} :</b></td>
+        <td>{{ commande.date_rapport }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Notre référence" %} :</b></td>
+        <td>{{ commande.notre_ref }}</td>
+        <td class="lbl"><b>{% trans "Délai en jours" %} :</b></td>
+        <td>{{ commande.delais }}</td>
+      </tr>
+      {% if commande.type_rapport != "Non spécifié" %}
+      <tr>
+        <td class="lbl"><b>{% trans "Type de rapport" %} :</b></td>
+        <td colspan="3">{{ commande.type_rapport }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- ══════════════════════════════════ -->
+  <!--  2. IDENTIFICATION                 -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "IDENTIFICATION" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "DONNÉES ACREMAC" %}</div>
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Raison sociale" %} :</b></td><td>{{ identification.acremac_info.nom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Sigle" %} :</b></td><td>{{ identification.acremac_info.sigle }}</td></tr>
+      {% for tel in identification.acremac_info.telephones %}
+      <tr><td class="lbl"><b>{% trans "Téléphone" %} {{ forloop.counter }} :</b></td><td>{{ tel }}</td></tr>
+      {% endfor %}
+      <tr><td class="lbl"><b>{% trans "Adresse" %} :</b></td><td>{{ identification.acremac_info.numero_adresse }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "BP" %} :</b></td><td>{{ identification.acremac_info.boite_postale }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Fax" %} :</b></td><td>{{ identification.acremac_info.fax }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Ville" %} :</b></td><td>{{ identification.acremac_info.ville }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Site internet" %} :</b></td><td>{{ additional_information.site_internet }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Pays" %} :</b></td><td>{{ identification.acremac_info.pays }}</td></tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Code NACE" %} :</b></td>
+        <td>{% for nace in additional_information.nace_codes %}{{ nace }}{% if not forloop.last %} · {% endif %}{% endfor %}</td>
+      </tr>
+      {% for port in identification.acremac_info.portables %}
+      <tr><td class="lbl"><b>{% trans "Portable" %} {{ forloop.counter }} :</b></td><td>{{ port }}</td></tr>
+      {% endfor %}
+      {% for em in identification.acremac_info.emails_secondaires %}
+      <tr><td class="lbl"><b>{% trans "Email" %} {{ forloop.counter }} :</b></td><td>{{ em }}</td></tr>
+      {% endfor %}
+      <tr><td class="lbl"><b>{% trans "Activité principale" %} :</b></td><td>{{ additional_information.activite_principale }}</td></tr>
+    </table>
+    <br>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ additional_information.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  3. RÉSUMÉ EXÉCUTIF               -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "RÉSUMÉ" %}</h3></div>
+  <div class="box">
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Date de création" %} :</b></td><td>{{ executive_summary.date_creation }}</td></tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Capitaux propres" %} :</b></td>
+        <td>{% if executive_summary.capitaux_propre != "Non spécifié" %}{{ executive_summary.capitaux_propre }} {{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Capital social" %} :</b></td>
+        <td>{% if executive_summary.capital_social != "Non spécifié" %}{{ executive_summary.capital_social }} {{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+      <tr><td class="lbl"><b>{% trans "Nombre d'employés" %} :</b></td><td>{{ executive_summary.nombre_employe }}</td></tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Chiffre d'affaires" %} :</b></td>
+        <td>{% if executive_summary.chiffre_affaire != "Non spécifié" %}{{ executive_summary.chiffre_affaire }} {{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Résultat Net" %} :</b></td>
+        <td>{% if executive_summary.resultat_net != "Non spécifié" %}{{ executive_summary.resultat_net }} {{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+      <tr><td class="lbl"><b>{% trans "Forme Juridique" %} :</b></td><td>{{ additional_information.forme_juridique }}</td></tr>
+    </table>
+    <br>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ executive_summary.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  4. RISK RATING                    -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "RISK RATING" %}</h3></div>
+  <div class="box">
+    <div style="text-align:center;">
+      {% if summary_and_opinion.risk_rating_image_base64 %}
+      <img src="{{ summary_and_opinion.risk_rating_image_base64 }}" alt="{% trans 'Score de risque' %}" class="score-img">
+      {% endif %}
+    </div>
+    <br>
+    <b class="cmt-lbl">{% trans "Analyse" %} :</b><br>
+    <p style="text-align:justify;">{{ summary_and_opinion.analyse_detailee }}</p>
+    <b class="cmt-lbl">{% trans "Interprétation" %} :</b><br>
+    <p style="text-align:justify;">{{ summary_and_opinion.interpretation }}</p>
+
+    <div class="sub-hdr">{% trans "LIMITE DE CRÉDIT" %}</div>
+    <table class="dtbl">
+      <tr>
+        <td class="lbl"><b>{% trans "Crédit demandé" %} :</b></td>
+        <td>{{ acremac_opinion.montant_credit_maximum }} {% if executive_summary.devise != "Non spécifié" %}{{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+    </table>
+
+    <div class="sub-hdr">{% trans "TENDANCE" %}</div>
+    <table class="dtbl">
+      <tr>
+        <td class="lbl"><b>{% trans "Avis commercial" %} :</b></td>
+        <td style="font-weight:bold; color:#003366;">{{ sector_analysis.tendance.avis_commercial }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Principaux concurrents" %} :</b></td>
+        <td>{{ sector_analysis.tendance.principaux_concurrent }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Presse/Médias" %} :</b></td>
+        <td>{{ sector_analysis.tendance.presse_media }}</td>
+      </tr>
+    </table>
+    <br>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ sector_analysis.tendance.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  5. DONNÉES D'ENREGISTREMENT       -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "DONNÉES D'ENREGISTREMENT" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "FAITS MARQUANTS" %}</div>
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Date de création" %} :</b></td><td>{{ registered_data.date_creation }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Date de registre" %} :</b></td><td>{{ registered_data.date_registre }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "N° de registre de commerce" %} :</b></td><td>{{ registered_data.numero_registre_commerce }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "N° Fiscal" %} :</b></td><td>{{ registered_data.numero_fiscale }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Statut du Registre" %} :</b></td><td>{{ registered_data.statut_registre }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Forme juridique" %} :</b></td><td>{{ registered_data.forme_juridique }}</td></tr>
+    </table>
+    <br>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ registered_data.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  6. ANTÉCÉDENTS JURIDIQUES         -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "ANTÉCÉDENTS JURIDIQUES" %}</h3></div>
+  <div class="box">
+    {% if legal_background.antecedents_juridiques %}
+    {% for ant in legal_background.antecedents_juridiques %}
+    {% if ant != "Aucun antécédent juridique disponible" %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Dossiers de faillite" %} :</b></td><td>{{ ant.dossier_faillite }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Jugements de la Cour" %} :</b></td><td>{{ ant.jugement_cour }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Antécédents de redressement" %} :</b></td><td>{{ ant.antecedant_redressement }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Autre" %} :</b></td><td>{{ ant.autre }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ ant.commentaire }}<br>
+    {% endif %}
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucun antécédent juridique disponible pour cet acheteur." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  7. GESTION ET PERSONNEL           -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "GESTION ET PERSONNEL" %}</h3></div>
+  <div class="box">
+    {% if management.responsables %}
+    {% for resp in management.responsables %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "NOM(S) & PRÉNOM(S)" %} :</b></td><td>{{ resp.nom }} {{ resp.prenom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "POSTE" %} :</b></td><td>{{ resp.poste }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "NATIONALITÉ" %} :</b></td><td>{{ resp.nationalite }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ resp.commentaire }}<br><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucun dirigeant disponible." %}</p>
+    {% endif %}
+
+    {% if management.risk_management.image %}
+    <div style="text-align:center; margin:8px 0;">
+      <img src="{% static management.risk_management.image %}" alt="{% trans 'Management du risque' %}" style="width:350px; height:auto;">
+    </div>
+    {% endif %}
+
+    <div class="sub-hdr">{% trans "CONSEIL D'ADMINISTRATION" %}</div>
+    {% if management.conseil_administration %}
+    {% for ca in management.conseil_administration %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Nom" %} :</b></td><td>{{ ca.nom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Fonction" %} :</b></td><td>{{ ca.fonction_dans_le_conseil }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Adresse" %} :</b></td><td>{{ ca.numero_adresse }} {{ ca.rue_adresse }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ ca.commentaire }}<br><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucun membre du conseil d'administration." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  8. CAPITAL SOCIAL                 -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "CAPITAL SOCIAL" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "COMPOSITION" %}</div>
+    <table class="dtbl">
+      <tr>
+        <td class="lbl"><b>{% trans "Capital émis" %} :</b></td>
+        <td>{{ capital_composition.emis }} {{ capital_composition.devise }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Capital Publié" %} :</b></td>
+        <td>{{ capital_composition.publie }} {{ capital_composition.devise }}</td>
+      </tr>
+      <tr>
+        <td class="lbl"><b>{% trans "Capital Libéré" %} :</b></td>
+        <td>{{ capital_composition.libere }} {{ capital_composition.devise }}</td>
+      </tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ capital_composition.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  9. ACTIONNARIAT / PROPRIÉTAIRES   -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "ACTIONNARIAT / PROPRIÉTAIRES" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "COMPOSITION" %}</div>
+    {% if shareholders.actionnaires %}
+    {% for act in shareholders.actionnaires %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Nom" %} :</b></td><td>{{ act.nom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Prénom" %} :</b></td><td>{{ act.prenom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "% part social / actions" %} :</b></td><td>{{ act.pourcentage }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ act.commentaire }}<br><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucun actionnaire disponible." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  10. AFFILIATIONS CORPORATIVES      -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "AFFILIATIONS CORPORATIVES" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "LIEN AVEC D'AUTRES SOCIÉTÉS" %}</div>
+    {% if affiliations.affiliations %}
+    {% for aff in affiliations.affiliations %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Nom" %} :</b></td><td>{{ aff.nom }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Type d'affiliation" %} :</b></td><td>{{ aff.type_affiliation }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Adresse" %} :</b></td><td>{{ aff.numero_adresse }} {{ aff.rue_adresse }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ aff.commentaire }}<br><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucune affiliation disponible." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  11. ANALYSE SECTORIELLE           -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "ANALYSE SECTORIELLE" %}</h3></div>
+  <div class="box">
+    <span class="cmt-lbl">{% trans "Analyse Sectorielle" %} :</span><br>
+    {{ sector_analysis.sectorielle.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  12. CONSEILS D'ACREMAC            -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "CONSEILS D'ACREMAC" %}</h3></div>
+  <div class="box">
+    <span class="cmt-lbl">{% trans "Points forts" %} :</span><br>
+    {{ sector_analysis.advice.points_forts }}<br><br>
+    <span class="cmt-lbl">{% trans "Points faibles" %} :</span><br>
+    {{ sector_analysis.advice.points_faibles }}<br><br>
+    <span class="cmt-lbl">{% trans "Dynamisme à court terme" %} :</span><br>
+    {{ sector_analysis.advice.dynamisme_court_terme }}<br><br>
+    <span class="cmt-lbl">{% trans "Dynamisme à long terme" %} :</span><br>
+    {{ sector_analysis.advice.dynamisme_long_terme }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  13. RISQUE PAYS                   -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "RISQUE PAYS" %}</h3></div>
+  <div class="box">
+    <span class="cmt-lbl">{% trans "Données politiques" %} :</span><br>
+    {{ sector_analysis.geopolitics.donnees_politiques }}<br><br>
+    <span class="cmt-lbl">{% trans "Données économiques" %} :</span><br>
+    {{ sector_analysis.geopolitics.donnees_economiques }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  14. BANQUES & FINANCEMENTS        -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "BANQUES & FINANCEMENTS" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "BANQUIERS" %}</div>
+    {% if banking_data.data_banks %}
+    {% for bank in banking_data.data_banks %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Nom" %} :</b></td><td>{{ bank.nom_banque }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Type de relation" %} :</b></td><td>{{ bank.type_relation }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Numéro de compte" %} :</b></td><td>{{ bank.numero_compte }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ bank.commentaire }}<br><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucune donnée bancaire disponible." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ -->
+  <!--  [NOUVEAU] AVIS CRÉDIT ACREMAC (avant Comptes Fin.)-->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "AVIS CRÉDIT ACREMAC" %}</h3></div>
+  <div class="box">
+    <table class="dtbl">
+      <tr>
+        <td class="lbl"><b>{% trans "Montant crédit maximum" %} :</b></td>
+        <td>{{ acremac_opinion.montant_credit_maximum }}{% if executive_summary.devise != "Non spécifié" %} {{ executive_summary.devise }}{% endif %}</td>
+      </tr>
+    </table>
+    {% if acremac_opinion.notes and acremac_opinion.notes != "Non spécifié" %}
+    <br><span class="cmt-lbl">{% trans "Notes" %} :</span><br>
+    {{ acremac_opinion.notes }}<br>
+    {% endif %}
+    <br><span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ acremac_opinion.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  15. COMPTES FINANCIERS (desc.)    -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "COMPTES FINANCIERS" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "DESCRIPTION" %}</div>
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Requis pour déposer" %} :</b></td><td>{{ financial_accounts.requis_pour_deposer }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Cabinet comptable" %} :</b></td><td>{{ financial_accounts.cabinet }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Cabinet crédible pour ACREMAC" %} :</b></td><td>{{ financial_accounts.credibilite_cabinet }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "La source" %} :</b></td><td>{{ financial_accounts.source }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Présentation" %} :</b></td><td>{{ financial_accounts.presentation }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Début comptes N" %} :</b></td><td>{{ financial_accounts.date_compte }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Clôture comptes N" %} :</b></td><td>{{ financial_accounts.date_fin }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Début comptes N-1" %} :</b></td><td>{{ financial_accounts.date_compte_n_moins_un }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Clôture comptes N-1" %} :</b></td><td>{{ financial_accounts.date_fin_n_moins_un }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Début comptes N-2" %} :</b></td><td>{{ financial_accounts.date_compte_n_moins_deux }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Clôture comptes N-2" %} :</b></td><td>{{ financial_accounts.date_fin_n_moins_deux }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Type de comptes" %} :</b></td><td>{{ financial_accounts.type_compte }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Type de bilan" %} :</b></td><td>{{ financial_accounts.type_bilan }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Devise" %} :</b></td><td>{{ financial_accounts.devise }}</td></tr>
+    </table>
+    <span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>
+    {{ financial_accounts.commentaire }}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  16. ÉTATS FINANCIERS (conditionné par financial_accounts.type_bilan) -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  {% with btype=financial_accounts.type_bilan %}
+
+  {% if btype == "CLASSIQUE" or btype == "classique" or btype == "Classique" %}
+  <!-- ── BILAN CLASSIQUE ── -->
+  {% with ef=financial_statements.etats_financiers_classiques %}
+  <div class="sec-hdr"><h3>{% trans "ÉTATS FINANCIERS" %} — {% trans "BILAN CLASSIQUE" %}</h3></div>
+
+  {% if ef.actif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "ACTIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.actif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl">
+      <thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+      <tbody>
+      {% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+        <td>{{ row.label }}</td>
+        <td class="text-right">{{ row.values.n }}</td>
+        <td class="text-right">{{ row.values.n_moins_1 }}</td>
+        <td class="text-right {% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+        <td class="text-right">{{ row.values.n_moins_2 }}</td>
+      </tr>{% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.passif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "PASSIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.passif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl">
+      <thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+      <tbody>
+      {% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+        <td>{{ row.label }}</td>
+        <td class="text-right">{{ row.values.n }}</td>
+        <td class="text-right">{{ row.values.n_moins_1 }}</td>
+        <td class="text-right {% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+        <td class="text-right">{{ row.values.n_moins_2 }}</td>
+      </tr>{% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.resultat_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "COMPTES DE RÉSULTAT" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.resultat_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl">
+      <thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+      <tbody>
+      {% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+        <td>{{ row.label }}</td>
+        <td class="text-right">{{ row.values.n }}</td>
+        <td class="text-right">{{ row.values.n_moins_1 }}</td>
+        <td class="text-right {% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+        <td class="text-right">{{ row.values.n_moins_2 }}</td>
+      </tr>{% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.ratios_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "RATIOS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.ratios_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl">
+      <thead><tr><th style="width:40%">{% trans "Ratio" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+      <tbody>
+      {% for row in rows %}<tr>
+        <td>{{ row.label }}</td>
+        <td class="text-right">{{ row.values.n }}</td>
+        <td class="text-right">{{ row.values.n_moins_1 }}</td>
+        <td class="text-right {% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+        <td class="text-right">{{ row.values.n_moins_2 }}</td>
+      </tr>{% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.charts_data %}
+  <div class="box">
+    {% if ef.charts_data.charts_structure_financiere %}
+    <div class="sub-hdr">{% trans "Structure Financière" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_structure_financiere }}" alt="{% trans 'Structure Financière' %}" class="chart-img">
+    {% endif %}
+    {% if ef.charts_data.charts_rentabilite_financiere %}
+    <div class="sub-hdr">{% trans "Rentabilité Financière" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_rentabilite_financiere }}" alt="{% trans 'Rentabilité Financière' %}" class="chart-img">
+    {% endif %}
+    {% if ef.charts_data.charts_delais %}
+    <div class="sub-hdr">{% trans "Délais" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_delais }}" alt="{% trans 'Délais' %}" class="chart-img">
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% elif btype == "ANGLAIS" or btype == "anglais" or btype == "Anglais" %}
+  <!-- ── BILAN ANGLAIS ── -->
+  {% with ef=financial_statements.etats_financiers_anglais %}
+  <div class="sec-hdr"><h3>{% trans "ÉTATS FINANCIERS" %} — {% trans "BILAN ANGLAIS" %}</h3></div>
+
+  {% if ef.actif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "ASSETS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.actif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+      <td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td>
+      <td class="{% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+      <td>{{ row.values.n_moins_2 }}</td>
+    </tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.passif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "LIABILITIES & EQUITY" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.passif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+      <td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td>
+      <td class="{% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+      <td>{{ row.values.n_moins_2 }}</td>
+    </tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.resultat_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "INCOME STATEMENT" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.resultat_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}>
+      <td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td>
+      <td class="{% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+      <td>{{ row.values.n_moins_2 }}</td>
+    </tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.ratios_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "RATIOS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.ratios_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Ratio" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr>
+      <td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td>
+      <td class="{% if '-' in row.values.variation|default:'' %}neg{% else %}pos{% endif %}">{{ row.values.variation }}</td>
+      <td>{{ row.values.n_moins_2 }}</td>
+    </tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if ef.charts_data %}
+  <div class="box">
+    {% if ef.charts_data.charts_structure_financiere %}
+    <div class="sub-hdr">{% trans "Structure Financière" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_structure_financiere }}" class="chart-img">
+    {% endif %}
+    {% if ef.charts_data.charts_rentabilite_financiere %}
+    <div class="sub-hdr">{% trans "Rentabilité Financière" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_rentabilite_financiere }}" class="chart-img">
+    {% endif %}
+    {% if ef.charts_data.charts_delais %}
+    <div class="sub-hdr">{% trans "Délais" %}</div>
+    <img src="data:image/png;base64,{{ ef.charts_data.charts_delais }}" class="chart-img">
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% elif btype == "SYSCOHADA" or btype == "syscohada" or btype == "Syscohada" %}
+  <!-- ── BILAN SYSCOHADA ── -->
+  {% with ef=financial_statements.etats_financiers_syscohada %}
+  <div class="sec-hdr"><h3>{% trans "ÉTATS FINANCIERS" %} — SYSCOHADA</h3></div>
+  {% if ef.actif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "ACTIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.actif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.passif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "PASSIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.passif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.resultat_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "COMPTES DE RÉSULTAT" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.resultat_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.ratios_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "RATIOS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.ratios_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Ratio" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.charts_data %}
+  <div class="box">
+    {% if ef.charts_data.charts_structure_financiere %}<div class="sub-hdr">{% trans "Structure Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_structure_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_rentabilite_financiere %}<div class="sub-hdr">{% trans "Rentabilité Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_rentabilite_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_delais %}<div class="sub-hdr">{% trans "Délais" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_delais }}" class="chart-img">{% endif %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% elif btype == "BANCAIRE" or btype == "bancaire" or btype == "Bancaire" %}
+  <!-- ── BILAN BANCAIRE ── -->
+  {% with ef=financial_statements.etats_financiers_bancaires %}
+  <div class="sec-hdr"><h3>{% trans "ÉTATS FINANCIERS" %} — {% trans "BILAN BANCAIRE" %}</h3></div>
+  {% if ef.actif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "ACTIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.actif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.passif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "PASSIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.passif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.produit_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "PRODUITS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.produit_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.depense_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "DÉPENSES" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.depense_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.ratios_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "RATIOS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.ratios_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Ratio" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.charts_data %}
+  <div class="box">
+    {% if ef.charts_data.charts_structure_financiere %}<div class="sub-hdr">{% trans "Structure Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_structure_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_rentabilite_financiere %}<div class="sub-hdr">{% trans "Rentabilité Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_rentabilite_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_delais %}<div class="sub-hdr">{% trans "Délais" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_delais }}" class="chart-img">{% endif %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% elif btype == "IFRS" or btype == "ifrs" or btype == "IFRS COBAC" %}
+  <!-- ── BILAN IFRS COBAC ── -->
+  {% with ef=financial_statements.etats_financiers_irfs_cobac %}
+  <div class="sec-hdr"><h3>{% trans "ÉTATS FINANCIERS" %} — IFRS COBAC</h3></div>
+  {% if ef.actif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "ACTIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.actif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.passif_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "PASSIFS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.passif_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.resultat_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "COMPTES DE RÉSULTAT" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.resultat_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Poste" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr {% if row.is_total %}class="bold-row"{% endif %}><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.ratios_data %}
+  <div class="sec-hdr" style="background:#1a4a80;"><h3>{% trans "RATIOS" %}</h3></div>
+  <div class="box">
+  {% for section, rows in ef.ratios_data.items %}
+    <div class="sub-hdr">{{ section }}</div>
+    <table class="ftbl"><thead><tr><th style="width:40%">{% trans "Ratio" %}</th><th>N</th><th>N-1</th><th>{% trans "Var" %} %</th><th>N-2</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td>{{ row.values.n }}</td><td>{{ row.values.n_moins_1 }}</td><td>{{ row.values.variation }}</td><td>{{ row.values.n_moins_2 }}</td></tr>{% endfor %}</tbody></table>
+  {% endfor %}
+  </div>
+  {% endif %}
+  {% if ef.charts_data %}
+  <div class="box">
+    {% if ef.charts_data.charts_structure_financiere %}<div class="sub-hdr">{% trans "Structure Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_structure_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_rentabilite_financiere %}<div class="sub-hdr">{% trans "Rentabilité Financière" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_rentabilite_financiere }}" class="chart-img">{% endif %}
+    {% if ef.charts_data.charts_delais %}<div class="sub-hdr">{% trans "Délais" %}</div><img src="data:image/png;base64,{{ ef.charts_data.charts_delais }}" class="chart-img">{% endif %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% else %}
+  <div class="box">
+    <p><i>{% trans "Aucun état financier disponible pour ce type de bilan." %} ({{ btype }})</i></p>
+  </div>
+  {% endif %}
+
+  {% endwith %}
+
+  <!-- ══════════════════════════════════ -->
+  <!--  17. SCORE@ACREMAC                 -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>SCORE@ACREMAC</h3></div>
+  <div class="box">
+    <p style="text-align:justify;">
+      {% trans "Ce score est généré automatiquement par BUCREP à travers la sommation des éléments suivants : le site local, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code NACE. Cote de crédit :" %}
+    </p>
+    <p style="color:#5ab152">{% trans "10 — Sans risque" %}</p>
+    <p style="color:#7bc175">{% trans "9 — Risque très faible" %}</p>
+    <p style="color:#9cd097">{% trans "8 — Risque faible" %}</p>
+    <p style="color:#add8a9">{% trans "7 — Risque modéré" %}</p>
+    <p style="color:#cee8cb">{% trans "6 — Risque acceptable" %}</p>
+    <p style="color:#f19545">{% trans "5 — Risque moyennement élevé" %}</p>
+    <p style="color:#f7c033">{% trans "4 — Risque significatif" %}</p>
+    <p style="color:#f6bd8a">{% trans "3 — Risque important" %}</p>
+    <p style="color:#e93f33">{% trans "2 — Risque très important d'insolvabilité" %}</p>
+    <p>{% trans "1 — Risque extrêmement important d'insolvabilité" %}</p>
+    <p>{% trans "0 — Insolvabilité / Procédures de recouvrement" %}</p>
+
+    <!-- Scoring sans bilan -->
+    {% if scoring_sansbilan.score_png %}
+    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %}</div>
+    <img src="{% static scoring_sansbilan.score_png %}" alt="{% trans 'Score' %}" class="score-img">
+    {% endif %}
+
+    <!-- Scoring classique N, N-1, N-2 -->
+    {% if scoring_classique.score_value_annee_N %}
+    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N</div>
+    <img src="{% static scoring_classique.score_image_annee_N %}" alt="{% trans 'Score N' %}" class="score-img">
+    {% endif %}
+    {% if scoring_classique.score_value_annee_N1 %}
+    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N-1</div>
+    <img src="{% static scoring_classique.score_image_annee_N1 %}" alt="{% trans 'Score N-1' %}" class="score-img">
+    {% endif %}
+    {% if scoring_classique.score_value_annee_N2 %}
+    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N-2</div>
+    <img src="{% static scoring_classique.score_image_annee_N2 %}" alt="{% trans 'Score N-2' %}" class="score-img">
+    {% endif %}
+
+    <!-- Scoring manuel -->
+    {% if scoring_manuel.has_data %}
+    <div class="sub-hdr">{% trans "SCORING MANUEL" %}</div>
+    {% for entry in scoring_manuel.annees %}
+    {% if entry.is_available %}
+    <p><b>{% trans "Score" %} {{ entry.label }} ({{ entry.annee }}) :</b> {{ entry.score }} — {{ entry.interpretation }}</p>
+    <img src="{% static entry.score_image %}" alt="{% trans 'Score manuel' %}" class="score-img">
+    {% if entry.commentaire %}<span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>{{ entry.commentaire }}<br>{% endif %}
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  18. OPÉRATIONS & HISTORIQUE       -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "OPÉRATIONS & HISTORIQUE" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "Activités" %}</div>
+    <span class="cmt-lbl">{% trans "Description complète" %} :</span><br>
+    <p style="text-align:justify;">{{ operation_history.description_complete_activite }}</p>
+
+    <div class="sub-hdr">{% trans "Historique" %}</div>
+    <p style="text-align:justify;">{{ operation_history.historique }}</p>
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  19. PROPRIÉTÉ & ACTIFS            -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "PROPRIÉTÉ & ACTIFS" %}</h3></div>
+  <div class="box">
+    {% if properties_and_assets.assets_list %}
+    {% for asset in properties_and_assets.assets_list %}
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Locaux" %} :</b></td><td>{{ asset.locaux }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Branche" %} :</b></td><td>{{ asset.branche }}</td></tr>
+    </table><br>
+    {% endfor %}
+    {% else %}
+    <p>{% trans "Aucune propriété ou actif disponible." %}</p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  20. PAIEMENTS                     -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "PAIEMENTS" %}</h3></div>
+  <div class="box">
+    <div class="sub-hdr">{% trans "Conditions d'achat" %}</div>
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Local" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_achat.local }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Import" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_achat.importation }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Clients" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_achat.les_clients }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Fournisseurs" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_achat.fournisseur }}</td></tr>
+    </table>
+
+    <div class="sub-hdr">{% trans "Conditions de vente" %}</div>
+    <table class="dtbl">
+      <tr><td class="lbl"><b>{% trans "Local" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_vente.local }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Recouvrements / Jugements" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_vente.recouvrement_dette_jugement }}</td></tr>
+      <tr><td class="lbl"><b>{% trans "Comportement de paiement" %} :</b></td><td>{{ terms_of_purchase_and_sale.conditions_vente.comportement_de_paiement }}</td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  21. CONCLUSION ET AVIS            -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "CONCLUSION ET AVIS" %}</h3></div>
+  <div class="box">
+    <span class="cmt-lbl">{% trans "Commentaire" %}</span><br>
+    <p style="text-align:justify;">{{ conclusion_generale.commentaire }}</p>
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  22. NOTES D'INVESTIGATION         -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "NOTES D'INVESTIGATION" %}</h3></div>
+  <div class="box">
+    <h5><b>{% trans "Sources" %} :</b></h5>
+    <p>— {{ investigations.source1 }}</p>
+    <p>— {{ investigations.source2 }}</p>
+    <p>— {{ investigations.source3 }}</p>
+    <p>— {{ investigations.source4 }}</p>
+    <p>— {{ investigations.source5 }}</p>
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  COPYRIGHT                         -->
+  <!-- ══════════════════════════════════ -->
+  <div class="box" style="text-align:center; margin-top:10px;">
+    <p>{{ copyright.assureur }}</p>
+    <p style="text-align:justify; font-size:9pt;">{{ copyright.note }}</p>
+  </div>
+
 </div>
-
-<!-- ===================== IDENTIFICATION ===================== -->
-<div class="section">
-    <div class="section-title">{{ report_data.identification.title_2 }}</div>
-    <div class="section-content two-col">
-        <div>
-            <h4>{% trans "Client" %}</h4>
-            <p><b>{% trans "Nom:" %}</b> {{ report_data.identification.client_info.nom }}</p>
-            <p><b>{% trans "Adresse:" %}</b> {{ report_data.identification.client_info.numero_adresse }}
-                {{ report_data.identification.client_info.rue_adresse }},
-                {{ report_data.identification.client_info.ville }},
-                {{ report_data.identification.client_info.pays }}
-            </p>
-            <p><b>{% trans "Téléphone:" %}</b> {{ report_data.identification.client_info.telephone }}</p>
-            <p><b>{% trans "Email:" %}</b> {{ report_data.identification.client_info.email }}</p>
-        </div>
-        <div>
-            <h4>{% trans "ACREMAC" %}</h4>
-            <p><b>{% trans "Nom:" %}</b> {{ report_data.identification.acremac_info.nom }}</p>
-            <p><b>{% trans "Sigle:" %}</b> {{ report_data.identification.acremac_info.sigle }}</p>
-            <p><b>{% trans "Email:" %}</b> {{ report_data.identification.acremac_info.email }}</p>
-            <p><b>{% trans "Boîte postale:" %}</b> {{ report_data.identification.acremac_info.boite_postale }}</p>
-            <p><b>{% trans "Site internet:" %}</b> {{ report_data.identification.acremac_info.site_internet }}</p>
-        </div>
-    </div>
-</div>
-
-<!-- ===================== ANALYSE & INTERPRETATION ===================== -->
-<div class="section">
-    <div class="section-title">{{ report_data.summary_and_opinion.title_5 }}</div>
-    <div class="section-content analysis">
-        <img src="" alt="Jauge risque">
-        <div>
-            <p><b>{% trans "Analyse:" %}</b> {{ report_data.summary_and_opinion.analyse_detailee }}</p>
-            <p><b>{% trans "Interprétation:" %}</b> {{ report_data.summary_and_opinion.interpretation }}</p>
-            <p><b>{% trans "Cotation:" %}</b> {{ report_data.summary_and_opinion.cotation_du_risque }}</p>
-            <p><b>{% trans "Indice:" %}</b> {{ report_data.summary_and_opinion.indice_du_risque }}</p>
-        </div>
-    </div>
-</div>
-
-<!-- ===================== EXECUTIVE SUMMARY ===================== -->
-<div class="section">
-    <div class="section-title">{{ report_data.executive_summary.title_4 }}</div>
-    <div class="section-content">
-        <table>
-            <tr>
-                <th>{% trans "Date création" %}</th>
-                <th>{% trans "Capital social" %}</th>
-                <th>{% trans "Capitaux propres" %}</th>
-                <th>{% trans "Chiffre d'affaires" %}</th>
-                <th>{% trans "Résultat net" %}</th>
-                <th>{% trans "Nb. employés" %}</th>
-            </tr>
-            <tr>
-                <td>{{ report_data.executive_summary.date_creation }}</td>
-                <td>{{ report_data.executive_summary.capital_social }} {{ report_data.executive_summary.devise }}</td>
-                <td>{{ report_data.executive_summary.capitaux_propre }}</td>
-                <td>{{ report_data.executive_summary.chiffre_affaire }}</td>
-                <td>{{ report_data.executive_summary.resultat_net }}</td>
-                <td>{{ report_data.executive_summary.nombre_employe }}</td>
-            </tr>
-        </table>
-        <p><b>{% trans "Commentaire:" %}</b> {{ report_data.executive_summary.commentaire }}</p>
-    </div>
-</div>
-
-<!-- ===================== FOOTER ===================== -->
-<footer>
-    <p>{{ report_data.footer_report.footer_text_1 }}</p>
-    <p>{{ report_data.footer_report.footer_text_2 }}</p>
-    <p>{{ report_data.footer_report.footer_text_3 }}</p>
-</footer>
-
 </body>
 </html>
