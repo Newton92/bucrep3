@@ -2,1326 +2,394 @@
 {% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
-:root {
-    --primary-color: #0d80be;
-    --secondary-color: #25add6;
-    --accent-color: #0a95ca;
-    --light-color: #fcfefe;
-    --dark-color: #106cb2;
-    --success-color: #28a745;
-    --warning-color: #f39c12;
-    --danger-color: #e74c3c;
-    --low-risk-color: #198754;
-    --medium-risk-color: #ffc107;
-    --high-risk-color: #dc3545;
-    --info-color: #6f42c1;
-    --card-shadow: 0 8px 25px rgba(12, 128, 190, 0.08);
-    --card-shadow-hover: 0 15px 35px rgba(12, 128, 190, 0.15);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body {
-    background-color: var(--light-color);
-    color: #333;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-}
-
-/* Header Compact */
-.page-header {
-    background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(13,108,178,.15);
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.page-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
-.page-subtitle { font-size: 0.78rem; opacity: 0.85; margin: 0; }
-
-/* Carte de statistiques premium */
-.stat-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    transition: var(--transition);
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-    text-align: center;
-}
-
-.stat-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--card-shadow-hover);
-    border-color: var(--secondary-color);
-    background: linear-gradient(135deg, white, rgba(252, 254, 254, 0.95));
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--accent-color), var(--secondary-color));
-}
-
-/* Cartes spécifiques avec couleurs */
-.stat-card.remboursabilite::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
-.stat-card.liquidite::before { background: linear-gradient(to bottom, #28a745, #20c997); }
-.stat-card.performance::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
-.stat-card.secteur::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
-.stat-card.qualite-info::before { background: linear-gradient(to bottom, #17a2b8, #20c997); }
-.stat-card.garantie::before { background: linear-gradient(to bottom, #20c997, #0dcaf0); }
-.stat-card.terme::before { background: linear-gradient(to bottom, #6f42c1, #0d6efd); }
-.stat-card.mesure::before { background: linear-gradient(to bottom, #6610f2, #6f42c1); }
-
-/* Effet de brillance sur les cartes */
-.stat-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        transparent 70%
-    );
-    transform: rotate(45deg);
-    animation: cardShine 6s infinite;
-}
-
-@keyframes cardShine {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-.stat-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
+/* ── Risk Rating — design unifié ────────────────────────────── */
+.rr-score-wrap {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    font-size: 1.8rem;
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.stat-card.remboursabilite .stat-icon { 
-    background: linear-gradient(135deg, rgba(10, 149, 202, 0.15), rgba(28, 110, 164, 0.1));
-    color: #0A95CA; 
-}
-.stat-card.liquidite .stat-icon { 
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(32, 201, 151, 0.1));
-    color: #28a745; 
-}
-.stat-card.performance .stat-icon { 
-    background: linear-gradient(135deg, rgba(111, 66, 193, 0.15), rgba(232, 62, 140, 0.1));
-    color: #6f42c1; 
-}
-.stat-card.secteur .stat-icon { 
-    background: linear-gradient(135deg, rgba(253, 126, 20, 0.15), rgba(255, 193, 7, 0.1));
-    color: #fd7e14; 
-}
-.stat-card.qualite-info .stat-icon { 
-    background: linear-gradient(135deg, rgba(23, 162, 184, 0.15), rgba(32, 201, 151, 0.1));
-    color: #17a2b8; 
-}
-.stat-card.garantie .stat-icon { 
-    background: linear-gradient(135deg, rgba(32, 201, 151, 0.15), rgba(13, 202, 240, 0.1));
-    color: #20c997; 
-}
-.stat-card.terme .stat-icon { 
-    background: linear-gradient(135deg, rgba(111, 66, 193, 0.15), rgba(13, 110, 253, 0.1));
-    color: #6f42c1; 
-}
-.stat-card.mesure .stat-icon { 
-    background: linear-gradient(135deg, rgba(102, 16, 242, 0.15), rgba(111, 66, 193, 0.1));
-    color: #6610f2; 
-}
-
-.stat-value {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    position: relative;
-    z-index: 2;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-label {
-    font-size: 0.95rem;
-    color: var(--primary-color);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 1rem;
-    font-weight: 700;
-    position: relative;
-    z-index: 2;
-}
-
-.stat-badge {
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 0.5rem 1.5rem;
-    border-radius: 25px;
-    display: inline-block;
-    position: relative;
-    z-index: 2;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.badge-oui {
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.9), rgba(46, 204, 113, 0.9));
-    color: white;
-}
-
-.badge-non {
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.9), rgba(231, 76, 60, 0.9));
-    color: white;
-}
-
-/* Boutons premium */
-.btn-action {
-    padding: 0.75rem 2rem;
-    border-radius: 15px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    transition: var(--transition);
-    border: none;
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 0.5px;
-}
-
-.btn-action::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: 0.5s;
-}
-
-.btn-action:hover::before {
-    left: 100%;
-}
-
-.btn-action:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.btn-success {
-    background: linear-gradient(135deg, var(--success-color), #20c997);
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, var(--warning-color), #e67e22);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, var(--danger-color), #c0392b);
-}
-
-.btn-outline-primary {
-    background: transparent;
-    border: 2px solid var(--accent-color);
-    color: var(--accent-color);
-}
-
-.btn-outline-primary:hover {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
-    color: white;
-    border-color: transparent;
-}
-
-/* Cartes premium */
-.enhanced-card {
-    border-radius: 20px;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    transition: var(--transition);
-    background: white;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-}
-
-.enhanced-card:hover {
-    box-shadow: var(--card-shadow-hover);
-    transform: translateY(-5px);
-}
-
-.card-header-gradient {
-    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-    color: white;
-    border-radius: 20px 20px 0 0 !important;
-    padding: 1.75rem 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.card-header-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-/* Score de risque premium */
-.risk-score-container {
-    text-align: center;
-    padding: 3rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    border-radius: 25px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(37, 173, 214, 0.2);
-}
-
-.risk-score-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 8px;
-    background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
-}
-
-.risk-score-low::before { background: linear-gradient(90deg, var(--low-risk-color), #20c997); }
-.risk-score-medium::before { background: linear-gradient(90deg, var(--medium-risk-color), #fd7e14); }
-.risk-score-high::before { background: linear-gradient(90deg, var(--high-risk-color), #fd7e14); }
-
-.risk-score-image-container {
-    width: 220px;
-    height: 110px;
-    margin: 0 auto 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-}
-
-.risk-score-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
-}
-
-.risk-score-value {
-    font-size: 4rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-    position: relative;
-    z-index: 2;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.risk-score-max {
-    font-size: 1.8rem;
-    color: #6c757d;
-    font-weight: 600;
-    position: relative;
-    z-index: 2;
-}
-
-.risk-score-label {
-    font-size: 1.2rem;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    font-weight: 700;
-    position: relative;
-    z-index: 2;
-}
-
-/* Indicateurs de risque premium */
-.risk-indicator-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
-    border-left: 8px solid;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-    border: 1px solid rgba(37, 173, 214, 0.2);
-}
-
-.risk-indicator-card:hover {
-    transform: translateX(10px) translateY(-5px);
-    box-shadow: var(--card-shadow-hover);
-}
-
-.risk-cotation-card {
-    border-left-color: var(--accent-color);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(10, 149, 202, 0.05));
-}
-
-.risk-indice-card {
-    border-left-color: var(--info-color);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(111, 66, 193, 0.05));
-}
-
-/* État vide premium */
-.empty-state {
-    padding: 5rem 3rem;
-    text-align: center;
-    background: linear-gradient(135deg, rgba(252, 254, 254, 0.9), rgba(240, 248, 255, 0.9));
-    border-radius: 25px;
-    border: 3px dashed rgba(37, 173, 214, 0.4);
-    margin: 3rem 0;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-}
-
-.empty-state::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(37, 173, 214, 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: float 20s linear infinite;
-}
-
-@keyframes float {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(40px, 40px) rotate(360deg); }
-}
-
-.empty-state-icon {
-    font-size: 6rem;
-    color: var(--secondary-color);
-    margin-bottom: 2.5rem;
-    opacity: 0.9;
-    position: relative;
-    z-index: 2;
-    filter: drop-shadow(0 4px 6px rgba(12, 128, 190, 0.2));
-}
-
-.empty-state h4 {
-    color: var(--primary-color);
-    font-weight: 800;
-    margin-bottom: 1.25rem;
-    font-size: 2rem;
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.empty-state p {
-    color: #6c757d;
-    max-width: 500px;
-    margin: 0 auto 3rem;
-    position: relative;
-    z-index: 2;
-    line-height: 1.8;
-    font-size: 1.1rem;
-}
-
-/* Formulaires premium */
-.enhanced-form .form-group {
-    margin-bottom: 1.75rem;
-    position: relative;
-}
-
-.enhanced-form .form-label {
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.05rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.enhanced-form .form-label i {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.2rem;
-}
-
-.enhanced-form .form-control,
-.enhanced-form .form-select {
-    border: 2px solid rgba(37, 173, 214, 0.3);
-    border-radius: 15px;
-    padding: 1rem 1.25rem;
-    font-size: 1.1rem;
-    transition: var(--transition);
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(5px);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-}
-
-.enhanced-form .form-control:focus,
-.enhanced-form .form-select:focus {
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 0.35rem rgba(37, 173, 214, 0.25);
-    background: white;
-    transform: translateY(-2px);
-}
-
-.enhanced-form .input-with-icon {
-    position: relative;
-}
-
-.enhanced-form .input-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--accent-color);
-    font-size: 1.2rem;
-    z-index: 3;
-}
-
-.enhanced-form .form-control.with-icon {
-    padding-left: 3.5rem;
-}
-
-/* Modales compact */
-.modal-content {
-    border-radius: 12px;
-    overflow: hidden;
-    border: none;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-    color: white;
-    border-bottom: none;
-    padding: 0.5rem 0.75rem;
-}
-
-.modal-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-
-.btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
-    opacity: 0.8;
-    transition: var(--transition);
-    position: relative;
-    z-index: 2;
-}
-
-.btn-close-white:hover {
-    opacity: 1;
-    transform: rotate(90deg);
-}
-
-.modal-danger .modal-header {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-/* Badge premium */
-.badge-premium {
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-    color: white;
-    padding: 0.5rem 1.25rem;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(10, 149, 202, 0.2);
-}
-
-/* Popover personnalisé */
-.custom-popover {
-    --bs-popover-border-color: rgba(37, 173, 214, 0.2);
-    --bs-popover-header-bg: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-    --bs-popover-header-color: white;
-    --bs-popover-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(252, 254, 254, 0.9));
-    backdrop-filter: blur(10px);
-}
-
-/* Badges de statut premium */
-.status-badge {
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .stat-card {
-        padding: 1.5rem;
-    }
-    
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .risk-score-container {
-        padding: 2rem 1rem;
-    }
-    
-    .risk-score-image-container {
-        width: 180px;
-        height: 90px;
-    }
-    
-    .risk-score-value {
-        font-size: 3rem;
-    }
-    
-    .empty-state {
-        padding: 3rem 1.5rem;
-    }
-    
-    .empty-state-icon {
-        font-size: 4rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .stat-card {
-        padding: 1.25rem;
-    }
-    
-    .risk-score-value {
-        font-size: 2.5rem;
-    }
-    
-    .btn-action {
-        padding: 0.5rem 1.5rem;
-        font-size: 1rem;
-    }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in-up {
-    animation: fadeInUp 0.6s ease forwards;
-}
-
-/* Ajustements pour la carte acheteur */
-.acheteur-info-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 15px;
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(37, 173, 214, 0.1);
-    transition: var(--transition);
-}
-
-.acheteur-info-item:hover {
-    transform: translateX(10px);
-    background: white;
-    border-color: var(--secondary-color);
-    box-shadow: 0 8px 20px rgba(12, 128, 190, 0.1);
-}
-
-.acheteur-info-item i {
-    width: 45px;
-    height: 45px;
-    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.3rem;
-}
-
-/* Boutons info premium */
-.btn-info {
-    background: linear-gradient(135deg, var(--info-color), #9b5de5);
-}
-
-.btn-outline-info {
-    background: transparent;
-    border: 2px solid var(--info-color);
-    color: var(--info-color);
-}
-
-.btn-outline-info:hover {
-    background: linear-gradient(135deg, var(--info-color), #9b5de5);
-    color: white;
-    border-color: transparent;
-}
-
-/* Animation pulse pour les indicateurs */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.pulse-animation {
-    animation: pulse 2s infinite;
-}
-
-/* Zone d'analyse */
-.analysis-box {
-    background: linear-gradient(135deg, rgba(252, 254, 254, 0.9), rgba(240, 248, 255, 0.9));
-    border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(37, 173, 214, 0.2);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 20px rgba(12, 128, 190, 0.1);
-    position: relative;
-    overflow: hidden;
-}
-
-.analysis-box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 100%;
-    background: linear-gradient(to bottom, var(--accent-color), var(--secondary-color));
-}
-
-/* Style pour les petits indicateurs de risque */
-.risk-mini-indicator {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 10px;
-    vertical-align: middle;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.risk-low { background: linear-gradient(135deg, var(--low-risk-color), #20c997); }
-.risk-medium { background: linear-gradient(135deg, var(--medium-risk-color), #fd7e14); }
-.risk-high { background: linear-gradient(135deg, var(--high-risk-color), #fd7e14); }
+    gap: 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: .625rem;
+    padding: .9rem 1.1rem;
+}
+.rr-score-img { width: 120px; height: 60px; object-fit: contain; flex-shrink: 0; }
+.rr-score-val { font-size: 2rem; font-weight: 800; line-height: 1; color: #0d80be; }
+.rr-score-lbl { font-size: .78rem; color: #64748b; margin-top: .15rem; }
+
+.rr-pill {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .78rem; font-weight: 600; padding: .25rem .65rem;
+    border-radius: 20px; white-space: nowrap;
+}
+.rr-pill.yes  { background: #d1fae5; color: #065f46; }
+.rr-pill.no   { background: #fee2e2; color: #991b1b; }
+.rr-pill.na   { background: #f1f5f9; color: #64748b; }
+
+.rr-table td:first-child { width: 58%; font-size: .83rem; }
+.rr-table td:last-child  { text-align: right; }
+
+.rr-box {
+    background: #f8fafc;
+    border-left: 3px solid #0d80be;
+    border-radius: 0 .5rem .5rem 0;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+}
+
+.badge-cotation, .badge-indice {
+    font-size: .8rem; font-weight: 600;
+    padding: .35rem .75rem; border-radius: .4rem;
+}
+.badge-cotation { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-indice   { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
+<div class="container-fluid px-3 py-3">
 
-    <!-- Header Premium -->
-    <div class="page-header fade-in-up" style="--order: 0;">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-            <div>
-                <h1 class="page-title text-white">
-                    <i class="fas fa-shield-alt me-3"></i>{% trans "Évaluation de Risque" %}
-                </h1>
-                <p class="page-subtitle">
-                    <span class="fw-semibold">{{ acheteur.nom }}</span>{% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %} · {{ acheteur.code }}
-                </p>
-            </div>
-            <div class="d-flex gap-2 align-items-center">
-                {% acheteur_page_nav 'risk_rating' %}
-                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm btn-action">
-                    <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
-                </a>
-                {% if risk_rating %}
-                <button class="btn btn-warning btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#editRiskRatingModal">
-                    <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
-                </button>
-                <button class="btn btn-danger btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
-                </button>
-                {% else %}
-                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
-                    <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter une évaluation" %}
-                </button>
-                {% endif %}
-            </div>
+    <!-- En-tête de page -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h6 class="mb-0 fw-bold text-white">
+                <i class="bi bi-shield-exclamation me-1"></i>{% trans "Risk Rating" %}
+            </h6>
+            <small class="opacity-75">{{ acheteur.nom }}{% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}</small>
+        </div>
+        <div class="d-flex gap-1">
+            {% acheteur_page_nav 'risk_rating' %}
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            {% if risk_rating %}
+            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editRiskRatingModal">
+                <i class="bi bi-pencil-fill"></i> {% trans "Modifier" %}
+            </button>
+            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                <i class="bi bi-plus-lg"></i> {% trans "Ajouter" %}
+            </button>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Carte Acheteur Premium -->
-    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 1;">
-        <div class="card-header card-header-gradient">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div>
-                    <h5 class="mb-1 fw-bold text-white display-9">{{ acheteur.nom }}</h5>
-                    <p class="mb-0 opacity-90 fs-5">{{ acheteur.sigle|default:"" }}</p>
-                </div>
-                <div class="text-md-end">
-                    <span class="badge-premium fs-6">
-                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code }}
-                    </span>
-                    <p class="mb-0 mt-2 small opacity-75">{% trans "Code ACREMAC" %}</p>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-briefcase"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Activité principale" %}</small>
-                            <span class="fw-bold fs-6">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Date de création" %}</small>
-                            <span class="fw-bold fs-6">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="acheteur-info-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div>
-                            <small class="text-muted d-block">{% trans "Statut" %}</small>
-                            <span class="fw-bold fs-6 text-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Évaluation de Risque -->
     {% if risk_rating %}
     {% with score=risk_rating.calculate_risk_score %}
-    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 2;">
-        <div class="card-body">
-            <!-- Score et indicateurs principaux -->
-            <div class="row g-4 mb-5">
-                <div class="col-md-6">
-                    <div class="risk-score-container {% if score <= 2 %}risk-score-low{% elif score <= 5 %}risk-score-medium{% else %}risk-score-high{% endif %} fade-in-up" style="--order: 1;">
-                        <div class="risk-score-image-container">
-                            {% with risk_rating.get_risk_rating_image_url as image_url %}
-                            {% if image_url %}
-                            <img src="{{ image_url }}" alt="Score de risque" class="risk-score-image pulse-animation">
-                            {% else %}
-                            <div class="text-center">
-                                <i class="fas fa-chart-pie fa-5x text-primary mb-3" style="color: var(--primary-color);"></i>
-                                <div class="risk-score-value">{{ score }}</div>
-                                <div class="risk-score-max">/8</div>
-                            </div>
-                            {% endif %}
-                            {% endwith %}
-                        </div>
-                        <div class="risk-score-value">{{ score }}</div>
-                        <div class="risk-score-max">/8</div>
-                        <p class="risk-score-label">{% trans "Score de risque global" %}</p>
-                        <span class="badge-premium mt-2">
-                            {% if score <= 2 %}
-                            <i class="fas fa-check-circle me-2"></i>{% trans "Risque faible" %}
-                            {% elif score <= 5 %}
-                            <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Risque modéré" %}
-                            {% else %}
-                            <i class="fas fa-exclamation-circle me-2"></i>{% trans "Risque élevé" %}
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="row g-4">
-                        <div class="col-12">
-                            <div class="risk-indicator-card risk-cotation-card fade-in-up" style="--order: 2;">
-                                <h6 class="fw-bold mb-3 d-flex align-items-center">
-                                    <i class="fas fa-chart-line me-3 fa-lg"></i>{% trans "Cotation du risque" %}
-                                </h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="fw-bold fs-4">{{ risk_rating.get_cotation_du_risque_display|default:"Non évalué" }}</span>
-                                    <button class="btn btn-sm btn-outline-info" 
-                                            data-bs-toggle="popover" 
-                                            data-bs-trigger="hover focus"
-                                            data-bs-placement="top"
-                                            data-bs-content="{{ risk_rating.get_cotation_explication }}"
-                                            data-bs-custom-class="custom-popover">
-                                        <i class="fas fa-info-circle"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="risk-indicator-card risk-indice-card fade-in-up" style="--order: 3;">
-                                <h6 class="fw-bold mb-3 d-flex align-items-center">
-                                    <i class="fas fa-exclamation-triangle me-3 fa-lg"></i>{% trans "Indice du risque" %}
-                                </h6>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="fw-bold fs-4">{{ risk_rating.get_indice_du_risque_display|default:"Non évalué" }}</span>
-                                    <button class="btn btn-sm btn-outline-info" 
-                                            data-bs-toggle="popover" 
-                                            data-bs-trigger="hover focus"
-                                            data-bs-placement="top"
-                                            data-bs-content="{{ risk_rating.get_indice_explication }}"
-                                            data-bs-custom-class="custom-popover">
-                                        <i class="fas fa-info-circle"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Indicateurs de risque détaillés -->
-            <h5 class="fw-bold mb-4 fade-in-up" style="--order: 3;">
-                <i class="fas fa-tachometer-alt me-2"></i>{% trans "Indicateurs de Risque" %}
-            </h5>
-            <div class="row g-4 mb-5">
-                <div class="col-md-3">
-                    <div class="stat-card remboursabilite fade-in-up" style="--order: 4;">
-                        <div class="stat-icon">
-                            <i class="fas fa-money-check-alt"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Remboursabilité" %}</div>
-                        <span class="stat-badge {% if risk_rating.remboursabilite %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.remboursabilite|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Capacité de remboursement" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card liquidite fade-in-up" style="--order: 5;">
-                        <div class="stat-icon">
-                            <i class="fas fa-water"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Situation de Liquidité" %}</div>
-                        <span class="stat-badge {% if risk_rating.situation_liquidite %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.situation_liquidite|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Disponibilités financières" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card performance fade-in-up" style="--order: 6;">
-                        <div class="stat-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Performance & Rentabilité" %}</div>
-                        <span class="stat-badge {% if risk_rating.performance_rentabilite %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.performance_rentabilite|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Résultats économiques" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card secteur fade-in-up" style="--order: 7;">
-                        <div class="stat-icon">
-                            <i class="fas fa-industry"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Perspective du Secteur" %}</div>
-                        <span class="stat-badge {% if risk_rating.perspective_secteur %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.perspective_secteur|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Environnement économique" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card qualite-info fade-in-up" style="--order: 8;">
-                        <div class="stat-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Qualité de l'Information" %}</div>
-                        <span class="stat-badge {% if risk_rating.qualite_information_analyse %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.qualite_information_analyse|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Fiabilité des données" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card garantie fade-in-up" style="--order: 9;">
-                        <div class="stat-icon">
-                            <i class="fas fa-handshake"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Existence de Garantie" %}</div>
-                        <span class="stat-badge {% if risk_rating.existence_garantie %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.existence_garantie|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Sécurité collatérale" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card terme fade-in-up" style="--order: 10;">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Terme Financier" %}</div>
-                        <span class="stat-badge {% if risk_rating.terme_financier_duree_pret %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.terme_financier_duree_pret|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Conditions financières" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card mesure fade-in-up" style="--order: 11;">
-                        <div class="stat-icon">
-                            <i class="fas fa-life-ring"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Mesure de Soutien" %}</div>
-                        <span class="stat-badge {% if risk_rating.mesure_propre_soutenir_credit %}badge-oui{% else %}badge-non{% endif %}">
-                            {{ risk_rating.mesure_propre_soutenir_credit|yesno:"Oui,Non" }}
-                        </span>
-                        <small class="text-muted mt-3 d-block">{% trans "Soutiens additionnels" %}</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Informations supplémentaires -->
-            <div class="row g-4 fade-in-up" style="--order: 12;">
-                {% if risk_rating.interpretation %}
-                <div class="col-md-6">
-                    <div class="analysis-box h-100">
-                        <h6 class="fw-bold mb-3 d-flex align-items-center">
-                            <i class="fas fa-comment-dots text-primary me-3 fa-lg"></i>{% trans "Interprétation" %}
-                        </h6>
-                        <p class="mb-0 fs-6">{{ risk_rating.interpretation }}</p>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if risk_rating.analyse %}
-                <div class="col-md-6">
-                    <div class="analysis-box h-100">
-                        <h6 class="fw-bold mb-3 d-flex align-items-center">
-                            <i class="fas fa-search text-primary me-3 fa-lg"></i>{% trans "Analyse Détaillée" %}
-                        </h6>
-                        <p class="mb-0 fs-6">{{ risk_rating.analyse }}</p>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if not risk_rating.interpretation and not risk_rating.analyse %}
-                <div class="col-12">
-                    <div class="analysis-box text-center">
-                        <i class="fas fa-comment-slash fa-3x text-muted mb-3 opacity-50"></i>
-                        <p class="text-muted mb-0 fs-5">{% trans "Aucune analyse ou interprétation disponible" %}</p>
-                        <small class="text-muted">{% trans "Ajoutez une analyse pour enrichir cette évaluation" %}</small>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Informations temporelles -->
-            <div class="row mt-5 fade-in-up" style="--order: 13;">
-                <div class="col-12">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-muted">
-                        <div class="meta-item mb-3 mb-md-0">
-                            <i class="fas fa-calendar"></i>
-                            <span class="ms-2 fw-medium">
-                                {% trans "Créé le" %} {{ risk_rating.created_at|date:"d/m/Y H:i" }}
+    <!-- Score + cotation + indice -->
+    <div class="card mb-3">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-sm-5">
+                    <div class="rr-score-wrap">
+                        {% with risk_rating.get_risk_rating_image_url as image_url %}
+                        {% if image_url %}
+                        <img src="{{ image_url }}" alt="Score" class="rr-score-img">
+                        {% else %}
+                        <i class="bi bi-shield-exclamation fs-1 text-primary"></i>
+                        {% endif %}
+                        {% endwith %}
+                        <div>
+                            <div class="rr-score-val">{{ score }}<span class="fs-6 text-muted fw-normal">/8</span></div>
+                            <div class="rr-score-lbl">{% trans "Score global" %}</div>
+                            <span class="rr-pill mt-1 {% if score <= 2 %}yes{% elif score <= 5 %}na{% else %}no{% endif %}">
+                                {% if score <= 2 %}<i class="bi bi-check-circle-fill"></i>{% trans "Risque faible" %}
+                                {% elif score <= 5 %}<i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risque modéré" %}
+                                {% else %}<i class="bi bi-exclamation-circle-fill"></i>{% trans "Risque élevé" %}
+                                {% endif %}
                             </span>
                         </div>
-                        <div class="meta-item">
-                            <i class="fas fa-sync-alt"></i>
-                            <span class="ms-2 fw-medium">
-                                {% trans "Dernière mise à jour" %} : {{ risk_rating.updated_at|date:"d/m/Y H:i" }}
-                            </span>
+                    </div>
+                </div>
+                <div class="col-sm-7">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted fw-semibold">{% trans "Cotation du risque" %}</small>
+                            <span class="badge-cotation">{{ risk_rating.get_cotation_du_risque_display|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted fw-semibold">{% trans "Indice du risque" %}</small>
+                            <span class="badge-indice">{{ risk_rating.get_indice_du_risque_display|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                            <small class="text-muted">{% trans "Mis à jour" %}</small>
+                            <small class="text-muted">{{ risk_rating.updated_at|date:"d/m/Y H:i" }}</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% endwith %}
-    {% else %}
-    <!-- État vide premium -->
-    <div class="card enhanced-card fade-in-up" style="--order: 2;">
-        <div class="card-body">
-            <div class="empty-state">
-                <i class="fas fa-shield-alt empty-state-icon"></i>
-                <h4 class="fw-bold mb-2">{% trans "Aucune évaluation de risque" %}</h4>
-                <p class="text-muted mb-4">
-                    {% trans "Cet acheteur ne possède pas encore d'évaluation de risque." %}<br>
-                    {% trans "Créez-en une pour évaluer son profil de risque et prendre des décisions éclairées." %}
-                </p>
-                <button class="btn btn-success btn-sm btn-action" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Créer une évaluation" %}
-                </button>
+
+    <!-- Indicateurs de risque -->
+    <div class="card mb-3">
+        <div class="card-header py-2 px-3">
+            <span class="fw-semibold fs-sm"><i class="bi bi-sliders me-1"></i>{% trans "Indicateurs de risque" %}</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-hover mb-0 rr-table">
+                <tbody>
+                    <tr>
+                        <td><i class="bi bi-cash-coin text-primary me-1"></i>{% trans "Remboursabilité" %}</td>
+                        <td>
+                            {% if risk_rating.remboursabilite %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-droplet text-success me-1"></i>{% trans "Situation de liquidité" %}</td>
+                        <td>
+                            {% if risk_rating.situation_liquidite %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-graph-up text-purple me-1" style="color:#7c3aed"></i>{% trans "Performance & Rentabilité" %}</td>
+                        <td>
+                            {% if risk_rating.performance_rentabilite %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-buildings me-1" style="color:#ea580c"></i>{% trans "Perspective du secteur" %}</td>
+                        <td>
+                            {% if risk_rating.perspective_secteur %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-file-text text-info me-1"></i>{% trans "Qualité de l'information" %}</td>
+                        <td>
+                            {% if risk_rating.qualite_information_analyse %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-shield-check text-teal me-1" style="color:#0d9488"></i>{% trans "Existence de garantie" %}</td>
+                        <td>
+                            {% if risk_rating.existence_garantie %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-clock me-1" style="color:#7c3aed"></i>{% trans "Terme financier" %}</td>
+                        <td>
+                            {% if risk_rating.terme_financier_duree_pret %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-life-preserver me-1" style="color:#6d28d9"></i>{% trans "Mesure de soutien" %}</td>
+                        <td>
+                            {% if risk_rating.mesure_propre_soutenir_credit %}
+                            <span class="rr-pill yes"><i class="bi bi-check-lg"></i>{% trans "Oui" %}</span>
+                            {% else %}
+                            <span class="rr-pill no"><i class="bi bi-x-lg"></i>{% trans "Non" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Interprétation & Analyse -->
+    {% if risk_rating.interpretation or risk_rating.analyse %}
+    <div class="card mb-3">
+        <div class="card-header py-2 px-3">
+            <span class="fw-semibold fs-sm"><i class="bi bi-chat-square-text me-1"></i>{% trans "Analyses" %}</span>
+        </div>
+        <div class="card-body p-3 d-flex flex-column gap-2">
+            {% if risk_rating.interpretation %}
+            <div>
+                <small class="text-muted fw-semibold d-block mb-1">{% trans "Interprétation" %}</small>
+                <div class="rr-box">{{ risk_rating.interpretation }}</div>
             </div>
+            {% endif %}
+            {% if risk_rating.analyse %}
+            <div>
+                <small class="text-muted fw-semibold d-block mb-1">{% trans "Analyse détaillée" %}</small>
+                <div class="rr-box">{{ risk_rating.analyse }}</div>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
+
+    {% endwith %}
+
+    {% else %}
+    <!-- État vide -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-shield-exclamation fs-1 text-muted mb-3 d-block"></i>
+            <h6 class="fw-bold">{% trans "Aucune évaluation de risque" %}</h6>
+            <p class="text-muted small mb-3">{% trans "Créez une évaluation pour analyser le profil de risque de cet acheteur." %}</p>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                <i class="bi bi-plus-lg me-1"></i>{% trans "Créer une évaluation" %}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 
-<!-- Modal Ajout d'Évaluation de Risque -->
+
+<!-- ── Modal Ajout ──────────────────────────────────────────── -->
 <div class="modal fade" id="addRiskRatingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter une Évaluation de Risque" %}
-                </h5>
+                <h6 class="modal-title text-white fw-bold">
+                    <i class="bi bi-plus-circle me-1"></i>{% trans "Ajouter une évaluation de risque" %}
+                </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addRiskRatingForm" class="enhanced-form">
-                <div class="modal-body py-3 px-4">
-                    <!-- Score visuel dynamique -->
-                    <div class="risk-score-image-container mb-4 mx-auto">
-                        <img id="addRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
-                    </div>
-                    <div class="text-center mb-4">
-                        <h5 id="addRiskScoreValue" class="fw-bold">0/8</h5>
-                        <p class="text-muted small">{% trans "Score de risque calculé automatiquement" %}</p>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="remboursabilite" class="form-label">
-                                    <i class="fas fa-money-check-alt"></i>{% trans "Remboursabilité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="remboursabilite" name="remboursabilite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Bonne capacité de remboursement" %}</option>
-                                    <option value="false">{% trans "Non - Capacité de remboursement limitée" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Capacité de l'acheteur à rembourser ses engagements" %}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="situation_liquidite" class="form-label">
-                                    <i class="fas fa-water"></i>{% trans "Situation de Liquidité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="situation_liquidite" name="situation_liquidite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Liquidité satisfaisante" %}</option>
-                                    <option value="false">{% trans "Non - Problèmes de liquidité" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Disponibilités financières immédiates" %}</small>
-                            </div>
+            <form id="addRiskRatingForm">
+                <div class="modal-body py-3 px-3">
+                    <!-- Score dynamique compact -->
+                    <div class="rr-score-wrap mb-3">
+                        <img id="addRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score" class="rr-score-img">
+                        <div>
+                            <div class="rr-score-val"><span id="addRiskScoreValue">0</span><span class="fs-6 text-muted fw-normal">/8</span></div>
+                            <div class="rr-score-lbl">{% trans "Score calculé automatiquement" %}</div>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- 8 critères -->
+                    <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="performance_rentabilite" class="form-label">
-                                    <i class="fas fa-chart-line"></i>{% trans "Performance & Rentabilité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="performance_rentabilite" name="performance_rentabilite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Performance satisfaisante" %}</option>
-                                    <option value="false">{% trans "Non - Performance insuffisante" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Résultats économiques et rentabilité" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Remboursabilité" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="remboursabilite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="perspective_secteur" class="form-label">
-                                    <i class="fas fa-industry"></i>{% trans "Perspective du Secteur" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="perspective_secteur" name="perspective_secteur" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Secteur porteur" %}</option>
-                                    <option value="false">{% trans "Non - Secteur en difficulté" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Environnement économique du secteur" %}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="qualite_information_analyse" class="form-label">
-                                    <i class="fas fa-file-alt"></i>{% trans "Qualité de l'Information" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="qualite_information_analyse" name="qualite_information_analyse" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Information fiable" %}</option>
-                                    <option value="false">{% trans "Non - Information douteuse" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Fiabilité des données fournies" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Situation de liquidité" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="situation_liquidite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="existence_garantie" class="form-label">
-                                    <i class="fas fa-handshake"></i>{% trans "Existence de Garantie" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="existence_garantie" name="existence_garantie" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Garanties existantes" %}</option>
-                                    <option value="false">{% trans "Non - Aucune garantie" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Sécurités collatérales disponibles" %}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="terme_financier_duree_pret" class="form-label">
-                                    <i class="fas fa-clock"></i>{% trans "Terme Financier" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="terme_financier_duree_pret" name="terme_financier_duree_pret" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Conditions favorables" %}</option>
-                                    <option value="false">{% trans "Non - Conditions défavorables" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Conditions et durée des engagements" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Performance & Rentabilité" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="performance_rentabilite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="mesure_propre_soutenir_credit" class="form-label">
-                                    <i class="fas fa-life-ring"></i>{% trans "Mesure de Soutien" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="mesure_propre_soutenir_credit" name="mesure_propre_soutenir_credit" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Soutiens existants" %}</option>
-                                    <option value="false">{% trans "Non - Aucun soutien" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Mécanismes additionnels de soutien" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Perspective du secteur" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="perspective_secteur" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Qualité de l'information" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="qualite_information_analyse" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Existence de garantie" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="existence_garantie" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Terme financier" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="terme_financier_duree_pret" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Mesure de soutien" %}</label>
+                            <select class="form-select form-select-sm add-risk-criteria" name="mesure_propre_soutenir_credit" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- Cotation + Indice -->
+                    <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="cotation_du_risque" class="form-label">
-                                    <i class="fas fa-chart-line"></i>{% trans "Cotation du Risque" %}
-                                </label>
-                                <select class="form-select form-select-sm" id="cotation_du_risque" name="cotation_du_risque" required>
-                                    <option value="">{% trans "Sélectionnez une cotation" %}</option>
-                                    <option value="non_douteux">{% trans "Non douteux" %}</option>
-                                    <option value="risque_faible">{% trans "Risque faible" %}</option>
-                                    <option value="risque_modere">{% trans "Risque modéré" %}</option>
-                                    <option value="mise_en_garde">{% trans "Mise en garde" %}</option>
-                                    <option value="peu_satisfaisant">{% trans "Peu satisfaisant" %}</option>
-                                    <option value="inacceptable">{% trans "Inacceptable" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Classification globale du risque" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Cotation du risque" %} <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="cotation_du_risque" name="cotation_du_risque" required>
+                                <option value="">—</option>
+                                <option value="non_douteux">{% trans "Non douteux" %}</option>
+                                <option value="risque_faible">{% trans "Risque faible" %}</option>
+                                <option value="risque_modere">{% trans "Risque modéré" %}</option>
+                                <option value="mise_en_garde">{% trans "Mise en garde" %}</option>
+                                <option value="peu_satisfaisant">{% trans "Peu satisfaisant" %}</option>
+                                <option value="inacceptable">{% trans "Inacceptable" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="indice_du_risque" class="form-label">
-                                    <i class="fas fa-exclamation-triangle"></i>{% trans "Indice du Risque" %}
-                                </label>
-                                <select class="form-select form-select-sm" id="indice_du_risque" name="indice_du_risque" required>
-                                    <option value="">{% trans "Sélectionnez un indice" %}</option>
-                                    <option value="eleve">{% trans "Élevé" %}</option>
-                                    <option value="moyen">{% trans "Moyen" %}</option>
-                                    <option value="medium">{% trans "Medium" %}</option>
-                                    <option value="faible">{% trans "Faible" %}</option>
-                                </select>
-                                <small class="form-text text-muted mt-2">{% trans "Niveau général de risque" %}</small>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Indice du risque" %} <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="indice_du_risque" name="indice_du_risque" required>
+                                <option value="">—</option>
+                                <option value="eleve">{% trans "Élevé" %}</option>
+                                <option value="moyen">{% trans "Moyen" %}</option>
+                                <option value="medium">{% trans "Medium" %}</option>
+                                <option value="faible">{% trans "Faible" %}</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="interpretation" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Interprétation" %}
-                        </label>
-                        <textarea class="form-control form-control-sm" id="interpretation" name="interpretation"
-                                  rows="3" placeholder="{% trans 'Ajoutez une interprétation du profil de risque...' %}"></textarea>
-                        <small class="form-text text-muted mt-2">{% trans "Analyse synthétique du risque" %}</small>
+                    <!-- Interprétation + Analyse -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">{% trans "Interprétation" %}</label>
+                        <textarea class="form-control form-control-sm" id="interpretation" name="interpretation" rows="2"></textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label for="analyse" class="form-label">
-                            <i class="fas fa-search"></i>{% trans "Analyse Détaillée" %}
-                        </label>
-                        <textarea class="form-control form-control-sm" id="analyse" name="analyse"
-                                  rows="3" placeholder="{% trans 'Ajoutez une analyse détaillée...' %}"></textarea>
-                        <small class="form-text text-muted mt-2">{% trans "Évaluation approfondie des facteurs de risque" %}</small>
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold small">{% trans "Analyse détaillée" %}</label>
+                        <textarea class="form-control form-control-sm" id="analyse" name="analyse" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-success btn-sm btn-action" id="submitAddBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-check me-1"></i>{% trans "Créer l'évaluation" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                    <button type="submit" class="btn btn-success btn-sm" id="submitAddBtn">
+                        <span class="btn-text"><i class="bi bi-check-lg me-1"></i>{% trans "Créer" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
             </form>
@@ -1329,192 +397,138 @@ body {
     </div>
 </div>
 
-<!-- Modal Modification d'Évaluation de Risque -->
+
+<!-- ── Modal Modification ────────────────────────────────────── -->
 <div class="modal fade" id="editRiskRatingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-edit me-2"></i>{% trans "Modifier l'Évaluation de Risque" %}
-                </h5>
+                <h6 class="modal-title text-white fw-bold">
+                    <i class="bi bi-pencil-fill me-1"></i>{% trans "Modifier l'évaluation de risque" %}
+                </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editRiskRatingForm" class="enhanced-form">
+            <form id="editRiskRatingForm">
                 <input type="hidden" id="editRiskRatingId" name="id">
-                <div class="modal-body py-3 px-4">
-                    <!-- Score visuel dynamique -->
-                    <div class="risk-score-image-container mb-4 mx-auto">
-                        <img id="editRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-score-image">
-                    </div>
-                    <div class="text-center mb-4">
-                        <h5 id="editRiskScoreValue" class="fw-bold">0/8</h5>
-                        <p class="text-muted small">{% trans "Score de risque calculé automatiquement" %}</p>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editRemboursabilite" class="form-label">
-                                    <i class="fas fa-money-check-alt"></i>{% trans "Remboursabilité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editRemboursabilite" name="remboursabilite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Bonne capacité de remboursement" %}</option>
-                                    <option value="false">{% trans "Non - Capacité de remboursement limitée" %}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editSituationLiquidite" class="form-label">
-                                    <i class="fas fa-water"></i>{% trans "Situation de Liquidité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editSituationLiquidite" name="situation_liquidite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Liquidité satisfaisante" %}</option>
-                                    <option value="false">{% trans "Non - Problèmes de liquidité" %}</option>
-                                </select>
-                            </div>
+                <div class="modal-body py-3 px-3">
+                    <!-- Score dynamique compact -->
+                    <div class="rr-score-wrap mb-3">
+                        <img id="editRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score" class="rr-score-img">
+                        <div>
+                            <div class="rr-score-val"><span id="editRiskScoreValue">0</span><span class="fs-6 text-muted fw-normal">/8</span></div>
+                            <div class="rr-score-lbl">{% trans "Score calculé automatiquement" %}</div>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- 8 critères -->
+                    <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editPerformanceRentabilite" class="form-label">
-                                    <i class="fas fa-chart-line"></i>{% trans "Performance & Rentabilité" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editPerformanceRentabilite" name="performance_rentabilite" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Performance satisfaisante" %}</option>
-                                    <option value="false">{% trans "Non - Performance insuffisante" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Remboursabilité" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editRemboursabilite" name="remboursabilite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editPerspectiveSecteur" class="form-label">
-                                    <i class="fas fa-industry"></i>{% trans "Perspective du Secteur" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editPerspectiveSecteur" name="perspective_secteur" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Secteur porteur" %}</option>
-                                    <option value="false">{% trans "Non - Secteur en difficulté" %}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editQualiteInformationAnalyse" class="form-label">
-                                    <i class="fas fa-file-alt"></i>{% trans "Qualité de l'Information" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Information fiable" %}</option>
-                                    <option value="false">{% trans "Non - Information douteuse" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Situation de liquidité" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editSituationLiquidite" name="situation_liquidite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editExistenceGarantie" class="form-label">
-                                    <i class="fas fa-handshake"></i>{% trans "Existence de Garantie" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editExistenceGarantie" name="existence_garantie" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Garanties existantes" %}</option>
-                                    <option value="false">{% trans "Non - Aucune garantie" %}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editTermeFinancierDureePret" class="form-label">
-                                    <i class="fas fa-clock"></i>{% trans "Terme Financier" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Conditions favorables" %}</option>
-                                    <option value="false">{% trans "Non - Conditions défavorables" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Performance & Rentabilité" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editPerformanceRentabilite" name="performance_rentabilite" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editMesurePropreSoutenirCredit" class="form-label">
-                                    <i class="fas fa-life-ring"></i>{% trans "Mesure de Soutien" %}
-                                </label>
-                                <select class="form-select form-select-sm risk-criteria" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
-                                    <option value="">{% trans "Sélectionnez" %}</option>
-                                    <option value="true">{% trans "Oui - Soutiens existants" %}</option>
-                                    <option value="false">{% trans "Non - Aucun soutien" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Perspective du secteur" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editPerspectiveSecteur" name="perspective_secteur" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Qualité de l'information" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Existence de garantie" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editExistenceGarantie" name="existence_garantie" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Terme financier" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">{% trans "Mesure de soutien" %}</label>
+                            <select class="form-select form-select-sm edit-risk-criteria" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
+                                <option value="">—</option>
+                                <option value="true">{% trans "Oui" %}</option>
+                                <option value="false">{% trans "Non" %}</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- Cotation + Indice -->
+                    <div class="row g-2 mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editCotationDuRisque" class="form-label">
-                                    <i class="fas fa-chart-line"></i>{% trans "Cotation du Risque" %}
-                                </label>
-                                <select class="form-select form-select-sm" id="editCotationDuRisque" name="cotation_du_risque" required>
-                                    <option value="">{% trans "Sélectionnez une cotation" %}</option>
-                                    <option value="non_douteux">{% trans "Non douteux" %}</option>
-                                    <option value="risque_faible">{% trans "Risque faible" %}</option>
-                                    <option value="risque_modere">{% trans "Risque modéré" %}</option>
-                                    <option value="mise_en_garde">{% trans "Mise en garde" %}</option>
-                                    <option value="peu_satisfaisant">{% trans "Peu satisfaisant" %}</option>
-                                    <option value="inacceptable">{% trans "Inacceptable" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Cotation du risque" %}</label>
+                            <select class="form-select form-select-sm" id="editCotationDuRisque" name="cotation_du_risque" required>
+                                <option value="">—</option>
+                                <option value="non_douteux">{% trans "Non douteux" %}</option>
+                                <option value="risque_faible">{% trans "Risque faible" %}</option>
+                                <option value="risque_modere">{% trans "Risque modéré" %}</option>
+                                <option value="mise_en_garde">{% trans "Mise en garde" %}</option>
+                                <option value="peu_satisfaisant">{% trans "Peu satisfaisant" %}</option>
+                                <option value="inacceptable">{% trans "Inacceptable" %}</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editIndiceDuRisque" class="form-label">
-                                    <i class="fas fa-exclamation-triangle"></i>{% trans "Indice du Risque" %}
-                                </label>
-                                <select class="form-select form-select-sm" id="editIndiceDuRisque" name="indice_du_risque" required>
-                                    <option value="">{% trans "Sélectionnez un indice" %}</option>
-                                    <option value="eleve">{% trans "Élevé" %}</option>
-                                    <option value="moyen">{% trans "Moyen" %}</option>
-                                    <option value="medium">{% trans "Medium" %}</option>
-                                    <option value="faible">{% trans "Faible" %}</option>
-                                </select>
-                            </div>
+                            <label class="form-label fw-semibold small">{% trans "Indice du risque" %}</label>
+                            <select class="form-select form-select-sm" id="editIndiceDuRisque" name="indice_du_risque" required>
+                                <option value="">—</option>
+                                <option value="eleve">{% trans "Élevé" %}</option>
+                                <option value="moyen">{% trans "Moyen" %}</option>
+                                <option value="medium">{% trans "Medium" %}</option>
+                                <option value="faible">{% trans "Faible" %}</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="editInterpretation" class="form-label">
-                            <i class="fas fa-comment-dots"></i>{% trans "Interprétation" %}
-                        </label>
-                        <textarea class="form-control form-control-sm" id="editInterpretation" name="interpretation" rows="3"></textarea>
+                    <!-- Interprétation + Analyse -->
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">{% trans "Interprétation" %}</label>
+                        <textarea class="form-control form-control-sm" id="editInterpretation" name="interpretation" rows="2"></textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label for="editAnalyse" class="form-label">
-                            <i class="fas fa-search"></i>{% trans "Analyse Détaillée" %}
-                        </label>
-                        <textarea class="form-control form-control-sm" id="editAnalyse" name="analyse" rows="3"></textarea>
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold small">{% trans "Analyse détaillée" %}</label>
+                        <textarea class="form-control form-control-sm" id="editAnalyse" name="analyse" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm btn-action" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-warning btn-sm btn-action" id="submitEditBtn">
-                        <span class="btn-text">
-                            <i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}
-                        </span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                    <button type="submit" class="btn btn-warning btn-sm" id="submitEditBtn">
+                        <span class="btn-text"><i class="bi bi-save me-1"></i>{% trans "Mettre à jour" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
             </form>
@@ -1522,32 +536,22 @@ body {
     </div>
 </div>
 
-<!-- Modal de confirmation de suppression -->
-<div class="modal fade modal-danger" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+
+<!-- ── Modal Suppression ─────────────────────────────────────── -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation de suppression" %}
-                </h5>
+            <div class="modal-header py-2 px-3 bg-danger">
+                <h6 class="modal-title text-white fw-bold"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Supprimer" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body py-3 px-4 text-center">
-                <div class="mb-4">
-                    <i class="fas fa-trash-alt fa-4x text-danger opacity-75"></i>
-                </div>
-                <h6 class="fw-bold text-dark mb-3">{% trans "Supprimer l'évaluation de risque" %}</h6>
-                <p class="text-dark opacity-90 mb-4">
-                    {% trans "Êtes-vous sûr de vouloir supprimer cette évaluation de risque ?" %}<br>
-                    {% trans "Cette action est irréversible et supprimera définitivement toutes les analyses." %}
-                </p>
+            <div class="modal-body text-center py-4">
+                <p class="mb-0">{% trans "Supprimer cette évaluation de risque ?" %}<br><small class="text-muted">{% trans "Action irréversible." %}</small></p>
             </div>
-            <div class="modal-footer justify-content-center border-top-0 pt-0 py-2">
-                <button type="button" class="btn btn-secondary btn-sm btn-action" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
-                </button>
-                <button type="button" class="btn btn-light btn-sm btn-action text-danger fw-bold" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn">
+                    <i class="bi bi-trash-fill me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
         </div>
@@ -1556,309 +560,164 @@ body {
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function() {
-    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/evaluation-risque/`;
-    const ACCESS_TOKEN = '{{ access_token }}';
-    let currentRiskRating = {% if risk_rating %} {{ risk_rating.id|default:"null" }} {% else %} null {% endif %};
+(function () {
+    var API_BASE     = '/api/acheteur/{{ acheteur.id }}/evaluation-risque/';
+    var API_ADD      = '/api/acheteur/{{ acheteur.id }}/ajouter-une-evaluation-risque/';
+    var API_EDIT     = '/api/acheteur/{{ acheteur.id }}/editer-une-evaluation-risque/{% if risk_rating %}{{ risk_rating.id }}{% endif %}/';
+    var ACCESS_TOKEN = '{{ access_token }}';
+    var CRITERIA     = ['remboursabilite','situation_liquidite','performance_rentabilite',
+                        'perspective_secteur','qualite_information_analyse','existence_garantie',
+                        'terme_financier_duree_pret','mesure_propre_soutenir_credit'];
+    var STATIC_RR    = '{% static "riskrating/" %}';
 
-    // Fonction pour calculer le score et mettre à jour l'image
-    function updateRiskImage(formId, imageId, scoreValueId) {
-        let score = 0;
-        const fields = [
-            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
-            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
-            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
-        ];
-
-        // Calcul du score
-        fields.forEach(field => {
-            const $select = $(`${formId} [name="${field}"]`);
-            if ($select.length && $select.val() === 'true') {
-                score++;
-            }
+    function calcScore(form) {
+        var s = 0;
+        CRITERIA.forEach(function(f) {
+            var el = form.querySelector('[name="' + f + '"]');
+            if (el && el.value === 'true') s++;
         });
-
-        // Mettre à jour l'image (score de 0 à 8)
-        const imagePath = `{% static 'riskrating/' %}${score}.svg`;
-        $(imageId).attr('src', imagePath);
-        
-        // Mettre à jour le texte du score
-        if (scoreValueId) {
-            $(scoreValueId).text(`${score}/8`);
-        }
-        
-        // Animer le score
-        if (score > 0) {
-            $(scoreValueId).addClass('pulse-animation');
-            setTimeout(() => {
-                $(scoreValueId).removeClass('pulse-animation');
-            }, 500);
-        }
-        
-        return score;
+        return s;
     }
 
-    // Fonction pour obtenir le chemin de l'image basé sur le score
-    function getRiskImagePath(score) {
-        return `{% static 'riskrating/' %}${score}.svg`;
+    function updateScoreUI(form, imgEl, valEl) {
+        var s = calcScore(form);
+        if (imgEl) imgEl.src = STATIC_RR + s + '.svg';
+        if (valEl) valEl.textContent = s;
     }
 
-    // Fonction pour calculer le score à partir de la réponse API
-    function calculateScoreFromResponse(response) {
-        let score = 0;
-        const fields = [
-            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
-            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
-            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
-        ];
-
-        fields.forEach(field => {
-            if (response[field]) {
-                score++;
-            }
-        });
-
-        return score;
+    function calcScoreFromObj(obj) {
+        return CRITERIA.filter(function(f) { return obj[f]; }).length;
     }
 
-    // Initialisation pour le formulaire d'ajout
-    $('#addRiskRatingModal').on('show.bs.modal', function () {
-        updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage', '#addRiskScoreValue');
-    });
-
-    // Écouteurs pour les changements dans le formulaire d'ajout
-    $('.risk-criteria').on('change', function() {
-        updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage', '#addRiskScoreValue');
-    });
-
-    // Initialisation pour le formulaire d'édition
-    $('#editRiskRatingModal').on('show.bs.modal', function () {
-        updateRiskImage('#editRiskRatingForm', '#editRiskRatingImage', '#editRiskScoreValue');
-    });
-
-    // Écouteurs pour les changements dans le formulaire d'édition
-    $('#editRiskRatingModal .risk-criteria').on('change', function() {
-        updateRiskImage('#editRiskRatingForm', '#editRiskRatingImage', '#editRiskScoreValue');
-    });
-
-    // Charger les données de l'évaluation
-    function loadRiskRatingData() {
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                if (response && !response.message) {
-                    currentRiskRating = response;
-                    populateEditForm(response);
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status !== 404) {
-                    console.error('Erreur lors du chargement des données:', xhr);
-                }
-            }
-        });
-    }
-
-    // Remplir le formulaire d'édition
-    function populateEditForm(riskRating) {
-        if (!riskRating) return;
-        
-        $('#editRiskRatingId').val(riskRating.id);
-        
-        // Mettre à jour les champs booléens
-        $('#editRemboursabilite').val(riskRating.remboursabilite ? "true" : "false");
-        $('#editSituationLiquidite').val(riskRating.situation_liquidite ? "true" : "false");
-        $('#editPerformanceRentabilite').val(riskRating.performance_rentabilite ? "true" : "false");
-        $('#editPerspectiveSecteur').val(riskRating.perspective_secteur ? "true" : "false");
-        $('#editQualiteInformationAnalyse').val(riskRating.qualite_information_analyse ? "true" : "false");
-        $('#editExistenceGarantie').val(riskRating.existence_garantie ? "true" : "false");
-        $('#editTermeFinancierDureePret').val(riskRating.terme_financier_duree_pret ? "true" : "false");
-        $('#editMesurePropreSoutenirCredit').val(riskRating.mesure_propre_soutenir_credit ? "true" : "false");
-        
-        // Mettre à jour les autres champs
-        $('#editCotationDuRisque').val(riskRating.cotation_du_risque || '');
-        $('#editIndiceDuRisque').val(riskRating.indice_du_risque || '');
-        $('#editInterpretation').val(riskRating.interpretation || '');
-        $('#editAnalyse').val(riskRating.analyse || '');
-        
-        // Mettre à jour l'image
-        const score = calculateScoreFromResponse(riskRating);
-        $('#editRiskRatingImage').attr('src', getRiskImagePath(score));
-        $('#editRiskScoreValue').text(`${score}/8`);
-    }
-
-    // Formulaire d'ajout
-    $('#addRiskRatingForm').on('submit', function(e) {
-        e.preventDefault();
-        submitRiskRatingForm('POST', $(this).serialize(), '#submitAddBtn', 'addRiskRatingModal');
-    });
-
-    // Formulaire de modification
-    $('#editRiskRatingForm').on('submit', function(e) {
-        e.preventDefault();
-        const formData = $(this).serialize();
-        submitRiskRatingForm('POST', formData, '#submitEditBtn', 'editRiskRatingModal');
-    });
-
-    // Soumission du formulaire
-    function submitRiskRatingForm(method, formData, submitBtn, modalId) {
-        const $btn = $(submitBtn);
-        const $btnText = $btn.find('.btn-text');
-        const $spinner = $btn.find('.spinner-border');
-        
-        // Afficher le spinner
-        $btn.prop('disabled', true);
-        $btnText.hide();
-        $spinner.removeClass('d-none');
-        
-        $.ajax({
-            url: '{{ risk_rating.id }}' ? "/api/acheteur/{{ acheteur.id }}/editer-une-evaluation-risque/{{ risk_rating.id }}/" : "/api/acheteur/{{ acheteur.id }}/ajouter-une-evaluation-risque/",
-            type: 'POST',
-            data: formData,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function(response) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                $('#' + modalId).modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès !',
-                    text: currentRiskRating ? 'Évaluation mise à jour avec succès' : 'Évaluation créée avec succès',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'linear-gradient(135deg, var(--primary-color), var(--dark-color))',
-                    color: 'white',
-                    iconColor: 'white'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $spinner.addClass('d-none');
-                $btnText.show();
-                $btn.prop('disabled', false);
-                
-                let errorMessage = 'Une erreur est survenue';
-                if (xhr.responseJSON) {
-                    errorMessage = Object.values(xhr.responseJSON).join('\n');
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: errorMessage,
-                    confirmButtonColor: 'var(--primary-color)'
-                });
-            }
-        });
-    }
-
-    // Suppression de l'évaluation
-    $('#confirmDeleteBtn').on('click', function() {
-        const $btn = $(this);
-        const originalText = $btn.html();
-        
-        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
-        $btn.prop('disabled', true);
-        
-        $.ajax({
-            url: API_BASE_URL,
-            type: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            success: function() {
-                $btn.html(originalText);
-                $btn.prop('disabled', false);
-                
-                $('#confirmDeleteModal').modal('hide');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Suppression réussie !',
-                    text: 'Évaluation supprimée avec succès',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    background: 'linear-gradient(135deg, var(--primary-color), var(--dark-color))',
-                    color: 'white',
-                    iconColor: 'white'
-                }).then(() => {
-                    window.location.reload();
-                });
-            },
-            error: function(xhr) {
-                $btn.html(originalText);
-                $btn.prop('disabled', false);
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de supprimer l\'évaluation',
-                    confirmButtonColor: 'var(--primary-color)'
-                });
-            }
-        });
-    });
-
-    // Helper: Get CSRF token
     function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+        var m = document.cookie.match('(?:^|;) ?' + name + '=([^;]*)');
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    function showBtn(btn) {
+        btn.querySelector('.btn-text').style.display = '';
+        btn.querySelector('.spinner-border').classList.add('d-none');
+        btn.disabled = false;
+    }
+    function loadBtn(btn) {
+        btn.querySelector('.btn-text').style.display = 'none';
+        btn.querySelector('.spinner-border').classList.remove('d-none');
+        btn.disabled = true;
+    }
+
+    /* ── Add form ── */
+    var addForm  = document.getElementById('addRiskRatingForm');
+    var addImg   = document.getElementById('addRiskRatingImage');
+    var addVal   = document.getElementById('addRiskScoreValue');
+    var addBtn   = document.getElementById('submitAddBtn');
+
+    if (addForm) {
+        addForm.querySelectorAll('.add-risk-criteria').forEach(function(el) {
+            el.addEventListener('change', function() {
+                updateScoreUI(addForm, addImg, addVal);
+            });
+        });
+        addForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadBtn(addBtn);
+            var data = new FormData(addForm);
+            $.ajax({
+                url: API_ADD, type: 'POST',
+                data: Object.fromEntries(data),
+                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+                success: function() {
+                    bootstrap.Modal.getInstance(document.getElementById('addRiskRatingModal')).hide();
+                    Swal.fire({ icon:'success', title:'{% trans "Créé" %}', timer:1500, showConfirmButton:false }).then(function(){ location.reload(); });
+                },
+                error: function(xhr) {
+                    showBtn(addBtn);
+                    var msg = xhr.responseJSON ? Object.values(xhr.responseJSON).flat().join('\n') : '{% trans "Erreur" %}';
+                    Swal.fire({ icon:'error', title:'{% trans "Erreur" %}', text:msg });
                 }
-            }
-        }
-        return cookieValue;
-    }
-
-    // Initialiser les popovers
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-            customClass: 'custom-popover',
-            trigger: 'hover focus'
-        });
-    });
-
-    // Charger les données au démarrage
-    loadRiskRatingData();
-    
-    // Animation des cartes
-    function animateCardsOnScroll() {
-        $('.stat-card, .risk-indicator-card, .enhanced-card').each(function() {
-            const elementTop = $(this).offset().top;
-            const elementBottom = elementTop + $(this).outerHeight();
-            const viewportTop = $(window).scrollTop();
-            const viewportBottom = viewportTop + $(window).height();
-            
-            if (elementBottom > viewportTop && elementTop < viewportBottom) {
-                $(this).addClass('animate');
-            }
+            });
         });
     }
 
-    $(window).on('scroll', animateCardsOnScroll);
-    setTimeout(animateCardsOnScroll, 100);
-});
+    /* ── Edit form ── */
+    var editForm = document.getElementById('editRiskRatingForm');
+    var editImg  = document.getElementById('editRiskRatingImage');
+    var editVal  = document.getElementById('editRiskScoreValue');
+    var editBtn  = document.getElementById('submitEditBtn');
+
+    if (editForm) {
+        editForm.querySelectorAll('.edit-risk-criteria').forEach(function(el) {
+            el.addEventListener('change', function() {
+                updateScoreUI(editForm, editImg, editVal);
+            });
+        });
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            loadBtn(editBtn);
+            var data = new FormData(editForm);
+            $.ajax({
+                url: API_EDIT, type: 'POST',
+                data: Object.fromEntries(data),
+                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+                success: function() {
+                    bootstrap.Modal.getInstance(document.getElementById('editRiskRatingModal')).hide();
+                    Swal.fire({ icon:'success', title:'{% trans "Mis à jour" %}', timer:1500, showConfirmButton:false }).then(function(){ location.reload(); });
+                },
+                error: function(xhr) {
+                    showBtn(editBtn);
+                    var msg = xhr.responseJSON ? Object.values(xhr.responseJSON).flat().join('\n') : '{% trans "Erreur" %}';
+                    Swal.fire({ icon:'error', title:'{% trans "Erreur" %}', text:msg });
+                }
+            });
+        });
+    }
+
+    /* ── Charger les données dans le formulaire d'édition ── */
+    function loadForEdit() {
+        $.ajax({
+            url: API_BASE, type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(r) {
+                if (!r || r.message) return;
+                document.getElementById('editRiskRatingId').value = r.id;
+                CRITERIA.forEach(function(f) {
+                    var el = editForm.querySelector('[name="' + f + '"]');
+                    if (el) el.value = r[f] ? 'true' : 'false';
+                });
+                ['cotation_du_risque','indice_du_risque','interpretation','analyse'].forEach(function(f) {
+                    var el = editForm.querySelector('[name="' + f + '"]');
+                    if (el) el.value = r[f] || '';
+                });
+                var s = calcScoreFromObj(r);
+                if (editImg) editImg.src = STATIC_RR + s + '.svg';
+                if (editVal) editVal.textContent = s;
+            }
+        });
+    }
+
+    var editModal = document.getElementById('editRiskRatingModal');
+    if (editModal) editModal.addEventListener('show.bs.modal', loadForEdit);
+
+    /* ── Suppression ── */
+    var delBtn = document.getElementById('confirmDeleteBtn');
+    if (delBtn) {
+        delBtn.addEventListener('click', function() {
+            delBtn.disabled = true;
+            $.ajax({
+                url: API_BASE, type: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+                success: function() {
+                    bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
+                    Swal.fire({ icon:'success', title:'{% trans "Supprimé" %}', timer:1500, showConfirmButton:false }).then(function(){ location.reload(); });
+                },
+                error: function() {
+                    delBtn.disabled = false;
+                    Swal.fire({ icon:'error', title:'{% trans "Erreur" %}', text:'{% trans "Impossible de supprimer" %}' });
+                }
+            });
+        });
+    }
+}());
 </script>
 {% endblock %}
