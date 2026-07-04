@@ -118,30 +118,54 @@ body { background: var(--c-bg); }
 .tabs-nav .tn:hover { color:var(--c-primary); background:rgba(10,149,202,.06); }
 .tabs-nav .tn.active { color:#fff; background:var(--c-primary); }
 .tab-body { padding:1.1rem .9rem; }
+#tDetails { margin:-1.1rem -.9rem; border-radius:0 0 var(--radius) var(--radius); overflow:hidden; }
 .tab-pane { display:none; }
 .tab-pane.show { display:block; animation:fup .2s ease; }
 @keyframes fup { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
 
+/* ── Split-panel (tDetails) ── */
+.sp-wrap { display:flex; gap:0; height:calc(100vh - 260px); min-height:480px; overflow:hidden; }
+.sp-list {
+    width:260px; flex-shrink:0;
+    overflow-y:auto; border-right:1px solid var(--c-border);
+    background:#f8fafc;
+    padding:.35rem 0;
+}
+.sp-list::-webkit-scrollbar { width:3px; }
+.sp-list::-webkit-scrollbar-thumb { background:rgba(10,149,202,.3); border-radius:3px; }
+.sp-frame { flex:1; overflow:hidden; position:relative; background:#f0f6fb; }
+.sp-frame iframe { width:100%; height:100%; border:none; background:#f0f6fb; }
+.sp-placeholder {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; color:#94a3b8; gap:.75rem;
+}
+.sp-placeholder i { font-size:2.5rem; opacity:.4; }
+.sp-placeholder p { font-size:.83rem; margin:0; }
+.sp-loading {
+    position:absolute; inset:0; background:rgba(248,250,252,.8);
+    display:none; align-items:center; justify-content:center;
+    z-index:5;
+}
+.sp-loading.show { display:flex; }
 
-/* ── Detail vertical list ── */
+/* ── Detail list (dans split-panel) ── */
 .dl-list { display:flex; flex-direction:column; gap:0; }
 .dl {
     display:flex; align-items:center; gap:.7rem;
-    padding:.6rem .9rem;
-    border:1px solid var(--c-border);
-    border-bottom:none;
-    background:#fff;
+    padding:.5rem .75rem;
+    border-left:3px solid transparent;
+    background:transparent;
     text-decoration:none; color:#2d3748;
     font-size:.83rem; font-weight:500;
     transition:background .15s, color .15s;
 }
-.dl:first-child { border-radius:10px 10px 0 0; }
-.dl-last  { border-bottom:1px solid var(--c-border); border-radius:0 0 10px 10px; }
-.dl > i:first-child { color:var(--c-primary); font-size:.85rem; flex-shrink:0; }
-.dl:hover { background:var(--c-primary); color:#fff; }
-.dl:hover > i { color:#fff; }
-.dl-arr { margin-left:auto; opacity:.35; font-size:.72rem; }
-.dl:hover .dl-arr { opacity:.8; }
+.dl > i:first-child { color:var(--c-primary); font-size:.82rem; flex-shrink:0; }
+.dl:hover { background:rgba(10,149,202,.08); color:var(--c-primary); border-left-color:var(--c-primary); }
+.dl:hover > i:first-child { color:var(--c-primary); }
+.dl.active { background:rgba(10,149,202,.12); color:var(--c-primary); border-left-color:var(--c-primary); font-weight:600; }
+.dl.active > i:first-child { color:var(--c-primary); }
+.dl-arr { margin-left:auto; opacity:.3; font-size:.68rem; }
+.dl:hover .dl-arr, .dl.active .dl-arr { opacity:.7; }
 
 
 /* ── Bilan cards ── */
@@ -267,52 +291,68 @@ body { background: var(--c-bg); }
 
     <div class="tab-body">
 
-        {# ── Détails acheteur : ancien Finances + Analyse + Organisation + Contacts ── #}
+        {# ── Détails acheteur : split-panel liste + iframe ── #}
         <div class="tab-pane show" id="tDetails">
-            <div class="dl-list">
-                {# === Ordre de référence === #}
-                <a href="{% url 'dash_root_manage_telephone_acheteur'              id_acheteur %}" class="dl"><i class="bi bi-telephone-fill"></i>{% trans "Téléphones" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_portable_acheteur'               id_acheteur %}" class="dl"><i class="bi bi-phone-fill"></i>{% trans "Portables" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_email_acheteur'                  id_acheteur %}" class="dl"><i class="bi bi-envelope-fill"></i>{% trans "Emails" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_resume'                 id_acheteur %}" class="dl"><i class="bi bi-pie-chart-fill"></i>{% trans "Summary" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_risk_rating'            id_acheteur %}" class="dl"><i class="bi bi-shield-exclamation"></i>{% trans "Risk Rating" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_registre_commerce_acheteur'      id_acheteur %}" class="dl"><i class="bi bi-book-fill"></i>{% trans "Registration Data" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_tendance'               id_acheteur %}" class="dl"><i class="bi bi-graph-up-arrow"></i>{% trans "Trend" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_responsable'            id_acheteur %}" class="dl"><i class="bi bi-person-badge-fill"></i>{% trans "Manager" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_antecedent'             id_acheteur %}" class="dl"><i class="bi bi-clock-history"></i>{% trans "Legal Background" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_geopolitic'             id_acheteur %}" class="dl"><i class="bi bi-globe2"></i>{% trans "Geopolitics" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_advice'                 id_acheteur %}" class="dl"><i class="bi bi-lightbulb-fill"></i>{% trans "Acremac Advice" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_gestion_risque'         id_acheteur %}" class="dl"><i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risk Management" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_membre_conseil'         id_acheteur %}" class="dl"><i class="bi bi-person-workspace"></i>{% trans "Board of Directors" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_composition_capital'    id_acheteur %}" class="dl"><i class="bi bi-coin"></i>{% trans "Share Capital" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_actionnaire'            id_acheteur %}" class="dl"><i class="bi bi-person-check-fill"></i>{% trans "Shareholder / Owner" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_filiale_optimized'      id_acheteur %}" class="dl"><i class="bi bi-diagram-3-fill"></i>{% trans "Structure" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_banking_optimized'      id_acheteur %}" class="dl"><i class="bi bi-bank2"></i>{% trans "Banker" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_analyse_sectorielle'    id_acheteur %}" class="dl"><i class="bi bi-bar-chart-steps"></i>{% trans "Sector Analysis" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_compte_financier'       id_acheteur %}" class="dl"><i class="bi bi-file-earmark-spreadsheet-fill"></i>{% trans "Financial Account" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_operation_historique'   id_acheteur %}" class="dl"><i class="bi bi-journal-text"></i>{% trans "Operation & History" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_propriete_actif'        id_acheteur %}" class="dl"><i class="bi bi-building-fill"></i>{% trans "Property & Assets" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_condition_vente'        id_acheteur %}" class="dl"><i class="bi bi-shop-window"></i>{% trans "Condition of Sale" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                {# === Éléments supplémentaires (non dans la référence) === #}
-                <a href="{% url 'dash_root_manage_adresse_acheteur'                id_acheteur %}" class="dl"><i class="bi bi-geo-alt-fill"></i>{% trans "Adresses" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_condition_achat'        id_acheteur %}" class="dl"><i class="bi bi-cart-fill"></i>{% trans "Condition of Purchase" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_data_save'              id_acheteur %}" class="dl"><i class="bi bi-database-fill"></i>{% trans "Saved Data" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_identifiant_fiscal_acheteur'     id_acheteur %}" class="dl"><i class="bi bi-card-text"></i>{% trans "Tax Identifiers" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_cotisation_acheteur'             id_acheteur %}" class="dl"><i class="bi bi-file-ruled-fill"></i>{% trans "Social Contributions" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_certification_acheteur'                 id_acheteur %}" class="dl"><i class="bi bi-patch-check-fill"></i>{% trans "Certifications" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_procedure_collective_acheteur'   id_acheteur %}" class="dl"><i class="bi bi-hammer"></i>{% trans "Collective Procedures" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_document_acheteur'               id_acheteur %}" class="dl"><i class="bi bi-folder-fill"></i>{% trans "Documents" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_produit_service_acheteur'        id_acheteur %}" class="dl"><i class="bi bi-boxes"></i>{% trans "Products & Services" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_marque_acheteur'                 id_acheteur %}" class="dl"><i class="bi bi-award-fill"></i>{% trans "Brands" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_code_naf_acheteur'               id_acheteur %}" class="dl"><i class="bi bi-upc-scan"></i>{% trans "NAF Codes" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_code_nace_acheteur'              id_acheteur %}" class="dl"><i class="bi bi-code-square"></i>{% trans "NACE Codes" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_swot_acheteur'                   id_acheteur %}" class="dl"><i class="bi bi-crosshair2"></i>SWOT<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_strategie_acheteur'                     id_acheteur %}" class="dl"><i class="bi bi-puzzle-fill"></i>{% trans "Stratégie" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_conformite_acheteur'                    id_acheteur %}" class="dl"><i class="bi bi-check-circle-fill"></i>{% trans "Conformité" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_innovation_acheteur'                    id_acheteur %}" class="dl"><i class="bi bi-stars"></i>{% trans "Innovation" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                <a href="{% url 'dash_root_manage_acheteur_opinion_acremac'        id_acheteur %}" class="dl"><i class="bi bi-chat-quote-fill"></i>{% trans "Opinion crédit" %}<i class="bi bi-chevron-right dl-arr"></i></a>
-                {# === Dernier : Summary & Opinion === #}
-                <a href="{% url 'dash_root_manage_acheteur_sommaire_avis'          id_acheteur %}" class="dl dl-last"><i class="bi bi-file-text-fill"></i>{% trans "Summary & Opinion" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+            <div class="sp-wrap">
+
+                {# — Colonne gauche : liste des sections — #}
+                <div class="sp-list">
+                    <div class="dl-list" id="spList">
+                        <a href="#" data-url="{% url 'dash_root_manage_telephone_acheteur'              id_acheteur %}" class="dl sp-link"><i class="bi bi-telephone-fill"></i>{% trans "Téléphones" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_portable_acheteur'               id_acheteur %}" class="dl sp-link"><i class="bi bi-phone-fill"></i>{% trans "Portables" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_email_acheteur'                  id_acheteur %}" class="dl sp-link"><i class="bi bi-envelope-fill"></i>{% trans "Emails" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_resume'                 id_acheteur %}" class="dl sp-link"><i class="bi bi-pie-chart-fill"></i>{% trans "Summary" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_risk_rating'            id_acheteur %}" class="dl sp-link"><i class="bi bi-shield-exclamation"></i>{% trans "Risk Rating" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_registre_commerce_acheteur'      id_acheteur %}" class="dl sp-link"><i class="bi bi-book-fill"></i>{% trans "Registration Data" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_tendance'               id_acheteur %}" class="dl sp-link"><i class="bi bi-graph-up-arrow"></i>{% trans "Trend" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_responsable'            id_acheteur %}" class="dl sp-link"><i class="bi bi-person-badge-fill"></i>{% trans "Manager" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_antecedent'             id_acheteur %}" class="dl sp-link"><i class="bi bi-clock-history"></i>{% trans "Legal Background" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_geopolitic'             id_acheteur %}" class="dl sp-link"><i class="bi bi-globe2"></i>{% trans "Geopolitics" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_advice'                 id_acheteur %}" class="dl sp-link"><i class="bi bi-lightbulb-fill"></i>{% trans "Acremac Advice" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_gestion_risque'         id_acheteur %}" class="dl sp-link"><i class="bi bi-exclamation-triangle-fill"></i>{% trans "Risk Management" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_membre_conseil'         id_acheteur %}" class="dl sp-link"><i class="bi bi-person-workspace"></i>{% trans "Board of Directors" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_composition_capital'    id_acheteur %}" class="dl sp-link"><i class="bi bi-coin"></i>{% trans "Share Capital" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_actionnaire'            id_acheteur %}" class="dl sp-link"><i class="bi bi-person-check-fill"></i>{% trans "Shareholder / Owner" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_filiale_optimized'      id_acheteur %}" class="dl sp-link"><i class="bi bi-diagram-3-fill"></i>{% trans "Structure" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_banking_optimized'      id_acheteur %}" class="dl sp-link"><i class="bi bi-bank2"></i>{% trans "Banker" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_analyse_sectorielle'    id_acheteur %}" class="dl sp-link"><i class="bi bi-bar-chart-steps"></i>{% trans "Sector Analysis" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_compte_financier'       id_acheteur %}" class="dl sp-link"><i class="bi bi-file-earmark-spreadsheet-fill"></i>{% trans "Financial Account" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_operation_historique'   id_acheteur %}" class="dl sp-link"><i class="bi bi-journal-text"></i>{% trans "Operation & History" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_propriete_actif'        id_acheteur %}" class="dl sp-link"><i class="bi bi-building-fill"></i>{% trans "Property & Assets" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_condition_vente'        id_acheteur %}" class="dl sp-link"><i class="bi bi-shop-window"></i>{% trans "Condition of Sale" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_adresse_acheteur'                id_acheteur %}" class="dl sp-link"><i class="bi bi-geo-alt-fill"></i>{% trans "Adresses" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_condition_achat'        id_acheteur %}" class="dl sp-link"><i class="bi bi-cart-fill"></i>{% trans "Condition of Purchase" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_data_save'              id_acheteur %}" class="dl sp-link"><i class="bi bi-database-fill"></i>{% trans "Saved Data" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_identifiant_fiscal_acheteur'     id_acheteur %}" class="dl sp-link"><i class="bi bi-card-text"></i>{% trans "Tax Identifiers" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_cotisation_acheteur'             id_acheteur %}" class="dl sp-link"><i class="bi bi-file-ruled-fill"></i>{% trans "Social Contributions" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_certification_acheteur'                 id_acheteur %}" class="dl sp-link"><i class="bi bi-patch-check-fill"></i>{% trans "Certifications" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_procedure_collective_acheteur'   id_acheteur %}" class="dl sp-link"><i class="bi bi-hammer"></i>{% trans "Collective Procedures" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_document_acheteur'               id_acheteur %}" class="dl sp-link"><i class="bi bi-folder-fill"></i>{% trans "Documents" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_produit_service_acheteur'        id_acheteur %}" class="dl sp-link"><i class="bi bi-boxes"></i>{% trans "Products & Services" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_marque_acheteur'                 id_acheteur %}" class="dl sp-link"><i class="bi bi-award-fill"></i>{% trans "Brands" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_code_naf_acheteur'               id_acheteur %}" class="dl sp-link"><i class="bi bi-upc-scan"></i>{% trans "NAF Codes" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_code_nace_acheteur'              id_acheteur %}" class="dl sp-link"><i class="bi bi-code-square"></i>{% trans "NACE Codes" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_swot_acheteur'                   id_acheteur %}" class="dl sp-link"><i class="bi bi-crosshair2"></i>SWOT<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_strategie_acheteur'                     id_acheteur %}" class="dl sp-link"><i class="bi bi-puzzle-fill"></i>{% trans "Stratégie" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_conformite_acheteur'                    id_acheteur %}" class="dl sp-link"><i class="bi bi-check-circle-fill"></i>{% trans "Conformité" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_innovation_acheteur'                    id_acheteur %}" class="dl sp-link"><i class="bi bi-stars"></i>{% trans "Innovation" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_opinion_acremac'        id_acheteur %}" class="dl sp-link"><i class="bi bi-chat-quote-fill"></i>{% trans "Opinion crédit" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                        <a href="#" data-url="{% url 'dash_root_manage_acheteur_sommaire_avis'          id_acheteur %}" class="dl sp-link"><i class="bi bi-file-text-fill"></i>{% trans "Summary & Opinion" %}<i class="bi bi-chevron-right dl-arr"></i></a>
+                    </div>
+                </div>
+
+                {# — Zone droite : iframe — #}
+                <div class="sp-frame">
+                    <div class="sp-placeholder" id="spPlaceholder">
+                        <i class="bi bi-layout-text-sidebar-reverse"></i>
+                        <p>{% trans "Sélectionnez une section dans la liste" %}</p>
+                    </div>
+                    <div class="sp-loading" id="spLoading">
+                        <div class="spinner-border text-primary" role="status" style="width:1.8rem;height:1.8rem;"></div>
+                    </div>
+                    <iframe id="spIframe" src="" style="display:none;"></iframe>
+                </div>
+
             </div>
         </div>
 
@@ -594,6 +634,51 @@ body { background: var(--c-bg); }
             document.getElementById(target).classList.add('show');
         });
     });
+
+    /* ── Split-panel ── */
+    (function(){
+        var iframe      = document.getElementById('spIframe');
+        var placeholder = document.getElementById('spPlaceholder');
+        var loading     = document.getElementById('spLoading');
+        var links       = document.querySelectorAll('#spList .sp-link');
+
+        function loadSection(url, activeLink){
+            /* marquer actif */
+            links.forEach(function(l){ l.classList.remove('active'); });
+            activeLink.classList.add('active');
+            /* afficher spinner, cacher placeholder/iframe */
+            placeholder.style.display = 'none';
+            loading.classList.add('show');
+            iframe.style.display = 'none';
+            /* charger */
+            iframe.src = url;
+        }
+
+        if(iframe){
+            iframe.addEventListener('load', function(){
+                loading.classList.remove('show');
+                if(iframe.src && iframe.src !== window.location.href){
+                    iframe.style.display = 'block';
+                }
+            });
+
+            links.forEach(function(link){
+                link.addEventListener('click', function(e){
+                    e.preventDefault();
+                    var url = this.dataset.url;
+                    if(!url) return;
+                    /* si déjà chargé et actif — ne pas recharger */
+                    if(this.classList.contains('active') && iframe.src === url) return;
+                    loadSection(url, this);
+                });
+            });
+
+            /* Charger la première section au chargement de l'onglet */
+            if(links.length > 0){
+                loadSection(links[0].dataset.url, links[0]);
+            }
+        }
+    }());
 
     /* ── Load data ── */
     function loadData(){
