@@ -641,17 +641,20 @@ body { background: var(--c-bg); }
         var placeholder = document.getElementById('spPlaceholder');
         var loading     = document.getElementById('spLoading');
         var links       = document.querySelectorAll('#spList .sp-link');
+        var SP_KEY      = 'spSection_' + ID;   /* clé localStorage par acheteur */
 
-        function loadSection(url, activeLink){
-            /* marquer actif */
+        function loadSection(url, activeLink, save){
             links.forEach(function(l){ l.classList.remove('active'); });
             activeLink.classList.add('active');
-            /* afficher spinner, cacher placeholder/iframe */
             placeholder.style.display = 'none';
             loading.classList.add('show');
             iframe.style.display = 'none';
-            /* charger */
             iframe.src = url;
+            if(save !== false){
+                try { localStorage.setItem(SP_KEY, url); } catch(e){}
+            }
+            /* scroll gauche vers l'item actif */
+            activeLink.scrollIntoView({ block:'nearest' });
         }
 
         if(iframe){
@@ -667,15 +670,23 @@ body { background: var(--c-bg); }
                     e.preventDefault();
                     var url = this.dataset.url;
                     if(!url) return;
-                    /* si déjà chargé et actif — ne pas recharger */
                     if(this.classList.contains('active') && iframe.src === url) return;
                     loadSection(url, this);
                 });
             });
 
-            /* Charger la première section au chargement de l'onglet */
-            if(links.length > 0){
-                loadSection(links[0].dataset.url, links[0]);
+            /* Restaurer la section active depuis localStorage, sinon charger la première */
+            var savedUrl = '';
+            try { savedUrl = localStorage.getItem(SP_KEY) || ''; } catch(e){}
+
+            var initialLink = links[0];
+            if(savedUrl){
+                links.forEach(function(l){
+                    if(l.dataset.url === savedUrl){ initialLink = l; }
+                });
+            }
+            if(initialLink){
+                loadSection(initialLink.dataset.url, initialLink, false);
             }
         }
     }());
