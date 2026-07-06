@@ -282,6 +282,28 @@ class VilleAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('pays')
 
+@admin.register(Region)
+class RegionAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Régions — liées à un pays."""
+    list_display = ['code', 'nom', 'pays', 'is_active', 'deleted']
+    list_display_links = ['code', 'nom']
+    list_filter = ['is_active', 'pays'] + list(SafeDeleteAdmin.list_filter)
+    search_fields = ['nom', 'code', 'pays__nom']
+    list_select_related = ['pays']
+    list_editable = ['is_active']
+    autocomplete_fields = ['pays']
+    ordering = ['pays__nom', 'nom']
+
+    fieldsets = (
+        (_('Informations'), {
+            'fields': ('code', 'nom', 'pays', 'is_active')
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('pays')
+
+
 @admin.register(Annee)
 class AnneeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     """Configuration admin: AnneeAdmin."""
