@@ -486,33 +486,33 @@
          <!-- Identification -->
          <div class="section">
             <div class="section-title">{% trans "IDENTIFICATION" %}</div>
-            {% if identification.client_info %}
-            <div class="subsection-title">{% trans "INFORMATIONS CLIENT" %}</div>
             <table>
+               {% if identification.client_info %}
                <tr>
-                  <th>{% trans "Nom de l'acheteur" %}</th>
+                  <th>{% trans "Nom de l'acheteur" %} (Client)</th>
                   <td>{{ identification.client_info.nom }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Adresse" %}</th>
+                  <th>{% trans "Adresse" %} (Client)</th>
                   <td>{{ identification.client_info.numero_adresse }} {{ identification.client_info.rue_adresse }} {{ identification.client_info.code_postale_adresse }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Ville" %}</th>
+                  <th>{% trans "Ville" %} (Client)</th>
                   <td>{{ identification.client_info.ville }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Pays" %}</th>
+                  <th>{% trans "Pays" %} (Client)</th>
                   <td>{{ identification.client_info.pays }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Téléphone / Email" %}</th>
-                  <td>{{ identification.client_info.telephone }} / {{ identification.client_info.email }}</td>
+                  <th>{% trans "Téléphone" %} (Client)</th>
+                  <td>{{ identification.client_info.telephone }}</td>
                </tr>
-            </table>
-            {% endif %}
-            <div class="subsection-title">{% trans "INFORMATIONS ACREMAC" %}</div>
-            <table>
+               <tr>
+                  <th>{% trans "Email" %} (Client)</th>
+                  <td>{{ identification.client_info.email }}</td>
+               </tr>
+               {% endif %}
                <tr>
                   <th>{% trans "Nom de l'acheteur" %}</th>
                   <td>{{ identification.acremac_info.nom }}</td>
@@ -537,28 +537,25 @@
                   <th>{% trans "Email" %}</th>
                   <td>{{ identification.acremac_info.email }}</td>
                </tr>
+               {% for tel in identification.acremac_info.telephones %}
+               <tr>
+                  <th>{% trans "Téléphone" %} {{ forloop.counter }}{% if tel.nom %} — {{ tel.nom }}{% endif %}</th>
+                  <td>{{ tel.telephone }}</td>
+               </tr>
+               {% empty %}
                <tr>
                   <th>{% trans "Téléphone" %}</th>
-                  <td>{{ identification.acremac_info.telephone }}</td>
+                  <td>{% trans "Non spécifié" %}</td>
                </tr>
+               {% endfor %}
+               {% for port in identification.acremac_info.portables %}
                <tr>
-                  <th>{% trans "Téléphones supplémentaires" %}</th>
-                  <td>{% if identification.acremac_info.telephones %}{{ identification.acremac_info.telephones|join:", " }}{% endif %}</td>
+                  <th>{% trans "Mobile" %} {{ forloop.counter }}{% if port.nom %} — {{ port.nom }}{% endif %}</th>
+                  <td>{{ port.portable }}</td>
                </tr>
+               {% endfor %}
                <tr>
-                  <th>{% trans "Portables" %}</th>
-                  <td>{% if identification.acremac_info.portables %}{{ identification.acremac_info.portables|join:", " }}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Emails secondaires" %}</th>
-                  <td>{% if identification.acremac_info.emails_secondaires %}{{ identification.acremac_info.emails_secondaires|join:", " }}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Adresses supplémentaires" %}</th>
-                  <td>{% if identification.acremac_info.adresses_secondaires %}{{ identification.acremac_info.adresses_secondaires|join:" | " }}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Fax / Email" %}</th>
+                  <th>{% trans "Fax" %}</th>
                   <td>{{ identification.acremac_info.fax }}</td>
                </tr>
             </table>

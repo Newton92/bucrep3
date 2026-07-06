@@ -415,33 +415,33 @@
          <!-- Identification -->
          <div class="section">
             <div class="section-title">{% trans "IDENTIFICATION" %}</div>
-            {% if report_data.identification.client_info %}
-            <div class="subsection-title">{% trans "INFORMATIONS CLIENT" %}</div>
             <table>
+               {% if report_data.identification.client_info %}
                <tr>
-                  <th>{% trans "Nom de l'acheteur" %}</th>
+                  <th>{% trans "Nom de l'acheteur" %} (Client)</th>
                   <td>{{ report_data.identification.client_info.nom }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Adresse" %}</th>
+                  <th>{% trans "Adresse" %} (Client)</th>
                   <td>{{ report_data.identification.client_info.numero_adresse }} {{ report_data.identification.client_info.rue_adresse }} {{ report_data.identification.client_info.code_postale_adresse }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Ville" %}</th>
+                  <th>{% trans "Ville" %} (Client)</th>
                   <td>{{ report_data.identification.client_info.ville }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Pays" %}</th>
+                  <th>{% trans "Pays" %} (Client)</th>
                   <td>{{ report_data.identification.client_info.pays }}</td>
                </tr>
                <tr>
-                  <th>{% trans "Téléphone / Email" %}</th>
-                  <td>{{ report_data.identification.client_info.telephone }} / {{ report_data.identification.client_info.email }}</td>
+                  <th>{% trans "Téléphone" %} (Client)</th>
+                  <td>{{ report_data.identification.client_info.telephone }}</td>
                </tr>
-            </table>
-            {% endif %}
-            <div class="subsection-title">{% trans "INFORMATIONS ACREMAC" %}</div>
-            <table>
+               <tr>
+                  <th>{% trans "Email" %} (Client)</th>
+                  <td>{{ report_data.identification.client_info.email }}</td>
+               </tr>
+               {% endif %}
                <tr>
                   <th>{% trans "Nom de l'acheteur" %}</th>
                   <td>{{ report_data.identification.acremac_info.nom }}</td>
@@ -462,28 +462,25 @@
                   <th>{% trans "Pays" %}</th>
                   <td>{{ report_data.identification.acremac_info.pays }}</td>
                </tr>
+               {% for tel in report_data.identification.acremac_info.telephones %}
+               <tr>
+                  <th>{% trans "Téléphone" %} {{ forloop.counter }}{% if tel.nom %} — {{ tel.nom }}{% endif %}</th>
+                  <td>{{ tel.telephone }}</td>
+               </tr>
+               {% empty %}
                <tr>
                   <th>{% trans "Téléphone" %}</th>
-                  <td>{{ report_data.identification.acremac_info.telephone }}</td>
+                  <td>{% trans "Non spécifié" %}</td>
                </tr>
+               {% endfor %}
+               {% for port in report_data.identification.acremac_info.portables %}
                <tr>
-                  <th>{% trans "Téléphones supplémentaires" %}</th>
-                  <td>{% if report_data.identification.acremac_info.telephones %}{{ report_data.identification.acremac_info.telephones|join:", " }}{% else %}{% endif %}</td>
+                  <th>{% trans "Mobile" %} {{ forloop.counter }}{% if port.nom %} — {{ port.nom }}{% endif %}</th>
+                  <td>{{ port.portable }}</td>
                </tr>
+               {% endfor %}
                <tr>
-                  <th>{% trans "Portables" %}</th>
-                  <td>{% if report_data.identification.acremac_info.portables %}{{ report_data.identification.acremac_info.portables|join:", " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Emails secondaires" %}</th>
-                  <td>{% if report_data.identification.acremac_info.emails_secondaires %}{{ report_data.identification.acremac_info.emails_secondaires|join:", " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Adresses supplémentaires" %}</th>
-                  <td>{% if report_data.identification.acremac_info.adresses_secondaires %}{{ report_data.identification.acremac_info.adresses_secondaires|join:" | " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Fax / Email" %}</th>
+                  <th>{% trans "Fax" %} / {% trans "Email" %}</th>
                   <td>{{ report_data.identification.acremac_info.fax }} / {{ report_data.identification.acremac_info.email }}</td>
                </tr>
             </table>

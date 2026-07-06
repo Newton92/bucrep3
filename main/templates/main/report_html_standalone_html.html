@@ -390,33 +390,33 @@
          <!-- Identification -->
          <div class="section">
             <div class="section-title">IDENTIFICATION</div>
-            {% if identification.client_info %}
-            <div class="subsection-title">INFORMATIONS CLIENT</div>
             <table>
+               {% if identification.client_info %}
                <tr>
-                  <th>Nom de l'acheteur</th>
+                  <th>Nom de l'acheteur (Client)</th>
                   <td>{{ identification.client_info.nom }}</td>
                </tr>
                <tr>
-                  <th>Adresse</th>
+                  <th>Adresse (Client)</th>
                   <td>{{ identification.client_info.numero_adresse }} {{ identification.client_info.rue_adresse }} {{ identification.client_info.code_postale_adresse }}</td>
                </tr>
                <tr>
-                  <th>Ville</th>
+                  <th>Ville (Client)</th>
                   <td>{{ identification.client_info.ville }}</td>
                </tr>
                <tr>
-                  <th>Pays</th>
+                  <th>Pays (Client)</th>
                   <td>{{ identification.client_info.pays }}</td>
                </tr>
                <tr>
-                  <th>Téléphone / Email</th>
-                  <td>{{ identification.client_info.telephone }} / {{ identification.client_info.email }}</td>
+                  <th>Téléphone (Client)</th>
+                  <td>{{ identification.client_info.telephone }}</td>
                </tr>
-            </table>
-            {% endif %}
-            <div class="subsection-title">INFORMATIONS ACREMAC</div>
-            <table>
+               <tr>
+                  <th>Email (Client)</th>
+                  <td>{{ identification.client_info.email }}</td>
+               </tr>
+               {% endif %}
                <tr>
                   <th>Nom de l'acheteur</th>
                   <td>{{ identification.acremac_info.nom }}</td>
@@ -441,28 +441,25 @@
                   <th>Email</th>
                   <td>{{ identification.acremac_info.email }}</td>
                </tr>
+               {% for tel in identification.acremac_info.telephones %}
+               <tr>
+                  <th>Téléphone {{ forloop.counter }}{% if tel.nom %} — {{ tel.nom }}{% endif %}</th>
+                  <td>{{ tel.telephone }}</td>
+               </tr>
+               {% empty %}
                <tr>
                   <th>Téléphone</th>
-                  <td>{{ identification.acremac_info.telephone }}</td>
+                  <td>Non spécifié</td>
                </tr>
+               {% endfor %}
+               {% for port in identification.acremac_info.portables %}
                <tr>
-                  <th>Téléphones supplémentaires</th>
-                  <td>{% if identification.acremac_info.telephones %}{{ identification.acremac_info.telephones|join:", " }}{% else %}{% endif %}</td>
+                  <th>Mobile {{ forloop.counter }}{% if port.nom %} — {{ port.nom }}{% endif %}</th>
+                  <td>{{ port.portable }}</td>
                </tr>
+               {% endfor %}
                <tr>
-                  <th>Portables</th>
-                  <td>{% if identification.acremac_info.portables %}{{ identification.acremac_info.portables|join:", " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>Emails secondaires</th>
-                  <td>{% if identification.acremac_info.emails_secondaires %}{{ identification.acremac_info.emails_secondaires|join:", " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>Adresses supplémentaires</th>
-                  <td>{% if identification.acremac_info.adresses_secondaires %}{{ identification.acremac_info.adresses_secondaires|join:" | " }}{% else %}{% endif %}</td>
-               </tr>
-               <tr>
-                  <th>Fax / Email</th>
+                  <th>Fax</th>
                   <td>{{ identification.acremac_info.fax }}</td>
                </tr>
             </table>

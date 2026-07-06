@@ -856,14 +856,14 @@ def generer_rapport_solvabilite(request):
             TelephoneAcheteur.objects.filter(acheteur=acheteur)
             .exclude(telephone__isnull=True)
             .exclude(telephone__exact="")
-            .values_list("telephone", flat=True)
+            .values("telephone", "nom")
             .distinct()
         )
         portables_acheteur = list(
             PortableAcheteur.objects.filter(acheteur=acheteur)
             .exclude(portable__isnull=True)
             .exclude(portable__exact="")
-            .values_list("portable", flat=True)
+            .values("portable", "nom")
             .distinct()
         )
         emails_acheteur = list(
@@ -1737,7 +1737,7 @@ def generer_rapport_solvabilite(request):
                     "pays": _safe_nested_attr(acheteur, ["pays", "nom"]),
                     "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "",
-                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else ""),
+                    "telephone": telephones_acheteur[0]["telephone"] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else ""),
                     "telephones": telephones_acheteur,
                     "portables": portables_acheteur,
                     "emails_secondaires": emails_acheteur,
