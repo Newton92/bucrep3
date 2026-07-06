@@ -385,6 +385,16 @@ class ListProvincesByCountryView(APIView):
         return Response({"results": serializer.data})
 
 
+class ListRegionsByCountryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        country_id = self.kwargs.get("country_id")
+        regions = Region.objects.filter(pays_id=country_id, is_active=True).order_by("nom")
+        data = [{"id": r.id, "nom": r.nom, "code": r.code} for r in regions]
+        return Response({"results": data})
+
+
 class AddProvinceView(APIView):
     permission_classes = [IsAuthenticated]
 

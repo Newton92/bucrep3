@@ -266,6 +266,15 @@ class VilleSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "date_creation", "date_modification"]
 
 
+class RegionSerializer(serializers.ModelSerializer):
+    pays = PaysSerializer(read_only=True)
+
+    class Meta:
+        model = Region
+        fields = ["id", "nom", "code", "pays", "is_active"]
+        read_only_fields = ["id"]
+
+
 class VilleProvinceSerializer(serializers.ModelSerializer):
     province = (
         ProvinceSerializer()
@@ -1315,7 +1324,7 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
             "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email",
             "site_internet", "numero_adresse", "rue_adresse",
-            "ville", "province", "pays", "couleur_commentaire",
+            "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire", "code", "created_by"
         ]
         read_only_fields = ["created_at", "updated_at", "code"]
@@ -1609,7 +1618,7 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
             "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email",
             "site_internet", "numero_adresse", "rue_adresse",
-            "ville", "province", "pays", "couleur_commentaire",
+            "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire"
         ]
 
@@ -1617,13 +1626,13 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
         """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
         if not value or value == "":
             return ""
-            
+
         # Importer la liste
         from main.constantes import LISTE_NOUVEAUX_CODE_NACE
-        
+
         # Convertir en string pour la comparaison
         value_str = str(value).strip()
-        
+
         print(f"=== VALIDATION code_nace ===")
         print(f"Valeur à valider: '{value_str}'")
         
@@ -1765,6 +1774,7 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
     pays = PaysSerializer(read_only=True)
     province = ProvinceSerializer(read_only=True)
     ville = VilleSerializer(read_only=True)
+    region = RegionSerializer(read_only=True)
     couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
     
     site_internet_formatted = serializers.SerializerMethodField()
@@ -1781,7 +1791,7 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
             "sigle", "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email", "site_internet",
             "site_internet_formatted", "numero_adresse", "rue_adresse",
-            "ville", "province", "pays", "couleur_commentaire",
+            "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire", "created_at", "updated_at"
         ]
         read_only_fields = fields

@@ -213,7 +213,7 @@ body { background:#f0f4f8; }
                         </select>
                         <div class="invalid-feedback">{% trans "Pays requis" %}</div>
                     </div>
-                    <div class="col-md-7">
+                    <div class="col-md-4">
                         <label class="form-label required-field">{% trans "Ville" %}</label>
                         <div class="position-relative">
                             <select class="form-select select2" id="ville" name="ville" disabled required>
@@ -224,6 +224,17 @@ body { background:#f0f4f8; }
                             </div>
                         </div>
                         <div class="invalid-feedback">{% trans "Ville requise" %}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">{% trans "Région" %}</label>
+                        <div class="position-relative">
+                            <select class="form-select select2" id="region" name="region" disabled>
+                                <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
+                            </select>
+                            <div id="regionSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">{% trans "N°" %}</label>
@@ -391,7 +402,43 @@ $(document).ready(function () {
         });
     }
 
-    $('#pays').on('change', function(){ loadVillesParPays($(this).val(), null); });
+    // ── Régions ──
+    function loadRegionsParPays(paysId, selectedRegionId) {
+        if (!paysId) {
+            $('#region').prop('disabled',true).empty().append('<option value="">{% trans "Sélectionnez d\'abord un pays" %}</option>').trigger('change.select2');
+            return;
+        }
+        $('#regionSpinner').show();
+        $('#region').prop('disabled',true).empty().append('<option value="">'+i18n.loading+'</option>').trigger('change.select2');
+        $.ajax({
+            url:'/api/regions/'+paysId+'/', type:'GET', headers:getHeaders(),
+            success:function(response){
+                $('#region').empty().append('<option value="">{% trans "Aucune région sélectionnée" %}</option>');
+                var regions = response.results || [];
+                if (regions.length) {
+                    regions.forEach(function(r){
+                        $('#region').append(new Option(r.nom, r.id, false, String(r.id)===String(selectedRegionId)));
+                    });
+                    $('#region').prop('disabled',false);
+                    if (selectedRegionId) $('#region').trigger('change.select2');
+                } else {
+                    $('#region').append('<option value="" disabled>{% trans "Aucune région disponible" %}</option>');
+                    $('#region').prop('disabled',false);
+                }
+                $('#region').trigger('change.select2');
+            },
+            error:function(){
+                $('#region').empty().append('<option value="">{% trans "Erreur de chargement" %}</option>').prop('disabled',false);
+            },
+            complete:function(){ $('#regionSpinner').hide(); }
+        });
+    }
+
+    $('#pays').on('change', function(){
+        var paysId = $(this).val();
+        loadVillesParPays(paysId, null);
+        loadRegionsParPays(paysId, null);
+    });
 
     // ── Carte ──
     function initMap(lat, lng) {
@@ -488,6 +535,7 @@ $(document).ready(function () {
         if (a.pays && a.pays.id) {
             $('#pays').val(a.pays.id).trigger('change.select2');
             loadVillesParPays(a.pays.id, a.ville ? a.ville.id : null);
+            loadRegionsParPays(a.pays.id, a.region ? a.region.id : null);
         }
         if (commentaireQuill) commentaireQuill.root.innerHTML = a.commentaire || '';
         if (a.latitude)  $('#latitude').val(a.latitude);

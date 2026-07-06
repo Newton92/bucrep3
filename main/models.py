@@ -461,6 +461,46 @@ class Province(Model):
         return f"{self.nom} ({self.code})"
 
 
+class Region(Model):
+    """Modele metier: Region."""
+
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    nom = models.CharField(
+        max_length=100,
+        verbose_name=_("Nom de la région"),
+        help_text=_("Nom complet de la région, par exemple 'N'Djamena' ou 'Adamaoua'."),
+    )
+    code = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("Code de la région"),
+    )
+    pays = models.ForeignKey(
+        "Pays",
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Pays"),
+        help_text=_("Pays auquel appartient la région."),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Actif"),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Région")
+        verbose_name_plural = _("Régions")
+        ordering = ["nom"]
+        unique_together = ("nom", "pays")
+
+    def __str__(self):
+        return self.nom
+
+
 class Ville(Model):
     """Modele metier: Ville."""
     
@@ -1881,6 +1921,15 @@ class Acheteur(Model):
         null=True,
         verbose_name=_("Ville"),
         help_text=_("Ville où l'entreprise est située"),
+    )
+
+    region = models.ForeignKey(
+        "Region",
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
+        verbose_name=_("Région"),
+        help_text=_("Région où l'entreprise est située"),
     )
 
     couleur_commentaire = models.ForeignKey(

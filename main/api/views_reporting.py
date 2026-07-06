@@ -1736,6 +1736,7 @@ def generer_rapport_solvabilite(request):
                     "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
                     "pays": _safe_nested_attr(acheteur, ["pays", "nom"]),
                     "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
+                    "region": _safe_nested_attr(acheteur, ["region", "nom"]),
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "",
                     "telephone": telephones_acheteur[0]["telephone"] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else ""),
                     "telephones": telephones_acheteur,

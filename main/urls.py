@@ -1142,6 +1142,11 @@ urlpatterns = [
         ListProvincesByCountryView.as_view(),
         name="list-provinces-pays",
     ),
+    path(
+        "api/regions/<int:country_id>/",
+        ListRegionsByCountryView.as_view(),
+        name="list-regions-pays",
+    ),
     path("api/ajouter-une-province/", AddProvinceView.as_view(), name="add_province"),
     path(
         "api/editer-une-province/<int:id>/",

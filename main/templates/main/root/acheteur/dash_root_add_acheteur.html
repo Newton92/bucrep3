@@ -828,7 +828,7 @@
                         <div class="row g-3">
 
                             <!-- Ville (OBLIGATOIRE) -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="ville" class="form-label required-field">
                                     <i class="bi bi-building me-1"></i>{% trans "Ville" %}
                                 </label>
@@ -836,6 +836,21 @@
                                     <option value="">{% trans "Chargement des villes..." %}</option>
                                 </select>
                                 <div class="invalid-feedback">{% trans "Veuillez sélectionner une ville" %}</div>
+                            </div>
+
+                            <!-- Région (OPTIONNELLE) -->
+                            <div class="col-md-4">
+                                <label for="region" class="form-label">
+                                    <i class="bi bi-map me-1"></i>{% trans "Région" %}
+                                </label>
+                                <div class="position-relative">
+                                    <select class="form-select select2" id="region" name="region" disabled>
+                                        <option value="">{% trans "Chargement des régions..." %}</option>
+                                    </select>
+                                    <div id="regionSpinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display:none;">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Rue -->
@@ -1457,6 +1472,38 @@ $(document).ready(function() {
                 $ville.empty().append('<option value="">' + i18n.loadError + '</option>').prop('disabled', false);
             }
         });
+    }
+
+    // ========== CHARGEMENT RÉGIONS PAR PAYS ==========
+    function loadRegionsParPays(paysId, selectedRegionId) {
+        const $region = $('#region');
+        $region.prop('disabled', true).empty().append('<option value="">{% trans "Chargement..." %}</option>');
+        $('#regionSpinner').show();
+        $.ajax({
+            url: '/api/regions/' + paysId + '/',
+            type: 'GET',
+            headers: getHeaders(),
+            success: function(response) {
+                $region.empty().append('<option value="">{% trans "Aucune région sélectionnée" %}</option>');
+                const regions = response.results || [];
+                if (regions.length > 0) {
+                    regions.forEach(function(r) {
+                        $region.append(new Option(r.nom, r.id, false, String(r.id) === String(selectedRegionId)));
+                    });
+                } else {
+                    $region.append('<option value="" disabled>{% trans "Aucune région disponible" %}</option>');
+                }
+                $region.prop('disabled', false).trigger('change');
+            },
+            error: function() {
+                $region.empty().append('<option value="">{% trans "Erreur de chargement" %}</option>').prop('disabled', false);
+            },
+            complete: function() { $('#regionSpinner').hide(); }
+        });
+    }
+
+    if (SELECTED_PAYS_ID) {
+        loadRegionsParPays(SELECTED_PAYS_ID, null);
     }
 
     // ========== CARTE INTERACTIVE (Leaflet + OpenStreetMap) ==========
