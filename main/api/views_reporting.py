@@ -870,7 +870,7 @@ def generer_rapport_solvabilite(request):
             EmailAcheteur.objects.filter(acheteur=acheteur)
             .exclude(email__isnull=True)
             .exclude(email__exact="")
-            .values_list("email", flat=True)
+            .values("email", "description")
             .distinct()
         )
         adresses_acheteur = list(
