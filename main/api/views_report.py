@@ -2631,14 +2631,14 @@ class GenerateReport(APIView):
             TelephoneAcheteur.objects.filter(acheteur=acheteur)
             .exclude(telephone__isnull=True)
             .exclude(telephone__exact="")
-            .values_list("telephone", flat=True)
+            .values("telephone", "nom")
             .distinct()
         )
         portables_acheteur = list(
             PortableAcheteur.objects.filter(acheteur=acheteur)
             .exclude(portable__isnull=True)
             .exclude(portable__exact="")
-            .values_list("portable", flat=True)
+            .values("portable", "nom")
             .distinct()
         )
         emails_acheteur = list(
@@ -2707,7 +2707,7 @@ class GenerateReport(APIView):
                     "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
-                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "telephone": telephones_acheteur[0]["telephone"] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
                     "telephones": telephones_acheteur,
                     "portables": portables_acheteur,
                     "emails_secondaires": emails_acheteur,
@@ -4024,14 +4024,14 @@ class GenerateReportCommandeAcheteur(APIView):
             TelephoneAcheteur.objects.filter(acheteur=acheteur)
             .exclude(telephone__isnull=True)
             .exclude(telephone__exact="")
-            .values_list("telephone", flat=True)
+            .values("telephone", "nom")
             .distinct()
         )
         portables_acheteur = list(
             PortableAcheteur.objects.filter(acheteur=acheteur)
             .exclude(portable__isnull=True)
             .exclude(portable__exact="")
-            .values_list("portable", flat=True)
+            .values("portable", "nom")
             .distinct()
         )
         emails_acheteur = list(
@@ -4100,7 +4100,7 @@ class GenerateReportCommandeAcheteur(APIView):
                     "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
-                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "telephone": telephones_acheteur[0]["telephone"] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
                     "telephones": telephones_acheteur,
                     "portables": portables_acheteur,
                     "emails_secondaires": emails_acheteur,
