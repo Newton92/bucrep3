@@ -119,6 +119,34 @@
          .info-table th {
          width: 35%;
          }
+         .info-table-4col th {
+         width: 20%;
+         background-color: #e6f7ff;
+         font-weight: bold;
+         text-align: left;
+         }
+         .info-table-4col td {
+         width: 30%;
+         }
+         .codes-section-title {
+         font-weight: bold;
+         font-size: 9pt;
+         color: #ffffff;
+         padding: 5px 10px;
+         margin-top: 10px;
+         margin-bottom: 4px;
+         border-radius: 3px;
+         }
+         .codes-inner-table {
+         width: 100%;
+         border-collapse: collapse;
+         font-size: 8.5pt;
+         margin-bottom: 6px;
+         }
+         .codes-inner-table td {
+         padding: 3px 8px;
+         border: 1px solid #c8ddf0;
+         }
          .financial-table {
          font-size: 9pt;
          }
@@ -474,51 +502,62 @@
          </div>
          <!-- Informations supplémentaires ACREMAC -->
          <div class="section">
-            <div class="subsection-title">INFORMATIONS SUPPLÉMENTAIRES ACREMAC</div>
-            <table>
+            <div class="subsection-title">{% trans "INFORMATIONS SUPPLÉMENTAIRES ACREMAC" %}</div>
+
+            <table class="info-table-4col">
+               <colgroup>
+                  <col style="width: 20%;">
+                  <col style="width: 30%;">
+                  <col style="width: 20%;">
+                  <col style="width: 30%;">
+               </colgroup>
                <tr>
-                  <th>Boîte postale</th>
+                  <th>{% trans "Boîte postale" %}</th>
                   <td>{{ additional_information.boite_postale }}</td>
-               </tr>
-               <tr>
-                  <th>Site web</th>
+                  <th>{% trans "Site web" %}</th>
                   <td>{{ additional_information.site_internet }}</td>
                </tr>
                <tr>
-                  <th>Statut</th>
+                  <th>{% trans "Statut" %}</th>
                   <td>{{ additional_information.statut_entreprise }}</td>
-               </tr>
-               <tr>
-                  <th>Catégorie</th>
-                  <td>{{ additional_information.categorie_entreprise }}</td>
-               </tr>
-               <tr>
                   <th>{% trans "Forme juridique" %}</th>
                   <td>{{ additional_information.forme_juridique }}</td>
                </tr>
                <tr>
-                  <th>Activités principales</th>
-                  <td>
-                     {{ additional_information.activite_principale }}
-                  </td>
+                  <th>{% trans "Catégorie" %}</th>
+                  <td>{{ additional_information.categorie_entreprise }}</td>
+                  <th>{% trans "Activité principale" %}</th>
+                  <td>{{ additional_information.activite_principale }}</td>
                </tr>
+               {% if additional_information.commentaire %}
                <tr>
-                  <th>{% trans "Code(s) NACE" %}</th>
-                  <td>
-                     {% if additional_information.nace_specifique %}{{ additional_information.nace_specifique }}{% else %}{{ additional_information.nace_codes }}{% endif %}
-                  </td>
-               </tr>
-               <tr>
-                  <th>Code(s) NAF</th>
-                  <td>{{ additional_information.naf_codes }}</td>
-               </tr>
-               <tr>
-                  <th>Commentaire</th>
-                  <td style="color: {{ additional_information.couleur_commentaire_code }}; font-weight: bold;">
+                  <th>{% trans "Commentaire" %}</th>
+                  <td colspan="3" style="{% if additional_information.couleur_commentaire_code %}color: {{ additional_information.couleur_commentaire_code }};{% endif %} font-weight: bold;">
                      {{ additional_information.commentaire|striptags|safe }}
                   </td>
                </tr>
+               {% endif %}
             </table>
+
+            {% with nace=additional_information.nace_specifique|default:additional_information.nace_codes %}
+            {% if nace %}
+            <div class="codes-section-title" style="background-color: #003366;">{% trans "Codes NACE" %}</div>
+            <table class="codes-inner-table">
+               <tr style="background-color: #eaf2fb;">
+                  <td style="color: #003366; font-weight: bold;">{{ nace }}</td>
+               </tr>
+            </table>
+            {% endif %}
+            {% endwith %}
+
+            {% if additional_information.naf_codes %}
+            <div class="codes-section-title" style="background-color: #0d6b9e;">{% trans "Codes NAF" %}</div>
+            <table class="codes-inner-table">
+               <tr style="background-color: #e8f4fb;">
+                  <td style="color: #0d6b9e; font-weight: bold;">{{ additional_information.naf_codes }}</td>
+               </tr>
+            </table>
+            {% endif %}
          </div>
          <!-- Résumé exécutif -->
          <div class="section">
