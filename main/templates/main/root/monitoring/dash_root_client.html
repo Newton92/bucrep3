@@ -804,31 +804,34 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '{% trans "Client créé !" %}',
-                        html: `
-                            <div class="text-center">
-                                <i class="bi bi-person-check-fill text-success fs-1 mb-3"></i>
-                                <p class="fs-5 fw-semibold">${$('<span>').text(response.user.username).html()}</p>
-                                <div class="alert alert-info text-start">
-                                    <strong>{% trans "Mot de passe" %} :</strong>
-                                    <code>${response.generated_password || ''}</code>
+                    // Fermer le modal Bootstrap EN PREMIER pour éviter le conflit de backdrop avec Swal
+                    $('#addClientModal').modal('hide');
+                    loadClients(currentPage, currentSearch);
+                    loadStats();
+                    // Afficher Swal après que le modal est fermé
+                    $('#addClientModal').one('hidden.bs.modal', function () {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '{% trans "Client créé !" %}',
+                            html: `
+                                <div class="text-center">
+                                    <i class="bi bi-person-check-fill text-success fs-1 mb-3"></i>
+                                    <p class="fs-5 fw-semibold">${$('<span>').text(response.user.username).html()}</p>
+                                    <div class="alert alert-info text-start">
+                                        <strong>{% trans "Mot de passe" %} :</strong>
+                                        <code>${response.generated_password || ''}</code>
+                                    </div>
+                                    <div class="alert ${response.email_sent ? 'alert-success' : 'alert-warning'} text-start">
+                                        <i class="bi ${response.email_sent ? 'bi-envelope-check' : 'bi-envelope-exclamation'} me-1"></i>
+                                        ${response.email_sent
+                                            ? '{% trans "Les identifiants ont été envoyés par email au client." %}'
+                                            : '{% trans "Email non envoyé — vérifiez la configuration mail." %}'}
+                                    </div>
                                 </div>
-                                <div class="alert ${response.email_sent ? 'alert-success' : 'alert-warning'} text-start">
-                                    <i class="bi ${response.email_sent ? 'bi-envelope-check' : 'bi-envelope-exclamation'} me-1"></i>
-                                    ${response.email_sent
-                                        ? '{% trans "Les identifiants ont été envoyés par email au client." %}'
-                                        : '{% trans "Email non envoyé — vérifiez la configuration mail." %}'}
-                                </div>
-                            </div>
-                        `,
-                        confirmButtonText: '{% trans "Fermer" %}',
-                        confirmButtonColor: '#28a745'
-                    }).then(() => {
-                        $('#addClientModal').modal('hide');
-                        loadClients(currentPage, currentSearch);
-                        loadStats();
+                            `,
+                            confirmButtonText: '{% trans "Fermer" %}',
+                            confirmButtonColor: '#28a745'
+                        });
                     });
                 } else {
                     Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}', html: response.message || '{% trans "Erreur lors de la création" %}' });

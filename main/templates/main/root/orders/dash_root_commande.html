@@ -3,317 +3,191 @@
 
 {% block styles %}
 <style>
-:root {
-    --cmd-primary:    #0d80be;
-    --cmd-primary-dk: #0a6ca0;
-    --cmd-gradient:   linear-gradient(135deg, #0d80be 0%, #106cb2 100%);
-    --cmd-success:    #28a745;
-    --cmd-warning:    #e67e22;
-    --cmd-danger:     #dc3545;
-    --cmd-purple:     #6f42c1;
-    --cmd-dark:       #2c3e50;
-    --cmd-radius:     14px;
-    --cmd-shadow:     0 4px 18px rgba(13,110,178,.09);
-    --cmd-shadow-h:   0 8px 28px rgba(13,110,178,.17);
-    --cmd-border:     #e9ecef;
+/* ── Status badges ── */
+.sbadge {
+    display: inline-flex;
+    align-items: center;
+    gap: .28rem;
+    padding: .28rem .72rem;
+    border-radius: 20px;
+    font-size: .74rem;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.4;
 }
+.sbadge-nouvelle        { background: #e3f0fd; color: #1565c0; }
+.sbadge-en_cours        { background: #fff3e0; color: #e65100; }
+.sbadge-rapport_soumis  { background: #e1f5fe; color: #0277bd; }
+.sbadge-rapport_valide  { background: #e8f5e9; color: #2e7d32; }
+.sbadge-envoye_client   { background: #ede7f6; color: #6a1b9a; }
+.sbadge-terminee        { background: #eceff1; color: #37474f; }
+.sbadge-annulee         { background: #fce4ec; color: #b71c1c; }
 
-/* ── HEADER ── */
-.cmd-header {
-    background: var(--cmd-gradient);
-    border-radius: var(--cmd-radius);
-    padding: 1.35rem 1.75rem;
-    margin-bottom: 1.5rem;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(13,110,178,.22);
-    color: white;
-}
-.cmd-header::after {
-    content:'';
-    position:absolute; top:-70%; right:-8%;
-    width:280px; height:280px;
-    background:rgba(255,255,255,.06);
-    border-radius:50%;
-    pointer-events:none;
-}
-.cmd-header h3 { font-size:1.5rem; font-weight:700; margin:0; }
-.cmd-header p  { font-size:.87rem; opacity:.88; margin:.2rem 0 0; }
-.btn-new-cmd {
-    background:rgba(255,255,255,.18);
-    border:1.5px solid rgba(255,255,255,.5);
-    color:white;
-    font-weight:600;
-    border-radius:10px;
-    padding:.55rem 1.25rem;
-    font-size:.9rem;
-    transition:all .2s;
-    white-space:nowrap;
-}
-.btn-new-cmd:hover {
-    background:white;
-    color:var(--cmd-primary);
-    border-color:white;
-}
-
-/* ── KPI CARDS ── */
-.kpi-card {
-    background:white;
-    border-radius:var(--cmd-radius);
-    padding:1.1rem 1.2rem;
-    box-shadow:var(--cmd-shadow);
-    display:flex;
-    align-items:center;
-    gap:.9rem;
-    transition:all .25s ease;
-    cursor:pointer;
-    border:1.5px solid transparent;
-    user-select:none;
-}
-.kpi-card:hover { box-shadow:var(--cmd-shadow-h); transform:translateY(-2px); }
-.kpi-card.active-filter { border-color:var(--cmd-primary); box-shadow:0 0 0 3px rgba(13,128,190,.12); }
-.kpi-icon {
-    width:48px; height:48px;
-    border-radius:12px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:1.35rem; flex-shrink:0;
-}
-.kpi-icon.c-blue   { background:rgba(13,128,190,.11);  color:var(--cmd-primary); }
-.kpi-icon.c-green  { background:rgba(40,167,69,.11);   color:var(--cmd-success); }
-.kpi-icon.c-orange { background:rgba(230,126,34,.13);  color:var(--cmd-warning); }
-.kpi-icon.c-purple { background:rgba(111,66,193,.11);  color:var(--cmd-purple); }
-.kpi-label { font-size:.73rem; color:#8392a5; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-.kpi-value { font-size:1.65rem; font-weight:800; color:var(--cmd-dark); line-height:1.1; margin-top:1px; }
-
-/* ── MAIN CARD ── */
-.cmd-card {
-    background:white;
-    border-radius:var(--cmd-radius);
-    box-shadow:var(--cmd-shadow);
-    overflow:hidden;
-}
-.cmd-toolbar {
-    padding:.9rem 1.2rem;
-    border-bottom:1px solid #f0f3f7;
-    display:flex;
-    align-items:center;
-    gap:.7rem;
-    flex-wrap:wrap;
-}
-.cmd-toolbar-title {
-    font-weight:700; font-size:.95rem; color:var(--cmd-dark);
-    margin:0; flex:none;
-}
-.cmd-search {
-    position:relative; flex:1 1 200px; max-width:340px;
-}
-.cmd-search input {
-    padding:.5rem .9rem .5rem 2.3rem;
-    border-radius:10px;
-    border:1.5px solid var(--cmd-border);
-    font-size:.87rem;
-    width:100%;
-    transition:border-color .2s, box-shadow .2s;
-}
-.cmd-search input:focus {
-    outline:none;
-    border-color:var(--cmd-primary);
-    box-shadow:0 0 0 3px rgba(13,128,190,.1);
-}
-.cmd-search .search-ico {
-    position:absolute; left:.75rem; top:50%; transform:translateY(-50%);
-    color:#adb5bd; font-size:.85rem; pointer-events:none;
-}
-.cmd-status-filter {
-    border-radius:10px; border:1.5px solid var(--cmd-border);
-    font-size:.87rem; padding:.47rem .9rem; min-width:170px;
-    transition:border-color .2s, box-shadow .2s;
-}
-.cmd-status-filter:focus {
-    outline:none; border-color:var(--cmd-primary);
-    box-shadow:0 0 0 3px rgba(13,128,190,.1);
-}
-
-/* ── TABLE ── */
-.cmd-table { margin:0; }
+/* ── Table ── */
 .cmd-table thead th {
-    font-size:.72rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.5px; color:#8392a5;
-    background:#f8fafc;
-    border-bottom:2px solid #e9ecef;
-    padding:.75rem 1rem; white-space:nowrap;
-    border-top:none;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #8392a5;
+    background: #f8fafc;
+    border-bottom: 2px solid #e9ecef;
+    padding: .75rem 1rem;
+    white-space: nowrap;
+    border-top: none;
 }
 .cmd-table tbody td {
-    padding:.72rem 1rem;
-    vertical-align:middle;
-    font-size:.87rem;
-    border-bottom:1px solid #f3f5f7;
-    color:#3d4f5d;
+    padding: .7rem 1rem;
+    vertical-align: middle;
+    font-size: .87rem;
+    border-bottom: 1px solid #f3f5f7;
+    color: #3d4f5d;
 }
-.cmd-table tbody tr:last-child td { border-bottom:none; }
-.cmd-table tbody tr:hover { background:#f8fbff; }
+.cmd-table tbody tr:last-child td { border-bottom: none; }
+.cmd-table tbody tr:hover { background: #f8fbff; }
 
 .ref-pill {
-    display:inline-block;
-    background:rgba(13,128,190,.09);
-    color:var(--cmd-primary);
-    font-weight:700; font-size:.8rem;
-    padding:.2rem .65rem;
-    border-radius:20px;
+    display: inline-block;
+    background: rgba(13, 128, 190, .09);
+    color: #0d80be;
+    font-weight: 700;
+    font-size: .8rem;
+    padding: .18rem .65rem;
+    border-radius: 20px;
 }
-.client-name { font-weight:600; color:var(--cmd-dark); font-size:.85rem; }
 
-/* Status badges */
-.sbadge {
-    display:inline-flex; align-items:center; gap:.28rem;
-    padding:.28rem .7rem;
-    border-radius:20px;
-    font-size:.75rem; font-weight:600;
-    white-space:nowrap;
-}
-.sbadge-nouvelle        { background:#e3f0fd; color:#1565c0; }
-.sbadge-en_cours        { background:#fff3e0; color:#e65100; }
-.sbadge-rapport_soumis  { background:#e1f5fe; color:#0277bd; }
-.sbadge-rapport_valide  { background:#e8f5e9; color:#2e7d32; }
-.sbadge-envoye_client   { background:#ede7f6; color:#6a1b9a; }
-.sbadge-terminee        { background:#eceff1; color:#37474f; }
-.sbadge-annulee         { background:#fce4ec; color:#b71c1c; }
-
-/* Action buttons */
+/* ── Action buttons ── */
 .btn-act {
-    width:30px; height:30px; border-radius:8px; border:none;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:.78rem; transition:all .2s; cursor:pointer;
+    width: 30px; height: 30px;
+    border-radius: 8px; border: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .78rem;
+    transition: all .18s;
+    cursor: pointer;
 }
-.btn-act-edit   { background:rgba(40,167,69,.1);   color:#28a745; }
-.btn-act-manage { background:rgba(13,128,190,.1);  color:var(--cmd-primary); }
-.btn-act-delete { background:rgba(220,53,69,.1);   color:#dc3545; }
-.btn-act-edit:hover   { background:#28a745;          color:white; transform:scale(1.1); }
-.btn-act-manage:hover { background:var(--cmd-primary); color:white; transform:scale(1.1); }
-.btn-act-delete:hover { background:#dc3545;          color:white; transform:scale(1.1); }
+.btn-act-edit   { background: rgba(40,167,69,.1);   color: #28a745; }
+.btn-act-manage { background: rgba(13,128,190,.1);  color: #0d80be; }
+.btn-act-delete { background: rgba(220,53,69,.1);   color: #dc3545; }
+.btn-act-edit:hover   { background: #28a745;  color: white; }
+.btn-act-manage:hover { background: #0d80be;  color: white; }
+.btn-act-delete:hover { background: #dc3545;  color: white; }
 
-/* ── EMPTY STATE ── */
-.empty-state { padding:3.5rem 1rem; text-align:center; }
-.empty-state i { font-size:3.2rem; color:#dee2e6; display:block; margin-bottom:.85rem; }
-.empty-state strong { display:block; color:#6c757d; font-size:.95rem; }
-.empty-state small  { color:#adb5bd; font-size:.82rem; }
-
-/* ── FOOTER ── */
-.cmd-footer {
-    padding:.75rem 1.2rem;
-    background:#fafbfc;
-    border-top:1px solid #f0f3f7;
+/* ── Search box ── */
+.cmd-search-wrap .form-control {
+    border-left: none;
+    border-radius: 0 8px 8px 0;
 }
-.page-link { border-radius:8px !important; margin:0 1px; font-size:.82rem; color:var(--cmd-primary); border-color:#e9ecef; }
-.page-item.active .page-link { background:var(--cmd-primary); border-color:var(--cmd-primary); }
-.page-link:focus { box-shadow:0 0 0 3px rgba(13,128,190,.15); }
-
-/* ── MODALS ── */
-.modal-content { border-radius:16px; border:none; overflow:hidden; }
-.modal-header-cmd {
-    background:var(--cmd-gradient);
-    color:white; padding:1rem 1.5rem;
-    border-bottom:none;
+.cmd-search-wrap .input-group-text {
+    border-radius: 8px 0 0 8px;
+    background: #f8fafc;
+    color: #adb5bd;
+    border-color: #dee2e6;
 }
-.modal-header-cmd .btn-close { filter:brightness(0) invert(1); opacity:.8; }
-.modal-header-cmd .modal-title { font-weight:700; font-size:1.05rem; }
-
-.form-section {
-    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
-    color:var(--cmd-primary);
-    border-bottom:2px solid rgba(13,128,190,.12);
-    padding-bottom:.35rem;
-    margin:1.2rem 0 .8rem;
+.cmd-search-wrap .form-control:focus {
+    border-color: #0d80be;
+    box-shadow: none;
 }
-.form-section:first-child { margin-top:.1rem; }
-.form-label { font-size:.82rem; font-weight:600; color:#4a5568; margin-bottom:.3rem; }
+.cmd-status-select {
+    border-radius: 8px;
+    font-size: .87rem;
+    border-color: #dee2e6;
+}
+.cmd-status-select:focus {
+    border-color: #0d80be;
+    box-shadow: 0 0 0 3px rgba(13,128,190,.1);
+}
+
+/* ── Card header toolbar ── */
+.cmd-card-header {
+    padding: .85rem 1.2rem;
+    border-bottom: 1px solid #f0f3f7;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    background: white;
+    border-radius: 12px 12px 0 0;
+}
+
+/* ── Empty state ── */
+.empty-state { padding: 3rem 1rem; text-align: center; }
+.empty-state i { font-size: 3rem; color: #dee2e6; display: block; margin-bottom: .85rem; }
+.empty-state p { color: #6c757d; font-size: .9rem; margin: 0; }
+
+/* ── Modals ── */
+.modal-content { border-radius: 14px; border: none; overflow: hidden; }
+.modal-header {
+    background: linear-gradient(135deg, #0d80be, #106cb2);
+    color: white; border-bottom: none; padding: 1rem 1.5rem;
+}
+.modal-header .btn-close { filter: brightness(0) invert(1); opacity: .8; }
+.modal-header .modal-title { font-weight: 700; font-size: 1rem; }
+
+.form-section-lbl {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: #0d80be;
+    border-bottom: 1.5px solid rgba(13,128,190,.15);
+    padding-bottom: .3rem; margin: 1.1rem 0 .8rem;
+}
+.form-section-lbl:first-of-type { margin-top: 0; }
+.form-label { font-size: .82rem; font-weight: 600; color: #4a5568; margin-bottom: .3rem; }
 .form-control, .form-select {
-    border-radius:9px; border:1.5px solid #e2e8f0;
-    font-size:.87rem; padding:.5rem .85rem;
-    transition:border-color .2s, box-shadow .2s;
+    border-radius: 8px; border: 1.5px solid #e2e8f0;
+    font-size: .87rem; padding: .48rem .85rem;
+    transition: border-color .2s, box-shadow .2s;
 }
 .form-control:focus, .form-select:focus {
-    border-color:var(--cmd-primary);
-    box-shadow:0 0 0 3px rgba(13,128,190,.1);
+    border-color: #0d80be;
+    box-shadow: 0 0 0 3px rgba(13,128,190,.1);
 }
-.btn-submit-cmd {
-    background:var(--cmd-gradient);
-    color:white; border:none;
-    border-radius:10px; font-weight:600;
-    padding:.65rem 2rem;
-    transition:all .2s;
+.btn-modal-submit {
+    background: linear-gradient(135deg, #0d80be, #106cb2);
+    color: white; border: none; border-radius: 9px;
+    font-weight: 600; padding: .6rem 1.75rem;
+    transition: opacity .2s;
 }
-.btn-submit-cmd:hover { opacity:.9; transform:translateY(-1px); }
+.btn-modal-submit:hover { opacity: .88; color: white; }
+
+/* ── Page title ── */
+.page-title-area {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+    margin-bottom: 1.25rem;
+}
+.page-title-area h4 { font-weight: 700; font-size: 1.2rem; color: #2c3e50; margin: 0; }
+.page-title-area p  { color: #8392a5; font-size: .85rem; margin: 0; }
 </style>
 {% endblock %}
 
 {% block body %}
 
-<!-- ══════════════ HEADER ══════════════ -->
-<div class="cmd-header">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-            <h3><i class="bi bi-cart3 me-2"></i>{% trans "Gestion des Commandes" %}</h3>
-            <p>{% trans "Consultation, suivi et traitement de toutes les commandes clients" %}</p>
-        </div>
-        <button class="btn-new-cmd" data-bs-toggle="modal" data-bs-target="#addCommandeModal">
-            <i class="bi bi-plus-lg me-1"></i> {% trans "Nouvelle Commande" %}
-        </button>
+<!-- ── Page title ── -->
+<div class="page-title-area">
+    <div>
+        <h4><i class="bi bi-cart3 text-primary me-2"></i>{% trans "Commandes" %}</h4>
+        <p>{% trans "Consultation, suivi et traitement des commandes clients" %}</p>
     </div>
 </div>
 
-<!-- ══════════════ KPI CARDS ══════════════ -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3">
-        <div class="kpi-card active-filter" id="kpi-all" onclick="applyStatusFilter('')">
-            <div class="kpi-icon c-blue"><i class="bi bi-cart3"></i></div>
-            <div>
-                <div class="kpi-label">{% trans "Total" %}</div>
-                <div class="kpi-value" id="kpiTotal">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-xl-3">
-        <div class="kpi-card" id="kpi-new" onclick="applyStatusFilter('nouvelle')">
-            <div class="kpi-icon c-green"><i class="bi bi-plus-circle"></i></div>
-            <div>
-                <div class="kpi-label">{% trans "Nouvelles" %}</div>
-                <div class="kpi-value" id="kpiNouvelle">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-xl-3">
-        <div class="kpi-card" id="kpi-progress" onclick="applyStatusFilter('en_cours')">
-            <div class="kpi-icon c-orange"><i class="bi bi-hourglass-split"></i></div>
-            <div>
-                <div class="kpi-label">{% trans "En cours" %}</div>
-                <div class="kpi-value" id="kpiEnCours">—</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-xl-3">
-        <div class="kpi-card" id="kpi-done" onclick="applyStatusFilter('terminee')">
-            <div class="kpi-icon c-purple"><i class="bi bi-check2-circle"></i></div>
-            <div>
-                <div class="kpi-label">{% trans "Terminées" %}</div>
-                <div class="kpi-value" id="kpiTerminee">—</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════ TABLE CARD ══════════════ -->
-<div class="cmd-card">
+<!-- ── Main card ── -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
 
     <!-- Toolbar -->
-    <div class="cmd-toolbar">
-        <span class="cmd-toolbar-title"><i class="bi bi-list-ul me-2 text-primary opacity-75"></i>{% trans "Liste des Commandes" %}</span>
-        <div class="cmd-search">
-            <i class="bi bi-search search-ico"></i>
-            <input type="search" id="searchInput" placeholder="{% trans 'Rechercher...' %}">
+    <div class="cmd-card-header">
+        <span class="fw-bold text-dark me-auto" style="font-size:.95rem;">
+            <i class="bi bi-list-ul text-primary me-2"></i>{% trans "Liste des Commandes" %}
+        </span>
+
+        <!-- Search -->
+        <div class="cmd-search-wrap">
+            <div class="input-group" style="width:240px;">
+                <span class="input-group-text"><i class="bi bi-search fs-6"></i></span>
+                <input type="search" class="form-control" id="searchInput" placeholder="{% trans 'Rechercher...' %}">
+            </div>
         </div>
-        <select class="cmd-status-filter" id="statusFilter" onchange="applyStatusFilter(this.value)">
+
+        <!-- Status filter -->
+        <select class="form-select cmd-status-select" id="statusFilter" style="width:175px;" onchange="loadCommandes(1, document.getElementById('searchInput').value, this.value)">
             <option value="">{% trans "Tous les statuts" %}</option>
             <option value="nouvelle">{% trans "Nouvelle" %}</option>
             <option value="en_cours">{% trans "En cours" %}</option>
@@ -323,14 +197,17 @@
             <option value="terminee">{% trans "Terminée" %}</option>
             <option value="annulee">{% trans "Annulée" %}</option>
         </select>
-        <button type="button" onclick="loadCommandes(currentPage, document.getElementById('searchInput').value, currentStatus)" class="btn btn-sm btn-outline-secondary" title="{% trans 'Actualiser' %}" style="border-radius:9px;padding:.45rem .7rem;">
-            <i class="bi bi-arrow-clockwise"></i>
+
+        <!-- Add button -->
+        <button type="button" class="btn btn-primary btn-sm px-3" style="border-radius:8px; white-space:nowrap;"
+                data-bs-toggle="modal" data-bs-target="#addCommandeModal">
+            <i class="bi bi-plus-lg me-1"></i>{% trans "Nouvelle commande" %}
         </button>
     </div>
 
     <!-- Table -->
     <div class="table-responsive" id="commandesList">
-        <table class="table cmd-table">
+        <table class="table cmd-table mb-0">
             <thead>
                 <tr>
                     <th>#</th>
@@ -339,7 +216,7 @@
                     <th>{% trans "Raison Sociale" %}</th>
                     <th>{% trans "Pays" %}</th>
                     <th>{% trans "Statut" %}</th>
-                    <th>{% trans "Date création" %}</th>
+                    <th>{% trans "Date" %}</th>
                     <th style="text-align:center;">{% trans "Actions" %}</th>
                 </tr>
             </thead>
@@ -347,8 +224,9 @@
         </table>
     </div>
 
-    <!-- Footer -->
-    <div class="cmd-footer d-sm-flex justify-content-sm-between align-items-sm-center">
+    <!-- Footer / Pagination -->
+    <div class="d-sm-flex justify-content-sm-between align-items-sm-center px-3 py-2"
+         style="border-top:1px solid #f0f3f7; background:#fafbfc;">
         <p class="mb-sm-0 text-muted small" id="paginationInfo"></p>
         <nav aria-label="navigation">
             <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
@@ -357,31 +235,31 @@
 </div>
 
 
-<!-- ══════════════ MODAL AJOUT ══════════════ -->
+<!-- ══════════════ MODAL — AJOUT ══════════════ -->
 <div class="modal fade" id="addCommandeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header modal-header-cmd">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>{% trans "Nouvelle Commande" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body px-4 py-3">
                 <form id="addCommandeForm">
 
-                    <div class="form-section">{% trans "Identification" %}</div>
+                    <p class="form-section-lbl">{% trans "Identification" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Notre Référence" %}</label>
-                            <input type="text" class="form-control" id="notre_ref" name="notre_ref" placeholder="CMD-2026-001">
+                            <input type="text" class="form-control" id="notre_ref" name="notre_ref">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Référence Client" %}</label>
-                            <input type="text" class="form-control" id="reference_client" name="reference_client" placeholder="REF-CLI-XXX">
+                            <input type="text" class="form-control" id="reference_client" name="reference_client">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Client" %}</label>
                             <select class="form-select" id="client" name="client">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for client in client_list %}
                                     <option value="{{ client.id }}">{{ client.username }}</option>
                                 {% endfor %}
@@ -390,7 +268,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Acheteur" %}</label>
                             <select class="form-select" id="acheteur" name="acheteur">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for acheteur in acheteur_list %}
                                     <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
                                 {% endfor %}
@@ -398,16 +276,16 @@
                         </div>
                         <div class="col-md-12">
                             <label class="form-label">{% trans "Raison Sociale" %}</label>
-                            <input type="text" class="form-control" id="raison_sociale" name="raison_sociale" placeholder="{% trans 'Nom de la société' %}">
+                            <input type="text" class="form-control" id="raison_sociale" name="raison_sociale">
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Rapport" %}</div>
+                    <p class="form-section-lbl">{% trans "Rapport" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Type de Rapport" %}</label>
                             <select class="form-select" id="type_rapport" name="type_rapport">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 <option value="Normal">Normal</option>
                                 <option value="Urgent">Urgent</option>
                                 <option value="Flash">Flash</option>
@@ -417,7 +295,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Modèle de Rapport" %}</label>
                             <select class="form-select" id="ref_type_rapport" name="ref_type_rapport">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for modele in modele_rapport_list %}
                                     <option value="{{ modele.id }}">{{ modele.libelle }}</option>
                                 {% endfor %}
@@ -433,24 +311,24 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Délais" %}</label>
-                            <input type="text" class="form-control" id="delais" name="delais" placeholder="ex : 48h, 5 jours">
+                            <input type="text" class="form-control" id="delais" name="delais">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Priorité" %}</label>
-                            <input type="text" class="form-control" id="priorite" name="priorite" placeholder="ex : Haute, Normale">
+                            <input type="text" class="form-control" id="priorite" name="priorite">
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Données Financières" %}</div>
+                    <p class="form-section-lbl">{% trans "Données Financières" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Crédit Demandé" %}</label>
-                            <input type="number" class="form-control" id="credit_demande" name="credit_demande" placeholder="0">
+                            <input type="number" class="form-control" id="credit_demande" name="credit_demande">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Devise" %}</label>
                             <select class="form-select" id="devise_credit_demande" name="devise_credit_demande">
-                                <option value="">— {% trans "Devise" %} —</option>
+                                <option value="">—</option>
                                 {% for devise in devise_list_one %}
                                     <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
                                 {% endfor %}
@@ -458,12 +336,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Crédit Recommandé" %}</label>
-                            <input type="number" class="form-control" id="credit_recommande" name="credit_recommande" placeholder="0">
+                            <input type="number" class="form-control" id="credit_recommande" name="credit_recommande">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Devise" %}</label>
                             <select class="form-select" id="devise_credit_recommande" name="devise_credit_recommande">
-                                <option value="">— {% trans "Devise" %} —</option>
+                                <option value="">—</option>
                                 {% for devise in devise_list_two %}
                                     <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
                                 {% endfor %}
@@ -471,10 +349,10 @@
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Coordonnées" %}</div>
+                    <p class="form-section-lbl">{% trans "Coordonnées" %}</p>
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label">{% trans "N° Adresse" %}</label>
+                            <label class="form-label">{% trans "N°" %}</label>
                             <input type="text" class="form-control" id="numero_adresse" name="numero_adresse">
                         </div>
                         <div class="col-md-9">
@@ -488,7 +366,7 @@
                         <div class="col-md-8">
                             <label class="form-label">{% trans "Ville" %}</label>
                             <select class="form-select" id="ville" name="ville">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for ville in ville_list %}
                                     <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
                                 {% endfor %}
@@ -496,20 +374,20 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Téléphone" %}</label>
-                            <input type="text" class="form-control" id="telephone" name="telephone" placeholder="+241 …">
+                            <input type="text" class="form-control" id="telephone" name="telephone">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Email" %}</label>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="contact@entreprise.ga">
+                            <input type="email" class="form-control" id="email" name="email">
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Suivi" %}</div>
-                    <div class="row g-3 mb-2">
+                    <p class="form-section-lbl">{% trans "Suivi" %}</p>
+                    <div class="row g-3 mb-1">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Statut" %}</label>
                             <select class="form-select" id="status" name="status">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 <option value="nouvelle">{% trans "Nouvelle" %}</option>
                                 <option value="en_cours">{% trans "En cours de traitement" %}</option>
                                 <option value="rapport_soumis">{% trans "Rapport soumis" %}</option>
@@ -521,9 +399,9 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 pt-2 border-top mt-3">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
-                        <button type="submit" class="btn-submit-cmd"><i class="bi bi-check2 me-1"></i>{% trans "Enregistrer" %}</button>
+                    <div class="d-flex justify-content-end gap-2 pt-3 mt-2 border-top">
+                        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                        <button type="submit" class="btn-modal-submit">{% trans "Enregistrer" %}</button>
                     </div>
                 </form>
             </div>
@@ -532,11 +410,11 @@
 </div>
 
 
-<!-- ══════════════ MODAL ÉDITION ══════════════ -->
+<!-- ══════════════ MODAL — ÉDITION ══════════════ -->
 <div class="modal fade" id="editCommandeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header modal-header-cmd">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>{% trans "Modifier la Commande" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -544,7 +422,7 @@
                 <form id="editCommandeForm">
                     <input type="hidden" id="editCommandeId" name="id">
 
-                    <div class="form-section">{% trans "Identification" %}</div>
+                    <p class="form-section-lbl">{% trans "Identification" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Notre Référence" %}</label>
@@ -557,7 +435,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Client" %}</label>
                             <select class="form-select" id="editClient" name="client">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for client in client_list %}
                                     <option value="{{ client.id }}">{{ client.username }}</option>
                                 {% endfor %}
@@ -566,7 +444,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Acheteur" %}</label>
                             <select class="form-select" id="editAcheteur" name="acheteur">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for acheteur in acheteur_list %}
                                     <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
                                 {% endfor %}
@@ -578,12 +456,12 @@
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Rapport" %}</div>
+                    <p class="form-section-lbl">{% trans "Rapport" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Type de Rapport" %}</label>
                             <select class="form-select" id="editTypeRapport" name="type_rapport">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 <option value="Normal">Normal</option>
                                 <option value="Urgent">Urgent</option>
                                 <option value="Flash">Flash</option>
@@ -593,7 +471,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Modèle de Rapport" %}</label>
                             <select class="form-select" id="editRefTypeRapport" name="ref_type_rapport">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for modele in modele_rapport_list %}
                                     <option value="{{ modele.id }}">{{ modele.code }} - {{ modele.libelle }}</option>
                                 {% endfor %}
@@ -617,7 +495,7 @@
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Données Financières" %}</div>
+                    <p class="form-section-lbl">{% trans "Données Financières" %}</p>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Crédit Demandé" %}</label>
@@ -626,7 +504,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Devise" %}</label>
                             <select class="form-select" id="editDeviseCreditDemande" name="devise_credit_demande">
-                                <option value="">— {% trans "Devise" %} —</option>
+                                <option value="">—</option>
                                 {% for devise in devise_list_one %}
                                     <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
                                 {% endfor %}
@@ -639,7 +517,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Devise" %}</label>
                             <select class="form-select" id="editDeviseCreditRecommande" name="devise_credit_recommande">
-                                <option value="">— {% trans "Devise" %} —</option>
+                                <option value="">—</option>
                                 {% for devise in devise_list_two %}
                                     <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
                                 {% endfor %}
@@ -647,10 +525,10 @@
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Coordonnées" %}</div>
+                    <p class="form-section-lbl">{% trans "Coordonnées" %}</p>
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label">{% trans "N° Adresse" %}</label>
+                            <label class="form-label">{% trans "N°" %}</label>
                             <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
                         </div>
                         <div class="col-md-9">
@@ -664,7 +542,7 @@
                         <div class="col-md-8">
                             <label class="form-label">{% trans "Ville" %}</label>
                             <select class="form-select" id="editVille" name="ville">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 {% for ville in ville_list %}
                                     <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
                                 {% endfor %}
@@ -680,12 +558,12 @@
                         </div>
                     </div>
 
-                    <div class="form-section">{% trans "Suivi" %}</div>
-                    <div class="row g-3 mb-2">
+                    <p class="form-section-lbl">{% trans "Suivi" %}</p>
+                    <div class="row g-3 mb-1">
                         <div class="col-md-6">
                             <label class="form-label">{% trans "Statut" %}</label>
                             <select class="form-select" id="editStatus" name="status">
-                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="">—</option>
                                 <option value="nouvelle">{% trans "Nouvelle" %}</option>
                                 <option value="en_cours">{% trans "En cours de traitement" %}</option>
                                 <option value="rapport_soumis">{% trans "Rapport soumis" %}</option>
@@ -697,9 +575,9 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 pt-2 border-top mt-3">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
-                        <button type="submit" class="btn-submit-cmd"><i class="bi bi-check2 me-1"></i>{% trans "Mettre à jour" %}</button>
+                    <div class="d-flex justify-content-end gap-2 pt-3 mt-2 border-top">
+                        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                        <button type="submit" class="btn-modal-submit">{% trans "Mettre à jour" %}</button>
                     </div>
                 </form>
             </div>
@@ -711,38 +589,26 @@
 
 {% block scripts %}
 <script>
-const ACCESS_TOKEN = '{{ access }}';
+const ACCESS_TOKEN  = '{{ access }}';
 const REFRESH_TOKEN = '{{ refresh }}';
 let currentPage   = 1;
 let currentSearch = '';
 let currentStatus = '';
 
-/* ── Status badge helper ── */
 function statusBadge(status) {
-    const map = {
-        'nouvelle':        ['sbadge-nouvelle',        'bi-plus-circle',         'Nouvelle'],
-        'en_cours':        ['sbadge-en_cours',        'bi-hourglass-split',     'En cours'],
-        'rapport_soumis':  ['sbadge-rapport_soumis',  'bi-file-earmark-check',  'Rapport soumis'],
-        'rapport_valide':  ['sbadge-rapport_valide',  'bi-check-circle',        'Rapport validé'],
-        'envoye_client':   ['sbadge-envoye_client',   'bi-send',                'Envoyé au client'],
-        'terminee':        ['sbadge-terminee',        'bi-check2-all',          'Terminée'],
-        'annulee':         ['sbadge-annulee',         'bi-x-circle',            'Annulée'],
+    const cfg = {
+        'nouvelle':       ['sbadge-nouvelle',       'bi-plus-circle',        'Nouvelle'],
+        'en_cours':       ['sbadge-en_cours',       'bi-hourglass-split',    'En cours'],
+        'rapport_soumis': ['sbadge-rapport_soumis', 'bi-file-earmark-check', 'Rapport soumis'],
+        'rapport_valide': ['sbadge-rapport_valide', 'bi-check-circle',       'Rapport validé'],
+        'envoye_client':  ['sbadge-envoye_client',  'bi-send',               'Envoyé au client'],
+        'terminee':       ['sbadge-terminee',       'bi-check2-all',         'Terminée'],
+        'annulee':        ['sbadge-annulee',        'bi-x-circle',           'Annulée'],
     };
-    const [cls, icon, label] = map[status] || ['sbadge-terminee', 'bi-circle', status];
-    return `<span class="sbadge ${cls}"><i class="bi ${icon}"></i>${label}</span>`;
+    const [cls, ico, lbl] = cfg[status] || ['sbadge-terminee', 'bi-circle', status || '—'];
+    return `<span class="sbadge ${cls}"><i class="bi ${ico}"></i>${lbl}</span>`;
 }
 
-/* ── KPI filter ── */
-function applyStatusFilter(status) {
-    currentStatus = status;
-    document.getElementById('statusFilter').value = status;
-    document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-filter'));
-    const map = { '': 'kpi-all', 'nouvelle': 'kpi-new', 'en_cours': 'kpi-progress', 'terminee': 'kpi-done' };
-    if (map[status]) document.getElementById(map[status]).classList.add('active-filter');
-    loadCommandes(1, currentSearch, status);
-}
-
-/* ── Load commandes ── */
 function loadCommandes(page = 1, search = '', status = '') {
     currentPage   = page;
     currentSearch = search;
@@ -753,55 +619,58 @@ function loadCommandes(page = 1, search = '', status = '') {
     if (status) url += '&status=' + encodeURIComponent(status);
 
     const tbody = document.getElementById('commandesTableBody');
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Chargement…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted small">
+        <span class="spinner-border spinner-border-sm me-2"></span>Chargement…</td></tr>`;
 
     $.ajax({
         url, type: 'GET',
         headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
-        success: function(response) {
-            /* Pagination info */
-            const start = (page - 1) * (response.count || 10) + 1;
-            const end   = Math.min(page * (response.count || 10), response.total || 0);
-            $('#paginationInfo').text('Affichage ' + start + '–' + end + ' sur ' + (response.total || 0));
+        success: function(resp) {
+            const perPage = resp.count || 10;
+            const start = (page - 1) * perPage + 1;
+            const end   = Math.min(page * perPage, resp.total || 0);
+            $('#paginationInfo').text('Affichage ' + start + '–' + end + ' sur ' + (resp.total || 0));
 
-            /* Update total KPI */
-            if (!status && !search) $('#kpiTotal').text(response.total || 0);
-
-            /* Pagination buttons */
-            let pages = '';
-            if (response.previous) pages += `<li class="page-item"><a class="page-link" href="#" data-page="${page-1}"><i class="bi bi-chevron-left"></i></a></li>`;
-            for (let i = 1; i <= response.total_pages; i++) {
-                if (Math.abs(i - page) <= 2 || i === 1 || i === response.total_pages) {
-                    pages += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
-                } else if (Math.abs(i - page) === 3) {
-                    pages += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
+            /* Pagination */
+            let pgHtml = '';
+            if (resp.previous) pgHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${page-1}"><i class="bi bi-chevron-left"></i></a></li>`;
+            for (let i = 1; i <= resp.total_pages; i++) {
+                if (i === 1 || i === resp.total_pages || Math.abs(i - page) <= 1) {
+                    pgHtml += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                } else if (Math.abs(i - page) === 2) {
+                    pgHtml += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
                 }
             }
-            if (response.next) pages += `<li class="page-item"><a class="page-link" href="#" data-page="${page+1}"><i class="bi bi-chevron-right"></i></a></li>`;
-            $('#paginationControls').html(pages);
+            if (resp.next) pgHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${page+1}"><i class="bi bi-chevron-right"></i></a></li>`;
+            $('#paginationControls').html(pgHtml);
 
-            /* Table rows */
+            /* Rows */
             tbody.innerHTML = '';
-            if (!response.results || response.results.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><strong>Aucune commande trouvée</strong><small>Modifiez les filtres ou ajoutez une nouvelle commande</small></div></td></tr>`;
+            if (!resp.results || resp.results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p><strong>Aucune commande trouvée</strong><br>
+                        <small class="text-muted">Modifiez les filtres ou créez une nouvelle commande.</small></p>
+                    </div></td></tr>`;
                 return;
             }
-            response.results.forEach(function(cmd, index) {
-                const num = (index + 1 + (page - 1) * (response.count || 10));
+            resp.results.forEach(function(cmd, idx) {
+                const n    = idx + 1 + (page - 1) * perPage;
                 const date = cmd.created_at ? new Date(cmd.created_at).toLocaleDateString('fr-FR') : '—';
                 tbody.innerHTML += `
                 <tr>
-                    <td><span class="text-muted small">${num}</span></td>
+                    <td class="text-muted small">${n}</td>
                     <td><span class="ref-pill">${cmd.notre_ref || '—'}</span></td>
-                    <td><span class="client-name">${cmd.client_username || '—'} ${cmd.client?.last_name || ''}</span></td>
+                    <td style="font-weight:600;">${cmd.client_username || '—'} ${cmd.client?.last_name || ''}</td>
                     <td>${cmd.raison_sociale || '—'}</td>
-                    <td><small>${cmd.pays_nom || '—'}</small></td>
+                    <td class="text-muted small">${cmd.pays_nom || '—'}</td>
                     <td>${statusBadge(cmd.status)}</td>
-                    <td><small class="text-muted">${date}</small></td>
-                    <td style="text-align:center;white-space:nowrap;">
-                        <button class="btn-act btn-act-edit edit-btn me-1" data-id="${cmd.id}" title="Modifier"><i class="bi bi-pencil"></i></button>
-                        <button class="btn-act btn-act-manage manage-btn me-1" data-id="${cmd.id}" data-ref="${cmd.notre_ref}" title="Gérer"><i class="bi bi-gear"></i></button>
-                        <button class="btn-act btn-act-delete delete-btn" data-id="${cmd.id}" title="Supprimer"><i class="bi bi-trash"></i></button>
+                    <td class="text-muted small">${date}</td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <button class="btn-act btn-act-edit edit-btn me-1" data-id="${cmd.id}" title="{% trans 'Modifier' %}"><i class="bi bi-pencil"></i></button>
+                        <button class="btn-act btn-act-manage manage-btn me-1" data-id="${cmd.id}" data-ref="${cmd.notre_ref}" title="{% trans 'Gérer' %}"><i class="bi bi-gear"></i></button>
+                        <button class="btn-act btn-act-delete delete-btn" data-id="${cmd.id}" title="{% trans 'Supprimer' %}"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>`;
             });
@@ -812,33 +681,18 @@ function loadCommandes(page = 1, search = '', status = '') {
     });
 }
 
-/* ── Load KPI counts ── */
-function loadStats() {
-    const headers = { 'Authorization': 'Bearer ' + ACCESS_TOKEN };
-    $.ajax({ url: '/api/liste-des-commandes/?page=1', headers,
-        success: r => $('#kpiTotal').text(r.total || 0) });
-    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=nouvelle', headers,
-        success: r => $('#kpiNouvelle').text(r.total || 0) });
-    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=en_cours', headers,
-        success: r => $('#kpiEnCours').text(r.total || 0) });
-    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=terminee', headers,
-        success: r => $('#kpiTerminee').text(r.total || 0) });
-}
-
 $(document).ready(function() {
 
     loadCommandes();
-    loadStats();
 
-    /* Search (live) */
+    /* Search live */
     let searchTimer;
     $('#searchInput').on('input', function() {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => loadCommandes(1, this.value, currentStatus), 400);
+        const val = this.value;
+        searchTimer = setTimeout(() => loadCommandes(1, val, currentStatus), 380);
     });
-
-    /* Prevent form submit on Enter in search */
-    $('#searchInput').on('keydown', function(e) { if (e.key === 'Enter') e.preventDefault(); });
+    $('#searchInput').on('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
 
     /* Pagination */
     $(document).on('click', '#paginationControls .page-link', function(e) {
@@ -847,7 +701,7 @@ $(document).ready(function() {
         if (pg) loadCommandes(pg, currentSearch, currentStatus);
     });
 
-    /* ADD COMMANDE */
+    /* ADD */
     $('#addCommandeForm').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
@@ -855,14 +709,14 @@ $(document).ready(function() {
             data: $(this).serialize(),
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function() {
-                Swal.fire({ icon:'success', title:'Enregistrée', text:'Commande ajoutée avec succès.', showConfirmButton:false, timer:1500 })
-                    .then(() => { $('#addCommandeModal').modal('hide'); loadCommandes(1, currentSearch, currentStatus); loadStats(); });
+                Swal.fire({ icon: 'success', title: 'Enregistrée', text: 'Commande ajoutée avec succès.', showConfirmButton: false, timer: 1500 })
+                    .then(() => { $('#addCommandeModal').modal('hide'); loadCommandes(1, currentSearch, currentStatus); });
             },
-            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:"Impossible d'ajouter la commande." }); }
+            error: function() { Swal.fire({ icon: 'error', title: 'Erreur', text: "Impossible d'ajouter la commande." }); }
         });
     });
 
-    /* EDIT — open modal */
+    /* EDIT — open */
     $(document).on('click', '.edit-btn', function() {
         const id = $(this).data('id');
         $.ajax({
@@ -894,7 +748,7 @@ $(document).ready(function() {
                 $('#editStatus').val(r.status);
                 $('#editCommandeModal').modal('show');
             },
-            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de charger la commande.' }); }
+            error: function() { Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de charger la commande.' }); }
         });
     });
 
@@ -907,10 +761,10 @@ $(document).ready(function() {
             data: $(this).serialize(),
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function() {
-                Swal.fire({ icon:'success', title:'Mis à jour', text:'Commande modifiée avec succès.', showConfirmButton:false, timer:1500 })
-                    .then(() => { $('#editCommandeModal').modal('hide'); loadCommandes(currentPage, currentSearch, currentStatus); loadStats(); });
+                Swal.fire({ icon: 'success', title: 'Mis à jour', text: 'Commande modifiée.', showConfirmButton: false, timer: 1500 })
+                    .then(() => { $('#editCommandeModal').modal('hide'); loadCommandes(currentPage, currentSearch, currentStatus); });
             },
-            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de modifier la commande.' }); }
+            error: function() { Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de modifier la commande.' }); }
         });
     });
 
@@ -920,7 +774,7 @@ $(document).ready(function() {
         const ref = $(this).data('ref');
         Swal.fire({
             title: 'Gérer la commande',
-            html: `Ouvrir la fiche de la commande <b>${ref || '#'+id}</b> ?`,
+            html: `Ouvrir la fiche <b>${ref || '#' + id}</b> ?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#0d80be',
@@ -928,7 +782,8 @@ $(document).ready(function() {
             confirmButtonText: '<i class="bi bi-gear me-1"></i> Ouvrir',
             cancelButtonText: 'Annuler'
         }).then(r => {
-            if (r.isConfirmed) window.location.href = '/root-dashboard/commandes/manager-une-commande/' + id + '/?token={{ user.reset_token }}';
+            if (r.isConfirmed)
+                window.location.href = '/root-dashboard/commandes/manager-une-commande/' + id + '/?token={{ user.reset_token }}';
         });
     });
 
@@ -938,12 +793,9 @@ $(document).ready(function() {
         Swal.fire({
             title: 'Supprimer cette commande ?',
             text: 'Cette action est irréversible.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Oui, supprimer',
-            cancelButtonText: 'Annuler'
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer', cancelButtonText: 'Annuler'
         }).then(r => {
             if (r.isConfirmed) {
                 $.ajax({
@@ -951,29 +803,29 @@ $(document).ready(function() {
                     data: JSON.stringify({ ids: [id] }), contentType: 'application/json',
                     headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
                     success: function() {
-                        Swal.fire({ icon:'success', title:'Supprimée', text:'La commande a été supprimée.', showConfirmButton:false, timer:1400 })
-                            .then(() => { loadCommandes(currentPage, currentSearch, currentStatus); loadStats(); });
+                        Swal.fire({ icon: 'success', title: 'Supprimée', showConfirmButton: false, timer: 1200 })
+                            .then(() => loadCommandes(currentPage, currentSearch, currentStatus));
                     },
-                    error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de supprimer.' }); }
+                    error: function() { Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de supprimer.' }); }
                 });
             }
         });
     });
 
-    /* Token refresh */
-    $.ajaxSetup({ statusCode: { 401: refreshToken } });
-
-    function refreshToken() {
-        $.ajax({
-            url: '/api/token/refresh/', type: 'POST',
-            data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
-            success: r => { localStorage.setItem('access_token', r.access); },
-            error: function() {
-                Swal.fire({ icon:'error', title:'Session expirée', text:'Veuillez recharger la page.',
-                    confirmButtonText:'Recharger' }).then(() => window.location.reload(true));
+    /* Token refresh on 401 */
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                $.ajax({
+                    url: '/api/token/refresh/', type: 'POST',
+                    data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
+                    success: r => localStorage.setItem('access_token', r.access),
+                    error: () => Swal.fire({ icon: 'error', title: 'Session expirée', confirmButtonText: 'Recharger' })
+                               .then(() => window.location.reload(true))
+                });
             }
-        });
-    }
+        }
+    });
 });
 </script>
 {% endblock %}
