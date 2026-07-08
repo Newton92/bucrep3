@@ -1,733 +1,979 @@
 {% extends 'main/root/base.html' %}
-
 {% load i18n static %}
 
 {% block styles %}
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+<style>
+:root {
+    --cmd-primary:    #0d80be;
+    --cmd-primary-dk: #0a6ca0;
+    --cmd-gradient:   linear-gradient(135deg, #0d80be 0%, #106cb2 100%);
+    --cmd-success:    #28a745;
+    --cmd-warning:    #e67e22;
+    --cmd-danger:     #dc3545;
+    --cmd-purple:     #6f42c1;
+    --cmd-dark:       #2c3e50;
+    --cmd-radius:     14px;
+    --cmd-shadow:     0 4px 18px rgba(13,110,178,.09);
+    --cmd-shadow-h:   0 8px 28px rgba(13,110,178,.17);
+    --cmd-border:     #e9ecef;
+}
+
+/* ── HEADER ── */
+.cmd-header {
+    background: var(--cmd-gradient);
+    border-radius: var(--cmd-radius);
+    padding: 1.35rem 1.75rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(13,110,178,.22);
+    color: white;
+}
+.cmd-header::after {
+    content:'';
+    position:absolute; top:-70%; right:-8%;
+    width:280px; height:280px;
+    background:rgba(255,255,255,.06);
+    border-radius:50%;
+    pointer-events:none;
+}
+.cmd-header h3 { font-size:1.5rem; font-weight:700; margin:0; }
+.cmd-header p  { font-size:.87rem; opacity:.88; margin:.2rem 0 0; }
+.btn-new-cmd {
+    background:rgba(255,255,255,.18);
+    border:1.5px solid rgba(255,255,255,.5);
+    color:white;
+    font-weight:600;
+    border-radius:10px;
+    padding:.55rem 1.25rem;
+    font-size:.9rem;
+    transition:all .2s;
+    white-space:nowrap;
+}
+.btn-new-cmd:hover {
+    background:white;
+    color:var(--cmd-primary);
+    border-color:white;
+}
+
+/* ── KPI CARDS ── */
+.kpi-card {
+    background:white;
+    border-radius:var(--cmd-radius);
+    padding:1.1rem 1.2rem;
+    box-shadow:var(--cmd-shadow);
+    display:flex;
+    align-items:center;
+    gap:.9rem;
+    transition:all .25s ease;
+    cursor:pointer;
+    border:1.5px solid transparent;
+    user-select:none;
+}
+.kpi-card:hover { box-shadow:var(--cmd-shadow-h); transform:translateY(-2px); }
+.kpi-card.active-filter { border-color:var(--cmd-primary); box-shadow:0 0 0 3px rgba(13,128,190,.12); }
+.kpi-icon {
+    width:48px; height:48px;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.35rem; flex-shrink:0;
+}
+.kpi-icon.c-blue   { background:rgba(13,128,190,.11);  color:var(--cmd-primary); }
+.kpi-icon.c-green  { background:rgba(40,167,69,.11);   color:var(--cmd-success); }
+.kpi-icon.c-orange { background:rgba(230,126,34,.13);  color:var(--cmd-warning); }
+.kpi-icon.c-purple { background:rgba(111,66,193,.11);  color:var(--cmd-purple); }
+.kpi-label { font-size:.73rem; color:#8392a5; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.kpi-value { font-size:1.65rem; font-weight:800; color:var(--cmd-dark); line-height:1.1; margin-top:1px; }
+
+/* ── MAIN CARD ── */
+.cmd-card {
+    background:white;
+    border-radius:var(--cmd-radius);
+    box-shadow:var(--cmd-shadow);
+    overflow:hidden;
+}
+.cmd-toolbar {
+    padding:.9rem 1.2rem;
+    border-bottom:1px solid #f0f3f7;
+    display:flex;
+    align-items:center;
+    gap:.7rem;
+    flex-wrap:wrap;
+}
+.cmd-toolbar-title {
+    font-weight:700; font-size:.95rem; color:var(--cmd-dark);
+    margin:0; flex:none;
+}
+.cmd-search {
+    position:relative; flex:1 1 200px; max-width:340px;
+}
+.cmd-search input {
+    padding:.5rem .9rem .5rem 2.3rem;
+    border-radius:10px;
+    border:1.5px solid var(--cmd-border);
+    font-size:.87rem;
+    width:100%;
+    transition:border-color .2s, box-shadow .2s;
+}
+.cmd-search input:focus {
+    outline:none;
+    border-color:var(--cmd-primary);
+    box-shadow:0 0 0 3px rgba(13,128,190,.1);
+}
+.cmd-search .search-ico {
+    position:absolute; left:.75rem; top:50%; transform:translateY(-50%);
+    color:#adb5bd; font-size:.85rem; pointer-events:none;
+}
+.cmd-status-filter {
+    border-radius:10px; border:1.5px solid var(--cmd-border);
+    font-size:.87rem; padding:.47rem .9rem; min-width:170px;
+    transition:border-color .2s, box-shadow .2s;
+}
+.cmd-status-filter:focus {
+    outline:none; border-color:var(--cmd-primary);
+    box-shadow:0 0 0 3px rgba(13,128,190,.1);
+}
+
+/* ── TABLE ── */
+.cmd-table { margin:0; }
+.cmd-table thead th {
+    font-size:.72rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:#8392a5;
+    background:#f8fafc;
+    border-bottom:2px solid #e9ecef;
+    padding:.75rem 1rem; white-space:nowrap;
+    border-top:none;
+}
+.cmd-table tbody td {
+    padding:.72rem 1rem;
+    vertical-align:middle;
+    font-size:.87rem;
+    border-bottom:1px solid #f3f5f7;
+    color:#3d4f5d;
+}
+.cmd-table tbody tr:last-child td { border-bottom:none; }
+.cmd-table tbody tr:hover { background:#f8fbff; }
+
+.ref-pill {
+    display:inline-block;
+    background:rgba(13,128,190,.09);
+    color:var(--cmd-primary);
+    font-weight:700; font-size:.8rem;
+    padding:.2rem .65rem;
+    border-radius:20px;
+}
+.client-name { font-weight:600; color:var(--cmd-dark); font-size:.85rem; }
+
+/* Status badges */
+.sbadge {
+    display:inline-flex; align-items:center; gap:.28rem;
+    padding:.28rem .7rem;
+    border-radius:20px;
+    font-size:.75rem; font-weight:600;
+    white-space:nowrap;
+}
+.sbadge-nouvelle        { background:#e3f0fd; color:#1565c0; }
+.sbadge-en_cours        { background:#fff3e0; color:#e65100; }
+.sbadge-rapport_soumis  { background:#e1f5fe; color:#0277bd; }
+.sbadge-rapport_valide  { background:#e8f5e9; color:#2e7d32; }
+.sbadge-envoye_client   { background:#ede7f6; color:#6a1b9a; }
+.sbadge-terminee        { background:#eceff1; color:#37474f; }
+.sbadge-annulee         { background:#fce4ec; color:#b71c1c; }
+
+/* Action buttons */
+.btn-act {
+    width:30px; height:30px; border-radius:8px; border:none;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:.78rem; transition:all .2s; cursor:pointer;
+}
+.btn-act-edit   { background:rgba(40,167,69,.1);   color:#28a745; }
+.btn-act-manage { background:rgba(13,128,190,.1);  color:var(--cmd-primary); }
+.btn-act-delete { background:rgba(220,53,69,.1);   color:#dc3545; }
+.btn-act-edit:hover   { background:#28a745;          color:white; transform:scale(1.1); }
+.btn-act-manage:hover { background:var(--cmd-primary); color:white; transform:scale(1.1); }
+.btn-act-delete:hover { background:#dc3545;          color:white; transform:scale(1.1); }
+
+/* ── EMPTY STATE ── */
+.empty-state { padding:3.5rem 1rem; text-align:center; }
+.empty-state i { font-size:3.2rem; color:#dee2e6; display:block; margin-bottom:.85rem; }
+.empty-state strong { display:block; color:#6c757d; font-size:.95rem; }
+.empty-state small  { color:#adb5bd; font-size:.82rem; }
+
+/* ── FOOTER ── */
+.cmd-footer {
+    padding:.75rem 1.2rem;
+    background:#fafbfc;
+    border-top:1px solid #f0f3f7;
+}
+.page-link { border-radius:8px !important; margin:0 1px; font-size:.82rem; color:var(--cmd-primary); border-color:#e9ecef; }
+.page-item.active .page-link { background:var(--cmd-primary); border-color:var(--cmd-primary); }
+.page-link:focus { box-shadow:0 0 0 3px rgba(13,128,190,.15); }
+
+/* ── MODALS ── */
+.modal-content { border-radius:16px; border:none; overflow:hidden; }
+.modal-header-cmd {
+    background:var(--cmd-gradient);
+    color:white; padding:1rem 1.5rem;
+    border-bottom:none;
+}
+.modal-header-cmd .btn-close { filter:brightness(0) invert(1); opacity:.8; }
+.modal-header-cmd .modal-title { font-weight:700; font-size:1.05rem; }
+
+.form-section {
+    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--cmd-primary);
+    border-bottom:2px solid rgba(13,128,190,.12);
+    padding-bottom:.35rem;
+    margin:1.2rem 0 .8rem;
+}
+.form-section:first-child { margin-top:.1rem; }
+.form-label { font-size:.82rem; font-weight:600; color:#4a5568; margin-bottom:.3rem; }
+.form-control, .form-select {
+    border-radius:9px; border:1.5px solid #e2e8f0;
+    font-size:.87rem; padding:.5rem .85rem;
+    transition:border-color .2s, box-shadow .2s;
+}
+.form-control:focus, .form-select:focus {
+    border-color:var(--cmd-primary);
+    box-shadow:0 0 0 3px rgba(13,128,190,.1);
+}
+.btn-submit-cmd {
+    background:var(--cmd-gradient);
+    color:white; border:none;
+    border-radius:10px; font-weight:600;
+    padding:.65rem 2rem;
+    transition:all .2s;
+}
+.btn-submit-cmd:hover { opacity:.9; transform:translateY(-1px); }
+</style>
 {% endblock %}
 
 {% block body %}
 
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-cart fa-fw me-1"></i>Commandes</h3>
+<!-- ══════════════ HEADER ══════════════ -->
+<div class="cmd-header">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h3><i class="bi bi-cart3 me-2"></i>{% trans "Gestion des Commandes" %}</h3>
+            <p>{% trans "Consultation, suivi et traitement de toutes les commandes clients" %}</p>
+        </div>
+        <button class="btn-new-cmd" data-bs-toggle="modal" data-bs-target="#addCommandeModal">
+            <i class="bi bi-plus-lg me-1"></i> {% trans "Nouvelle Commande" %}
+        </button>
     </div>
 </div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countCommandes">Module de Gestion des Commandes</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une commande notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
+<!-- ══════════════ KPI CARDS ══════════════ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card active-filter" id="kpi-all" onclick="applyStatusFilter('')">
+            <div class="kpi-icon c-blue"><i class="bi bi-cart3"></i></div>
+            <div>
+                <div class="kpi-label">{% trans "Total" %}</div>
+                <div class="kpi-value" id="kpiTotal">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card" id="kpi-new" onclick="applyStatusFilter('nouvelle')">
+            <div class="kpi-icon c-green"><i class="bi bi-plus-circle"></i></div>
+            <div>
+                <div class="kpi-label">{% trans "Nouvelles" %}</div>
+                <div class="kpi-value" id="kpiNouvelle">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card" id="kpi-progress" onclick="applyStatusFilter('en_cours')">
+            <div class="kpi-icon c-orange"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+                <div class="kpi-label">{% trans "En cours" %}</div>
+                <div class="kpi-value" id="kpiEnCours">—</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card" id="kpi-done" onclick="applyStatusFilter('terminee')">
+            <div class="kpi-icon c-purple"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="kpi-label">{% trans "Terminées" %}</div>
+                <div class="kpi-value" id="kpiTerminee">—</div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 
-<!-- Commandes START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Commandes</h5>
+<!-- ══════════════ TABLE CARD ══════════════ -->
+<div class="cmd-card">
+
+    <!-- Toolbar -->
+    <div class="cmd-toolbar">
+        <span class="cmd-toolbar-title"><i class="bi bi-list-ul me-2 text-primary opacity-75"></i>{% trans "Liste des Commandes" %}</span>
+        <div class="cmd-search">
+            <i class="bi bi-search search-ico"></i>
+            <input type="search" id="searchInput" placeholder="{% trans 'Rechercher...' %}">
+        </div>
+        <select class="cmd-status-filter" id="statusFilter" onchange="applyStatusFilter(this.value)">
+            <option value="">{% trans "Tous les statuts" %}</option>
+            <option value="nouvelle">{% trans "Nouvelle" %}</option>
+            <option value="en_cours">{% trans "En cours" %}</option>
+            <option value="rapport_soumis">{% trans "Rapport soumis" %}</option>
+            <option value="rapport_valide">{% trans "Rapport validé" %}</option>
+            <option value="envoye_client">{% trans "Envoyé au client" %}</option>
+            <option value="terminee">{% trans "Terminée" %}</option>
+            <option value="annulee">{% trans "Annulée" %}</option>
+        </select>
+        <button type="button" onclick="loadCommandes(currentPage, document.getElementById('searchInput').value, currentStatus)" class="btn btn-sm btn-outline-secondary" title="{% trans 'Actualiser' %}" style="border-radius:9px;padding:.45rem .7rem;">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive" id="commandesList">
+        <table class="table cmd-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{% trans "Référence" %}</th>
+                    <th>{% trans "Client" %}</th>
+                    <th>{% trans "Raison Sociale" %}</th>
+                    <th>{% trans "Pays" %}</th>
+                    <th>{% trans "Statut" %}</th>
+                    <th>{% trans "Date création" %}</th>
+                    <th style="text-align:center;">{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody id="commandesTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="cmd-footer d-sm-flex justify-content-sm-between align-items-sm-center">
+        <p class="mb-sm-0 text-muted small" id="paginationInfo"></p>
+        <nav aria-label="navigation">
+            <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+        </nav>
+    </div>
+</div>
+
+
+<!-- ══════════════ MODAL AJOUT ══════════════ -->
+<div class="modal fade" id="addCommandeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-cmd">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>{% trans "Nouvelle Commande" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <!-- Card header END -->
+            <div class="modal-body px-4 py-3">
+                <form id="addCommandeForm">
 
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="{% trans 'Recherche...' %}" aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
-                        <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addCommandeModal">
-                                Ajouter une Commande
-                            </button>
+                    <div class="form-section">{% trans "Identification" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Notre Référence" %}</label>
+                            <input type="text" class="form-control" id="notre_ref" name="notre_ref" placeholder="CMD-2026-001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Référence Client" %}</label>
+                            <input type="text" class="form-control" id="reference_client" name="reference_client" placeholder="REF-CLI-XXX">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Client" %}</label>
+                            <select class="form-select" id="client" name="client">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for client in client_list %}
+                                    <option value="{{ client.id }}">{{ client.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Acheteur" %}</label>
+                            <select class="form-select" id="acheteur" name="acheteur">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for acheteur in acheteur_list %}
+                                    <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">{% trans "Raison Sociale" %}</label>
+                            <input type="text" class="form-control" id="raison_sociale" name="raison_sociale" placeholder="{% trans 'Nom de la société' %}">
                         </div>
                     </div>
-                </div>
-                <!-- Search and select END -->
 
-                <!-- Commandes list START -->
-                <div class="table-responsive border-0" id="commandesList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Référence</th>
-                                <th scope="col" class="border-0">Client</th>
-                                <th scope="col" class="border-0">Raison Sociale</th>
-                                <th scope="col" class="border-0">Pays</th>
-                                <th scope="col" class="border-0">Statut</th>
-                                <th scope="col" class="border-0">Date de Création</th>
-                                <th scope="col" class="border-0 rounded-end">{% trans "Action" %}</th>
-                            </tr>
-                        </thead>
+                    <div class="form-section">{% trans "Rapport" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Type de Rapport" %}</label>
+                            <select class="form-select" id="type_rapport" name="type_rapport">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="Normal">Normal</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Flash">Flash</option>
+                                <option value="Super flash">Super flash</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Modèle de Rapport" %}</label>
+                            <select class="form-select" id="ref_type_rapport" name="ref_type_rapport">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for modele in modele_rapport_list %}
+                                    <option value="{{ modele.id }}">{{ modele.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Date de Réception" %}</label>
+                            <input type="date" class="form-control" id="date_recept_commande" name="date_recept_commande">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Date du Rapport" %}</label>
+                            <input type="date" class="form-control" id="date_rapport" name="date_rapport">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Délais" %}</label>
+                            <input type="text" class="form-control" id="delais" name="delais" placeholder="ex : 48h, 5 jours">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Priorité" %}</label>
+                            <input type="text" class="form-control" id="priorite" name="priorite" placeholder="ex : Haute, Normale">
+                        </div>
+                    </div>
 
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="commandesTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
-                </div>
-                <!-- Commandes list END -->
-            </div>
-            <!-- Card body END -->
+                    <div class="form-section">{% trans "Données Financières" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Crédit Demandé" %}</label>
+                            <input type="number" class="form-control" id="credit_demande" name="credit_demande" placeholder="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Devise" %}</label>
+                            <select class="form-select" id="devise_credit_demande" name="devise_credit_demande">
+                                <option value="">— {% trans "Devise" %} —</option>
+                                {% for devise in devise_list_one %}
+                                    <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Crédit Recommandé" %}</label>
+                            <input type="number" class="form-control" id="credit_recommande" name="credit_recommande" placeholder="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Devise" %}</label>
+                            <select class="form-select" id="devise_credit_recommande" name="devise_credit_recommande">
+                                <option value="">— {% trans "Devise" %} —</option>
+                                {% for devise in devise_list_two %}
+                                    <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
 
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
-                </div>
-            </div>
-            <!-- Card footer END -->
-        </div>
-    </div>
-</div>
-<!-- Commandes END -->
+                    <div class="form-section">{% trans "Coordonnées" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "N° Adresse" %}</label>
+                            <input type="text" class="form-control" id="numero_adresse" name="numero_adresse">
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label">{% trans "Rue" %}</label>
+                            <input type="text" class="form-control" id="rue_adresse" name="rue_adresse">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% trans "Code Postal" %}</label>
+                            <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">{% trans "Ville" %}</label>
+                            <select class="form-select" id="ville" name="ville">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for ville in ville_list %}
+                                    <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Téléphone" %}</label>
+                            <input type="text" class="form-control" id="telephone" name="telephone" placeholder="+241 …">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Email" %}</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="contact@entreprise.ga">
+                        </div>
+                    </div>
 
-<!-- Add Commande Modal START -->
-<div class="modal fade" id="addCommandeModal" tabindex="-1" aria-labelledby="addCommandeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addCommandeModalLabel">Ajouter une Commande</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addCommandeForm">
-                    <div class="mb-3">
-                        <label for="notre_ref" class="form-label">Notre Référence</label>
-                        <input type="text" class="form-control" id="notre_ref" name="notre_ref">
+                    <div class="form-section">{% trans "Suivi" %}</div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Statut" %}</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="nouvelle">{% trans "Nouvelle" %}</option>
+                                <option value="en_cours">{% trans "En cours de traitement" %}</option>
+                                <option value="rapport_soumis">{% trans "Rapport soumis" %}</option>
+                                <option value="rapport_valide">{% trans "Rapport validé" %}</option>
+                                <option value="envoye_client">{% trans "Envoyé au client" %}</option>
+                                <option value="terminee">{% trans "Terminée" %}</option>
+                                <option value="annulee">{% trans "Annulée" %}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="reference_client" class="form-label">Référence Client</label>
-                        <input type="text" class="form-control" id="reference_client" name="reference_client">
+
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top mt-3">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                        <button type="submit" class="btn-submit-cmd"><i class="bi bi-check2 me-1"></i>{% trans "Enregistrer" %}</button>
                     </div>
-                    <div class="mb-3">
-                        <label for="date_recept_commande" class="form-label">Date de Réception</label>
-                        <input type="date" class="form-control" id="date_recept_commande" name="date_recept_commande">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_rapport" class="form-label">Date du Rapport</label>
-                        <input type="date" class="form-control" id="date_rapport" name="date_rapport">
-                    </div>
-                    <div class="mb-3">
-                        <label for="delais" class="form-label">Délais</label>
-                        <input type="text" class="form-control" id="delais" name="delais">
-                    </div>
-                    <div class="mb-3">
-                        <label for="priorite" class="form-label">Priorité</label>
-                        <input type="text" class="form-control" id="priorite" name="priorite">
-                    </div>
-                    <div class="mb-3">
-                        <label for="raison_sociale" class="form-label">Raison Sociale</label>
-                        <input type="text" class="form-control" id="raison_sociale" name="raison_sociale">
-                    </div>
-                    <div class="mb-3">
-                        <label for="type_rapport" class="form-label">Type de Rapport</label>
-                        <select class="form-select" id="type_rapport" name="type_rapport" data-live-search="true">
-                            <option value="">Selectionnez un Type</option>
-                            <option value="Normal">Normal</option>
-                            <option value="Urgent">Urgent</option>
-                            <option value="Flash">Flash</option>
-                            <option value="Super flash">Super flash</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="ref_type_rapport" class="form-label">Référence du Modèle de Rapport</label>
-                        <select class="form-select" id="ref_type_rapport" name="ref_type_rapport" data-live-search="true">
-                            <option value="">Selectionnez une Référence</option>
-                            {% for modele in modele_rapport_list %}
-                                <option value="{{ modele.id }}">{{ modele.libelle }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="credit_demande" class="form-label">Crédit Demandé</label>
-                        <input type="number" class="form-control" id="credit_demande" name="credit_demande">
-                    </div>
-                    <div class="mb-3">
-                        <label for="devise_credit_demande" class="form-label">Devise du Crédit Demandé</label>
-                        <select class="form-select" id="devise_credit_demande" name="devise_credit_demande" data-live-search="true">
-                            <option value="">Selectionnez une Devise</option>
-                            {% for devise in devise_list_one %}
-                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="credit_recommande" class="form-label">Crédit Recommandé</label>
-                        <input type="number" class="form-control" id="credit_recommande" name="credit_recommande">
-                    </div>
-                    <div class="mb-3">
-                        <label for="devise_credit_recommande" class="form-label">Devise du Crédit Recommandé</label>
-                        <select class="form-select" id="devise_credit_recommande" name="devise_credit_recommande" data-live-search="true">
-                            <option value="">Selectionnez une Devise</option>
-                            {% for devise in devise_list_two %}
-                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="numero_adresse" class="form-label">Numéro d'Adresse</label>
-                        <input type="text" class="form-control" id="numero_adresse" name="numero_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="rue_adresse" class="form-label">Rue Adresse</label>
-                        <input type="text" class="form-control" id="rue_adresse" name="rue_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="code_postale_adresse" class="form-label">Code Postal</label>
-                        <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="telephone" class="form-label">Téléphone</label>
-                        <input type="text" class="form-control" id="telephone" name="telephone">
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email">
-                    </div>
-                    <div class="mb-3">
-                        <label for="ville" class="form-label">Ville</label>
-                        <select class="form-select" id="ville" name="ville" data-live-search="true">
-                            <option value="">Selectionnez une Ville</option>
-                            {% for ville in ville_list %}
-                                <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="client" class="form-label">Client</label>
-                        <select class="form-select" id="client" name="client" data-live-search="true">
-                            <option value="">Selectionnez un Client</option>
-                            {% for client in client_list %}
-                                <option value="{{ client.id }}">{{ client.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="acheteur" class="form-label">Acheteur</label>
-                        <select class="form-select" id="acheteur" name="acheteur" data-live-search="true">
-                            <option value="">Selectionnez un Acheteur</option>
-                            {% for acheteur in acheteur_list %}
-                                <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">Statut</label>
-                        <select class="form-select" id="status" name="status" data-live-search="true">
-                            <option value="">Selectionnez un Statut</option>
-                            <option value="nouvelle">Nouvelle</option>
-                            <option value="en_cours">En cours de traitement</option>
-                            <option value="rapport_soumis">Rapport soumis</option>
-                            <option value="rapport_valide">Rapport validé</option>
-                            <option value="envoye_client">Envoyé au client</option>
-                            <option value="terminee">Terminée</option>
-                            <option value="annulee">Annulée</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-<!-- Add Commande Modal END -->
 
-<!-- Edit Commande Modal START -->
-<div class="modal fade" id="editCommandeModal" tabindex="-1" aria-labelledby="editCommandeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+
+<!-- ══════════════ MODAL ÉDITION ══════════════ -->
+<div class="modal fade" id="editCommandeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCommandeModalLabel">Editer une Commande</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header modal-header-cmd">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>{% trans "Modifier la Commande" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body px-4 py-3">
                 <form id="editCommandeForm">
                     <input type="hidden" id="editCommandeId" name="id">
-                    <div class="mb-3">
-                        <label for="editNotreRef" class="form-label">Notre Référence</label>
-                        <input type="text" class="form-control" id="editNotreRef" name="notre_ref">
+
+                    <div class="form-section">{% trans "Identification" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Notre Référence" %}</label>
+                            <input type="text" class="form-control" id="editNotreRef" name="notre_ref">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Référence Client" %}</label>
+                            <input type="text" class="form-control" id="editReferenceClient" name="reference_client">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Client" %}</label>
+                            <select class="form-select" id="editClient" name="client">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for client in client_list %}
+                                    <option value="{{ client.id }}">{{ client.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Acheteur" %}</label>
+                            <select class="form-select" id="editAcheteur" name="acheteur">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for acheteur in acheteur_list %}
+                                    <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">{% trans "Raison Sociale" %}</label>
+                            <input type="text" class="form-control" id="editRaisonSociale" name="raison_sociale">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editReferenceClient" class="form-label">Référence Client</label>
-                        <input type="text" class="form-control" id="editReferenceClient" name="reference_client">
+
+                    <div class="form-section">{% trans "Rapport" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Type de Rapport" %}</label>
+                            <select class="form-select" id="editTypeRapport" name="type_rapport">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="Normal">Normal</option>
+                                <option value="Urgent">Urgent</option>
+                                <option value="Flash">Flash</option>
+                                <option value="Super flash">Super flash</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Modèle de Rapport" %}</label>
+                            <select class="form-select" id="editRefTypeRapport" name="ref_type_rapport">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for modele in modele_rapport_list %}
+                                    <option value="{{ modele.id }}">{{ modele.code }} - {{ modele.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Date de Réception" %}</label>
+                            <input type="date" class="form-control" id="editDateReceptCommande" name="date_recept_commande">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Date du Rapport" %}</label>
+                            <input type="date" class="form-control" id="editDateRapport" name="date_rapport">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Délais" %}</label>
+                            <input type="text" class="form-control" id="editDelais" name="delais">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Priorité" %}</label>
+                            <input type="text" class="form-control" id="editPriorite" name="priorite">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateReceptCommande" class="form-label">Date de Réception</label>
-                        <input type="date" class="form-control" id="editDateReceptCommande" name="date_recept_commande">
+
+                    <div class="form-section">{% trans "Données Financières" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Crédit Demandé" %}</label>
+                            <input type="number" class="form-control" id="editCreditDemande" name="credit_demande">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Devise" %}</label>
+                            <select class="form-select" id="editDeviseCreditDemande" name="devise_credit_demande">
+                                <option value="">— {% trans "Devise" %} —</option>
+                                {% for devise in devise_list_one %}
+                                    <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Crédit Recommandé" %}</label>
+                            <input type="number" class="form-control" id="editCreditRecommande" name="credit_recommande">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Devise" %}</label>
+                            <select class="form-select" id="editDeviseCreditRecommande" name="devise_credit_recommande">
+                                <option value="">— {% trans "Devise" %} —</option>
+                                {% for devise in devise_list_two %}
+                                    <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateRapport" class="form-label">Date du Rapport</label>
-                        <input type="date" class="form-control" id="editDateRapport" name="date_rapport">
+
+                    <div class="form-section">{% trans "Coordonnées" %}</div>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "N° Adresse" %}</label>
+                            <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label">{% trans "Rue" %}</label>
+                            <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{% trans "Code Postal" %}</label>
+                            <input type="text" class="form-control" id="editCodePostaleAdresse" name="code_postale_adresse">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">{% trans "Ville" %}</label>
+                            <select class="form-select" id="editVille" name="ville">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                {% for ville in ville_list %}
+                                    <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Téléphone" %}</label>
+                            <input type="text" class="form-control" id="editTelephone" name="telephone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Email" %}</label>
+                            <input type="email" class="form-control" id="editEmail" name="email">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDelais" class="form-label">Délais</label>
-                        <input type="text" class="form-control" id="editDelais" name="delais">
+
+                    <div class="form-section">{% trans "Suivi" %}</div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">{% trans "Statut" %}</label>
+                            <select class="form-select" id="editStatus" name="status">
+                                <option value="">— {% trans "Sélectionner" %} —</option>
+                                <option value="nouvelle">{% trans "Nouvelle" %}</option>
+                                <option value="en_cours">{% trans "En cours de traitement" %}</option>
+                                <option value="rapport_soumis">{% trans "Rapport soumis" %}</option>
+                                <option value="rapport_valide">{% trans "Rapport validé" %}</option>
+                                <option value="envoye_client">{% trans "Envoyé au client" %}</option>
+                                <option value="terminee">{% trans "Terminée" %}</option>
+                                <option value="annulee">{% trans "Annulée" %}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editPriorite" class="form-label">Priorité</label>
-                        <input type="text" class="form-control" id="editPriorite" name="priorite">
+
+                    <div class="d-flex justify-content-end gap-2 pt-2 border-top mt-3">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                        <button type="submit" class="btn-submit-cmd"><i class="bi bi-check2 me-1"></i>{% trans "Mettre à jour" %}</button>
                     </div>
-                    <div class="mb-3">
-                        <label for="editRaisonSociale" class="form-label">Raison Sociale</label>
-                        <input type="text" class="form-control" id="editRaisonSociale" name="raison_sociale">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTypeRapport" class="form-label">Type de Rapport</label>
-                        <select class="form-select" id="editTypeRapport" name="type_rapport" data-live-search="true">
-                            <option value="">Selectionnez un Type</option>
-                            <option value="Normal">Normal</option>
-                            <option value="Urgent">Urgent</option>
-                            <option value="Flash">Flash</option>
-                            <option value="Super flash">Super flash</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRefTypeRapport" class="form-label">Référence du Modèle de Rapport</label>
-                        <select class="form-select" id="editRefTypeRapport" name="ref_type_rapport" data-live-search="true">
-                            <option value="">Selectionnez une Référence</option>
-                            {% for modele in modele_rapport_list %}
-                                <option value="{{ modele.id }}">{{ modele.code }} - {{ modele.libelle }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCreditDemande" class="form-label">Crédit Demandé</label>
-                        <input type="number" class="form-control" id="editCreditDemande" name="credit_demande">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDeviseCreditDemande" class="form-label">Devise du Crédit Demandé</label>
-                        <select class="form-select" id="editDeviseCreditDemande" name="devise_credit_demande" data-live-search="true">
-                            <option value="">Selectionnez une Devise</option>
-                            {% for devise in devise_list_one %}
-                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCreditRecommande" class="form-label">Crédit Recommandé</label>
-                        <input type="number" class="form-control" id="editCreditRecommande" name="credit_recommande">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDeviseCreditRecommande" class="form-label">Devise du Crédit Recommandé</label>
-                        <select class="form-select" id="editDeviseCreditRecommande" name="devise_credit_recommande" data-live-search="true">
-                            <option value="">Selectionnez une Devise</option>
-                            {% for devise in devise_list_two %}
-                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editNumeroAdresse" class="form-label">Numéro d'Adresse</label>
-                        <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRueAdresse" class="form-label">Rue Adresse</label>
-                        <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCodePostaleAdresse" class="form-label">Code Postal</label>
-                        <input type="text" class="form-control" id="editCodePostaleAdresse" name="code_postale_adresse">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editTelephone" class="form-label">Téléphone</label>
-                        <input type="text" class="form-control" id="editTelephone" name="telephone">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="editEmail" name="email">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editVille" class="form-label">Ville</label>
-                        <select class="form-select" id="editVille" name="ville" data-live-search="true">
-                            <option value="">Selectionnez une Ville</option>
-                            {% for ville in ville_list %}
-                                <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editClient" class="form-label">Client</label>
-                        <select class="form-select" id="editClient" name="client" data-live-search="true">
-                            <option value="">Selectionnez un Client</option>
-                            {% for client in client_list %}
-                                <option value="{{ client.id }}">{{ client.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAcheteur" class="form-label">Acheteur</label>
-                        <select class="form-select" id="editAcheteur" name="acheteur" data-live-search="true">
-                            <option value="">Selectionnez un Acheteur</option>
-                            {% for acheteur in acheteur_list %}
-                                <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editStatus" class="form-label">Statut</label>
-                        <select class="form-select" id="editStatus" name="status" data-live-search="true">
-                            <option value="">Selectionnez un Statut</option>
-                            <option value="nouvelle">Nouvelle</option>
-                            <option value="en_cours">En cours de traitement</option>
-                            <option value="rapport_soumis">Rapport soumis</option>
-                            <option value="rapport_valide">Rapport validé</option>
-                            <option value="envoye_client">Envoyé au client</option>
-                            <option value="terminee">Terminée</option>
-                            <option value="annulee">Annulée</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Commande Modal END -->
 
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
-
-<!-- (Optional) Latest compiled and minified JavaScript translation files -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/i18n/defaults-*.min.js"></script>
-
 <script>
-    $(document).ready(function() {
-        // Function to load commandes data
-        function loadCommandes(page = 1, search = '') {
-            $.ajax({
-                url: '/api/liste-des-commandes/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+const ACCESS_TOKEN = '{{ access }}';
+const REFRESH_TOKEN = '{{ refresh }}';
+let currentPage   = 1;
+let currentSearch = '';
+let currentStatus = '';
 
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
+/* ── Status badge helper ── */
+function statusBadge(status) {
+    const map = {
+        'nouvelle':        ['sbadge-nouvelle',        'bi-plus-circle',         'Nouvelle'],
+        'en_cours':        ['sbadge-en_cours',        'bi-hourglass-split',     'En cours'],
+        'rapport_soumis':  ['sbadge-rapport_soumis',  'bi-file-earmark-check',  'Rapport soumis'],
+        'rapport_valide':  ['sbadge-rapport_valide',  'bi-check-circle',        'Rapport validé'],
+        'envoye_client':   ['sbadge-envoye_client',   'bi-send',                'Envoyé au client'],
+        'terminee':        ['sbadge-terminee',        'bi-check2-all',          'Terminée'],
+        'annulee':         ['sbadge-annulee',         'bi-x-circle',            'Annulée'],
+    };
+    const [cls, icon, label] = map[status] || ['sbadge-terminee', 'bi-circle', status];
+    return `<span class="sbadge ${cls}"><i class="bi ${icon}"></i>${label}</span>`;
+}
 
-                    // Update commandes table body
-                    $('#commandesTableBody').html('');
-                    if (response.results.length === 0) {
-                        $('#commandesTableBody').append('<tr><td colspan="7" class="text-center">Aucune commande trouvée pour le pays sélectionné.</td></tr>');
-                    } else {
-                        response.results.forEach(function(commande, index) {
-                            $('#commandesTableBody').append(
-                                `<tr>
-                                    <td>${(index + 1 + (page - 1) * response.count)}</td>
-                                    <td>${commande.notre_ref || 'N/A'}</td>
-                                    <td>${commande.client_username || 'N/A'} ${commande.client.last_name || ''}</td>
-                                    <td>${commande.raison_sociale}</td>
-                                    <td>${commande.pays_nom || 'N/A'}</td> 
-                                    <td>${commande.status}</td>
-                                    <td>${new Date(commande.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <button class="btn btn-success btn-round mb-0 edit-btn" data-id="${commande.id}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>
-                                        &nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="${commande.id}" data-ref="${commande.notre_ref}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{% trans 'Gérer' %}"><i class="bi bi-gear"></i></button>
-                                        &nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="${commande.id}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="{% trans 'Supprimer' %}"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>`
-                            );
-                        });
-                    }
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
+/* ── KPI filter ── */
+function applyStatusFilter(status) {
+    currentStatus = status;
+    document.getElementById('statusFilter').value = status;
+    document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-filter'));
+    const map = { '': 'kpi-all', 'nouvelle': 'kpi-new', 'en_cours': 'kpi-progress', 'terminee': 'kpi-done' };
+    if (map[status]) document.getElementById(map[status]).classList.add('active-filter');
+    loadCommandes(1, currentSearch, status);
+}
 
-        // Initial load
-        loadCommandes();
+/* ── Load commandes ── */
+function loadCommandes(page = 1, search = '', status = '') {
+    currentPage   = page;
+    currentSearch = search;
+    currentStatus = status;
 
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadCommandes(1, search);
-        });
+    let url = '/api/liste-des-commandes/?page=' + page;
+    if (search) url += '&search=' + encodeURIComponent(search);
+    if (status) url += '&status=' + encodeURIComponent(status);
 
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadCommandes(page, search);
-        });
+    const tbody = document.getElementById('commandesTableBody');
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Chargement…</td></tr>`;
 
-        // Add Commande form submission
-        $('#addCommandeForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/ajouter-une-commande/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Commande ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addCommandeModal').modal('hide');
-                        loadCommandes();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la commande.',
-                    });
-                }
-            });
-        });
+    $.ajax({
+        url, type: 'GET',
+        headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+        success: function(response) {
+            /* Pagination info */
+            const start = (page - 1) * (response.count || 10) + 1;
+            const end   = Math.min(page * (response.count || 10), response.total || 0);
+            $('#paginationInfo').text('Affichage ' + start + '–' + end + ' sur ' + (response.total || 0));
 
-        // Edit Commande button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/editer-une-commande/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editCommandeId').val(response.id);
-                    $('#editNotreRef').val(response.notre_ref);
-                    $('#editReferenceClient').val(response.reference_client);
-                    $('#editDateReceptCommande').val(response.date_recept_commande);
-                    $('#editDateRapport').val(response.date_rapport);
-                    $('#editDelais').val(response.delais);
-                    $('#editPriorite').val(response.priorite);
-                    $('#editRaisonSociale').val(response.raison_sociale);
-                    $('#editTypeRapport').val(response.type_rapport);
-                    $('#editRefTypeRapport').val(response.ref_type_rapport);
-                    $('#editCreditDemande').val(response.credit_demande);
-                    $('#editDeviseCreditDemande').val(response.devise_credit_demande);
-                    $('#editCreditRecommande').val(response.credit_recommande);
-                    $('#editDeviseCreditRecommande').val(response.devise_credit_recommande);
-                    $('#editNumeroAdresse').val(response.numero_adresse);
-                    $('#editRueAdresse').val(response.rue_adresse);
-                    $('#editCodePostaleAdresse').val(response.code_postale_adresse);
-                    $('#editTelephone').val(response.telephone);
-                    $('#editEmail').val(response.email);
-                    $('#editVille').val(response.ville);
-                    $('#editClient').val(response.client);
-                    $('#editAcheteur').val(response.acheteur);
-                    $('#editStatus').val(response.status);
-                    $('#editCommandeModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la commande.',
-                    });
-                }
-            });
-        });
+            /* Update total KPI */
+            if (!status && !search) $('#kpiTotal').text(response.total || 0);
 
-        // Edit Commande form submission
-        $('#editCommandeForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editCommandeId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/editer-une-commande/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Commande mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editCommandeModal').modal('hide');
-                        loadCommandes();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la commande.',
-                    });
-                }
-            });
-        });
-
-        // Manage Acheteur button click (avec SweetAlert)
-        $(document).on('click', '.manage-btn', function() {
-            var commandeId = $(this).data('id');
-            var commandeRef = $(this).data('ref');
-
-            Swal.fire({
-                title: 'Manager Commande',
-                html: 'Voulez-vous manager la commande <b>"' + commandeRef + '"</b> ?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, manager',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '/root-dashboard/commandes/manager-une-commande/' + commandeId + '/?token=' + '{{ user.reset_token }}';
-                }
-            });
-        });
-
-        // Delete Commande button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/supprimer-des-commandes/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La commande a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadCommandes();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la commande.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
+            /* Pagination buttons */
+            let pages = '';
+            if (response.previous) pages += `<li class="page-item"><a class="page-link" href="#" data-page="${page-1}"><i class="bi bi-chevron-left"></i></a></li>`;
+            for (let i = 1; i <= response.total_pages; i++) {
+                if (Math.abs(i - page) <= 2 || i === 1 || i === response.total_pages) {
+                    pages += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+                } else if (Math.abs(i - page) === 3) {
+                    pages += `<li class="page-item disabled"><span class="page-link">…</span></li>`;
                 }
             }
-        });
+            if (response.next) pages += `<li class="page-item"><a class="page-link" href="#" data-page="${page+1}"><i class="bi bi-chevron-right"></i></a></li>`;
+            $('#paginationControls').html(pages);
 
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
+            /* Table rows */
+            tbody.innerHTML = '';
+            if (!response.results || response.results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><strong>Aucune commande trouvée</strong><small>Modifiez les filtres ou ajoutez une nouvelle commande</small></div></td></tr>`;
+                return;
+            }
+            response.results.forEach(function(cmd, index) {
+                const num = (index + 1 + (page - 1) * (response.count || 10));
+                const date = cmd.created_at ? new Date(cmd.created_at).toLocaleDateString('fr-FR') : '—';
+                tbody.innerHTML += `
+                <tr>
+                    <td><span class="text-muted small">${num}</span></td>
+                    <td><span class="ref-pill">${cmd.notre_ref || '—'}</span></td>
+                    <td><span class="client-name">${cmd.client_username || '—'} ${cmd.client?.last_name || ''}</span></td>
+                    <td>${cmd.raison_sociale || '—'}</td>
+                    <td><small>${cmd.pays_nom || '—'}</small></td>
+                    <td>${statusBadge(cmd.status)}</td>
+                    <td><small class="text-muted">${date}</small></td>
+                    <td style="text-align:center;white-space:nowrap;">
+                        <button class="btn-act btn-act-edit edit-btn me-1" data-id="${cmd.id}" title="Modifier"><i class="bi bi-pencil"></i></button>
+                        <button class="btn-act btn-act-manage manage-btn me-1" data-id="${cmd.id}" data-ref="${cmd.notre_ref}" title="Gérer"><i class="bi bi-gear"></i></button>
+                        <button class="btn-act btn-act-delete delete-btn" data-id="${cmd.id}" title="Supprimer"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
             });
+        },
+        error: function() {
+            Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de charger les commandes.' });
         }
     });
+}
+
+/* ── Load KPI counts ── */
+function loadStats() {
+    const headers = { 'Authorization': 'Bearer ' + ACCESS_TOKEN };
+    $.ajax({ url: '/api/liste-des-commandes/?page=1', headers,
+        success: r => $('#kpiTotal').text(r.total || 0) });
+    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=nouvelle', headers,
+        success: r => $('#kpiNouvelle').text(r.total || 0) });
+    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=en_cours', headers,
+        success: r => $('#kpiEnCours').text(r.total || 0) });
+    $.ajax({ url: '/api/liste-des-commandes/?page=1&status=terminee', headers,
+        success: r => $('#kpiTerminee').text(r.total || 0) });
+}
+
+$(document).ready(function() {
+
+    loadCommandes();
+    loadStats();
+
+    /* Search (live) */
+    let searchTimer;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => loadCommandes(1, this.value, currentStatus), 400);
+    });
+
+    /* Prevent form submit on Enter in search */
+    $('#searchInput').on('keydown', function(e) { if (e.key === 'Enter') e.preventDefault(); });
+
+    /* Pagination */
+    $(document).on('click', '#paginationControls .page-link', function(e) {
+        e.preventDefault();
+        const pg = $(this).data('page');
+        if (pg) loadCommandes(pg, currentSearch, currentStatus);
+    });
+
+    /* ADD COMMANDE */
+    $('#addCommandeForm').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '/api/ajouter-une-commande/', type: 'POST',
+            data: $(this).serialize(),
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function() {
+                Swal.fire({ icon:'success', title:'Enregistrée', text:'Commande ajoutée avec succès.', showConfirmButton:false, timer:1500 })
+                    .then(() => { $('#addCommandeModal').modal('hide'); loadCommandes(1, currentSearch, currentStatus); loadStats(); });
+            },
+            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:"Impossible d'ajouter la commande." }); }
+        });
+    });
+
+    /* EDIT — open modal */
+    $(document).on('click', '.edit-btn', function() {
+        const id = $(this).data('id');
+        $.ajax({
+            url: '/api/editer-une-commande/' + id + '/', type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(r) {
+                $('#editCommandeId').val(r.id);
+                $('#editNotreRef').val(r.notre_ref);
+                $('#editReferenceClient').val(r.reference_client);
+                $('#editDateReceptCommande').val(r.date_recept_commande);
+                $('#editDateRapport').val(r.date_rapport);
+                $('#editDelais').val(r.delais);
+                $('#editPriorite').val(r.priorite);
+                $('#editRaisonSociale').val(r.raison_sociale);
+                $('#editTypeRapport').val(r.type_rapport);
+                $('#editRefTypeRapport').val(r.ref_type_rapport);
+                $('#editCreditDemande').val(r.credit_demande);
+                $('#editDeviseCreditDemande').val(r.devise_credit_demande);
+                $('#editCreditRecommande').val(r.credit_recommande);
+                $('#editDeviseCreditRecommande').val(r.devise_credit_recommande);
+                $('#editNumeroAdresse').val(r.numero_adresse);
+                $('#editRueAdresse').val(r.rue_adresse);
+                $('#editCodePostaleAdresse').val(r.code_postale_adresse);
+                $('#editTelephone').val(r.telephone);
+                $('#editEmail').val(r.email);
+                $('#editVille').val(r.ville);
+                $('#editClient').val(r.client);
+                $('#editAcheteur').val(r.acheteur);
+                $('#editStatus').val(r.status);
+                $('#editCommandeModal').modal('show');
+            },
+            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de charger la commande.' }); }
+        });
+    });
+
+    /* EDIT — submit */
+    $('#editCommandeForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#editCommandeId').val();
+        $.ajax({
+            url: '/api/editer-une-commande/' + id + '/', type: 'PUT',
+            data: $(this).serialize(),
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function() {
+                Swal.fire({ icon:'success', title:'Mis à jour', text:'Commande modifiée avec succès.', showConfirmButton:false, timer:1500 })
+                    .then(() => { $('#editCommandeModal').modal('hide'); loadCommandes(currentPage, currentSearch, currentStatus); loadStats(); });
+            },
+            error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de modifier la commande.' }); }
+        });
+    });
+
+    /* MANAGE */
+    $(document).on('click', '.manage-btn', function() {
+        const id  = $(this).data('id');
+        const ref = $(this).data('ref');
+        Swal.fire({
+            title: 'Gérer la commande',
+            html: `Ouvrir la fiche de la commande <b>${ref || '#'+id}</b> ?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0d80be',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bi bi-gear me-1"></i> Ouvrir',
+            cancelButtonText: 'Annuler'
+        }).then(r => {
+            if (r.isConfirmed) window.location.href = '/root-dashboard/commandes/manager-une-commande/' + id + '/?token={{ user.reset_token }}';
+        });
+    });
+
+    /* DELETE */
+    $(document).on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'Supprimer cette commande ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then(r => {
+            if (r.isConfirmed) {
+                $.ajax({
+                    url: '/api/supprimer-des-commandes/', type: 'DELETE',
+                    data: JSON.stringify({ ids: [id] }), contentType: 'application/json',
+                    headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+                    success: function() {
+                        Swal.fire({ icon:'success', title:'Supprimée', text:'La commande a été supprimée.', showConfirmButton:false, timer:1400 })
+                            .then(() => { loadCommandes(currentPage, currentSearch, currentStatus); loadStats(); });
+                    },
+                    error: function() { Swal.fire({ icon:'error', title:'Erreur', text:'Impossible de supprimer.' }); }
+                });
+            }
+        });
+    });
+
+    /* Token refresh */
+    $.ajaxSetup({ statusCode: { 401: refreshToken } });
+
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/', type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }), contentType: 'application/json',
+            success: r => { localStorage.setItem('access_token', r.access); },
+            error: function() {
+                Swal.fire({ icon:'error', title:'Session expirée', text:'Veuillez recharger la page.',
+                    confirmButtonText:'Recharger' }).then(() => window.location.reload(true));
+            }
+        });
+    }
+});
 </script>
-
 {% endblock %}
-
-
