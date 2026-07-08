@@ -84,6 +84,26 @@ class ListCommandeView(APIView):
                 | Q(ville__nom__icontains=search_query)
             )
 
+        status_filter = request.query_params.get("status", "")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        type_filter = request.query_params.get("type_rapport", "")
+        if type_filter:
+            queryset = queryset.filter(type_rapport=type_filter)
+
+        client_filter = request.query_params.get("client", "")
+        if client_filter:
+            queryset = queryset.filter(client_id=client_filter)
+
+        date_from = request.query_params.get("date_from", "")
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+
+        date_to = request.query_params.get("date_to", "")
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+
         # Tri du queryset
         queryset = queryset.order_by("-created_at")
 
