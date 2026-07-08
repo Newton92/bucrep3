@@ -229,14 +229,11 @@ def generer_rapport_solvabilite(request, acheteur_id):
     
     # Validation des paramètres
     valid_languages = ['fr', 'en']
-    valid_devises = ['XAF', 'XOF', 'USD', 'EUR', 'GBP', 'JPY']
     valid_bilan_types = ['Classique', 'Anglais', 'Syscohada', 'Bancaire', 'IFRS COBAC']
     valid_formats = ['pdf', 'html', 'json', 'xml']
     
     if language not in valid_languages:
         return Response({'error': 'Langue non supportée'}, status=400)
-    if devise not in valid_devises:
-        return Response({'error': 'Devise non supportée'}, status=400)
     if bilan_type not in valid_bilan_types:
         return Response({'error': 'Type de bilan non supporté'}, status=400)
     if format_report not in valid_formats:
