@@ -266,6 +266,13 @@ body { background:#f0f4f8; }
                 </div>
             </div>
 
+            <!-- ── Description ── -->
+            <div class="sec">
+                <div class="sec-title"><i class="bi bi-file-text"></i>{% trans "Description" %}</div>
+                <div id="descriptionEditor"></div>
+                <input type="hidden" name="description" id="descriptionHidden">
+            </div>
+
             <!-- ── Opinion ACREMAC ── -->
             <div class="sec">
                 <div class="sec-title"><i class="bi bi-chat-left-text"></i>{% trans "Opinion ACREMAC" %}</div>
@@ -499,16 +506,24 @@ $(document).ready(function () {
     }
 
     // ── Quill ──
+    var QUILL_TOOLBAR = [
+        [{header:[1,2,3,false]}],
+        ['bold','italic','underline','strike'],
+        [{color:[]},{background:[]}],
+        [{list:'ordered'},{list:'bullet'}],
+        ['link','blockquote'],['clean']
+    ];
+
+    var descriptionQuill = new Quill('#descriptionEditor', {
+        theme:'snow',
+        placeholder:'{% trans "Description détaillée de l\'acheteur..." %}',
+        modules:{ toolbar: QUILL_TOOLBAR }
+    });
+
     var commentaireQuill = new Quill('#commentaireEditor', {
         theme:'snow',
         placeholder:'{% trans "Votre commentaire sur cet acheteur..." %}',
-        modules:{ toolbar:[
-            [{header:[1,2,3,false]}],
-            ['bold','italic','underline','strike'],
-            [{color:[]},{background:[]}],
-            [{list:'ordered'},{list:'bullet'}],
-            ['link','blockquote'],['clean']
-        ]}
+        modules:{ toolbar: QUILL_TOOLBAR }
     });
 
     // ── Remplissage ──
@@ -537,6 +552,7 @@ $(document).ready(function () {
             loadVillesParPays(a.pays.id, a.ville ? a.ville.id : null);
             loadRegionsParPays(a.pays.id, a.region ? a.region.id : null);
         }
+        if (descriptionQuill) descriptionQuill.root.innerHTML = a.description || '';
         if (commentaireQuill) commentaireQuill.root.innerHTML = a.commentaire || '';
         if (a.latitude)  $('#latitude').val(a.latitude);
         if (a.longitude) $('#longitude').val(a.longitude);
@@ -589,6 +605,9 @@ $(document).ready(function () {
     $('#editAcheteurForm').on('submit', function(e){
         e.preventDefault();
         if (!validate()) return;
+
+        var descHtml = descriptionQuill ? descriptionQuill.root.innerHTML : '';
+        $('#descriptionHidden').val(descHtml==='<p><br></p>' ? '' : descHtml);
 
         var html = commentaireQuill ? commentaireQuill.root.innerHTML : '';
         $('#commentaireHidden').val(html==='<p><br></p>' ? '' : html);
