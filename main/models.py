@@ -1990,14 +1990,12 @@ class Acheteur(Model):
             "pays_id": self.pays_id,
             "province_id": self.province_id,
             "ville_id": self.ville_id,
-            "email": self.email,
             "site_internet": self.site_internet,
             "numero_adresse": self.numero_adresse,
             "rue_adresse": self.rue_adresse,
             "code_postal": self.code_postal,
             "fax": self.fax,
             "boite_postale": self.boite_postale,
-            # Pourrait aussi surveiller 'taille' (si elle existe) si elle est liée à 'Santé Financière'
         }
 
     def save(self, *args, **kwargs):
@@ -2019,7 +2017,6 @@ class Acheteur(Model):
             "pays_id": self.pays_id,
             "province_id": self.province_id,
             "ville_id": self.ville_id,
-            "email": self.email,
             "site_internet": self.site_internet,
             "numero_adresse": self.numero_adresse,
             "rue_adresse": self.rue_adresse,
@@ -2033,7 +2030,6 @@ class Acheteur(Model):
         field_to_element_code = {
             "nom": "COMPANY_NAME_CHANGE",
             "forme_juridique_id": "FORME_JURIDIQUE_CHANGE",
-            "email": "CONTACT_INFO_CHANGE",
             "site_internet": "CONTACT_INFO_CHANGE",
             "numero_adresse": "CONTACT_INFO_CHANGE",
             "rue_adresse": "CONTACT_INFO_CHANGE",
