@@ -184,7 +184,6 @@ class ListAcheteurView(APIView):
                 | Q(code__icontains=search_query)
                 | Q(nom__icontains=search_query)
                 | Q(sigle__icontains=search_query)
-                | Q(email__icontains=search_query)
                 | Q(numero_adresse__icontains=search_query)
                 | Q(site_internet__icontains=search_query)
                 | Q(rue_adresse__icontains=search_query)
@@ -261,7 +260,6 @@ class SearchAcheteurView(APIView):
             Q(code__icontains=search_term) |
             Q(nom__icontains=search_term) |
             Q(sigle__icontains=search_term) |
-            Q(email__icontains=search_term) |
             Q(activite_principale__icontains=search_term) |
             Q(pays__nom__icontains=search_term) |
             Q(ville__nom__icontains=search_term) |

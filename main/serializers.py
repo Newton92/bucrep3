@@ -1092,7 +1092,6 @@ class AcheteurSerializerTwo(serializers.ModelSerializer):
             "code_postal",
             "fax",
             "boite_postale",
-            "email",
             "site_internet",
             "numero_adresse",
             "rue_adresse",
@@ -1105,7 +1104,7 @@ class AcheteurSerializerTwo(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
-        
+
 class AcheteurSerializer(serializers.ModelSerializer):
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
@@ -1120,7 +1119,7 @@ class AcheteurSerializer(serializers.ModelSerializer):
             "activite_principale",
             "nom", "sigle", "description", "date_creation",
             "statut_entreprise", "code_postal", "fax", "boite_postale",
-            "email", "site_internet", "numero_adresse", "rue_adresse",
+            "site_internet", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "couleur_commentaire",
             "commentaire", "created_at", "updated_at",
         ]
@@ -1162,7 +1161,7 @@ class AddAcheteurSerializerTwo(serializers.ModelSerializer):
             "id", "forme_juridique",
             "activite_principale", "nom", "sigle", "description",
             "date_creation", "statut_entreprise", "code_postal",
-            "fax", "boite_postale", "email", "site_internet",
+            "fax", "boite_postale", "site_internet",
             "numero_adresse", "rue_adresse", "ville", "province",
             "pays", "couleur_commentaire", "commentaire",
             "code"
@@ -1173,133 +1172,102 @@ class AddAcheteurSerializerTwo(serializers.ModelSerializer):
         """Validation simple du site internet"""
         if value:
             value = value.strip()
-            # Supprimer https:// si présent
             value = re.sub(r'^https?://', '', value)
-            # Supprimer le slash final
             value = value.rstrip('/')
         return value
-    
-    def validate_email(self, value):
-        """Validation de l'email"""
-        if value:
-            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', value):
-                raise serializers.ValidationError("Format d'email invalide")
-        return value
-    
+
     def validate_nom(self, value):
         """Validation du nom"""
         if len(value.strip()) < 2:
             raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
         return value.strip()
-    
+
     def validate_activite_principale(self, value):
         """Validation de l'activité principale"""
         if value and len(value.strip()) < 3:
             raise serializers.ValidationError("L'activité principale doit contenir au moins 3 caractères")
         return value.strip() if value else value
-    
+
     def validate_commentaire(self, value):
         """Validation du commentaire"""
         if value and len(value.strip()) < 10:
             raise serializers.ValidationError("Le commentaire doit contenir au moins 10 caractères")
         return value.strip() if value else value
-    
+
     def validate(self, data):
         """Validation globale"""
-        # Vérifier la cohérence des dates
         date_creation = data.get('date_creation')
         if date_creation and date_creation > timezone.now().date():
             raise serializers.ValidationError({
                 "date_creation": "La date de création ne peut pas être dans le futur"
             })
-        
-        # Vérifier la cohérence géographique
+
         ville = data.get('ville')
         province = data.get('province')
         pays = data.get('pays')
-        
+
         if ville and province:
             if ville.province_id != province.id:
                 raise serializers.ValidationError({
                     "ville": "La ville doit appartenir à la province sélectionnée"
                 })
-        
+
         if province and pays:
             if province.pays_id != pays.id:
                 raise serializers.ValidationError({
                     "province": "La province doit appartenir au pays sélectionné"
                 })
-        
-        # Générer un code automatique si non fourni
+
         if not data.get('code'):
             data['code'] = self.generate_code(data.get('nom'), data.get('pays'))
-        
+
         return data
-    
+
     def generate_code(self, nom, pays):
-        """Génère un code unique pour l'acheteur"""
         from django.db.models import Max
-        
         if not nom or not pays:
             return ""
-        
-        # Prendre les 3 premières lettres du nom
         prefix = nom[:3].upper()
-        
-        # Prendre le code du pays
         pays_code = pays.code if hasattr(pays, 'code') else 'GA'
-        
-        # Chercher le dernier numéro pour ce préfixe/pays
         last_code = Acheteur.objects.filter(
             code__startswith=f"ACH-{pays_code}-{prefix}"
         ).aggregate(max_num=Max('code'))
-        
         if last_code['max_num']:
             try:
                 last_num = int(last_code['max_num'].split('-')[-1])
                 next_num = last_num + 1
-            except:
+            except Exception:
                 next_num = 1
         else:
             next_num = 1
-        
         return f"ACH-{pays_code}-{prefix}{next_num:04d}"
-    
+
     @transaction.atomic
     def create(self, validated_data):
-        """Création avec gestion des transactions et journalisation"""
         try:
-            # Créer l'acheteur
             acheteur = super().create(validated_data)
-            
-            # Journaliser la création (ne pas bloquer en cas d'échec)
             try:
                 request = self.context.get('request')
                 if request and request.user:
                     from main.models import ActivityLog
-                    
                     ActivityLog.objects.create(
                         user=request.user,
-                        action_type='CREATE',  # ou 'ACHETEUR_CREATED'
+                        action_type='CREATE',
                         object_id=acheteur.id,
                         object_type='Acheteur',
                         details=f"Création de l'acheteur '{acheteur.nom}' (ID: {acheteur.id})",
                         ip_address=request.META.get('REMOTE_ADDR', ''),
-                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]  # Limiter la taille
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]
                     )
             except Exception as log_error:
-                # Log l'erreur mais ne pas bloquer la création
                 import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Échec de journalisation: {str(log_error)}")
-            
+                logging.getLogger(__name__).warning(f"Échec de journalisation: {str(log_error)}")
             return acheteur
-            
         except Exception as e:
             raise serializers.ValidationError({
                 "non_field_errors": f"Erreur lors de la création: {str(e)}"
-            })    
-            
+            })
+
 class AddAcheteurSerializer(serializers.ModelSerializer):
     site_internet = DomainNameField()
     
@@ -1309,7 +1277,7 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
             "id", "forme_juridique",
             "activite_principale", "nom", "sigle",
             "description", "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email",
+            "code_postal", "fax", "boite_postale",
             "site_internet", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire", "code", "created_by"
@@ -1317,22 +1285,12 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at", "code"]
 
     def validate_site_internet(self, value):
-        """Validation simple du site internet"""
         if value:
             value = value.strip()
-            # Supprimer https:// si présent
             value = re.sub(r'^https?://', '', value)
-            # Supprimer le slash final
             value = value.rstrip('/')
         return value
-    
-    def validate_email(self, value):
-        """Validation de l'email"""
-        if value:
-            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', value):
-                raise serializers.ValidationError("Format d'email invalide")
-        return value
-    
+
     def validate_nom(self, value):
         """Validation du nom"""
         if len(value.strip()) < 2:
@@ -1469,62 +1427,37 @@ class EditAcheteurSerializerTwo(serializers.ModelSerializer):
             "id", "forme_juridique",
             "activite_principale", "nom", "sigle", "description",
             "date_creation", "statut_entreprise", "code_postal",
-            "fax", "boite_postale", "email", "site_internet",
+            "fax", "boite_postale", "site_internet",
             "numero_adresse", "rue_adresse", "ville", "province",
             "pays", "couleur_commentaire", "commentaire"
         ]
-    
+
     def validate_site_internet(self, value):
-        """Validation et nettoyage"""
         if not value:
             return ''
-        
         value = str(value).strip()
-        
-        # Si c'est vide
         if not value:
             return ''
-        
-        # Supprimer les protocoles s'ils sont présents
         value = re.sub(r'^https?://', '', value)
-        
-        # Supprimer slash final
         value = value.rstrip('/')
-        
-        # Supprimer www. si présent
         value = re.sub(r'^www\.', '', value)
-        
-        # Retourner tel quel (Django URLField ajoutera https:// si nécessaire)
         return value.lower()
-    
+
     def validate(self, data):
-        """Validation globale"""
-        # Nettoyer site_internet avant toutes les autres validations
         if 'site_internet' in data:
             data['site_internet'] = self.validate_site_internet(data['site_internet'])
-        
         return data
-    
+
     @transaction.atomic
     def update(self, instance, validated_data):
-        """Mise à jour avec transactions - UNE SEULE MÉTHODE UPDATE"""
         try:
-            # Journalisation optionnelle
             request = self.context.get('request')
-            
-            # Mettre à jour
             for field, value in validated_data.items():
                 setattr(instance, field, value)
-            
-            # Nettoyer site_internet si nécessaire
             if hasattr(instance, 'site_internet') and instance.site_internet:
-                # Si le site internet ne commence pas par http/https, ajouter https://
                 if not instance.site_internet.startswith(('http://', 'https://')):
                     instance.site_internet = f'https://{instance.site_internet}'
-            
             instance.save()
-            
-            # Log d'activité
             if request and request.user:
                 from main.models import ActivityLog
                 ActivityLog.objects.create(
@@ -1535,14 +1468,12 @@ class EditAcheteurSerializerTwo(serializers.ModelSerializer):
                     details=f"Mise à jour de l'acheteur {instance.nom}",
                     ip_address=request.META.get('REMOTE_ADDR', '')
                 )
-            
             return instance
-            
         except Exception as e:
             raise serializers.ValidationError({
                 'non_field_errors': [f'Erreur lors de la mise à jour: {str(e)}']
             })
-                     
+
 class EditAcheteurSerializer(serializers.ModelSerializer):
     site_internet = serializers.CharField(
         required=False,
@@ -1557,63 +1488,38 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
             "id", "forme_juridique",
             "activite_principale", "nom", "sigle",
             "description", "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email",
+            "code_postal", "fax", "boite_postale",
             "site_internet", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire"
         ]
 
     def validate_site_internet(self, value):
-        """Validation et nettoyage"""
         if not value:
             return ''
-        
         value = str(value).strip()
-        
-        # Si c'est vide
         if not value:
             return ''
-        
-        # Supprimer les protocoles s'ils sont présents
         value = re.sub(r'^https?://', '', value)
-        
-        # Supprimer slash final
         value = value.rstrip('/')
-        
-        # Supprimer www. si présent
         value = re.sub(r'^www\.', '', value)
-        
-        # Retourner tel quel (Django URLField ajoutera https:// si nécessaire)
         return value.lower()
-    
+
     def validate(self, data):
-        """Validation globale"""
-        # Nettoyer site_internet avant toutes les autres validations
         if 'site_internet' in data:
             data['site_internet'] = self.validate_site_internet(data['site_internet'])
-        
         return data
-    
+
     @transaction.atomic
     def update(self, instance, validated_data):
-        """Mise à jour avec transactions - UNE SEULE MÉTHODE UPDATE"""
         try:
-            # Journalisation optionnelle
             request = self.context.get('request')
-            
-            # Mettre à jour
             for field, value in validated_data.items():
                 setattr(instance, field, value)
-            
-            # Nettoyer site_internet si nécessaire
             if hasattr(instance, 'site_internet') and instance.site_internet:
-                # Si le site internet ne commence pas par http/https, ajouter https://
                 if not instance.site_internet.startswith(('http://', 'https://')):
                     instance.site_internet = f'https://{instance.site_internet}'
-            
             instance.save()
-            
-            # Log d'activité
             if request and request.user:
                 from main.models import ActivityLog
                 ActivityLog.objects.create(
@@ -1624,9 +1530,7 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
                     details=f"Mise à jour de l'acheteur {instance.nom}",
                     ip_address=request.META.get('REMOTE_ADDR', '')
                 )
-            
             return instance
-            
         except Exception as e:
             raise serializers.ValidationError({
                 'non_field_errors': [f'Erreur lors de la mise à jour: {str(e)}']
@@ -1650,19 +1554,18 @@ class GetAcheteurSerializerTwo(serializers.ModelSerializer):
             "id", "code", "forme_juridique",
             "activite_principale", "nom", "sigle", "description",
             "date_creation", "statut_entreprise", "code_postal",
-            "fax", "boite_postale", "email", "site_internet",
+            "fax", "boite_postale", "site_internet",
             "site_internet_formatted", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "couleur_commentaire",
             "commentaire", "created_at", "updated_at"
         ]
         read_only_fields = fields
-    
+
     def get_site_internet_formatted(self, obj):
-        """Retourne l'URL formatée avec https://"""
         if obj.site_internet:
             return f"https://{obj.site_internet}"
         return None
-    
+
 class GetAcheteurSerializer(serializers.ModelSerializer):
     forme_juridique = FormeJuridiqueSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseSerializer(read_only=True)
@@ -1680,7 +1583,7 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
             "id", "code", "forme_juridique",
             "activite_principale", "nom",
             "sigle", "description", "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email", "site_internet",
+            "code_postal", "fax", "boite_postale", "site_internet",
             "site_internet_formatted", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
             "commentaire", "created_at", "updated_at"

@@ -1871,7 +1871,6 @@ class Acheteur(Model):
         max_length=200, blank=True, help_text=_("Boîte postale de l'entreprise")
     )
 
-    email = models.EmailField(blank=True, help_text=_("Adresse email de l'entreprise"))
 
     site_internet = models.URLField(
         max_length=300, blank=True, help_text=_("Site internet de l'entreprise")
