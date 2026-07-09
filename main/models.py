@@ -1977,7 +1977,7 @@ class Acheteur(Model):
         verbose_name = _("Acheteur")
         verbose_name_plural = _("Acheteurs")
         ordering = ["nom"]
-        unique_together = ("nom", "email")
+        unique_together = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
