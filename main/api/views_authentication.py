@@ -744,7 +744,13 @@ class PaysListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
+        user = request.user
+        if user.is_superuser or user.is_staff:
+            pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
+        else:
+            pays_list = user.affectation_possible.filter(afficher_au_dashboard=True).order_by("nom")
+            if not pays_list.exists():
+                pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
         serializer = PaysSerializer(pays_list, many=True)
         return Response(serializer.data)
     
@@ -763,7 +769,17 @@ class UpdateSelectedPaysView(APIView):
 
         try:
             pays = Pays.objects.get(id=pays_id, afficher_au_dashboard=True)
-            # Persister en session ET en base (survit à la déconnexion)
+
+            # Vérifier que l'utilisateur a le droit de sélectionner ce pays
+            user = request.user
+            if not user.is_superuser and not user.is_staff:
+                if user.affectation_possible.exists() and \
+                   not user.affectation_possible.filter(id=pays_id).exists():
+                    return Response(
+                        {"error": _("Vous n'êtes pas autorisé à sélectionner ce pays.")},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
             request.session['selected_pays_id'] = pays.id
             request.user.__class__.objects.filter(pk=request.user.pk).update(pays_actif_id=pays.id)
             return Response(
@@ -780,28 +796,40 @@ class UpdateSelectedPaysView(APIView):
             )
             
     def get(self, request, *args, **kwargs):
-        # Priorité : session en cours → pays_actif en DB → user.pays → premier pays dashboard
+        user = request.user
+        # Priorité : session → pays_actif (DB) → user.pays → affectation → affectation_possible → premier dashboard
         selected_pays_id = request.session.get("selected_pays_id")
 
         if not selected_pays_id:
-            # Restaurer depuis la DB (persisté entre sessions)
-            db_pays_actif = getattr(request.user, 'pays_actif_id', None)
+            db_pays_actif = getattr(user, 'pays_actif_id', None)
             if db_pays_actif:
                 selected_pays_id = db_pays_actif
-            elif request.user.pays:
-                selected_pays_id = request.user.pays.id
+            elif user.pays:
+                selected_pays_id = user.pays.id
 
+        # Auto-connexion sur le champ Affectation (premier pays affecté)
         if not selected_pays_id:
-            first_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by('nom').first()
+            first_affectation = user.affectation.order_by("nom").first()
+            if first_affectation:
+                selected_pays_id = first_affectation.id
+
+        # Fallback sur affectation_possible
+        if not selected_pays_id:
+            first_possible = user.affectation_possible.filter(afficher_au_dashboard=True).order_by("nom").first()
+            if first_possible:
+                selected_pays_id = first_possible.id
+
+        # Dernier fallback global (superuser uniquement)
+        if not selected_pays_id and (user.is_superuser or user.is_staff):
+            first_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
             if first_pays:
                 selected_pays_id = first_pays.id
 
-        # Vérifier que ce pays est toujours valide
+        # Vérifier que ce pays est toujours valide pour cet utilisateur
         if selected_pays_id:
             if not Pays.objects.filter(id=selected_pays_id, afficher_au_dashboard=True).exists():
-                selected_pays_id = request.user.pays.id if request.user.pays else None
+                selected_pays_id = user.pays.id if user.pays else None
 
-        # Toujours synchroniser la session
         if selected_pays_id:
             request.session["selected_pays_id"] = selected_pays_id
 
