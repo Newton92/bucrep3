@@ -318,23 +318,6 @@ class AddAcheteurView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
-        print("Données reçues:", request.data)  # Debug
-        print("=== DEBUG COMPLET CODE NACE ===")
-        print("Valeur reçue:", request.data.get('code_nace'))
-        
-        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
-        
-        print("=== TOUTES LES VALEURS DE LISTE_NOUVEAUX_CODE_NACE ===")
-        for i, (value, label) in enumerate(LISTE_NOUVEAUX_CODE_NACE):
-            print(f"{i+1:3}. {value} -> {label}")
-            if value == '5000 VENTE' or str(value) == '5000 VENTE':
-                print(f"   *** TROUVÉ: {value} ***")
-        
-        # Vérifier spécifiquement '5000 VENTE'
-        valid_values = [str(code[0]) for code in LISTE_NOUVEAUX_CODE_NACE]
-        print(f"'5000 VENTE' dans valid_values? {'5000 VENTE' in valid_values}")
-        print(f"valid_values contient '5000 VENTE'? {any('5000 VENTE' in str(v) for v in valid_values)}")
-            
         try:
             # Préparer les données
             data = request.data.copy()
@@ -532,8 +515,6 @@ class InitierAcheteurView(APIView):
                 description=(request.data.get('description') or '').strip(),
                 activite_principale=(request.data.get('activite_principale') or '').strip(),
                 date_creation=request.data.get('date_creation') or None,
-                code_nace=(request.data.get('code_nace') or ''),
-                nace_specifique=resolve_fk(NaceSpecifique, request.data.get('nace_specifique')),
                 forme_juridique=resolve_fk(FormeJuridique, request.data.get('forme_juridique')),
                 statut_entreprise=resolve_fk(StatutEntreprise, request.data.get('statut_entreprise')),
                 created_by=request.user,

@@ -1113,13 +1113,11 @@ class AcheteurSerializer(serializers.ModelSerializer):
     province = ProvinceSerializer()
     ville = VilleSerializer()
 
-    code_nace_display = serializers.SerializerMethodField()
-
     class Meta:
         model = Acheteur
         fields = [
             "id", "code", "forme_juridique",
-            "code_nace", "code_nace_display", "activite_principale",
+            "activite_principale",
             "nom", "sigle", "description", "date_creation",
             "statut_entreprise", "code_postal", "fax", "boite_postale",
             "email", "site_internet", "numero_adresse", "rue_adresse",
@@ -1127,17 +1125,6 @@ class AcheteurSerializer(serializers.ModelSerializer):
             "commentaire", "created_at", "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
-    
-    def get_code_nace_display(self, obj):
-        """Retourne l'affichage complet du code NACE"""
-        if obj.code_nace:
-            try:
-                # Récupérer la sous-catégorie correspondante
-                subcat = SubCategoryNaceCode.objects.get(code=obj.code_nace, active=True)
-                return f"{subcat.code} - {subcat.libelle}"
-            except SubCategoryNaceCode.DoesNotExist:
-                return obj.code_nace
-        return None
 
 
 class DomainNameField(serializers.CharField):
@@ -1320,7 +1307,7 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
         model = Acheteur
         fields = [
             "id", "forme_juridique",
-            "code_nace", "activite_principale", "nom", "sigle",
+            "activite_principale", "nom", "sigle",
             "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email",
             "site_internet", "numero_adresse", "rue_adresse",
@@ -1328,53 +1315,7 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
             "commentaire", "code", "created_by"
         ]
         read_only_fields = ["created_at", "updated_at", "code"]
-    
-    # ... garder les autres validateurs existants
-    def validate_code_nace(self, value):
-        """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
-        if not value or value == "":
-            return ""
-            
-        # Importer la liste
-        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
-        
-        # Convertir en string pour la comparaison
-        value_str = str(value).strip()
-        
-        print(f"=== VALIDATION code_nace ===")
-        print(f"Valeur à valider: '{value_str}'")
-        
-        # Vérifier si c'est une valeur exacte
-        valid_values = []
-        for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
-            str_value = str(code_value)
-            str_label = str(code_label)
-            valid_values.append(str_value)
-            
-            if value_str == str_value or value_str == str_label:
-                print(f"  ✓ Correspondance exacte trouvée: {str_value}")
-                return str_value
-        
-        print(f"  ✗ Aucune correspondance exacte")
-        print(f"  Valeurs valides: {valid_values[:10]}...")  # Afficher les 10 premières
-        
-        # Si pas de correspondance exacte, chercher par code numérique
-        if ' ' in value_str:
-            code_part = value_str.split(' ')[0]  # '5000' de '5000 VENTE'
-            print(f"  Recherche par code numérique: '{code_part}'")
-            
-            for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
-                str_value = str(code_value)
-                if str_value.startswith(code_part):
-                    print(f"  ✓ Correspondance partielle trouvée: {str_value}")
-                    return str_value
-        
-        print(f"  ✗ Aucune correspondance trouvée")
-        
-        # Si aucune correspondance, retourner la valeur telle quelle
-        # (ou lever une erreur selon vos besoins)
-        return value_str
-    
+
     def validate_site_internet(self, value):
         """Validation simple du site internet"""
         if value:
@@ -1614,7 +1555,7 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
         model = Acheteur
         fields = [
             "id", "forme_juridique",
-            "code_nace", "nace_specifique", "activite_principale", "nom", "sigle",
+            "activite_principale", "nom", "sigle",
             "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email",
             "site_internet", "numero_adresse", "rue_adresse",
@@ -1622,52 +1563,6 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
             "commentaire"
         ]
 
-    def validate_code_nace(self, value):
-        """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
-        if not value or value == "":
-            return ""
-
-        # Importer la liste
-        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
-
-        # Convertir en string pour la comparaison
-        value_str = str(value).strip()
-
-        print(f"=== VALIDATION code_nace ===")
-        print(f"Valeur à valider: '{value_str}'")
-        
-        # Vérifier si c'est une valeur exacte
-        valid_values = []
-        for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
-            str_value = str(code_value)
-            str_label = str(code_label)
-            valid_values.append(str_value)
-            
-            if value_str == str_value or value_str == str_label:
-                print(f"  ✓ Correspondance exacte trouvée: {str_value}")
-                return str_value
-        
-        print(f"  ✗ Aucune correspondance exacte")
-        print(f"  Valeurs valides: {valid_values[:10]}...")  # Afficher les 10 premières
-        
-        # Si pas de correspondance exacte, chercher par code numérique
-        if ' ' in value_str:
-            code_part = value_str.split(' ')[0]  # '5000' de '5000 VENTE'
-            print(f"  Recherche par code numérique: '{code_part}'")
-            
-            for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
-                str_value = str(code_value)
-                if str_value.startswith(code_part):
-                    print(f"  ✓ Correspondance partielle trouvée: {str_value}")
-                    return str_value
-        
-        print(f"  ✗ Aucune correspondance trouvée")
-        
-        # Si aucune correspondance, retourner la valeur telle quelle
-        # (ou lever une erreur selon vos besoins)
-        return value_str
-    
-    # ... garder les autres validateurs et méthodes
     def validate_site_internet(self, value):
         """Validation et nettoyage"""
         if not value:
@@ -1778,15 +1673,11 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
     couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
     
     site_internet_formatted = serializers.SerializerMethodField()
-    code_nace_info = serializers.SerializerMethodField()
-    nace_specifique_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Acheteur
         fields = [
             "id", "code", "forme_juridique",
-            "code_nace", "code_nace_info",
-            "nace_specifique", "nace_specifique_info",
             "activite_principale", "nom",
             "sigle", "description", "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email", "site_internet",
@@ -1800,36 +1691,6 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
         if obj.site_internet:
             return f"https://{obj.site_internet}"
         return None
-
-    def get_code_nace_info(self, obj):
-        if obj.code_nace:
-            try:
-                subcat = SubCategoryNaceCode.objects.select_related('category').get(
-                    code=obj.code_nace,
-                    active=True
-                )
-                return {
-                    'code': subcat.code,
-                    'libelle': subcat.libelle,
-                    'categorie': subcat.category.libelle if subcat.category else '',
-                    'poids': subcat.poids
-                }
-            except SubCategoryNaceCode.DoesNotExist:
-                return None
-        return None
-
-    def get_nace_specifique_info(self, obj):
-        n = obj.nace_specifique
-        if not n:
-            return None
-        return {
-            "id": n.id,
-            "code": n.code,
-            "denomination": n.denomination,
-            "activity": n.activity,
-            "type": n.type,
-            "label": f"{n.code} — {n.denomination}",
-        }
 
 
 

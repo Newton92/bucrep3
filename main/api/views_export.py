@@ -66,13 +66,10 @@ def _get_listing_queryset(params):
         )
 
     domaine    = params.get("domaine", "").strip()
-    code_nace  = params.get("code_nace", "").strip()
     search     = params.get("search", "").strip()
 
     if domaine:
         qs = qs.filter(activite_principale__icontains=domaine)
-    if code_nace:
-        qs = qs.filter(code_nace__icontains=code_nace)
     if search:
         qs = qs.filter(Q(nom__icontains=search) | Q(code__icontains=search))
 

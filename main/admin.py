@@ -2130,7 +2130,7 @@ class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
             'classes': ('collapse',)
         }),
         (_('Activité'), {
-            'fields': ('code_nace', 'activite_principale'),
+            'fields': ('activite_principale',),
             'classes': ('collapse',)
         }),
         (_('Coordonnées'), {

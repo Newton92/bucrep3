@@ -1817,17 +1817,6 @@ class Acheteur(Model):
         help_text=_("Forme juridique de l'entreprise"),
     )
     
-    code_nace = models.CharField(_("Code Nace"), max_length=100, choices=LISTE_NOUVEAUX_CODE_NACE, blank=True)
-
-    nace_specifique = models.ForeignKey(
-        "NaceSpecifique",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name="NACE Code (Specific)",
-        related_name="acheteurs",
-    )
-
     activite_principale = models.CharField(
         _("Activité Principale"),
         max_length=255,
