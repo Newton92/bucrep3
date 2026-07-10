@@ -579,6 +579,11 @@
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
+
+/* Quill rich editor */
+.ql-container.ql-snow { height: auto !important; min-height: 80px; max-height: 200px; overflow-y: auto; }
+.ql-editor { min-height: 80px !important; max-height: 200px; }
+.ql-editor.ql-blank::before { font-style: normal; color: #adb5bd; font-size: .82rem; }
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -639,11 +644,6 @@
                                 <div class="stat-value">{{ data_save.date_creation|date:"d/m/Y"|default:"-" }}</div>
                                 <small class="text-muted">{% trans "Date légale de création de l'entreprise" %}</small>
                             </div>
-                            <div class="date-timeline-item">
-                                <div class="stat-label">{% trans "Date registre" %}</div>
-                                <div class="stat-value">{{ data_save.date_registre|date:"d/m/Y"|default:"-" }}</div>
-                                <small class="text-muted">{% trans "Date d'inscription au registre" %}</small>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -652,44 +652,22 @@
                         <h5 class="fw-bold mb-3" style="color: #0a95ca;">
                             <i class="fas fa-balance-scale me-2"></i>{% trans "Statut légal" %}
                         </h5>
-                        <div class="mb-3">
+                        <div>
                             <div class="stat-label">{% trans "Forme juridique" %}</div>
                             <div class="stat-value">
-                                {% for key, value in forme_juridique_choices %}
-                                    {% if key == data_save.forme_juridique %}{{ value }}{% endif %}
-                                {% endfor %}
-                                {% if not data_save.forme_juridique %}-{% endif %}
+                                {{ data_save.forme_juridique.libelle|default:"-" }}
                             </div>
-                        </div>
-                        <div>
-                            <div class="stat-label">{% trans "Statut au registre" %}</div>
-                            <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
-                                {% for key, value in statut_registre_choices %}
-                                    {% if key == data_save.statut_registre %}{{ value }}{% endif %}
-                                {% endfor %}
-                                {% if not data_save.statut_registre %}Non spécifié{% endif %}
-                            </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Numéros d'identification -->
+            <!-- Identifiant fiscal -->
             <h5 class="fw-bold mb-3" style="color: #0a95ca;">
                 <i class="fas fa-id-card me-2"></i>{% trans "Identifiants légaux" %}
             </h5>
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="stat-card numero-registre">
-                        <div class="stat-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Registre du Commerce" %}</div>
-                        <div class="stat-value">{{ data_save.numero_registre_commerce|default:"-" }}</div>
-                        <small class="text-muted">N° d'immatriculation</small>
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="stat-card numero-fiscal">
                         <div class="stat-icon">
                             <i class="fas fa-file-invoice-dollar"></i>
@@ -697,21 +675,6 @@
                         <div class="stat-label">{% trans "Numéro Fiscal" %}</div>
                         <div class="stat-value">{{ data_save.numero_fiscale|default:"-" }}</div>
                         <small class="text-muted">{% trans "Identifiant fiscal" %}</small>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-card statut-registre">
-                        <div class="stat-icon">
-                            <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Statut légal" %}</div>
-                        <span class="status-badge {% if 'active' in data_save.statut_registre|lower %}badge-actif{% else %}badge-inactif{% endif %}">
-                            {% for key, value in statut_registre_choices %}
-                                {% if key == data_save.statut_registre %}{{ value }}{% endif %}
-                            {% endfor %}
-                            {% if not data_save.statut_registre %}-{% endif %}
-                        </span>
-                        <small class="text-muted">{% trans "Situation administrative" %}</small>
                     </div>
                 </div>
             </div>
@@ -733,18 +696,11 @@
 
             <!-- Commentaire -->
             {% if data_save.commentaire %}
-            <div class="colored-comment mb-4" style="border-left-color: {{ data_save.couleur_commentaire.code|default:'#0a95ca' }};">
+            <div class="registre-info-card mb-4">
                 <h6 class="fw-bold mb-2" style="color: #0a95ca;">
                     <i class="fas fa-comment-dots me-2"></i>{% trans "Commentaire" %}
                 </h6>
-                <p class="mb-0">{{ data_save.commentaire }}</p>
-                {% if data_save.couleur_commentaire %}
-                <div class="mt-3">
-                    <span class="badge badge-actif">
-                        <i class="fas fa-palette me-1"></i>{{ data_save.couleur_commentaire.couleur }}
-                    </span>
-                </div>
-                {% endif %}
+                <div class="mb-0">{{ data_save.commentaire|safe }}</div>
             </div>
             {% endif %}
 
@@ -811,7 +767,7 @@
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calendar-alt"></i>
-                                    <input type="date" class="form-control with-icon" 
+                                    <input type="date" class="form-control with-icon"
                                            id="date_creation" name="date_creation">
                                 </div>
                                 <small class="form-text text-muted">{% trans "Date légale de création de l'entreprise" %}</small>
@@ -819,34 +775,21 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="date_registre" class="form-label">
-                                    <i class="fas fa-calendar-check" style="color: #25add6;"></i>{% trans "Date registre" %}
-                                </label>
-                                <div class="input-with-icon">
-                                    <i class="input-icon fas fa-calendar-check"></i>
-                                    <input type="date" class="form-control with-icon" 
-                                           id="date_registre" name="date_registre">
-                                </div>
-                                <small class="form-text text-muted">{% trans "Date d'inscription au registre" %}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
                                 <label for="nom_anterieur" class="form-label">
                                     <i class="fas fa-history" style="color: #0d80be;"></i>{% trans "Nom Antérieur" %}
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-signature"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="nom_anterieur" name="nom_anterieur" 
-                                           placeholder="Ancien nom ou dénomination">
+                                    <input type="text" class="form-control with-icon"
+                                           id="nom_anterieur" name="nom_anterieur"
+                                           placeholder="{% trans "Ancien nom ou dénomination" %}">
                                 </div>
                                 <small class="form-text text-muted">{% trans "Ancienne dénomination sociale" %}</small>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="forme_juridique" class="form-label">
@@ -854,28 +797,11 @@
                                 </label>
                                 <select class="form-select select2" id="forme_juridique" name="forme_juridique">
                                     <option value="">{% trans "Sélectionnez une forme juridique" %}</option>
-                                    {% for key, value in forme_juridique_choices %}
-                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% for fj in forme_juridique_list %}
+                                    <option value="{{ fj.id }}">{{ fj.libelle }}</option>
                                     {% endfor %}
                                 </select>
                                 <small class="form-text text-muted">{% trans "Structure juridique de l'entreprise" %}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="numero_registre_commerce" class="form-label">
-                                    <i class="fas fa-book" style="color: #0a95ca;"></i>N° Registre du Commerce
-                                </label>
-                                <div class="input-with-icon">
-                                    <i class="input-icon fas fa-hashtag"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="numero_registre_commerce" name="numero_registre_commerce" 
-                                           placeholder="Ex: RC123456">
-                                </div>
-                                <small class="form-text text-muted">{% trans "Numéro d'immatriculation au RCCM" %}</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -885,46 +811,11 @@
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-hashtag"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="numero_fiscale" name="numero_fiscale" 
+                                    <input type="text" class="form-control with-icon"
+                                           id="numero_fiscale" name="numero_fiscale"
                                            placeholder="Ex: NIF123456">
                                 </div>
                                 <small class="form-text text-muted">{% trans "Numéro d'identification fiscale" %}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="statut_registre" class="form-label">
-                                    <i class="fas fa-clipboard-check" style="color: #0d80be;"></i>{% trans "Statut au Registre" %}
-                                </label>
-                                <select class="form-select select2" id="statut_registre" name="statut_registre">
-                                    <option value="">{% trans "Sélectionnez un statut" %}</option>
-                                    {% for key, value in statut_registre_choices %}
-                                    <option value="{{ key }}">{{ value }}</option>
-                                    {% endfor %}
-                                </select>
-                                <small class="form-text text-muted">{% trans "Situation administrative de l'entreprise" %}</small>
-                            </div>
-                        </div>
-                        <!-- Dans la modal d'ajout (#addDataSaveModal) -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="couleur_commentaire" class="form-label">
-                                    <i class="fas fa-palette" style="color: #106cb2;"></i>{% trans "Couleur Commentaire" %}
-                                </label>
-                                <select class="form-select select2" id="couleur_commentaire" name="couleur_commentaire">
-                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                    {% for couleur in coloration_list %}
-                                    <!-- CORRECTION ICI : Utiliser le bon champ pour la couleur -->
-                                    <option value="{{ couleur.id }}" data-color="{{ couleur.code|default:couleur.couleur }}">
-                                        {{ couleur.libelle }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <small class="form-text text-muted">{% trans "Couleur pour le commentaire" %}</small>
                             </div>
                         </div>
                     </div>
@@ -933,9 +824,8 @@
                         <label for="commentaire" class="form-label">
                             <i class="fas fa-comment-dots" style="color: #25add6;"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" 
-                                  rows="3" placeholder="Ajoutez des notes ou observations sur ces informations légales..."></textarea>
-                        <small class="form-text text-muted">{% trans "Observations et notes complémentaires" %}</small>
+                        <textarea class="form-control rich-editor" id="commentaire" name="commentaire"
+                                  rows="3" placeholder="{% trans "Observations et notes complémentaires..." %}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -967,7 +857,6 @@
             <form id="editDataSaveForm" class="enhanced-form">
                 <input type="hidden" id="editDataSaveId" name="id">
                 <div class="modal-body">
-                    <!-- Le contenu du formulaire d'édition reste le même -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -976,26 +865,11 @@
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calendar-alt"></i>
-                                    <input type="date" class="form-control with-icon" 
-                                           id="editDateCreation" name="date_creation" required>
+                                    <input type="date" class="form-control with-icon"
+                                           id="editDateCreation" name="date_creation">
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editDateRegistre" class="form-label">
-                                    <i class="fas fa-calendar-check text-success"></i>{% trans "Date d'Enregistrement" %}
-                                </label>
-                                <div class="input-with-icon">
-                                    <i class="input-icon fas fa-calendar-check"></i>
-                                    <input type="date" class="form-control with-icon" 
-                                           id="editDateRegistre" name="date_registre" required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editNomAnterieur" class="form-label">
@@ -1003,25 +877,10 @@
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-signature"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="editNomAnterieur" name="nom_anterieur" 
-                                           placeholder="Ancien nom ou dénomination">
+                                    <input type="text" class="form-control with-icon"
+                                           id="editNomAnterieur" name="nom_anterieur"
+                                           placeholder="{% trans "Ancien nom ou dénomination" %}">
                                 </div>
-                                <small class="form-text text-muted">{% trans "Ancienne dénomination sociale" %}</small>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editFormeJuridique" class="form-label">
-                                    <i class="fas fa-balance-scale" style="color: #106cb2;"></i>{% trans "Forme Juridique" %}
-                                </label>
-                                <select class="form-select select2" id="editFormeJuridique" name="forme_juridique">
-                                    <option value="">{% trans "Sélectionnez une forme juridique" %}</option>
-                                    {% for key, value in forme_juridique_choices %}
-                                    <option value="{{ key }}">{{ value }}</option>
-                                    {% endfor %}
-                                </select>
-                                <small class="form-text text-muted">{% trans "Structure juridique de l'entreprise" %}</small>
                             </div>
                         </div>
                     </div>
@@ -1029,14 +888,15 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editNumeroRegistreCommerce" class="form-label">
-                                    <i class="fas fa-book text-primary"></i>N° Registre du Commerce
+                                <label for="editFormeJuridique" class="form-label">
+                                    <i class="fas fa-balance-scale" style="color: #106cb2;"></i>{% trans "Forme Juridique" %}
                                 </label>
-                                <div class="input-with-icon">
-                                    <i class="input-icon fas fa-hashtag"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="editNumeroRegistreCommerce" name="numero_registre_commerce" required>
-                                </div>
+                                <select class="form-select select2" id="editFormeJuridique" name="forme_juridique">
+                                    <option value="">{% trans "Sélectionnez une forme juridique" %}</option>
+                                    {% for fj in forme_juridique_list %}
+                                    <option value="{{ fj.id }}">{{ fj.libelle }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -1046,44 +906,9 @@
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-hashtag"></i>
-                                    <input type="text" class="form-control with-icon" 
-                                           id="editNumeroFiscal" name="numero_fiscale" required>
+                                    <input type="text" class="form-control with-icon"
+                                           id="editNumeroFiscal" name="numero_fiscale">
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editStatutRegistre" class="form-label">
-                                    <i class="fas fa-clipboard-check" style="color: #0d80be;"></i>{% trans "Statut au Registre" %}
-                                </label>
-                                <select class="form-select select2" id="editStatutRegistre" name="statut_registre">
-                                    <option value="">{% trans "Sélectionnez un statut" %}</option>
-                                    {% for key, value in statut_registre_choices %}
-                                    <option value="{{ key }}">{{ value }}</option>
-                                    {% endfor %}
-                                </select>
-                                <small class="form-text text-muted">{% trans "Situation administrative de l'entreprise" %}</small>
-                            </div>
-                        </div>
-                        <!-- Dans la modal d'édition (#editDataSaveModal) -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="editCouleurCommentaire" class="form-label">
-                                    <i class="fas fa-palette" style="color: #106cb2;"></i>{% trans "Couleur Commentaire" %}
-                                </label>
-                                <select class="form-select select2" id="editCouleurCommentaire" name="couleur_commentaire">
-                                    <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                                    {% for couleur in coloration_list %}
-                                    <!-- CORRECTION ICI : Utiliser le bon champ pour la couleur -->
-                                    <option value="{{ couleur.id }}" data-color="{{ couleur.code|default:couleur.couleur }}">
-                                        {{ couleur.couleur }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <small class="form-text text-muted">{% trans "Couleur pour le commentaire" %}</small>
                             </div>
                         </div>
                     </div>
@@ -1092,7 +917,8 @@
                         <label for="editCommentaire" class="form-label">
                             <i class="fas fa-comment-dots text-success"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
+                        <textarea class="form-control rich-editor" id="editCommentaire" name="commentaire" rows="3"
+                                  placeholder="{% trans "Observations et notes complémentaires..." %}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1192,20 +1018,21 @@ $(document).ready(function() {
 
     // Réinitialisation pour les modales
     $('#addDataSaveModal, #editDataSaveModal').on('shown.bs.modal', function() {
-        $(this).find('.select2').each(function() {
+        var $modal = $(this);
+        $modal.find('.select2').each(function() {
             if ($(this).data('select2')) {
                 $(this).select2('destroy');
             }
         });
 
-        $(this).find('.select2').select2({
+        $modal.find('.select2').select2({
             theme: 'bootstrap-5',
             width: '100%',
             placeholder: 'Sélectionnez une option',
             language: 'fr',
             allowClear: true,
             minimumResultsForSearch: 5,
-            dropdownParent: $(this),
+            dropdownParent: $modal,
             templateResult: function(option) {
                 if ($(option.element).data('color')) {
                     return formatColorOption(option);
@@ -1217,6 +1044,23 @@ $(document).ready(function() {
             },
             escapeMarkup: function(m) { return m; }
         });
+
+        // Quill : appliquer la valeur après initialisation
+        var modalId = $modal.attr('id');
+        setTimeout(function() {
+            if (modalId === 'editDataSaveModal' && pendingEditData) {
+                window.quillSetValue('editCommentaire', pendingEditData.commentaire || '');
+                pendingEditData = null;
+            }
+        }, 50);
+    });
+
+    $('#editDataSaveModal').on('hidden.bs.modal', function() {
+        window.quillSetValue('editCommentaire', '');
+    });
+
+    $('#addDataSaveModal').on('hidden.bs.modal', function() {
+        window.quillSetValue('commentaire', '');
     });
 
     // Charger les données d'enregistrement
@@ -1239,44 +1083,21 @@ $(document).ready(function() {
         });
     }
 
+    var pendingEditData = null;
+
     // Remplir le formulaire d'édition
     function populateEditForm(dataSave) {
         if (!dataSave) return;
 
-        // Dans la fonction populateEditForm, ajoutez :
-        console.log('Données reçues pour édition:', dataSave);
-        console.log('Couleur commentaire:', dataSave.couleur_commentaire);
-        if (dataSave.couleur_commentaire) {
-            console.log('ID couleur:', dataSave.couleur_commentaire.id);
-            console.log('Code couleur:', dataSave.couleur_commentaire.code);
-            console.log('Nom couleur:', dataSave.couleur_commentaire.libelle);
-        }
-
+        pendingEditData = dataSave;
         $('#editDataSaveId').val(dataSave.id);
         $('#editDateCreation').val(dataSave.date_creation || '');
-        $('#editDateRegistre').val(dataSave.date_registre || '');
         $('#editNomAnterieur').val(dataSave.nom_anterieur || '');
-        $('#editNumeroRegistreCommerce').val(dataSave.numero_registre_commerce || '');
         $('#editNumeroFiscal').val(dataSave.numero_fiscale || '');
-        $('#editCommentaire').val(dataSave.commentaire || '');
-        
-        // Sélectionner les valeurs dans les select2
-        if (dataSave.forme_juridique) {
-            $('#editFormeJuridique').val(dataSave.forme_juridique).trigger('change');
-        }
-        
-        if (dataSave.statut_registre) {
-            $('#editStatutRegistre').val(dataSave.statut_registre).trigger('change');
-        }
-        
-        if (dataSave.couleur_commentaire) {
-            const couleurId = dataSave.couleur_commentaire.id || 
-                            dataSave.couleur_commentaire.pk || 
-                            dataSave.couleur_commentaire;
-            $('#editCouleurCommentaire').val(couleurId).trigger('change');
-        }
 
-        
+        if (dataSave.forme_juridique) {
+            $('#editFormeJuridique').val(dataSave.forme_juridique.id).trigger('change');
+        }
     }
 
     // Soumission des formulaires

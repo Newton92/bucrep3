@@ -1850,38 +1850,20 @@ class ResumeSummarySerializer(serializers.ModelSerializer):
 
 class DonneesEnregistrementSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
-    # ⭐ AJOUT : Ajouter les champs texte
-    forme_juridique_display = serializers.CharField(
-        source='get_forme_juridique_display', 
-        read_only=True
-    )
-    statut_registre_display = serializers.CharField(
-        source='get_statut_registre_display', 
-        read_only=True
-    )
+    forme_juridique = FormeJuridiqueSerializer(read_only=True)
 
     class Meta:
         model = DonneesEnregistrement
         fields = "__all__"
-        extra_fields = ['forme_juridique_display', 'statut_registre_display']
 
 
 class GetDonneesEnregistrementSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
-    # ⭐ AJOUT : Ajouter les display fields
-    forme_juridique_display = serializers.CharField(
-        source='get_forme_juridique_display', 
-        read_only=True
-    )
-    statut_registre_display = serializers.CharField(
-        source='get_statut_registre_display', 
-        read_only=True
-    )
+    forme_juridique = FormeJuridiqueSerializer(read_only=True)
 
     class Meta:
         model = DonneesEnregistrement
         fields = "__all__"
-        extra_fields = ['forme_juridique_display', 'statut_registre_display']
 
 
 class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
@@ -1892,61 +1874,27 @@ class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
             "acheteur",
             "nom_anterieur",
             "date_creation",
-            "date_registre",
             "forme_juridique",
-            "numero_registre_commerce",
             "numero_fiscale",
-            "statut_registre",
             "commentaire",
-            "couleur_commentaire",
         ]
-    
-    def validate_forme_juridique(self, value):
-        """Valider que la forme juridique est dans les choix"""
-        if value and value not in [choice[0] for choice in NOUVEAU_LEGAL_FORM]:
-            raise serializers.ValidationError(
-                f"Forme juridique invalide. Les choix sont: {[choice[1] for choice in NOUVEAU_LEGAL_FORM]}"
-            )
-        return value
-    
-    def validate_statut_registre(self, value):
-        """Valider que le statut est dans les choix"""
-        if value and value not in [choice[0] for choice in LIEN_STATUT_CHOICE]:
-            raise serializers.ValidationError(
-                f"Statut registre invalide. Les choix sont: {[choice[1] for choice in LIEN_STATUT_CHOICE]}"
-            )
-        return value
 
 
 class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
     class Meta:
         model = DonneesEnregistrement
         fields = [
-            "id", 
-            "acheteur", 
+            "id",
+            "acheteur",
             "nom_anterieur",
-            "date_creation", 
-            "date_registre",
-            "forme_juridique", 
-            "numero_registre_commerce", 
+            "date_creation",
+            "forme_juridique",
             "numero_fiscale",
-            "statut_registre", 
             "commentaire",
-            "couleur_commentaire",
         ]
         extra_kwargs = {
             'acheteur': {'read_only': True}
         }
-    
-    def validate_forme_juridique(self, value):
-        if value and value not in [choice[0] for choice in NOUVEAU_LEGAL_FORM]:
-            raise serializers.ValidationError("Forme juridique invalide")
-        return value
-    
-    def validate_statut_registre(self, value):
-        if value and value not in [choice[0] for choice in LIEN_STATUT_CHOICE]:
-            raise serializers.ValidationError("Statut registre invalide")
-        return value
 
 
 
@@ -10117,8 +10065,7 @@ class AddRegistreCommerceSerializer(serializers.ModelSerializer):
             "acheteur",
             "numero",
             "date_inscription",
-            "est_actif",
-            "couleur_commentaire",
+            "statut_registre",
             "commentaire",
         ]
 
@@ -10128,8 +10075,7 @@ class EditRegistreCommerceSerializer(serializers.ModelSerializer):
         fields = [
             "numero",
             "date_inscription",
-            "est_actif",
-            "couleur_commentaire",
+            "statut_registre",
             "commentaire",
         ]
 

@@ -189,7 +189,7 @@
 
                 <!-- Date + Statut -->
                 <div class="row g-3 mb-3">
-                    <div class="col-7">
+                    <div class="col-md-6">
                         <label class="form-label fw-semibold small mb-1">
                             <i class="fas fa-calendar-alt text-primary me-1"></i>{% trans "Date d'inscription" %}
                             <span class="text-muted fw-normal">({% trans "optionnel" %})</span>
@@ -198,20 +198,17 @@
                                placeholder="JJ/MM/AAAA" autocomplete="off"
                                style="border-color:rgba(10,149,202,.3);">
                     </div>
-                    <div class="col-5 d-flex align-items-end">
-                        <!-- Toggle statut stylisé -->
-                        <label id="activeToggleLabel" class="w-100 rounded-3 px-3 py-2 d-flex align-items-center gap-2 cursor-pointer"
-                               style="border:1px solid rgba(10,149,202,.25);background:white;transition:all .2s;cursor:pointer;" for="estActifInput">
-                            <input class="form-check-input m-0 flex-shrink-0" type="checkbox" id="estActifInput" role="switch" style="width:2em;height:1.1em;">
-                            <div>
-                                <div class="fw-semibold small" id="toggleLabel">{% trans "Archivé" %}</div>
-                                <div style="font-size:.68rem;color:#8a9ab0;">{% trans "Statut actuel" %}</div>
-                            </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small mb-1">
+                            <i class="fas fa-clipboard-check text-primary me-1"></i>{% trans "Statut au registre" %}
                         </label>
+                        <select class="form-select form-select-sm" id="statutRegistreInput" style="border-color:rgba(10,149,202,.3);">
+                            <option value="">{% trans "Sélectionner" %}</option>
+                            {% for key, value in statut_registre_choices %}
+                            <option value="{{ key }}">{{ value }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                </div>
-                <div class="mb-1" style="font-size:.7rem;color:#8a9ab0;margin-top:-8px;">
-                    <i class="fas fa-info-circle me-1"></i>{% trans "Un seul registre peut être actif à la fois." %}
                 </div>
 
                 <!-- Commentaire -->
@@ -351,10 +348,11 @@
         var page  = filtered.slice(start, start + PAGE_SIZE);
 
         tableBody.innerHTML = page.map(function(item, i) {
-            var isActif   = item.est_actif === true;
-            var statusHtml = isActif
-                ? '<span class="status-badge status-actif">{% trans "Actif" %}</span>'
-                : '<span class="status-badge status-archive">{% trans "Archivé" %}</span>';
+            var statut = item.statut_registre || '—';
+            var isActive = statut.toLowerCase().indexOf('active') !== -1 || statut.toLowerCase().indexOf('active') !== -1;
+            var statusClass = (statut && statut !== '--------' && statut.toLowerCase().indexOf('inact') === -1 && statut.toLowerCase().indexOf('cessé') === -1 && statut.toLowerCase().indexOf('sommeil') === -1 && statut !== '—')
+                ? 'status-actif' : 'status-archive';
+            if (statut === '--------' || statut === '—') statusClass = 'status-archive';
             return '<tr>' +
                 '<td class="text-muted small">' + (start + i + 1) + '</td>' +
                 '<td>' +
@@ -363,7 +361,7 @@
                     '<span class="num-rc">' + escHtml(item.numero || '—') + '</span>' +
                   '</div>' +
                 '</td>' +
-                '<td>' + statusHtml + '</td>' +
+                '<td><span class="status-badge ' + statusClass + '">' + escHtml(statut) + '</span></td>' +
                 '<td class="date-text">' + fmtDate(item.date_inscription) + '</td>' +
                 '<td class="date-text">' + fmtDate(item.created_at) + '</td>' +
                 '<td class="text-center" style="white-space:nowrap;">' +
@@ -397,28 +395,6 @@
         ctrl.appendChild(mkBtn('<i class="fas fa-chevron-right fa-xs"></i>', currentPage+1, currentPage===totalPages, false));
     }
 
-    /* ── Toggle statut ── */
-    var toggleEl  = document.getElementById('estActifInput');
-    var toggleLbl = document.getElementById('toggleLabel');
-    var toggleBox = document.getElementById('activeToggleLabel');
-    function updateToggleStyle(checked) {
-        if (!toggleLbl || !toggleBox) return;
-        if (checked) {
-            toggleLbl.textContent = '{% trans "Actif" %}';
-            toggleLbl.style.color = '#28a745';
-            toggleBox.style.background = 'rgba(40,167,69,.06)';
-            toggleBox.style.borderColor = 'rgba(40,167,69,.3)';
-        } else {
-            toggleLbl.textContent = '{% trans "Archivé" %}';
-            toggleLbl.style.color = '#6c757d';
-            toggleBox.style.background = 'white';
-            toggleBox.style.borderColor = 'rgba(10,149,202,.25)';
-        }
-    }
-    if (toggleEl) {
-        toggleEl.addEventListener('change', function() { updateToggleStyle(this.checked); });
-    }
-
     /* ── Modal helpers ── */
     function showModalError(msg) {
         var el  = document.getElementById('modalError');
@@ -443,7 +419,8 @@
     function resetModal() {
         document.getElementById('editId').value = '';
         document.getElementById('numeroInput').value = '';
-        if (toggleEl) { toggleEl.checked = false; updateToggleStyle(false); }
+        var statutEl = document.getElementById('statutRegistreInput');
+        if (statutEl) statutEl.value = '';
         hideModalError();
         setSaveLoading(false);
         clearDatepicker();
@@ -467,7 +444,8 @@
             .then(function(data) {
                 initDatepicker();
                 document.getElementById('numeroInput').value = data.numero || '';
-                if (toggleEl) { toggleEl.checked = data.est_actif === true; updateToggleStyle(data.est_actif === true); }
+                var statutEl = document.getElementById('statutRegistreInput');
+                if (statutEl) statutEl.value = data.statut_registre || '';
                 setDate(data.date_inscription);
                 if (window.quillSetValue) window.quillSetValue('commentaireInput', data.commentaire || '');
                 else document.getElementById('commentaireInput').value = data.commentaire || '';
@@ -487,20 +465,21 @@
         var isEdit  = !!id;
         var url     = isEdit ? API_BASE + id + '/' : API_BASE;
         var dateVal = getDate();
-        var actif   = toggleEl ? toggleEl.checked : false;
+        var statutEl = document.getElementById('statutRegistreInput');
+        var statutVal = statutEl ? statutEl.value : '';
 
         var payload = isEdit
             ? {
                 numero: numero,
                 date_inscription_input: dateVal || '',
-                est_actif: actif,
+                statut_registre: statutVal,
                 commentaire: document.getElementById('commentaireInput').value.trim()
               }
             : {
                 acheteur: ACHETEUR_ID,
                 numero: numero,
                 date_inscription: dateVal,
-                est_actif: actif,
+                statut_registre: statutVal,
                 commentaire: document.getElementById('commentaireInput').value.trim()
               };
 

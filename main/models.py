@@ -2783,56 +2783,32 @@ class DonneesEnregistrement(Model):
     )
     
     nom_anterieur = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Nom antérieur"))
-    
+
     date_creation = models.DateField(
         null=True, blank=True, verbose_name=_("Date de création")
     )
-    date_registre = models.DateField(
-        null=True, blank=True, verbose_name=_("Date registre")
+
+    forme_juridique = models.ForeignKey(
+        "FormeJuridique",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Forme juridique"),
     )
 
-    # Ancien attribut avec choices
-    forme_juridique = models.CharField(
-        max_length=4000,
-        choices=NOUVEAU_LEGAL_FORM,
-        default="Veuillez choisir la forme juridique",
-        null=True,  # Ajouté pour correspondre à V2
-        blank=True,  # Ajouté pour correspondre à V2
-        verbose_name=_("Forme juridique"),  # Nom de V2 pour la cohérence
-    )
-
-    numero_registre_commerce = models.CharField(
-        max_length=50, 
-        blank=True, 
-        null=True,  # Ajouté pour correspondre à V2
-        verbose_name=_("Numéro registre commerce")  # Nom de V2 pour la cohérence
-    )
     numero_fiscale = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True,  # Ajouté pour correspondre à V2
-        verbose_name=_("Numéro fiscal")  # Nom de V2 pour la cohérence
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name=_("Numéro fiscal")
     )
-
-    # Ancien champ avec choices
-    statut_registre = models.CharField(
-        max_length=4000,
-        choices=LIEN_STATUT_CHOICE,  # Assurez-vous que cette variable est définie
-        default="--------",
-        null=True,  # Ajouté pour correspondre à V2
-        blank=True,  # Ajouté pour correspondre à V2
-        verbose_name=_("Statut registre"),  # Nom de V2 pour la cohérence
-    )
-
-    
 
     commentaire = models.TextField(
-        blank=True, 
-        null=True,  # Ajouté pour correspondre à V2
-        max_length=10000000,  # Ajouté pour correspondre à V2
+        blank=True,
+        null=True,
+        max_length=10000000,
         verbose_name=_("Commentaire")
     )
-    couleur_commentaire = models.ForeignKey("CouleurCommentaire", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur Commentaire"))
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -2870,58 +2846,11 @@ class DonneesEnregistrement(Model):
     def __str__(self):
         return f"Données Enregistrement {self.pk} - {self.acheteur}"
     
-    # Méthodes utilitaires optionnelles
-    def get_forme_juridique_display(self):
-        """Retourne l'affichage de la forme juridique"""
-        if self.forme_juridique:
-            # Appelle la méthode de Django, pas elle-même
-            return dict(NOUVEAU_LEGAL_FORM).get(self.forme_juridique, self.forme_juridique)
-        return ""
-
-    def get_statut_registre_display(self):
-        """Retourne l'affichage du statut registre"""
-        if self.statut_registre:
-            return dict(LIEN_STATUT_CHOICE).get(self.statut_registre, self.statut_registre)
-        return ""
-    
-    def is_registre_valide(self):
-        """Vérifie si le registre est valide (a un numéro et une date)"""
-        return bool(self.numero_registre_commerce and self.date_registre)
-    
     def get_anciens_noms(self):
-        """Retourne une liste des anciens noms (peut être étendu)"""
         noms = []
         if self.nom_anterieur:
             noms.append(self.nom_anterieur)
         return noms
-    
-    def clean(self):
-        """Validation des données"""
-        from django.core.exceptions import ValidationError
-        
-        super().clean()
-        
-        # Validation: date_registre ne peut pas être antérieure à date_creation
-        if self.date_registre and self.date_creation:
-            if self.date_registre < self.date_creation:
-                raise ValidationError({
-                    'date_registre': _("La date d'enregistrement ne peut pas être antérieure à la date de création.")
-                })
-        
-        # Validation: vérifier le format du numéro fiscal si présent
-        if self.numero_fiscale:
-            # Exemple: nettoyer les espaces et vérifier la longueur
-            cleaned_num = ''.join(self.numero_fiscale.split())
-            if len(cleaned_num) < 5:
-                raise ValidationError({
-                    'numero_fiscale': _("Le numéro fiscal semble trop court.")
-                })
-    
-    def save(self, *args, **kwargs):
-        """Sauvegarde avec validation optionnelle"""
-        # Décommentez pour valider automatiquement avant la sauvegarde
-        # self.full_clean()
-        super().save(*args, **kwargs)
 
 
 class Tendance(Model):
@@ -5073,15 +5002,16 @@ class RegistreCommerce(Model):
         default=False,
         help_text=_("Indique si ce registre de commerce est celui actuellement en vigueur"),
     )
-
-    couleur_commentaire = models.ForeignKey(
-        "CouleurCommentaire",
+    statut_registre = models.CharField(
+        max_length=4000,
+        choices=LIEN_STATUT_CHOICE,
+        default="--------",
         null=True,
         blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire"),
+        verbose_name=_("Statut au registre"),
     )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+
+    commentaire = models.TextField(_("Commentaire"), blank=True, null=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")

@@ -2685,13 +2685,6 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # ⭐ AJOUT : Préparer les choix pour le template
-    forme_juridique_choices = NOUVEAU_LEGAL_FORM
-    statut_registre_choices = LIEN_STATUT_CHOICE
-    
-    # CORRECTION ICI : Retirer 'description' qui n'existe pas
-    coloration_list = CouleurCommentaire.objects.all().values('id', 'couleur', 'code')
-
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -2701,10 +2694,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
         "acheteur": acheteur,
         "data_save": data_save,
         "id_acheteur": acheteur_id,
-        "forme_juridique_choices": forme_juridique_choices,
-        "statut_registre_choices": statut_registre_choices,
-        # ⭐ AJOUT : Conserver les listes existantes pour compatibilité
-        "coloration_list": coloration_list,
+        "forme_juridique_list": FormeJuridique.objects.filter(active=True).order_by('libelle'),
     }
     return render(
         request,
@@ -9629,9 +9619,9 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         "registres_actifs": registres_actifs_count,
         "registres_archives": registres_archives_count,
         "registres_json": registres_json or '[]',
-        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
+        "statut_registre_choices": LIEN_STATUT_CHOICE,
     }
     return render(
         request,
