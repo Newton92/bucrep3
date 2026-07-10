@@ -584,6 +584,7 @@
 .ql-container.ql-snow { height: auto !important; min-height: 80px; max-height: 200px; overflow-y: auto; }
 .ql-editor { min-height: 80px !important; max-height: 200px; }
 .ql-editor.ql-blank::before { font-style: normal; color: #adb5bd; font-size: .82rem; }
+
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -629,115 +630,65 @@
 
     <!-- Données d'Enregistrement -->
     {% if data_save %}
-    <div class="card enhanced-card mb-4" style="animation-delay: 0.3s;">
+    <div class="card enhanced-card mb-3">
+        <div class="card-header card-header-gradient d-flex justify-content-between align-items-center py-2 px-3">
+            <h6 class="mb-0 text-white fw-bold">
+                <i class="fas fa-file-contract me-2"></i>{% trans "Données d'Enregistrement" %}
+            </h6>
+            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editDataSaveModal">
+                <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+            </button>
+        </div>
         <div class="card-body">
-            <!-- Dates importantes -->
-            <div class="row g-4 mb-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="small fw-semibold mb-1" style="color:#5a6c7d;">
+                        <i class="fas fa-calendar-alt me-1" style="color:#0a95ca;"></i>{% trans "Date de création" %}
+                    </div>
+                    <div class="fw-bold">{{ data_save.date_creation|date:"d/m/Y"|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small fw-semibold mb-1" style="color:#5a6c7d;">
+                        <i class="fas fa-balance-scale me-1" style="color:#0a95ca;"></i>{% trans "Forme juridique" %}
+                    </div>
+                    <div class="fw-bold">{{ forme_juridique_display|default:"-" }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="small fw-semibold mb-1" style="color:#5a6c7d;">
+                        <i class="fas fa-file-invoice-dollar me-1" style="color:#0a95ca;"></i>{% trans "Numéro Fiscal" %}
+                    </div>
+                    <div class="fw-bold">{{ data_save.numero_fiscale|default:"-" }}</div>
+                </div>
+                {% if data_save.nom_anterieur %}
                 <div class="col-md-6">
-                    <div class="registre-info-card">
-                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
-                            <i class="fas fa-calendar-check me-2"></i>{% trans "Dates importantes" %}
-                        </h5>
-                        <div class="date-timeline">
-                            <div class="date-timeline-item">
-                                <div class="stat-label">{% trans "Date de création" %}</div>
-                                <div class="stat-value">{{ data_save.date_creation|date:"d/m/Y"|default:"-" }}</div>
-                                <small class="text-muted">{% trans "Date légale de création de l'entreprise" %}</small>
-                            </div>
-                        </div>
+                    <div class="small fw-semibold mb-1" style="color:#5a6c7d;">
+                        <i class="fas fa-history me-1" style="color:#0a95ca;"></i>{% trans "Nom antérieur" %}
                     </div>
+                    <div class="fw-bold">{{ data_save.nom_anterieur }}</div>
                 </div>
-                <div class="col-md-6">
-                    <div class="registre-info-card">
-                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
-                            <i class="fas fa-balance-scale me-2"></i>{% trans "Statut légal" %}
-                        </h5>
-                        <div>
-                            <div class="stat-label">{% trans "Forme juridique" %}</div>
-                            <div class="stat-value">
-                                {{ data_save.forme_juridique.libelle|default:"-" }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
-
-            <!-- Identifiant fiscal -->
-            <h5 class="fw-bold mb-3" style="color: #0a95ca;">
-                <i class="fas fa-id-card me-2"></i>{% trans "Identifiants légaux" %}
-            </h5>
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <div class="stat-card numero-fiscal">
-                        <div class="stat-icon">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                        </div>
-                        <div class="stat-label">{% trans "Numéro Fiscal" %}</div>
-                        <div class="stat-value">{{ data_save.numero_fiscale|default:"-" }}</div>
-                        <small class="text-muted">{% trans "Identifiant fiscal" %}</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Nom antérieur -->
-            {% if data_save.nom_anterieur %}
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="registre-info-card">
-                        <h5 class="fw-bold mb-3" style="color: #0a95ca;">
-                            <i class="fas fa-history me-2"></i>{% trans "Nom antérieur" %}
-                        </h5>
-                        <div class="stat-value">{{ data_save.nom_anterieur }}</div>
-                        <small class="text-muted">{% trans "Ancien nom ou dénomination sociale" %}</small>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Commentaire -->
             {% if data_save.commentaire %}
-            <div class="registre-info-card mb-4">
-                <h6 class="fw-bold mb-2" style="color: #0a95ca;">
-                    <i class="fas fa-comment-dots me-2"></i>{% trans "Commentaire" %}
-                </h6>
-                <div class="mb-0">{{ data_save.commentaire|safe }}</div>
+            <div class="border-start border-3 ps-3 mt-3" style="border-color:#0a95ca!important;">
+                <div class="small fw-semibold mb-1" style="color:#5a6c7d;">
+                    <i class="fas fa-comment-dots me-1" style="color:#0a95ca;"></i>{% trans "Commentaire" %}
+                </div>
+                <div>{{ data_save.commentaire|safe }}</div>
             </div>
             {% endif %}
-
-            <!-- Informations temporelles -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center text-muted small">
-                        <div>
-                            <i class="fas fa-calendar me-1" style="color: #0a95ca;"></i>
-                            Créé le {{ data_save.created_at|date:"d/m/Y H:i" }}
-                            {% if data_save.created_by %}
-                                par {{ data_save.created_by.username }}
-                            {% endif %}
-                        </div>
-                        <div>
-                            <i class="fas fa-sync-alt me-1" style="color: #0a95ca;"></i>
-                            Dernière mise à jour : {{ data_save.updated_at|date:"d/m/Y H:i" }}
-                            {% if data_save.updated_by %}
-                                par {{ data_save.updated_by.username }}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+            <div class="d-flex justify-content-between align-items-center text-muted mt-3 pt-2" style="font-size:.72rem;border-top:1px solid rgba(10,149,202,.1);">
+                <div><i class="fas fa-calendar me-1" style="color:#0a95ca;"></i>{% trans "Créé le" %} {{ data_save.created_at|date:"d/m/Y H:i" }}{% if data_save.created_by %} {% trans "par" %} {{ data_save.created_by.username }}{% endif %}</div>
+                <div><i class="fas fa-sync-alt me-1" style="color:#0a95ca;"></i>{{ data_save.updated_at|date:"d/m/Y H:i" }}{% if data_save.updated_by %} {% trans "par" %} {{ data_save.updated_by.username }}{% endif %}</div>
             </div>
         </div>
     </div>
     {% else %}
-    <!-- État vide -->
-    <div class="card enhanced-card" style="animation-delay: 0.3s;">
+    <div class="card enhanced-card mb-3">
         <div class="card-body">
             <div class="empty-state">
                 <i class="fas fa-file-contract empty-state-icon"></i>
-                <h4 class="fw-bold mb-2" style="color: #0a95ca;">{% trans "Aucune donnée d'enregistrement" %}</h4>
-                <p class="text-muted mb-4">
-                    Cet acheteur ne possède pas encore de données d'enregistrement.<br>
-                    Ajoutez les informations légales et administratives de l'entreprise.
-                </p>
+                <h4 class="fw-bold mb-2" style="color:#0a95ca;">{% trans "Aucune donnée d'enregistrement" %}</h4>
+                <p class="text-muted mb-4">{% trans "Ajoutez les informations légales et administratives de l'entreprise." %}</p>
                 <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addDataSaveModal">
                     <i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter les données" %}
                 </button>
@@ -745,6 +696,7 @@
         </div>
     </div>
     {% endif %}
+
 </div>
 
 <!-- Modal Ajout de Données d'Enregistrement -->
@@ -1268,4 +1220,5 @@ $(document).ready(function() {
     }
 });
 </script>
+
 {% endblock %}

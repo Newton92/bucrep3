@@ -2685,6 +2685,15 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
 
+    forme_juridique_display = None
+    if data_save and data_save.forme_juridique:
+        fj = data_save.forme_juridique
+        lang = getattr(request, 'LANGUAGE_CODE', '') or ''
+        if lang.startswith('en'):
+            forme_juridique_display = _fj_to_english(fj.code, fj.libelle)
+        else:
+            forme_juridique_display = fj.libelle
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -2694,7 +2703,8 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
         "acheteur": acheteur,
         "data_save": data_save,
         "id_acheteur": acheteur_id,
-        "forme_juridique_list": FormeJuridique.objects.filter(active=True).order_by('libelle'),
+        "forme_juridique_list": _translate_juridique_list(request),
+        "forme_juridique_display": forme_juridique_display,
     }
     return render(
         request,

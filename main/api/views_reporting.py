@@ -1176,8 +1176,8 @@ def generer_rapport_solvabilite(request):
         for registre in registres:
             list_registres_data.append({
                 "numero": registre.numero if registre.numero else "",
-                "date_inscription": registre.date_inscription if registre.date_inscription else "",
-                "est_actif": registre.est_actif if registre.est_actif else False,
+                "date_inscription": registre.date_inscription.strftime("%d/%m/%Y") if registre.date_inscription else "",
+                "statut_registre": registre.statut_registre if registre.statut_registre else "",
                 "commentaires": registre.commentaire if getattr(registre, "commentaire", None) else "",
             })
             
@@ -1840,20 +1840,10 @@ def generer_rapport_solvabilite(request):
             "registered_data": {
                 "title_7": "DONNEES D'ENREGISTREMENT",
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "",
-                "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "",
-                "forme_juridique": (
-                    donnees_enregistrement.forme_juridique
-                    if donnees_enregistrement and donnees_enregistrement.forme_juridique
-                    else donnees_enregistrement.forme_juridique if donnees_enregistrement else ""
-                ),
+                "forme_juridique": donnees_enregistrement.forme_juridique.libelle if donnees_enregistrement and donnees_enregistrement.forme_juridique else "",
+                "nom_anterieur": donnees_enregistrement.nom_anterieur if donnees_enregistrement and donnees_enregistrement.nom_anterieur else "",
                 "acheteur": _safe_nested_attr(donnees_enregistrement, ["acheteur", "nom"]),
-                "numero_registre_commerce": donnees_enregistrement.numero_registre_commerce if donnees_enregistrement and donnees_enregistrement.numero_registre_commerce else "",
                 "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "",
-                "statut_registre": (
-                    donnees_enregistrement.statut_registre
-                    if donnees_enregistrement and donnees_enregistrement.statut_registre
-                    else donnees_enregistrement.statut_registre if donnees_enregistrement else ""
-                ),
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else _t("Aucun commentaire disponible"),
             },
             "legal_background": {
