@@ -896,8 +896,8 @@ def generer_rapport_solvabilite(request):
         # Recuperation des codes NACE avec leurs libellés
         nace_codes_data = list(CodeNaceAcheteur.objects.filter(acheteur=acheteur)
             .select_related('code__category')
-            .values('code__code', 'code__libelle', 'code__libelle_en',
-                    'code__category__code', 'code__category__libelle', 'code__category__libelle_en')
+            .values('code__code', 'code__libelle',
+                    'code__category__code', 'code__category__libelle')
             .distinct()
             .order_by('code__category__code', 'code__code'))
 
@@ -907,14 +907,12 @@ def generer_rapport_solvabilite(request):
             raw_code = item['code__code'] or ''
             display_code = raw_code.split('.', 1)[1] if '.' in raw_code else raw_code
             libelle = item['code__libelle'] or ''
-            libelle_en = item.get('code__libelle_en') or libelle
             nace_codes_formatted.append(f"{display_code} - {libelle}" if libelle else display_code)
             cat_code = item['code__category__code'] or '—'
             cat_libelle = item['code__category__libelle'] or 'Non classifié'
-            cat_libelle_en = item.get('code__category__libelle_en') or cat_libelle
             if cat_code not in nace_by_cat:
-                nace_by_cat[cat_code] = {'cat_code': cat_code, 'cat_libelle': cat_libelle, 'cat_libelle_en': cat_libelle_en, 'codes': []}
-            nace_by_cat[cat_code]['codes'].append({'code': display_code, 'libelle': libelle or '—', 'libelle_en': libelle_en or '—'})
+                nace_by_cat[cat_code] = {'cat_code': cat_code, 'cat_libelle': cat_libelle, 'codes': []}
+            nace_by_cat[cat_code]['codes'].append({'code': display_code, 'libelle': libelle or '—'})
         nace_codes_grouped = list(nace_by_cat.values())
 
         # Recuperation des codes NAF avec leurs libellés et catégories
@@ -2359,8 +2357,8 @@ def exporter_rapport(request):
             # NACE grouped
             nace_rows = list(CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id)
                 .select_related('code__category')
-                .values('code__code', 'code__libelle', 'code__libelle_en',
-                        'code__category__code', 'code__category__libelle', 'code__category__libelle_en')
+                .values('code__code', 'code__libelle',
+                        'code__category__code', 'code__category__libelle')
                 .distinct()
                 .order_by('code__category__code', 'code__code'))
             nace_by_cat: dict = {}
@@ -2368,13 +2366,11 @@ def exporter_rapport(request):
                 raw = item['code__code'] or ''
                 dcode = raw.split('.', 1)[1] if '.' in raw else raw
                 lib = item['code__libelle'] or ''
-                lib_en = item.get('code__libelle_en') or lib
                 ccat = item['code__category__code'] or '—'
                 clib = item['code__category__libelle'] or 'Non classifié'
-                clib_en = item.get('code__category__libelle_en') or clib
                 if ccat not in nace_by_cat:
-                    nace_by_cat[ccat] = {'cat_code': ccat, 'cat_libelle': clib, 'cat_libelle_en': clib_en, 'codes': []}
-                nace_by_cat[ccat]['codes'].append({'code': dcode, 'libelle': lib or '—', 'libelle_en': lib_en or '—'})
+                    nace_by_cat[ccat] = {'cat_code': ccat, 'cat_libelle': clib, 'codes': []}
+                nace_by_cat[ccat]['codes'].append({'code': dcode, 'libelle': lib or '—'})
             add_info['nace_codes_grouped'] = list(nace_by_cat.values())
 
             # NAF grouped

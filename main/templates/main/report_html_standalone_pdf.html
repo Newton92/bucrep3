@@ -1,4 +1,5 @@
 {% load i18n static custom_filters %}
+{% get_current_language as current_lang %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
    <head>
@@ -119,6 +120,7 @@
          }
          .info-table th {
          width: 35%;
+         vertical-align: middle;
          }
          .info-table-4col th {
          width: 20%;
@@ -632,50 +634,56 @@
                   <th>{% trans "Activités principales" %}</th>
                   <td>{{ additional_information.activite_principale }}</td>
                </tr>
-               <tr>
-                  <th style="vertical-align: top;">{% trans "Code(s) NACE" %}</th>
-                  <td>
-                     {% if additional_information.nace_codes_grouped %}
-                        {% for group in additional_information.nace_codes_grouped %}
-                        <div style="margin-bottom: 8px;">
-                           <div style="background-color: #dce9f7; border-left: 3px solid #003366; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #003366; margin-bottom: 2px;">
-                              {{ group.cat_code }} — {% if lang == 'en' %}{{ group.cat_libelle_en|default:group.cat_libelle }}{% else %}{{ group.cat_libelle }}{% endif %}
-                           </div>
-                           <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
-                              {% for c in group.codes %}
-                              <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#edf4fc{% else %}#f8fbff{% endif %};">
-                                 <td style="padding: 2px 8px; color: #003366; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
-                                 <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{% if lang == 'en' %}{{ c.libelle_en|default:c.libelle }}{% else %}{{ c.libelle }}{% endif %}</td>
-                              </tr>
-                              {% endfor %}
-                           </table>
+               {% if additional_information.nace_codes_grouped %}
+                  {% for group in additional_information.nace_codes_grouped %}
+                  <tr>
+                     {% if forloop.first %}<th rowspan="{{ additional_information.nace_codes_grouped|length }}" style="vertical-align: middle;">{% trans "Code(s) NACE" %}</th>{% endif %}
+                     <td style="vertical-align: top;">
+                        <div style="background-color: #dce9f7; border-left: 3px solid #003366; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #003366; margin-bottom: 2px;">
+                           {{ group.cat_code }} — {{ group.cat_libelle }}
                         </div>
-                        {% endfor %}
-                     {% endif %}
-                  </td>
-               </tr>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+                           {% for c in group.codes %}
+                           <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#edf4fc{% else %}#f8fbff{% endif %};">
+                              <td style="padding: 2px 8px; color: #003366; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
+                              <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{{ c.libelle }}</td>
+                           </tr>
+                           {% endfor %}
+                        </table>
+                     </td>
+                  </tr>
+                  {% endfor %}
+               {% else %}
                <tr>
-                  <th style="vertical-align: top;">{% trans "Code(s) NAF" %}</th>
-                  <td>
-                     {% if additional_information.naf_codes_grouped %}
-                        {% for group in additional_information.naf_codes_grouped %}
-                        <div style="margin-bottom: 8px;">
-                           <div style="background-color: #e8f4fb; border-left: 3px solid #0d6b9e; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #0d6b9e; margin-bottom: 2px;">
-                              {{ group.cat_code }} — {% if lang == 'en' %}{{ group.cat_libelle_en|default:group.cat_libelle }}{% else %}{{ group.cat_libelle }}{% endif %}
-                           </div>
-                           <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
-                              {% for c in group.codes %}
-                              <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#eaf4fb{% else %}#f8fbff{% endif %};">
-                                 <td style="padding: 2px 8px; color: #0d6b9e; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
-                                 <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{% if lang == 'en' %}{{ c.libelle_en|default:c.libelle }}{% else %}{{ c.libelle }}{% endif %}</td>
-                              </tr>
-                              {% endfor %}
-                           </table>
-                        </div>
-                        {% endfor %}
-                     {% endif %}
-                  </td>
+                  <th>{% trans "Code(s) NACE" %}</th>
+                  <td></td>
                </tr>
+               {% endif %}
+               {% if additional_information.naf_codes_grouped %}
+                  {% for group in additional_information.naf_codes_grouped %}
+                  <tr>
+                     {% if forloop.first %}<th rowspan="{{ additional_information.naf_codes_grouped|length }}" style="vertical-align: middle;">{% trans "Code(s) NAF" %}</th>{% endif %}
+                     <td style="vertical-align: top;">
+                        <div style="background-color: #e8f4fb; border-left: 3px solid #0d6b9e; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #0d6b9e; margin-bottom: 2px;">
+                           {{ group.cat_code }} — {% if current_lang == 'en' %}{{ group.cat_libelle_en|default:group.cat_libelle }}{% else %}{{ group.cat_libelle }}{% endif %}
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+                           {% for c in group.codes %}
+                           <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#eaf4fb{% else %}#f8fbff{% endif %};">
+                              <td style="padding: 2px 8px; color: #0d6b9e; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
+                              <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{% if current_lang == 'en' %}{{ c.libelle_en|default:c.libelle }}{% else %}{{ c.libelle }}{% endif %}</td>
+                           </tr>
+                           {% endfor %}
+                        </table>
+                     </td>
+                  </tr>
+                  {% endfor %}
+               {% else %}
+               <tr>
+                  <th>{% trans "Code(s) NAF" %}</th>
+                  <td></td>
+               </tr>
+               {% endif %}
                <tr>
                   <th style="vertical-align: top;">{% trans "Commentaire" %}</th>
                   <td style="{% if additional_information.couleur_commentaire_code %}color: {{ additional_information.couleur_commentaire_code }};{% endif %} font-weight: bold;">
