@@ -9608,6 +9608,8 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
             'id': registre.id,
             'numero': registre.numero or '',
             'est_actif': registre.est_actif,
+            'statut_registre': registre.statut_registre or '',
+            'commentaire': registre.commentaire or '',
             'date_inscription': registre.date_inscription.isoformat() if registre.date_inscription else None,
             'date_inscription_display': registre.date_inscription.strftime('%d/%m/%Y') if registre.date_inscription else 'Non spécifiée',
             'created_at': registre.created_at.isoformat() if registre.created_at else None,
