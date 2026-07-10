@@ -55,6 +55,7 @@ from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
 from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
+from main.views import _fj_to_english
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -1840,7 +1841,11 @@ def generer_rapport_solvabilite(request):
             "registered_data": {
                 "title_7": "DONNEES D'ENREGISTREMENT",
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "",
-                "forme_juridique": donnees_enregistrement.forme_juridique.libelle if donnees_enregistrement and donnees_enregistrement.forme_juridique else "",
+                "forme_juridique": (
+                    _fj_to_english(donnees_enregistrement.forme_juridique.code, donnees_enregistrement.forme_juridique.libelle)
+                    if donnees_enregistrement and donnees_enregistrement.forme_juridique and getattr(request, 'LANGUAGE_CODE', 'fr').startswith('en')
+                    else (donnees_enregistrement.forme_juridique.libelle if donnees_enregistrement and donnees_enregistrement.forme_juridique else "")
+                ),
                 "nom_anterieur": donnees_enregistrement.nom_anterieur if donnees_enregistrement and donnees_enregistrement.nom_anterieur else "",
                 "acheteur": _safe_nested_attr(donnees_enregistrement, ["acheteur", "nom"]),
                 "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "",
