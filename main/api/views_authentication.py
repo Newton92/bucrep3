@@ -747,8 +747,15 @@ class PaysListView(APIView):
         user = request.user
         if user.is_superuser or user.is_staff:
             pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
+            if not pays_list.exists():
+                pays_list = Pays.objects.order_by("nom")
         else:
-            pays_list = user.affectation_possible.filter(afficher_au_dashboard=True).order_by("nom")
+            # Priorité : affectation_possible → affectation → pays principal → dashboard public
+            pays_list = user.affectation_possible.order_by("nom")
+            if not pays_list.exists():
+                pays_list = user.affectation.order_by("nom")
+            if not pays_list.exists() and user.pays:
+                pays_list = Pays.objects.filter(id=user.pays.id)
             if not pays_list.exists():
                 pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
         serializer = PaysSerializer(pays_list, many=True)
@@ -767,21 +774,26 @@ class UpdateSelectedPaysView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        user = request.user
         try:
-            pays = Pays.objects.get(id=pays_id, afficher_au_dashboard=True)
-
-            # Vérifier que l'utilisateur a le droit de sélectionner ce pays
-            user = request.user
+            # Pour un non-admin, le pays doit être dans affectation_possible, affectation ou pays principal
             if not user.is_superuser and not user.is_staff:
-                if user.affectation_possible.exists() and \
-                   not user.affectation_possible.filter(id=pays_id).exists():
+                if user.affectation_possible.filter(id=pays_id).exists():
+                    pays = Pays.objects.get(id=pays_id)
+                elif user.affectation.filter(id=pays_id).exists():
+                    pays = Pays.objects.get(id=pays_id)
+                elif user.pays and str(user.pays.id) == str(pays_id):
+                    pays = user.pays
+                else:
                     return Response(
                         {"error": _("Vous n'êtes pas autorisé à sélectionner ce pays.")},
                         status=status.HTTP_403_FORBIDDEN
                     )
+            else:
+                pays = Pays.objects.get(id=pays_id)
 
             request.session['selected_pays_id'] = pays.id
-            request.user.__class__.objects.filter(pk=request.user.pk).update(pays_actif_id=pays.id)
+            user.__class__.objects.filter(pk=user.pk).update(pays_actif_id=pays.id)
             return Response(
                 {
                     "message": _("Pays sélectionné mis à jour."),
@@ -797,38 +809,38 @@ class UpdateSelectedPaysView(APIView):
             
     def get(self, request, *args, **kwargs):
         user = request.user
-        # Priorité : session → pays_actif (DB) → user.pays → affectation → affectation_possible → premier dashboard
+        # Priorité : session → pays_actif (DB) → affectation → affectation_possible → user.pays → premier dashboard (admin)
         selected_pays_id = request.session.get("selected_pays_id")
+
+        # Vérifier que la valeur en session est encore accessible à cet utilisateur
+        if selected_pays_id:
+            selected_pays_id = self._validate_pays_for_user(user, int(selected_pays_id))
 
         if not selected_pays_id:
             db_pays_actif = getattr(user, 'pays_actif_id', None)
             if db_pays_actif:
-                selected_pays_id = db_pays_actif
-            elif user.pays:
-                selected_pays_id = user.pays.id
+                selected_pays_id = self._validate_pays_for_user(user, db_pays_actif)
 
-        # Auto-connexion sur le champ Affectation (premier pays affecté)
+        # Auto-connexion : affectation_possible → affectation → pays principal → dashboard (admin)
+        if not selected_pays_id:
+            first_possible = user.affectation_possible.order_by("nom").first()
+            if first_possible:
+                selected_pays_id = first_possible.id
+
         if not selected_pays_id:
             first_affectation = user.affectation.order_by("nom").first()
             if first_affectation:
                 selected_pays_id = first_affectation.id
 
-        # Fallback sur affectation_possible
-        if not selected_pays_id:
-            first_possible = user.affectation_possible.filter(afficher_au_dashboard=True).order_by("nom").first()
-            if first_possible:
-                selected_pays_id = first_possible.id
+        if not selected_pays_id and user.pays:
+            selected_pays_id = user.pays.id
 
-        # Dernier fallback global (superuser uniquement)
         if not selected_pays_id and (user.is_superuser or user.is_staff):
             first_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
+            if not first_pays:
+                first_pays = Pays.objects.order_by("nom").first()
             if first_pays:
                 selected_pays_id = first_pays.id
-
-        # Vérifier que ce pays est toujours valide pour cet utilisateur
-        if selected_pays_id:
-            if not Pays.objects.filter(id=selected_pays_id, afficher_au_dashboard=True).exists():
-                selected_pays_id = user.pays.id if user.pays else None
 
         if selected_pays_id:
             request.session["selected_pays_id"] = selected_pays_id
@@ -837,3 +849,18 @@ class UpdateSelectedPaysView(APIView):
             {"selected_pays_id": selected_pays_id},
             status=status.HTTP_200_OK
         )
+
+    @staticmethod
+    def _validate_pays_for_user(user, pays_id):
+        """Vérifie qu'un pays est accessible à l'utilisateur. Retourne pays_id ou None."""
+        if not pays_id:
+            return None
+        if user.is_superuser or user.is_staff:
+            return pays_id if Pays.objects.filter(id=pays_id).exists() else None
+        if user.affectation_possible.filter(id=pays_id).exists():
+            return pays_id
+        if user.affectation.filter(id=pays_id).exists():
+            return pays_id
+        if user.pays and user.pays.id == pays_id:
+            return pays_id
+        return None

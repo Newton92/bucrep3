@@ -410,6 +410,10 @@
         }
 
         /* Pour le dropdown de Choices.js */
+        .choices__list--dropdown {
+            z-index: 99999 !important;
+        }
+
         .choices__list--dropdown .choices__item {
             padding: 10px 15px !important;
             margin: 2px 0 !important;
@@ -1878,7 +1882,7 @@
             select.classList.remove('country-loading');
 
             const userPaysId = "{{ request.user.pays.id|default:'' }}";
-            const userPaysNom = "{{ request.user.pays.nom|default:'Gabon' }}";
+            const userPaysNom = "{{ request.user.pays.nom|default:'' }}";
             let previousCountryId = null;
             let countryList = [];
 
@@ -1925,8 +1929,13 @@
             .then(([countries, selectedSession]) => {
                 countryList = Array.isArray(countries) ? countries : [];
                 if (!countryList.length) {
-                    select.innerHTML = `<option value="${userPaysId}" selected>&nbsp;&nbsp;${userPaysNom}&nbsp;&nbsp;</option>`;
-                    previousCountryId = userPaysId || '';
+                    if (userPaysId && userPaysNom) {
+                        select.innerHTML = `<option value="${userPaysId}" selected>&nbsp;&nbsp;${userPaysNom}&nbsp;&nbsp;</option>`;
+                        previousCountryId = userPaysId;
+                    } else {
+                        select.innerHTML = `<option value="" disabled selected>&nbsp;&nbsp;{% trans "Aucun pays disponible" %}&nbsp;&nbsp;</option>`;
+                        previousCountryId = '';
+                    }
                     return;
                 }
 
@@ -1983,8 +1992,13 @@
             })
             .catch((error) => {
                 console.error('Erreur chargement pays:', error);
-                select.innerHTML = `<option value="${userPaysId}" selected>&nbsp;&nbsp;${userPaysNom}&nbsp;&nbsp;</option>`;
-                previousCountryId = userPaysId || '';
+                if (userPaysId && userPaysNom) {
+                    select.innerHTML = `<option value="${userPaysId}" selected>&nbsp;&nbsp;${userPaysNom}&nbsp;&nbsp;</option>`;
+                    previousCountryId = userPaysId;
+                } else {
+                    select.innerHTML = `<option value="" disabled selected>&nbsp;&nbsp;{% trans "Erreur chargement pays" %}&nbsp;&nbsp;</option>`;
+                    previousCountryId = '';
+                }
             });
 
             select.onchange = function() {

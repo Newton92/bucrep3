@@ -98,12 +98,12 @@ def _resolve_pays_id(request, persist=True):
             sid = int(session_value)
         except (TypeError, ValueError):
             sid = None
-        if sid and Pays.objects.filter(id=sid, afficher_au_dashboard=True).exists():
+        if sid and Pays.objects.filter(id=sid).exists():
             selected_pays_id = sid
 
     if not selected_pays_id:
         pays_actif_id = getattr(request.user, "pays_actif_id", None)
-        if pays_actif_id and Pays.objects.filter(id=pays_actif_id, afficher_au_dashboard=True).exists():
+        if pays_actif_id and Pays.objects.filter(id=pays_actif_id).exists():
             selected_pays_id = pays_actif_id
 
     if not selected_pays_id:

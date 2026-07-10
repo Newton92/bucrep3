@@ -798,7 +798,7 @@ $(document).ready(function() {
                             </div>
                             <div class="nace-card-meta">
                                 <span><i class="fas fa-calendar me-1"></i>${formatDate(n.created_at)}</span>
-                                <span>${s.active ? '<span style="font-size:.65rem;font-weight:600;color:#198754;background:rgba(25,135,84,.1);padding:.1rem .45rem;border-radius:8px;">Actif</span>' : '<span style="font-size:.65rem;font-weight:600;color:#6c757d;background:rgba(108,117,125,.1);padding:.1rem .45rem;border-radius:8px;">Inactif</span>'}</span>
+                                <span>${s.active ? '<span style="font-size:.65rem;font-weight:600;color:#198754;background:rgba(25,135,84,.1);padding:.1rem .45rem;border-radius:8px;">{% trans "Actif" %}</span>' : '<span style="font-size:.65rem;font-weight:600;color:#6c757d;background:rgba(108,117,125,.1);padding:.1rem .45rem;border-radius:8px;">{% trans "Inactif" %}</span>'}</span>
                             </div>
                         </div>
                     </div>`;
@@ -820,7 +820,7 @@ $(document).ready(function() {
     $('#addCodeNaceForm').on('submit', function(e) {
         e.preventDefault();
         const codeId = $('#addNaceCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', `Veuillez sélectionner un code NACE à l'étape ③.`); return; }
+        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
         submitForm('POST', { code: codeId, acheteur: ACHETEUR_ID }, '#submitAddBtn', '#addCodeNaceModal');
     });
 
@@ -829,7 +829,7 @@ $(document).ready(function() {
         e.preventDefault();
         if (!currentCodeNaceId) return;
         const codeId = $('#editNaceCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', `Veuillez sélectionner un code NACE à l'étape ③.`); return; }
+        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
         submitForm('PUT', { code: codeId }, '#submitEditBtn', '#editCodeNaceModal', currentCodeNaceId);
     });
 
@@ -850,7 +850,7 @@ $(document).ready(function() {
                 $(modalSel).modal('hide');
                 Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: r.message || '{% trans "Opération réussie" %}',
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
-                .then(() => location.reload());
+                .then(() => { loadCodesNace(''); buildCategoryFilter(); });
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).find('.btn-text').show();
@@ -859,7 +859,7 @@ $(document).ready(function() {
                     refreshAccessToken(() => submitForm(method, data, btnSel, modalSel, codeNaceId));
                     return;
                 }
-                let msg = `Erreur lors de l'opération`;
+                let msg = '{% trans "Erreur lors de l\'opération." %}';
                 if (xhr.responseJSON) {
                     msg = xhr.responseJSON.detail || xhr.responseJSON.code?.join?.('\n') || msg;
                 }
@@ -923,7 +923,7 @@ $(document).ready(function() {
                 $('#confirmDeleteModal').modal('hide');
                 Swal.fire({ icon: 'success', title: '{% trans "Succès" %}', text: r.message || '{% trans "Code dissocié" %}',
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
-                .then(() => location.reload());
+                .then(() => { loadCodesNace(''); buildCategoryFilter(); });
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).html('<i class="fas fa-unlink me-1"></i>{% trans "Dissocier" %}');
@@ -936,15 +936,15 @@ $(document).ready(function() {
     // ── Reset modals ──────────────────────────────────────────
     $('#addCodeNaceModal').on('hidden.bs.modal', function() {
         $('#addCodeNaceForm')[0].reset();
-        $('#addNaceGroupe').empty().append(`<option value="">Sélectionnez d'abord une catégorie...</option>`).prop('disabled', true);
-        $('#addNaceCode').empty().append(`<option value="">Sélectionnez d'abord un groupe...</option>`).prop('disabled', true);
+        $('#addNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
+        $('#addNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
         addSubcache.data = [];
         hidePreview();
     });
     $('#editCodeNaceModal').on('hidden.bs.modal', function() {
         $('#editCodeNaceForm')[0].reset();
-        $('#editNaceGroupe').empty().append(`<option value="">Sélectionnez d'abord une catégorie...</option>`).prop('disabled', true);
-        $('#editNaceCode').empty().append(`<option value="">Sélectionnez d'abord un groupe...</option>`).prop('disabled', true);
+        $('#editNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
+        $('#editNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
         editSubcache.data = [];
         currentCodeNaceId = null;
     });
