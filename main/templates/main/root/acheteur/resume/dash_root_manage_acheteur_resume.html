@@ -562,6 +562,18 @@ body {
 </style>
 
 <style>
+/* Largeur colonne th table détails */
+.w-35 { width: 22%; }
+
+/* Quill rich editor */
+.ql-container.ql-snow { height: auto !important; min-height: 100px; max-height: 200px; overflow-y: auto; }
+.ql-editor { min-height: 100px !important; max-height: 200px; }
+.ql-editor.ql-blank::before { font-style: normal; color: #adb5bd; font-size: .85rem; }
+.ql-toolbar.ql-snow { border-radius: 6px 6px 0 0; }
+.ql-container.ql-snow { border-radius: 0 0 6px 6px; }
+</style>
+
+<style>
 /* Styles spécifiques pour Select2 dans les modales */
 .select2-dropdown-modal {
     z-index: 999999 !important;
@@ -788,52 +800,49 @@ body {
     <!-- Résumé Financier -->
     {% if resume %}
     <div class="card enhanced-card mb-3 fade-in-up" style="--order: 2;">
+        <div class="card-header-gradient d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="fas fa-file-invoice-dollar me-2"></i>{% trans "Financial Summary" %}</span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-warning btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#editResumeModal">
+                    <i class="fas fa-edit me-1"></i>{% trans "Edit" %}
+                </button>
+                <button class="btn btn-danger btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    <i class="fas fa-trash-alt me-1"></i>{% trans "Delete" %}
+                </button>
+            </div>
+        </div>
         <div class="card-body p-3">
             <!-- Stats -->
             <div class="row g-3 mb-3">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="stat-card capital" style="--order: 0;">
-                        <div class="stat-icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
+                        <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
                         <div class="stat-value">{{ resume.capital_social|intcomma|default:"-" }}</div>
                         <div class="stat-label">{% trans "Share Capital" %}</div>
-                        {% if resume.devise %}
-                        <span class="stat-devise">{{ resume.devise.code }}</span>
-                        {% endif %}
+                        {% if resume.devise %}<span class="stat-devise">{{ resume.devise.code }}</span>{% endif %}
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="stat-card ca" style="--order: 1;">
-                        <div class="stat-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
                         <div class="stat-value">{{ resume.chiffre_affaire|intcomma|default:"-" }}</div>
                         <div class="stat-label">{% trans "Revenue" %}</div>
-                        {% if resume.devise %}
-                        <span class="stat-devise">{{ resume.devise.code }}</span>
-                        {% endif %}
+                        {% if resume.devise %}<span class="stat-devise">{{ resume.devise.code }}</span>{% endif %}
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="stat-card resultat" style="--order: 2;">
-                        <div class="stat-icon">
-                            <i class="fas fa-calculator"></i>
-                        </div>
+                        <div class="stat-icon"><i class="fas fa-calculator"></i></div>
                         <div class="stat-value {% if resume.resultat_net >= 0 %}text-success{% else %}text-danger{% endif %}">
                             {{ resume.resultat_net|intcomma|default:"-" }}
                         </div>
                         <div class="stat-label">{% trans "Net Income" %}</div>
-                        {% if resume.devise %}
-                        <span class="stat-devise">{{ resume.devise.code }}</span>
-                        {% endif %}
+                        {% if resume.devise %}<span class="stat-devise">{{ resume.devise.code }}</span>{% endif %}
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="stat-card employes" style="--order: 3;">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
                         <div class="stat-value">{{ resume.nombre_employe|intcomma|default:"-" }}</div>
                         <div class="stat-label">{% trans "Employees" %}</div>
                         <span class="stat-devise">{% trans "persons" %}</span>
@@ -841,49 +850,37 @@ body {
                 </div>
             </div>
 
-            <!-- Additional info -->
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="card enhanced-card h-100">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3 text-primary">
-                                <i class="fas fa-calendar me-2"></i>{% trans "Timeline" %}
-                            </h6>
-                            <div class="mb-2">
-                                <small class="text-muted d-block mb-1">{% trans "Company creation date" %}</small>
-                                <span class="fw-bold fs-6">{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</span>
-                            </div>
-                            <div>
-                                <small class="text-muted d-block mb-1">{% trans "Last updated" %}</small>
-                                <span class="fw-bold fs-6">{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    {% if resume.commentaire %}
-                    <div class="colored-comment" style="border-left-color: {{ resume.couleur_commentaire.code|default:'#6c757d' }};">
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-comment-dots me-2"></i>{% trans "Analytical Comment" %}
-                        </h6>
-                        <p class="mb-0">{{ resume.commentaire }}</p>
-                        {% if resume.couleur_commentaire %}
-                        <div class="mt-4">
-                            <span class="color-badge" style="color: {{ resume.couleur_commentaire.code }};">
-                                {{ resume.couleur_commentaire.couleur }}
-                            </span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <i class="fas fa-comment-slash empty-state-icon"></i>
-                        <h4 class="fw-bold mb-3">{% trans "No comment" %}</h4>
-                        <p class="text-muted mb-0">{% trans "Add a comment to document this financial analysis" %}</p>
-                    </div>
-                    {% endif %}
+            <!-- Détails financiers -->
+            <div class="row g-3 mb-3">
+                <div class="col-12">
+                    <table class="table table-sm table-bordered mb-0" style="font-size:.9rem;">
+                        <tbody>
+                            <tr>
+                                <th class="w-35 text-muted fw-semibold bg-light">{% trans "Equity" %}</th>
+                                <td>{{ resume.capitaux_propre|intcomma|default:"-" }}{% if resume.devise %} {{ resume.devise.code }}{% endif %}</td>
+                                <th class="w-35 text-muted fw-semibold bg-light">{% trans "Creation Date" %}</th>
+                                <td>{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted fw-semibold bg-light">{% trans "Currency" %}</th>
+                                <td>{% if resume.devise %}{{ resume.devise.nom }} ({{ resume.devise.code }}){% else %}-{% endif %}</td>
+                                <th class="text-muted fw-semibold bg-light">{% trans "Last updated" %}</th>
+                                <td>{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
+            <!-- Commentaire -->
+            {% if resume.commentaire %}
+            <div class="colored-comment" style="border-left-color: {{ resume.couleur_commentaire.code|default:'var(--primary-color)' }};">
+                <h6 class="fw-bold mb-2">
+                    <i class="fas fa-comment-dots me-2"></i>{% trans "Analytical Comment" %}
+                </h6>
+                <div class="mb-0">{{ resume.commentaire|safe }}</div>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% else %}
@@ -952,18 +949,9 @@ body {
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="couleur_commentaire" class="form-label">{% trans "Comment Colour" %}</label>
-                            <select class="form-select select2-with-color" id="couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Select a colour" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
                             <label for="commentaire" class="form-label">{% trans "Comment" %}</label>
-                            <textarea class="form-control" id="commentaire" name="commentaire" rows="3" placeholder="{% trans 'Comment on the financial situation...' %}"></textarea>
+                            <textarea class="form-control rich-editor" id="commentaire" name="commentaire" rows="3" placeholder="{% trans "Comment on the financial situation..." %}"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1030,18 +1018,9 @@ body {
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="edit_couleur_commentaire" class="form-label">{% trans "Comment Colour" %}</label>
-                            <select class="form-select select2-with-color" id="edit_couleur_commentaire" name="couleur_commentaire">
-                                <option value="">{% trans "Select a colour" %}</option>
-                                {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">{{ coloration.couleur }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         <div class="col-12">
                             <label for="edit_commentaire" class="form-label">{% trans "Comment" %}</label>
-                            <textarea class="form-control" id="edit_commentaire" name="commentaire" rows="3"></textarea>
+                            <textarea class="form-control rich-editor" id="edit_commentaire" name="commentaire" rows="3"></textarea>
                         </div>
                     </div>
                 </div>
@@ -1139,7 +1118,7 @@ $(document).ready(function() {
     // Initialisation de Select2 corrigée avec centrage
     function initSelect2() {
         // Détruire les instances existantes
-        $('.select2-with-search, .select2-with-color').each(function() {
+        $('.select2-with-search').each(function() {
             if ($(this).hasClass('select2-hidden-accessible')) {
                 $(this).select2('destroy');
             }
@@ -1188,57 +1167,16 @@ $(document).ready(function() {
                 }, 10);
                 
                 // Fermer les autres dropdowns
-                $('.select2-with-search, .select2-with-color').not(this).select2('close');
+                $('.select2-with-search').not(this).select2('close');
             });
         });
 
-        // Initialiser les sélecteurs de couleur
-        $('.select2-with-color').each(function() {
-            const $select = $(this);
-            const selectId = $select.attr('id');
-            const $container = $select.closest('.modal-content');
-            
-            select2Instances[selectId] = $select.select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                placeholder: 'Select a colour',
-                language: 'en',
-                allowClear: true,
-                minimumResultsForSearch: 0,
-                dropdownParent: $container,
-                templateResult: formatOption,
-                templateSelection: formatOptionSelection,
-                escapeMarkup: function(m) { return m; },
-                dropdownCssClass: 'select2-dropdown-modal select2-dropdown-centered',
-                containerCssClass: 'select2-container-modal',
-                dropdownAutoWidth: true
-            }).on('select2:open', function(e) {
-                $('.select2-dropdown').css('z-index', '999999');
-                
-                // Calculer et appliquer la largeur centrée
-                setTimeout(() => {
-                    const $dropdown = $('.select2-dropdown');
-                    const selectWidth = $select.outerWidth();
-                    const dropdownWidth = selectWidth;
-                    
-                    $dropdown.css({
-                        'width': dropdownWidth + 'px',
-                        'left': '50%',
-                        'transform': 'translateX(-50%)',
-                        'position': 'fixed',
-                        'top': $select.offset().top + $select.outerHeight() + 5 + 'px'
-                    });
-                }, 10);
-                
-                $('.select2-with-search, .select2-with-color').not(this).select2('close');
-            });
-        });
     }
 
     // Détruire Select2 avant la fermeture du modal
     function destroySelect2BeforeModalClose() {
         $('#addResumeModal, #editResumeModal').on('hide.bs.modal', function() {
-            $(this).find('.select2-with-search, .select2-with-color').each(function() {
+            $(this).find('.select2-with-search').each(function() {
                 if ($(this).hasClass('select2-hidden-accessible')) {
                     $(this).select2('destroy');
                 }
@@ -1256,26 +1194,35 @@ $(document).ready(function() {
 
     // Réinitialisation pour les modales - version corrigée
     $('#addResumeModal, #editResumeModal').on('shown.bs.modal', function() {
-        // Attendre que le modal soit complètement affiché
+        const modalId = $(this).attr('id');
+        const $modal = $(this);
         setTimeout(() => {
             initSelect2();
-            
-            // Forcer le recalcul des positions
-            $(this).find('.select2-with-search, .select2-with-color').each(function() {
+            $modal.find('.select2-with-search').each(function() {
                 const instance = $(this).data('select2');
                 if (instance) {
                     instance.dropdown._positionDropdown();
                     instance.dropdown._resizeDropdown();
                 }
             });
+            if (modalId === 'editResumeModal' && currentResume) {
+                window.quillSetValue('edit_commentaire', currentResume.commentaire || '');
+            }
         }, 50);
+    });
+
+    $('#addResumeModal').on('hidden.bs.modal', function() {
+        window.quillSetValue('commentaire', '');
+    });
+    $('#editResumeModal').on('hidden.bs.modal', function() {
+        window.quillSetValue('edit_commentaire', '');
     });
 
     // Gérer les clics en dehors des dropdowns pour les fermer
     $(document).on('click', function(e) {
         if (!$(e.target).closest('.select2-container').length && 
             !$(e.target).closest('.modal').length) {
-            $('.select2-with-search, .select2-with-color').select2('close');
+            $('.select2-with-search').select2('close');
         }
     });
 
@@ -1327,12 +1274,7 @@ $(document).ready(function() {
             if (resume.devise && $('#edit_devise').length) {
                 $('#edit_devise').val(resume.devise.id).trigger('change');
             }
-            if (resume.couleur_commentaire && $('#edit_couleur_commentaire').length) {
-                $('#edit_couleur_commentaire').val(resume.couleur_commentaire.id).trigger('change');
-            }
         }, 100);
-
-        $('#edit_commentaire').val(resume.commentaire || '');
     }
 
     // Formulaire d'ajout avec gestion améliorée
@@ -1340,7 +1282,7 @@ $(document).ready(function() {
         e.preventDefault();
         
         // Fermer tous les dropdowns Select2 avant soumission
-        $('.select2-with-search, .select2-with-color').select2('close');
+        $('.select2-with-search').select2('close');
         
         submitResumeForm('POST', $(this).serialize(), '#submitAddBtn', 'addResumeModal');
     });
@@ -1350,7 +1292,7 @@ $(document).ready(function() {
         e.preventDefault();
         
         // Fermer tous les dropdowns Select2 avant soumission
-        $('.select2-with-search, .select2-with-color').select2('close');
+        $('.select2-with-search').select2('close');
         
         const formData = $(this).serialize();
         submitResumeForm('POST', formData, '#submitEditBtn', 'editResumeModal');
