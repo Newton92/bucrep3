@@ -2298,7 +2298,10 @@ class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
         required=True,
         error_messages={'required': 'Le prénom est obligatoire'}
     )
-    
+    # CharField simple pour éviter le ChoiceField qui évalue les clés gettext_lazy
+    # en langue serveur (EN) et rejette les clés françaises soumises par le formulaire
+    poste = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
+
     class Meta:
         model = ResponsableAcheteur
         fields = [
@@ -2343,7 +2346,8 @@ class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    
+    poste = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
+
     class Meta:
         model = ResponsableAcheteur
         fields = [
