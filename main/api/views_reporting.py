@@ -1938,13 +1938,14 @@ def generer_rapport_solvabilite(request):
                 },
                 "tendance": {
                     "avis_commercial": (
-                        getattr(tendance.avis_commercial, "libelle", str(tendance.avis_commercial))
-                        if tendance and tendance.avis_commercial
+                        (getattr(tendance.avis_commercial, "libelle_en", None) or getattr(tendance.avis_commercial, "libelle", ""))
+                        if tendance and tendance.avis_commercial and getattr(request, 'LANGUAGE_CODE', 'fr').startswith('en')
+                        else getattr(tendance.avis_commercial, "libelle", str(tendance.avis_commercial)) if tendance and tendance.avis_commercial
                         else ""
                     ),
                     "plus_informations": tendance.plus_informations if tendance and tendance.plus_informations else "",
                     "presse_media": tendance.presse_media if tendance and tendance.presse_media else "",
-                    "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "",
+                    "principaux_concurrent": tendance.principaux_concurrent if tendance else "",
                     "commentaire": tendance.commentaire if tendance and tendance.commentaire else _t("Aucun commentaire disponible"),
                 },
                 "advice": {
