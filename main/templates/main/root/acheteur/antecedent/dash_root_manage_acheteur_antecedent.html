@@ -412,7 +412,11 @@ $(document).ready(function() {
         $.ajax({
             url: API_BASE_URL + '?' + params,
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
-            success: function(r) { updateTable(r.results); updatePagination(r); },
+            success: function(r) {
+                updateTable(r.results);
+                updatePagination(r);
+                if (!filters.search && !filters.type) updateStatTotal(r.count);
+            },
             error: function(xhr) {
                 if (xhr.status === 401) refreshAccessToken(function() { loadAntecedents(page, filters); });
                 else Swal.fire({ icon: 'error', title: S.err, text: S.errLoad });
@@ -534,16 +538,23 @@ $(document).ready(function() {
             success: function(r) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
-                bootstrap.Modal.getInstance($('#addAntecedentModal')[0]).hide();
-                Swal.fire({ icon: 'success', title: S.ok, text: S.antAdded, timer: 1500, showConfirmButton: false })
-                    .then(function() { loadAntecedents(currentPage, currentFilters); updateStats(); });
+                var addInst = bootstrap.Modal.getInstance($('#addAntecedentModal')[0]);
+                if (addInst) { addInst.hide(); }
+                Swal.fire({ icon: 'success', title: S.ok, text: S.antAdded, timer: 2000, showConfirmButton: false })
+                    .then(function() { loadAntecedents(1, {}); });
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
                 if (xhr.status === 401) { refreshAccessToken(function() { $('#addAntecedentForm').submit(); }); return; }
                 var msg = S.errGeneric;
-                if (xhr.responseJSON) { msg = xhr.responseJSON.error || (xhr.responseJSON.non_field_errors ? (Array.isArray(xhr.responseJSON.non_field_errors) ? xhr.responseJSON.non_field_errors.join(', ') : xhr.responseJSON.non_field_errors) : msg) || msg; }
+                if (xhr.responseJSON) {
+                    msg = xhr.responseJSON.error || xhr.responseJSON.detail || msg;
+                    if (!msg || msg === S.errGeneric) {
+                        var nfe = xhr.responseJSON.non_field_errors;
+                        if (nfe) msg = Array.isArray(nfe) ? nfe.join(', ') : String(nfe);
+                    }
+                }
                 Swal.fire({ icon: 'error', title: S.err, text: msg });
             }
         });
@@ -570,9 +581,10 @@ $(document).ready(function() {
             success: function(r) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
-                bootstrap.Modal.getInstance($('#editAntecedentModal')[0]).hide();
-                Swal.fire({ icon: 'success', title: S.ok, text: S.antEdited, timer: 1500, showConfirmButton: false })
-                    .then(function() { loadAntecedents(currentPage, currentFilters); updateStats(); });
+                var editInst = bootstrap.Modal.getInstance($('#editAntecedentModal')[0]);
+                if (editInst) { editInst.hide(); }
+                Swal.fire({ icon: 'success', title: S.ok, text: S.antEdited, timer: 2000, showConfirmButton: false })
+                    .then(function() { loadAntecedents(currentPage, currentFilters); });
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
@@ -635,7 +647,6 @@ $(document).ready(function() {
                         $('#deleteSelected').prop('disabled', true);
                         $('#selectAll, #toggleAll').prop('checked', false);
                         loadAntecedents(currentPage, currentFilters);
-                        updateStats();
                     });
             },
             error: function(xhr) {
@@ -669,18 +680,8 @@ $(document).ready(function() {
     }
 
     // --- Statistiques ---
-    function updateStats() {
-        $.ajax({
-            url: '/api/acheteur/' + ACHETEUR_ID + '/antecedents/stats/',
-            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
-            success: function(r) {
-                var s = r.stats || r;
-                if (s.total !== undefined) $('#statTotal').text(s.total);
-                if (s.avec_faillite !== undefined) $('#statFaillite').text(s.avec_faillite);
-                if (s.avec_jugement !== undefined) $('#statJugement').text(s.avec_jugement);
-                if (s.avec_redressement !== undefined) $('#statRedressement').text(s.avec_redressement);
-            }
-        });
+    function updateStatTotal(count) {
+        if (count !== undefined) $('#statTotal').text(count);
     }
 
     // --- Helpers ---

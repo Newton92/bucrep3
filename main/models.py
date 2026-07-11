@@ -17,7 +17,7 @@ from django.db import models
 from django.db.models import ForeignKey
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, override as translation_override
 
 from safedelete.managers import SafeDeleteManager
 from safedelete.models import SOFT_DELETE_CASCADE, SafeDeleteModel
@@ -3215,10 +3215,14 @@ class ResponsableAcheteur(Model):
             )
         
         # Validation: vérifier que le poste est valide si renseigné
-        if self.poste and self.poste not in dict(LISTE_NOUVELLE_FONCTION):
-            raise ValidationError({
-                'poste': _("Valeur invalide pour le poste.")
-            })
+        # Évaluation forcée en FR car les clés sont des gettext_lazy français
+        if self.poste:
+            with translation_override('fr'):
+                valid_postes = {str(k) for k, _ in LISTE_NOUVELLE_FONCTION}
+            if self.poste not in valid_postes:
+                raise ValidationError({
+                    'poste': _("Valeur invalide pour le poste.")
+                })
         
         # Validation: longueur du commentaire
         if self.commentaire and len(self.commentaire) > 10000000:
@@ -3231,7 +3235,10 @@ class ResponsableAcheteur(Model):
         is_new = self.pk is None
         
         # Valider avant de sauvegarder
-        self.full_clean()
+        # exclude=['poste'] : la validation Django des choices évalue les clés
+        # gettext_lazy en langue serveur courante ; on fait notre propre vérification
+        # en FR dans clean() ci-dessus
+        self.full_clean(exclude=['poste'])
         
         # Sauvegarder
         super().save(*args, **kwargs)

@@ -2053,7 +2053,6 @@ class AcheteurMinimalSerializer(serializers.ModelSerializer):
             'date_creation_formatted',
             'forme_juridique',
             'statut_entreprise',
-            'email',
             'site_internet',
             'pays',
             'province',
