@@ -3,15 +3,35 @@
 
 {% block styles %}
 <style>
-.page-header{background:linear-gradient(135deg,#0a95ca,#106cb2);padding:.75rem 1.25rem;border-radius:12px;margin-bottom:1rem;color:#fff;box-shadow:0 2px 8px rgba(13,108,178,.15)}
+:root{--color-primary:#0a95ca;--color-primary-dark:#106cb2;--primary-gradient:linear-gradient(135deg,#0a95ca,#106cb2)}
+.page-header{background:var(--primary-gradient);padding:.75rem 1.25rem;border-radius:12px;margin-bottom:1rem;color:#fff;box-shadow:0 2px 8px rgba(13,108,178,.15)}
 .page-title{font-size:1.05rem;font-weight:700;margin:0}
 .page-subtitle{font-size:.78rem;opacity:.85;margin:0}
-.ant-stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.metric-card{background:#fff;border-radius:10px;padding:.9rem 1rem;box-shadow:0 2px 8px rgba(10,149,202,.07);border:1px solid rgba(10,149,202,.1)}
+.metric-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem}
+.metric-icon{width:32px;height:32px;border-radius:8px;background:rgba(10,149,202,.1);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.metric-label{font-size:.75rem;color:#5a6c7d;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.metric-value{font-size:1.4rem;font-weight:700;color:var(--color-primary-dark);line-height:1}
+.metric-sub{font-size:.72rem;color:#8a9ab0;margin-top:.2rem}
+.table-card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(10,149,202,.07);border:1px solid rgba(10,149,202,.1);overflow:hidden}
+.table-card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding:.75rem 1rem;border-bottom:1px solid rgba(37,173,214,.1)}
+.search-input{border:1px solid rgba(10,149,202,.25);border-radius:6px;padding:.3rem .65rem;font-size:.8rem;outline:none;color:#333;background:#fff}
+.search-input:focus{border-color:var(--color-primary);box-shadow:0 0 0 2px rgba(10,149,202,.12)}
+.modern-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.modern-table thead th{background:rgba(10,149,202,.05);padding:.55rem .75rem;font-weight:600;color:#4a5568;border-bottom:2px solid rgba(10,149,202,.12);white-space:nowrap}
+.modern-table tbody td{padding:.5rem .75rem;border-bottom:1px solid #f0f4f8;vertical-align:middle}
+.modern-table tbody tr:last-child td{border-bottom:none}
+.modern-table tbody tr:hover{background:rgba(10,149,202,.03)}
+.btn-tbl{width:26px;height:26px;border:none;border-radius:5px;cursor:pointer;font-size:.72rem;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.btn-tbl-edit{background:rgba(10,149,202,.1);color:#0a95ca}
+.btn-tbl-delete{background:rgba(220,53,69,.1);color:#dc3545}
+.btn-tbl:hover{opacity:.75;transform:scale(1.08)}
 .ant-badge{display:inline-flex;align-items:center;padding:.2rem .45rem;border-radius:4px;font-size:.7rem;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap}
 .ant-badge.faillite{background:#dc3545}
 .ant-badge.jugement{background:#28a745}
 .ant-badge.redressement{background:#0a95ca}
 .ant-badge.autre{background:#6f42c1}
+.pag-info{font-size:.75rem;color:#8a9ab0}
 .empty-state-wrap{text-align:center;padding:2.5rem 1rem}
 .empty-state-wrap .esi{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;background:linear-gradient(135deg,#f0f7ff,#e3f2fd);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#0a95ca}
 .ql-container.ql-snow{height:auto !important;min-height:80px}
@@ -52,146 +72,125 @@
     <!-- Statistiques -->
     <div class="row g-2 mb-3">
         <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ant-stat-icon bg-primary text-white"><i class="bi bi-hammer"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1" id="statTotal">{{ stats.total }}</div>
-                    <div class="text-muted small">{% trans "Total Antécédents" %}</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon"><i class="bi bi-hammer"></i></div>
+                    <span class="metric-label">{% trans "Total Antécédents" %}</span>
                 </div>
+                <div class="metric-value" id="statTotal">{{ stats.total }}</div>
+                <div class="metric-sub">{% trans "antécédents enregistrés" %}</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ant-stat-icon bg-danger text-white"><i class="bi bi-exclamation-octagon-fill"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1" id="statFaillite">{{ stats.avec_faillite }}</div>
-                    <div class="text-muted small">{% trans "Dossiers Faillite" %}</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(220,53,69,.1);color:#dc3545;"><i class="bi bi-exclamation-octagon-fill"></i></div>
+                    <span class="metric-label">{% trans "Dossiers Faillite" %}</span>
                 </div>
+                <div class="metric-value" id="statFaillite" style="color:#dc3545;">{{ stats.avec_faillite }}</div>
+                <div class="metric-sub">{% trans "dossiers de faillite" %}</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ant-stat-icon bg-success text-white"><i class="bi bi-bank2"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1" id="statJugement">{{ stats.avec_jugement }}</div>
-                    <div class="text-muted small">{% trans "Jugements" %}</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(40,167,69,.1);color:#28a745;"><i class="bi bi-bank2"></i></div>
+                    <span class="metric-label">{% trans "Jugements" %}</span>
                 </div>
+                <div class="metric-value" id="statJugement" style="color:#28a745;">{{ stats.avec_jugement }}</div>
+                <div class="metric-sub">{% trans "jugements de cour" %}</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="ant-stat-icon text-white" style="background:#0a95ca;"><i class="bi bi-arrow-repeat"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1" id="statRedressement">{{ stats.avec_redressement }}</div>
-                    <div class="text-muted small">{% trans "Redressements" %}</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon" style="background:rgba(10,149,202,.1);color:#0a95ca;"><i class="bi bi-arrow-repeat"></i></div>
+                    <span class="metric-label">{% trans "Redressements" %}</span>
                 </div>
+                <div class="metric-value" id="statRedressement" style="color:#0a95ca;">{{ stats.avec_redressement }}</div>
+                <div class="metric-sub">{% trans "antécédents de redressement" %}</div>
             </div>
         </div>
     </div>
 
     <!-- Antécédents récents -->
     {% if antecedents_recent %}
-    <div class="card mb-3">
-        <div class="card-body py-2 px-3">
-            <strong class="small">{% trans "Antécédents récemment ajoutés" %}</strong>
-            <div class="mt-2 d-flex flex-column gap-1">
-                {% for a in antecedents_recent %}
-                <div class="d-flex align-items-center gap-2 py-1 border-bottom">
-                    <div class="d-flex gap-1 flex-shrink-0">
-                        {% if a.dossier_faillite %}<span class="ant-badge faillite">DFLT</span>{% endif %}
-                        {% if a.jugement_cour %}<span class="ant-badge jugement">JGMT</span>{% endif %}
-                        {% if a.antecedant_redressement %}<span class="ant-badge redressement">ANTR</span>{% endif %}
-                        {% if a.Autre %}<span class="ant-badge autre">AUTR</span>{% endif %}
-                    </div>
-                    <div class="flex-grow-1 small text-muted text-truncate">
-                        {{ a.dossier_faillite|default:a.jugement_cour|default:a.antecedant_redressement|default:a.Autre|truncatechars:70 }}
-                    </div>
-                    <span class="text-muted flex-shrink-0" style="font-size:.72rem;">{{ a.created_at|date:"d/m/Y" }}</span>
+    <div class="table-card mb-3 p-3">
+        <strong class="small" style="color:var(--color-primary-dark);">{% trans "Antécédents récemment ajoutés" %}</strong>
+        <div class="mt-2 d-flex flex-column gap-1">
+            {% for a in antecedents_recent %}
+            <div class="d-flex align-items-center gap-2 py-1 border-bottom">
+                <div class="d-flex gap-1 flex-shrink-0">
+                    {% if a.dossier_faillite %}<span class="ant-badge faillite">DFLT</span>{% endif %}
+                    {% if a.jugement_cour %}<span class="ant-badge jugement">JGMT</span>{% endif %}
+                    {% if a.antecedant_redressement %}<span class="ant-badge redressement">ANTR</span>{% endif %}
+                    {% if a.Autre %}<span class="ant-badge autre">AUTR</span>{% endif %}
                 </div>
-                {% endfor %}
+                <div class="flex-grow-1 small text-muted text-truncate">
+                    {{ a.dossier_faillite|default:a.jugement_cour|default:a.antecedant_redressement|default:a.Autre|truncatechars:70 }}
+                </div>
+                <span class="text-muted flex-shrink-0" style="font-size:.72rem;">{{ a.created_at|date:"d/m/Y" }}</span>
             </div>
+            {% endfor %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Filtres -->
-    <div class="card mb-3">
-        <div class="card-body py-2 px-3">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label small mb-1"><i class="bi bi-search text-primary me-1"></i>{% trans "Recherche" %}</label>
-                    <input type="text" class="form-control form-control-sm" id="searchInput"
-                           placeholder="{% trans 'Référence, jugement, redressement...' %}">
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label small mb-1"><i class="bi bi-funnel text-primary me-1"></i>{% trans "Filtrer par type" %}</label>
-                    <select class="form-select form-select-sm" id="filterType">
-                        <option value="">{% trans "Tous les types" %}</option>
-                        <option value="faillite">{% trans "Dossiers de Faillite" %}</option>
-                        <option value="jugement">{% trans "Jugements de Cour" %}</option>
-                        <option value="redressement">{% trans "Redressements" %}</option>
-                        <option value="autre">{% trans "Autres" %}</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1" id="applyFilters">
-                        <i class="bi bi-funnel-fill"></i>{% trans "Filtrer" %}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Table -->
-    <div class="card">
-        <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center"
-             style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
-            <span class="text-white fw-semibold small">
-                <i class="bi bi-list-ul me-1"></i>{% trans "Liste des Antécédents Juridiques" %}
-            </span>
-            <div class="d-flex gap-2 align-items-center">
-                <div class="form-check form-check-inline mb-0">
-                    <input class="form-check-input" type="checkbox" id="selectAll">
-                    <label class="form-check-label small text-white" for="selectAll">{% trans "Sélectionner tout" %}</label>
-                </div>
-                <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="deleteSelected" disabled>
-                    <i class="bi bi-trash-fill"></i>{% trans "Supprimer sélection" %}
+    <!-- Table principale -->
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="bi bi-list-ul me-2"></i>{% trans "Liste des Antécédents Juridiques" %}
+            </h6>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="text" class="search-input" id="searchInput"
+                       placeholder="{% trans 'Référence, jugement...' %}" style="width:175px;">
+                <select class="search-input" id="filterType" style="cursor:pointer;">
+                    <option value="">{% trans "Tous les types" %}</option>
+                    <option value="faillite">{% trans "Faillite" %}</option>
+                    <option value="jugement">{% trans "Jugement" %}</option>
+                    <option value="redressement">{% trans "Redressement" %}</option>
+                    <option value="autre">{% trans "Autre" %}</option>
+                </select>
+                <label class="d-flex align-items-center gap-1 mb-0 small text-muted" style="cursor:pointer;white-space:nowrap;">
+                    <input class="form-check-input mt-0" type="checkbox" id="selectAll">{% trans "Tout" %}
+                </label>
+                <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" id="deleteSelected" disabled style="font-size:.75rem;">
+                    <i class="bi bi-trash-fill"></i>{% trans "Supprimer" %}
                 </button>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0" id="antecedentTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
-                            <th>{% trans "Type" %}</th>
-                            <th>{% trans "Contenu principal" %}</th>
-                            <th>{% trans "Commentaire" %}</th>
-                            <th>{% trans "Date" %}</th>
-                            <th width="90">{% trans "Actions" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="antecedentTableBody">
-                        {% if stats.total == 0 %}
-                        <tr><td colspan="6">
-                            <div class="empty-state-wrap">
-                                <div class="esi"><i class="bi bi-hammer"></i></div>
-                                <h6 class="text-muted mb-1">{% trans "Aucun antécédent trouvé" %}</h6>
-                                <p class="text-muted small mb-3">{% trans "Utilisez les filtres ou ajoutez un nouvel antécédent" %}</p>
-                                <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">
-                                    <i class="bi bi-plus-circle-fill"></i>&nbsp;{% trans "Ajouter un antécédent" %}
-                                </button>
-                            </div>
-                        </td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="paginationContainer">
-                <div class="text-muted small" id="paginationInfo"></div>
-                <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
-            </div>
+        <div class="table-responsive">
+            <table class="modern-table" id="antecedentTable">
+                <thead>
+                    <tr>
+                        <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
+                        <th>{% trans "Type" %}</th>
+                        <th>{% trans "Contenu principal" %}</th>
+                        <th>{% trans "Commentaire" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th style="width:80px;text-align:center;">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="antecedentTableBody">
+                    {% if stats.total == 0 %}
+                    <tr><td colspan="6">
+                        <div class="empty-state-wrap">
+                            <div class="esi"><i class="bi bi-hammer"></i></div>
+                            <h6 class="text-muted mb-1">{% trans "Aucun antécédent trouvé" %}</h6>
+                            <p class="text-muted small mb-3">{% trans "Utilisez les filtres ou ajoutez un nouvel antécédent" %}</p>
+                            <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">
+                                <i class="bi bi-plus-circle-fill"></i>&nbsp;{% trans "Ajouter un antécédent" %}
+                            </button>
+                        </div>
+                    </td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-top:1px solid rgba(37,173,214,.1);" id="paginationContainer">
+            <div class="pag-info" id="paginationInfo"></div>
+            <nav><ul class="pagination pagination-sm mb-0" id="paginationControls"></ul></nav>
         </div>
     </div>
 </div>
@@ -200,7 +199,7 @@
 <div class="modal fade" id="addAntecedentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+            <div class="modal-header py-2 px-3" style="background:var(--primary-gradient);">
                 <h6 class="modal-title text-white mb-0"><i class="bi bi-plus-circle me-2"></i>{% trans "Ajouter un Antécédent Juridique" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -263,7 +262,7 @@
 <div class="modal fade" id="editAntecedentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
+            <div class="modal-header py-2 px-3" style="background:var(--primary-gradient);">
                 <h6 class="modal-title text-white mb-0"><i class="bi bi-pencil-square me-2"></i>{% trans "Modifier l'Antécédent Juridique" %}</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -339,7 +338,9 @@
 {% trans "antécédents" as t_antecedents %}
 {% trans "Modifier" as t_edit_btn %}
 {% trans "Ajouter un antécédent" as t_add_btn %}
+{% endblock %}
 
+{% block scripts %}
 <script>
 $(document).ready(function() {
     var ACHETEUR_ID = '{{ acheteur.id }}';
@@ -454,7 +455,7 @@ $(document).ready(function() {
                   '<h6 class="text-muted mb-1">' + S.aucun + '</h6>' +
                   '<p class="text-muted small mb-3">' + S.useFilters + '</p>' +
                   '<button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addAntecedentModal">' +
-                    '<i class="bi bi-plus-circle-fill"></i>&nbsp;' + S.addBtn +
+                    '{% trans "Ajouter un antécédent" %}'  +
                   '</button>' +
                 '</div>' +
                 '</td></tr>'
@@ -472,9 +473,9 @@ $(document).ready(function() {
                 '<td class="small" style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + getMainContent(a) + '</td>' +
                 '<td class="small text-muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + commentTxt + '</td>' +
                 '<td class="small text-muted" style="white-space:nowrap;"><i class="bi bi-calendar3 me-1"></i>' + (a.created_at_formatted || '') + '</td>' +
-                '<td><div class="btn-group btn-group-sm">' +
-                  '<button class="btn btn-outline-primary edit-btn" data-id="' + a.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil"></i></button>' +
-                  '<button class="btn btn-outline-danger delete-btn" data-id="' + a.id + '" title="' + S.del + '"><i class="bi bi-trash"></i></button>' +
+                '<td style="text-align:center;"><div class="d-flex align-items-center justify-content-center gap-1">' +
+                  '<button class="btn btn-sm btn-outline-primary edit-btn py-0 px-2" style="font-size:.72rem;" data-id="' + a.id + '">{% trans "Modifier" %}</button> ' +
+                  '<button class="btn btn-sm btn-outline-danger delete-btn py-0 px-2" style="font-size:.72rem;" data-id="' + a.id + '">{% trans "Supprimer" %}</button>' +
                 '</div></td>' +
                 '</tr>'
             );
@@ -495,13 +496,14 @@ $(document).ready(function() {
     }
 
     // --- Filtres ---
-    $('#applyFilters').on('click', function() {
+    function applyFilters() {
         loadAntecedents(1, { search: $('#searchInput').val(), type: $('#filterType').val() });
-    });
+    }
+    $('#filterType').on('change', function() { applyFilters(); });
     var searchTimeout;
     $('#searchInput').on('input', function() {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() { $('#applyFilters').click(); }, 500);
+        searchTimeout = setTimeout(applyFilters, 500);
     });
     $(document).on('click', '.page-link', function(e) {
         e.preventDefault();
@@ -712,3 +714,4 @@ $(document).ready(function() {
 });
 </script>
 {% endblock %}
+

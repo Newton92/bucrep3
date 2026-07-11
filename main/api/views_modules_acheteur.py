@@ -1728,49 +1728,31 @@ class AcheteurAntecedentListView(APIView):
         serializer = AntecedantJuridiqueListSerializer(antecedents, many=True)
         return Response(serializer.data)
     
-    @transaction.atomic
     def post(self, request, acheteur_id):
         """Ajoute un nouvel antécédent juridique"""
         acheteur = self.get_acheteur(acheteur_id)
-        
-        # DEBUG
-        print("=== POST Données brutes ===")
-        print(request.data)
-        print("==========================")
-        
-        # Vérifier s'il existe déjà un antécédent avec les mêmes données
-        data = request.data.copy()
-        
-        # Vérifier s'il existe déjà un antécédent avec les mêmes données
-        data = request.data
-        
-        """Ajoute un nouvel antécédent juridique"""
-        # Normaliser les données : convertir 'autre' en 'Autre'
-        data = request.data.copy()
-        if 'autre' in data:
+
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        # Normaliser : 'autre' (minuscule) → 'Autre' (majuscule, nom du champ modèle)
+        if 'autre' in data and 'Autre' not in data:
             data['Autre'] = data.pop('autre')
-        
-        # Vérifier les doublons basés sur les champs principaux
-        if data.get('dossier_faillite') and data.get('jugement_cour'):
-            existe_deja = AntecedantsJuridique.objects.filter(
-                acheteur=acheteur,
-                dossier_faillite=data['dossier_faillite'].strip(),
-                jugement_cour=data['jugement_cour'].strip()
-            ).exists()
-            
-            if existe_deja:
-                return Response({
-                    'error': "Un antécédent avec ces informations existe déjà."
-                }, status=status.HTTP_409_CONFLICT)
-        
-        # Ajouter l'acheteur aux données
+
         data['acheteur'] = acheteur_id
-        
+
         serializer = AddAntecedantsJuridiqueSerializer(data=data)
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
             antecedent = serializer.save()
-            
-            # Log d'activité
+        except Exception as e:
+            logger.error(f"Erreur création antécédent: {e}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
             self.log_activity(
                 request=request,
                 action_type='CREATE_ANTECEDENT',
@@ -1778,17 +1760,13 @@ class AcheteurAntecedentListView(APIView):
                 object_type='AntecedantsJuridique',
                 details=f"Ajout d'un antécédent juridique pour l'acheteur {acheteur.nom} ({acheteur.code})"
             )
-            
-            return Response({
-                'message': 'Antécédent juridique ajouté avec succès',
-                'data': GetAntecedantsJuridiqueSerializer(antecedent).data
-            }, status=status.HTTP_201_CREATED)
-            
-        print("=== Erreurs de validation ===")
-        print(serializer.errors)
-        print("=============================")
-            
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            pass  # ne pas bloquer la réponse si le log échoue
+
+        return Response({
+            'message': 'Antécédent juridique ajouté avec succès',
+            'id': antecedent.id
+        }, status=status.HTTP_201_CREATED)
     
     
     @transaction.atomic
@@ -1877,11 +1855,10 @@ class AcheteurAntecedentDetailView(APIView):
         serializer = GetAntecedantsJuridiqueSerializer(antecedent)
         return Response(serializer.data)
     
-    @transaction.atomic
     def put(self, request, acheteur_id, antecedent_id):
         """Met à jour un antécédent existant"""
         acheteur = self.get_acheteur(acheteur_id)
-        
+
         try:
             antecedent = AntecedantsJuridique.objects.get(
                 id=antecedent_id,
@@ -1892,28 +1869,11 @@ class AcheteurAntecedentDetailView(APIView):
                 {'error': 'Antécédent non trouvé'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # DEBUG: Afficher les données brutes
-        print("=== PUT Données brutes ===")
-        print(request.data)
-        print("==========================")
-        
-        # Normaliser les données - IMPORTANT: utiliser 'autre' pour correspondre au serializer
-        data = request.data.copy()
-        
-        # Le serializer attend 'autre' mais le modèle a 'Autre'
-        # Le serializer gérera la conversion avec source='Autre'
+
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        # Normaliser : 'Autre' → 'autre' pour correspondre au champ serializer (source='Autre')
         if 'Autre' in data and 'autre' not in data:
             data['autre'] = data.pop('Autre')
-        
-        # Sauvegarder les anciennes valeurs pour le log
-        old_values = {
-            'dossier_faillite': antecedent.dossier_faillite,
-            'jugement_cour': antecedent.jugement_cour,
-            'antecedant_redressement': antecedent.antecedant_redressement,
-            'Autre': antecedent.Autre,
-            'commentaire': antecedent.commentaire
-        }
         
         serializer = EditAntecedantsJuridiqueSerializer(
             antecedent,
@@ -1921,52 +1881,30 @@ class AcheteurAntecedentDetailView(APIView):
             partial=True
         )
         
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
             updated_antecedent = serializer.save()
-            
-            # Détecter les changements pour le log
-            changes = []
-            new_values = serializer.validated_data
-            
-            # Comparer les champs
-            for field_name in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'commentaire']:
-                if field_name in new_values:
-                    if str(new_values[field_name] or '') != str(old_values[field_name] or ''):
-                        old_val = str(old_values[field_name] or '')[:50] + ('...' if len(str(old_values[field_name] or '')) > 50 else '')
-                        new_val = str(new_values[field_name] or '')[:50] + ('...' if len(str(new_values[field_name] or '')) > 50 else '')
-                        changes.append(f"{field_name}: '{old_val}' → '{new_val}'")
-            
-            # Gérer le champ 'Autre' spécialement
-            if 'autre' in new_values:
-                new_autre = new_values['autre'] or ''
-                if str(new_autre) != str(old_values['Autre'] or ''):
-                    old_val = str(old_values['Autre'] or '')[:50] + ('...' if len(str(old_values['Autre'] or '')) > 50 else '')
-                    new_val = str(new_autre)[:50] + ('...' if len(str(new_autre)) > 50 else '')
-                    changes.append(f"Autre: '{old_val}' → '{new_val}'")
-            
-            # Log d'activité
-            details = f"Mise à jour d'un antécédent juridique pour l'acheteur {acheteur.nom}"
-            if changes:
-                details += f" - Changements: {', '.join(changes)}"
-            
+        except Exception as e:
+            logger.error(f"Erreur mise à jour antécédent: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
             self.log_activity(
                 request=request,
                 action_type='UPDATE_ANTECEDENT',
                 object_id=antecedent.id,
                 object_type='AntecedantsJuridique',
-                details=details
+                details=f"Mise à jour d'un antécédent juridique pour l'acheteur {acheteur.nom}"
             )
-            
-            return Response({
-                'message': 'Antécédent juridique mis à jour avec succès',
-                'data': GetAntecedantsJuridiqueSerializer(updated_antecedent).data
-            })
-        
-        print("=== Erreurs de validation ===")
-        print(serializer.errors)
-        print("=============================")
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            pass
+
+        return Response({
+            'message': 'Antécédent juridique mis à jour avec succès',
+            'id': updated_antecedent.id
+        })
 
 
 
