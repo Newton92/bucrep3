@@ -2853,6 +2853,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         else:
             poste_choices = [(str(k), str(v)) for k, v in LISTE_NOUVELLE_FONCTION]
         poste_choices_json = json.dumps(poste_choices, default=str)
+        poste_en_json = json.dumps(LISTE_NOUVELLE_FONCTION_EN, default=str)
 
         context = {
             "acheteurs_active": "active",
@@ -2867,6 +2868,8 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
             "responsables_json": responsables_json,
             "poste_choices": poste_choices,
             "poste_choices_json": poste_choices_json,
+            "poste_en_json": poste_en_json,
+            "is_english": lang.startswith('en'),
         }
         
         return render(

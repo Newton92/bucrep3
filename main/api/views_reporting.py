@@ -2,6 +2,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.utils.translation import get_language
+from main.constantes import LISTE_NOUVELLE_FONCTION_EN
 from main.models import Annee, Devise, Commande, Resume, CodeNafAcheteur, CodeNafAcheteur, Assets, Pays
 from main.models import Resume, RiskRating, RiskManagment, OpinionCreditAcremac, DonneesEnregistrement, AntecedantsJuridique
 from main.models import ResponsableAcheteur, ConseilAdministration, CompositionCapitalSocial, CompositionAction, Structure
@@ -1072,15 +1074,18 @@ def generer_rapport_solvabilite(request):
             pass
         
         
-        # Recuperation des dirigeants de l'acheteur 
+        # Recuperation des dirigeants de l'acheteur
+        _lang = (get_language() or 'fr')
         responsables = ResponsableAcheteur.objects.filter(acheteur=acheteur)
         list_responsables_data = []
         for responsable in responsables:
+            fr_poste = responsable.poste or ""
+            poste_label = LISTE_NOUVELLE_FONCTION_EN.get(fr_poste, fr_poste) if _lang.startswith('en') else fr_poste
             list_responsables_data.append({
                 "nom": responsable.nom if responsable.nom else "",
                 "prenom": responsable.prenom if responsable.prenom else "",
                 "sexe": responsable.Sexe if responsable.Sexe else "",
-                "poste": responsable.poste if responsable.poste else "",
+                "poste": poste_label,
                 "nationalite": responsable.nationalite if responsable.nationalite else "",
                 "commentaire": responsable.commentaire if responsable.commentaire else "",
             })
@@ -1763,7 +1768,7 @@ def generer_rapport_solvabilite(request):
                 "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
                 "naf_codes_grouped": naf_codes_grouped if naf_codes_grouped else [],
                 "nace_specifique": str(acheteur.nace_specifique) if hasattr(acheteur, 'nace_specifique') and acheteur.nace_specifique else "",
-                "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "#ff0000",
+                "couleur_commentaire_code": _safe_nested_attr(acheteur, ["couleur_commentaire", "code"]) or "",
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "",
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "",
                 "description": acheteur.description if hasattr(acheteur, 'description') else "",
@@ -2238,7 +2243,7 @@ def generer_rapport_solvabilite(request):
             "conclusion_generale": {
                 "title": "CONCLUSION GENERALE",
                 "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "",
-                "couleur_commentaire_code": (conclusion_generale.couleur_commentaire.code if conclusion_generale and conclusion_generale.couleur_commentaire else None) or "#ff0000",
+                "couleur_commentaire_code": (conclusion_generale.couleur_commentaire.code if conclusion_generale and conclusion_generale.couleur_commentaire else None) or "",
                 "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else _t("Aucun commentaire disponible"),
             }
         }
