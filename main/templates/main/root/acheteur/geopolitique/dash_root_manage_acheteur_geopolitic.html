@@ -329,6 +329,16 @@
     }
 }
 :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* Barre d'action visible uniquement en mode iframe (embed-mode) */
+.embed-actions { display: none; }
+html.embed-mode .embed-actions {
+    display: flex !important;
+    justify-content: flex-end;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: .6rem;
+}
 </style>
 {% endblock %}
 
@@ -371,7 +381,24 @@
         </div>
     </div>
 
+    <!-- Barre d'action embed-mode (page-header masqué dans l'iframe) -->
+    <div class="embed-actions">
+        {% if geopolitic %}
+        <a href="{% url 'dash_root_manage_acheteur_geopolitic_form' acheteur.id %}" class="btn btn-warning btn-action btn-sm">
+            <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+        </a>
+        <button class="btn btn-danger btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+            <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+        </button>
+        {% else %}
+        <a href="{% url 'dash_root_manage_acheteur_geopolitic_form' acheteur.id %}" class="btn btn-success btn-action btn-sm">
+            <i class="fas fa-plus-circle me-1"></i>{% trans "Créer l'analyse" %}
+        </a>
+        {% endif %}
+    </div>
+
     {% if geopolitic %}
+    <div class="geopolitic-content">
 
     <!-- Score Metric Cards -->
     <div class="row g-3 mb-3">
@@ -496,6 +523,8 @@
             {% trans "Dernière mise à jour" %} {{ geopolitic.updated_at|date:"d/m/Y H:i" }}
         </span>
     </div>
+
+    </div><!-- /geopolitic-content -->
 
     {% else %}
 

@@ -283,7 +283,11 @@
 <script>
 $(document).ready(function() {
     const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_URL = `/api/acheteur/${ACHETEUR_ID}/geopolitics/`;
+    const GEOPOLITIC_ID = '{{ geopolitic.id|default:"" }}';
+    const IS_EDIT = GEOPOLITIC_ID !== '';
+    const API_URL = IS_EDIT
+        ? `/api/acheteur/${ACHETEUR_ID}/editer-un-donnee-geopolitique/${GEOPOLITIC_ID}/`
+        : `/api/acheteur/${ACHETEUR_ID}/geopolitics/`;
     const REDIRECT_URL = '{% url "dash_root_manage_acheteur_geopolitic" acheteur.id %}';
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
@@ -400,7 +404,7 @@ $(document).ready(function() {
 
         $.ajax({
             url: API_URL,
-            type: 'POST',
+            type: IS_EDIT ? 'PUT' : 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },

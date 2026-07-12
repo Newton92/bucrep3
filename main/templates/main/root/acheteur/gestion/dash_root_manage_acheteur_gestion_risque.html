@@ -35,8 +35,8 @@
 .page-title    { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
 .page-subtitle { font-size: 0.8rem; opacity: 0.85; font-weight: 400; }
 
-/* ── Metric cards (risk display) ─────────────────────────── */
-.metric-card {
+/* ── Risk indicator cards (renamed rm-card to avoid embed-mode base.html rule) ── */
+.rm-card {
     background: var(--color-background);
     border-radius: 10px;
     padding: 1rem 1.25rem;
@@ -46,18 +46,18 @@
     position: relative;
     overflow: hidden;
 }
-.metric-card::before {
+.rm-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0;
     width: 3px; height: 100%;
 }
-.metric-card.professionalisme::before { background: linear-gradient(to bottom, #FF5733, #FF8E53); }
-.metric-card.organisation::before     { background: linear-gradient(to bottom, #33C957, #53FF8E); }
-.metric-card.turn-over::before        { background: linear-gradient(to bottom, #3357FF, #538EFF); }
-.metric-card.greve::before            { background: linear-gradient(to bottom, #FF33A6, #FF53C6); }
-.metric-card.degradation::before      { background: linear-gradient(to bottom, #FFA500, #FFC153); }
-.metric-card.respect::before          { background: linear-gradient(to bottom, #8A2BE2, #B453FF); }
+.rm-card.professionalisme::before { background: linear-gradient(to bottom, #FF5733, #FF8E53); }
+.rm-card.organisation::before     { background: linear-gradient(to bottom, #33C957, #53FF8E); }
+.rm-card.turn-over::before        { background: linear-gradient(to bottom, #3357FF, #538EFF); }
+.rm-card.greve::before            { background: linear-gradient(to bottom, #FF33A6, #FF53C6); }
+.rm-card.degradation::before      { background: linear-gradient(to bottom, #FFA500, #FFC153); }
+.rm-card.respect::before          { background: linear-gradient(to bottom, #8A2BE2, #B453FF); }
 
 .metric-header {
     display: flex;
@@ -250,7 +250,7 @@
 
 @media (max-width: 768px) {
     .page-header { padding: 0.75rem 1rem; }
-    .metric-card { padding: 0.85rem 1rem; }
+    .rm-card { padding: 0.85rem 1rem; }
     .timestamps-bar { flex-direction: column; gap: 0.25rem; align-items: flex-start; }
 }
 
@@ -259,6 +259,16 @@
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* ── Embed-mode action bar (visible uniquement dans l'iframe) ── */
+.embed-actions { display: none; }
+html.embed-mode .embed-actions {
+    display: flex !important;
+    justify-content: flex-end;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: .6rem;
 }
 </style>
 {% endblock %}
@@ -301,6 +311,22 @@
         </div>
     </div>
 
+    <!-- Barre d'action embed-mode (page-header masqué dans l'iframe) -->
+    <div class="embed-actions">
+        {% if gestion_risque %}
+        <button class="btn btn-warning btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#editRiskManagementModal">
+            <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+        </button>
+        <button class="btn btn-danger btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+            <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+        </button>
+        {% else %}
+        <button class="btn btn-success btn-action btn-sm" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+            <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter l'évaluation" %}
+        </button>
+        {% endif %}
+    </div>
+
     {% if gestion_risque %}
 
     <!-- ── Synthèse visuelle (image cliquable) ────────────── -->
@@ -318,7 +344,7 @@
     <div class="row g-3 mb-3">
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card professionalisme">
+            <div class="rm-card professionalisme">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-user-tie"></i></div>
                     <span class="metric-label">{% trans "Professionnalisme" %}</span>
@@ -333,7 +359,7 @@
         </div>
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card organisation">
+            <div class="rm-card organisation">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-sitemap"></i></div>
                     <span class="metric-label">{% trans "Organisation" %}</span>
@@ -348,7 +374,7 @@
         </div>
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card turn-over">
+            <div class="rm-card turn-over">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-user-friends"></i></div>
                     <span class="metric-label">{% trans "Non départ employés" %}</span>
@@ -363,7 +389,7 @@
         </div>
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card greve">
+            <div class="rm-card greve">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-hand-paper"></i></div>
                     <span class="metric-label">{% trans "Non grève" %}</span>
@@ -378,7 +404,7 @@
         </div>
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card degradation">
+            <div class="rm-card degradation">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-chart-line"></i></div>
                     <span class="metric-label">{% trans "Non dégradation qualité" %}</span>
@@ -393,7 +419,7 @@
         </div>
 
         <div class="col-sm-6 col-lg-4">
-            <div class="metric-card respect">
+            <div class="rm-card respect">
                 <div class="metric-header">
                     <div class="metric-icon"><i class="fas fa-handshake"></i></div>
                     <span class="metric-label">{% trans "Respect des employés" %}</span>
@@ -700,10 +726,9 @@ $(document).ready(function() {
     function getManagementImagePath(data) {
         const vals = fieldsConfig.map(f => data[f.name]);
         const oui = vals.filter(v => v === 'Oui').length;
-        const non = vals.filter(v => v === 'Non').length;
         if (oui >= 4) return `{% static 'management/bien.png' %}`;
-        if (non >= 4) return `{% static 'management/mauvais.png' %}`;
-        return `{% static 'management/passable.png' %}`;
+        if (oui >= 2) return `{% static 'management/passable.png' %}`;
+        return `{% static 'management/mauvais.png' %}`;
     }
 
     function calculateManagementScore(data) {
@@ -729,18 +754,6 @@ $(document).ready(function() {
         $('#viewImageModal').modal('show');
     };
 
-    // Délégation sur le modal (robuste après destroy/reinit Select2)
-    $('#addRiskManagementModal').on('change', '[name]', function() {
-        if (fieldsConfig.some(f => f.name === $(this).attr('name'))) {
-            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
-        }
-    });
-    $('#editRiskManagementModal').on('change', '[name]', function() {
-        if (fieldsConfig.some(f => f.name === $(this).attr('name'))) {
-            updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
-        }
-    });
-
     // ── Modal add : init Quill + Select2 + image ──────────────
     $('#addRiskManagementModal').on('shown.bs.modal', function() {
         const $modal = $(this);
@@ -749,6 +762,14 @@ $(document).ready(function() {
         });
         initSelect2($modal);
         initAddQuill();
+        // Binding direct sur chaque select après init Select2
+        fieldsConfig.forEach(f => {
+            $(`#addRiskManagementForm [name="${f.name}"]`)
+                .off('change.rmImage')
+                .on('change.rmImage', function() {
+                    updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+                });
+        });
         setTimeout(() => updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage'), 50);
     });
 
@@ -760,6 +781,15 @@ $(document).ready(function() {
         });
         initSelect2($modal);
         initEditQuill();
+        // Binding direct sur chaque select après init Select2
+        fieldsConfig.forEach(f => {
+            const editId = `edit${f.name.charAt(0).toUpperCase() + f.name.slice(1)}`;
+            $(`#${editId}`)
+                .off('change.rmImage')
+                .on('change.rmImage', function() {
+                    updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+                });
+        });
         if (!{{ gestion_risque|yesno:"true,false" }}) return;
         $.ajax({
             url: API_BASE_URL, type: 'GET',

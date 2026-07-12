@@ -825,76 +825,7 @@
             {% endif %}
 
          </div>
-         <div class="subsection-title">{% trans "OPINION CRÉDIT ACREMAC" %}</div>
-         <div class="section">
-            <div class="rating-scale">
-               <div class="rating-point" style="background-color: #E0201E;">1</div>
-               <div class="rating-point" style="background-color: #2F4A6D;">2</div>
-               <div class="rating-point" style="background-color: #F57C00;">3</div>
-               <div class="rating-point" style="background-color: #2F85AB;">4</div>
-               <div class="rating-point" style="background-color: #F5C400;">5</div>
-               <div class="rating-point" style="background-color: #66CC33;">6</div>
-               <div class="rating-point" style="background-color: #D32F2F;">7</div>
-               <div class="rating-point" style="background-color: #F4A600;">8</div>
-               <div class="rating-point" style="background-color: #178B16;">9</div>
-            </div>
-            <div class="rating-scale" style="align-items: space-between; padding: 10px;">
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_defaut %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque de défaut" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_concentration_credit %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque de concentration crédit" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_reputation %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque de réputation" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_pays %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque pays" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_taux_dinteret %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque taux d'intérêt" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_liquidite %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque de liquidité" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_eleve %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque élevé" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_moyen %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque moyen" %}</div>
-               <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_faible %} highlighted{% endif %}" style="font-size: 6.5pt;">{% trans "Risque faible" %}</div>
-            </div>
-            <div class="subsection-title">{% trans "LÉGENDE EXPLICATIVE" %}</div>
-            <table>
-               <tr>
-                  <th>{% trans "Échelle" %}</th>
-                  <td>{% trans "L'échelle ACREMAC va de 1 (risque le plus élevé) à 9 (risque le plus faible)." as default_echelle %}{{ acremac_opinion.legende.echelle|default:default_echelle }}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Codes" %}</th>
-                  <td>
-                     {% if acremac_opinion.legende.codes %}
-                     <ul style="margin: 0; padding-left: 18px;">
-                        {% for code in acremac_opinion.legende.codes %}
-                        <li><strong>{{ code.code }}</strong> - {{ code.libelle }} : {{ code.description }}</li>
-                        {% endfor %}
-                     </ul>
-                     {% else %}
-                     <ul style="margin: 0; padding-left: 18px;">
-                        <li><strong>RDEF</strong> - {% trans "Risque de défaut : Capacité de remboursement très fragile, vigilance maximale." %}</li>
-                        <li><strong>RMOY</strong> - {% trans "Risque moyen : Risque intermédiaire, décision à encadrer selon garanties et délais." %}</li>
-                        <li><strong>RFAI</strong> - {% trans "Risque faible : Profil favorable, capacité de remboursement jugée solide." %}</li>
-                     </ul>
-                     {% endif %}
-                  </td>
-               </tr>
-               <tr>
-                  <th>{% trans "Lecture des notes" %}</th>
-                  <td>{% trans "La section Notes liste les facteurs de risque actifs avec leur note respective." as default_lecture %}{{ acremac_opinion.legende.lecture_notes|default:default_lecture }}</td>
-               </tr>
-            </table>
-            <table>
-               <tr>
-                  <th>{% trans "Note" %}:</th>
-                  <td>{{ acremac_opinion.notes_detailed|default:acremac_opinion.notes|linebreaksbr }}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Montant crédit maximum conseillée" %}:</th>
-                  <td>{{ acremac_opinion.montant_credit_maximum }} {{ executive_summary.devise }}</td>
-               </tr>
-               <tr>
-                  <th>{% trans "Commentaire" %}</th>
-                  <td colspan="1" class="warning">
-                     {{ acremac_opinion.commentaire|safe }}
-                  </td>
-               </tr>
-            </table>
-         </div>
+        
          <!-- Données d'enregistrement -->
          <div class="section">
             <div class="section-title">{% trans "DONNÉES D'ENREGISTREMENT" %}</div>
@@ -1072,6 +1003,82 @@
                </tbody>
             </table>
          </div>
+         <!-- Risque pays / Country Risk -->
+         {% with geo=sector_analysis.geopolitics %}
+         <div class="section">
+            <div class="section-title">{% trans "COUNTRY RISK" %}</div>
+            {% if geo.stabilite_politique or geo.etat_droit or geo.efficacite or geo.qualite or geo.liberte_expression %}
+            <div class="subsection-title">{% trans "INDICATEURS GÉOPOLITIQUES" %}</div>
+            
+            <div class="section">
+               {% if sector_analysis.geopolitics.stabilite_politique or sector_analysis.geopolitics.etat_droit or sector_analysis.geopolitics.efficacite or sector_analysis.geopolitics.qualite or sector_analysis.geopolitics.liberte_expression %}
+               <table style="width:100%;margin-bottom:8px;">
+                  <tr>
+                     {% with s=sector_analysis.geopolitics.stabilite_politique|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Stabilité Politique" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.etat_droit|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "État de Droit" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.efficacite|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Efficacité Gouvernementale" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.qualite|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Qualité Réglementaire" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.liberte_expression|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Liberté d'Expression" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                  </tr>
+               </table>
+               {% endif %}
+               
+            </div>
+            
+            {% endif %}
+            {% if geo.donnees_politiques %}
+            <div class="subsection-title">{% trans "ANALYSE POLITIQUE" %}</div>
+            <div style="padding: 6px 10px; font-size: 9pt; line-height: 1.5;">{{ geo.donnees_politiques|safe }}</div>
+            {% endif %}
+            {% if geo.donnees_economiques %}
+            <div class="subsection-title">{% trans "ANALYSE ÉCONOMIQUE" %}</div>
+            <div style="padding: 6px 10px; font-size: 9pt; line-height: 1.5;">{{ geo.donnees_economiques|safe }}</div>
+            {% endif %}
+            {% if not geo.stabilite_politique and not geo.etat_droit and not geo.efficacite and not geo.qualite and not geo.liberte_expression and not geo.donnees_politiques and not geo.donnees_economiques %}
+            <div class="subsection-title">{% trans "Aucune analyse géopolitique disponible pour cet acheteur." %}</div>
+            {% endif %}
+         </div>
+         {% endwith %}
          <!-- Capital social -->
          <div class="section">
             <div class="section-title">{% trans "CAPITAL SOCIAL" %}</div>

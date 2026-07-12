@@ -2063,58 +2063,57 @@ class AcheteurGestionRisqueView(APIView):
     def get(self, request, acheteur_id):
         """Récupère la gestion des risques de l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
-        
-        try:
-            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+
+        gestion_risque = RiskManagment.objects.filter(acheteur=acheteur).order_by('-created_at').first()
+        if gestion_risque:
             serializer = GetRiskManagmentSerializer(gestion_risque)
             return Response(serializer.data)
-        except RiskManagment.DoesNotExist:
-            return Response({
-                "message": "Aucune gestion des risques trouvée pour cet acheteur",
-                "acheteur_id": acheteur_id
-            }, status=status.HTTP_404_NOT_FOUND)
-    
+        return Response({
+            "message": "Aucune gestion des risques trouvée pour cet acheteur",
+            "acheteur_id": acheteur_id
+        }, status=status.HTTP_404_NOT_FOUND)
+
     @transaction.atomic
     def post(self, request, acheteur_id):
         """Crée ou met à jour la gestion des risques de l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
-        
-        # Vérifier si une gestion des risques existe déjà
-        try:
-            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+
+        gestion_risque = RiskManagment.objects.filter(acheteur=acheteur).order_by('-created_at').first()
+        if gestion_risque:
             serializer = EditRiskManagmentSerializer(
                 gestion_risque, data=request.data, partial=True
             )
             action = "mise à jour"
-        except RiskManagment.DoesNotExist:
+            http_status = status.HTTP_200_OK
+        else:
             data = request.data.copy()
             data["acheteur"] = acheteur_id
             serializer = AddRiskManagmentSerializer(data=data)
             action = "créée"
-        
+            http_status = status.HTTP_201_CREATED
+
         if serializer.is_valid():
             serializer.save()
             return Response({
                 "message": f"Gestion des risques {action} avec succès",
                 "data": serializer.data
-            }, status=status.HTTP_200_OK if action == "mise à jour" else status.HTTP_201_CREATED)
-        
+            }, status=http_status)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def delete(self, request, acheteur_id):
         """Supprime la gestion des risques de l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
-        
-        try:
-            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+
+        gestion_risque = RiskManagment.objects.filter(acheteur=acheteur).order_by('-created_at').first()
+        if gestion_risque:
             gestion_risque.delete()
             return Response({
                 "message": "Gestion des risques supprimée avec succès"
             }, status=status.HTTP_200_OK)
-        except RiskManagment.DoesNotExist:
-            return Response({
-                "message": "Aucune gestion des risques à supprimer"
-            }, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "message": "Aucune gestion des risques à supprimer"
+        }, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -6772,27 +6771,27 @@ class AcheteurGeopoliticsView(APIView):
         """Récupère l'analyse géopolitique de l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
         
-        try:
-            geopolitic = Geopolitics.objects.get(acheteur=acheteur)
+        geopolitic = Geopolitics.objects.filter(acheteur=acheteur).order_by('-created_at').first()
+        if geopolitic:
             serializer = GetGeopoliticsSerializer(geopolitic)
-            
+
             # Ajouter le score moyen calculé
             data = serializer.data
             scores = []
             for field in ['stabilite_politique', 'etat_droit', 'efficacite', 'qualite', 'liberte_expression']:
                 if data[field] and data[field].isdigit():
                     scores.append(int(data[field]))
-            
+
             if scores:
                 data['score_moyen'] = round(sum(scores) / len(scores), 1)
             else:
                 data['score_moyen'] = 0
-                
+
             return Response({
                 "exists": True,
                 "data": data
             })
-        except Geopolitics.DoesNotExist:
+        else:
             return Response({
                 "message": "Aucune analyse géopolitique trouvée pour cet acheteur",
                 "exists": False
@@ -6819,14 +6818,14 @@ class AcheteurGeopoliticsView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
         
         # Vérifier si une analyse existe déjà
-        try:
-            geopolitic = Geopolitics.objects.get(acheteur=acheteur)
+        geopolitic = Geopolitics.objects.filter(acheteur=acheteur).order_by('-created_at').first()
+        if geopolitic:
             serializer = EditGeopoliticsSerializer(
                 geopolitic, data=request.data, partial=True
             )
             action = "mise à jour"
             http_status = status.HTTP_200_OK
-        except Geopolitics.DoesNotExist:
+        else:
             data = request.data.copy()
             data["acheteur"] = acheteur_id
             serializer = AddGeopoliticsSerializer(data=data)

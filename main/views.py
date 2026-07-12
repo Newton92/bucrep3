@@ -4653,8 +4653,8 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
         id=acheteur_id
     )
 
-    # Récupérer l'analyse géopolitique existante (une seule)
-    geopolitic = Geopolitics.objects.filter(acheteur=acheteur).first()
+    # Récupérer l'analyse géopolitique existante (la plus récente)
+    geopolitic = Geopolitics.objects.filter(acheteur=acheteur).order_by('-created_at').first()
     
     # Génération des tokens JWT
     try:

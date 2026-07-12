@@ -1162,11 +1162,7 @@ def generer_rapport_solvabilite(request):
             pass
 
         # Recuperation des donnees geopolitiques sur l'acheteur
-        geopolitics = None
-        try:
-            geopolitics = Geopolitics.objects.get(acheteur=acheteur)
-        except Geopolitics.DoesNotExist:
-            pass
+        geopolitics = Geopolitics.objects.filter(acheteur=acheteur).order_by('-created_at').first()
 
         # Recuperation de l'analyse SWOT sur l'acheteur
         swot_analysis = None
