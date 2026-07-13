@@ -1,4 +1,5 @@
-# Fichier : views_report.py
+﻿# Fichier : views_report.py
+from django.utils.translation import gettext as _
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
@@ -1746,7 +1747,7 @@ def my_view(request):
 
     context = {
         "summary_and_opinion": {
-            "title_5": "EVALUATION DU RISQUE",
+            "title_5": _("EVALUATION DU RISQUE"),
             "risk_gauge_base64": risk_gauge_base64,
         }
     }
@@ -2400,7 +2401,7 @@ class GenerateReport(APIView):
             print(int(round(scoring_sans_bilan.scoring_value or 0)))
             print(score_indexe)
             scoring_context = {
-                "title_26": "SCORING ACREMAC - SANS BILAN",
+                "title_26": _("SCORING ACREMAC - SANS BILAN"),
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{score_indexe}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",
@@ -2676,7 +2677,7 @@ class GenerateReport(APIView):
                 "footer_text_3": footer_3,
             },
             "commande": {
-                "title_1": "DETAILS COMMANDE",
+                "title_1": _("DETAILS COMMANDE"),
                 "client": commande.client.username if hasattr(commande, 'client') and commande.client else "Non spécifié",
                 "ref_client": commande.reference_client if hasattr(commande, 'reference_client') else "Non spécifié",
                 "notre_ref": commande.notre_ref if hasattr(commande, 'notre_ref') else "Non spécifié",
@@ -2687,7 +2688,7 @@ class GenerateReport(APIView):
                 "type_rapport": commande.type_rapport if hasattr(commande, 'type_rapport') else "Non spécifié"
             },
             "identification": {
-                "title_2": "IDENTIFICATION",
+                "title_2": _("IDENTIFICATION"),
                 "client_info": {
                     "nom": commande.raison_sociale if hasattr(commande, 'raison_sociale') else "Non spécifié",
                     "numero_adresse": commande.numero_adresse if hasattr(commande, 'numero_adresse') else "Non spécifié",
@@ -2718,7 +2719,7 @@ class GenerateReport(APIView):
                 }
             },
             "additional_information": {
-                "title_3": "INFORMATIONS SUPPLEMENTAIRES",
+                "title_3": _("INFORMATIONS SUPPLEMENTAIRES"),
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "Non spécifié",
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
                 "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
@@ -2740,7 +2741,7 @@ class GenerateReport(APIView):
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
             },
             "executive_summary": {
-                "title_4": "RESUME EXECUTIF",
+                "title_4": _("RESUME EXECUTIF"),
                 "capital_social": resume.capital_social if resume and resume.capital_social else "Non spécifié",
                 "devise": resume.devise.code if resume and hasattr(resume, 'devise') and resume.devise else "Non spécifié",
                 "chiffre_affaire": resume.chiffre_affaire if resume and resume.chiffre_affaire else "Non spécifié",
@@ -2751,7 +2752,7 @@ class GenerateReport(APIView):
                 "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible",
             },
             "summary_and_opinion": {
-                "title_5": "EVALUATION DU RISQUE",
+                "title_5": _("EVALUATION DU RISQUE"),
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_image_base64": (
@@ -2775,7 +2776,7 @@ class GenerateReport(APIView):
                 "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else "Aucune analyse détaillée disponible",
             },
             "acremac_opinion": {
-                "title_6": "AVIS CREDIT ACREMAC",
+                "title_6": _("AVIS CREDIT ACREMAC"),
                 # Passez le dictionnaire directement au template
                 "notes": notes_str, # Passez la chaîne formatée au template
                 "highlighted_risks": highlighted_risks,
@@ -2783,7 +2784,7 @@ class GenerateReport(APIView):
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
             },
             "registered_data": {
-                "title_7": "DONNEES D'ENREGISTREMENT",
+                "title_7": _("DONNEES D'ENREGISTREMENT"),
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "Non spécifié",
                 "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "Non spécifié",
                 "forme_juridique": (
@@ -2802,11 +2803,11 @@ class GenerateReport(APIView):
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else "Aucun commentaire disponible",
             },
             "legal_background": {
-                "title_8": "ANTECEDENTS JURIDIQUES",
+                "title_8": _("ANTECEDENTS JURIDIQUES"),
                 "antecedents_juridiques": list_antecedants_data if list_antecedants_data else ["Aucun antécédent juridique disponible"],
             },
             "management": {
-                "title_9": "MANAGEMENT DU RISQUE",
+                "title_9": _("MANAGEMENT DU RISQUE"),
                 "risk_management": {
                     "professionalisme": risk_management.professionalisme if risk_management and risk_management.professionalisme else "Non spécifié",
                     "organisation": risk_management.organisation if risk_management and risk_management.organisation else "Non spécifié",
@@ -2822,7 +2823,7 @@ class GenerateReport(APIView):
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
             },
             "capital_composition": {
-                "title_10": "COMPOSITION DU CAPITAL",
+                "title_10": _("COMPOSITION DU CAPITAL"),
                 "emis": format_currency(composition_capital_social.emis) if composition_capital_social else "Non spécifié",
                 "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "Non spécifié",
                 "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "Non spécifié",
@@ -2830,15 +2831,15 @@ class GenerateReport(APIView):
                 "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else "Aucun commentaire disponible",
             },
             "shareholders": {
-                "title_11": "ACTIONNARIAT/PROPRIETAIRES",
+                "title_11": _("ACTIONNARIAT/PROPRIETAIRES"),
                 "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
             },
             "affiliations": {
-                "title_12": "AFFILIATIONS D'ENTREPRISE",
+                "title_12": _("AFFILIATIONS CORPORATIVES"),
                 "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
             },
             "sector_analysis": {
-                "title_13": "ANALYSE SECTORIELLE",
+                "title_13": _("ANALYSE SECTORIELLE"),
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
@@ -2864,12 +2865,12 @@ class GenerateReport(APIView):
                 },
             },
             "banking_data": {
-                "title_14": "DONNEES BANCAIRES",
+                "title_14": _("DONNEES BANCAIRES"),
                 "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
             },
             
             "financial_accounts": {
-                "title_15": "COMPTES FINANCIERS",
+                "title_15": _("COMPTES FINANCIERS"),
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
                 "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "Non spécifié",
                 "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "Non spécifié",
@@ -2888,7 +2889,7 @@ class GenerateReport(APIView):
             },
             
             "financial_statements": {
-                "title_16": "ETATS FINANCIERS",
+                "title_16": _("ETATS FINANCIERS"),
                 "years": years_to_retrieve,
                 "bilan_type": bilan_report,
                 "etats_financiers_classiques": {
@@ -2956,7 +2957,7 @@ class GenerateReport(APIView):
             "translations": {},
             "scoring_manuel": scoring_manuel_context,
             "scoring_sansbilan": {
-                "title_17": "SCORING ACREMAC - SANS BILAN",
+                "title_17": _("SCORING ACREMAC - SANS BILAN"),
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
@@ -2966,7 +2967,7 @@ class GenerateReport(APIView):
                 "score_type": "Scoring sans bilan",
             },
             "scoring_classique": {
-                "title_18": "SCORING CLASSIQUE - AVEC BILAN",
+                "title_18": _("SCORING CLASSIQUE - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
                 "score_value_annee_N": score_value_annee_N,
                 "interpretation_annee_N": interpretation_annee_N,
@@ -2980,7 +2981,7 @@ class GenerateReport(APIView):
                 "interpretation_annee_N2": interpretation_annee_N2,
             },
             "scoring_anglais": {
-                "title_19": "SCORING ANGLAIS - AVEC BILAN",
+                "title_19": _("SCORING ANGLAIS - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
                 "score_value_annee_N": score_value_anglais_annee_N,
                 "interpretation_annee_N": interpretation_anglais_annee_N,
@@ -2992,7 +2993,7 @@ class GenerateReport(APIView):
                 "interpretation_annee_N2": interpretation_anglais_anglais_annee_N2,
             },
             "scoring_bancaire": {
-                "title_20": "SCORING BANCAIRE - AVEC BILAN",
+                "title_20": _("SCORING BANCAIRE - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
                 "score_value_annee_N": score_value_bancaire_annee_N,
                 "interpretation_annee_N": interpretation_bancaire_annee_N,
@@ -3004,7 +3005,7 @@ class GenerateReport(APIView):
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
             },
             "scoring_syscohada": {
-                "title_21": "SCORING SYSCOHADA - AVEC BILAN",
+                "title_21": _("SCORING SYSCOHADA - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
                 "score_value_annee_N": score_value_syscohada_annee_N,
                 "interpretation_annee_N": interpretation_syscohada_annee_N,
@@ -3016,7 +3017,7 @@ class GenerateReport(APIView):
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
             },
             "scoring_ifrs": {
-                "title_22": "SCORING IFRS COBAC - AVEC BILAN",
+                "title_22": _("SCORING IFRS COBAC - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
                 "score_value_annee_N": score_value_ifrs_annee_N,
                 "interpretation_annee_N": interpretation_ifrs_annee_N,
@@ -3028,18 +3029,18 @@ class GenerateReport(APIView):
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
             },
             "operation_history": {
-                "title_23": "HISTORIQUE DES OPERATIONS",
+                "title_23": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
                 "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else "Aucune description disponible",
                 "importation": operation_history.importation if operation_history and operation_history.importation else "Non spécifié",
                 "historique": operation_history.historique if operation_history and operation_history.historique else "Aucun historique disponible",
             },
             "properties_and_assets": {
-                "title_24": "PROPRIÉTÉ ET ACTIFS",
+                "title_24": _("PROPRIÉTÉ ET ACTIFS"),
                 "assets_list": list_properties_and_assets_data if list_properties_and_assets_data else None,
             },
             "terms_of_purchase_and_sale": {
-                "title_25": "CONDITION D'ACHAT ET DE VENTE",
+                "title_25": _("CONDITION D'ACHAT ET DE VENTE"),
                 "conditions_achat": {
                     "local": condition_achat.local if condition_achat and condition_achat.local else "Non spécifié",
                     "importation": condition_achat.importation if condition_achat and condition_achat.importation else "Non spécifié",
@@ -3794,7 +3795,7 @@ class GenerateReportCommandeAcheteur(APIView):
             print(int(round(scoring_sans_bilan.scoring_value or 0)))
             print(score_indexe)
             scoring_context = {
-                "title_26": "SCORING ACREMAC - SANS BILAN",
+                "title_26": _("SCORING ACREMAC - SANS BILAN"),
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{score_indexe}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",
@@ -4070,7 +4071,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "footer_text_3": footer_3,
             },
             "commande": {
-                "title_1": "DETAILS COMMANDE",
+                "title_1": _("DETAILS COMMANDE"),
                 "client": commande.client.username if hasattr(commande, 'client') and commande.client else "Non spécifié",
                 "ref_client": commande.reference_client if hasattr(commande, 'reference_client') else "Non spécifié",
                 "notre_ref": commande.notre_ref if hasattr(commande, 'notre_ref') else "Non spécifié",
@@ -4081,7 +4082,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "type_rapport": commande.type_rapport if hasattr(commande, 'type_rapport') else "Non spécifié"
             },
             "identification": {
-                "title_2": "IDENTIFICATION",
+                "title_2": _("IDENTIFICATION"),
                 "client_info": {
                     "nom": commande.raison_sociale if hasattr(commande, 'raison_sociale') else "Non spécifié",
                     "numero_adresse": commande.numero_adresse if hasattr(commande, 'numero_adresse') else "Non spécifié",
@@ -4112,7 +4113,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 }
             },
             "additional_information": {
-                "title_3": "INFORMATIONS SUPPLEMENTAIRES",
+                "title_3": _("INFORMATIONS SUPPLEMENTAIRES"),
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "Non spécifié",
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
                 "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
@@ -4134,7 +4135,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
             },
             "executive_summary": {
-                "title_4": "RESUME EXECUTIF",
+                "title_4": _("RESUME EXECUTIF"),
                 "capital_social": resume.capital_social if resume and resume.capital_social else "Non spécifié",
                 "devise": resume.devise.code if resume and hasattr(resume, 'devise') and resume.devise else "Non spécifié",
                 "chiffre_affaire": resume.chiffre_affaire if resume and resume.chiffre_affaire else "Non spécifié",
@@ -4145,7 +4146,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible",
             },
             "summary_and_opinion": {
-                "title_5": "EVALUATION DU RISQUE",
+                "title_5": _("EVALUATION DU RISQUE"),
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_image_base64": (
@@ -4169,7 +4170,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else "Aucune analyse détaillée disponible",
             },
             "acremac_opinion": {
-                "title_6": "AVIS CREDIT ACREMAC",
+                "title_6": _("AVIS CREDIT ACREMAC"),
                 # Passez le dictionnaire directement au template
                 "notes": notes_str, # Passez la chaîne formatée au template
                 "highlighted_risks": highlighted_risks,
@@ -4177,7 +4178,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
             },
             "registered_data": {
-                "title_7": "DONNEES D'ENREGISTREMENT",
+                "title_7": _("DONNEES D'ENREGISTREMENT"),
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "Non spécifié",
                 "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "Non spécifié",
                 "forme_juridique": (
@@ -4196,11 +4197,11 @@ class GenerateReportCommandeAcheteur(APIView):
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else "Aucun commentaire disponible",
             },
             "legal_background": {
-                "title_8": "ANTECEDENTS JURIDIQUES",
+                "title_8": _("ANTECEDENTS JURIDIQUES"),
                 "antecedents_juridiques": list_antecedants_data if list_antecedants_data else ["Aucun antécédent juridique disponible"],
             },
             "management": {
-                "title_9": "MANAGEMENT DU RISQUE",
+                "title_9": _("MANAGEMENT DU RISQUE"),
                 "risk_management": {
                     "professionalisme": risk_management.professionalisme if risk_management and risk_management.professionalisme else "Non spécifié",
                     "organisation": risk_management.organisation if risk_management and risk_management.organisation else "Non spécifié",
@@ -4216,7 +4217,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
             },
             "capital_composition": {
-                "title_10": "COMPOSITION DU CAPITAL",
+                "title_10": _("COMPOSITION DU CAPITAL"),
                 "emis": format_currency(composition_capital_social.emis) if composition_capital_social else "Non spécifié",
                 "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "Non spécifié",
                 "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "Non spécifié",
@@ -4224,54 +4225,54 @@ class GenerateReportCommandeAcheteur(APIView):
                 "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else "Aucun commentaire disponible",
             },
             "shareholders": {
-                "title_11": "ACTIONNARIAT/PROPRIETAIRES",
+                "title_11": _("ACTIONNARIAT/PROPRIETAIRES"),
                 "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
             },
             # Nouveaux elements
             "registres": {
-                "title_12": "REGISTRES DE COMMERCE",
+                "title_12": _("REGISTRES DE COMMERCE"),
                 "registres": list_registres_data if list_registres_data else ["Aucun registre disponible"],
             },
             "produits_services": {
-                "title_13": "PRODUITS & SERVICES",
+                "title_13": _("PRODUITS & SERVICES"),
                 "produits": list_produits_services_data if list_produits_services_data else ["Aucun produit ou service disponible"],
             },
             "marques": {
-                "title_14": "MARQUES",
+                "title_14": _("MARQUES"),
                 "marques": list_marques_data if list_marques_data else ["Aucune marque disponible"],
             },
             "procedures_collectives": {
-                "title_15": "PROCEDURES & COLLECTIVES",
+                "title_15": _("PROCEDURES & COLLECTIVES"),
                 "procedures_collectives": list_procedures_collectives_data if list_procedures_collectives_data else ["Aucune procédure ou collective disponible"],
             },
             "cotisations": {
-                "title_16": "COTISATIONS SOCIALES",
+                "title_16": _("COTISATIONS SOCIALES"),
                 "cotisations": list_cotisations_data if list_cotisations_data else ["Aucune cotisation disponible"],
             },
             "certifications": {
-                "title_17": "CERTIFICATIONS",
+                "title_17": _("CERTIFICATIONS"),
                 "certifications": list_certifications_data if list_certifications_data else ["Aucune certification disponible"],
             },
             "innovations_developpements": {
-                "title_18": "INNOVATIONS & DEVELOPPEMENT",
+                "title_18": _("INNOVATIONS & DEVELOPPEMENT"),
                 "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["Aucune innovation ou développement disponible"],
             },
             "strategies_planifications": {
-                "title_19": "STRATEGIES & PLANIFICATIONS",
+                "title_19": _("STRATEGIES & PLANIFICATIONS"),
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             "conformitesy": {
-                "title_20": "CONFORMITE REGLEMENTATION",
+                "title_20": _("CONFORMITE REGLEMENTATION"),
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             
             
             "affiliations": {
-                "title_21": "AFFILIATIONS D'ENTREPRISE",
+                "title_21": _("AFFILIATIONS CORPORATIVES"),
                 "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
             },
             "sector_analysis": {
-                "title_22": "ANALYSE ECONOMIQUE",
+                "title_22": _("ANALYSE ECONOMIQUE"),
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
@@ -4304,12 +4305,12 @@ class GenerateReportCommandeAcheteur(APIView):
                 },
             },
             "banking_data": {
-                "title_23": "DONNEES BANCAIRES",
+                "title_23": _("DONNEES BANCAIRES"),
                 "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
             },
             
             "financial_accounts": {
-                "title_24": "COMPTES FINANCIERS",
+                "title_24": _("COMPTES FINANCIERS"),
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
                 "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "Non spécifié",
                 "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "Non spécifié",
@@ -4328,7 +4329,7 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             
             "financial_statements": {
-                "title_25": "ETATS FINANCIERS",
+                "title_25": _("ETATS FINANCIERS"),
                 "years": years_to_retrieve,
                 "bilan_type": bilan_report,
                 "etats_financiers_classiques": {
@@ -4397,7 +4398,7 @@ class GenerateReportCommandeAcheteur(APIView):
             "scoring": scoring_context,
             "scoring_manuel": scoring_manuel_context,
             "scoring_classique": {
-                "title_26": "SCORING CLASSIQUE - AVEC BILAN",
+                "title_26": _("SCORING CLASSIQUE - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
                 "score_value_annee_N": score_value_annee_N,
                 "interpretation_annee_N": interpretation_annee_N,
@@ -4409,7 +4410,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "interpretation_annee_N2": interpretation_annee_N2,
             },
             "scoring_anglais": {
-                "title_27": "SCORING ANGLAIS - AVEC BILAN",
+                "title_27": _("SCORING ANGLAIS - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
                 "score_value_annee_N": score_value_anglais_annee_N,
                 "interpretation_annee_N": interpretation_anglais_annee_N,
@@ -4421,7 +4422,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "interpretation_annee_N2": interpretation_anglais_anglais_annee_N2,
             },
             "scoring_bancaire": {
-                "title_28": "SCORING BANCAIRE - AVEC BILAN",
+                "title_28": _("SCORING BANCAIRE - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
                 "score_value_annee_N": score_value_bancaire_annee_N,
                 "interpretation_annee_N": interpretation_bancaire_annee_N,
@@ -4433,7 +4434,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
             },
             "scoring_syscohada": {
-                "title_29": "SCORING SYSCOHADA - AVEC BILAN",
+                "title_29": _("SCORING SYSCOHADA - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
                 "score_value_annee_N": score_value_syscohada_annee_N,
                 "interpretation_annee_N": interpretation_syscohada_annee_N,
@@ -4445,7 +4446,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
             },
             "scoring_ifrs": {
-                "title_30": "SCORING IFRS COBAC - AVEC BILAN",
+                "title_30": _("SCORING IFRS COBAC - AVEC BILAN"),
                 "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
                 "score_value_annee_N": score_value_ifrs_annee_N,
                 "interpretation_annee_N": interpretation_ifrs_annee_N,
@@ -4457,18 +4458,18 @@ class GenerateReportCommandeAcheteur(APIView):
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
             },
             "operation_history": {
-                "title_31": "HISTORIQUE DES OPERATIONS",
+                "title_31": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
                 "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else "Aucune description disponible",
                 "importation": operation_history.importation if operation_history and operation_history.importation else "Non spécifié",
                 "historique": operation_history.historique if operation_history and operation_history.historique else "Aucun historique disponible",
             },
             "properties_and_assets": {
-                "title_32": "PROPRIÉTÉ ET ACTIFS",
+                "title_32": _("PROPRIÉTÉ ET ACTIFS"),
                 "assets_list": list_properties_and_assets_data if list_properties_and_assets_data else None,
             },
             "terms_of_purchase_and_sale": {
-                "title_33": "CONDITION D'ACHAT ET DE VENTE",
+                "title_33": _("CONDITION D'ACHAT ET DE VENTE"),
                 "conditions_achat": {
                     "local": condition_achat.local if condition_achat and condition_achat.local else "Non spécifié",
                     "importation": condition_achat.importation if condition_achat and condition_achat.importation else "Non spécifié",
@@ -4504,7 +4505,7 @@ class GenerateReportCommandeAcheteur(APIView):
             if scoring_sans_bilan:
                 score_indexe = score_indexe if score_indexe is not None else 0
                 scoring_context = {
-                    "title_26": "SCORING ACREMAC - SANS BILAN",
+                    "title_26": _("SCORING ACREMAC - SANS BILAN"),
                     "score_image": f"scoring/{score_indexe}.png",
                     "score_png": f"scoring/{score_indexe}.png",
                     "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",

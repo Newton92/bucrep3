@@ -109,6 +109,7 @@
 .modal-hdr-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); padding: .5rem .9rem; }
 .modal-hdr-warning .modal-title { font-size: .9rem; font-weight: 700; color: #fff; }
 .modal-lbl { font-size: .76rem; font-weight: 600; color: var(--cp-dark); margin-bottom: .25rem; display: block; }
+.swal2-container { z-index: 99999 !important; }
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -150,7 +151,10 @@
             <div class="metric-card mc-emis">
                 <div class="metric-icon"><i class="fas fa-money-bill-wave"></i></div>
                 <div>
-                    <div class="metric-val">{{ capital.emis|floatformat:0|intcomma }}</div>
+                    <div class="metric-val">
+                        {{ capital.emis|floatformat:0|intcomma }}
+                        {% if capital.devise and capital.devise.symbole %}<small style="font-size:.65rem;opacity:.85;"> {{ capital.devise.symbole }}</small>{% endif %}
+                    </div>
                     <div class="metric-lbl">{% trans "Capital Émis" %}</div>
                 </div>
             </div>
@@ -159,7 +163,10 @@
             <div class="metric-card mc-publie">
                 <div class="metric-icon"><i class="fas fa-newspaper"></i></div>
                 <div>
-                    <div class="metric-val">{{ capital.publie|floatformat:0|intcomma }}</div>
+                    <div class="metric-val">
+                        {{ capital.publie|floatformat:0|intcomma }}
+                        {% if capital.devise and capital.devise.symbole %}<small style="font-size:.65rem;opacity:.85;"> {{ capital.devise.symbole }}</small>{% endif %}
+                    </div>
                     <div class="metric-lbl">{% trans "Capital Publié" %}</div>
                 </div>
             </div>
@@ -168,7 +175,10 @@
             <div class="metric-card mc-libere">
                 <div class="metric-icon"><i class="fas fa-hand-holding-usd"></i></div>
                 <div>
-                    <div class="metric-val">{{ capital.libere|floatformat:0|intcomma }}</div>
+                    <div class="metric-val">
+                        {{ capital.libere|floatformat:0|intcomma }}
+                        {% if capital.devise and capital.devise.symbole %}<small style="font-size:.65rem;opacity:.85;"> {{ capital.devise.symbole }}</small>{% endif %}
+                    </div>
                     <div class="metric-lbl">{% trans "Capital Libéré" %}</div>
                 </div>
             </div>
@@ -203,26 +213,57 @@
                 </div>
                 <div class="d-flex justify-content-between mt-1" style="font-size:.7rem; color:#aaa;">
                     <span>0%</span>
-                    <span>{{ capital.libere|floatformat:2 }} / {{ capital.emis|floatformat:2 }}</span>
+                    <span>
+                        {{ capital.libere|floatformat:2|intcomma }}
+                        {% if capital.devise and capital.devise.symbole %} {{ capital.devise.symbole }}{% endif %}
+                        &nbsp;/&nbsp;
+                        {{ capital.emis|floatformat:2|intcomma }}
+                        {% if capital.devise and capital.devise.symbole %} {{ capital.devise.symbole }}{% endif %}
+                    </span>
                     <span>100%</span>
                 </div>
             </div>
 
             <!-- Info rows -->
             <div class="info-row">
+                <span class="lbl"><i class="fas fa-money-bill-wave" style="color:var(--cp); width:14px;"></i>{% trans "Capital Émis" %}</span>
+                <span class="val fw-semibold">
+                    {{ capital.emis|floatformat:2|intcomma|default:"—" }}
+                    {% if capital.devise %}{{ capital.devise.symbole|default:capital.devise.nom }}{% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="lbl"><i class="fas fa-newspaper" style="color:#28a745; width:14px;"></i>{% trans "Capital Publié" %}</span>
+                <span class="val fw-semibold">
+                    {{ capital.publie|floatformat:2|intcomma|default:"—" }}
+                    {% if capital.devise %}{{ capital.devise.symbole|default:capital.devise.nom }}{% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="lbl"><i class="fas fa-hand-holding-usd" style="color:#6f42c1; width:14px;"></i>{% trans "Capital Libéré" %}</span>
+                <span class="val fw-semibold">
+                    {{ capital.libere|floatformat:2|intcomma|default:"—" }}
+                    {% if capital.devise %}{{ capital.devise.symbole|default:capital.devise.nom }}{% endif %}
+                </span>
+            </div>
+            <div class="info-row">
                 <span class="lbl"><i class="fas fa-money-check-alt" style="color:var(--cp); width:14px;"></i>{% trans "Devise" %}</span>
                 <span class="val">
-                    {% if capital.devise %}{{ capital.devise.nom }}{% if capital.devise.symbole %} ({{ capital.devise.symbole }}){% endif %}{% else %}{% trans "Non spécifiée" %}{% endif %}
+                    {% if capital.devise %}{{ capital.devise.nom }}{% if capital.devise.symbole %} ({{ capital.devise.symbole }}){% endif %}{% else %}<span class="text-muted fst-italic">{% trans "Non spécifiée" %}</span>{% endif %}
                 </span>
             </div>
 
             {% if capital.commentaire %}
-            <div class="info-row">
-                <span class="lbl"><i class="fas fa-comment-dots" style="color:#28a745; width:14px;"></i>{% trans "Commentaire" %}</span>
-                <span class="val muted">{{ capital.commentaire|striptags|truncatechars:80 }}</span>
+            <div class="info-row align-items-start">
+                <span class="lbl" style="padding-top:.2rem;"><i class="fas fa-comment-dots" style="color:#28a745; width:14px;"></i>{% trans "Commentaire" %}</span>
+                <span class="val" style="flex:1;">{{ capital.commentaire|safe }}</span>
             </div>
             {% endif %}
 
+            <div class="info-row">
+                <span class="lbl"><i class="fas fa-calendar-plus" style="color:#20c997; width:14px;"></i>{% trans "Créé le" %}</span>
+                <span class="val">{{ capital.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
             <div class="info-row">
                 <span class="lbl"><i class="fas fa-history" style="color:#ffc107; width:14px;"></i>{% trans "Dernière mise à jour" %}</span>
                 <span class="val">{{ capital.updated_at|date:"d/m/Y H:i" }}</span>
@@ -247,10 +288,167 @@
     </div>
 
     {% endif %}
+
+    <!-- ── Section Actionnaires ─────────────────────────────── -->
+    <div class="capital-info-card bg-white mt-3">
+        <div class="card-header-grad">
+            <span class="card-title-text"><i class="fas fa-users me-2"></i>{% trans "Actionnaires / Shareholders" %}</span>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addActionnaireModal">
+                <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter" %}
+            </button>
+        </div>
+        <div class="px-3 pt-2 pb-2">
+            {% if actionnaires %}
+            <table class="table table-sm table-hover mb-0" style="font-size:.82rem;">
+                <thead>
+                    <tr style="color:var(--cp-dark); font-size:.74rem; text-transform:uppercase; letter-spacing:.4px;">
+                        <th>{% trans "Nom" %}</th>
+                        <th>{% trans "Prénom" %}</th>
+                        <th class="text-end">{% trans "%" %}</th>
+                        <th>{% trans "Commentaire" %}</th>
+                        <th style="width:80px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in actionnaires %}
+                <tr>
+                    <td class="fw-semibold">{{ a.nom|default:"—" }}</td>
+                    <td>{{ a.prenom|default:"—" }}</td>
+                    <td class="text-end fw-semibold {% if a.pourcentage %}text-primary{% endif %}">
+                        {% if a.pourcentage %}{{ a.pourcentage|floatformat:2 }}%{% else %}—{% endif %}
+                    </td>
+                    <td class="text-muted" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        {{ a.commentaire|striptags|truncatechars:50|default:"" }}
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-outline-warning btn-sm py-0 px-1 btn-edit-actionnaire"
+                                data-id="{{ a.id }}" title="{% trans "Modifier" %}">
+                            <i class="fas fa-edit" style="font-size:.72rem;"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm py-0 px-1 ms-1 btn-delete-actionnaire"
+                                data-id="{{ a.id }}" data-nom="{{ a.nom }} {{ a.prenom }}" title="{% trans "Supprimer" %}">
+                            <i class="fas fa-trash" style="font-size:.72rem;"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-3" style="color:#aaa; font-size:.83rem;">
+                <i class="fas fa-user-slash fa-2x mb-2 d-block" style="opacity:.35;"></i>
+                {% trans "Aucun actionnaire enregistré." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 
 <!-- ══════════════════════════════════════════
-     Modal — Ajouter
+     Modal — Ajouter Actionnaire
+════════════════════════════════════════════ -->
+<div class="modal fade" id="addActionnaireModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-hdr-grad">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>{% trans "Ajouter un actionnaire" %}</h5>
+                    <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <form id="addActionnaireForm">
+                <div class="modal-body py-3 px-4">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="modal-lbl">{% trans "Nom" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="addActNom" name="nom" placeholder="Alladoum" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="modal-lbl">{% trans "Prénom" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="addActPrenom" name="prenom" placeholder="Maikogué" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="modal-lbl">{% trans "Pourcentage de détention" %}</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="addActPourcentage" name="pourcentage" placeholder="0.00">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text" style="font-size:.7rem;">{% trans "Optionnel · entre 0 et 100" %}</div>
+                    </div>
+                    <div>
+                        <label class="modal-lbl"><i class="fas fa-comment-dots me-1 text-success"></i>{% trans "Commentaire" %}</label>
+                        <textarea class="rich-editor" id="addActCommentaire" name="commentaire"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm" id="submitAddActBtn">
+                        <span class="btn-text"><i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     Modal — Modifier Actionnaire
+════════════════════════════════════════════ -->
+<div class="modal fade" id="editActionnaireModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-hdr-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>{% trans "Modifier l'actionnaire" %}</h5>
+                    <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <form id="editActionnaireForm">
+                <input type="hidden" id="editActId">
+                <div class="modal-body py-3 px-4">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="modal-lbl">{% trans "Nom" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="editActNom" name="nom" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="modal-lbl">{% trans "Prénom" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="editActPrenom" name="prenom" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="modal-lbl">{% trans "Pourcentage de détention" %}</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm" id="editActPourcentage" name="pourcentage">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="modal-lbl"><i class="fas fa-comment-dots me-1 text-success"></i>{% trans "Commentaire" %}</label>
+                        <textarea class="rich-editor" id="editActCommentaire" name="commentaire"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning btn-sm" id="submitEditActBtn">
+                        <span class="btn-text"><i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}</span>
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     Modal — Ajouter Capital
 ════════════════════════════════════════════ -->
 <div class="modal fade" id="addCapitalModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -266,23 +464,23 @@
 
                     <div class="row g-2 mb-3">
                         <div class="col-md-3">
-                            <label for="emis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="emis" name="emis" required placeholder="0.00">
+                            <label for="emis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="emis" name="emis" placeholder="0.00">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant total émis" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="publie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="publie" name="publie" required placeholder="0.00">
+                            <label for="publie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="publie" name="publie" placeholder="0.00">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant publié" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="libere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="libere" name="libere" required placeholder="0.00">
+                            <label for="libere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="libere" name="libere" placeholder="0.00">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant libéré" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="devise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %} <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm select2-with-search" id="devise" name="devise" required>
+                            <label for="devise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %}</label>
+                            <select class="form-select form-select-sm select2-with-search" id="devise" name="devise">
                                 <option value="">{% trans "Sélectionnez" %}</option>
                                 {% for devise in devise_list %}
                                 <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
@@ -332,23 +530,23 @@
 
                     <div class="row g-2 mb-3">
                         <div class="col-md-3">
-                            <label for="editEmis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editEmis" name="emis" required>
+                            <label for="editEmis" class="modal-lbl"><i class="fas fa-money-bill-wave me-1 text-primary"></i>{% trans "Capital Émis" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editEmis" name="emis">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant total émis" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="editPublie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editPublie" name="publie" required>
+                            <label for="editPublie" class="modal-lbl"><i class="fas fa-newspaper me-1 text-success"></i>{% trans "Capital Publié" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editPublie" name="publie">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant publié" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="editLibere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %} <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editLibere" name="libere" required>
+                            <label for="editLibere" class="modal-lbl"><i class="fas fa-hand-holding-usd me-1" style="color:#6f42c1;"></i>{% trans "Capital Libéré" %}</label>
+                            <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="editLibere" name="libere">
                             <div class="form-text" style="font-size:.7rem;">{% trans "Montant libéré" %}</div>
                         </div>
                         <div class="col-md-3">
-                            <label for="editDevise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %} <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm select2-with-search" id="editDevise" name="devise" required>
+                            <label for="editDevise" class="modal-lbl"><i class="fas fa-money-check-alt me-1 text-primary"></i>{% trans "Devise" %}</label>
+                            <select class="form-select form-select-sm select2-with-search" id="editDevise" name="devise">
                                 <option value="">{% trans "Sélectionnez" %}</option>
                                 {% for devise in devise_list %}
                                 <option value="{{ devise.id }}" data-symbole="{{ devise.symbole|default:'' }}">
@@ -574,6 +772,149 @@ $(document).ready(function() {
             }
         });
     }
+
+    // ════════════════════════════════════════════════════════
+    // ACTIONNAIRES
+    // ════════════════════════════════════════════════════════
+    var ACT_ADD_URL  = '/api/acheteur/' + ACHETEUR_ID + '/ajouter-un-actionnaire/';
+    var ACT_EDIT_URL = '/api/acheteur/' + ACHETEUR_ID + '/editer-un-actionnaire/';
+    var ACT_DEL_URL  = '/api/acheteur/' + ACHETEUR_ID + '/supprimer-des-actionnaires/';
+
+    // ── Ajouter ───────────────────────────────────────────
+    $('#addActionnaireForm').on('submit', function(e) {
+        e.preventDefault();
+        var $btn  = $('#submitAddActBtn');
+        var $text = $btn.find('.btn-text');
+        var $spin = $btn.find('.spinner-border');
+        $btn.prop('disabled', true); $text.hide(); $spin.removeClass('d-none');
+
+        var ta = document.getElementById('addActCommentaire');
+        var data = {
+            nom:         $('#addActNom').val().trim(),
+            prenom:      $('#addActPrenom').val().trim(),
+            pourcentage: $('#addActPourcentage').val() || null,
+            commentaire: ta ? ta.value : '',
+        };
+
+        $.ajax({
+            url: ACT_ADD_URL, type: 'POST',
+            data: JSON.stringify(data), contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function() {
+                $btn.prop('disabled', false); $text.show(); $spin.addClass('d-none');
+                $('#addActionnaireModal').modal('hide');
+                Swal.fire({ icon: 'success', title: 'Enregistré', text: 'Actionnaire ajouté avec succès',
+                    timer: 2000, showConfirmButton: false, background: '#fcfefe' })
+                .then(function() { window.location.reload(); });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false); $text.show(); $spin.addClass('d-none');
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#addActionnaireForm').trigger('submit'); }); return; }
+                var msg = 'Erreur ' + xhr.status;
+                if (xhr.responseJSON) {
+                    if (typeof xhr.responseJSON === 'object') {
+                        msg = Object.entries(xhr.responseJSON).map(function(e) { return e[0] + ': ' + (Array.isArray(e[1]) ? e[1].join(', ') : e[1]); }).join('\n');
+                    } else { msg = xhr.responseJSON.detail || msg; }
+                }
+                Swal.fire({ icon: 'error', title: 'Erreur', html: msg.replace(/\n/g, '<br>'), background: '#fcfefe' });
+            }
+        });
+    });
+
+    // ── Ouvrir modal modifier ─────────────────────────────
+    $(document).on('click', '.btn-edit-actionnaire', function() {
+        var id = $(this).data('id');
+        $.ajax({
+            url: ACT_EDIT_URL + id + '/', type: 'GET',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
+            success: function(d) {
+                $('#editActId').val(d.id);
+                $('#editActNom').val(d.nom || '');
+                $('#editActPrenom').val(d.prenom || '');
+                $('#editActPourcentage').val(d.pourcentage || '');
+                quillSetValue('editActCommentaire', d.commentaire || '');
+                $('#editActionnaireModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#editActionnaireModal').modal('show'); }); }
+            }
+        });
+    });
+
+    // ── Soumettre modifier ────────────────────────────────
+    $('#editActionnaireForm').on('submit', function(e) {
+        e.preventDefault();
+        var $btn  = $('#submitEditActBtn');
+        var $text = $btn.find('.btn-text');
+        var $spin = $btn.find('.spinner-border');
+        $btn.prop('disabled', true); $text.hide(); $spin.removeClass('d-none');
+
+        var id  = $('#editActId').val();
+        var ta  = document.getElementById('editActCommentaire');
+        var data = {
+            nom:         $('#editActNom').val().trim(),
+            prenom:      $('#editActPrenom').val().trim(),
+            pourcentage: $('#editActPourcentage').val() || null,
+            commentaire: ta ? ta.value : '',
+        };
+
+        $.ajax({
+            url: ACT_EDIT_URL + id + '/', type: 'PUT',
+            data: JSON.stringify(data), contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function() {
+                $btn.prop('disabled', false); $text.show(); $spin.addClass('d-none');
+                $('#editActionnaireModal').modal('hide');
+                Swal.fire({ icon: 'success', title: 'Mis à jour', text: 'Actionnaire modifié avec succès',
+                    timer: 2000, showConfirmButton: false, background: '#fcfefe' })
+                .then(function() { window.location.reload(); });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false); $text.show(); $spin.addClass('d-none');
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#editActionnaireForm').trigger('submit'); }); return; }
+                var msg = 'Erreur ' + xhr.status;
+                if (xhr.responseJSON) {
+                    if (typeof xhr.responseJSON === 'object') {
+                        msg = Object.entries(xhr.responseJSON).map(function(e) { return e[0] + ': ' + (Array.isArray(e[1]) ? e[1].join(', ') : e[1]); }).join('\n');
+                    } else { msg = xhr.responseJSON.detail || msg; }
+                }
+                Swal.fire({ icon: 'error', title: 'Erreur', html: msg.replace(/\n/g, '<br>'), background: '#fcfefe' });
+            }
+        });
+    });
+
+    // ── Supprimer ─────────────────────────────────────────
+    $(document).on('click', '.btn-delete-actionnaire', function() {
+        var id  = $(this).data('id');
+        var nom = $(this).data('nom');
+        Swal.fire({
+            icon: 'warning', title: 'Confirmer la suppression',
+            html: 'Supprimer <strong>' + nom + '</strong> ? Cette action est irréversible.',
+            showCancelButton: true, confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Supprimer', cancelButtonText: 'Annuler', background: '#fcfefe'
+        }).then(function(res) {
+            if (!res.isConfirmed) return;
+            $.ajax({
+                url: ACT_DEL_URL, type: 'DELETE',
+                data: JSON.stringify({ ids: [id] }), contentType: 'application/json',
+                headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+                success: function() {
+                    Swal.fire({ icon: 'success', title: 'Supprimé', timer: 1500, showConfirmButton: false, background: '#fcfefe' })
+                    .then(function() { window.location.reload(); });
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) { refreshAccessToken(function() { $('.btn-delete-actionnaire[data-id="' + id + '"]').click(); }); return; }
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: "Impossible de supprimer l'actionnaire", background: '#fcfefe' });
+                }
+            });
+        });
+    });
+
+    // ── Reset add modal ───────────────────────────────────
+    $('#addActionnaireModal').on('hidden.bs.modal', function() {
+        document.getElementById('addActionnaireForm').reset();
+        quillSetValue('addActCommentaire', '');
+    });
 });
 </script>
 {% endblock %}

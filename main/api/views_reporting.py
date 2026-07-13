@@ -1,8 +1,8 @@
-# Fichier : views_reporting.py
+﻿# Fichier : views_reporting.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.utils.translation import get_language
+from django.utils.translation import get_language, gettext as _
 from main.constantes import LISTE_NOUVELLE_FONCTION_EN
 from main.models import Annee, Devise, Commande, Resume, CodeNafAcheteur, CodeNafAcheteur, Assets, Pays
 from main.models import Resume, RiskRating, RiskManagment, OpinionCreditAcremac, DonneesEnregistrement, AntecedantsJuridique
@@ -1709,7 +1709,7 @@ def generer_rapport_solvabilite(request):
                 "bilan_report": data.get('type_bilan', '').upper() if data.get('type_bilan') else "",
             },
             "commande": {
-                "title_1": "DETAILS COMMANDE",
+                "title_1": _("DETAILS COMMANDE"),
                 "client": commande.client.username if commande and commande.client else "",
                 "ref_client": commande.reference_client if commande else "",
                 "notre_ref": commande.notre_ref if commande else "",
@@ -1724,7 +1724,7 @@ def generer_rapport_solvabilite(request):
                 "devise_credit_recommande": commande.devise_credit_recommande.code if commande and commande.devise_credit_recommande else "",
             },
             "identification": {
-                "title_2": "IDENTIFICATION",
+                "title_2": _("IDENTIFICATION"),
                 "client_info": {
                     "nom": commande.raison_sociale if commande and hasattr(commande, 'raison_sociale') else None,
                     "numero_adresse": commande.numero_adresse if commande and hasattr(commande, 'numero_adresse') else None,
@@ -1757,7 +1757,7 @@ def generer_rapport_solvabilite(request):
                 }
             },
             "additional_information": {
-                "title_3": "INFORMATIONS SUPPLEMENTAIRES",
+                "title_3": _("INFORMATIONS SUPPLEMENTAIRES"),
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "",
                 "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
                 "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
@@ -1775,7 +1775,7 @@ def generer_rapport_solvabilite(request):
                 "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "",
             },
             "executive_summary": {
-                "title_4": "RESUME EXECUTIF",
+                "title_4": _("RESUME EXECUTIF"),
                 "capital_social": resume.capital_social if resume and resume.capital_social else "",
                 "devise": resume.devise.code if resume and hasattr(resume, 'devise') and resume.devise else "",
                 "chiffre_affaire": resume.chiffre_affaire if resume and resume.chiffre_affaire else "",
@@ -1787,7 +1787,7 @@ def generer_rapport_solvabilite(request):
                 "couleur_commentaire_code": (resume.couleur_commentaire.code if resume and resume.couleur_commentaire else None) or "",
             },
             "summary_and_opinion": {
-                "title_5": "EVALUATION DU RISQUE",
+                "title_5": _("EVALUATION DU RISQUE"),
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_image_base64": get_risk_rating_base64(risk_rating_value),
@@ -1809,7 +1809,7 @@ def generer_rapport_solvabilite(request):
                 "analyse_detailee": html.unescape(risk_rating.analyse) if risk_rating and risk_rating.analyse else _t("Aucune analyse détaillée disponible"),
             },
             "acremac_opinion": {
-                "title_6": "AVIS CREDIT ACREMAC",
+                "title_6": _("AVIS CREDIT ACREMAC"),
                 # Passez le dictionnaire directement au template
                 "notes": notes_str, # Passez la chaîne formatée au template
                 "notes_details": notes_details,
@@ -1840,7 +1840,7 @@ def generer_rapport_solvabilite(request):
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else _t("Aucun commentaire disponible"),
             },
             "registered_data": {
-                "title_7": "DONNEES D'ENREGISTREMENT",
+                "title_7": _("DONNEES D'ENREGISTREMENT"),
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "",
                 "forme_juridique": (
                     _fj_to_english(donnees_enregistrement.forme_juridique.code, donnees_enregistrement.forme_juridique.libelle)
@@ -1853,11 +1853,11 @@ def generer_rapport_solvabilite(request):
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else _t("Aucun commentaire disponible"),
             },
             "legal_background": {
-                "title_8": "ANTECEDENTS JURIDIQUES",
+                "title_8": _("ANTECEDENTS JURIDIQUES"),
                 "antecedents_juridiques": list_antecedants_data if list_antecedants_data else [],
             },
             "management": {
-                "title_9": "MANAGEMENT DU RISQUE",
+                "title_9": _("MANAGEMENT DU RISQUE"),
                 "risk_management": {
                     "professionalisme": risk_management.professionalisme if risk_management and risk_management.professionalisme else "",
                     "organisation": risk_management.organisation if risk_management and risk_management.organisation else "",
@@ -1875,7 +1875,7 @@ def generer_rapport_solvabilite(request):
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else [],
             },
             "capital_composition": {
-                "title_10": "COMPOSITION DU CAPITAL",
+                "title_10": _("COMPOSITION DU CAPITAL"),
                 "emis": format_currency(composition_capital_social.emis) if composition_capital_social else "",
                 "publie": format_currency(composition_capital_social.publie) if composition_capital_social else "",
                 "libere": format_currency(composition_capital_social.libere) if composition_capital_social else "",
@@ -1883,53 +1883,53 @@ def generer_rapport_solvabilite(request):
                 "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else _t("Aucun commentaire disponible"),
             },
             "shareholders": {
-                "title_11": "ACTIONNARIAT/PROPRIETAIRES",
+                "title_11": _("ACTIONNARIAT/PROPRIETAIRES"),
                 "actionnaires": list_shareholders_data if list_shareholders_data else [],
             },
             # Nouveaux elements
             "registres": {
-                "title_12": "REGISTRES DE COMMERCE",
+                "title_12": _("REGISTRES DE COMMERCE"),
                 "registres": list_registres_data if list_registres_data else ["Aucun registre disponible"],
             },
             "produits_services": {
-                "title_13": "PRODUITS & SERVICES",
+                "title_13": _("PRODUITS & SERVICES"),
                 "produits": list_produits_services_data if list_produits_services_data else ["Aucun produit ou service disponible"],
             },
             "marques": {
-                "title_14": "MARQUES",
+                "title_14": _("MARQUES"),
                 "marques": list_marques_data if list_marques_data else ["Aucune marque disponible"],
             },
             "procedures_collectives": {
-                "title_15": "PROCEDURES & COLLECTIVES",
+                "title_15": _("PROCEDURES & COLLECTIVES"),
                 "procedures_collectives": list_procedures_data if list_procedures_data else ["Aucune procédure ou collective disponible"],
             },
             "cotisations": {
-                "title_16": "COTISATIONS SOCIALES",
+                "title_16": _("COTISATIONS SOCIALES"),
                 "cotisations": list_cotisations_data if list_cotisations_data else ["Aucune cotisation disponible"],
             },
             "certifications": {
-                "title_17": "CERTIFICATIONS",
+                "title_17": _("CERTIFICATIONS"),
                 "certifications": list_certifications_data if list_certifications_data else ["Aucune certification disponible"],
             },
             "innovations_developpements": {
-                "title_18": "INNOVATIONS & DEVELOPPEMENT",
+                "title_18": _("INNOVATIONS & DEVELOPPEMENT"),
                 "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["Aucune innovation ou développement disponible"],
             },
             "strategies_planifications": {
-                "title_19": "STRATEGIES & PLANIFICATIONS",
+                "title_19": _("STRATEGIES & PLANIFICATIONS"),
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             "conformitesy": {
-                "title_20": "CONFORMITE REGLEMENTATION",
+                "title_20": _("CONFORMITE REGLEMENTATION"),
                 "strategies_planifications": list_conformites_reglementations_data if list_conformites_reglementations_data else ["Aucune donnée de conformité disponible"],
             },
             
             "affiliations": {
-                "title_12": "AFFILIATIONS D'ENTREPRISE",
+                "title_12": _("AFFILIATIONS CORPORATIVES"),
                 "affiliations": list_affiliations_data if list_affiliations_data else [],
             },
             "sector_analysis": {
-                "title_13": "ANALYSE ECONOMIQUE",
+                "title_13": _("ANALYSE ECONOMIQUE"),
                 "nace_codes": ", ".join(nace_codes_formatted) if nace_codes_formatted else "",
                 "nace_codes_grouped": nace_codes_grouped if nace_codes_grouped else [],
                 "naf_codes": ", ".join(naf_codes_formatted) if naf_codes_formatted else "",
@@ -1973,11 +1973,11 @@ def generer_rapport_solvabilite(request):
                 },
             },
             "banking_data": {
-                "title_14": "DONNEES BANCAIRES",
+                "title_14": _("DONNEES BANCAIRES"),
                 "data_banks": list_banking_data if list_banking_data else [],
             },
             "financial_accounts": {
-                "title_15": "COMPTES FINANCIERS",
+                "title_15": _("COMPTES FINANCIERS"),
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "",
                 "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "",
                 "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "",
@@ -2069,7 +2069,7 @@ def generer_rapport_solvabilite(request):
             },
             
             "scoring_sans_bilan": {
-                "title_16": "SCORING ACREMAC - SANS BILAN",
+                "title_16": _("SCORING ACREMAC - SANS BILAN"),
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{score_indexe}.png",
                 "score_image_base64": get_static_image_base64(f"scoring/{score_indexe}.png"),
@@ -2081,7 +2081,7 @@ def generer_rapport_solvabilite(request):
             },
             "scoring_manuel": scoring_manuel_context,
             "scoring_classique": {
-                "title_16": "SCORING CLASSIQUE - AVEC BILAN",
+                "title_16": _("SCORING CLASSIQUE - AVEC BILAN"),
                 "annee_N": annee_N,
                 "annee_N1": annee_N1,
                 "annee_N2": annee_N2,
@@ -2107,7 +2107,7 @@ def generer_rapport_solvabilite(request):
                 "url_site": static_base_url,
             },
             "scoring_anglais": {
-                "title_16": "SCORING ANGLAIS - AVEC BILAN",
+                "title_16": _("SCORING ANGLAIS - AVEC BILAN"),
                 "annee_N": annee_N,
                 "annee_N1": annee_N1,
                 "annee_N2": annee_N2,
@@ -2133,7 +2133,7 @@ def generer_rapport_solvabilite(request):
                 "url_site": static_base_url,
             },
             "scoring_bancaire": {
-                "title_16": "SCORING BANCAIRE - AVEC BILAN",
+                "title_16": _("SCORING BANCAIRE - AVEC BILAN"),
                 "annee_N": annee_N,
                 "annee_N1": annee_N1,
                 "annee_N2": annee_N2,
@@ -2159,7 +2159,7 @@ def generer_rapport_solvabilite(request):
                 "url_site": static_base_url,
             },
             "scoring_syscohada": {
-                "title_16": "SCORING SYSCOHADA - AVEC BILAN",
+                "title_16": _("SCORING SYSCOHADA - AVEC BILAN"),
                 "annee_N": annee_N,
                 "annee_N1": annee_N1,
                 "annee_N2": annee_N2,
@@ -2185,7 +2185,7 @@ def generer_rapport_solvabilite(request):
                 "url_site": static_base_url,
             },
             "scoring_ifrs": {
-                "title_16": "SCORING IFRS COBAC - AVEC BILAN",
+                "title_16": _("SCORING IFRS COBAC - AVEC BILAN"),
                 "annee_N": annee_N,
                 "annee_N1": annee_N1,
                 "annee_N2": annee_N2,
@@ -2212,18 +2212,18 @@ def generer_rapport_solvabilite(request):
             },
             
             "operation_history": {
-                "title_17": "HISTORIQUE DES OPERATIONS",
+                "title_17": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else _t("Aucun commentaire disponible"),
                 "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else _t("Aucune description disponible"),
                 "importation": operation_history.importation if operation_history and operation_history.importation else "",
                 "historique": operation_history.historique if operation_history and operation_history.historique else _t("Aucun historique disponible"),
             },
             "properties_and_assets": {
-                "title_18": "PROPRIÉTÉ ET ACTIFS",
+                "title_18": _("PROPRIÉTÉ ET ACTIFS"),
                 "assets_list": list_properties_and_assets_data if list_properties_and_assets_data else None,
             },
             "terms_of_purchase_and_sale": {
-                "title_19": "CONDITION D'ACHAT ET DE VENTE",
+                "title_19": _("CONDITION D'ACHAT ET DE VENTE"),
                 "conditions_achat": {
                     "local": condition_achat.local if condition_achat and condition_achat.local else "",
                     "importation": condition_achat.importation if condition_achat and condition_achat.importation else "",

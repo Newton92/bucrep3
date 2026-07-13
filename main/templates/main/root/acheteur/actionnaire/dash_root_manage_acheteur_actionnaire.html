@@ -132,6 +132,9 @@
                 <i class="bi bi-list-ul"></i>{% trans "Liste des Actionnaires" %}
             </h6>
             <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#addActionnaireModal">
+                    <i class="bi bi-plus-circle-fill"></i>{% trans "Ajouter" %}
+                </button>
                 <div class="form-check mb-0">
                     <input class="form-check-input" type="checkbox" id="selectAll">
                     <label class="form-check-label small text-white" for="selectAll">{% trans "Sélectionner tout" %}</label>
@@ -291,6 +294,7 @@
 {% trans "Une erreur est survenue lors de l'ajout" as t_err_add %}
 {% trans "Actionnaire ajouté avec succès" as t_act_added %}
 {% trans "Actionnaire modifié avec succès" as t_act_edited %}
+{% trans "Actionnaire(s) supprimé(s) avec succès" as t_act_deleted %}
 {% trans "Une erreur est survenue" as t_err_generic %}
 {% trans "Pourcentage invalide" as t_pct_inv %}
 {% trans "Affichage" as t_display %}
@@ -336,6 +340,7 @@ $(document).ready(function() {
         errAdd:       "{{ t_err_add|escapejs }}",
         actAdded:     "{{ t_act_added|escapejs }}",
         actEdited:    "{{ t_act_edited|escapejs }}",
+        actDeleted:   "{{ t_act_deleted|escapejs }}",
         errGeneric:   "{{ t_err_generic|escapejs }}",
         pctInv:       "{{ t_pct_inv|escapejs }}",
         display:      "{{ t_display|escapejs }}",
@@ -511,7 +516,7 @@ $(document).ready(function() {
                 $btn.find('.btn-text').show();
                 bootstrap.Modal.getInstance($('#addActionnaireModal')[0]).hide();
                 if (r.pourcentage_total !== undefined) { totalPourcentage = parseFloat(r.pourcentage_total); updatePourcentageDisponible(); }
-                Swal.fire({ icon: 'success', title: S.ok, text: r.message || S.actAdded, timer: 1500, showConfirmButton: false })
+                Swal.fire({ icon: 'success', title: S.ok, text: S.actAdded, timer: 1500, showConfirmButton: false })
                     .then(function() { loadActionnaires(currentPage, currentFilters); loadStats(); });
             },
             error: function(xhr) {
@@ -557,7 +562,7 @@ $(document).ready(function() {
                 $btn.find('.btn-text').show();
                 bootstrap.Modal.getInstance($('#editActionnaireModal')[0]).hide();
                 if (r.pourcentage_total !== undefined) { totalPourcentage = parseFloat(r.pourcentage_total); updatePourcentageDisponible(); }
-                Swal.fire({ icon: 'success', title: S.ok, text: r.message || S.actEdited, timer: 1500, showConfirmButton: false })
+                Swal.fire({ icon: 'success', title: S.ok, text: S.actEdited, timer: 1500, showConfirmButton: false })
                     .then(function() { loadActionnaires(currentPage, currentFilters); loadStats(); });
             },
             error: function(xhr) {
@@ -616,7 +621,7 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
             success: function(r) {
                 loadStats();
-                Swal.fire({ icon: 'success', title: S.ok, text: r.message, timer: 2000, showConfirmButton: false })
+                Swal.fire({ icon: 'success', title: S.ok, text: S.actDeleted, timer: 2000, showConfirmButton: false })
                     .then(function() {
                         selectedActionnaires.clear();
                         $('#deleteSelected').prop('disabled', true);

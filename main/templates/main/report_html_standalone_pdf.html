@@ -1003,6 +1003,296 @@
                </tbody>
             </table>
          </div>
+          <!-- Capital social -->
+         <div class="section">
+            <div class="section-title">{% trans "CAPITAL SOCIAL" %}</div>
+            <table>
+               <tbody>
+                  <tr>
+                     <th>{% trans "Capital social émis" %}</th>
+                     <td>{{ capital_composition.emis }} {{ capital_composition.devise|default:"" }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Capital social publié" %}</th>
+                     <td>{{ capital_composition.publie }} {{ capital_composition.devise|default:"" }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Capital social libéré" %}</th>
+                     <td>{{ capital_composition.libere }} {{ capital_composition.devise|default:"" }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td colspan="1" class="warning">{{ capital_composition.commentaire|safe|default:"" }}</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+
+          <!-- Actionnariat/Propriétaires -->
+         <div class="section">
+            {% trans "ACTIONNARIAT/PROPRIÉTAIRES" as default_actionnariat %}
+            <div class="section-title">{{ shareholders.title_11|default:default_actionnariat }}</div>
+            {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
+            {% for shareholder in shareholders.actionnaires %}
+            <div class="shareholder-entry">
+               <table>
+                  <tbody>
+                     <tr>
+                        <th>{% trans "Nom" %}</th>
+                        <td>{{ shareholder.nom }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Prénom" %}</th>
+                        <td>{{ shareholder.prenom }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "% part sociale/actions" %}</th>
+                        <td>
+                           {% if shareholder.pourcentage  %}
+                           {{ shareholder.pourcentage|floatformat:2 }}%
+                           {% else %}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Commentaire" %}</th>
+                        <td colspan="1" class="warning">{{ shareholder.commentaire|safe }}</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">{% trans "Aucun actionnaire n'est spécifié pour cet acheteur." %}</div>
+            {% endif %}
+         </div>
+
+         <!-- Affiliations d'entreprise -->
+         <div class="section">
+            {% trans "AFFILIATIONS CORPORATIVES" as default_affiliations %}
+            <div class="section-title">{{ affiliations.title_21|default:affiliations.title_12|default:default_affiliations }}</div>
+            {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
+            {% for affiliation in affiliations.affiliations %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     <tr>
+                        <th>{% trans "Nom" %}</th>
+                        <td class="text">{{ affiliation.nom }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Type d'affiliation" %}</th>
+                        <td>{{ affiliation.type_affiliation }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Adresse" %}</th>
+                        <td>
+                           {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
+                           {{ affiliation.numero_adresse }} {{ affiliation.rue_adresse }},
+                           {{ affiliation.code_postale_adresse }}
+                           {% else %}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Commentaire" %}</th>
+                        <td colspan="1" class="warning">{{ affiliation.commentaire|safe }}</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <div style="height: 10px;"></div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">{% trans "Aucune affiliation d'entreprise n'est disponible pour cet acheteur." %}</div>
+            {% endif %}
+         </div>
+
+          <!-- Analyse sectorielle -->
+         <div class="section">
+            {% trans "ANALYSE ECONOMIQUE" as default_analyse_sectorielle %}
+            <div class="section-title">{{ sector_analysis.title_22|default:sector_analysis.title_13|default:default_analyse_sectorielle }}</div>
+            <!-- SECTORIELLE -->
+            <div class="subsection-title">{% trans "ANALYSE SECTORIELLE" %}</div>
+            <div class="section">
+               <table>
+                  <tr>
+                     <th>{% trans "Impact COVID" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.sectorielle.impact_covid_19|safe }}
+                     </td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.sectorielle.commentaire|safe }}
+                     </td>
+                  </tr>
+               </table>
+            </div>
+            <!-- TENDANCE -->
+            <div class="subsection-title">{% trans "TENDANCE" %}</div>
+            <div class="section">
+               <table>
+                  <tr>
+                     <th>{% trans "Avis commercial" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.tendance.avis_commercial|safe }}
+                     </td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Presse et Médias" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.tendance.presse_media|safe }}
+                     </td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Competitive Analysis" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.tendance.principaux_concurrent|safe }}
+                     </td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td colspan="1" class="warning">
+                        {{ sector_analysis.tendance.commentaire|safe }}
+                     </td>
+                  </tr>
+               </table>
+            </div>
+            <!-- GEOPOLITIQUES -->
+            <div class="subsection-title">{% trans "GEOPOLITIQUES" %}</div>
+            <div class="section">
+               {% if sector_analysis.geopolitics.stabilite_politique or sector_analysis.geopolitics.etat_droit or sector_analysis.geopolitics.efficacite or sector_analysis.geopolitics.qualite or sector_analysis.geopolitics.liberte_expression %}
+               <table style="width:100%;margin-bottom:8px;">
+                  <tr>
+                     {% with s=sector_analysis.geopolitics.stabilite_politique|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Stabilité Politique" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.etat_droit|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "État de Droit" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.efficacite|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Efficacité Gouvernementale" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.qualite|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Qualité Réglementaire" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                     {% with s=sector_analysis.geopolitics.liberte_expression|default:0 %}
+                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
+                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Liberté d'Expression" %}</div>
+                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
+                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
+                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
+                        </div>
+                     </td>
+                     {% endwith %}
+                  </tr>
+               </table>
+               {% endif %}
+               <table>
+                  <tr>
+                     <th>{% trans "Analyse Politique" %}</th>
+                     <td class="warning">{{ sector_analysis.geopolitics.donnees_politiques|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Analyse Économique" %}</th>
+                     <td class="warning">{{ sector_analysis.geopolitics.donnees_economiques|safe }}</td>
+                  </tr>
+               </table>
+            </div>
+
+            <!-- SWOT -->
+            <div class="subsection-title">{% trans "ANALYSE SWOT" %}</div>
+            <div class="section">
+               <table>
+                  <tr>
+                     <th>{% trans "Forces" %}</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.forces|default:""|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Faiblesses" %}</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.faiblesses|default:""|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Opportunités" %}</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.opportunites|default:""|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Menaces" %}</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.menaces|default:""|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>{% trans "Commentaires" %}</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.commentaires|default:""|safe }}</td>
+                  </tr>
+               </table>
+            </div>
+
+            <div class="subsection-title">{{ banking_data.title_23|default:banking_data.title_14|default:"DONNÉES BANCAIRES" }}</div>
+            {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
+            {% for bank in banking_data.data_banks %}
+            <div class="bank-entry">
+               <table>
+                  <tbody>
+                     <tr>
+                        <th>{% trans "Nom de la banque" %}</th>
+                        <td>{{ bank.nom_banque }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Numéro de compte" %}</th>
+                        <td>{{ bank.numero_compte }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Type de relation" %}</th>
+                        <td>{{ bank.type_relation }}</td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Adresse" %}</th>
+                        <td>
+                           {% if bank.numero  or bank.rue  or bank.ville  or bank.code_postal  %}
+                           {{ bank.numero }} {{ bank.rue }},
+                           {{ bank.code_postal }} {{ bank.ville }}
+                           {% else %}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     <tr>
+                        <th>{% trans "Commentaire" %}</th>
+                        <td class="warning">{{ bank.commentaire|safe }}</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">{% trans "Aucune donnée bancaire n'est disponible pour cet acheteur." %}</div>
+            {% endif %}
+         </div>
          <!-- Risque pays / Country Risk -->
          {% with geo=sector_analysis.geopolitics %}
          <div class="section">
@@ -1079,68 +1369,8 @@
             {% endif %}
          </div>
          {% endwith %}
-         <!-- Capital social -->
-         <div class="section">
-            <div class="section-title">{% trans "CAPITAL SOCIAL" %}</div>
-            <table>
-               <tbody>
-                  <tr>
-                     <th>{% trans "Capital social émis" %}</th>
-                     <td>{{ capital_composition.emis }} {{ capital_composition.devise|default:"" }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Capital social publié" %}</th>
-                     <td>{{ capital_composition.publie }} {{ capital_composition.devise|default:"" }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Capital social libéré" %}</th>
-                     <td>{{ capital_composition.libere }} {{ capital_composition.devise|default:"" }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Commentaire" %}</th>
-                     <td colspan="1" class="warning">{{ capital_composition.commentaire|safe }}</td>
-                  </tr>
-               </tbody>
-            </table>
-         </div>
-         <!-- Actionnariat/Propriétaires -->
-         <div class="section">
-            {% trans "ACTIONNARIAT/PROPRIÉTAIRES" as default_actionnariat %}
-            <div class="section-title">{{ shareholders.title_11|default:default_actionnariat }}</div>
-            {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
-            {% for shareholder in shareholders.actionnaires %}
-            <div class="shareholder-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th>{% trans "Nom" %}</th>
-                        <td>{{ shareholder.nom }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Prénom" %}</th>
-                        <td>{{ shareholder.prenom }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "% part sociale/actions" %}</th>
-                        <td>
-                           {% if shareholder.pourcentage  %}
-                           {{ shareholder.pourcentage|floatformat:2 }}%
-                           {% else %}
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Commentaire" %}</th>
-                        <td colspan="1" class="warning">{{ shareholder.commentaire|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            {% endfor %}
-            {% else %}
-            <div class="subsection-title">{% trans "Aucun actionnaire n'est spécifié pour cet acheteur." %}</div>
-            {% endif %}
-         </div>
+        
+        
 
          <!-- Registres de commerce -->
          <div class="section">
@@ -1892,231 +2122,8 @@
             {% endif %}
          </div>
 
-         <!-- Affiliations d'entreprise -->
-         <div class="section">
-            {% trans "AFFILIATIONS D'ENTREPRISE" as default_affiliations %}
-            <div class="section-title">{{ affiliations.title_21|default:affiliations.title_12|default:default_affiliations }}</div>
-            {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
-            {% for affiliation in affiliations.affiliations %}
-            <div class="affiliation-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th>{% trans "Nom" %}</th>
-                        <td class="text">{{ affiliation.nom }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Type d'affiliation" %}</th>
-                        <td>{{ affiliation.type_affiliation }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Adresse" %}</th>
-                        <td>
-                           {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
-                           {{ affiliation.numero_adresse }} {{ affiliation.rue_adresse }},
-                           {{ affiliation.code_postale_adresse }}
-                           {% else %}
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Commentaire" %}</th>
-                        <td colspan="1" class="warning">{{ affiliation.commentaire|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <div style="height: 10px;"></div>
-            {% endfor %}
-            {% else %}
-            <div class="subsection-title">{% trans "Aucune affiliation d'entreprise n'est disponible pour cet acheteur." %}</div>
-            {% endif %}
-         </div>
-         <!-- Analyse sectorielle -->
-         <div class="section">
-            {% trans "ANALYSE ECONOMIQUE" as default_analyse_sectorielle %}
-            <div class="section-title">{{ sector_analysis.title_22|default:sector_analysis.title_13|default:default_analyse_sectorielle }}</div>
-            <!-- SECTORIELLE -->
-            <div class="subsection-title">{% trans "ANALYSE SECTORIELLE" %}</div>
-            <div class="section">
-               <table>
-                  <tr>
-                     <th>{% trans "Impact COVID" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.sectorielle.impact_covid_19|safe }}
-                     </td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Commentaire" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.sectorielle.commentaire|safe }}
-                     </td>
-                  </tr>
-               </table>
-            </div>
-            <!-- TENDANCE -->
-            <div class="subsection-title">{% trans "TENDANCE" %}</div>
-            <div class="section">
-               <table>
-                  <tr>
-                     <th>{% trans "Avis commercial" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.tendance.avis_commercial|safe }}
-                     </td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Presse et Médias" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.tendance.presse_media|safe }}
-                     </td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Competitive Analysis" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.tendance.principaux_concurrent|safe }}
-                     </td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Commentaire" %}</th>
-                     <td colspan="1" class="warning">
-                        {{ sector_analysis.tendance.commentaire|safe }}
-                     </td>
-                  </tr>
-               </table>
-            </div>
-            <!-- GEOPOLITIQUES -->
-            <div class="subsection-title">{% trans "GEOPOLITIQUES" %}</div>
-            <div class="section">
-               {% if sector_analysis.geopolitics.stabilite_politique or sector_analysis.geopolitics.etat_droit or sector_analysis.geopolitics.efficacite or sector_analysis.geopolitics.qualite or sector_analysis.geopolitics.liberte_expression %}
-               <table style="width:100%;margin-bottom:8px;">
-                  <tr>
-                     {% with s=sector_analysis.geopolitics.stabilite_politique|default:0 %}
-                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
-                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Stabilité Politique" %}</div>
-                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
-                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
-                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
-                        </div>
-                     </td>
-                     {% endwith %}
-                     {% with s=sector_analysis.geopolitics.etat_droit|default:0 %}
-                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
-                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "État de Droit" %}</div>
-                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
-                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
-                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
-                        </div>
-                     </td>
-                     {% endwith %}
-                     {% with s=sector_analysis.geopolitics.efficacite|default:0 %}
-                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
-                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Efficacité Gouvernementale" %}</div>
-                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
-                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
-                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
-                        </div>
-                     </td>
-                     {% endwith %}
-                     {% with s=sector_analysis.geopolitics.qualite|default:0 %}
-                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
-                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Qualité Réglementaire" %}</div>
-                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
-                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
-                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
-                        </div>
-                     </td>
-                     {% endwith %}
-                     {% with s=sector_analysis.geopolitics.liberte_expression|default:0 %}
-                     <td style="width:20%;padding:4px 6px;vertical-align:top;">
-                        <div style="font-size:8pt;font-weight:700;color:#5a6c7d;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;min-height:2.6em;">{% trans "Liberté d'Expression" %}</div>
-                        <div style="font-size:10pt;font-weight:700;color:#0d80be;margin-bottom:3px;">{{ s }}/10</div>
-                        <div style="background:#e9ecef;border-radius:3px;height:7px;overflow:hidden;">
-                           <div style="height:100%;width:{% widthratio s 10 100 %}%;background:linear-gradient(to right,#dc3545 0%,#fd7e14 30%,#ffc107 60%,#28a745 100%);border-radius:3px;"></div>
-                        </div>
-                     </td>
-                     {% endwith %}
-                  </tr>
-               </table>
-               {% endif %}
-               <table>
-                  <tr>
-                     <th>{% trans "Analyse Politique" %}</th>
-                     <td class="warning">{{ sector_analysis.geopolitics.donnees_politiques|safe }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Analyse Économique" %}</th>
-                     <td class="warning">{{ sector_analysis.geopolitics.donnees_economiques|safe }}</td>
-                  </tr>
-               </table>
-            </div>
-
-            <!-- SWOT -->
-            <div class="subsection-title">{% trans "ANALYSE SWOT" %}</div>
-            <div class="section">
-               <table>
-                  <tr>
-                     <th>{% trans "Forces" %}</th>
-                     <td colspan="1" class="warning">{{ sector_analysis.swot.forces|default:""|safe }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Faiblesses" %}</th>
-                     <td colspan="1" class="warning">{{ sector_analysis.swot.faiblesses|default:""|safe }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Opportunités" %}</th>
-                     <td colspan="1" class="warning">{{ sector_analysis.swot.opportunites|default:""|safe }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Menaces" %}</th>
-                     <td colspan="1" class="warning">{{ sector_analysis.swot.menaces|default:""|safe }}</td>
-                  </tr>
-                  <tr>
-                     <th>{% trans "Commentaires" %}</th>
-                     <td colspan="1" class="warning">{{ sector_analysis.swot.commentaires|default:""|safe }}</td>
-                  </tr>
-               </table>
-            </div>
-
-            <div class="subsection-title">{{ banking_data.title_23|default:banking_data.title_14|default:"DONNÉES BANCAIRES" }}</div>
-            {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
-            {% for bank in banking_data.data_banks %}
-            <div class="bank-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th>{% trans "Nom de la banque" %}</th>
-                        <td>{{ bank.nom_banque }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Numéro de compte" %}</th>
-                        <td>{{ bank.numero_compte }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Type de relation" %}</th>
-                        <td>{{ bank.type_relation }}</td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Adresse" %}</th>
-                        <td>
-                           {% if bank.numero  or bank.rue  or bank.ville  or bank.code_postal  %}
-                           {{ bank.numero }} {{ bank.rue }},
-                           {{ bank.code_postal }} {{ bank.ville }}
-                           {% else %}
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th>{% trans "Commentaire" %}</th>
-                        <td class="warning">{{ bank.commentaire|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            {% endfor %}
-            {% else %}
-            <div class="subsection-title">{% trans "Aucune donnée bancaire n'est disponible pour cet acheteur." %}</div>
-            {% endif %}
-         </div>
+         
+        
          <!-- Comptes financiers -->
          <div class="section">
             {% trans "COMPTES FINANCIERS" as default_comptes %}

@@ -3497,6 +3497,9 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
 
     # Récupérer le capital social existant (un seul)
     capital = CompositionCapitalSocial.objects.filter(acheteur=acheteur).first()
+
+    # Récupérer les actionnaires
+    actionnaires = CompositionAction.objects.filter(acheteur=acheteur).select_related('couleur_commentaire').order_by('-created_at')
     
     # Calculer le pourcentage de capital libéré si le capital existe
     if capital and capital.emis and capital.emis > 0:
@@ -3568,6 +3571,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
         "capital_json": capital_json or 'null',
         "acheteur": acheteur,
         "capital": capital,
+        "actionnaires": actionnaires,
         "id_acheteur": acheteur_id,
         "devise_list": devise_list,
         "coloration_list": coloration_list,

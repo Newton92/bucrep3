@@ -515,7 +515,7 @@ html.embed-mode .embed-actions {
                             <label for="{{ field.id }}" class="form-label" style="font-size:0.78rem;">
                                 <i class="fas {{ field.icon }}" style="color:var(--color-primary);"></i> {{ field.label }}
                             </label>
-                            <select class="form-select form-select-sm select2" id="{{ field.id }}" name="{{ field.name }}" required>
+                            <select class="form-select form-select-sm" id="{{ field.id }}" name="{{ field.name }}" required>
                                 <option value="Aucun">{% trans "Aucun" %}</option>
                                 <option value="Oui">{% trans "Oui" %}</option>
                                 <option value="Non">{% trans "Non" %}</option>
@@ -526,8 +526,8 @@ html.embed-mode .embed-actions {
                             <label class="form-label" style="font-size:0.78rem;">
                                 <i class="fas fa-comment-dots" style="color:#28a745;"></i> {% trans "Commentaire d'évaluation" %}
                             </label>
-                            <div id="addCommentaireEditor"></div>
-                            <input type="hidden" name="commentaire" id="addCommentaireHidden">
+                            <textarea class="rich-editor" name="commentaire" id="addCommentaireHidden"
+                                      placeholder="{% trans "Ajoutez des observations et recommandations…" %}"></textarea>
                         </div>
                     </div>
                 </div>
@@ -574,7 +574,7 @@ html.embed-mode .embed-actions {
                             <label for="edit{{ field.name|capfirst }}" class="form-label" style="font-size:0.78rem;">
                                 <i class="fas {{ field.icon }}" style="color:var(--color-primary);"></i> {{ field.label }}
                             </label>
-                            <select class="form-select form-select-sm select2" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
+                            <select class="form-select form-select-sm" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
                                 <option value="Aucun">{% trans "Aucun" %}</option>
                                 <option value="Oui">{% trans "Oui" %}</option>
                                 <option value="Non">{% trans "Non" %}</option>
@@ -585,8 +585,8 @@ html.embed-mode .embed-actions {
                             <label class="form-label" style="font-size:0.78rem;">
                                 <i class="fas fa-comment-dots" style="color:#28a745;"></i> {% trans "Commentaire d'évaluation" %}
                             </label>
-                            <div id="editCommentaireEditor"></div>
-                            <input type="hidden" name="commentaire" id="editCommentaireHidden">
+                            <textarea class="rich-editor" name="commentaire" id="editCommentaireHidden"
+                                      placeholder="{% trans "Ajoutez des observations et recommandations…" %}"></textarea>
                         </div>
                     </div>
                 </div>
@@ -655,68 +655,35 @@ html.embed-mode .embed-actions {
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-
 <script>
-const fieldsConfig = [
-    { id: 'professionalisme',   name: 'professionalisme',   label: '{% trans "Professionnalisme" %}',     icon: 'fa-user-tie' },
-    { id: 'organisation',       name: 'organisation',       label: '{% trans "Organisation" %}',           icon: 'fa-sitemap' },
-    { id: 'turn_over',          name: 'turn_over',          label: '{% trans "Non départ des employés" %}',icon: 'fa-user-friends' },
-    { id: 'greve',              name: 'greve',              label: '{% trans "Non grève" %}',              icon: 'fa-hand-paper' },
-    { id: 'degradation_qualite',name: 'degradation_qualite',label: '{% trans "Non dégradation qualité" %}',icon: 'fa-chart-line' },
-    { id: 'non_respect_condition',name:'non_respect_condition',label:'{% trans "Respect des Employés" %}', icon: 'fa-handshake' },
-];
+// Chemins statiques rendus côté serveur
+var RM_IMG = {
+    bien:     '{% static "management/bien.png" %}',
+    passable: '{% static "management/passable.png" %}',
+    mauvais:  '{% static "management/mauvais.png" %}'
+};
+var RM_FIELD_NAMES = ['professionalisme','organisation','turn_over','greve','degradation_qualite','non_respect_condition'];
+
+function rmUpdateImage(mode) {
+    var formId = mode === 'add' ? 'addRiskManagementForm' : 'editRiskManagementForm';
+    var imgId  = mode === 'add' ? 'addRiskManagementImage' : 'editRiskManagementImage';
+    var form   = document.getElementById(formId);
+    var img    = document.getElementById(imgId);
+    if (!form || !img) return;
+    var oui = 0;
+    RM_FIELD_NAMES.forEach(function(name) {
+        var el = form.querySelector('select[name="' + name + '"]');
+        if (el && el.value === 'Oui') oui++;
+    });
+    img.src = oui >= 4 ? RM_IMG.bien : oui >= 1 ? RM_IMG.passable : RM_IMG.mauvais;
+}
+
+var fieldsConfig = RM_FIELD_NAMES.map(function(n) { return { name: n }; });
 
 $(document).ready(function() {
-    const API_BASE_URL  = `/api/acheteur/{{ acheteur.id }}/gestion-risque/`;
-    const ACCESS_TOKEN  = '{{ access_token }}';
-    const REFRESH_TOKEN = '{{ refresh_token }}';
-
-    // ── Quill editors ─────────────────────────────────────────
-    const QUILL_TOOLBAR = [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ color: [] }, { background: [] }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ indent: '-1' }, { indent: '+1' }],
-        ['link', 'blockquote'],
-        ['clean'],
-    ];
-    let addQuill = null;
-    let editQuill = null;
-
-    function initAddQuill() {
-        if (addQuill) return;
-        addQuill = new Quill('#addCommentaireEditor', {
-            theme: 'snow',
-            placeholder: '{% trans "Ajoutez des observations et recommandations…" %}',
-            modules: { toolbar: QUILL_TOOLBAR },
-        });
-    }
-
-    function initEditQuill() {
-        if (editQuill) return;
-        editQuill = new Quill('#editCommentaireEditor', {
-            theme: 'snow',
-            placeholder: '{% trans "Ajoutez des observations et recommandations…" %}',
-            modules: { toolbar: QUILL_TOOLBAR },
-        });
-    }
-
-    // ── Select2 ──────────────────────────────────────────────
-    function initSelect2(parent) {
-        const opts = {
-            theme: 'bootstrap-5', width: '100%',
-            placeholder: '{% trans "Sélectionnez une option" %}',
-            language: '{% get_current_language as LANG %}{{ LANG }}',
-            allowClear: true, minimumResultsForSearch: 5,
-            dropdownParent: parent || $('body'),
-        };
-        (parent ? parent.find('.select2') : $('.select2')).select2(opts);
-    }
-    initSelect2();
+    var API_BASE_URL  = '/api/acheteur/{{ acheteur.id }}/gestion-risque/';
+    var ACCESS_TOKEN  = '{{ access_token }}';
+    var REFRESH_TOKEN = '{{ refresh_token }}';
 
     // ── Image logic ───────────────────────────────────────────
     let gestionRisqueData = null;
@@ -727,7 +694,7 @@ $(document).ready(function() {
         const vals = fieldsConfig.map(f => data[f.name]);
         const oui = vals.filter(v => v === 'Oui').length;
         if (oui >= 4) return `{% static 'management/bien.png' %}`;
-        if (oui >= 2) return `{% static 'management/passable.png' %}`;
+        if (oui >= 1) return `{% static 'management/passable.png' %}`;
         return `{% static 'management/mauvais.png' %}`;
     }
 
@@ -740,12 +707,6 @@ $(document).ready(function() {
         };
     }
 
-    function updateManagementImage(formSel, imgSel) {
-        const data = {};
-        fieldsConfig.forEach(f => { data[f.name] = $(`${formSel} [name="${f.name}"]`).val(); });
-        $(imgSel).attr('src', getManagementImagePath(data));
-    }
-
     window.showManagementImage = function() {
         if (!gestionRisqueData) return;
         const score = calculateManagementScore(gestionRisqueData);
@@ -754,42 +715,21 @@ $(document).ready(function() {
         $('#viewImageModal').modal('show');
     };
 
-    // ── Modal add : init Quill + Select2 + image ──────────────
-    $('#addRiskManagementModal').on('shown.bs.modal', function() {
-        const $modal = $(this);
-        $modal.find('.select2').each(function() {
-            if ($(this).data('select2')) $(this).select2('destroy');
-        });
-        initSelect2($modal);
-        initAddQuill();
-        // Binding direct sur chaque select après init Select2
-        fieldsConfig.forEach(f => {
-            $(`#addRiskManagementForm [name="${f.name}"]`)
-                .off('change.rmImage')
-                .on('change.rmImage', function() {
-                    updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
-                });
-        });
-        setTimeout(() => updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage'), 50);
+    // ── Mise à jour image sur changement de valeur ───────────
+    $('#addRiskManagementForm').on('change', 'select', function() {
+        rmUpdateImage('add');
+    });
+    $('#editRiskManagementForm').on('change', 'select', function() {
+        rmUpdateImage('edit');
     });
 
-    // ── Modal edit : init Quill + Select2 + load data ─────────
+    // ── Modal add : init image à l'ouverture ─────────────────
+    $('#addRiskManagementModal').on('shown.bs.modal', function() {
+        rmUpdateImage('add');
+    });
+
+    // ── Modal edit : charger données existantes ───────────────
     $('#editRiskManagementModal').on('shown.bs.modal', function() {
-        const $modal = $(this);
-        $modal.find('.select2').each(function() {
-            if ($(this).data('select2')) $(this).select2('destroy');
-        });
-        initSelect2($modal);
-        initEditQuill();
-        // Binding direct sur chaque select après init Select2
-        fieldsConfig.forEach(f => {
-            const editId = `edit${f.name.charAt(0).toUpperCase() + f.name.slice(1)}`;
-            $(`#${editId}`)
-                .off('change.rmImage')
-                .on('change.rmImage', function() {
-                    updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
-                });
-        });
         if (!{{ gestion_risque|yesno:"true,false" }}) return;
         $.ajax({
             url: API_BASE_URL, type: 'GET',
@@ -802,69 +742,88 @@ $(document).ready(function() {
     function populateEditForm(d) {
         if (!d) return;
         $('#editRiskManagementId').val(d.id);
-        if (editQuill) {
-            editQuill.root.innerHTML = d.commentaire || '';
-        }
+        var _taEdit = document.getElementById('editCommentaireHidden');
+        if (_taEdit) _taEdit.value = d.commentaire || '';
+        quillSetValue('editCommentaireHidden', d.commentaire || '');
         fieldsConfig.forEach(f => {
             const id = `edit${f.name.charAt(0).toUpperCase() + f.name.slice(1)}`;
             if (d[f.name]) $(`#${id}`).val(d[f.name]).trigger('change');
         });
-        $('#editRiskManagementImage').attr('src', getManagementImagePath(d));
+        rmUpdateImage('edit');
     }
 
     // ── Form reset ────────────────────────────────────────────
     $('#addRiskManagementModal').on('hidden.bs.modal', function() {
         $('#addRiskManagementForm')[0].reset();
-        $('#addRiskManagementModal .select2').val(null).trigger('change');
         $('#addRiskManagementImage').attr('src', `{% static 'management/mauvais.png' %}`);
-        if (addQuill) addQuill.setText('');
-        $('#addCommentaireHidden').val('');
+        quillSetValue('addCommentaireHidden', '');
     });
+
+    // ── Collecte données du formulaire ────────────────────────
+    function collectRMData(formPrefix) {
+        var data = {};
+        RM_FIELD_NAMES.forEach(function(name) {
+            var prefix = formPrefix === 'add' ? '' : 'edit';
+            var fieldName = prefix ? 'edit' + name.charAt(0).toUpperCase() + name.slice(1) : name;
+            var el = document.getElementById(fieldName) || document.querySelector('#' + formPrefix + 'RiskManagementForm [name="' + name + '"]');
+            if (el) data[name] = el.value;
+        });
+        var taId = formPrefix + 'CommentaireHidden';
+        var ta = document.getElementById(taId);
+        data.commentaire = ta ? ta.value : '';
+        return data;
+    }
 
     // ── Form submit ───────────────────────────────────────────
     $('#addRiskManagementForm').on('submit', function(e) {
         e.preventDefault();
-        const html = addQuill ? addQuill.root.innerHTML : '';
-        $('#addCommentaireHidden').val(html === '<p><br></p>' ? '' : html);
-        submitForm('POST', $(this).serialize(), '#submitAddBtn', 'addRiskManagementModal');
+        submitFormJSON(collectRMData('add'), '#submitAddBtn', 'addRiskManagementModal');
     });
     $('#editRiskManagementForm').on('submit', function(e) {
         e.preventDefault();
-        const html = editQuill ? editQuill.root.innerHTML : '';
-        $('#editCommentaireHidden').val(html === '<p><br></p>' ? '' : html);
-        submitForm('POST', $(this).serialize(), '#submitEditBtn', 'editRiskManagementModal');
+        var data = collectRMData('edit');
+        var idEl = document.getElementById('editRiskManagementId');
+        if (idEl && idEl.value) data.id = idEl.value;
+        submitFormJSON(data, '#submitEditBtn', 'editRiskManagementModal');
     });
 
-    function submitForm(method, formData, btnSel, modalId) {
-        const $btn = $(btnSel);
+    function submitFormJSON(data, btnSel, modalId) {
+        var $btn = $(btnSel);
         $btn.prop('disabled', true).find('.btn-text').hide();
         $btn.find('.spinner-border').removeClass('d-none');
+        console.log('[RM] envoi POST', API_BASE_URL, data);
 
         $.ajax({
-            url: API_BASE_URL, type: method, data: formData,
+            url: API_BASE_URL, type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
             success: function(r) {
+                console.log('[RM] succes', r);
                 $btn.prop('disabled', false).find('.btn-text').show();
                 $btn.find('.spinner-border').addClass('d-none');
-                $(`#${modalId}`).modal('hide');
-                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}',
-                    text: r.message || '{% trans "Évaluation enregistrée avec succès" %}',
+                $('#' + modalId).modal('hide');
+                Swal.fire({ icon: 'success', title: 'Enregistré',
+                    text: r.message || 'Évaluation enregistrée avec succès',
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
-                .then(() => window.location.reload());
+                .then(function() { window.location.reload(); });
             },
             error: function(xhr) {
+                console.error('[RM] erreur HTTP', xhr.status, xhr.responseText);
                 $btn.prop('disabled', false).find('.btn-text').show();
                 $btn.find('.spinner-border').addClass('d-none');
                 if (xhr.status === 401) {
-                    refreshAccessToken(() => submitForm(method, formData, btnSel, modalId));
+                    refreshAccessToken(function() { submitFormJSON(data, btnSel, modalId); });
                 } else {
-                    let msg = '{% trans "Une erreur est survenue" %}';
+                    var msg = 'Erreur (HTTP ' + xhr.status + ')';
                     if (xhr.responseJSON) {
                         if (typeof xhr.responseJSON === 'object') {
-                            msg = Object.entries(xhr.responseJSON).map(([k,v]) => `${k}: ${v}`).join('\n');
+                            msg = Object.entries(xhr.responseJSON).map(function(e) { return e[0] + ': ' + e[1]; }).join('\n');
                         } else { msg = xhr.responseJSON.detail || msg; }
+                    } else if (xhr.responseText) {
+                        msg += '<br><small>' + xhr.responseText.substring(0, 300).replace(/</g,'&lt;') + '</small>';
                     }
-                    Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}',
+                    Swal.fire({ icon: 'error', title: 'Erreur ' + xhr.status,
                         html: msg.replace(/\n/g,'<br>'), background: '#fcfefe' });
                 }
             }
@@ -873,30 +832,30 @@ $(document).ready(function() {
 
     // ── Delete ────────────────────────────────────────────────
     $('#confirmDeleteBtn').on('click', function() {
-        const $btn = $(this).prop('disabled', true)
-            .html('<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Suppression…" %}');
+        var $btn = $(this).prop('disabled', true)
+            .html('<i class="fas fa-spinner fa-spin me-1"></i> Suppression...');
         $.ajax({
             url: API_BASE_URL, type: 'DELETE',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
             success: function() {
                 $('#confirmDeleteModal').modal('hide');
-                Swal.fire({ icon: 'success', title: '{% trans "Succès" %}',
-                    text: '{% trans "Évaluation supprimée avec succès" %}',
+                Swal.fire({ icon: 'success', title: 'Supprimé',
+                    text: 'Évaluation supprimée avec succès',
                     timer: 2000, showConfirmButton: false, background: '#fcfefe' })
-                .then(() => window.location.reload());
+                .then(function() { window.location.reload(); });
             },
             error: function(xhr) {
-                $btn.prop('disabled', false).html('<i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}');
-                if (xhr.status === 401) { refreshAccessToken(() => $('#confirmDeleteBtn').click()); }
-                else { Swal.fire({ icon: 'error', title: '{% trans "Erreur" %}',
-                    text: '{% trans "Impossible de supprimer l\'évaluation" %}', background: '#fcfefe' }); }
+                $btn.prop('disabled', false).html('<i class="fas fa-trash me-1"></i> Supprimer');
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#confirmDeleteBtn').click(); }); }
+                else { Swal.fire({ icon: 'error', title: 'Erreur',
+                    text: "Impossible de supprimer l'évaluation", background: '#fcfefe' }); }
             }
         });
     });
 
     // ── Helpers ───────────────────────────────────────────────
     function getCookie(name) {
-        const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
         return match ? decodeURIComponent(match[1]) : null;
     }
 
@@ -905,12 +864,12 @@ $(document).ready(function() {
             url: '/api/token/refresh/', type: 'POST',
             data: JSON.stringify({ refresh: REFRESH_TOKEN }),
             contentType: 'application/json',
-            success: function(r) { if (r.access && cb) { window.ACCESS_TOKEN = r.access; cb(); } },
+            success: function(r) { if (r.access && cb) { ACCESS_TOKEN = r.access; cb(); } },
             error: function() {
-                Swal.fire({ icon: 'error', title: '{% trans "Session expirée" %}',
-                    text: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
-                    confirmButtonText: '{% trans "Se reconnecter" %}', background: '#fcfefe' })
-                .then(r => { if (r.isConfirmed) window.location.href = '/login/'; });
+                Swal.fire({ icon: 'error', title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'Se reconnecter', background: '#fcfefe' })
+                .then(function(res) { if (res.isConfirmed) window.location.href = '/login/'; });
             }
         });
     }
