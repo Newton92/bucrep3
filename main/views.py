@@ -42,7 +42,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport, SuiviCommande
-from main.models import OperationEtHistorique, ListeImportation
+from main.models import OperationEtHistorique, ListeImportation, CommentaireRatiosBilan
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -5226,6 +5226,7 @@ def dash_root_manage_acheteur_ratios_anglais(request, acheteur_id):
     except Exception:
         pass
 
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan='anglais')
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -5238,6 +5239,7 @@ def dash_root_manage_acheteur_ratios_anglais(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
         "cf_annees_json": json.dumps(cf_annees),
+        "commentaire_ratios": cr_obj.commentaire or '',
     }
     return render(
         request,
@@ -5764,6 +5766,7 @@ def dash_root_manage_acheteur_ratio_classique(request, acheteur_id):
         except Exception:
             continue
 
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan='classique')
     context = {
         'acheteur_active': 'active',
         'user': request.user,
@@ -5772,6 +5775,7 @@ def dash_root_manage_acheteur_ratio_classique(request, acheteur_id):
         'id_acheteur': acheteur_id,
         'acheteur': acheteur,
         'years_data': years_data,
+        'commentaire_ratios': cr_obj.commentaire or '',
     }
     return render(request, 'main/root/acheteur/bilans/classique/dash_root_manage_acheteur_ratio_classique.html', context)
 
@@ -5864,6 +5868,7 @@ def dash_root_manage_acheteur_ratio_syscohada(request, acheteur_id):
         except Exception:
             continue
 
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan='syscohada')
     context = {
         'acheteur_active': 'active',
         'user': request.user,
@@ -5872,6 +5877,7 @@ def dash_root_manage_acheteur_ratio_syscohada(request, acheteur_id):
         'id_acheteur': acheteur_id,
         'acheteur': acheteur,
         'years_data': years_data,
+        'commentaire_ratios': cr_obj.commentaire or '',
     }
     return render(request, 'main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_ratio_syscohada.html', context)
 
@@ -6702,6 +6708,7 @@ def dash_root_manage_acheteur_ratio_bancaire(request, acheteur_id):
             'has_hbs':      hbs is not None,
         })
 
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan='bancaire')
     context = {
         'acheteur_active': 'active',
         'user': request.user,
@@ -6710,6 +6717,7 @@ def dash_root_manage_acheteur_ratio_bancaire(request, acheteur_id):
         'id_acheteur': acheteur_id,
         'acheteur': acheteur,
         'years_data': years_data,
+        'commentaire_ratios': cr_obj.commentaire or '',
     }
     return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_ratio_bancaire.html', context)
 
@@ -6855,12 +6863,16 @@ def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
 
+    acheteur_fi = get_object_or_404(Acheteur, id=acheteur_id)
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur_fi, type_bilan='financier_ifrs')
     context = {
         "acheteur_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
         "id_acheteur": id_acheteur,
+        "acheteur": acheteur_fi,
+        "commentaire_ratios": cr_obj.commentaire or '',
     }
     return render(
         request,
@@ -8863,6 +8875,7 @@ def dash_root_manage_acheteur_ratio_ifrs(request, acheteur_id):
             'r_eff_raw':  r_eff_raw * 100 if r_eff_raw is not None else None,
         })
 
+    cr_obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan='ifrs')
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -8871,6 +8884,7 @@ def dash_root_manage_acheteur_ratio_ifrs(request, acheteur_id):
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
         "years_data": years_data,
+        "commentaire_ratios": cr_obj.commentaire or '',
     }
     return render(request, "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_ratio_ifrs.html", context)
 

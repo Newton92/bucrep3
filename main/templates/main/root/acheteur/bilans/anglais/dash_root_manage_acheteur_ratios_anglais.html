@@ -66,6 +66,14 @@ html{overflow:hidden;}
   .bg-table tr.row-total td{background:#ccc !important;color:#000 !important;}
   .bg-table tr.row-grand td{background:#000 !important;color:#fff !important;}
 }
+.ratio-commentaire-section{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(10,149,202,.10);padding:18px 20px 14px;margin:18px 16px 0;}
+.ratio-commentaire-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.ratio-commentaire-header i{color:var(--app-blue);font-size:1.1rem;}
+.ratio-commentaire-header h6{margin:0;font-size:.92rem;font-weight:600;color:#1a1a1a;}
+.ratio-save-btn{background:linear-gradient(135deg,var(--app-dark),var(--app-blue));color:#fff;border:none;border-radius:7px;padding:6px 18px;font-size:.82rem;font-weight:600;cursor:pointer;transition:opacity .2s;}
+.ratio-save-btn:hover{opacity:.88;}
+.ql-container.ql-snow{height:auto !important;min-height:80px;}
+.ql-editor{min-height:80px !important;}
 </style>
 {% endblock %}
 
@@ -109,6 +117,19 @@ html{overflow:hidden;}
             <thead id="ratioHead"></thead>
             <tbody id="ratioBody"></tbody>
         </table>
+    </div>
+</div>
+<div class="ratio-commentaire-section">
+    <div class="ratio-commentaire-header">
+        <i class="bi bi-chat-text-fill"></i>
+        <h6>{% trans "Commentaire analytique des ratios" %}</h6>
+    </div>
+    <textarea class="form-control rich-editor" id="commentaireRatios" name="commentaire" rows="5"
+              placeholder="{% trans "Rédigez votre analyse des ratios financiers..." %}"></textarea>
+    <div class="d-flex justify-content-end mt-2">
+        <button type="button" class="ratio-save-btn" id="btnSaveCommentaireRatios">
+            <i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -390,5 +411,33 @@ function adjustGridHeight(){
 document.getElementById('btnRefresh').addEventListener('click', init);
 $(document).ready(function(){ adjustGridHeight(); init(); });
 window.addEventListener('resize', adjustGridHeight);
+</script>
+<script>
+(function(){
+    var ACCESS = '{{ access }}';
+    var AID    = {{ id_acheteur }};
+    var TYPE   = 'anglais';
+    if (window.quillSetValue) window.quillSetValue('commentaireRatios', '{{ commentaire_ratios|escapejs }}');
+    document.getElementById('btnSaveCommentaireRatios').addEventListener('click', function(){
+        var btn = this;
+        var commentaire = document.getElementById('commentaireRatios').value;
+        var csrf = (document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+        fetch('/api/acheteur/'+AID+'/commentaire-ratios/'+TYPE+'/', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+ACCESS,'X-CSRFToken':csrf},
+            body:JSON.stringify({commentaire: commentaire})
+        }).then(function(r){ return r.json(); }).then(function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>{% trans "Enregistré" %}';
+            setTimeout(function(){ btn.innerHTML = '<i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}'; }, 2000);
+        }).catch(function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>{% trans "Erreur" %}';
+            setTimeout(function(){ btn.innerHTML = '<i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}'; }, 3000);
+        });
+    });
+}());
 </script>
 {% endblock %}

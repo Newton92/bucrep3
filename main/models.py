@@ -14588,3 +14588,45 @@ class ActivityLog(models.Model):
     
     def __str__(self):
         return f"{self.action_type} par {self.user} à {self.created_at}"
+
+
+class CommentaireRatiosBilan(SafeDeleteModel):
+    """Commentaire analytique sur les ratios financiers, par type de bilan et par acheteur."""
+
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    TYPE_CHOICES = [
+        ('classique',      _('Classique')),
+        ('syscohada',      _('SYSCOHADA')),
+        ('anglais',        _('Anglais')),
+        ('ifrs',           _('IFRS')),
+        ('financier_ifrs', _('Financier IFRS')),
+        ('bancaire',       _('Bancaire')),
+    ]
+
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        related_name='commentaires_ratios_bilan',
+        verbose_name=_("Acheteur"),
+    )
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        verbose_name=_("Type de bilan"),
+    )
+    commentaire = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Commentaire des ratios"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Créé le"))
+    updated_at = models.DateTimeField(auto_now=True,     verbose_name=_("Mis à jour le"))
+
+    class Meta:
+        unique_together = [('acheteur', 'type_bilan')]
+        verbose_name        = _("Commentaire ratios bilan")
+        verbose_name_plural = _("Commentaires ratios bilan")
+
+    def __str__(self):
+        return f"Ratios {self.type_bilan} — {self.acheteur}"

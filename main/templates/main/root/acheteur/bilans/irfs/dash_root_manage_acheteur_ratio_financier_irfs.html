@@ -180,6 +180,29 @@
 </div>
 <!-- Edit Ratio Modal END -->
 
+<!-- ── Commentaire analytique des ratios ── -->
+<style>
+.ratio-commentaire-section{background:#fff;border:1px solid rgba(13,128,190,.15);border-radius:8px;padding:1rem 1.25rem;margin-top:1.5rem;}
+.ratio-commentaire-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;color:#0a95ca;}
+.ratio-commentaire-header h6{margin:0;font-size:.9rem;font-weight:700;color:inherit;}
+.ratio-save-btn{background:#0a95ca;color:#fff;border:none;border-radius:6px;font-size:.82rem;padding:.35rem .9rem;cursor:pointer;}
+.ratio-save-btn:hover{background:#106cb2;}
+.ql-container.ql-snow{min-height:100px;}.ql-editor{min-height:100px;}
+</style>
+<div class="ratio-commentaire-section">
+    <div class="ratio-commentaire-header">
+        <i class="bi bi-chat-text-fill"></i>
+        <h6>{% trans "Commentaire analytique des ratios" %}</h6>
+    </div>
+    <textarea class="form-control rich-editor" id="commentaireRatios" name="commentaire" rows="5"
+              placeholder="{% trans "Rédigez votre analyse des ratios financiers..." %}"></textarea>
+    <div class="d-flex justify-content-end mt-2">
+        <button type="button" class="ratio-save-btn" id="btnSaveCommentaireRatios">
+            <i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}
+        </button>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -429,6 +452,34 @@
         }
 
     });
+</script>
+<script>
+(function(){
+    var ACCESS = '{{ access }}';
+    var AID    = {{ id_acheteur }};
+    var TYPE   = 'financier_ifrs';
+    if (window.quillSetValue) window.quillSetValue('commentaireRatios', '{{ commentaire_ratios|escapejs }}');
+    document.getElementById('btnSaveCommentaireRatios').addEventListener('click', function(){
+        var btn = this;
+        var commentaire = document.getElementById('commentaireRatios').value;
+        var csrf = (document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
+        fetch('/api/acheteur/'+AID+'/commentaire-ratios/'+TYPE+'/', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+ACCESS,'X-CSRFToken':csrf},
+            body:JSON.stringify({commentaire: commentaire})
+        }).then(function(r){ return r.json(); }).then(function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>{% trans "Enregistré" %}';
+            setTimeout(function(){ btn.innerHTML = '<i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}'; }, 2000);
+        }).catch(function(){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i>{% trans "Erreur" %}';
+            setTimeout(function(){ btn.innerHTML = '<i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}'; }, 3000);
+        });
+    });
+}());
 </script>
 
 {% endblock %}

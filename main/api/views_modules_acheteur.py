@@ -18068,5 +18068,40 @@ class SubCategoryNafCodeListOneView(APIView):
         queryset = queryset[:100]
         
         serializer = SubCategoryNafCodeSimpleOneSerializer(queryset, many=True)
-        
+
         return Response(serializer.data)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Commentaire Ratios Bilan
+# ─────────────────────────────────────────────────────────────────────────────
+from main.models import CommentaireRatiosBilan
+
+class CommentaireRatiosBilanAPIView(APIView):
+    """
+    GET  /api/acheteur/<acheteur_id>/commentaire-ratios/<type_bilan>/
+    POST /api/acheteur/<acheteur_id>/commentaire-ratios/<type_bilan>/
+    """
+    permission_classes = [IsAuthenticated]
+
+    VALID_TYPES = {'classique', 'syscohada', 'anglais', 'ifrs', 'financier_ifrs', 'bancaire'}
+
+    def _get_acheteur(self, acheteur_id):
+        return get_object_or_404(Acheteur, id=acheteur_id)
+
+    def get(self, request, acheteur_id, type_bilan):
+        if type_bilan not in self.VALID_TYPES:
+            return Response({'error': 'Type de bilan invalide'}, status=status.HTTP_400_BAD_REQUEST)
+        acheteur = self._get_acheteur(acheteur_id)
+        obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan=type_bilan)
+        return Response({'commentaire': obj.commentaire or '', 'updated_at': obj.updated_at})
+
+    def post(self, request, acheteur_id, type_bilan):
+        if type_bilan not in self.VALID_TYPES:
+            return Response({'error': 'Type de bilan invalide'}, status=status.HTTP_400_BAD_REQUEST)
+        acheteur = self._get_acheteur(acheteur_id)
+        commentaire = request.data.get('commentaire', '')
+        obj, _ = CommentaireRatiosBilan.objects.get_or_create(acheteur=acheteur, type_bilan=type_bilan)
+        obj.commentaire = commentaire
+        obj.save()
+        return Response({'message': 'Commentaire enregistré', 'updated_at': obj.updated_at})

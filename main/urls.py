@@ -4852,9 +4852,14 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/codes-naf-oneview/<int:code_naf_id>/', 
          AcheteurCodeNafDetailOneView.as_view(), 
          name='acheteur-code-naf-detail-oneview'),
-    path('api/subcategories-naf-oneview/', 
-         SubCategoryNafCodeListOneView.as_view(), 
+    path('api/subcategories-naf-oneview/',
+         SubCategoryNafCodeListOneView.as_view(),
          name='subcategories-naf-list-oneview'),
+    path(
+        'api/acheteur/<int:acheteur_id>/commentaire-ratios/<str:type_bilan>/',
+        CommentaireRatiosBilanAPIView.as_view(),
+        name='commentaire-ratios-bilan',
+    ),
     
     
     
