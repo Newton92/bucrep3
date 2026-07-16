@@ -561,7 +561,7 @@
 /* Form controls premium */
 .enhanced-form-premium .form-control,
 .enhanced-form-premium .form-select,
-.enhanced-form-premium textarea {
+.enhanced-form-premium textarea:not(.select2-search__field) {
     border: 2px solid var(--color-border);
     border-radius: 12px;
     padding: 1rem 1.25rem;
@@ -574,16 +574,24 @@
 
 .enhanced-form-premium .form-control:focus,
 .enhanced-form-premium .form-select:focus,
-.enhanced-form-premium textarea:focus {
+.enhanced-form-premium textarea:not(.select2-search__field):focus {
     border-color: #20c997;
     box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.15);
     background: var(--color-background);
 }
 
-.enhanced-form-premium textarea {
+.enhanced-form-premium textarea:not(.select2-search__field) {
     min-height: 180px;
     resize: vertical;
     line-height: 1.6;
+}
+
+/* Masquer le <select> natif avant init select2 pour éviter l'apparence listbox */
+select.select2-with-search:not(.select2-hidden-accessible) {
+    opacity: 0;
+    height: 44px;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 /* Styles Premium pour Select2 */
@@ -659,8 +667,8 @@
     background: var(--color-background) !important;
     box-shadow: 0 10px 30px rgba(10, 149, 202, 0.15) !important;
     overflow: hidden !important;
-    z-index: 1060 !important;
 }
+.select2-container--open { z-index: 1070 !important; }
 
 .select2-container--bootstrap-5 .select2-results__option {
     padding: 0.875rem 1.25rem !important;
@@ -1282,31 +1290,37 @@ $(document).ready(function() {
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentOperationId = null;
 
-    // Initialiser Select2
-    function initSelect2() {
-        $('.select2-with-search').each(function () {
-            const $select = $(this);
-            const $modal = $select.closest('.modal');
+    var pendingEditImportations = null;
 
-            $select.select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                placeholder: 'Sélectionnez une ou plusieurs options',
-                language: 'fr',
-                allowClear: true,
-                minimumResultsForSearch: 0,
-                dropdownParent: $modal.length ? $modal : $(document.body)
-            });
-        });
-    }
-    
-    // Initialisation
-    initSelect2();
-    
-    // Gérer la fermeture des modals
+    var S2_OPTS = {
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Sélectionnez ou saisissez une importation...',
+        language: 'fr',
+        allowClear: true,
+        tags: true,
+        tokenSeparators: [','],
+        minimumResultsForSearch: 0
+    };
+
+    // Init une seule fois : select2 masque aussitôt le <select> natif
+    $('#importation').select2(S2_OPTS);
+    $('#editImportation').select2(S2_OPTS);
+
+    // Modal édition : restaurer les importations après affichage
+    $('#editOperationModal').on('shown.bs.modal', function() {
+        if (pendingEditImportations !== null) {
+            $('#editImportation').val(pendingEditImportations).trigger('change');
+            pendingEditImportations = null;
+        }
+    });
+
+    // Fermeture : vider les sélections, protéger les modals sans form
     $('.modal').on('hidden.bs.modal', function() {
-        $(this).find('form')[0].reset();
-        $('.select2-with-search').val(null).trigger('change');
+        var $form = $(this).find('form');
+        if (!$form.length) return;
+        $(this).find('.select2-with-search').val(null).trigger('change');
+        $form[0].reset();
         var mid = $(this).attr('id');
         if (window.quillSetValue) {
             if (mid === 'addOperationModal') {
@@ -1339,10 +1353,8 @@ $(document).ready(function() {
                     $('#editHistorique').val(response.historique || '');
                 }
                 
-                // Sélectionner les importations
-                const importationIds = response.importation_list ? response.importation_list.map(imp => imp.id) : [];
-                $('#editImportation').val(importationIds).trigger('change');
-                
+                // Stocker pour restauration après shown.bs.modal (select2 initialisé là)
+                pendingEditImportations = response.importation_list ? response.importation_list.map(imp => imp.id) : [];
                 $('#editOperationModal').modal('show');
             },
             error: function(xhr) {

@@ -4963,7 +4963,22 @@ class DeleteAcheteurOperationHistoriqueView(APIView):
             status=status.HTTP_200_OK,
         )
         
-           
+
+
+def _resolve_importations(items):
+    """Résout un mix d'IDs (int) et de libellés (str) en liste d'IDs ListeImportation."""
+    ids = []
+    for item in (items or []):
+        try:
+            ids.append(int(item))
+        except (ValueError, TypeError):
+            label = str(item).strip()
+            if label:
+                obj, _ = ListeImportation.objects.get_or_create(libelle=label)
+                ids.append(obj.id)
+    return ids
+
+
 class AcheteurOperationHistoriqueListView(APIView):
     """
     API pour gérer les opérations et historiques d'un acheteur
@@ -5006,16 +5021,22 @@ class AcheteurOperationHistoriqueListView(APIView):
         
         data = request.data.copy()
         data["acheteur"] = acheteur_id
-        
+
+        # Extraire importation avant sérialisation (peut contenir des labels texte via tags select2)
+        raw_importations = data.getlist('importation') if hasattr(data, 'getlist') else data.get('importation', [])
+        try:
+            del data['importation']
+        except KeyError:
+            pass
+
         serializer = OperationEtHistoriqueCreateSerializer(data=data)
-        
+
         if serializer.is_valid():
-            # Sauvegarder en passant created_by si nécessaire
             operation = serializer.save()
-            
-            # Gérer les importations ManyToMany
-            if 'importation' in data:
-                operation.importation.set(data['importation'])
+
+            # Résoudre IDs + créer nouveaux ListeImportation si libellé inconnu
+            if raw_importations:
+                operation.importation.set(_resolve_importations(raw_importations))
             
             # Log d'activité
             ActivityLog.objects.create(
@@ -5067,16 +5088,28 @@ class AcheteurOperationHistoriqueDetailView(APIView):
         """Modifie une opération/historique existante"""
         operation = self.get_operation(acheteur_id, operation_id)
         
+        # Extraire importation avant sérialisation (peut contenir des labels texte via tags select2)
+        has_importation = 'importation' in request.data
+        raw_importations = []
+        if has_importation:
+            raw_importations = request.data.getlist('importation') if hasattr(request.data, 'getlist') else request.data['importation']
+
+        data_for_serializer = request.data.copy()
+        try:
+            del data_for_serializer['importation']
+        except KeyError:
+            pass
+
         serializer = OperationEtHistoriqueUpdateSerializer(
-            operation, data=request.data, partial=True
+            operation, data=data_for_serializer, partial=True
         )
-        
+
         if serializer.is_valid():
             operation = serializer.save()
-            
-            # Mettre à jour les importations ManyToMany
-            if 'importation' in request.data:
-                operation.importation.set(request.data['importation'])
+
+            # Résoudre IDs + créer nouveaux ListeImportation si libellé inconnu
+            if has_importation:
+                operation.importation.set(_resolve_importations(raw_importations))
             
             # Log d'activité
             ActivityLog.objects.create(
