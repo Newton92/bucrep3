@@ -4503,12 +4503,12 @@ class AddBanquierSerializer(serializers.ModelSerializer):
                 })
         
         # Validation de la longueur du commentaire
-        commentaire = attrs.get('commentaire', '')
+        commentaire = attrs.get('commentaire') or ''
         if len(commentaire) > 10000:
             raise serializers.ValidationError({
                 'commentaire': 'Le commentaire est trop long (max: 10,000 caractères)'
             })
-        
+
         # Si code postal spécifié manuellement, vérifier la cohérence avec la ville
         ville = attrs.get('ville')
         code_postal = attrs.get('code_postal')
