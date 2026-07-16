@@ -42,6 +42,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport, SuiviCommande
+from main.models import OperationEtHistorique, ListeImportation
 
 from django.shortcuts import render, redirect
 from django.contrib import messages

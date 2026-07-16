@@ -5023,7 +5023,7 @@ class AcheteurOperationHistoriqueListView(APIView):
                 action_type='CREATE_OPERATION',
                 object_id=operation.id,
                 object_type='OperationEtHistorique',
-                details=f"Opération/historique créé pour l'acheteur {acheteur.nom}: {operation.description_complete_activite[:100]}...",
+                details=f"Opération/historique créé pour l'acheteur {acheteur.nom}: {(operation.description_complete_activite or '')[:100]}...",
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
