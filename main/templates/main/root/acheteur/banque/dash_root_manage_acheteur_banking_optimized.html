@@ -1025,7 +1025,7 @@
                                 <label for="ville" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-city me-1"></i>{% trans "Ville" %}
                                 </label>
-                                <select class="form-select form-select-sm select2-field" id="ville" name="ville" required>
+                                <select class="form-select form-select-sm select2-field" id="ville" name="ville">
                                     <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
                                     {% for ville in ville_list %}
                                     <option value="{{ ville.id }}" data-pays="{{ ville.pays_id }}">
@@ -1557,18 +1557,6 @@ $(document).ready(function() {
             return;
         }
         
-        if (!formData.ville) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: 'La ville est obligatoire',
-                background: '#fcfefe',
-                color: '#000000'
-            });
-            $('#ville').focus();
-            return;
-        }
-        
         submitBankingForm('POST', formData, '#submitAddBtn', 'addBankingModal');
     });
     
@@ -1712,12 +1700,21 @@ $(document).ready(function() {
                 $btn.prop('disabled', false);
                 
                 let errorMessage = 'Une erreur est survenue';
-                
+                console.error('Banking API error:', xhr.status, xhr.responseJSON);
+
                 if (xhr.responseJSON) {
                     if (xhr.responseJSON.error) {
                         errorMessage = xhr.responseJSON.error;
                     } else if (xhr.responseJSON.detail) {
                         errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.errors) {
+                        const errs = xhr.responseJSON.errors;
+                        const msgs = [];
+                        Object.keys(errs).forEach(function(field) {
+                            const fieldMsgs = Array.isArray(errs[field]) ? errs[field] : [errs[field]];
+                            msgs.push(field + ': ' + fieldMsgs.join(', '));
+                        });
+                        errorMessage = msgs.join('\n');
                     }
                 }
                 

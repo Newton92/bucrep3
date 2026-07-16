@@ -4428,9 +4428,9 @@ class AddBanquierSerializer(serializers.ModelSerializer):
     
     ville = serializers.PrimaryKeyRelatedField(
         queryset=Ville.objects.all(),
-        required=True,
+        required=False,
+        allow_null=True,
         error_messages={
-            'required': 'La ville est obligatoire',
             'does_not_exist': 'La ville sélectionnée n\'existe pas'
         }
     )

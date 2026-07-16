@@ -7114,7 +7114,7 @@ class AcheteurBanquierListView(APIView):
         data['acheteur'] = acheteur_id
         
         # Gérer les champs vides
-        for field in ['numero_compte', 'type_relation', 'numero', 'rue', 'code_postal', 'commentaire']:
+        for field in ['numero_compte', 'type_relation', 'numero', 'rue', 'code_postal', 'commentaire', 'ville']:
             if field in data and data[field] == '':
                 data[field] = None
         
