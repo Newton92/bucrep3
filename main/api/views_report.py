@@ -2854,10 +2854,12 @@ class GenerateReport(APIView):
                     "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
                 },
                 "advice": {
-                    "points_forts": advice.points_forts if advice and advice.points_forts else "Non spécifié",
-                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "Non spécifié",
-                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "Non spécifié",
-                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "Non spécifié",
+                    "title_advice": _("CONSEILS D'ACREMAC"),
+                    "points_forts": advice.points_forts if advice and advice.points_forts else "",
+                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
+                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
+                    "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
                 },
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
@@ -4287,10 +4289,12 @@ class GenerateReportCommandeAcheteur(APIView):
                     "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
                 },
                 "advice": {
-                    "points_forts": advice.points_forts if advice and advice.points_forts else "Non spécifié",
-                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "Non spécifié",
-                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "Non spécifié",
-                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "Non spécifié",
+                    "title_advice": _("CONSEILS D'ACREMAC"),
+                    "points_forts": advice.points_forts if advice and advice.points_forts else "",
+                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
+                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
+                    "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
                 },
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
