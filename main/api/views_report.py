@@ -2866,11 +2866,19 @@ class GenerateReport(APIView):
                     "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "Non spécifié",
                 },
             },
+            "advice": {
+                "title_advice": _("CONSEILS D'ACREMAC"),
+                "points_forts": advice.points_forts if advice and advice.points_forts else "",
+                "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
+                "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
+                "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+            },
             "banking_data": {
                 "title_14": _("DONNEES BANCAIRES"),
                 "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
             },
-            
+
             "financial_accounts": {
                 "title_15": _("COMPTES FINANCIERS"),
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
@@ -4308,11 +4316,19 @@ class GenerateReportCommandeAcheteur(APIView):
                     "menaces": swot_analysis.menaces if swot_analysis and swot_analysis.menaces else "Non spécifié",
                 },
             },
+            "advice": {
+                "title_advice": _("CONSEILS D'ACREMAC"),
+                "points_forts": advice.points_forts if advice and advice.points_forts else "",
+                "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
+                "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
+                "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+            },
             "banking_data": {
                 "title_23": _("DONNEES BANCAIRES"),
                 "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
             },
-            
+
             "financial_accounts": {
                 "title_24": _("COMPTES FINANCIERS"),
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
