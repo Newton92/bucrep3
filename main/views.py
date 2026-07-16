@@ -4826,10 +4826,8 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
         )
 
         # Récupérer les listes pour les formulaires
-        # ville_list = Ville.objects.select_related('pays').all()[:100]  # Limiter à 100
-        ville_list = Ville.objects.filter(
-            Q(pays=pays) | Q(pays=pays_user)
-        )
+        pays_list = Pays.objects.filter(is_active=True).order_by('nom')
+        ville_list = Ville.objects.select_related('pays').order_by('nom')
         coloration_list = CouleurCommentaire.objects.all()
         
         # Statistiques détaillées
@@ -4883,6 +4881,7 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "acheteur": acheteur,
+            "pays_list": pays_list,
             "ville_list": ville_list,
             "coloration_list": coloration_list,
             "stats": stats,

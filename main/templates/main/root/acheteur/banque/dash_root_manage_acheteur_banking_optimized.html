@@ -715,6 +715,12 @@
     pointer-events: none;
     z-index: 1;
 }
+
+/* Empty state */
+.empty-state-wrap { text-align: center; padding: 2.5rem 1rem; }
+.empty-state-wrap .esi { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto .75rem; background: linear-gradient(135deg,#f0f7ff,#e3f2fd); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0a95ca; }
+.ql-container.ql-snow{height:auto !important;min-height:80px}
+.ql-editor{min-height:80px !important}
 </style>
 <link rel="stylesheet" href="{% static 'assets/css/compact_acheteur.css' %}">
 {% endblock %}
@@ -839,14 +845,6 @@
                             {% endif %}
                         </div>
                         {% endif %}
-                        {% if banking.couleur_commentaire %}
-                        <div class="mt-3">
-                            <span class="color-badge">
-                                <div class="color-preview-small" style="background-color: {{ banking.couleur_commentaire.code_couleur|default:'#6c757d' }}"></div>
-                                {{ banking.couleur_commentaire.couleur }}
-                            </span>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -875,8 +873,21 @@
         </div>
     </div>
 
+    <!-- État vide (affiché si aucune donnée bancaire) -->
+    <div id="emptyStateBanking" class="table-card" style="display:none;">
+        <div class="empty-state-wrap">
+            <div class="esi"><i class="fas fa-university"></i></div>
+            <h6 class="text-muted mb-1">{% trans "Aucune donnée bancaire enregistrée" %}</h6>
+            <p class="text-muted small mb-3">{% trans "Ajoutez le premier compte bancaire de cet acheteur" %}</p>
+            <button class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
+                    data-bs-toggle="modal" data-bs-target="#addBankingModal">
+                <i class="fas fa-plus-circle"></i>&nbsp;{% trans "Ajouter un compte bancaire" %}
+            </button>
+        </div>
+    </div>
+
     <!-- Table des Données Bancaires Premium -->
-    <div class="table-card">
+    <div class="table-card" id="tableBanking">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0" style="color: var(--color-primary-dark);">
@@ -891,6 +902,9 @@
                     </div>
                     <button class="btn btn-danger btn-sm" id="deleteSelected" disabled>
                         <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
+                    </button>
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addBankingModal">
+                        <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter" %}
                     </button>
                 </div>
             </div>
@@ -995,20 +1009,35 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label for="pays" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-globe me-1"></i>{% trans "Pays" %}
+                                </label>
+                                <select class="form-select form-select-sm select2-field" id="pays" name="pays">
+                                    <option value="">{% trans "Sélectionnez un pays" %}</option>
+                                    {% for p in pays_list %}
+                                    <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label for="ville" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-city me-1"></i>{% trans "Ville" %}
                                 </label>
                                 <select class="form-select form-select-sm select2-field" id="ville" name="ville" required>
-                                    <option value="">{% trans "Sélectionnez une ville" %}</option>
+                                    <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
                                     {% for ville in ville_list %}
-                                    <option value="{{ ville.id }}"
-                                            data-code="{{ ville.code|default:'' }}">
-                                        {{ ville.nom }} ({{ ville.code|default:'' }})
+                                    <option value="{{ ville.id }}" data-pays="{{ ville.pays_id }}">
+                                        {{ ville.nom }}
                                     </option>
                                     {% endfor %}
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="code_postal" class="form-label fw-semibold" style="font-size:0.78rem;">
@@ -1021,24 +1050,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="couleur_commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
-                            <i class="fas fa-palette me-1"></i>{% trans "Couleur Commentaire" %}
-                        </label>
-                        <select class="form-select form-select-sm select2-field" id="couleur_commentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
                         <label for="commentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots me-1"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control form-control-sm" id="commentaire" name="commentaire" rows="3"
+                        <textarea class="form-control form-control-sm rich-editor" id="commentaire" name="commentaire" rows="3"
                                   placeholder="{% trans 'Commentaires sur le compte bancaire...' %}"></textarea>
                     </div>
                 </div>
@@ -1120,20 +1135,35 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label for="editPays" class="form-label fw-semibold" style="font-size:0.78rem;">
+                                    <i class="fas fa-globe me-1"></i>{% trans "Pays" %}
+                                </label>
+                                <select class="form-select form-select-sm select2-field" id="editPays" name="pays">
+                                    <option value="">{% trans "Sélectionnez un pays" %}</option>
+                                    {% for p in pays_list %}
+                                    <option value="{{ p.id }}">{{ p.nom }} ({{ p.code }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label for="editVille" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-city me-1"></i>{% trans "Ville" %}
                                 </label>
                                 <select class="form-select form-select-sm select2-field" id="editVille" name="ville" required>
-                                    <option value="">{% trans "Sélectionnez une ville" %}</option>
+                                    <option value="">{% trans "Sélectionnez d'abord un pays" %}</option>
                                     {% for ville in ville_list %}
-                                    <option value="{{ ville.id }}"
-                                            data-code="{{ ville.code|default:'' }}">
-                                        {{ ville.nom }} ({{ ville.code|default:'' }})
+                                    <option value="{{ ville.id }}" data-pays="{{ ville.pays_id }}">
+                                        {{ ville.nom }}
                                     </option>
                                     {% endfor %}
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="editCodePostal" class="form-label fw-semibold" style="font-size:0.78rem;">
@@ -1145,24 +1175,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="editCouleurCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
-                            <i class="fas fa-palette me-1"></i>{% trans "Couleur Commentaire" %}
-                        </label>
-                        <select class="form-select form-select-sm select2-field" id="editCouleurCommentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
                         <label for="editCommentaire" class="form-label fw-semibold" style="font-size:0.78rem;">
                             <i class="fas fa-comment-dots me-1"></i>{% trans "Commentaire" %}
                         </label>
-                        <textarea class="form-control form-control-sm" id="editCommentaire" name="commentaire" rows="3"></textarea>
+                        <textarea class="form-control form-control-sm rich-editor" id="editCommentaire" name="commentaire" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -1256,37 +1272,18 @@ $(document).ready(function() {
             
             select2Instances.push(select2Instance);
             
-            // Pour les champs ville, gérer le changement
-            if ($select.attr('id') === 'ville' || $select.attr('id') === 'editVille') {
+            // Pour les champs pays, filtrer les villes
+            if ($select.attr('id') === 'pays') {
                 $select.on('change', function() {
-                    const selectedOption = $(this).find('option:selected');
-                    const code = selectedOption.data('code');
-                    const codePostalField = $(this).attr('id') === 'ville' ? 
-                        $('#code_postal') : $('#editCodePostal');
-                    
-                    if (code) {
-                        codePostalField.val(code).attr('readonly', true);
-                    } else {
-                        codePostalField.val('').attr('readonly', false);
-                    }
+                    filterVillesByPays($(this).val(), '#ville', '#ville');
+                });
+            }
+            if ($select.attr('id') === 'editPays') {
+                $select.on('change', function() {
+                    filterVillesByPays($(this).val(), '#editVille', '#editVille');
                 });
             }
             
-            // Pour les champs couleur, formater l'affichage
-            if ($select.attr('id') === 'couleur_commentaire' || $select.attr('id') === 'editCouleurCommentaire') {
-                $select.on('select2:select', function(e) {
-                    const data = e.params.data;
-                    const color = $(data.element).data('color');
-                    
-                    // Mettre à jour l'affichage
-                    const $container = $select.parent();
-                    if (color) {
-                        $container.find('.select2-selection__rendered').prepend(
-                            `<span class="color-preview-small" style="background-color:${color}; margin-right:8px;"></span>`
-                        );
-                    }
-                });
-            }
         });
     }
     
@@ -1302,10 +1299,15 @@ $(document).ready(function() {
     });
     
     // Gérer la fermeture des modals
-    $('#addBankingModal, #editBankingModal').on('hidden.bs.modal', function() {
+    $('#addBankingModal').on('hidden.bs.modal', function() {
         $(this).find('form')[0].reset();
-        // Réinitialiser Select2
         $('.select2-field').val(null).trigger('change');
+        window.quillSetValue('commentaire', '');
+    });
+    $('#editBankingModal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+        $('.select2-field').val(null).trigger('change');
+        window.quillSetValue('editCommentaire', '');
     });
     
     // Effet de ripple sur les boutons
@@ -1371,21 +1373,12 @@ $(document).ready(function() {
         tbody.empty();
         
         if (!bankings || bankings.length === 0) {
-            tbody.html(`
-                <tr>
-                    <td colspan="8" class="text-center py-5">
-                        <div class="mb-3">
-                            <div class="stat-icon stat-total mx-auto" style="width: 64px; height: 64px; font-size: 1.5rem;">
-                                <i class="fas fa-university"></i>
-                            </div>
-                        </div>
-                        <h5 class="text-dark mb-2">{% trans "Aucune donnée bancaire trouvée" %}</h5>
-                        <p class="text-muted mb-0">{% trans "Utilisez les filtres ou ajoutez une nouvelle donnée bancaire" %}</p>
-                    </td>
-                </tr>
-            `);
+            $('#emptyStateBanking').show();
+            $('#tableBanking').hide();
             return;
         }
+        $('#emptyStateBanking').hide();
+        $('#tableBanking').show();
         
         bankings.forEach((banking) => {
             const isSelected = selectedBankings.has(banking.id.toString());
@@ -1548,7 +1541,6 @@ $(document).ready(function() {
             rue: $('#rue').val().trim() || '',
             ville: $('#ville').val(),
             code_postal: $('#code_postal').val().trim() || '',
-            couleur_commentaire: $('#couleur_commentaire').val() || null,
             commentaire: $('#commentaire').val().trim() || ''
         };
         
@@ -1597,15 +1589,20 @@ $(document).ready(function() {
                 $('#editTypeRelation').val(response.type_relation || '');
                 $('#editNumero').val(response.numero || '');
                 $('#editRue').val(response.rue || '');
-                $('#editVille').val(response.ville?.id || '');
                 $('#editCodePostal').val(response.code_postal || '');
-                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '');
-                $('#editCommentaire').val(response.commentaire || '');
-                
-                if (response.ville && response.ville.code_postal) {
-                    $('#editCodePostal').attr('placeholder', response.ville.code_postal);
+                window.quillSetValue('editCommentaire', response.commentaire || '');
+
+                // Pré-sélectionner le pays puis filtrer les villes
+                const paysId = response.ville?.pays_id || response.ville?.pays?.id || null;
+                if (paysId) {
+                    $('#editPays').val(paysId).trigger('change.select2');
+                    filterVillesByPays(paysId, '#editVille', '#editVille');
                 }
-                
+                // Pré-sélectionner la ville après le filtrage
+                setTimeout(function() {
+                    $('#editVille').val(response.ville?.id || '').trigger('change.select2');
+                }, 50);
+
                 $('#editBankingModal').modal('show');
             },
             error: function(xhr) {
@@ -1626,6 +1623,30 @@ $(document).ready(function() {
         });
     });
     
+    // Filtrer les villes par pays sélectionné
+    function filterVillesByPays(paysId, selectId, triggerSelect) {
+        const $villeSelect = $(selectId);
+        const $allOptions = $villeSelect.find('option[data-pays]');
+
+        if (!paysId) {
+            $allOptions.show();
+            $villeSelect.val('').trigger('change.select2');
+            return;
+        }
+
+        $villeSelect.val('').trigger('change.select2');
+        $allOptions.each(function() {
+            if ($(this).data('pays').toString() === paysId.toString()) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // Forcer select2 à reconstruire la liste
+        $villeSelect.trigger('change.select2');
+    }
+
     // Formulaire de modification
     $('#editBankingForm').on('submit', function(e) {
         e.preventDefault();
@@ -1638,7 +1659,6 @@ $(document).ready(function() {
             rue: $('#editRue').val().trim() || '',
             ville: $('#editVille').val(),
             code_postal: $('#editCodePostal').val().trim() || '',
-            couleur_commentaire: $('#editCouleurCommentaire').val() || null,
             commentaire: $('#editCommentaire').val().trim() || ''
         };
         
