@@ -149,95 +149,60 @@ class Command(BaseCommand):
     def import_with_raw_sql(self, incoterms):
         """Importe les données avec SQL brut pour contourner Django ORM"""
         self.stdout.write("Importing Incoterms with raw SQL...")
-        
+
+        # Détecter la structure une seule fois avant la boucle
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'main_listeimportation'"
+            )
+            columns = [row[0] for row in cursor.fetchall()]
+
+        has_safedelete = 'deleted_by_cascade' in columns
+        self.stdout.write(f"SafeDelete fields detected: {has_safedelete}")
+
         success_count = 0
         error_count = 0
-        
-        with connection.cursor() as cursor:
-            for i, incoterm in enumerate(incoterms, 1):
-                try:
-                    # Nettoyer le texte pour SQL
-                    clean_incoterm = incoterm.replace("'", "''")
-                    
-                    # Vérifier la structure de la table
-                    cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'main_listeimportation'")
-                    columns = [row[0] for row in cursor.fetchall()]
-                    
-                    if 'deleted_by_cascade' in columns:
-                        # Table avec SafeDelete
-                        sql = """
-                            INSERT INTO main_listeimportation (libelle, deleted, deleted_by_cascade)
-                            VALUES (%s, NULL, NULL)
-                            RETURNING id;
-                        """
+
+        for i, incoterm in enumerate(incoterms, 1):
+            code = "???"
+            for inc_code in ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF']:
+                if inc_code in incoterm:
+                    code = inc_code
+                    break
+
+            # Chaque INSERT dans son propre curseur pour isoler les erreurs
+            try:
+                with connection.cursor() as cursor:
+                    if has_safedelete:
+                        cursor.execute(
+                            "INSERT INTO main_listeimportation (libelle, deleted, deleted_by_cascade) "
+                            "VALUES (%s, NULL, NULL) RETURNING id;",
+                            [incoterm]
+                        )
                     else:
-                        # Table sans SafeDelete
-                        sql = """
-                            INSERT INTO main_listeimportation (libelle)
-                            VALUES (%s)
-                            RETURNING id;
-                        """
-                    
-                    cursor.execute(sql, [clean_incoterm])
+                        cursor.execute(
+                            "INSERT INTO main_listeimportation (libelle) VALUES (%s) RETURNING id;",
+                            [incoterm]
+                        )
                     inserted_id = cursor.fetchone()[0]
-                    
-                    success_count += 1
-                    # Extraire le code pour l'affichage
-                    code = "???"
-                    for inc_code in ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP', 'FAS', 'FOB', 'CFR', 'CIF']:
-                        if inc_code in incoterm:
-                            code = inc_code
-                            break
-                    
-                    self.stdout.write(self.style.SUCCESS(
-                        f"{i:2}. [{code}] Inserted ID: {inserted_id}"
-                    ))
-                    
-                except Exception as e:
-                    error_count += 1
-                    error_msg = str(e)
-                    
-                    # Si c'est l'erreur NOT NULL, essayer une autre approche
-                    if 'NOT NULL' in error_msg and 'deleted_by_cascade' in error_msg:
-                        try:
-                            # Essayer avec une valeur par défaut
-                            self.stdout.write(self.style.WARNING(
-                                f"{i:2}. Trying alternative INSERT..."
-                            ))
-                            
-                            cursor.execute("""
-                                INSERT INTO main_listeimportation (libelle, deleted_by_cascade)
-                                VALUES (%s, FALSE)
-                                RETURNING id;
-                            """, [clean_incoterm])
-                            
-                            inserted_id = cursor.fetchone()[0]
-                            success_count += 1
-                            self.stdout.write(self.style.SUCCESS(f"    ✓ Success with FALSE default"))
-                            
-                        except Exception as e2:
-                            error_count += 1
-                            self.stdout.write(self.style.ERROR(
-                                f"    ✗ Still error: {str(e2)[:100]}"
-                            ))
-                    else:
-                        self.stdout.write(self.style.ERROR(
-                            f"{i:2}. Error: {error_msg[:100]}"
-                        ))
-        
-        # Résumé
+
+                success_count += 1
+                self.stdout.write(self.style.SUCCESS(f"{i:2}. [{code}] Inserted ID: {inserted_id}"))
+
+            except Exception as e:
+                error_count += 1
+                self.stdout.write(self.style.ERROR(f"{i:2}. [{code}] Error: {str(e)[:120]}"))
+
+        # Compter le total final dans un curseur séparé
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM main_listeimportation;")
+            total = cursor.fetchone()[0]
+
         self.stdout.write("\n" + "="*60)
         if error_count == 0:
-            self.stdout.write(self.style.SUCCESS(
-                f"SUCCESS: All {success_count} Incoterms imported"
-            ))
+            self.stdout.write(self.style.SUCCESS(f"SUCCESS: All {success_count} Incoterms imported"))
         else:
-            self.stdout.write(self.style.WARNING(
-                f"PARTIAL: {success_count} successful, {error_count} errors"
-            ))
-        
-        # Afficher le total dans la table
-        cursor.execute("SELECT COUNT(*) FROM main_listeimportation;")
-        total = cursor.fetchone()[0]
+            self.stdout.write(self.style.WARNING(f"PARTIAL: {success_count} ok, {error_count} errors"))
         self.stdout.write(f"Total in table: {total}")
         self.stdout.write("="*60)
