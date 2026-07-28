@@ -1864,9 +1864,9 @@ class GenerateReport(APIView):
         # 2. Définir les années et récupérer la devise
         current_year = dt.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
-        # trier immédiatement afin que les graphiques et badges s'affichent en ordre chronologique
-        years_to_retrieve = sorted(years_to_retrieve)
-        print("years_to_retrieve (sorted):", years_to_retrieve)
+        # N, N-1, N-2 : le plus récent en premier (years[0]=N, years[1]=N-1, years[2]=N-2)
+        years_to_retrieve = sorted(years_to_retrieve, reverse=True)
+        print("years_to_retrieve (sorted desc):", years_to_retrieve)
         
         # 3. Définir les textes en fonction de la langue
         if language_report.lower() == "en":
@@ -3161,7 +3161,8 @@ class GenerateReportCommandeAcheteur(APIView):
         # 2. Définir les années et récupérer la devise
         current_year = dt.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
-        years_to_retrieve = sorted(years_to_retrieve)
+        # N, N-1, N-2 : le plus récent en premier (years[0]=N, years[1]=N-1, years[2]=N-2)
+        years_to_retrieve = sorted(years_to_retrieve, reverse=True)
         print(years_to_retrieve)
         
         # Variables

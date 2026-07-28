@@ -342,6 +342,12 @@
     padding-right: 0.5rem;
 }
 
+.operation-content-premium .ql-content p { margin-bottom: .5rem; }
+.operation-content-premium .ql-content ul,
+.operation-content-premium .ql-content ol { padding-left: 1.4rem; margin-bottom: .5rem; }
+.operation-content-premium .ql-content strong { font-weight: 600; }
+.operation-content-premium .ql-content em { font-style: italic; }
+
 .operation-content-premium pre {
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -586,13 +592,6 @@
     line-height: 1.6;
 }
 
-/* Masquer le <select> natif avant init select2 pour éviter l'apparence listbox */
-select.select2-with-search:not(.select2-hidden-accessible) {
-    opacity: 0;
-    height: 44px;
-    overflow: hidden;
-    pointer-events: none;
-}
 
 /* Styles Premium pour Select2 */
 .select2-container--bootstrap-5 .select2-selection {
@@ -958,11 +957,11 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                             <div class="operation-section-premium">
                                 <div class="operation-label-premium">
                                     <i class="fas fa-file-alt"></i>
-                                    Description de l'activité
+                                    {% trans "Description de l'activité" %}
                                 </div>
                                 <div class="operation-content-premium">
                                     {% if operation.description_complete_activite %}
-                                        <pre>{{ operation.description_complete_activite }}</pre>
+                                        <div class="ql-content">{{ operation.description_complete_activite|safe }}</div>
                                     {% else %}
                                         <div class="empty-content-message">
                                             <i class="fas fa-info-circle fa-2x mb-3"></i>
@@ -978,11 +977,11 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                             <div class="operation-section-premium">
                                 <div class="operation-label-premium">
                                     <i class="fas fa-history"></i>
-                                    Historique
+                                    {% trans "Historique" %}
                                 </div>
                                 <div class="operation-content-premium">
                                     {% if operation.historique %}
-                                        <pre>{{ operation.historique }}</pre>
+                                        <div class="ql-content">{{ operation.historique|safe }}</div>
                                     {% else %}
                                         <div class="empty-content-message">
                                             <i class="fas fa-history fa-2x mb-3"></i>
@@ -1021,7 +1020,7 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                         <div class="operation-info-temp-item-premium">
                             <i class="fas fa-calendar-plus"></i>
                             <div>
-                                <div class="fw-medium">Créé le {{ operation.created_at|date:"d/m/Y" }}</div>
+                                <div class="fw-medium">{% trans "Créé le" %} {{ operation.created_at|date:"d/m/Y" }}</div>
                                 <small class="text-muted">à {{ operation.created_at|date:"H:i" }}</small>
                             </div>
                         </div>
@@ -1047,8 +1046,8 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                     <i class="fas fa-chart-line operation-empty-state-icon-premium"></i>
                     <h4 class="fw-bold mb-3">{% trans "Aucune opération enregistrée" %}</h4>
                     <p class="text-muted mb-4">
-                        Cet acheteur ne possède pas encore d'opération ou historique enregistré.<br>
-                        Créez une fiche opérationnelle pour suivre les activités commerciales.
+                        {% trans "Cet acheteur ne possède pas encore d'opération ou historique enregistré." %}<br>
+                        {% trans "Créez une fiche opérationnelle pour suivre les activités commerciales." %}
                     </p>
                     <button class="btn btn-operation-premium btn-action-premium" data-bs-toggle="modal" data-bs-target="#addOperationModal">
                         <i class="fas fa-plus-circle me-2"></i>{% trans "Créer l'opération" %}
@@ -1092,9 +1091,9 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                                 <textarea class="form-control rich-editor" id="description_complete_activite"
                                           name="description_complete_activite"
                                           rows="5"
-                                          placeholder="Décrivez en détail l'opération commerciale, les objectifs, les produits/services concernés..."></textarea>
+                                          placeholder="{% trans "Décrivez en détail l'opération commerciale, les objectifs, les produits/services concernés..." %}"></textarea>
                                 <small class="form-text text-muted">
-                                    Description détaillée de l'activité principale de cet acheteur
+                                    {% trans "Description détaillée de l'activité principale de cet acheteur" %}
                                 </small>
                             </div>
                         </div>
@@ -1117,7 +1116,7 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                                     {% endfor %}
                                 </select>
                                 <small class="form-text text-muted">
-                                    Sélectionnez les importations liées à cette opération
+                                    {% trans "Sélectionnez les importations liées à cette opération" %}
                                 </small>
                             </div>
                         </div>
@@ -1137,9 +1136,9 @@ select.select2-with-search:not(.select2-hidden-accessible) {
                                 <textarea class="form-control rich-editor" id="historique"
                                           name="historique"
                                           rows="6"
-                                          placeholder="Racontez l'historique de cette opération, les dates clés, les évolutions, les relations avec l'acheteur, les précédentes collaborations..."></textarea>
+                                          placeholder="{% trans "Racontez l'historique de cette opération, les dates clés, les évolutions, les relations avec l'acheteur, les précédentes collaborations..." %}"></textarea>
                                 <small class="form-text text-muted">
-                                    Historique détaillé des opérations avec cet acheteur
+                                    {% trans "Historique détaillé des opérations avec cet acheteur" %}
                                 </small>
                             </div>
                         </div>
@@ -1292,36 +1291,51 @@ $(document).ready(function() {
 
     var pendingEditImportations = null;
 
-    var S2_OPTS = {
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: 'Sélectionnez ou saisissez une importation...',
-        language: 'fr',
-        allowClear: true,
-        tags: true,
-        tokenSeparators: [','],
-        minimumResultsForSearch: 0
-    };
+    function s2Opts(modalId) {
+        return {
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $(modalId),
+            placeholder: 'Sélectionnez ou saisissez une importation...',
+            language: 'fr',
+            allowClear: true,
+            tags: true,
+            tokenSeparators: [',']
+        };
+    }
 
-    // Init une seule fois : select2 masque aussitôt le <select> natif
-    $('#importation').select2(S2_OPTS);
-    $('#editImportation').select2(S2_OPTS);
+    // Init select2 à l'ouverture des modals (éléments visibles → width calculée correctement)
+    $('#addOperationModal').on('shown.bs.modal', function() {
+        if (!$('#importation').hasClass('select2-hidden-accessible')) {
+            $('#importation').select2(s2Opts('#addOperationModal'));
+        }
+    });
 
-    // Modal édition : restaurer les importations après affichage
     $('#editOperationModal').on('shown.bs.modal', function() {
+        if (!$('#editImportation').hasClass('select2-hidden-accessible')) {
+            $('#editImportation').select2(s2Opts('#editOperationModal'));
+        }
         if (pendingEditImportations !== null) {
             $('#editImportation').val(pendingEditImportations).trigger('change');
             pendingEditImportations = null;
         }
     });
 
-    // Fermeture : vider les sélections, protéger les modals sans form
+    // Fermeture : détruire select2 + reset form + vider Quill
     $('.modal').on('hidden.bs.modal', function() {
         var $form = $(this).find('form');
         if (!$form.length) return;
-        $(this).find('.select2-with-search').val(null).trigger('change');
-        $form[0].reset();
         var mid = $(this).attr('id');
+
+        // Détruire select2 pour permettre réinitialisation propre à la prochaine ouverture
+        $(this).find('.select2-with-search').each(function() {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).val(null).trigger('change').select2('destroy');
+            }
+        });
+
+        $form[0].reset();
+
         if (window.quillSetValue) {
             if (mid === 'addOperationModal') {
                 window.quillSetValue('description_complete_activite', '');
