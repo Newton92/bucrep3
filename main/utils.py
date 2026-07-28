@@ -2128,124 +2128,116 @@ def get_charts_structure_financiere_data(acheteur, years, chart_type='bar'):
         return None
 
 
-def get_charts_rentabilite_financiere_data(acheteur, years, chart_type='bar'):
+def get_charts_rentabilite_financiere_data(acheteur, years, chart_type='radar'):
     """
-    Génère les données pour le chart de rentabilité financière AVEC GESTION D'ERREURS
-    ``chart_type`` peut être 'bar' ou 'line'.
+    Génère un radar chart (toile d'araignée) pour les ratios de rentabilité financière.
+    Chaque année est représentée par un polygone, les 6 axes étant les ratios clés.
     """
     try:
         actif_model = ActifC
         passif_model = PassifC
         resultat_model = ResultatC
-        
-        # Vérifier s'il y a des données
+
         has_data = False
         ratios_by_year = {}
-        
+
         for year in years:
             actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
             passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
             resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
-            
+
             if actif_instance and passif_instance and resultat_instance:
                 ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
                 ratios_by_year[year] = ratios
                 has_data = True
             else:
                 ratios_by_year[year] = None
-                print(
-                    "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
-                    f"year={year} missing={{"
-                    f"actif:{'OK' if actif_instance else 'None'}, "
-                    f"passif:{'OK' if passif_instance else 'None'}, "
-                    f"resultat:{'OK' if resultat_instance else 'None'}"
-                    f"}}"
-                )
-        
-        if not has_data:
-            print(
-                "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
-                f"acheteur_id={getattr(acheteur, 'id', None)} years={years} -> has_data=False"
-            )
-            return None
-        
-        # Préparer les données
-        labels = [str(year) for year in years]
-        
-        # Récupérer les données avec valeurs par défaut
-        caf_data = []
-        caht_data = []
-        re_data = []
-        ref_data = []
-        rop_data = []
-        cff_data = []
-        
-        for year in years:
-            ratio = ratios_by_year.get(year)
-            caf_data.append(float(ratio.chiffre_d_affaires) if ratio and ratio.chiffre_d_affaires else 0.0)
-            caht_data.append(float(ratio.chiffre_d_affaires_hors_taxe) if ratio and ratio.chiffre_d_affaires_hors_taxe else 0.0)
-            re_data.append(float(ratio.rentabilite_economique) if ratio and ratio.rentabilite_economique else 0.0)
-            ref_data.append(float(ratio.rentabilite_fin) if ratio and ratio.rentabilite_fin else 0.0)
-            rop_data.append(float(ratio.rentabilite_de_loutil_de_production) if ratio and ratio.rentabilite_de_loutil_de_production else 0.0)
-            cff_data.append(float(ratio.couverture_des_frais_financiers) if ratio and ratio.couverture_des_frais_financiers else 0.0)
 
-        print(
-            "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
-            f"series={{caf:{caf_data}, caht:{caht_data}, re:{re_data}, ref:{ref_data}, rop:{rop_data}, cff:{cff_data}}}"
-        )
-        
-        # sort labels and data
-        try:
-            order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
-            labels = [labels[i] for i in order]
-            caf_data = [caf_data[i] for i in order]
-            caht_data = [caht_data[i] for i in order]
-            re_data = [re_data[i] for i in order]
-            ref_data = [ref_data[i] for i in order]
-            rop_data = [rop_data[i] for i in order]
-            cff_data = [cff_data[i] for i in order]
-        except Exception:
-            pass
-        
-        # Créer le graphique
-        plt.figure(figsize=(12, 8))
-        if chart_type == 'bar':
-            width = 0.13
-            x = np.arange(len(labels))
-            plt.bar(x - 2*width, caf_data, width=width, label='CAF - Chiffre d\'Affaires', color='#1f77b4')
-            plt.bar(x - width, caht_data, width=width, label='CAHT - Chiffre d\'Affaires Hors Taxes', color='#ff7f0e')
-            plt.bar(x, re_data, width=width, label='RE - Rentabilité Économique', color='#2ca02c')
-            plt.bar(x + width, ref_data, width=width, label='REF - Rentabilité Financière', color='#d62728')
-            plt.bar(x + 2*width, rop_data, width=width, label='ROP - Rentabilité Outil de Production', color='#9467bd')
-            plt.bar(x + 3*width, cff_data, width=width, label='CFF - Couverture Frais Financiers', color='#8c564b')
-            plt.xticks(x, labels)
-        else:
-            # Tracer les courbes
-            plt.plot(labels, caf_data, label='CAF - Chiffre d\'Affaires', marker='o', linewidth=2, color='#1f77b4')
-            plt.plot(labels, caht_data, label='CAHT - Chiffre d\'Affaires Hors Taxes', marker='s', linewidth=2, color='#ff7f0e')
-            plt.plot(labels, re_data, label='RE - Rentabilité Économique', marker='^', linewidth=2, color='#2ca02c')
-            plt.plot(labels, ref_data, label='REF - Rentabilité Financière', marker='d', linewidth=2, color='#d62728')
-            plt.plot(labels, rop_data, label='ROP - Rentabilité Outil de Production', marker='v', linewidth=2, color='#9467bd')
-            plt.plot(labels, cff_data, label='CFF - Couverture Frais Financiers', marker='*', linewidth=2, color='#8c564b')
-        
-        # Personnaliser le graphique
-        plt.title('Rentabilité Financière', fontsize=16, fontweight='bold', pad=20)
-        plt.xlabel('Années', fontsize=12)
-        plt.ylabel('Valeurs', fontsize=12)
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.grid(True, alpha=0.3)
+        if not has_data:
+            return None
+
+        # Trier les années de façon croissante pour l'affichage (N-2, N-1, N)
+        sorted_years = sorted(years)
+        labels_years = [str(y) for y in sorted_years]
+
+        # Extraire les valeurs pour chaque année
+        re_data   = [float(ratios_by_year[y].rentabilite_economique or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+        ref_data  = [float(ratios_by_year[y].rentabilite_fin or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+        rop_data  = [float(ratios_by_year[y].rentabilite_de_loutil_de_production or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+        cff_data  = [float(ratios_by_year[y].couverture_des_frais_financiers or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+        caf_data  = [float(ratios_by_year[y].chiffre_d_affaires or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+        caht_data = [float(ratios_by_year[y].chiffre_d_affaires_hors_taxe or 0) if ratios_by_year.get(y) else 0.0 for y in sorted_years]
+
+        # Normaliser le CA en millions pour que les échelles soient comparables
+        caf_m  = [v / 1e6 if v else 0.0 for v in caf_data]
+        caht_m = [v / 1e6 if v else 0.0 for v in caht_data]
+
+        # Définition des axes du radar
+        metric_labels = [
+            'RE (%)', 'REF (%)', 'ROP (%)', 'CFF',
+            'CA (M)', 'CAHT (M)'
+        ]
+        n_metrics = len(metric_labels)
+        angles = np.linspace(0, 2 * np.pi, n_metrics, endpoint=False).tolist()
+        angles += angles[:1]  # fermer le polygone
+
+        # Regrouper les séries par année [RE, REF, ROP, CFF, CA, CAHT]
+        series = {
+            labels_years[i]: [re_data[i], ref_data[i], rop_data[i], cff_data[i], caf_m[i], caht_m[i]]
+            for i in range(len(sorted_years))
+        }
+
+        # Normalisation 0-1 par axe (pour rendre la toile lisible)
+        all_vals = np.array([series[y] for y in labels_years], dtype=float)
+        mins = all_vals.min(axis=0)
+        maxs = all_vals.max(axis=0)
+        ranges = maxs - mins
+        ranges[ranges == 0] = 1.0
+        norm_series = {y: ((np.array(series[y], dtype=float) - mins) / ranges).tolist() for y in labels_years}
+
+        # Palette couleurs par année
+        palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+
+        fig, ax = plt.subplots(figsize=(9, 7), subplot_kw=dict(polar=True))
+        ax.set_theta_offset(np.pi / 2)
+        ax.set_theta_direction(-1)
+
+        for idx, year_label in enumerate(labels_years):
+            vals = norm_series[year_label]
+            vals_plot = vals + vals[:1]
+            color = palette[idx % len(palette)]
+            ax.plot(angles, vals_plot, 'o-', linewidth=2, label=year_label, color=color)
+            ax.fill(angles, vals_plot, alpha=0.12, color=color)
+
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(metric_labels, size=10, fontweight='bold')
+        ax.set_ylim(0, 1)
+        ax.set_yticklabels([])
+        ax.yaxis.grid(True, linestyle='--', alpha=0.5)
+        ax.xaxis.grid(True, linestyle='--', alpha=0.3)
+
+        # Valeurs réelles en annotation sur le graphe le plus récent (N)
+        last_year = labels_years[-1]
+        raw_vals = series[last_year]
+        raw_labels = [f'{v:.1f}' for v in raw_vals]
+        for angle, raw_label, norm_val in zip(angles[:-1], raw_labels, norm_series[last_year]):
+            ax.annotate(raw_label, xy=(angle, norm_val),
+                        xytext=(angle, min(norm_val + 0.12, 1.0)),
+                        fontsize=7, ha='center', color='#333333')
+
+        ax.set_title('Rentabilité Financière', size=15, fontweight='bold', pad=25)
+        ax.legend(loc='upper right', bbox_to_anchor=(1.35, 1.15), title='Année', fontsize=10)
+
         plt.tight_layout()
-        
-        # Convertir en image base64
         buffer = io.BytesIO()
         plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
         buffer.seek(0)
         image_png = buffer.getvalue()
         buffer.close()
         plt.close()
-        
+
         return base64.b64encode(image_png).decode('utf-8')
-        
+
     except Exception as e:
         print(f"Erreur dans get_charts_rentabilite_financiere_data: {str(e)}")
         import traceback
@@ -2253,124 +2245,97 @@ def get_charts_rentabilite_financiere_data(acheteur, years, chart_type='bar'):
         return None
 
 
-def get_charts_delais_data(acheteur, years, chart_type='bar'):
+def get_charts_delais_data(acheteur, years, chart_type='hbar'):
     """
-    Génère les données pour le chart des délais AVEC GESTION D'ERREURS.
-    ``chart_type`` may be 'bar' or 'line'; bars are used by default.
+    Génère un diagramme en barres horizontales groupées pour les délais de rotation.
+    Une barre par ratio, groupée par année (N-2, N-1, N).
     """
     try:
         actif_model = ActifC
         passif_model = PassifC
         resultat_model = ResultatC
-        
-        # Vérifier s'il y a des données
+
         has_data = False
         ratios_by_year = {}
-        
+
         for year in years:
             actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
             passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
             resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
-            
+
             if actif_instance and passif_instance and resultat_instance:
                 ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
                 ratios_by_year[year] = ratios
                 has_data = True
             else:
                 ratios_by_year[year] = None
-                print(
-                    "[DEBUG][UTILS][get_charts_delais_data] "
-                    f"year={year} missing={{"
-                    f"actif:{'OK' if actif_instance else 'None'}, "
-                    f"passif:{'OK' if passif_instance else 'None'}, "
-                    f"resultat:{'OK' if resultat_instance else 'None'}"
-                    f"}}"
-                )
-        
-        if not has_data:
-            print(
-                "[DEBUG][UTILS][get_charts_delais_data] "
-                f"acheteur_id={getattr(acheteur, 'id', None)} years={years} -> has_data=False"
-            )
-            return None
-        
-        # Préparer les données
-        labels = [str(year) for year in years]
-        
-        # Récupérer les données avec valeurs par défaut
-        rsmp_data = []
-        rspf_data = []
-        rstmt_data = []
-        rsts_data = []
-        cc_data = []
-        cf_data = []
-        
-        for year in years:
-            ratio = ratios_by_year.get(year)
-            rsmp_data.append(float(ratio.rotation_des_stock_de_mp) if ratio and ratio.rotation_des_stock_de_mp else 0.0)
-            rspf_data.append(float(ratio.rotation_des_stock_de_pf) if ratio and ratio.rotation_des_stock_de_pf else 0.0)
-            rstmt_data.append(float(ratio.rotation_des_stock_de_marchandises) if ratio and ratio.rotation_des_stock_de_marchandises else 0.0)
-            rsts_data.append(float(ratio.rotation_des_stock_de_services) if ratio and ratio.rotation_des_stock_de_services else 0.0)
-            cc_data.append(float(ratio.credit_clients) if ratio and ratio.credit_clients else 0.0)
-            cf_data.append(float(ratio.credits_fournisseurs) if ratio and ratio.credits_fournisseurs else 0.0)
 
-        print(
-            "[DEBUG][UTILS][get_charts_delais_data] "
-            f"series={{rsmp:{rsmp_data}, rspf:{rspf_data}, rstmt:{rstmt_data}, rsts:{rsts_data}, cc:{cc_data}, cf:{cf_data}}}"
-        )
-        
-        # sort labels/data
-        try:
-            order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
-            labels = [labels[i] for i in order]
-            rsmp_data = [rsmp_data[i] for i in order]
-            rspf_data = [rspf_data[i] for i in order]
-            rstmt_data = [rstmt_data[i] for i in order]
-            rsts_data = [rsts_data[i] for i in order]
-            cc_data = [cc_data[i] for i in order]
-            cf_data = [cf_data[i] for i in order]
-        except Exception:
-            pass
-        
-        # Créer le graphique
-        plt.figure(figsize=(12, 8))
-        if chart_type == 'bar':
-            width = 0.13
-            x = np.arange(len(labels))
-            plt.bar(x - 2*width, rsmp_data, width=width, label='RSMP - Rotation Stocks MP (jours)', color='#1f77b4')
-            plt.bar(x - width, rspf_data, width=width, label='RSPF - Rotation Stocks PF (jours)', color='#ff7f0e')
-            plt.bar(x, rstmt_data, width=width, label='RSTM - Rotation Stocks Marchandises (jours)', color='#2ca02c')
-            plt.bar(x + width, rsts_data, width=width, label='RSTS - Rotation Stocks Services (jours)', color='#d62728')
-            plt.bar(x + 2*width, cc_data, width=width, label='CC - Crédit Clients (jours)', color='#9467bd')
-            plt.bar(x + 3*width, cf_data, width=width, label='CF - Crédit Fournisseurs (jours)', color='#8c564b')
-            plt.xticks(x, labels)
-        else:
-            # Tracer les courbes
-            plt.plot(labels, rsmp_data, label='RSMP - Rotation Stocks MP (jours)', marker='o', linewidth=2, color='#1f77b4')
-            plt.plot(labels, rspf_data, label='RSPF - Rotation Stocks PF (jours)', marker='s', linewidth=2, color='#ff7f0e')
-            plt.plot(labels, rstmt_data, label='RSTM - Rotation Stocks Marchandises (jours)', marker='^', linewidth=2, color='#2ca02c')
-            plt.plot(labels, rsts_data, label='RSTS - Rotation Stocks Services (jours)', marker='d', linewidth=2, color='#d62728')
-            plt.plot(labels, cc_data, label='CC - Crédit Clients (jours)', marker='v', linewidth=2, color='#9467bd')
-            plt.plot(labels, cf_data, label='CF - Crédit Fournisseurs (jours)', marker='*', linewidth=2, color='#8c564b')
-        
-        # Personnaliser le graphique
-        plt.title('Délais', fontsize=16, fontweight='bold', pad=20)
-        plt.xlabel('Années', fontsize=12)
-        plt.ylabel('Jours', fontsize=12)
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.grid(True, alpha=0.3)
+        if not has_data:
+            return None
+
+        # Trier les années croissant (N-2, N-1, N)
+        sorted_years = sorted(years)
+        labels_years = [str(y) for y in sorted_years]
+
+        # Noms des métriques (axe Y)
+        metric_labels = [
+            'Stocks MP (j)', 'Stocks PF (j)',
+            'Stocks Marchandises (j)', 'Stocks Services (j)',
+            'Crédit Clients (j)', 'Crédit Fournisseurs (j)',
+        ]
+        n_metrics = len(metric_labels)
+
+        # Valeurs pour chaque année [rsmp, rspf, rstmt, rsts, cc, cf]
+        series = {}
+        for y in sorted_years:
+            r = ratios_by_year.get(y)
+            series[y] = [
+                float(r.rotation_des_stock_de_mp or 0) if r else 0.0,
+                float(r.rotation_des_stock_de_pf or 0) if r else 0.0,
+                float(r.rotation_des_stock_de_marchandises or 0) if r else 0.0,
+                float(r.rotation_des_stock_de_services or 0) if r else 0.0,
+                float(r.credit_clients or 0) if r else 0.0,
+                float(r.credits_fournisseurs or 0) if r else 0.0,
+            ]
+
+        palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+        n_years = len(sorted_years)
+        bar_h = 0.22
+        y_pos = np.arange(n_metrics)
+
+        fig, ax = plt.subplots(figsize=(12, 7))
+
+        for idx, year in enumerate(sorted_years):
+            offsets = y_pos - (n_years - 1) * bar_h / 2 + idx * bar_h
+            vals = series[year]
+            bars = ax.barh(offsets, vals, height=bar_h,
+                           label=str(year), color=palette[idx % len(palette)],
+                           edgecolor='white', linewidth=0.5)
+            # Valeur annotée sur chaque barre
+            for bar, val in zip(bars, vals):
+                if val > 0:
+                    ax.text(bar.get_width() + 0.5, bar.get_y() + bar.get_height() / 2,
+                            f'{val:.1f}', va='center', ha='left', fontsize=8, color='#333333')
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(metric_labels, fontsize=10)
+        ax.set_xlabel('Jours', fontsize=11)
+        ax.set_title('Délais de Rotation', fontsize=15, fontweight='bold', pad=15)
+        ax.legend(title='Année', loc='lower right', fontsize=10)
+        ax.grid(True, alpha=0.3, axis='x', linestyle='--')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
         plt.tight_layout()
-        
-        # Convertir en image base64
         buffer = io.BytesIO()
         plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
         buffer.seek(0)
         image_png = buffer.getvalue()
         buffer.close()
         plt.close()
-        
+
         return base64.b64encode(image_png).decode('utf-8')
-        
+
     except Exception as e:
         print(f"Erreur dans get_charts_delais_data: {str(e)}")
         import traceback
