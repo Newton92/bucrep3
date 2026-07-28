@@ -839,12 +839,12 @@ def generer_rapport_solvabilite(request):
                     .distinct()
                     .order_by('-annee__annee')[:3]
                 )
-            years_to_retrieve = sorted(available_years)
+            years_to_retrieve = sorted(available_years, reverse=True)
         else:
             years_to_retrieve = [annee_n, annee_n1, annee_n2]
-            years_to_retrieve = sorted(y for y in years_to_retrieve if y is not None)
+            years_to_retrieve = sorted((y for y in years_to_retrieve if y is not None), reverse=True)
 
-        print("years_to_retrieve (sorted):", years_to_retrieve)
+        print("years_to_retrieve (sorted desc):", years_to_retrieve)
         
         # Récupération de la commande si spécifiée
         commande = None
