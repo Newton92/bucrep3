@@ -49,6 +49,14 @@
 .date-text { font-size: .77rem; color: #5a6c7d; white-space: nowrap; }
 .duree-text { font-size: .72rem; color: #8a9ab0; }
 #crudModal .modal-body { padding-bottom: 1rem; }
+/* Hauteur fixe pour les éditeurs Quill dans la modal */
+#crudModal .ql-container { min-height: 80px; max-height: 110px; overflow-y: auto; font-size: .83rem; }
+#crudModal .ql-editor   { min-height: 80px; padding: .4rem .6rem; }
+#crudModal .ql-toolbar  { padding: 3px 6px; }
+#crudModal .ql-toolbar .ql-formats { margin-right: 6px; }
+/* Séparateur visuel entre sections du formulaire */
+.form-section-divider { border: none; border-top: 1px dashed rgba(10,149,202,.2); margin: .25rem 0; }
+.form-section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #8a9ab0; margin-bottom: .1rem; }
 </style>
 {% endblock %}
 
@@ -163,10 +171,13 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editId">
-                <div class="row g-3">
+
+                <!-- Section 1 : Identification -->
+                <p class="form-section-label mb-1">{% trans "Identification" %}</p>
+                <div class="row g-2">
                     <div class="col-md-8">
-                        <label class="form-label fw-semibold">{% trans "Type de procédure" %} <span class="text-danger">*</span></label>
-                        <select class="form-select" id="typeInput">
+                        <label class="form-label fw-semibold mb-1">{% trans "Type de procédure" %} <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="typeInput">
                             <option value="">{% trans "Sélectionnez un type..." %}</option>
                             {% for type in types_procedures %}
                             <option value="{{ type }}">{{ type }}</option>
@@ -174,44 +185,56 @@
                         </select>
                     </div>
                     <div class="col-md-4" id="otherTypeWrap" style="display:none;">
-                        <label class="form-label fw-semibold">{% trans "Préciser le type" %}</label>
-                        <input type="text" class="form-control" id="otherTypeInput" placeholder="{% trans 'Précisez...' %}">
+                        <label class="form-label fw-semibold mb-1">{% trans "Préciser le type" %}</label>
+                        <input type="text" class="form-control form-control-sm" id="otherTypeInput" placeholder="{% trans 'Précisez...' %}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Date d'ouverture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <input type="text" class="form-control" id="dateOuvertureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                        <label class="form-label fw-semibold mb-1">{% trans "Date d'ouverture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control form-control-sm" id="dateOuvertureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Date de clôture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <input type="text" class="form-control" id="dateClotureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                        <label class="form-label fw-semibold mb-1">{% trans "Date de clôture" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control form-control-sm" id="dateClotureInput" placeholder="JJ/MM/AAAA" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Section 2 : Dossier -->
+                <hr class="form-section-divider mt-3 mb-2">
+                <p class="form-section-label mb-1">{% trans "Dossier" %}</p>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold mb-1">{% trans "Tribunal compétent" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control form-control-sm" id="tribunalInput" placeholder="{% trans 'Ex: Tribunal de commerce' %}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Tribunal compétent" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <input type="text" class="form-control" id="tribunalInput" placeholder="{% trans 'Ex: Tribunal de commerce' %}">
+                        <label class="form-label fw-semibold mb-1">{% trans "Numéro de dossier" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control form-control-sm" id="numeroDossierInput" placeholder="{% trans 'Référence du dossier' %}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Numéro de dossier" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <input type="text" class="form-control" id="numeroDossierInput" placeholder="{% trans 'Référence du dossier' %}">
+                        <label class="form-label fw-semibold mb-1">{% trans "Secteur d'activité" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control form-control-sm" id="secteurActiviteInput" placeholder="{% trans 'Ex: Commerce, Industrie, BTP...' %}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Secteur d'activité" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <input type="text" class="form-control" id="secteurActiviteInput" placeholder="{% trans 'Ex: Commerce, Industrie, BTP...' %}">
+                        <label class="form-label fw-semibold mb-1">{% trans "Montant des créances" %} <span class="text-muted fw-normal small">(FCFA, {% trans "optionnel" %})</span></label>
+                        <input type="number" class="form-control form-control-sm" id="montantCreanceInput" placeholder="0" min="0" step="1">
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">{% trans "Montant des créances" %} <span class="text-muted fw-normal small">(FCFA, {% trans "optionnel" %})</span></label>
-                        <input type="number" class="form-control" id="montantCreanceInput" placeholder="0" min="0" step="1">
+                </div>
+
+                <!-- Section 3 : Textes libres -->
+                <hr class="form-section-divider mt-3 mb-2">
+                <p class="form-section-label mb-1">{% trans "Détails" %}</p>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold mb-1">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="descriptionInput" rows="2" placeholder="{% trans 'Description de la procédure...' %}"></textarea>
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <textarea class="form-control rich-editor" id="descriptionInput" rows="3" placeholder="{% trans 'Description de la procédure...' %}"></textarea>
+                        <label class="form-label fw-semibold mb-1">{% trans "Impact pour l'assureur crédit" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="impactAssureurInput" rows="2" placeholder="{% trans 'Résumé de l\'impact et des mesures prises...' %}"></textarea>
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-semibold">{% trans "Impact pour l'assureur crédit" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <textarea class="form-control rich-editor" id="impactAssureurInput" rows="3" placeholder="{% trans 'Résumé de l\'impact et des mesures prises...' %}"></textarea>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">{% trans "Commentaires" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
-                        <textarea class="form-control rich-editor" id="commentaireInput" rows="3" placeholder="{% trans 'Commentaires additionnels...' %}"></textarea>
+                        <label class="form-label fw-semibold mb-1">{% trans "Commentaires" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="commentaireInput" rows="2" placeholder="{% trans 'Commentaires additionnels...' %}"></textarea>
                     </div>
                 </div>
                 <div id="modalError" class="alert alert-danger py-2 small mt-3" style="display:none;"></div>
