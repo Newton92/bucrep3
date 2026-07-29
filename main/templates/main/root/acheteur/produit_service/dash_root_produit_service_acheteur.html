@@ -285,6 +285,9 @@
 {% trans "enregistrements" as t_enregs %}
 {% trans "Modifier" as t_edit_btn %}
 
+{% endblock %}
+
+{% block scripts %}
 <script>
 $(document).ready(function() {
     var ACHETEUR_ID = '{{ acheteur.id }}';
@@ -473,10 +476,8 @@ $(document).ready(function() {
         var produits    = getQuillValue('addProduits');
         var services    = getQuillValue('addServices');
         var commentaire = getQuillValue('addCommentaire');
-        /* DEBUG — à supprimer après résolution */
-        console.log('[PS-DEBUG] produits:', produits, '| services:', services);
         if (!stripHtml(produits) && !stripHtml(services)) {
-            Swal.fire({ icon: 'warning', title: S.err, text: S.atLeastOne + '\n[DEBUG] produits=' + JSON.stringify(produits) + ' services=' + JSON.stringify(services) });
+            Swal.fire({ icon: 'warning', title: S.err, text: S.atLeastOne });
             return;
         }
         var formData = { produits: produits, services: services, commentaire: commentaire, acheteur: parseInt(ACHETEUR_ID) };
@@ -497,7 +498,6 @@ $(document).ready(function() {
             error: function(xhr) {
                 $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
                 $btn.find('.btn-text').show();
-                console.log('[PS-DEBUG] error status:', xhr.status, 'response:', xhr.responseText);
                 if (xhr.status === 401) { refreshAccessToken(function() { $('#addPSForm').submit(); }); return; }
                 var msg = S.errGeneric;
                 if (xhr.responseJSON) {
