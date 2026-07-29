@@ -13925,22 +13925,30 @@ class AcheteurProduitServiceListOneView(APIView):
         serializer = ProduitServiceOneSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
-    @transaction.atomic
     def post(self, request, acheteur_id):
         """Crée un nouvel enregistrement de produits et services pour l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
-        
+
         data = request.data.copy()
         data["acheteur"] = acheteur_id
-        
-        # Passer le contexte avec la requête au serializer
+
         serializer = AddProduitServiceOneSerializer(data=data, context={'request': request})
-        
-        if serializer.is_valid():
-            # Le serializer gère maintenant created_by et updated_by
-            produit_service = serializer.save()
-            
-            # Log d'activité
+
+        if not serializer.is_valid():
+            print("[ProduitService POST] Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                produit_service = serializer.save()
+        except Exception as e:
+            import traceback
+            print("[ProduitService POST] Save error:", str(e))
+            traceback.print_exc()
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # ActivityLog hors transaction pour ne pas annuler le save si ça échoue
+        try:
             ActivityLog.objects.create(
                 user=request.user,
                 action_type='CREATE_PRODUIT_SERVICE',
@@ -13950,13 +13958,13 @@ class AcheteurProduitServiceListOneView(APIView):
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
-            
-            return Response({
-                "message": "Produits et services ajoutés avec succès",
-                "data": ProduitServiceOneSerializer(produit_service).data
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("[ProduitService POST] ActivityLog error (non-blocking):", str(e))
+
+        return Response({
+            "message": "Produits et services ajoutés avec succès",
+            "data": ProduitServiceOneSerializer(produit_service).data
+        }, status=status.HTTP_201_CREATED)
 
 class AcheteurProduitServiceDetailOneView(APIView):
     """
@@ -13984,24 +13992,31 @@ class AcheteurProduitServiceDetailOneView(APIView):
         serializer = ProduitServiceOneSerializer(produit_service)
         return Response(serializer.data)
     
-    @transaction.atomic
     def put(self, request, acheteur_id, produit_service_id):
         """Modifie un enregistrement de produits et services existant"""
         produit_service = self.get_produit_service(acheteur_id, produit_service_id)
-        
-        # Passer le contexte avec la requête pour que le serializer puisse accéder à request.user
+
         serializer = EditProduitServiceOneSerializer(
-            produit_service, 
-            data=request.data, 
+            produit_service,
+            data=request.data,
             partial=True,
             context={'request': request}
         )
-        
-        if serializer.is_valid():
-            # Le serializer gère maintenant updated_by via sa méthode update()
-            produit_service = serializer.save()
-            
-            # Log d'activité
+
+        if not serializer.is_valid():
+            print("[ProduitService PUT] Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                produit_service = serializer.save()
+        except Exception as e:
+            import traceback
+            print("[ProduitService PUT] Save error:", str(e))
+            traceback.print_exc()
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
             ActivityLog.objects.create(
                 user=request.user,
                 action_type='UPDATE_PRODUIT_SERVICE',
@@ -14011,13 +14026,13 @@ class AcheteurProduitServiceDetailOneView(APIView):
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
-            
-            return Response({
-                "message": "Produits et services modifiés avec succès",
-                "data": ProduitServiceOneSerializer(produit_service).data
-            })
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("[ProduitService PUT] ActivityLog error (non-blocking):", str(e))
+
+        return Response({
+            "message": "Produits et services modifiés avec succès",
+            "data": ProduitServiceOneSerializer(produit_service).data
+        })
     
     @transaction.atomic
     def delete(self, request, acheteur_id, produit_service_id):

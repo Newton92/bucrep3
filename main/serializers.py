@@ -10829,27 +10829,21 @@ class EditProduitServiceOneSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validation pour l'édition"""
-        # Vérifier qu'au moins un champ est rempli après modification
-        produits = data.get('produits')
-        services = data.get('services')
-        
-        current_produits = self.instance.produits if self.instance else ''
-        current_services = self.instance.services if self.instance else ''
-        
-        # Si produits n'est pas dans les données, utiliser la valeur actuelle
-        if produits is None:
-            produits = current_produits
-        
-        # Si services n'est pas dans les données, utiliser la valeur actuelle
-        if services is None:
-            services = current_services
-        
-        # Vérifier qu'au moins un champ a du contenu
-        if not produits.strip() and not services.strip():
+        import re
+
+        def strip_html(value):
+            if not value:
+                return ''
+            return re.sub(r'<[^>]+>', '', str(value)).strip()
+
+        produits = data.get('produits', self.instance.produits if self.instance else None)
+        services = data.get('services', self.instance.services if self.instance else None)
+
+        if not strip_html(produits) and not strip_html(services):
             raise serializers.ValidationError({
                 'non_field_errors': 'Veuillez renseigner au moins un produit ou un service.'
             })
-        
+
         return data
 
 class ProduitServiceSearchSerializer(serializers.ModelSerializer):
