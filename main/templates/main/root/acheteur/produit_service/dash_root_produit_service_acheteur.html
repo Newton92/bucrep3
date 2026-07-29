@@ -262,6 +262,9 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 {% trans "Erreur" as t_err %}
 {% trans "Succès" as t_ok %}
 {% trans "Aucun enregistrement trouvé" as t_aucun %}
@@ -284,10 +287,6 @@
 {% trans "Affichage" as t_display %}
 {% trans "enregistrements" as t_enregs %}
 {% trans "Modifier" as t_edit_btn %}
-
-{% endblock %}
-
-{% block scripts %}
 <script>
 $(document).ready(function() {
     var ACHETEUR_ID = '{{ acheteur.id }}';
@@ -410,22 +409,28 @@ $(document).ready(function() {
             if (hasProd) badges += '<span class="ps-badge prod me-1">PROD</span>';
             if (hasServ) badges += '<span class="ps-badge serv">SERV</span>';
             if (!badges) badges = '<span class="text-muted small">—</span>';
-            var prodRaw  = hasProd ? stripHtml(ps.produits) : '';
-            var servRaw  = hasServ ? stripHtml(ps.services) : '';
-            var prodTxt  = prodRaw ? (prodRaw.length > 50 ? prodRaw.substring(0, 50) + '…' : prodRaw) : '<span class="text-muted">—</span>';
-            var servTxt  = servRaw ? (servRaw.length > 50 ? servRaw.substring(0, 50) + '…' : servRaw) : '<span class="text-muted">—</span>';
             var dateStr  = ps.created_at ? ps.created_at.substring(0, 10).split('-').reverse().join('/') : '—';
+
+            /* Affichage HTML enrichi tronqué à 120 caractères de texte brut */
+            function htmlPreview(html, limit) {
+                if (!html) return '<span class="text-muted fst-italic small">—</span>';
+                var raw = stripHtml(html);
+                if (!raw) return '<span class="text-muted fst-italic small">—</span>';
+                var preview = raw.length > limit ? raw.substring(0, limit) + '…' : raw;
+                return '<span class="ql-content small">' + $('<span>').text(preview).html() + '</span>';
+            }
+
             tbody.append(
-                '<tr data-id="' + ps.id + '">' +
+                '<tr data-id="' + ps.id + '" style="vertical-align:middle;">' +
                 '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + ps.id + '" ' + checked + '></td>' +
-                '<td>' + badges + '</td>' +
-                '<td class="small" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + prodTxt + '</td>' +
-                '<td class="small" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + servTxt + '</td>' +
-                '<td class="small text-muted" style="white-space:nowrap;"><i class="bi bi-calendar3 me-1"></i>' + dateStr + '</td>' +
-                '<td><div class="btn-group btn-group-sm">' +
-                  '<button class="btn btn-outline-primary edit-btn" data-id="' + ps.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil"></i></button>' +
-                  '<button class="btn btn-outline-danger delete-btn" data-id="' + ps.id + '" title="' + S.del + '"><i class="bi bi-trash"></i></button>' +
-                '</div></td>' +
+                '<td style="white-space:nowrap;">' + badges + '</td>' +
+                '<td style="max-width:260px;">' + htmlPreview(ps.produits, 120) + '</td>' +
+                '<td style="max-width:260px;">' + htmlPreview(ps.services, 120) + '</td>' +
+                '<td class="text-muted" style="white-space:nowrap;font-size:.8rem;"><i class="bi bi-calendar3 me-1"></i>' + dateStr + '</td>' +
+                '<td style="white-space:nowrap;">' +
+                  '<button class="btn btn-sm btn-outline-primary me-1 edit-btn" data-id="' + ps.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil-square me-1"></i>' + S.editBtn + '</button>' +
+                  '<button class="btn btn-sm btn-outline-danger delete-btn" data-id="' + ps.id + '" title="' + S.del + '"><i class="bi bi-trash"></i></button>' +
+                '</td>' +
                 '</tr>'
             );
         });
