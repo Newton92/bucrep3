@@ -49,10 +49,10 @@
 .date-text { font-size: .77rem; color: #5a6c7d; white-space: nowrap; }
 .duree-text { font-size: .72rem; color: #8a9ab0; }
 #crudModal .modal-body { padding-bottom: 1rem; }
-/* Quill dans la modal : hauteur contrainte — les valeurs JS ci-dessous priment sur ces règles */
-#crudModal .ql-toolbar  { padding: 3px 6px !important; }
-#crudModal .ql-toolbar .ql-formats { margin-right: 6px !important; }
-#crudModal .ql-editor   { min-height: 70px !important; max-height: 90px !important; overflow-y: auto !important; padding: .35rem .5rem !important; font-size: .83rem !important; }
+/* Quill dans la modal : toolbar compacte (hauteur gérée en JS après init) */
+#crudModal .ql-toolbar  { padding: 3px 6px; }
+#crudModal .ql-toolbar .ql-formats { margin-right: 6px; }
+#crudModal .ql-editor   { padding: .35rem .5rem; font-size: .83rem; }
 /* Séparateur visuel entre sections du formulaire */
 .form-section-divider { border: none; border-top: 1px dashed rgba(10,149,202,.2); margin: .25rem 0; }
 .form-section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #8a9ab0; margin-bottom: .1rem; }
@@ -333,17 +333,14 @@
             var cur = document.getElementById('typeInput').value;
             document.getElementById('otherTypeWrap').style.display = cur === 'Autre' ? 'block' : 'none';
         }
-        /* Forcer la hauteur des éditeurs Quill APRÈS leur initialisation par base.html */
-        ['descriptionInput', 'impactAssureurInput', 'commentaireInput'].forEach(function(id) {
-            var ta = document.getElementById(id);
-            if (!ta) return;
-            var editor = ta._quill ? ta._quill.root : null;
-            if (editor) {
-                editor.style.minHeight = '70px';
-                editor.style.maxHeight = '90px';
-                editor.style.overflowY = 'auto';
-            }
-        });
+        /* Forcer la hauteur APRÈS initRichEditors() de base.html (qui tourne aussi sur shown.bs.modal) */
+        setTimeout(function() {
+            document.querySelectorAll('#crudModal .ql-editor').forEach(function(el) {
+                el.style.setProperty('min-height', '70px',  'important');
+                el.style.setProperty('max-height', '90px',  'important');
+                el.style.setProperty('overflow-y', 'auto',  'important');
+            });
+        }, 50);
     });
 
     /* ── Utils ── */
