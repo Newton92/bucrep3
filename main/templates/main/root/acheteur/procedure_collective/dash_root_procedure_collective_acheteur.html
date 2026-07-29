@@ -155,7 +155,7 @@
 
 <!-- Add/Edit Modal -->
 <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header" style="background:var(--primary-gradient);color:white;">
                 <h5 class="modal-title" id="crudModalLabel"><i class="fas fa-gavel me-2"></i>{% trans "Procédure collective" %}</h5>
@@ -193,9 +193,25 @@
                         <label class="form-label fw-semibold">{% trans "Numéro de dossier" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
                         <input type="text" class="form-control" id="numeroDossierInput" placeholder="{% trans 'Référence du dossier' %}">
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Secteur d'activité" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <input type="text" class="form-control" id="secteurActiviteInput" placeholder="{% trans 'Ex: Commerce, Industrie, BTP...' %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">{% trans "Montant des créances" %} <span class="text-muted fw-normal small">(FCFA, {% trans "optionnel" %})</span></label>
+                        <input type="number" class="form-control" id="montantCreanceInput" placeholder="0" min="0" step="1">
+                    </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold">{% trans "Description" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
                         <textarea class="form-control rich-editor" id="descriptionInput" rows="3" placeholder="{% trans 'Description de la procédure...' %}"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Impact pour l'assureur crédit" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="impactAssureurInput" rows="3" placeholder="{% trans 'Résumé de l\'impact et des mesures prises...' %}"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">{% trans "Commentaires" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
+                        <textarea class="form-control rich-editor" id="commentaireInput" rows="3" placeholder="{% trans 'Commentaires additionnels...' %}"></textarea>
                     </div>
                 </div>
                 <div id="modalError" class="alert alert-danger py-2 small mt-3" style="display:none;"></div>
@@ -399,6 +415,17 @@
         ctrl.appendChild(mkBtn('<i class="fas fa-chevron-right fa-xs"></i>', currentPage+1, currentPage===totalPages, false));
     }
 
+    /* ── Quill helper ── */
+    function getQuillValue(id) {
+        var ta = document.getElementById(id);
+        if (!ta) return '';
+        if (ta._quill) {
+            var html = ta._quill.root.innerHTML;
+            return (html === '<p><br></p>' || html === '<p></p>') ? '' : html;
+        }
+        return ta.value || '';
+    }
+
     /* ── Modal helpers ── */
     function showModalError(msg) {
         var el = document.getElementById('modalError');
@@ -411,13 +438,21 @@
         document.getElementById('otherTypeInput').value = '';
         document.getElementById('tribunalInput').value = '';
         document.getElementById('numeroDossierInput').value = '';
-        if (window.quillSetValue) window.quillSetValue('descriptionInput', '');
-        else document.getElementById('descriptionInput').value = '';
+        document.getElementById('secteurActiviteInput').value = '';
+        document.getElementById('montantCreanceInput').value = '';
+        if (window.quillSetValue) {
+            window.quillSetValue('descriptionInput', '');
+            window.quillSetValue('impactAssureurInput', '');
+            window.quillSetValue('commentaireInput', '');
+        } else {
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('impactAssureurInput').value = '';
+            document.getElementById('commentaireInput').value = '';
+        }
         document.getElementById('otherTypeWrap').style.display = 'none';
         document.getElementById('modalError').style.display = 'none';
         document.getElementById('saveBtn').disabled = false;
         clearDatepickers();
-        /* Détruire select2 s'il est initialisé, pour forcer une réinit propre dans shown.bs.modal */
         if (window.$ && $.fn.select2) {
             var $sel = $('#typeInput');
             if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
@@ -450,10 +485,19 @@
                 }
                 setDate('dateOuvertureInput', data.date_ouverture);
                 setDate('dateClotureInput', data.date_cloture);
-                document.getElementById('tribunalInput').value      = data.tribunal || '';
-                document.getElementById('numeroDossierInput').value = data.numero_dossier || '';
-                if (window.quillSetValue) window.quillSetValue('descriptionInput', data.description || '');
-                else document.getElementById('descriptionInput').value = data.description || '';
+                document.getElementById('tribunalInput').value        = data.tribunal || '';
+                document.getElementById('numeroDossierInput').value   = data.numero_dossier || '';
+                document.getElementById('secteurActiviteInput').value = data.secteur_activite || '';
+                document.getElementById('montantCreanceInput').value  = data.montant_creance !== null && data.montant_creance !== undefined ? data.montant_creance : '';
+                if (window.quillSetValue) {
+                    window.quillSetValue('descriptionInput',   data.description    || '');
+                    window.quillSetValue('impactAssureurInput', data.impact_assureur || '');
+                    window.quillSetValue('commentaireInput',   data.commentaire    || '');
+                } else {
+                    document.getElementById('descriptionInput').value    = data.description    || '';
+                    document.getElementById('impactAssureurInput').value = data.impact_assureur || '';
+                    document.getElementById('commentaireInput').value    = data.commentaire    || '';
+                }
                 getModal().show();
             })
             .catch(function() { showModalError('{% trans "Erreur lors du chargement." %}'); });
@@ -472,14 +516,19 @@
         var isEdit = !!id;
         var url    = isEdit ? API_BASE + id + '/' : API_BASE;
 
+        var montantRaw = document.getElementById('montantCreanceInput').value.trim();
         var payload = {
-            acheteur:       ACHETEUR_ID,
-            type_procedure: typeVal,
-            date_ouverture: getDate('dateOuvertureInput'),
-            date_cloture:   getDate('dateClotureInput'),
-            tribunal:       document.getElementById('tribunalInput').value.trim() || null,
-            numero_dossier: document.getElementById('numeroDossierInput').value.trim() || null,
-            description:    document.getElementById('descriptionInput').value.trim() || null
+            acheteur:         ACHETEUR_ID,
+            type_procedure:   typeVal,
+            date_ouverture:   getDate('dateOuvertureInput'),
+            date_cloture:     getDate('dateClotureInput'),
+            tribunal:         document.getElementById('tribunalInput').value.trim() || null,
+            numero_dossier:   document.getElementById('numeroDossierInput').value.trim() || null,
+            secteur_activite: document.getElementById('secteurActiviteInput').value.trim() || null,
+            montant_creance:  montantRaw !== '' ? parseFloat(montantRaw) : null,
+            description:      getQuillValue('descriptionInput') || null,
+            impact_assureur:  getQuillValue('impactAssureurInput') || null,
+            commentaire:      getQuillValue('commentaireInput') || ''
         };
 
         var btn = this;
