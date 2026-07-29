@@ -458,16 +458,26 @@ $(document).ready(function() {
         if (p) loadPS(p, currentFilters);
     });
 
+    function getQuillValue(id) {
+        var ta = document.getElementById(id);
+        if (!ta) return '';
+        if (ta._quill) {
+            var html = ta._quill.root.innerHTML;
+            return (html === '<p><br></p>' || html === '<p></p>') ? '' : html;
+        }
+        return ta.value || '';
+    }
+
     $('#addPSForm').on('submit', function(e) {
         e.preventDefault();
-        var produits    = $('#addProduits').val().trim();
-        var services    = $('#addServices').val().trim();
-        var commentaire = $('#addCommentaire').val().trim();
+        var produits    = getQuillValue('addProduits');
+        var services    = getQuillValue('addServices');
+        var commentaire = getQuillValue('addCommentaire');
         if (!stripHtml(produits) && !stripHtml(services)) {
             Swal.fire({ icon: 'warning', title: S.err, text: S.atLeastOne });
             return;
         }
-        var formData = { produits: produits, services: services, commentaire: commentaire, acheteur: ACHETEUR_ID };
+        var formData = { produits: produits, services: services, commentaire: commentaire, acheteur: parseInt(ACHETEUR_ID) };
         var $btn = $('#submitAddBtn');
         $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
         $btn.find('.btn-text').hide();
@@ -506,9 +516,9 @@ $(document).ready(function() {
         e.preventDefault();
         var id = $('#editPSId').val();
         var formData = {
-            produits:    $('#editProduits').val().trim(),
-            services:    $('#editServices').val().trim(),
-            commentaire: $('#editCommentaire').val().trim()
+            produits:    getQuillValue('editProduits'),
+            services:    getQuillValue('editServices'),
+            commentaire: getQuillValue('editCommentaire')
         };
         var $btn = $('#submitEditBtn');
         $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');

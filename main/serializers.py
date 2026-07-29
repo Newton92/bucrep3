@@ -10773,7 +10773,10 @@ class AddProduitServiceOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
         queryset=Acheteur.objects.all()
     )
-    
+    commentaire = serializers.CharField(
+        allow_blank=True, required=False, default='', max_length=10000000
+    )
+
     class Meta:
         model = ProduitService
         fields = ['produits', 'services', 'couleur_commentaire', 'commentaire', 'acheteur']
@@ -10807,6 +10810,10 @@ class AddProduitServiceOneSerializer(serializers.ModelSerializer):
         return data
 
 class EditProduitServiceOneSerializer(serializers.ModelSerializer):
+    commentaire = serializers.CharField(
+        allow_blank=True, required=False, default='', max_length=10000000
+    )
+
     class Meta:
         model = ProduitService
         fields = ['produits', 'services', 'couleur_commentaire', 'commentaire']
