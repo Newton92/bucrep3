@@ -4246,35 +4246,35 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             "produits_services": {
                 "title_13": _("PRODUITS & SERVICES"),
-                "produits": list_produits_services_data if list_produits_services_data else ["Aucun produit ou service disponible"],
+                "produits": list_produits_services_data if list_produits_services_data else ["No product or service available"],
             },
             "marques": {
                 "title_14": _("MARQUES"),
-                "marques": list_marques_data if list_marques_data else ["Aucune marque disponible"],
+                "marques": list_marques_data if list_marques_data else ["No trademark available"],
             },
             "procedures_collectives": {
                 "title_15": _("PROCEDURES & COLLECTIVES"),
-                "procedures_collectives": list_procedures_collectives_data if list_procedures_collectives_data else ["Aucune procédure ou collective disponible"],
+                "procedures_collectives": list_procedures_data if list_procedures_data else ["No collective procedure available"],
             },
             "cotisations": {
                 "title_16": _("COTISATIONS SOCIALES"),
-                "cotisations": list_cotisations_data if list_cotisations_data else ["Aucune cotisation disponible"],
+                "cotisations": list_cotisations_data if list_cotisations_data else ["No contribution available"],
             },
             "certifications": {
                 "title_17": _("CERTIFICATIONS"),
-                "certifications": list_certifications_data if list_certifications_data else ["Aucune certification disponible"],
+                "certifications": list_certifications_data if list_certifications_data else ["No certification available"],
             },
             "innovations_developpements": {
                 "title_18": _("INNOVATIONS & DEVELOPPEMENT"),
-                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["Aucune innovation ou développement disponible"],
+                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["No innovation or development available"],
             },
             "strategies_planifications": {
                 "title_19": _("STRATEGIES & PLANIFICATIONS"),
-                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["No strategy or planning available"],
             },
             "conformitesy": {
                 "title_20": _("CONFORMITE REGLEMENTATION"),
-                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["No compliance data available"],
             },
             
             
