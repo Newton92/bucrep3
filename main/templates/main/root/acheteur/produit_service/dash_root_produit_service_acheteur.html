@@ -487,7 +487,16 @@ $(document).ready(function() {
                 $btn.find('.btn-text').show();
                 if (xhr.status === 401) { refreshAccessToken(function() { $('#addPSForm').submit(); }); return; }
                 var msg = S.errGeneric;
-                if (xhr.responseJSON) { msg = xhr.responseJSON.error || xhr.responseJSON.detail || msg; }
+                if (xhr.responseJSON) {
+                    var r = xhr.responseJSON;
+                    var msgs = [];
+                    if (typeof r === 'object') {
+                        $.each(r, function(k, v) {
+                            msgs.push(Array.isArray(v) ? v.join(' ') : String(v));
+                        });
+                    }
+                    msg = msgs.length ? msgs.join('\n') : (r.error || r.detail || msg);
+                }
                 Swal.fire({ icon: 'error', title: S.err, text: msg });
             }
         });
@@ -520,7 +529,14 @@ $(document).ready(function() {
                 $btn.find('.btn-text').show();
                 if (xhr.status === 401) { refreshAccessToken(function() { $('#editPSForm').submit(); }); return; }
                 var msg = S.errGeneric;
-                if (xhr.responseJSON) { msg = xhr.responseJSON.error || xhr.responseJSON.detail || msg; }
+                if (xhr.responseJSON) {
+                    var r = xhr.responseJSON;
+                    var msgs = [];
+                    if (typeof r === 'object') {
+                        $.each(r, function(k, v) { msgs.push(Array.isArray(v) ? v.join(' ') : String(v)); });
+                    }
+                    msg = msgs.length ? msgs.join('\n') : (r.error || r.detail || msg);
+                }
                 Swal.fire({ icon: 'error', title: S.err, text: msg });
             }
         });

@@ -10789,28 +10789,21 @@ class AddProduitServiceOneSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validation globale des produits et services"""
-        acheteur = data.get('acheteur')
-        
-        # Vérifier si cet acheteur a déjà des produits/services enregistrés
-        # (On suppose qu'un acheteur ne peut avoir qu'un seul enregistrement ProduitService)
-        existing = ProduitService.objects.filter(
-            acheteur=acheteur
-        ).exists()
-        
-        if existing and self.instance is None:
-            raise serializers.ValidationError({
-                'acheteur': 'Cet acheteur possède déjà des produits et services enregistrés.'
-            })
-        
-        # Vérifier qu'au moins un champ est rempli
-        produits = data.get('produits', '').strip()
-        services = data.get('services', '').strip()
-        
+        import re
+
+        def strip_html(value):
+            if not value:
+                return ''
+            return re.sub(r'<[^>]+>', '', str(value)).strip()
+
+        produits = strip_html(data.get('produits'))
+        services = strip_html(data.get('services'))
+
         if not produits and not services:
             raise serializers.ValidationError({
                 'non_field_errors': 'Veuillez renseigner au moins un produit ou un service.'
             })
-        
+
         return data
 
 class EditProduitServiceOneSerializer(serializers.ModelSerializer):
