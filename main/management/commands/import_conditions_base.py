@@ -57,39 +57,34 @@ class Command(BaseCommand):
         self.stdout.write("CONDITIONS D'ACHAT")
         self.stdout.write("="*50)
         
-        # Données à importer
+        # Données à importer : (nom_en, nom_fr)
         CONDITIONS_ACHAT = [
-            "Paiement comptant",
-            "Paiement à réception",
-            "Paiement par virement",
-            "Paiement contre documents",
-            "Crédit documentaire",
-            "Lettre de crédit à terme",
-            "Lettre de crédit à vue",
-            "Délai de paiement de 30 à 60 jours date BL",
-            "Délai de paiement de 60 à 90 jours date LB",
-            "Délai de paiement de 90 à 120 Jours date BL",
-            "Délais de paiement de 30 à 60 jours avec pénalités de retard",
-            "Délais de paiement de 60 à 90 jours avec pénalités de retard",
-            "Délais de paiement de 90 à 120 jours avec pénalités de retard",
-            "Délais de paiement de 120 à 180 jours avec pénalités de retard",
+            ("1- Cash payment",                              "1- Paiement comptant"),
+            ("2- Payment on receipt",                        "2- Paiement à réception"),
+            ("3- Payment by bank transfer",                  "3- Paiement par virement bancaire"),
+            ("4- Payment against documents",                 "4- Paiement contre documents"),
+            ("5- Documentary credit",                        "5- Crédit documentaire"),
+            ("6- Term letter of credit",                     "6- Lettre de crédit à terme"),
+            ("7- Demand letter of credit",                   "7- Lettre de crédit à vue"),
+            ("8- Payment term from 30 to 60 days BL date",  "8- Délai de paiement de 30 à 60 jours date BL"),
+            ("9- Payment term from 60 to 90 days date LB",  "9- Délai de paiement de 60 à 90 jours date LB"),
+            ("10- Payment term from 90 to 120 days date BL","10- Délai de paiement de 90 à 120 jours date BL"),
         ]
-        
+
         if dry_run:
             self.stdout.write(f"\n{len(CONDITIONS_ACHAT)} conditions d'achat à importer:")
-            for i, condition in enumerate(CONDITIONS_ACHAT, 1):
-                self.stdout.write(f"  {i:2}. {condition}")
+            for nom_en, nom_fr in CONDITIONS_ACHAT:
+                self.stdout.write(f"  EN: {nom_en}  |  FR: {nom_fr}")
             return
-        
+
         # Vérifier le modèle
         try:
-            # Vérifier les champs du modèle
             model_fields = [f.name for f in ListeConditionAchat._meta.fields]
             self.stdout.write(f"Champs du modèle: {model_fields}")
-        except:
+        except Exception:
             self.stdout.write(self.style.WARNING("Le modèle ListeConditionAchat n'existe pas ou a un problème"))
             return
-        
+
         # Nettoyer si demandé
         if clear_data:
             self.stdout.write("Suppression des données existantes...")
@@ -100,26 +95,37 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"✓ {deleted} conditions d'achat supprimées"))
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"⚠ Impossible de supprimer: {str(e)[:100]}"))
-        
+
         # Importer les données
         created = 0
         errors = 0
         skipped = 0
-        
-        for condition in CONDITIONS_ACHAT:
+
+        for nom_en, nom_fr in CONDITIONS_ACHAT:
             try:
-                # Vérifier si existe déjà
-                if not ListeConditionAchat.objects.filter(nom=condition).exists():
-                    ListeConditionAchat.objects.create(nom=condition)
-                    created += 1
-                    self.stdout.write(self.style.SUCCESS(f"✓ {condition}"))
-                else:
+                obj, is_created = ListeConditionAchat.objects.get_or_create(
+                    nom_en=nom_en,
+                    defaults={"nom": nom_en, "nom_fr": nom_fr, "nom_en": nom_en},
+                )
+                if not is_created:
+                    # Mettre à jour nom_fr si manquant
+                    updated = False
+                    if not obj.nom_fr:
+                        obj.nom_fr = nom_fr
+                        updated = True
+                    if not obj.nom_en:
+                        obj.nom_en = nom_en
+                        updated = True
+                    if updated:
+                        obj.save()
                     skipped += 1
-                    self.stdout.write(self.style.WARNING(f"↺ {condition} (existe déjà)"))
-                    
+                    self.stdout.write(self.style.WARNING(f"↺ {nom_en} (existe déjà)"))
+                else:
+                    created += 1
+                    self.stdout.write(self.style.SUCCESS(f"✓ {nom_en}"))
             except Exception as e:
                 errors += 1
-                self.stdout.write(self.style.ERROR(f"✗ {condition}: {str(e)[:50]}"))
+                self.stdout.write(self.style.ERROR(f"✗ {nom_en}: {str(e)[:80]}"))
         
         # Résumé
         self.stdout.write("\n" + "-"*40)
@@ -211,20 +217,16 @@ class CommandSQL(BaseCommand):
         self.stdout.write("Import via SQL brut...")
         
         CONDITIONS_ACHAT_SQL = [
-            ("1", "Paiement comptant"),
-            ("2", "Paiement à réception"),
-            ("3", "Paiement par virement"),
-            ("4", "Paiement contre documents"),
-            ("5", "Crédit documentaire"),
-            ("6", "Lettre de crédit à terme"),
-            ("7", "Lettre de crédit à vue"),
-            ("8", "Délai de paiement de 30 à 60 jours date BL"),
-            ("9", "Délai de paiement de 60 à 90 jours date LB"),
-            ("10", "Délai de paiement de 90 à 120 Jours date BL"),
-            ("11", "Délais de paiement de 30 à 60 jours avec pénalités de retard"),
-            ("12", "Délais de paiement de 60 à 90 jours avec pénalités de retard"),
-            ("13", "Délais de paiement de 90 à 120 jours avec pénalités de retard"),
-            ("14", "Délais de paiement de 120 à 180 jours avec pénalités de retard"),
+            ("1",  "1- Cash payment"),
+            ("2",  "2- Payment on receipt"),
+            ("3",  "3- Payment by bank transfer"),
+            ("4",  "4- Payment against documents"),
+            ("5",  "5- Documentary credit"),
+            ("6",  "6- Term letter of credit"),
+            ("7",  "7- Demand letter of credit"),
+            ("8",  "8- Payment term from 30 to 60 days BL date"),
+            ("9",  "9- Payment term from 60 to 90 days date LB"),
+            ("10", "10- Payment term from 90 to 120 days date BL"),
         ]
         
         CONDITIONS_VENTE_SQL = [

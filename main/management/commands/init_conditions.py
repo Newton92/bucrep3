@@ -109,22 +109,18 @@ class Command(BaseCommand):
         """Importe les données de base"""
         self.stdout.write("\n3. Import des données de base...")
         
-        # Données pour ListeConditionAchat
+        # Données pour ListeConditionAchat : (nom_en, nom_fr)
         conditions_achat = [
-            "Paiement comptant",
-            "Paiement à réception",
-            "Paiement par virement",
-            "Paiement contre documents",
-            "Crédit documentaire",
-            "Lettre de crédit à terme",
-            "Lettre de crédit à vue",
-            "Délai de paiement de 30 à 60 jours date BL",
-            "Délai de paiement de 60 à 90 jours date LB",
-            "Délai de paiement de 90 à 120 Jours date BL",
-            "Délais de paiement de 30 à 60 jours avec pénalités de retard",
-            "Délais de paiement de 60 à 90 jours avec pénalités de retard",
-            "Délais de paiement de 90 à 120 jours avec pénalités de retard",
-            "Délais de paiement de 120 à 180 jours avec pénalités de retard",
+            ("1- Cash payment",                              "1- Paiement comptant"),
+            ("2- Payment on receipt",                        "2- Paiement à réception"),
+            ("3- Payment by bank transfer",                  "3- Paiement par virement bancaire"),
+            ("4- Payment against documents",                 "4- Paiement contre documents"),
+            ("5- Documentary credit",                        "5- Crédit documentaire"),
+            ("6- Term letter of credit",                     "6- Lettre de crédit à terme"),
+            ("7- Demand letter of credit",                   "7- Lettre de crédit à vue"),
+            ("8- Payment term from 30 to 60 days BL date",  "8- Délai de paiement de 30 à 60 jours date BL"),
+            ("9- Payment term from 60 to 90 days date LB",  "9- Délai de paiement de 60 à 90 jours date LB"),
+            ("10- Payment term from 90 to 120 days date BL","10- Délai de paiement de 90 à 120 jours date BL"),
         ]
         
         # Données pour ListeConditionVente
@@ -161,13 +157,19 @@ class Command(BaseCommand):
                 if force and has_achat_data:
                     ListeConditionAchat.objects.all().delete()
                     self.stdout.write("  Anciennes données supprimées")
-                
-                for condition in conditions_achat:
-                    obj, created = ListeConditionAchat.objects.get_or_create(nom=condition)
+
+                for nom_en, nom_fr in conditions_achat:
+                    obj, created = ListeConditionAchat.objects.get_or_create(
+                        nom_en=nom_en,
+                        defaults={"nom": nom_en, "nom_fr": nom_fr, "nom_en": nom_en},
+                    )
                     if created:
-                        self.stdout.write(self.style.SUCCESS(f"  ✓ {condition}"))
+                        self.stdout.write(self.style.SUCCESS(f"  ✓ {nom_en}"))
                     else:
-                        self.stdout.write(self.style.WARNING(f"  ↺ {condition} (existe déjà)"))
+                        if not obj.nom_fr:
+                            obj.nom_fr = nom_fr
+                            obj.save()
+                        self.stdout.write(self.style.WARNING(f"  ↺ {nom_en} (existe déjà)"))
                 
                 # Conditions de vente
                 self.stdout.write("\nConditions de vente:")
@@ -226,7 +228,7 @@ class Command(BaseCommand):
             achat_count = ListeConditionAchat.objects.count()
             vente_count = ListeConditionVente.objects.count()
             
-            self.stdout.write(f"  Conditions d'achat: {achat_count}/14")
+            self.stdout.write(f"  Conditions d'achat: {achat_count}/10")
             self.stdout.write(f"  Conditions de vente: {vente_count}/10")
             
             if achat_count >= 10 and vente_count >= 7:

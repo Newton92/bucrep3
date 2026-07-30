@@ -14379,19 +14379,39 @@ class Locaux(models.Model):
 class ListeConditionAchat(models.Model):
     """Modele metier: ListeConditionAchat."""
     _safedelete_policy = SOFT_DELETE_CASCADE
-    nom = models.CharField(_("nom"), max_length=100)
+    nom    = models.CharField(_("nom"), max_length=200)
+    nom_fr = models.CharField(_("nom (français)"), max_length=200, blank=True, default="")
+    nom_en = models.CharField(_("nom (anglais)"),  max_length=200, blank=True, default="")
+
+    @property
+    def nom_display(self):
+        from django.utils.translation import get_language
+        lang = get_language() or "fr"
+        if lang.startswith("fr"):
+            return self.nom_fr or self.nom_en or self.nom
+        return self.nom_en or self.nom_fr or self.nom
 
     def __str__(self):
-        return self.nom   
-    
-    
+        return self.nom_display
+
+
 class ListeConditionVente(models.Model):
     """Modele metier: ListeConditionVente."""
     _safedelete_policy = SOFT_DELETE_CASCADE
-    nom = models.CharField(_("nom"), max_length=100)
+    nom    = models.CharField(_("nom"), max_length=200)
+    nom_fr = models.CharField(_("nom (français)"), max_length=200, blank=True, default="")
+    nom_en = models.CharField(_("nom (anglais)"),  max_length=200, blank=True, default="")
+
+    @property
+    def nom_display(self):
+        from django.utils.translation import get_language
+        lang = get_language() or "fr"
+        if lang.startswith("fr"):
+            return self.nom_fr or self.nom_en or self.nom
+        return self.nom_en or self.nom_fr or self.nom
 
     def __str__(self):
-        return self.nom
+        return self.nom_display
     
     
 class ListeImportation(models.Model):

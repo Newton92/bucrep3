@@ -2478,9 +2478,9 @@ class LocauxAdmin(admin.ModelAdmin):
 @admin.register(ListeConditionAchat)
 class ListeConditionAchatAdmin(admin.ModelAdmin):
     """Configuration admin: ListeConditionAchatAdmin."""
-    list_display = ("id", "nom")
-    search_fields = ("nom",)
-    ordering = ("nom",)
+    list_display = ("id", "nom_fr", "nom_en")
+    search_fields = ("nom_fr", "nom_en", "nom")
+    ordering = ("nom_fr",)
 
 
 @admin.register(ListeConditionVente)
