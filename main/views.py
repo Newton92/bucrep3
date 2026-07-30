@@ -9521,6 +9521,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
             'faiblesses': swot_analysis.faiblesses or '',
             'opportunites': swot_analysis.opportunites or '',
             'menaces': swot_analysis.menaces or '',
+            'commentaire': swot_analysis.commentaire or '',
             'created_at': swot_analysis.created_at,
             'updated_at': swot_analysis.updated_at,
         }

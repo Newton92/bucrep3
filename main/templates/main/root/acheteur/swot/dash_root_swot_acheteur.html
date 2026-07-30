@@ -1,416 +1,344 @@
 {% extends 'main/root/base.html' %}
-{% load static humanize i18n %}
+{% load i18n static %}
 
 {% block styles %}
 <style>
-/* ── Variables ── */
 :root {
-    --sw-green:  #28a745;
-    --sw-red:    #dc3545;
-    --sw-blue:   #17a2b8;
-    --sw-purple: #6f42c1;
-    --sw-border: rgba(10,149,202,.12);
-    --sw-radius: 10px;
-    --primary:   #0a95ca;
+    --color-primary:      #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-accent:       #106cb2;
+    --primary-gradient:   linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
 }
 
-/* ── Header compact ── */
-.sw-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: .5rem;
-    padding: .6rem .9rem;
-    background: linear-gradient(135deg, var(--primary), #0d80be);
-    border-radius: var(--sw-radius);
-    margin-bottom: 1rem;
-    color: #fff;
-}
-.sw-header-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
-.sw-header-sub   { font-size: .78rem; opacity: .85; }
+/* ── Communs (mêmes que certifications) ── */
+.page-header    { background: var(--primary-gradient); padding: .75rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; color: white; }
+.page-title     { font-size: 1.05rem; font-weight: 700; margin-bottom: 0; }
+.page-subtitle  { font-size: .8rem; opacity: .85; }
+.btn-add        { background: var(--primary-gradient); color: white; border: none; border-radius: 6px; padding: .35rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; transition: opacity .15s; }
+.btn-add:hover  { opacity: .88; }
+.table-card     { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(10,149,202,.07); border: 1px solid rgba(10,149,202,.1); overflow: hidden; }
+.table-card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-bottom: 1px solid rgba(37,173,214,.1); }
+.empty-state    { text-align: center; padding: 2.5rem 1rem; color: #8a9ab0; }
 
 /* ── Grille SWOT 2×2 ── */
-.sw-grid {
+.swot-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: 1px;
+    background: rgba(10,149,202,.1);
 }
-@media (max-width: 767px) { .sw-grid { grid-template-columns: 1fr; } }
+@media (max-width: 767px) { .swot-grid { grid-template-columns: 1fr; } }
 
-.sw-quad {
-    border-radius: var(--sw-radius);
-    border: 2px solid var(--sw-border);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 240px;
-}
+.swot-quad { background: #fff; display: flex; flex-direction: column; }
 
-/* En-têtes de quadrant */
-.sw-quad-head {
+.swot-quad-head {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    padding: .55rem .9rem;
+    gap: .45rem;
+    padding: .5rem .85rem;
+    font-size: .78rem;
     font-weight: 700;
-    font-size: .85rem;
     color: #fff;
-    letter-spacing: .3px;
+    letter-spacing: .2px;
 }
-.sw-quad.forces      .sw-quad-head { background: var(--sw-green); }
-.sw-quad.faiblesses  .sw-quad-head { background: var(--sw-red); }
-.sw-quad.opportunites .sw-quad-head { background: var(--sw-blue); }
-.sw-quad.menaces     .sw-quad-head { background: var(--sw-purple); }
-
-.sw-quad-tag {
+.swot-quad-tag {
     margin-left: auto;
     background: rgba(255,255,255,.22);
-    font-size: .7rem;
-    padding: .1rem .45rem;
+    font-size: .68rem;
+    padding: .05rem .4rem;
     border-radius: 20px;
-    letter-spacing: .3px;
+    font-weight: 600;
 }
 
-/* Corps du quadrant */
-.sw-quad-body {
+.swot-quad.forces      .swot-quad-head { background: #28a745; }
+.swot-quad.faiblesses  .swot-quad-head { background: #dc3545; }
+.swot-quad.opportunites .swot-quad-head { background: #17a2b8; }
+.swot-quad.menaces     .swot-quad-head { background: #6f42c1; }
+
+.swot-quad-body {
     flex: 1;
-    padding: .8rem 1rem;
-    font-size: .87rem;
+    padding: .7rem .9rem;
+    font-size: .83rem;
     line-height: 1.6;
     color: #2c3e50;
+    min-height: 160px;
+    max-height: 260px;
     overflow-y: auto;
-    max-height: 300px;
-    background: #fff;
 }
-.sw-quad-body .ql-editor { padding: 0; min-height: unset; }
-.sw-quad-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    min-height: 140px;
-    color: #aab;
-    font-style: italic;
-    font-size: .82rem;
-    gap: .4rem;
-}
-.sw-quad-empty i { font-size: 1.6rem; }
+.swot-quad-body .ql-editor { padding: 0; min-height: unset; font-size: .83rem; }
+.swot-quad-body p:last-child { margin-bottom: 0; }
 
-/* ── Commentaire ── */
-.sw-comment-block {
-    margin-top: 1rem;
-    padding: .7rem 1rem;
-    background: #f8f9fa;
-    border-left: 4px solid var(--primary);
-    border-radius: 0 var(--sw-radius) var(--sw-radius) 0;
-    font-size: .85rem;
+.swot-empty-inline {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: #b0bac8;
+    font-style: italic;
+    font-size: .8rem;
+    padding-top: .3rem;
+}
+
+/* ── Commentaire bas de page ── */
+.swot-comment {
+    padding: .6rem 1rem;
+    background: rgba(10,149,202,.04);
+    border-top: 1px solid rgba(10,149,202,.1);
+    font-size: .8rem;
     color: #555;
 }
 
-/* ── État vide global ── */
-.sw-empty-global {
-    padding: 3rem 1rem;
-    text-align: center;
-    border: 2px dashed rgba(10,149,202,.25);
-    border-radius: var(--sw-radius);
-    color: #8a9ab0;
-}
-.sw-empty-global i { font-size: 2.5rem; margin-bottom: .75rem; }
-.sw-empty-global h5 { font-weight: 700; color: #555; margin-bottom: .5rem; }
-
-/* ── Modal éditeurs ── */
-.sw-section-head {
+/* ── Éditeurs dans le modal ── */
+.sw-sec-head {
     display: flex;
     align-items: center;
     gap: .4rem;
     font-weight: 700;
-    font-size: .8rem;
-    padding: .45rem .75rem;
-    border-radius: 6px 6px 0 0;
+    font-size: .76rem;
+    padding: .35rem .7rem;
+    border-radius: 5px 5px 0 0;
     color: #fff;
-    margin-bottom: 0;
+    text-transform: uppercase;
+    letter-spacing: .3px;
 }
-.sw-section-head.forces      { background: var(--sw-green); }
-.sw-section-head.faiblesses  { background: var(--sw-red); }
-.sw-section-head.opportunites { background: var(--sw-blue); }
-.sw-section-head.menaces     { background: var(--sw-purple); }
+.sw-sec-head.forces       { background: #28a745; }
+.sw-sec-head.faiblesses   { background: #dc3545; }
+.sw-sec-head.opportunites { background: #17a2b8; }
+.sw-sec-head.menaces      { background: #6f42c1; }
+.sw-sec-head.commentaire  { background: #6c757d; }
 
-.sw-editor-wrap {
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    margin-bottom: 1rem;
-    overflow: hidden;
-}
-.sw-editor-wrap .ql-toolbar  { border: none; border-bottom: 1px solid #dee2e6; padding: 3px 6px; }
-.sw-editor-wrap .ql-container { border: none; min-height: 130px; }
-.sw-editor-wrap .ql-editor   { min-height: 130px; font-size: .9rem; }
+.sw-ed-wrap { border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 5px 5px; margin-bottom: .9rem; overflow: hidden; }
+.sw-ed-wrap .ql-toolbar  { border: none; border-bottom: 1px solid #dee2e6; padding: 2px 5px; }
+.sw-ed-wrap .ql-container { border: none; }
+.sw-ed-wrap .ql-editor   { min-height: 110px; font-size: .85rem; }
 
-/* ── Dark mode ── */
-@media (prefers-color-scheme: dark) {
-    .sw-quad-body   { background: #1a2233; color: #cdd3de; }
-    .sw-comment-block { background: #1e2a3a; color: #aab3c4; }
-    .sw-empty-global { color: #6b7a90; }
-}
-:root[data-theme="dark"] .sw-quad-body   { background: #1a2233; color: #cdd3de; }
-:root[data-theme="dark"] .sw-comment-block { background: #1e2a3a; color: #aab3c4; }
+#crudModal .modal-body { padding-bottom: .75rem; }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid px-3">
+<div class="container-fluid">
 
-    {# ── En-tête ── #}
-    <div class="sw-header">
-        <div>
-            <div class="sw-header-title">
-                <i class="bi bi-crosshair2"></i> SWOT — {{ acheteur.nom }}
+    {# ── Header ── #}
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1 class="page-title"><i class="fas fa-crosshairs me-2"></i>{% trans "Analyse SWOT" %}</h1>
+                <p class="page-subtitle mb-0">
+                    <span class="fw-semibold">{{ acheteur.nom }}</span>
+                    {% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
+                    &nbsp;·&nbsp;<span class="opacity-75">{{ acheteur.code }}</span>
+                </p>
             </div>
-            <div class="sw-header-sub">
-                {{ acheteur.code }}{% if acheteur.sigle %} · {{ acheteur.sigle }}{% endif %}
-                {% if acheteur.activite_principale %} · {{ acheteur.activite_principale }}{% endif %}
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-secondary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-arrow-left"></i>{% trans "Retour" %}
+                </a>
+                {% if swot_exists %}
+                <button class="btn-add" id="editSwotBtn">
+                    <i class="fas fa-edit"></i>{% trans "Modifier" %}
+                </button>
+                <button class="btn btn-sm btn-danger d-flex align-items-center gap-1" id="deleteSwotBtn">
+                    <i class="fas fa-trash"></i>{% trans "Supprimer" %}
+                </button>
+                {% else %}
+                <button class="btn-add" id="createSwotBtn">
+                    <i class="fas fa-plus"></i>{% trans "Créer l'analyse" %}
+                </button>
+                {% endif %}
             </div>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-            {% if swot_exists %}
-            <button class="btn btn-sm btn-warning fw-semibold" id="editSwotBtn">
-                <i class="bi bi-pencil-fill me-1"></i>{% trans "Modifier" %}
-            </button>
-            <button class="btn btn-sm btn-danger fw-semibold" id="deleteSwotBtn">
-                <i class="bi bi-trash-fill me-1"></i>{% trans "Supprimer" %}
-            </button>
-            {% else %}
-            <button class="btn btn-sm btn-light fw-semibold" id="createSwotBtn">
-                <i class="bi bi-plus-circle-fill me-1"></i>{% trans "Créer l'analyse" %}
-            </button>
-            {% endif %}
         </div>
     </div>
 
-    {# ── Contenu principal ── #}
-    {% if swot_exists %}
-
-    <div class="sw-grid">
-
-        {# Forces #}
-        <div class="sw-quad forces">
-            <div class="sw-quad-head">
-                <i class="bi bi-check-circle-fill"></i> {% trans "Forces" %}
-                <span class="sw-quad-tag">{% trans "Interne" %} · +</span>
-            </div>
-            <div class="sw-quad-body">
-                {% if swot_data.forces %}
-                    {{ swot_data.forces|safe }}
-                {% else %}
-                    <div class="sw-quad-empty">
-                        <i class="bi bi-dash-circle"></i>
-                        <span>{% trans "Non renseigné" %}</span>
-                    </div>
-                {% endif %}
-            </div>
+    {# ── Contenu ── #}
+    <div class="table-card">
+        <div class="table-card-header">
+            <h6 class="mb-0 fw-bold" style="color:var(--color-primary-dark);">
+                <i class="fas fa-crosshairs me-2"></i>{% trans "SWOT stratégique" %}
+            </h6>
         </div>
 
-        {# Faiblesses #}
-        <div class="sw-quad faiblesses">
-            <div class="sw-quad-head">
-                <i class="bi bi-exclamation-triangle-fill"></i> {% trans "Faiblesses" %}
-                <span class="sw-quad-tag">{% trans "Interne" %} · −</span>
+        {% if swot_exists %}
+        <div class="swot-grid">
+
+            {# Forces #}
+            <div class="swot-quad forces">
+                <div class="swot-quad-head">
+                    <i class="fas fa-check-circle"></i> {% trans "Forces" %}
+                    <span class="swot-quad-tag">{% trans "Interne · +" %}</span>
+                </div>
+                <div class="swot-quad-body">
+                    {% if swot_data.forces %}
+                        {{ swot_data.forces|safe }}
+                    {% else %}
+                        <div class="swot-empty-inline"><i class="fas fa-minus-circle"></i>{% trans "Non renseigné" %}</div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="sw-quad-body">
-                {% if swot_data.faiblesses %}
-                    {{ swot_data.faiblesses|safe }}
-                {% else %}
-                    <div class="sw-quad-empty">
-                        <i class="bi bi-dash-circle"></i>
-                        <span>{% trans "Non renseigné" %}</span>
-                    </div>
-                {% endif %}
+
+            {# Faiblesses #}
+            <div class="swot-quad faiblesses">
+                <div class="swot-quad-head">
+                    <i class="fas fa-exclamation-triangle"></i> {% trans "Faiblesses" %}
+                    <span class="swot-quad-tag">{% trans "Interne · −" %}</span>
+                </div>
+                <div class="swot-quad-body">
+                    {% if swot_data.faiblesses %}
+                        {{ swot_data.faiblesses|safe }}
+                    {% else %}
+                        <div class="swot-empty-inline"><i class="fas fa-minus-circle"></i>{% trans "Non renseigné" %}</div>
+                    {% endif %}
+                </div>
             </div>
+
+            {# Opportunités #}
+            <div class="swot-quad opportunites">
+                <div class="swot-quad-head">
+                    <i class="fas fa-arrow-up"></i> {% trans "Opportunités" %}
+                    <span class="swot-quad-tag">{% trans "Externe · +" %}</span>
+                </div>
+                <div class="swot-quad-body">
+                    {% if swot_data.opportunites %}
+                        {{ swot_data.opportunites|safe }}
+                    {% else %}
+                        <div class="swot-empty-inline"><i class="fas fa-minus-circle"></i>{% trans "Non renseigné" %}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Menaces #}
+            <div class="swot-quad menaces">
+                <div class="swot-quad-head">
+                    <i class="fas fa-shield-alt"></i> {% trans "Menaces" %}
+                    <span class="swot-quad-tag">{% trans "Externe · −" %}</span>
+                </div>
+                <div class="swot-quad-body">
+                    {% if swot_data.menaces %}
+                        {{ swot_data.menaces|safe }}
+                    {% else %}
+                        <div class="swot-empty-inline"><i class="fas fa-minus-circle"></i>{% trans "Non renseigné" %}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>{# /swot-grid #}
+
+        {% if swot_data.commentaire %}
+        <div class="swot-comment">
+            <i class="fas fa-comment-alt me-1" style="color:var(--color-primary);"></i>
+            <strong>{% trans "Commentaire" %} :</strong>
+            {{ swot_data.commentaire|safe }}
+        </div>
+        {% endif %}
+
+        {% else %}
+
+        <div class="empty-state">
+            <i class="fas fa-crosshairs fa-3x mb-3" style="color:rgba(10,149,202,.25);"></i>
+            <h5 class="fw-bold mb-2" style="color:var(--color-primary);">{% trans "Aucune analyse SWOT" %}</h5>
+            <p class="text-muted mb-3 small">{% trans "Aucune analyse SWOT n'a été créée pour cet acheteur." %}</p>
+            <button class="btn-add" id="createSwotBtn2">
+                <i class="fas fa-plus"></i>{% trans "Créer l'analyse" %}
+            </button>
         </div>
 
-        {# Opportunités #}
-        <div class="sw-quad opportunites">
-            <div class="sw-quad-head">
-                <i class="bi bi-arrow-up-right-circle-fill"></i> {% trans "Opportunités" %}
-                <span class="sw-quad-tag">{% trans "Externe" %} · +</span>
-            </div>
-            <div class="sw-quad-body">
-                {% if swot_data.opportunites %}
-                    {{ swot_data.opportunites|safe }}
-                {% else %}
-                    <div class="sw-quad-empty">
-                        <i class="bi bi-dash-circle"></i>
-                        <span>{% trans "Non renseigné" %}</span>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        {# Menaces #}
-        <div class="sw-quad menaces">
-            <div class="sw-quad-head">
-                <i class="bi bi-shield-exclamation"></i> {% trans "Menaces" %}
-                <span class="sw-quad-tag">{% trans "Externe" %} · −</span>
-            </div>
-            <div class="sw-quad-body">
-                {% if swot_data.menaces %}
-                    {{ swot_data.menaces|safe }}
-                {% else %}
-                    <div class="sw-quad-empty">
-                        <i class="bi bi-dash-circle"></i>
-                        <span>{% trans "Non renseigné" %}</span>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-    </div>{# /sw-grid #}
-
-    {% if swot_data.commentaires %}
-    <div class="sw-comment-block">
-        <i class="bi bi-chat-left-text me-1"></i>
-        <strong>{% trans "Commentaire" %} :</strong>
-        {{ swot_data.commentaires|safe }}
+        {% endif %}
     </div>
-    {% endif %}
-
-    {% else %}
-
-    <div class="sw-empty-global">
-        <div><i class="bi bi-crosshair2"></i></div>
-        <h5>{% trans "Aucune analyse SWOT" %}</h5>
-        <p class="mb-3 fs-sm">{% trans "Créez l'analyse SWOT pour évaluer la position stratégique de cet acheteur." %}</p>
-        <button class="btn btn-primary btn-sm fw-semibold" id="createSwotBtn2">
-            <i class="bi bi-plus-circle-fill me-1"></i>{% trans "Créer l'analyse" %}
-        </button>
-    </div>
-
-    {% endif %}
 
 </div>
 
-{# ════════════════════════════════════ MODAL CRUD ════════════════════ #}
-<div class="modal fade" id="swotModal" tabindex="-1" aria-hidden="true">
+{# ══════════════════════ MODAL CRUD ══════════════════════════════════ #}
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
 
-            <div class="modal-header bg-primary text-white py-2 px-3">
-                <h6 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0" id="swotModalTitle">
-                    <i class="bi bi-crosshair2"></i> {% trans "Analyse SWOT" %}
+            <div class="modal-header" style="background:var(--primary-gradient);padding:.6rem 1rem;">
+                <h6 class="modal-title text-white fw-bold mb-0 d-flex align-items-center gap-2" id="crudModalTitle">
+                    <i class="fas fa-crosshairs"></i> {% trans "Analyse SWOT" %}
                 </h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
 
             <form id="swotForm">
                 <input type="hidden" id="swotId">
-                <input type="hidden" id="acheteurId" value="{{ acheteur.id }}">
-
                 <div class="modal-body p-3">
                     <div class="row g-3">
 
                         {# Forces #}
                         <div class="col-md-6">
-                            <div class="sw-section-head forces">
-                                <i class="bi bi-check-circle-fill"></i> {% trans "Forces" %} — {% trans "Interne" %}
-                            </div>
-                            <div class="sw-editor-wrap">
+                            <div class="sw-sec-head forces"><i class="fas fa-check-circle"></i> {% trans "Forces" %} — {% trans "Interne" %}</div>
+                            <div class="sw-ed-wrap">
                                 <div id="forcesEditor"></div>
-                                <textarea id="forcesTextarea" name="forces" style="display:none;"></textarea>
+                                <textarea id="forcesTextarea" style="display:none;"></textarea>
                             </div>
                         </div>
 
                         {# Faiblesses #}
                         <div class="col-md-6">
-                            <div class="sw-section-head faiblesses">
-                                <i class="bi bi-exclamation-triangle-fill"></i> {% trans "Faiblesses" %} — {% trans "Interne" %}
-                            </div>
-                            <div class="sw-editor-wrap">
+                            <div class="sw-sec-head faiblesses"><i class="fas fa-exclamation-triangle"></i> {% trans "Faiblesses" %} — {% trans "Interne" %}</div>
+                            <div class="sw-ed-wrap">
                                 <div id="faiblessesEditor"></div>
-                                <textarea id="faiblessesTextarea" name="faiblesses" style="display:none;"></textarea>
+                                <textarea id="faiblessesTextarea" style="display:none;"></textarea>
                             </div>
                         </div>
 
                         {# Opportunités #}
                         <div class="col-md-6">
-                            <div class="sw-section-head opportunites">
-                                <i class="bi bi-arrow-up-right-circle-fill"></i> {% trans "Opportunités" %} — {% trans "Externe" %}
-                            </div>
-                            <div class="sw-editor-wrap">
+                            <div class="sw-sec-head opportunites"><i class="fas fa-arrow-up"></i> {% trans "Opportunités" %} — {% trans "Externe" %}</div>
+                            <div class="sw-ed-wrap">
                                 <div id="opportunitesEditor"></div>
-                                <textarea id="opportunitesTextarea" name="opportunites" style="display:none;"></textarea>
+                                <textarea id="opportunitesTextarea" style="display:none;"></textarea>
                             </div>
                         </div>
 
                         {# Menaces #}
                         <div class="col-md-6">
-                            <div class="sw-section-head menaces">
-                                <i class="bi bi-shield-exclamation"></i> {% trans "Menaces" %} — {% trans "Externe" %}
-                            </div>
-                            <div class="sw-editor-wrap">
+                            <div class="sw-sec-head menaces"><i class="fas fa-shield-alt"></i> {% trans "Menaces" %} — {% trans "Externe" %}</div>
+                            <div class="sw-ed-wrap">
                                 <div id="menacesEditor"></div>
-                                <textarea id="menacesTextarea" name="menaces" style="display:none;"></textarea>
+                                <textarea id="menacesTextarea" style="display:none;"></textarea>
                             </div>
                         </div>
 
-                        {# Commentaire #}
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold">
-                                <i class="bi bi-chat-left-text me-1"></i>{% trans "Commentaire interne" %}
-                            </label>
-                            <textarea class="form-control form-control-sm" id="commentaireSwot" rows="2"></textarea>
-                        </div>
-
-                        {# Couleur #}
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold">
-                                <i class="bi bi-palette me-1"></i>{% trans "Couleur commentaire" %}
-                            </label>
-                            <select class="form-select form-select-sm" id="couleurCommentaireSwot">
-                                <option value="">{% trans "Aucune" %}</option>
-                                {% for c in coloration_list %}
-                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
-                                {% endfor %}
-                            </select>
+                        {# Commentaire interne (rich editor, pleine largeur) #}
+                        <div class="col-12">
+                            <div class="sw-sec-head commentaire"><i class="fas fa-comment-alt"></i> {% trans "Commentaire interne" %}</div>
+                            <div class="sw-ed-wrap">
+                                <div id="commentaireEditor"></div>
+                                <textarea id="commentaireTextarea" style="display:none;"></textarea>
+                            </div>
                         </div>
 
                     </div>
                 </div>
 
                 <div class="modal-footer py-2 px-3">
-                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
-                        {% trans "Annuler" %}
-                    </button>
-                    <button type="submit" class="btn btn-sm btn-primary fw-semibold" id="submitSwotBtn">
-                        <i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}
-                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                    <button type="submit" class="btn-add" id="submitBtn">
+                        <i class="fas fa-check"></i><span class="btn-label">{% trans "Enregistrer" %}</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-1" role="status"></span>
                     </button>
                 </div>
             </form>
-
         </div>
     </div>
 </div>
 
-{# ════════════════════════════════════ MODAL SUPPRESSION ════════════ #}
+{# ══════════════════════ MODAL SUPPRESSION ═══════════════════════════ #}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white py-2 px-3">
-                <h6 class="modal-title fw-bold mb-0">
-                    <i class="bi bi-trash-fill me-1"></i>{% trans "Confirmation" %}
-                </h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-trash me-1"></i>{% trans "Confirmation" %}</h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center py-3">
-                <i class="bi bi-exclamation-triangle-fill text-danger fs-2 d-block mb-2"></i>
-                <p class="mb-0 small">{% trans "Supprimer l'analyse SWOT ? Cette action est irréversible." %}</p>
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2 d-block"></i>
+                <p class="small mb-0">{% trans "Supprimer l'analyse SWOT ? Cette action est irréversible." %}</p>
             </div>
             <div class="modal-footer py-2 justify-content-center">
                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
                 <button type="button" class="btn btn-sm btn-danger fw-semibold" id="confirmDeleteBtn">
-                    <i class="bi bi-trash me-1"></i>{% trans "Supprimer" %}
+                    <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
                 </button>
             </div>
         </div>
@@ -421,15 +349,16 @@
 {% block scripts %}
 <script>
 $(function () {
-    const ACHETEUR_ID = '{{ acheteur.id }}';
-    const API_URL     = `/api/acheteur/${ACHETEUR_ID}/swot-oneview/`;
-    let   token       = '{{ access_token }}';
-    const refresh     = '{{ refresh_token }}';
-    let   swotId      = null;
-    let   editors     = {};
-    let   editorsReady = false;
+    const ACHETEUR_ID   = '{{ id_acheteur }}';
+    const API_URL       = `/api/acheteur/${ACHETEUR_ID}/swot-oneview/`;
+    let   token         = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let   swotId        = {% if swot_exists %}{{ swot.id }}{% else %}null{% endif %};
+    let   editors       = {};
+    let   editorsReady  = false;
 
-    /* ── Quill ── */
+    /* ── Quill init ── */
+    const FIELDS = ['forces','faiblesses','opportunites','menaces','commentaire'];
     const QUILL_OPTS = {
         theme: 'snow',
         modules: { toolbar: [['bold','italic','underline'],
@@ -439,100 +368,86 @@ $(function () {
 
     function initEditors() {
         if (editorsReady) return;
-        [['forces','forcesTextarea'],
-         ['faiblesses','faiblessesTextarea'],
-         ['opportunites','opportunitesTextarea'],
-         ['menaces','menacesTextarea']].forEach(([key, taId]) => {
-            const q = new Quill(`#${key}Editor`, QUILL_OPTS);
-            const ta = document.getElementById(taId);
+        FIELDS.forEach(k => {
+            const q  = new Quill(`#${k}Editor`, QUILL_OPTS);
+            const ta = document.getElementById(`${k}Textarea`);
             q.on('text-change', () => {
                 const h = q.root.innerHTML;
                 ta.value = (h === '<p><br></p>' || h === '<p></p>') ? '' : h;
             });
-            editors[key] = q;
+            editors[k] = q;
         });
         editorsReady = true;
     }
 
     function fillEditors(data) {
-        if (!editorsReady) return;
-        ['forces','faiblesses','opportunites','menaces'].forEach(k => {
+        FIELDS.forEach(k => {
             if (editors[k]) editors[k].root.innerHTML = data[k] || '';
         });
     }
 
     function clearEditors() {
-        if (!editorsReady) return;
-        Object.values(editors).forEach(q => q.root.innerHTML = '');
-        ['forcesTextarea','faiblessesTextarea','opportunitesTextarea','menacesTextarea']
-            .forEach(id => document.getElementById(id).value = '');
+        FIELDS.forEach(k => {
+            if (editors[k]) editors[k].root.innerHTML = '';
+            const ta = document.getElementById(`${k}Textarea`);
+            if (ta) ta.value = '';
+        });
     }
 
     /* ── Helpers ── */
-    function csrfToken() {
+    function csrf() {
         const m = document.cookie.match(/csrftoken=([^;]+)/);
         return m ? m[1] : '';
     }
-
-    function authHeaders(extra) {
-        return Object.assign({ 'Authorization': 'Bearer ' + token }, extra || {});
+    function headers(extra) {
+        return Object.assign({'Authorization':'Bearer '+token}, extra||{});
     }
-
     function doRefresh(cb) {
-        $.ajax({ url: '/api/token/refresh/', type: 'POST',
-                 contentType: 'application/json',
-                 data: JSON.stringify({ refresh }),
-                 success(r) { if (r.access) { token = r.access; cb && cb(); } },
-                 error()    { window.location.href = '/login/'; }
+        $.ajax({ url:'/api/token/refresh/', type:'POST',
+                 contentType:'application/json',
+                 data: JSON.stringify({refresh:REFRESH_TOKEN}),
+                 success(r){ if(r.access){token=r.access; cb&&cb();} },
+                 error(){ window.location.href='/login/'; }
         });
     }
 
     /* ── Ouvrir modal ── */
     function openModal(editing) {
-        initEditors();
-        clearEditors();
-        swotId = null;
-        $('#swotId').val('');
-        $('#commentaireSwot').val('');
-        $('#couleurCommentaireSwot').val('');
-        $('#swotModal').modal('show');
+        $('#crudModal').modal('show');
+        $('#crudModal').one('shown.bs.modal', function() {
+            initEditors();
+            clearEditors();
+            swotId = null;
 
-        if (editing) {
-            $.ajax({ url: API_URL, type: 'GET', headers: authHeaders(),
-                success(resp) {
-                    if (resp && resp.length) {
-                        const d = resp[0];
-                        swotId = d.id;
-                        $('#swotId').val(d.id);
-                        $('#commentaireSwot').val(d.commentaire || '');
-                        $('#couleurCommentaireSwot').val(d.couleur_commentaire || '');
-                        setTimeout(() => fillEditors(d), 80);
-                    }
-                },
-                error(xhr) { if (xhr.status === 401) doRefresh(() => openModal(true)); }
-            });
-        }
+            if (editing) {
+                $.ajax({ url: API_URL, type:'GET', headers: headers(),
+                    success(resp) {
+                        if (resp && resp.length) {
+                            const d = resp[0];
+                            swotId = d.id;
+                            fillEditors(d);
+                        }
+                    },
+                    error(xhr){ if(xhr.status===401) doRefresh(()=>openModal(true)); }
+                });
+            }
+        });
     }
 
     $('#createSwotBtn, #createSwotBtn2').on('click', () => openModal(false));
-    $('#editSwotBtn').on('click',   () => openModal(true));
+    $('#editSwotBtn').on('click',              () => openModal(true));
 
     /* ── Soumettre ── */
-    $('#swotForm').on('submit', function (e) {
+    $('#swotForm').on('submit', function(e) {
         e.preventDefault();
-        const isEdit = !!swotId;
-        const payload = {
-            acheteur:           ACHETEUR_ID,
-            forces:             $('#forcesTextarea').val(),
-            faiblesses:         $('#faiblessesTextarea').val(),
-            opportunites:       $('#opportunitesTextarea').val(),
-            menaces:            $('#menacesTextarea').val(),
-            couleur_commentaire: $('#couleurCommentaireSwot').val() || null,
-            commentaire:        $('#commentaireSwot').val() || null
-        };
-        if (isEdit) payload.id = swotId;
+        const isEdit  = !!swotId;
+        const payload = { acheteur: ACHETEUR_ID };
+        FIELDS.forEach(k => {
+            const val = document.getElementById(`${k}Textarea`).value;
+            payload[k] = val || null;
+        });
 
-        const $btn = $('#submitSwotBtn');
+        const $btn = $('#submitBtn');
         $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
 
         $.ajax({
@@ -540,54 +455,54 @@ $(function () {
             type: isEdit ? 'PUT' : 'POST',
             contentType: 'application/json',
             data: JSON.stringify(payload),
-            headers: authHeaders({ 'X-CSRFToken': csrfToken() }),
-            success() {
-                $('#swotModal').modal('hide');
-                Swal.fire({ icon:'success', title:'{% trans "Enregistré" %}',
-                            timer:1500, showConfirmButton:false })
-                    .then(() => location.reload());
+            headers: headers({'X-CSRFToken': csrf()}),
+            success(r) {
+                if (!isEdit && r && r.data && r.data.id) swotId = r.data.id;
+                $('#crudModal').modal('hide');
+                Swal.fire({icon:'success', title:'{% trans "Enregistré" %}',
+                           timer:1500, showConfirmButton:false})
+                    .then(()=>location.reload());
             },
             error(xhr) {
-                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-                if (xhr.status === 401) { doRefresh(() => $('#swotForm').trigger('submit')); return; }
-                let msg = '{% trans "Une erreur est survenue." %}';
+                $btn.prop('disabled',false).find('.spinner-border').addClass('d-none');
+                if (xhr.status===401){doRefresh(()=>$('#swotForm').trigger('submit'));return;}
+                let msg='{% trans "Une erreur est survenue." %}';
                 if (xhr.responseJSON) {
-                    const errs = Object.entries(xhr.responseJSON)
-                        .map(([f, v]) => `${f}: ${Array.isArray(v) ? v.join(', ') : v}`)
+                    const errs=Object.entries(xhr.responseJSON)
+                        .map(([f,v])=>`${f}: ${Array.isArray(v)?v.join(', '):v}`)
                         .join('\n');
-                    if (errs) msg = errs;
+                    if(errs) msg=errs;
                 }
-                Swal.fire({ icon:'error', title:'Erreur', html: msg.replace(/\n/g,'<br>') });
+                Swal.fire({icon:'error',title:'Erreur',html:msg.replace(/\n/g,'<br>')});
             }
         });
     });
 
     /* ── Supprimer ── */
-    $('#deleteSwotBtn').on('click', () => $('#deleteModal').modal('show'));
+    $('#deleteSwotBtn').on('click', ()=>$('#deleteModal').modal('show'));
 
-    $('#confirmDeleteBtn').on('click', function () {
-        function doDelete(id) {
+    $('#confirmDeleteBtn').on('click', function() {
+        function del(id) {
             $.ajax({
-                url: `${API_URL}${id}/`, type: 'DELETE',
-                headers: authHeaders({ 'X-CSRFToken': csrfToken() }),
-                success() {
+                url: `${API_URL}${id}/`, type:'DELETE',
+                headers: headers({'X-CSRFToken':csrf()}),
+                success(){
                     $('#deleteModal').modal('hide');
-                    Swal.fire({ icon:'success', title:'{% trans "Supprimé" %}',
-                                timer:1500, showConfirmButton:false })
-                        .then(() => location.reload());
+                    Swal.fire({icon:'success',title:'{% trans "Supprimé" %}',
+                               timer:1500,showConfirmButton:false})
+                        .then(()=>location.reload());
                 },
-                error(xhr) {
-                    if (xhr.status === 401) { doRefresh(() => doDelete(id)); return; }
-                    Swal.fire({ icon:'error', title:'Erreur',
-                                text: xhr.responseJSON?.detail || '{% trans "Impossible de supprimer." %}' });
+                error(xhr){
+                    if(xhr.status===401){doRefresh(()=>del(id));return;}
+                    Swal.fire({icon:'error',title:'Erreur',
+                               text:xhr.responseJSON?.detail||'{% trans "Impossible de supprimer." %}'});
                 }
             });
         }
-
-        if (swotId) { doDelete(swotId); return; }
-        $.ajax({ url: API_URL, type: 'GET', headers: authHeaders(),
-            success(r) { if (r && r.length) doDelete(r[0].id); },
-            error(xhr) { if (xhr.status === 401) doRefresh(() => $('#confirmDeleteBtn').trigger('click')); }
+        if(swotId){ del(swotId); return; }
+        $.ajax({ url:API_URL, type:'GET', headers:headers(),
+            success(r){ if(r&&r.length) del(r[0].id); },
+            error(xhr){ if(xhr.status===401) doRefresh(()=>$('#confirmDeleteBtn').trigger('click')); }
         });
     });
 });
