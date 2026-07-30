@@ -114,6 +114,9 @@
             <h6 class="mb-0 fw-bold" style="color:#0d80be;">
                 <i class="fas fa-lightbulb me-2"></i><span id="listCount">{{ innovations_count }}</span> {% trans "innovation(s)" %}
             </h6>
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addInnovationModal">
+                <i class="fas fa-plus"></i>{% trans "Ajouter" %}
+            </button>
         </div>
         <div class="p-3" id="innovationsContainer">
             <div class="empty-state">
@@ -280,7 +283,11 @@ $(function () {
         }
     });
 
-    /* ── Types couleurs ── */
+    /* ── Types (labels traduits depuis Django, couleurs) ── */
+    const TYPE_LABELS = {
+        {% for type_code, type_label in types_innovation %}'{{ type_code }}': '{{ type_label|escapejs }}',
+        {% endfor %}
+    };
     const TYPE_COLORS = {
         'nouveau_produit_service':      '#25add6',
         'nouveaux_outils_production':   '#28a745',
@@ -331,7 +338,7 @@ $(function () {
             <div class="d-flex justify-content-between align-items-start">
                 <div style="flex:1;min-width:0;">
                     <div class="inn-title">${$('<div>').text(inn.titre||'—').html()}</div>
-                    <span class="inn-type" style="background:${color};">${$('<div>').text(inn.type_innovation_display||inn.type_innovation).html()}</span>
+                    <span class="inn-type" style="background:${color};">${$('<div>').text(TYPE_LABELS[inn.type_innovation]||inn.type_innovation).html()}</span>
                     ${period ? `<div class="inn-period"><i class="fas fa-calendar-alt me-1"></i>${period}</div>` : ''}
                 </div>
                 <div class="inn-actions ms-2">
