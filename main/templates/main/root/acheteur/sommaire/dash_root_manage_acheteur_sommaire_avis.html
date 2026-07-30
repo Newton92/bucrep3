@@ -2,10 +2,6 @@
 {% load i18n static humanize acheteur_navigation %}
 
 {% block styles %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
 .page-header {
     background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
@@ -31,6 +27,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
 }
 .analysis-block-header h6 {
     font-size: 0.8rem;
@@ -49,24 +47,6 @@
 .analysis-block-body p { margin-bottom: 0.5rem; }
 .analysis-block-body p:last-child { margin-bottom: 0; }
 
-.color-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 20px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-.color-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
 .timestamps-bar {
     display: flex;
     gap: 1.25rem;
@@ -80,14 +60,12 @@
 
 .empty-state {
     text-align: center;
-    padding: 2.5rem 1.5rem;
-    background: #fff;
-    border: 2px dashed #c8dde9;
-    border-radius: 10px;
+    padding: 2rem 1.5rem;
+    color: #8a9ab0;
 }
-.empty-state i { font-size: 2.5rem; color: #b0c8d8; margin-bottom: 0.75rem; }
-.empty-state h6 { font-size: 0.95rem; font-weight: 700; color: #0d80be; margin-bottom: 0.4rem; }
-.empty-state p { font-size: 0.82rem; color: #6c757d; margin-bottom: 1rem; }
+.empty-state i { font-size: 2rem; color: #b0c8d8; margin-bottom: 0.5rem; }
+.empty-state h6 { font-size: 0.9rem; font-weight: 700; color: #0d80be; margin-bottom: 0.3rem; }
+.empty-state p { font-size: 0.82rem; color: #6c757d; margin-bottom: 0; }
 
 .card-header-gradient {
     background: linear-gradient(135deg, #0a95ca 0%, #106cb2 100%);
@@ -96,18 +74,6 @@
     border-radius: 6px 6px 0 0;
 }
 .card-header-gradient .modal-title { font-size: 0.9rem; font-weight: 700; }
-
-.select2-container--bootstrap-5 .select2-selection {
-    border: 1px solid #ced4da !important;
-    border-radius: 6px !important;
-    min-height: 36px !important;
-    font-size: 0.875rem !important;
-}
-.select2-container--bootstrap-5 .select2-dropdown {
-    border: 1px solid #ced4da !important;
-    border-radius: 6px !important;
-    z-index: 1060 !important;
-}
 </style>
 {% endblock %}
 
@@ -116,60 +82,55 @@
     <!-- Header compact -->
     <div class="page-header d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="page-title"><i class="fas fa-file-alt me-2"></i>{% trans "Sommaire et Avis" %}</h1>
+            <h1 class="page-title"><i class="bi bi-file-text-fill me-2"></i>{% trans "Sommaire et Avis" %}</h1>
             <p class="page-subtitle">{{ acheteur.nom }} &mdash; {% trans "Évaluation synthétique et recommandations" %}</p>
         </div>
         <div class="d-flex gap-1 align-items-center">
             {% acheteur_page_nav 'sommaire_avis' %}
             <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-sm btn-outline-light">
-                <i class="fas fa-arrow-left me-1"></i>{% trans "Retour" %}
+                <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
             </a>
         </div>
     </div>
 
-    <!-- Contenu principal -->
-    {% if sommaire_avis %}
-        <!-- Actions -->
-        <div class="d-flex justify-content-end gap-2 mb-2">
-            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editSommaireModal">
-                <i class="fas fa-edit me-1"></i>{% trans "Modifier" %}
+    <!-- Bloc commentaire -->
+    <div class="analysis-block">
+        <div class="analysis-block-header">
+            <h6><i class="bi bi-chat-quote-fill me-1"></i>{% trans "Commentaire synthétique" %}</h6>
+            {% if sommaire_avis %}
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-warning btn-sm py-0 px-2" style="font-size:.75rem;" data-bs-toggle="modal" data-bs-target="#editSommaireModal">
+                    <i class="bi bi-pencil-fill me-1"></i>{% trans "Modifier" %}
+                </button>
+                <button class="btn btn-danger btn-sm py-0 px-2" style="font-size:.75rem;" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    <i class="bi bi-trash-fill me-1"></i>{% trans "Supprimer" %}
+                </button>
+            </div>
+            {% else %}
+            <button class="btn btn-success btn-sm py-0 px-2" style="font-size:.75rem;" data-bs-toggle="modal" data-bs-target="#addSommaireModal">
+                <i class="bi bi-plus-lg me-1"></i>{% trans "Ajouter" %}
             </button>
-            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                <i class="fas fa-trash me-1"></i>{% trans "Supprimer" %}
-            </button>
+            {% endif %}
         </div>
 
-        <!-- Commentaire synthétique -->
-        <div class="analysis-block">
-            <div class="analysis-block-header">
-                <h6><i class="fas fa-comment-dots me-1"></i>{% trans "Commentaire synthétique" %}</h6>
-                {% if sommaire_avis.couleur_commentaire %}
-                <span class="color-badge">
-                    <span class="color-dot" style="background-color: {{ sommaire_avis.couleur_commentaire.code|default:'#6c757d' }}"></span>
-                    {{ sommaire_avis.couleur_commentaire.couleur }}
-                </span>
-                {% endif %}
-            </div>
-            <div class="analysis-block-body">
-                {{ sommaire_avis.commentaire|safe }}
-            </div>
-            <div class="timestamps-bar">
-                <span><i class="fas fa-calendar-plus me-1"></i>{% trans "Créé le" %} {{ sommaire_avis.created_at|date:"d/m/Y H:i" }}</span>
-                <span><i class="fas fa-sync-alt me-1"></i>{% trans "Mis à jour" %} {{ sommaire_avis.updated_at|date:"d/m/Y H:i" }}</span>
+        {% if sommaire_avis %}
+        <div class="analysis-block-body">
+            {{ sommaire_avis.commentaire|safe }}
+        </div>
+        <div class="timestamps-bar">
+            <span><i class="bi bi-calendar-plus me-1"></i>{% trans "Créé le" %} {{ sommaire_avis.created_at|date:"d/m/Y H:i" }}</span>
+            <span><i class="bi bi-arrow-repeat me-1"></i>{% trans "Mis à jour" %} {{ sommaire_avis.updated_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        {% else %}
+        <div class="analysis-block-body">
+            <div class="empty-state">
+                <div><i class="bi bi-file-text"></i></div>
+                <h6>{% trans "Aucun sommaire et avis défini" %}</h6>
+                <p>{% trans "Cet acheteur ne possède pas encore de sommaire et avis enregistré." %}</p>
             </div>
         </div>
-
-    {% else %}
-        <!-- État vide -->
-        <div class="empty-state">
-            <div><i class="fas fa-file-alt"></i></div>
-            <h6>{% trans "Aucun sommaire et avis défini" %}</h6>
-            <p>{% trans "Cet acheteur ne possède pas encore de sommaire et avis enregistré." %}</p>
-            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addSommaireModal">
-                <i class="fas fa-plus-circle me-1"></i>{% trans "Ajouter le sommaire et avis" %}
-            </button>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </div>
 
 <!-- Modal Ajout -->
@@ -177,38 +138,25 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="card-header-gradient d-flex justify-content-between align-items-center">
-                <span class="modal-title"><i class="fas fa-plus-circle me-2"></i>{% trans "Ajouter le Sommaire et Avis" %}</span>
+                <span class="modal-title"><i class="bi bi-plus-circle me-2"></i>{% trans "Ajouter le Sommaire et Avis" %}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <form id="addSommaireForm">
                 <div class="modal-body py-3 px-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold" style="font-size:0.82rem;">
-                            <i class="fas fa-comment-dots me-1 text-primary"></i>{% trans "Commentaire synthétique" %}
+                            <i class="bi bi-chat-quote-fill me-1 text-primary"></i>{% trans "Commentaire synthétique" %}
                         </label>
                         <textarea class="form-control rich-editor" id="commentaire" name="commentaire" rows="6"
                                   placeholder="{% trans "Rédigez une synthèse claire de votre évaluation : points forts, points d'attention, recommandations..." %}"></textarea>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold" style="font-size:0.82rem;">
-                            <i class="fas fa-palette me-1 text-info"></i>{% trans "Étiquette de couleur" %} <span class="text-muted fw-normal">({% trans "optionnel" %})</span>
-                        </label>
-                        <select class="form-select form-select-sm select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                        <i class="bi bi-x me-1"></i>{% trans "Annuler" %}
                     </button>
                     <button type="submit" class="btn btn-sm btn-success" id="submitAddBtn">
-                        <span class="btn-text"><i class="fas fa-check me-1"></i>{% trans "Enregistrer" %}</span>
+                        <span class="btn-text"><i class="bi bi-check me-1"></i>{% trans "Enregistrer" %}</span>
                         <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
@@ -222,7 +170,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="card-header-gradient d-flex justify-content-between align-items-center">
-                <span class="modal-title"><i class="fas fa-edit me-2"></i>{% trans "Modifier le Sommaire et Avis" %}</span>
+                <span class="modal-title"><i class="bi bi-pencil-fill me-2"></i>{% trans "Modifier le Sommaire et Avis" %}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <form id="editSommaireForm">
@@ -230,30 +178,17 @@
                 <div class="modal-body py-3 px-4">
                     <div class="mb-3">
                         <label class="form-label fw-semibold" style="font-size:0.82rem;">
-                            <i class="fas fa-comment-dots me-1 text-primary"></i>{% trans "Commentaire synthétique" %}
+                            <i class="bi bi-chat-quote-fill me-1 text-primary"></i>{% trans "Commentaire synthétique" %}
                         </label>
                         <textarea class="form-control rich-editor" id="editCommentaire" name="commentaire" rows="6"></textarea>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold" style="font-size:0.82rem;">
-                            <i class="fas fa-palette me-1 text-info"></i>{% trans "Étiquette de couleur" %}
-                        </label>
-                        <select class="form-select form-select-sm select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
-                            <option value="">{% trans "Sélectionnez une couleur" %}</option>
-                            {% for coloration in coloration_list %}
-                            <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
-                                {{ coloration.couleur }}
-                            </option>
-                            {% endfor %}
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                        <i class="bi bi-x me-1"></i>{% trans "Annuler" %}
                     </button>
                     <button type="submit" class="btn btn-sm btn-warning" id="submitEditBtn">
-                        <span class="btn-text"><i class="fas fa-save me-1"></i>{% trans "Mettre à jour" %}</span>
+                        <span class="btn-text"><i class="bi bi-floppy me-1"></i>{% trans "Mettre à jour" %}</span>
                         <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
                 </div>
@@ -267,11 +202,11 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white py-2 px-3">
-                <h6 class="modal-title mb-0"><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Confirmation" %}</h6>
+                <h6 class="modal-title mb-0"><i class="bi bi-exclamation-triangle me-2"></i>{% trans "Confirmation" %}</h6>
                 <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center py-4">
-                <i class="fas fa-file-alt fa-2x text-danger mb-2 d-block"></i>
+                <i class="bi bi-file-text" style="font-size:2rem; color:#dc3545; display:block; margin-bottom:.5rem;"></i>
                 <h6 class="fw-bold mb-2">{% trans "Supprimer le sommaire et avis" %}</h6>
                 <p class="text-muted mb-0" style="font-size:0.85rem;">
                     {% trans "Cette action supprimera définitivement le sommaire et avis." %}<br>
@@ -280,10 +215,10 @@
             </div>
             <div class="modal-footer justify-content-center py-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>{% trans "Annuler" %}
+                    <i class="bi bi-x me-1"></i>{% trans "Annuler" %}
                 </button>
                 <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-1"></i>{% trans "Confirmer la suppression" %}
+                    <i class="bi bi-trash me-1"></i>{% trans "Confirmer la suppression" %}
                 </button>
             </div>
         </div>
@@ -292,7 +227,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
@@ -307,57 +241,31 @@ $(document).ready(function() {
         commentMinLength: "{% trans "Veuillez rédiger un commentaire synthétique d'au moins 10 caractères." %}",
         success: '{% trans "Succès" %}',
         error: '{% trans "Erreur" %}',
-        deleteInProgress: '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Suppression..." %}',
-        deleteConfirm: '<i class="fas fa-trash me-1"></i>{% trans "Confirmer la suppression" %}',
+        deleteInProgress: '<i class="bi bi-hourglass-split me-1"></i>{% trans "Suppression..." %}',
+        deleteConfirm: '<i class="bi bi-trash me-1"></i>{% trans "Confirmer la suppression" %}',
         sessionExpired: '{% trans "Session expirée" %}',
         sessionExpiredText: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
         reconnect: '{% trans "Se reconnecter" %}',
         cancel: '{% trans "Annuler" %}',
         cannotDelete: '{% trans "Impossible de supprimer le sommaire et avis" %}',
-        selectOption: '{% trans "Sélectionnez une option" %}',
     };
-
-    function formatColorOption(option) {
-        if (!option.id) return option.text;
-        const color = $(option.element).data('color');
-        if (color) {
-            return $(`<span class="d-flex align-items-center gap-2">
-                <span style="display:inline-block;width:14px;height:14px;background:${color};border-radius:3px;"></span>
-                <span>${option.text}</span>
-            </span>`);
-        }
-        return option.text;
-    }
-
-    function initSelect2() {
-        $('.select2-with-search').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: I18N.selectOption,
-            language: 'fr',
-            allowClear: true,
-            minimumResultsForSearch: 10,
-            dropdownParent: $('body'),
-            templateResult: formatColorOption,
-            templateSelection: formatColorOption
-        });
-    }
-
-    initSelect2();
 
     {% if sommaire_avis %}
     function populateEditForm() {
         const data = JSON.parse('{{ sommaire_avis_json|escapejs }}');
         $('#editSommaireId').val(data.id);
-        window.quillSetValue('editCommentaire', data.commentaire || '');
-        $('#editCouleurCommentaire').val(data.couleur_commentaire?.id || '').trigger('change');
+        var commHtml = data.commentaire || '';
+        var ta = document.getElementById('editCommentaire');
+        if (ta) {
+            ta.value = commHtml;
+            if (ta._quill) { ta._quill.clipboard.dangerouslyPasteHTML(commHtml); }
+        }
     }
     $('#editSommaireModal').on('shown.bs.modal', function() { populateEditForm(); });
     {% endif %}
 
     $('.modal').on('hidden.bs.modal', function() {
         $(this).find('form')[0]?.reset();
-        $('.select2-with-search').val(null).trigger('change');
     });
 
     $('#addSommaireForm').on('submit', function(e) {
