@@ -162,8 +162,8 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Description / Détails" %}</label>
-                            <textarea id="addDescription" class="form-control form-control-sm" rows="4"
-                                      placeholder="{% trans 'Objectifs, méthodologie, résultats...' %}"></textarea>
+                            <div id="addDescriptionEditor"></div>
+                            <textarea id="addDescription" style="display:none;"></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaire interne" %}</label>
@@ -219,7 +219,8 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Description / Détails" %}</label>
-                            <textarea id="editDescription" class="form-control form-control-sm" rows="4"></textarea>
+                            <div id="editDescriptionEditor"></div>
+                            <textarea id="editDescription" style="display:none;"></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaire interne" %}</label>
@@ -258,28 +259,37 @@ $(function () {
 
     /* ── Quill ── */
     const Q_OPTS = { theme:'snow', modules:{ toolbar:[['bold','italic','underline'],[{'list':'ordered'},{'list':'bullet'}],['clean']] } };
-    let quillAdd  = null;
-    let quillEdit = null;
+    let quillAddDesc  = null;
+    let quillAddCom   = null;
+    let quillEditDesc = null;
+    let quillEditCom  = null;
+
+    function syncQuill(q, taId) {
+        var h = q.root.innerHTML;
+        $(taId).val((h === '<p><br></p>' || h === '<p></p>') ? '' : h);
+    }
 
     $('#addInnovationModal').on('shown.bs.modal', function() {
-        if (!quillAdd) {
-            quillAdd = new Quill('#addCommentaireEditor', Q_OPTS);
-            quillAdd.on('text-change', function() {
-                var h = quillAdd.root.innerHTML;
-                $('#addCommentaire').val((h==='<p><br></p>'||h==='<p></p>') ? '' : h);
-            });
+        if (!quillAddDesc) {
+            quillAddDesc = new Quill('#addDescriptionEditor', Q_OPTS);
+            quillAddDesc.on('text-change', function() { syncQuill(quillAddDesc, '#addDescription'); });
         }
-        quillAdd.root.innerHTML = '';
-        $('#addCommentaire').val('');
+        if (!quillAddCom) {
+            quillAddCom = new Quill('#addCommentaireEditor', Q_OPTS);
+            quillAddCom.on('text-change', function() { syncQuill(quillAddCom, '#addCommentaire'); });
+        }
+        quillAddDesc.root.innerHTML = ''; $('#addDescription').val('');
+        quillAddCom.root.innerHTML  = ''; $('#addCommentaire').val('');
     });
 
     $('#editInnovationModal').on('shown.bs.modal', function() {
-        if (!quillEdit) {
-            quillEdit = new Quill('#editCommentaireEditor', Q_OPTS);
-            quillEdit.on('text-change', function() {
-                var h = quillEdit.root.innerHTML;
-                $('#editCommentaire').val((h==='<p><br></p>'||h==='<p></p>') ? '' : h);
-            });
+        if (!quillEditDesc) {
+            quillEditDesc = new Quill('#editDescriptionEditor', Q_OPTS);
+            quillEditDesc.on('text-change', function() { syncQuill(quillEditDesc, '#editDescription'); });
+        }
+        if (!quillEditCom) {
+            quillEditCom = new Quill('#editCommentaireEditor', Q_OPTS);
+            quillEditCom.on('text-change', function() { syncQuill(quillEditCom, '#editCommentaire'); });
         }
     });
 
@@ -417,7 +427,8 @@ $(function () {
     $('#addInnovationModal').on('hidden.bs.modal', function() {
         $('#addInnovationForm')[0].reset();
         clearFlatpickr('addDateDebut'); clearFlatpickr('addDateFin');
-        if (quillAdd) { quillAdd.root.innerHTML=''; $('#addCommentaire').val(''); }
+        if (quillAddDesc) { quillAddDesc.root.innerHTML=''; $('#addDescription').val(''); }
+        if (quillAddCom)  { quillAddCom.root.innerHTML='';  $('#addCommentaire').val('');  }
     });
 
     $('#addInnovationForm').on('submit', function(e) {
@@ -463,19 +474,20 @@ $(function () {
                 $('#editInnovationId').val(d.id);
                 $('#editTypeInnovation').val(d.type_innovation);
                 $('#editTitre').val(d.titre||'');
-                $('#editDescription').val(d.description||'');
+                var descVal    = d.description  || '';
+                var commentVal = d.commentaire  || '';
+                $('#editDescription').val(descVal);
+                $('#editCommentaire').val(commentVal);
 
                 clearFlatpickr('editDateDebut'); clearFlatpickr('editDateFin');
                 if (d.date_debut) { $('#editDateDebut').val(d.date_debut); var fp=$('#editDateDebut')[0]._flatpickr; if(fp)fp.setDate(d.date_debut); }
                 if (d.date_fin)   { $('#editDateFin').val(d.date_fin);     var fp=$('#editDateFin')[0]._flatpickr;   if(fp)fp.setDate(d.date_fin);   }
 
-                var commentVal = d.commentaire || '';
-                $('#editCommentaire').val(commentVal);
-
                 var $modal = $('#editInnovationModal');
                 bootstrap.Modal.getOrCreateInstance($modal[0]).show();
                 $modal.one('shown.bs.modal', function() {
-                    if (quillEdit) quillEdit.root.innerHTML = commentVal;
+                    if (quillEditDesc) quillEditDesc.root.innerHTML = descVal;
+                    if (quillEditCom)  quillEditCom.root.innerHTML  = commentVal;
                 });
             },
             error:function(xhr){ if(xhr.status===401){refreshToken(function(){$(`.edit-innovation-btn[data-id="${id}"]`).click();}); } }
@@ -485,7 +497,8 @@ $(function () {
     $('#editInnovationModal').on('hidden.bs.modal', function() {
         $('#editInnovationForm')[0].reset();
         clearFlatpickr('editDateDebut'); clearFlatpickr('editDateFin');
-        if (quillEdit) { quillEdit.root.innerHTML=''; $('#editCommentaire').val(''); }
+        if (quillEditDesc) { quillEditDesc.root.innerHTML=''; $('#editDescription').val(''); }
+        if (quillEditCom)  { quillEditCom.root.innerHTML='';  $('#editCommentaire').val('');  }
         currentId = null;
     });
 
