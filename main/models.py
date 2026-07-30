@@ -5498,12 +5498,12 @@ class InnovationDeveloppement(Model):
     """
 
     TYPES_INNOVATION = [
-        ("nouveau_produit_service", "Développement de Nouveau produit ou service"),
-        ("nouveaux_outils_production", "Acquisition de nouveaux outils de production"),
-        ("innovation_produit", "L'innovation de produit"),
-        ("innovation_procede", "L'innovation de procédé"),
-        ("innovation_commercialisation", "L'innovation de commercialisation"),
-        ("innovation_organisation", "L'innovation d'organisation"),
+        ("nouveau_produit_service",      _("Développement de Nouveau produit ou service")),
+        ("nouveaux_outils_production",   _("Acquisition de nouveaux outils de production")),
+        ("innovation_produit",           _("L'innovation de produit")),
+        ("innovation_procede",           _("L'innovation de procédé")),
+        ("innovation_commercialisation", _("L'innovation de commercialisation")),
+        ("innovation_organisation",      _("L'innovation d'organisation")),
     ]
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.CASCADE, related_name="innovations"
