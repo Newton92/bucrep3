@@ -187,7 +187,8 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaires" %}</label>
-                            <textarea class="form-control form-control-sm" id="addCommentaires" rows="3"></textarea>
+                            <div id="addCommentairesEditor" style="border:1px solid #dee2e6;border-radius:4px;min-height:90px;font-size:.85rem;"></div>
+                            <textarea id="addCommentaires" style="display:none;"></textarea>
                         </div>
                     </div>
                 </div>
@@ -247,7 +248,8 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">{% trans "Commentaires" %}</label>
-                            <textarea class="form-control form-control-sm" id="editCommentaires" rows="3"></textarea>
+                            <div id="editCommentairesEditor" style="border:1px solid #dee2e6;border-radius:4px;min-height:90px;font-size:.85rem;"></div>
+                            <textarea id="editCommentaires" style="display:none;"></textarea>
                         </div>
                     </div>
                 </div>
@@ -305,6 +307,36 @@ $(document).ready(function() {
     var currentFilters = {};
     var PAGE_SIZE = 10;
     var currentEditId = null;
+
+    /* ── Quill commentaires ── */
+    var quillAdd  = null;
+    var quillEdit = null;
+    var QUILL_OPTS = {
+        theme: 'snow',
+        modules: { toolbar: [['bold','italic','underline'],[{'list':'ordered'},{'list':'bullet'}],['clean']] }
+    };
+
+    $('#addConformiteModal').on('shown.bs.modal', function() {
+        if (!quillAdd) {
+            quillAdd = new Quill('#addCommentairesEditor', QUILL_OPTS);
+            quillAdd.on('text-change', function() {
+                var h = quillAdd.root.innerHTML;
+                $('#addCommentaires').val((h === '<p><br></p>' || h === '<p></p>') ? '' : h);
+            });
+        }
+        quillAdd.root.innerHTML = '';
+        $('#addCommentaires').val('');
+    });
+
+    $('#editConformiteModal').on('shown.bs.modal', function() {
+        if (!quillEdit) {
+            quillEdit = new Quill('#editCommentairesEditor', QUILL_OPTS);
+            quillEdit.on('text-change', function() {
+                var h = quillEdit.root.innerHTML;
+                $('#editCommentaires').val((h === '<p><br></p>' || h === '<p></p>') ? '' : h);
+            });
+        }
+    });
 
     var TYPE_LABELS = {
         'reglementaire':  "{{ t_reglementaire|escapejs }}",
@@ -570,6 +602,7 @@ $(document).ready(function() {
 
     $('#addConformiteModal').on('hidden.bs.modal', function() {
         this.querySelector('form').reset();
+        if (quillAdd) { quillAdd.root.innerHTML = ''; $('#addCommentaires').val(''); }
         toggleDetails(true, 'add');
     });
 
@@ -587,9 +620,14 @@ $(document).ready(function() {
                 $('#editOrganisme').val(d.organisme_controle || '');
                 $('#editStatut').prop('checked', d.statut);
                 $('#editDetails').val(d.details_non_conformite || '');
-                $('#editCommentaires').val(d.commentaires || '');
+                var commentVal = d.commentaires || '';
+                $('#editCommentaires').val(commentVal);
                 toggleDetails(d.statut, 'edit');
-                bootstrap.Modal.getOrCreateInstance($('#editConformiteModal')[0]).show();
+                var $modal = $('#editConformiteModal');
+                bootstrap.Modal.getOrCreateInstance($modal[0]).show();
+                $modal.one('shown.bs.modal', function() {
+                    if (quillEdit) quillEdit.root.innerHTML = commentVal;
+                });
             },
             error: function(xhr) {
                 if (xhr.status === 401) { refreshAccessToken(function() { $('[data-id="' + id + '"].edit-btn').first().click(); }); }
@@ -645,6 +683,7 @@ $(document).ready(function() {
 
     $('#editConformiteModal').on('hidden.bs.modal', function() {
         this.querySelector('form').reset();
+        if (quillEdit) { quillEdit.root.innerHTML = ''; $('#editCommentaires').val(''); }
         toggleDetails(true, 'edit');
         currentEditId = null;
     });
