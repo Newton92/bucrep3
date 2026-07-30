@@ -254,9 +254,9 @@ body { background: var(--c-bg); }
         </div>
     </div>
     <div class="hero-actions">
-        <a href="{% url 'dash_root_edit_acheteur' id_acheteur %}" class="hbtn hbtn-edit">
+        <button class="hbtn hbtn-edit" data-bs-toggle="modal" data-bs-target="#editAcheteurModal">
             <i class="bi bi-pencil-fill"></i> {% trans "Modifier" %}
-        </a>
+        </button>
         <a href="{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}" class="hbtn hbtn-opinion">
             <i class="bi bi-chat-quote-fill"></i> {% trans "Opinion crédit" %}
         </a>
@@ -558,6 +558,100 @@ body { background: var(--c-bg); }
 
     </div>{# end tab-body #}
 </div>{# end tabs-wrap #}
+
+{# ── Modal édition acheteur ── #}
+<div class="modal fade" id="editAcheteurModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;box-shadow:0 8px 30px rgba(0,0,0,.18);">
+            <div class="modal-header p-0">
+                <div style="background:linear-gradient(135deg,#0a95ca,#106cb2);padding:.55rem .9rem;width:100%;display:flex;align-items:center;justify-content:space-between;">
+                    <h5 class="modal-title mb-0" style="color:#fff;font-size:.9rem;font-weight:700;">
+                        <i class="bi bi-pencil-fill me-2"></i>{% trans "Modifier l'acheteur" %}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding:1rem 1.1rem;">
+                <form id="editAcheteurModalForm" novalidate>
+                    <div class="row g-2">
+
+                        <div class="col-12" style="font-size:.72rem;font-weight:700;color:#0d80be;text-transform:uppercase;letter-spacing:.4px;padding-bottom:2px;border-bottom:1px solid rgba(10,149,202,.15);margin-bottom:.1rem;">
+                            {% trans "Généralités" %}
+                        </div>
+                        <div class="col-md-7">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Raison sociale" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="eaNom" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Sigle" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="eaSigle">
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Date de création" %}</label>
+                            <input type="date" class="form-control form-control-sm" id="eaDateCreation">
+                        </div>
+                        <div class="col-md-8">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Activité principale" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="eaActivite">
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Statut" %}</label>
+                            <select class="form-select form-select-sm" id="eaStatut">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for s in statut_list %}<option value="{{ s.id }}">{{ s.libelle }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Forme juridique" %}</label>
+                            <select class="form-select form-select-sm" id="eaFormeJuridique">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for j in juridique_list %}<option value="{{ j.id }}">{{ j.libelle }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12" style="font-size:.72rem;font-weight:700;color:#0d80be;text-transform:uppercase;letter-spacing:.4px;padding-bottom:2px;border-bottom:1px solid rgba(10,149,202,.15);margin-top:.4rem;margin-bottom:.1rem;">
+                            {% trans "Localisation" %}
+                        </div>
+                        <div class="col-md-5">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Pays" %}</label>
+                            <select class="form-select form-select-sm" id="eaPays">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for p in pays_list %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Ville" %}</label>
+                            <select class="form-select form-select-sm" id="eaVille">
+                                <option value="">{% trans "Sélectionnez..." %}</option>
+                                {% for v in ville_list %}<option value="{{ v.id }}">{{ v.nom }}</option>{% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12" style="font-size:.72rem;font-weight:700;color:#0d80be;text-transform:uppercase;letter-spacing:.4px;padding-bottom:2px;border-bottom:1px solid rgba(10,149,202,.15);margin-top:.4rem;margin-bottom:.1rem;">
+                            {% trans "Contacts" %}
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Fax" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="eaFax" placeholder="(+241) 22 22 22 22">
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:.76rem;font-weight:600;color:#4a5568;display:block;margin-bottom:3px;">{% trans "Site internet" %}</label>
+                            <input type="text" class="form-control form-control-sm" id="eaSite" placeholder="exemple.com">
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="padding:.5rem .9rem;border-top:1px solid rgba(10,149,202,.12);">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% trans "Annuler" %}</button>
+                <button type="button" class="btn btn-sm btn-warning" id="submitEditAcheteurBtn">
+                    <span class="btn-label"><i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}</span>
+                    <span class="spinner-border spinner-border-sm d-none ms-1" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -873,6 +967,75 @@ body { background: var(--c-bg); }
 
     document.getElementById('btnPdf').addEventListener('click', generatePdf);
     document.getElementById('btnPdfTab').addEventListener('click', generatePdf);
+
+    /* ── Modal édition acheteur ── */
+    {% trans "Champs requis" as t_required %}
+    {% trans "La raison sociale est obligatoire." as t_nomreq %}
+    {% trans "Enregistré" as t_saved %}
+    {% trans "Une erreur est survenue." as t_errgen %}
+
+    document.getElementById('editAcheteurModal').addEventListener('show.bs.modal', function() {
+        $.ajax({ url: '/api/consulter-un-acheteur/'+ID+'/', headers: auth(),
+            success: function(r) {
+                var a = r.acheteur || r;
+                $('#eaNom').val(a.nom || '');
+                $('#eaSigle').val(a.sigle || '');
+                $('#eaDateCreation').val(a.date_creation || '');
+                $('#eaActivite').val(a.activite_principale || '');
+                $('#eaStatut').val(a.statut_entreprise ? a.statut_entreprise.id : '');
+                $('#eaFormeJuridique').val(a.forme_juridique ? a.forme_juridique.id : '');
+                $('#eaPays').val(a.pays ? a.pays.id : '');
+                $('#eaVille').val(a.ville ? a.ville.id : '');
+                $('#eaFax').val(a.fax || '');
+                $('#eaSite').val(a.site_internet || '');
+            }
+        });
+    });
+
+    $('#submitEditAcheteurBtn').on('click', function() {
+        var nom = $('#eaNom').val().trim();
+        if (!nom) {
+            Swal.fire({icon:'warning', title:'{{ t_required|escapejs }}', text:'{{ t_nomreq|escapejs }}'});
+            return;
+        }
+        var payload = {
+            nom:                nom,
+            sigle:              $('#eaSigle').val().trim() || null,
+            date_creation:      $('#eaDateCreation').val() || null,
+            activite_principale:$('#eaActivite').val().trim() || null,
+            statut_entreprise:  $('#eaStatut').val() || null,
+            forme_juridique:    $('#eaFormeJuridique').val() || null,
+            pays:               $('#eaPays').val() || null,
+            ville:              $('#eaVille').val() || null,
+            fax:                $('#eaFax').val().trim() || null,
+            site_internet:      $('#eaSite').val().trim() || null,
+        };
+        var $btn = $(this);
+        $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
+        $btn.find('.btn-label').hide();
+        $.ajax({
+            url: '/api/editer-un-acheteur/'+ID+'/',
+            type: 'PUT',
+            data: JSON.stringify(payload),
+            contentType: 'application/json',
+            headers: auth(),
+            success: function() {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-label').show();
+                $('#editAcheteurModal').modal('hide');
+                Swal.fire({icon:'success', title:'{{ t_saved|escapejs }}', timer:1500, showConfirmButton:false})
+                    .then(function(){ loadData(); });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                $btn.find('.btn-label').show();
+                var msg = Object.entries(xhr.responseJSON||{})
+                    .map(function(e){ return e[0]+': '+(Array.isArray(e[1])?e[1].join(', '):e[1]); })
+                    .join('\n') || '{{ t_errgen|escapejs }}';
+                Swal.fire({icon:'error', title:S.err, html:msg.replace(/\n/g,'<br>')});
+            }
+        });
+    });
 
     loadData();
 
