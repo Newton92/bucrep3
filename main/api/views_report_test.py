@@ -2,6 +2,7 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _, get_language
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -1037,13 +1038,13 @@ class GenerateReport(APIView):
             "terms_of_purchase_and_sale": {
                 "title_19": "CONDITION D'ACHAT ET DE VENTE",
                 "conditions_achat": {
-                    "local": condition_achat.local if condition_achat and condition_achat.local else "Non spécifié",
-                    "importation": condition_achat.importation if condition_achat and condition_achat.importation else "Non spécifié",
-                    "les_clients": condition_achat.les_clients if condition_achat and condition_achat.les_clients else "Non spécifié",
-                    "fournisseur": condition_achat.fournisseur if condition_achat and condition_achat.fournisseur else "Non spécifié",
+                    "local": (", ".join((c.nom_en or c.nom_fr or c.nom) if (get_language() or 'fr').startswith('en') else (c.nom_fr or c.nom_en or c.nom) for c in condition_achat.local.all()) or _("Non spécifié")) if condition_achat else _("Non spécifié"),
+                    "importation": (", ".join((c.nom_en or c.nom_fr or c.nom) if (get_language() or 'fr').startswith('en') else (c.nom_fr or c.nom_en or c.nom) for c in condition_achat.importation.all()) or _("Non spécifié")) if condition_achat else _("Non spécifié"),
+                    "les_clients": condition_achat.les_clients if condition_achat and condition_achat.les_clients else _("Non spécifié"),
+                    "fournisseur": condition_achat.fournisseur if condition_achat and condition_achat.fournisseur else _("Non spécifié"),
                 },
                 "conditions_vente": {
-                    "local": condition_vente.local if condition_vente and condition_vente.local else "Non spécifié",
+                    "local": (", ".join((c.nom_en or c.nom_fr or c.nom) if (get_language() or 'fr').startswith('en') else (c.nom_fr or c.nom_en or c.nom) for c in condition_vente.local.all()) or _("Non spécifié")) if condition_vente else _("Non spécifié"),
                     "recouvrement_dette_jugement": condition_vente.recouvrement_de_dette_jugement_ref.libelle if condition_vente and condition_vente.recouvrement_de_dette_jugement_ref else condition_vente.recouvrement_de_dette_jugement if condition_vente else "Non spécifié",
                     "comportement_de_paiement": condition_vente.comportement_de_paiement_ref.libelle if condition_vente and condition_vente.comportement_de_paiement_ref else condition_vente.comportement_de_paiement if condition_vente else "Non spécifié",
                 }
