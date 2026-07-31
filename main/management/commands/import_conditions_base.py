@@ -139,36 +139,40 @@ class Command(BaseCommand):
         self.stdout.write("\n" + "="*50)
         self.stdout.write("CONDITIONS DE VENTE")
         self.stdout.write("="*50)
-        
-        # Données à importer : (nom, nom_fr, nom_en)
+
+        # Données à importer : (nom_en, nom_fr)
+        # nom = nom_en (clé technique), nom_fr = label FR, nom_en = label EN
         CONDITIONS_VENTE = [
-            ("Espèces",                                                             "Espèces",                                                                    "Cash"),
-            ("Chèque",                                                              "Chèque",                                                                     "Cheque"),
-            ("Virement bancaire",                                                   "Virement bancaire",                                                          "Bank Transfer"),
-            ("Effets de commerce papier",                                           "Effets de commerce papier",                                                  "Paper Commercial Bills"),
-            ("Lettre de Change",                                                    "Lettre de Change",                                                           "Bill of Exchange"),
-            ("Billet à ordre",                                                      "Billet à ordre",                                                             "Promissory Note"),
-            ("Carte de credit/debit",                                               "Carte de crédit/débit",                                                      "Credit/Debit Card"),
-            ("Délais de paiement de 15 à 30 jours avec pénalités de retard",       "Délais de paiement de 15 à 30 jours avec pénalités de retard",               "Payment terms 15 to 30 days with late payment penalties"),
-            ("Délais de paiement de 30 à 60 jours avec pénalités de retard",       "Délais de paiement de 30 à 60 jours avec pénalités de retard",               "Payment terms 30 to 60 days with late payment penalties"),
-            ("Délais de paiement de 60 à 90 jours avec pénalités de retard",       "Délais de paiement de 60 à 90 jours avec pénalités de retard",               "Payment terms 60 to 90 days with late payment penalties"),
+            # ── Paiement immédiat ──────────────────────────────────────────
+            ("1- Cash payment",                                   "1- Paiement comptant en espèces"),
+            ("2- Payment by cheque",                              "2- Paiement par chèque"),
+            ("3- Payment by credit/debit card",                   "3- Paiement par carte de crédit/débit"),
+            ("4- Payment by bank transfer",                       "4- Paiement par virement bancaire"),
+            # ── Instruments de crédit ──────────────────────────────────────
+            ("5- Bill of exchange",                               "5- Lettre de change"),
+            ("6- Promissory note",                                "6- Billet à ordre"),
+            ("7- Commercial paper",                               "7- Effets de commerce"),
+            # ── Délais de paiement ─────────────────────────────────────────
+            ("8- Payment term 15 to 30 days from invoice date",   "8- Délai de paiement de 15 à 30 jours date facture"),
+            ("9- Payment term 30 to 60 days from invoice date",   "9- Délai de paiement de 30 à 60 jours date facture"),
+            ("10- Payment term 60 to 90 days from invoice date",  "10- Délai de paiement de 60 à 90 jours date facture"),
+            ("11- Payment term over 90 days from invoice date",   "11- Délai de paiement supérieur à 90 jours date facture"),
         ]
-        
+
         if dry_run:
             self.stdout.write(f"\n{len(CONDITIONS_VENTE)} conditions de vente à importer:")
-            for i, (nom, nom_fr, nom_en) in enumerate(CONDITIONS_VENTE, 1):
-                self.stdout.write(f"  {i:2}. {nom_fr} / {nom_en}")
+            for nom_en, nom_fr in CONDITIONS_VENTE:
+                self.stdout.write(f"  EN: {nom_en}  |  FR: {nom_fr}")
             return
-        
+
         # Vérifier le modèle
         try:
-            # Vérifier les champs du modèle
             model_fields = [f.name for f in ListeConditionVente._meta.fields]
             self.stdout.write(f"Champs du modèle: {model_fields}")
-        except:
+        except Exception:
             self.stdout.write(self.style.WARNING("Le modèle ListeConditionVente n'existe pas ou a un problème"))
             return
-        
+
         # Nettoyer si demandé
         if clear_data:
             self.stdout.write("Suppression des données existantes...")
@@ -179,39 +183,36 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"✓ {deleted} conditions de vente supprimées"))
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"⚠ Impossible de supprimer: {str(e)[:100]}"))
-        
+
         # Importer les données
         created = 0
         errors = 0
         skipped = 0
-        
-        for nom, nom_fr, nom_en in CONDITIONS_VENTE:
+
+        for nom_en, nom_fr in CONDITIONS_VENTE:
             try:
-                obj = ListeConditionVente.objects.filter(nom=nom).first()
-                if not obj:
-                    ListeConditionVente.objects.create(nom=nom, nom_fr=nom_fr, nom_en=nom_en)
-                    created += 1
-                    self.stdout.write(self.style.SUCCESS(f"✓ {nom_fr}"))
-                else:
-                    # Mettre à jour les traductions si vides
+                obj, is_created = ListeConditionVente.objects.get_or_create(
+                    nom_en=nom_en,
+                    defaults={"nom": nom_en, "nom_fr": nom_fr, "nom_en": nom_en},
+                )
+                if not is_created:
                     updated = False
-                    if not obj.nom_fr and nom_fr:
+                    if not obj.nom_fr:
                         obj.nom_fr = nom_fr
                         updated = True
-                    if not obj.nom_en and nom_en:
+                    if not obj.nom_en:
                         obj.nom_en = nom_en
                         updated = True
                     if updated:
                         obj.save()
-                        skipped += 1
-                        self.stdout.write(self.style.WARNING(f"↺ {nom_fr} (traductions mises à jour)"))
-                    else:
-                        skipped += 1
-                        self.stdout.write(self.style.WARNING(f"↺ {nom_fr} (existe déjà)"))
-
+                    skipped += 1
+                    self.stdout.write(self.style.WARNING(f"↺ {nom_en} (existe déjà)"))
+                else:
+                    created += 1
+                    self.stdout.write(self.style.SUCCESS(f"✓ {nom_en}"))
             except Exception as e:
                 errors += 1
-                self.stdout.write(self.style.ERROR(f"✗ {nom}: {str(e)[:50]}"))
+                self.stdout.write(self.style.ERROR(f"✗ {nom_en}: {str(e)[:80]}"))
         
         # Résumé
         self.stdout.write("\n" + "-"*40)
