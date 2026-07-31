@@ -31,29 +31,15 @@ class Command(BaseCommand):
         fix_db = options.get('fix_db', False)
         
         # Données à importer
-        LOCAUX_DATA = [
-            _('Usine'),
-            _('Bureaux'),
-            _('Entrepôt'),
-            _('Entrepôt et bureaux'),
-            _("Salle d'exposition"),
-            _('Bureau et usine'),
-            _('Entrepôt, bureau et usine'),
+        locaux_list = [
+            '1-Factory',
+            '2-Offices',
+            '3-Warehouse',
+            '4-Warehouse and offices',
+            '5-Showroom',
+            '6-Office and factory',
+            '7-warehouse, office and factory',
         ]
-        
-        # Pour dry-run, utiliser les chaînes brutes
-        if dry_run:
-            locaux_list = [
-                'Usine',
-                'Bureaux', 
-                'Entrepôt',
-                'Entrepôt et bureaux',
-                "Salle d'exposition",
-                'Bureau et usine',
-                'Entrepôt, bureau et usine',
-            ]
-        else:
-            locaux_list = LOCAUX_DATA
         
         self.stdout.write("="*60)
         self.stdout.write("IMPORT DES TYPES DE LOCAUX")
@@ -251,20 +237,10 @@ class Command(BaseCommand):
         }
     
     def clean_nom(self, nom):
-        """Nettoie et formate le nom"""
-        # Convertir gettext_lazy en string si nécessaire
+        """Retourne le nom tel quel (les préfixes numériques sont conservés)"""
         if hasattr(nom, '_proxy____args'):
             nom = str(nom)
-        
-        # Supprimer les préfixes numériques (ex: "1- Usine" -> "Usine")
-        import re
-        nom = re.sub(r'^\d+\s*-\s*', '', nom.strip())
-        
-        # Capitaliser la première lettre
-        if nom:
-            nom = nom[0].upper() + nom[1:]
-        
-        return nom
+        return nom.strip()
     
     def find_existing(self, nom):
         """Recherche un local existant"""
@@ -398,12 +374,13 @@ class Command(BaseCommand):
                     self.stdout.write(f"  • {local.nom}")
             
             # Vérifier les données manquantes
-            expected = {'Usine', 'Bureaux', 'Entrepôt', 'Entrepôt et bureaux', 
-                       "Salle d'exposition", 'Bureau et usine', 'Entrepôt, bureau et usine'}
-            
+            expected = {
+                '1-Factory', '2-Offices', '3-Warehouse', '4-Warehouse and offices',
+                '5-Showroom', '6-Office and factory', '7-warehouse, office and factory'
+            }
             actual = {local.nom for local in Locaux.objects.all()}
             missing = expected - actual
-            
+
             if missing:
                 self.stdout.write(self.style.WARNING(f"\n⚠ Manquants: {missing}"))
             else:
@@ -419,15 +396,14 @@ class CommandSimple(BaseCommand):
     help = 'Import rapide des types de locaux'
     
     def handle(self, *args, **options):
-        # Données brutes (sans gettext_lazy pour éviter les problèmes)
         LOCAUX = [
-            'Usine',
-            'Bureaux',
-            'Entrepôt',
-            'Entrepôt et bureaux',
-            "Salle d'exposition",
-            'Bureau et usine',
-            'Entrepôt, bureau et usine',
+            '1-Factory',
+            '2-Offices',
+            '3-Warehouse',
+            '4-Warehouse and offices',
+            '5-Showroom',
+            '6-Office and factory',
+            '7-warehouse, office and factory',
         ]
         
         self.stdout.write("Import rapide des locaux...")
