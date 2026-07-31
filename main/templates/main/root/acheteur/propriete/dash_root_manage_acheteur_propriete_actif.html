@@ -96,30 +96,41 @@
         <div class="card-body" id="contentBody">
             {% if has_propriete_actif %}
             <!-- Contenu rendu côté serveur -->
-            <div class="row g-3 py-1" id="paRecord">
-                <div class="col-md-6">
-                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Local" %}</div>
-                    <div class="pa-section-value" id="locauxDisplay">
+            <div class="row g-3 py-2" id="paRecord">
+
+                <!-- Local -->
+                <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="pa-section-label mb-0"><i class="bi bi-geo-alt me-1"></i>{% trans "Local" %}</div>
+                        <span class="badge bg-primary rounded-pill">{{ propriete_actif.locaux.count }}</span>
+                    </div>
+                    <div id="locauxDisplay" class="p-2 border rounded bg-light" style="min-height:2.5rem;">
                         {% if propriete_actif.locaux.all %}
                             {% for local in propriete_actif.locaux.all %}
                             <span class="local-badge"><i class="bi bi-geo-alt-fill" style="font-size:.65rem;"></i>{{ local.nom }}</span>
                             {% endfor %}
                         {% else %}
-                            <span class="text-muted small">{% trans "Aucun local associé" %}</span>
+                            <span class="text-muted small fst-italic">{% trans "Aucun local associé" %}</span>
                         {% endif %}
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
-                    <textarea class="form-control form-control-sm rich-editor" id="brancheInlineInput" rows="3"
+
+                <!-- Branch (inline éditable) -->
+                <div class="col-12">
+                    <div class="pa-section-label mb-1"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
+                    <textarea class="form-control rich-editor" id="brancheInlineInput" rows="4"
                               placeholder="{% trans 'Saisissez la branche...' %}">{{ propriete_actif.branche|default:'' }}</textarea>
-                    <button class="btn btn-sm btn-primary mt-2" id="btnSaveBranche">
-                        <i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}
-                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
-                    </button>
+                    <div class="d-flex justify-content-end mt-2">
+                        <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" id="btnSaveBranche">
+                            <i class="bi bi-save"></i>{% trans "Enregistrer Branch" %}
+                            <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+                        </button>
+                    </div>
                 </div>
-                <div class="col-12 border-top pt-3 mt-1">
-                    <div class="d-flex gap-4">
+
+                <!-- Dates -->
+                <div class="col-12 border-top pt-2 mt-1">
+                    <div class="d-flex gap-4 flex-wrap">
                         <div>
                             <div class="pa-section-label"><i class="bi bi-calendar3 me-1"></i>{% trans "Ajouté le" %}</div>
                             <div class="text-muted small">{{ propriete_actif.created_at|date:"d/m/Y H:i" }}</div>
@@ -148,7 +159,7 @@
 
 <!-- Modal Ajout / Modification -->
 <div class="modal fade" id="paModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2 px-3" style="background:linear-gradient(135deg,#0a95ca,#106cb2);">
                 <h6 class="modal-title text-white mb-0" id="paModalTitle">
@@ -158,9 +169,9 @@
             </div>
             <form id="paForm">
                 <div class="modal-body py-3 px-4">
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">
+                            <label class="form-label fw-semibold">
                                 <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Local" %}
                             </label>
                             <select multiple class="select2-pa-local w-100" id="locauxSelect">
@@ -168,21 +179,22 @@
                                 <option value="{{ local.id }}">{{ local.nom }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="form-text"><i class="bi bi-info-circle me-1"></i>{% trans "Sélectionnez un ou plusieurs locaux" %}</div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">
+                            <label class="form-label fw-semibold">
                                 <i class="bi bi-diagram-3 me-1 text-primary"></i>{% trans "Branch" %}
                             </label>
-                            <textarea class="form-control form-control-sm rich-editor" id="brancheInput" rows="3"
+                            <textarea class="form-control rich-editor" id="brancheInput" rows="5"
                                       placeholder="{% trans 'Saisissez la branche...' %}"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg me-1"></i>{% trans "Annuler" %}
                     </button>
-                    <button type="submit" class="btn btn-sm btn-success" id="submitPABtn">
+                    <button type="submit" class="btn btn-success" id="submitPABtn">
                         <span class="btn-text"><i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}</span>
                         <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
                     </button>
