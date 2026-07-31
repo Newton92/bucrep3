@@ -194,35 +194,13 @@
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-house-fill me-1 text-success"></i>{% trans "Conditions Locales" %}
                             </label>
-                            <select multiple class="form-select form-select-sm select2-field" id="localSelect" name="local">
-                                <option value="1">1- Paiement comptant</option>
-                                <option value="2">2- Paiement à réception</option>
-                                <option value="3">3- Paiement par virement bancaire</option>
-                                <option value="4">4- Paiement contre documents</option>
-                                <option value="5">5- Crédit documentaire</option>
-                                <option value="6">6- Lettre de crédit à terme</option>
-                                <option value="7">7- Lettre de crédit à vue</option>
-                                <option value="8">8- Délai de paiement de 30 à 60 jours date BL</option>
-                                <option value="9">9- Délai de paiement de 60 à 90 jours date LB</option>
-                                <option value="10">10- Délai de paiement de 90 à 120 jours date BL</option>
-                            </select>
+                            <select multiple class="form-select form-select-sm select2-field" id="localSelect" name="local"></select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-globe-americas me-1 text-primary"></i>{% trans "Conditions d'Importation" %}
                             </label>
-                            <select multiple class="form-select form-select-sm select2-field" id="importationSelect" name="importation">
-                                <option value="1">1- Paiement comptant</option>
-                                <option value="2">2- Paiement à réception</option>
-                                <option value="3">3- Paiement par virement bancaire</option>
-                                <option value="4">4- Paiement contre documents</option>
-                                <option value="5">5- Crédit documentaire</option>
-                                <option value="6">6- Lettre de crédit à terme</option>
-                                <option value="7">7- Lettre de crédit à vue</option>
-                                <option value="8">8- Délai de paiement de 30 à 60 jours date BL</option>
-                                <option value="9">9- Délai de paiement de 60 à 90 jours date LB</option>
-                                <option value="10">10- Délai de paiement de 90 à 120 jours date BL</option>
-                            </select>
+                            <select multiple class="form-select form-select-sm select2-field" id="importationSelect" name="importation"></select>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
@@ -305,8 +283,19 @@ $(document).ready(function() {
         reconnect:  "{{ t_reconnect|escapejs }}"
     };
 
+    // ── Données bilingues depuis la vue ──
+    var CONDITIONS_DATA = {{ conditions_json|safe }};
+
     // ── Select2 : init dans shown.bs.modal (modal caché = dimensions nulles) ──
     $('#achatModal').on('shown.bs.modal', function() {
+        // Peupler les options si vides (première ouverture)
+        if ($('#localSelect option').length === 0) {
+            $.each(CONDITIONS_DATA, function(i, c) {
+                $('#localSelect').append(new Option(c.label, c.id, false, false));
+                $('#importationSelect').append(new Option(c.label, c.id, false, false));
+            });
+        }
+        // Init Select2 après peuplement
         $('.select2-field').each(function() {
             if ($(this).data('select2')) { $(this).select2('destroy'); }
             $(this).select2({
