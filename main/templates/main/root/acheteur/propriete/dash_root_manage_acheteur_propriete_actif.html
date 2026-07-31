@@ -120,7 +120,7 @@
                     <div class="pa-section-label mb-1"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
                     <div class="pa-section-value p-2 border rounded bg-light" id="brancheDisplay" style="min-height:2.5rem;">
                         {% if propriete_actif.branche %}
-                            {{ propriete_actif.branche }}
+                            {{ propriete_actif.branche|safe }}
                         {% else %}
                             <span class="text-muted small fst-italic">{% trans "Non renseigné" %}</span>
                         {% endif %}
@@ -240,6 +240,7 @@ $(document).ready(function() {
     var HAS_RECORD        = {% if has_propriete_actif %}true{% else %}false{% endif %};
     var isEditMode        = HAS_RECORD;
     var pendingLocauxIds  = [];
+    var pendingBranche    = null;  // null = mode ajout, string = mode édition
 
     var S = {
         err:          "{{ t_err|escapejs }}",
@@ -269,8 +270,9 @@ $(document).ready(function() {
         maj:          "{{ t_maj|escapejs }}"
     };
 
-    // ── Init Select2 dans la modal ──
+    // ── Init Select2 + restauration valeurs dans la modal ──
     $('#paModal').on('shown.bs.modal', function() {
+        // Select2
         if ($('#locauxSelect').data('select2')) { $('#locauxSelect').select2('destroy'); }
         $('#locauxSelect').select2({
             theme: 'bootstrap-5',
@@ -279,9 +281,22 @@ $(document).ready(function() {
             placeholder: "{% trans 'Sélectionnez les locaux...' %}",
             dropdownParent: $('#paModal')
         });
+        // Restaurer les locaux sélectionnés (setTimeout pour laisser Select2 être prêt)
         if (pendingLocauxIds.length) {
-            $('#locauxSelect').val(pendingLocauxIds).trigger('change');
+            var ids = pendingLocauxIds.slice();
             pendingLocauxIds = [];
+            setTimeout(function() {
+                $('#locauxSelect').val(ids).trigger('change');
+            }, 50);
+        }
+        // Restaurer Branch via Quill (setTimeout pour laisser base.html initialiser Quill)
+        if (pendingBranche !== null) {
+            var val = pendingBranche;
+            pendingBranche = null;
+            setTimeout(function() {
+                if (window.quillSetValue) window.quillSetValue('brancheInput', val);
+                else document.getElementById('brancheInput').value = val;
+            }, 100);
         }
     });
 
@@ -289,10 +304,9 @@ $(document).ready(function() {
     $(document).on('click', '#btnCreate, #btnCreateBody', function() {
         isEditMode = false;
         pendingLocauxIds = [];
+        pendingBranche   = '';
         $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
-        if (window.quillSetValue) window.quillSetValue('brancheInput', '');
-        else document.getElementById('brancheInput').value = '';
         bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
     });
 
@@ -307,10 +321,9 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 if (r.exists === false) return;
-                if (window.quillSetValue) window.quillSetValue('brancheInput', r.branche || '');
-                else document.getElementById('brancheInput').value = r.branche || '';
-                // r.locaux = tableau d'IDs entiers retourné par le serializer
-                var ids = r.locaux || [];
+                // Stocker les valeurs — elles seront appliquées dans shown.bs.modal
+                pendingBranche = r.branche || '';
+                var ids = (r.locaux || []);
                 if (!ids.length && r.locaux_list) {
                     ids = r.locaux_list.map(function(l) { return l.id; });
                 }
@@ -384,9 +397,8 @@ $(document).ready(function() {
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
         if ($('#locauxSelect').data('select2')) { $('#locauxSelect').val(null).trigger('change'); }
-        if (window.quillSetValue) window.quillSetValue('brancheInput', '');
-        else document.getElementById('brancheInput').value = '';
         pendingLocauxIds = [];
+        pendingBranche   = null;
     });
 
     // ── Helpers ──
