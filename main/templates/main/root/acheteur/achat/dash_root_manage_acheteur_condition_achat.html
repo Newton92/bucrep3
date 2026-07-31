@@ -285,6 +285,8 @@ $(document).ready(function() {
 
     // ── Données bilingues depuis la vue ──
     var CONDITIONS_DATA = {{ conditions_json|safe }};
+    var pendingLocalIds  = [];
+    var pendingImportIds = [];
 
     // ── Select2 : init dans shown.bs.modal (modal caché = dimensions nulles) ──
     $('#achatModal').on('shown.bs.modal', function() {
@@ -305,16 +307,24 @@ $(document).ready(function() {
                 placeholder: '{% trans "Sélectionnez…" %}'
             });
         });
+        // Restaurer les valeurs en mode édition
+        if (pendingLocalIds.length || pendingImportIds.length) {
+            $('#localSelect').val(pendingLocalIds).trigger('change');
+            $('#importationSelect').val(pendingImportIds).trigger('change');
+            pendingLocalIds  = [];
+            pendingImportIds = [];
+        }
     });
 
     // ── Ouvrir modal Ajout ──
     $(document).on('click', '#btnCreate, #btnCreateBody', function() {
         isEditMode = false;
+        pendingLocalIds  = [];
+        pendingImportIds = [];
         $('#achatModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitAchatBtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>' + S.enr);
         $('#lesClientsInput').val('');
         $('#fournisseurInput').val('');
-        $('#localSelect, #importationSelect').val(null).trigger('change');
         bootstrap.Modal.getOrCreateInstance($('#achatModal')[0]).show();
     });
 
@@ -329,10 +339,9 @@ $(document).ready(function() {
 
         $('#lesClientsInput').val(CDATA.les_clients || '');
         $('#fournisseurInput').val(CDATA.fournisseur || '');
-        var localIds  = (CDATA.local_list      || []).map(function(x) { return String(x.id); });
-        var importIds = (CDATA.importation_list || []).map(function(x) { return String(x.id); });
-        $('#localSelect').val(localIds).trigger('change');
-        $('#importationSelect').val(importIds).trigger('change');
+        // Stocker les IDs — appliqués après init Select2 dans shown.bs.modal
+        pendingLocalIds  = (CDATA.local_list      || []).map(function(x) { return String(x.id); });
+        pendingImportIds = (CDATA.importation_list || []).map(function(x) { return String(x.id); });
 
         bootstrap.Modal.getOrCreateInstance($('#achatModal')[0]).show();
     });
