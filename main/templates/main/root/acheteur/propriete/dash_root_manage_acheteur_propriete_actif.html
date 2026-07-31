@@ -111,7 +111,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
-                    <textarea class="form-control form-control-sm" id="brancheInlineInput" rows="3"
+                    <textarea class="form-control form-control-sm rich-editor" id="brancheInlineInput" rows="3"
                               placeholder="{% trans 'Saisissez la branche...' %}">{{ propriete_actif.branche|default:'' }}</textarea>
                     <button class="btn btn-sm btn-primary mt-2" id="btnSaveBranche">
                         <i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}
@@ -173,7 +173,7 @@
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-diagram-3 me-1 text-primary"></i>{% trans "Branch" %}
                             </label>
-                            <textarea class="form-control form-control-sm" id="brancheInput" rows="3"
+                            <textarea class="form-control form-control-sm rich-editor" id="brancheInput" rows="3"
                                       placeholder="{% trans 'Saisissez la branche...' %}"></textarea>
                         </div>
                     </div>
@@ -303,7 +303,8 @@ $(document).ready(function() {
         pendingLocauxIds = [];
         $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
-        $('#brancheInput').val('');
+        if (window.quillSetValue) window.quillSetValue('brancheInput', '');
+        else document.getElementById('brancheInput').value = '';
         bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
     });
 
@@ -318,7 +319,8 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 if (r.exists === false) return;
-                $('#brancheInput').val(r.branche || '');
+                if (window.quillSetValue) window.quillSetValue('brancheInput', r.branche || '');
+                else document.getElementById('brancheInput').value = r.branche || '';
                 pendingLocauxIds = (r.locaux_list || []).map(function(l) { return String(l.id); });
                 bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
             },
@@ -389,7 +391,8 @@ $(document).ready(function() {
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
         if ($('#locauxSelect').data('select2')) { $('#locauxSelect').val(null).trigger('change'); }
-        $('#brancheInput').val('');
+        if (window.quillSetValue) window.quillSetValue('brancheInput', '');
+        else document.getElementById('brancheInput').value = '';
         pendingLocauxIds = [];
     });
 
