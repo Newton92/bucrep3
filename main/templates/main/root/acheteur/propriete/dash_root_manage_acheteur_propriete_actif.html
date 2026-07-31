@@ -97,8 +97,8 @@
             {% if has_propriete_actif %}
             <!-- Contenu rendu côté serveur -->
             <div class="row g-3 py-1" id="paRecord">
-                <div class="col-12">
-                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Branch" %}</div>
+                <div class="col-md-6">
+                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Local" %}</div>
                     <div class="pa-section-value" id="locauxDisplay">
                         {% if propriete_actif.locaux.all %}
                             {% for local in propriete_actif.locaux.all %}
@@ -106,6 +106,16 @@
                             {% endfor %}
                         {% else %}
                             <span class="text-muted small">{% trans "Aucun local associé" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
+                    <div class="pa-section-value" id="brancheDisplay">
+                        {% if propriete_actif.branche %}
+                            {{ propriete_actif.branche }}
+                        {% else %}
+                            <span class="text-muted small">{% trans "Non renseigné" %}</span>
                         {% endif %}
                     </div>
                 </div>
@@ -152,7 +162,7 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
-                                <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Branch" %}
+                                <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Local" %}
                             </label>
                             <select multiple class="form-select form-select-sm" id="locauxSelect"
                                     style="min-height:120px;">
@@ -165,6 +175,13 @@
                             <div class="form-text small">
                                 <i class="bi bi-info-circle me-1"></i>{% trans "Maintenez Ctrl pour sélectionner plusieurs locaux" %}
                             </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">
+                                <i class="bi bi-diagram-3 me-1 text-primary"></i>{% trans "Branch" %}
+                            </label>
+                            <textarea class="form-control form-control-sm" id="brancheInput" rows="3"
+                                      placeholder="{% trans 'Saisissez la branche...' %}"></textarea>
                         </div>
                     </div>
                 </div>
@@ -253,6 +270,7 @@ $(document).ready(function() {
         $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
         $('#locauxSelect option').prop('selected', false);
+        $('#brancheInput').val('');
         bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
     });
 
@@ -267,6 +285,7 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 if (r.exists === false) return;
+                $('#brancheInput').val(r.branche || '');
                 var ids = (r.locaux_list || []).map(function(l) { return String(l.id); });
                 $('#locauxSelect option').each(function() {
                     $(this).prop('selected', ids.indexOf($(this).val()) !== -1);
@@ -283,8 +302,9 @@ $(document).ready(function() {
     // ── Soumission formulaire ──
     $('#paForm').on('submit', function(e) {
         e.preventDefault();
+        var branche   = $('#brancheInput').val().trim();
         var locauxIds = $.map($('#locauxSelect').val() || [], function(v) { return parseInt(v); });
-        var formData  = { locaux: locauxIds };
+        var formData  = { branche: branche, locaux: locauxIds };
         if (!isEditMode) { formData.acheteur = ACHETEUR_ID; }
 
         var $btn = $('#submitPABtn');
@@ -339,6 +359,7 @@ $(document).ready(function() {
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
         $('#locauxSelect option').prop('selected', false);
+        $('#brancheInput').val('');
     });
 
     // ── Helpers ──
