@@ -4211,10 +4211,10 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect_to_login(request.get_full_path())
     
-    # Récupérer tous les locaux disponibles
-    locaux = Locaux.objects.all().order_by('nom')
+    # Récupérer les locaux numérotés uniquement (1-Factory, 2-Offices, etc.)
+    locaux = Locaux.objects.filter(nom__regex=r'^\d+').order_by('nom')
     locaux_data = [
-        {'id': local.id, 'nom': local.nom or ''} 
+        {'id': local.id, 'nom': local.nom or ''}
         for local in locaux
     ]
     # Convertir en JSON sécurisé

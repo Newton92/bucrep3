@@ -63,7 +63,7 @@
                     <div class="fw-bold fs-5 lh-1" id="statLocaux">
                         {% if propriete_actif %}{{ propriete_actif.locaux.count }}{% else %}0{% endif %}
                     </div>
-                    <div class="text-muted small">{% trans "Locaux associés" %}</div>
+                    <div class="text-muted small">{% trans "Branch" %}</div>
                 </div>
             </div>
         </div>
@@ -97,18 +97,8 @@
             {% if has_propriete_actif %}
             <!-- Contenu rendu côté serveur -->
             <div class="row g-3 py-1" id="paRecord">
-                <div class="col-md-6">
-                    <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branche d'activité" %}</div>
-                    <div class="pa-section-value">
-                        {% if propriete_actif.branche %}
-                            {{ propriete_actif.branche }}
-                        {% else %}
-                            <span class="text-muted small">{% trans "Aucune branche spécifiée" %}</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Locaux associés" %}</div>
+                <div class="col-12">
+                    <div class="pa-section-label"><i class="bi bi-geo-alt me-1"></i>{% trans "Branch" %}</div>
                     <div class="pa-section-value" id="locauxDisplay">
                         {% if propriete_actif.locaux.all %}
                             {% for local in propriete_actif.locaux.all %}
@@ -162,14 +152,7 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
-                                <i class="bi bi-diagram-3 me-1 text-primary"></i>{% trans "Branche d'activité" %}
-                            </label>
-                            <input type="text" class="form-control form-control-sm" id="brancheInput"
-                                   placeholder="{% trans 'Aucune branche spécifiée' %}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold">
-                                <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Locaux associés" %}
+                                <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Branch" %}
                             </label>
                             <select multiple class="form-select form-select-sm" id="locauxSelect"
                                     style="min-height:120px;">
@@ -220,10 +203,8 @@
 {% trans "Session expirée" as t_sess_exp %}
 {% trans "Votre session a expiré. Veuillez vous reconnecter." as t_sess_msg %}
 {% trans "Se reconnecter" as t_reconnect %}
-{% trans "Branche d'activité" as t_branche %}
-{% trans "Locaux associés" as t_locaux %}
+{% trans "Branch" as t_locaux %}
 {% trans "Aucun local associé" as t_aucun_local %}
-{% trans "Aucune branche spécifiée" as t_aucune_branche %}
 {% trans "Aucune propriété/actif enregistrée" as t_aucune_pa %}
 {% trans "Créer la propriété/actif" as t_creer %}
 {% trans "Ajouté le" as t_ajoute_le %}
@@ -258,10 +239,8 @@ $(document).ready(function() {
         sessExp:      "{{ t_sess_exp|escapejs }}",
         sessMsg:      "{{ t_sess_msg|escapejs }}",
         reconnect:    "{{ t_reconnect|escapejs }}",
-        branche:      "{{ t_branche|escapejs }}",
         locaux:       "{{ t_locaux|escapejs }}",
         aucunLocal:   "{{ t_aucun_local|escapejs }}",
-        aucuneBranch: "{{ t_aucune_branche|escapejs }}",
         aucunePA:     "{{ t_aucune_pa|escapejs }}",
         creer:        "{{ t_creer|escapejs }}",
         ajouteLe:     "{{ t_ajoute_le|escapejs }}",
@@ -273,7 +252,6 @@ $(document).ready(function() {
         isEditMode = false;
         $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
-        $('#brancheInput').val('');
         $('#locauxSelect option').prop('selected', false);
         bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
     });
@@ -289,7 +267,6 @@ $(document).ready(function() {
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 if (r.exists === false) return;
-                $('#brancheInput').val(r.branche || '');
                 var ids = (r.locaux_list || []).map(function(l) { return String(l.id); });
                 $('#locauxSelect option').each(function() {
                     $(this).prop('selected', ids.indexOf($(this).val()) !== -1);
@@ -306,9 +283,8 @@ $(document).ready(function() {
     // ── Soumission formulaire ──
     $('#paForm').on('submit', function(e) {
         e.preventDefault();
-        var branche   = $('#brancheInput').val().trim();
         var locauxIds = $.map($('#locauxSelect').val() || [], function(v) { return parseInt(v); });
-        var formData  = { branche: branche, locaux: locauxIds };
+        var formData  = { locaux: locauxIds };
         if (!isEditMode) { formData.acheteur = ACHETEUR_ID; }
 
         var $btn = $('#submitPABtn');
@@ -362,7 +338,6 @@ $(document).ready(function() {
 
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
-        $('#paForm')[0].reset();
         $('#locauxSelect option').prop('selected', false);
     });
 
