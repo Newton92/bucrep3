@@ -1108,11 +1108,7 @@
                                 <label for="local" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-store me-1"></i>{% trans "Sélection des conditions locales" %}
                                 </label>
-                                <select class="form-select form-select-sm select2-with-search" id="local" name="local" multiple="multiple">
-                                    {% for condition in conditions_liste %}
-                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
-                                    {% endfor %}
-                                </select>
+                                <select class="form-select form-select-sm select2-field-vente" id="local" name="local" multiple="multiple"></select>
                                 <small class="form-text text-muted">
                                     {% trans "Sélectionnez les conditions de vente locales applicables" %}
                                 </small>
@@ -1208,11 +1204,7 @@
                                 <label for="editLocal" class="form-label fw-semibold" style="font-size:0.78rem;">
                                     <i class="fas fa-store me-1"></i>{% trans "Sélection des conditions locales" %}
                                 </label>
-                                <select class="form-select form-select-sm select2-with-search" id="editLocal" name="local" multiple="multiple">
-                                    {% for condition in conditions_liste %}
-                                    <option value="{{ condition.id }}">{{ condition.nom }}</option>
-                                    {% endfor %}
-                                </select>
+                                <select class="form-select form-select-sm select2-field-vente" id="editLocal" name="local" multiple="multiple"></select>
                             </div>
                         </div>
                     </div>
@@ -1315,95 +1307,85 @@ $(document).ready(function() {
     // Configuration
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/condition-vente/`;
-    const CONDITIONS_API_URL = '/api/conditions-vente/';
-    const CHOICES_API_URL = '/api/condition-vente/choices/';
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
     let currentVenteId = null;
-    let conditionsData = [];
-    let recouvrementChoices = {{ recouvrement_choices|safe }};
-    let paiementChoices = {{ paiement_choices|safe }};
 
-    // Initialiser Select2
-    function initSelect2() {
-        $('.select2-with-search').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: 'Sélectionnez une ou plusieurs options',
-            language: 'fr',
-            allowClear: true,
-            minimumResultsForSearch: 10,
-            dropdownParent: $('body')
+    // Données bilingues depuis la vue Django
+    var CONDITIONS_DATA = {{ conditions_json|safe }};
+    var pendingLocalIds = [];
+    var pendingRecouvrementVal = '';
+    var pendingPaiementVal = '';
+
+    // ── Modal AJOUT : init Select2 dans shown.bs.modal ──
+    $('#addVenteModal').on('shown.bs.modal', function() {
+        if ($('#local option').length === 0) {
+            $.each(CONDITIONS_DATA, function(i, c) {
+                $('#local').append(new Option(c.label, c.id, false, false));
+            });
+        }
+        var $loc = $('#local');
+        if ($loc.data('select2')) $loc.select2('destroy');
+        $loc.select2({
+            theme: 'bootstrap-5', width: '100%',
+            allowClear: true, minimumResultsForSearch: 5,
+            dropdownParent: $('#addVenteModal'),
+            placeholder: "{% trans "Sélectionnez des conditions..." %}"
         });
-        
-        $('select:not(.select2-with-search)').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: 'Sélectionnez une option',
-            language: 'fr'
+        $.each(['#recouvrement_de_dette_jugement', '#comportement_de_paiement'], function(_, sel) {
+            var $el = $(sel);
+            if ($el.data('select2')) $el.select2('destroy');
+            $el.select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addVenteModal') });
         });
-    }
-    
-    // Charger les conditions disponibles
-    function loadConditions() {
-        $.ajax({
-            url: CONDITIONS_API_URL,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                // Vérifier la structure de la réponse
-                if (Array.isArray(response)) {
-                    conditionsData = response;
-                } else if (response.results && Array.isArray(response.results)) {
-                    conditionsData = response.results;
-                } else if (response.data && Array.isArray(response.data)) {
-                    conditionsData = response.data;
-                } else {
-                    conditionsData = [];
-                }
-                
-                updateSelect2Options();
-            },
-            error: function(xhr) {
-                console.error('Erreur lors du chargement des conditions:', xhr);
-                // Fallback aux données du template
-                useTemplateConditions();
-            }
+    });
+
+    // ── Modal ÉDITION : init Select2 dans shown.bs.modal ──
+    $('#editVenteModal').on('shown.bs.modal', function() {
+        if ($('#editLocal option').length === 0) {
+            $.each(CONDITIONS_DATA, function(i, c) {
+                $('#editLocal').append(new Option(c.label, c.id, false, false));
+            });
+        }
+        var $eloc = $('#editLocal');
+        if ($eloc.data('select2')) $eloc.select2('destroy');
+        $eloc.select2({
+            theme: 'bootstrap-5', width: '100%',
+            allowClear: true, minimumResultsForSearch: 5,
+            dropdownParent: $('#editVenteModal'),
+            placeholder: "{% trans "Sélectionnez des conditions..." %}"
         });
-    }
-    
-    // Utiliser les conditions du template Django
-    function useTemplateConditions() {
-        conditionsData = [];
-        
-        // Mettre à jour Select2 avec les options existantes
-        $('#local, #editLocal').each(function() {
-            if ($(this).find('option').length === 0) {
-                {% for condition in conditions_liste %}
-                $(this).append(new Option('{{ condition.nom }}', '{{ condition.id }}', false, false));
-                {% endfor %}
-            }
+        $.each(['#editRecouvrementJugement', '#editComportementPaiement'], function(_, sel) {
+            var $el = $(sel);
+            if ($el.data('select2')) $el.select2('destroy');
+            $el.select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#editVenteModal') });
         });
-        
-        $('#local, #editLocal').trigger('change');
-    }
-    
-    // Mettre à jour les options Select2
-    function updateSelect2Options() {
-        $('#local, #editLocal').empty();
-        
-        conditionsData.forEach(function(cond) {
-            if (cond && cond.id && cond.nom) {
-                $('#local').append(new Option(cond.nom, cond.id, false, false));
-                $('#editLocal').append(new Option(cond.nom, cond.id, false, false));
-            }
-        });
-        
-        $('#local, #editLocal').trigger('change');
-    }
-    
+        // Restaurer les valeurs en mode édition
+        if (pendingLocalIds.length) {
+            $('#editLocal').val(pendingLocalIds).trigger('change');
+            pendingLocalIds = [];
+        }
+        if (pendingRecouvrementVal) {
+            $('#editRecouvrementJugement').val(pendingRecouvrementVal).trigger('change');
+            pendingRecouvrementVal = '';
+        }
+        if (pendingPaiementVal) {
+            $('#editComportementPaiement').val(pendingPaiementVal).trigger('change');
+            pendingPaiementVal = '';
+        }
+    });
+
+    // Vider les pending quand modals fermées
+    $('#editVenteModal').on('hidden.bs.modal', function() {
+        pendingLocalIds = [];
+        pendingRecouvrementVal = '';
+        pendingPaiementVal = '';
+        $(this).find('form')[0].reset();
+    });
+    $('#addVenteModal').on('hidden.bs.modal', function() {
+        $(this).find('form')[0].reset();
+    });
+
+
     // Mettre à jour l'affichage après modification
     function updateVenteDisplay(venteData) {
         // Mettre à jour les tags locaux
@@ -1455,82 +1437,43 @@ $(document).ready(function() {
         }
     }
     
-    // Initialisation
-    initSelect2();
-    loadConditions();
-    
-    // Gérer la fermeture des modals
-    $('.modal').on('hidden.bs.modal', function() {
-        $(this).find('form')[0].reset();
-        $('.select2-with-search').val(null).trigger('change');
-        $('select:not(.select2-with-search)').val(null).trigger('change');
-    });
-    
-    // Bouton pour créer de nouvelles conditions
+    // Bouton Créer
     $(document).on('click', '#openCreateModalBtn', function() {
-        $('#addVenteModal').modal('show');
+        bootstrap.Modal.getOrCreateInstance($('#addVenteModal')[0]).show();
     });
-    
-    // Bouton pour modifier les conditions
+
+    // Bouton Modifier
     $(document).on('click', '.edit-vente-btn', function() {
         currentVenteId = $(this).data('id');
-        
+
         $.ajax({
             url: API_BASE_URL,
             type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(response) {
                 if (response.exists === false) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Ces conditions de vente n\'existent plus'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Erreur', text: "Ces conditions de vente n'existent plus" });
                     return;
                 }
-                
                 $('#editVenteId').val(response.id);
-                
-                // Sélectionner les options
-                if (response.recouvrement_de_dette_jugement) {
-                    $('#editRecouvrementJugement').val(response.recouvrement_de_dette_jugement).trigger('change');
-                }
-                if (response.comportement_de_paiement) {
-                    $('#editComportementPaiement').val(response.comportement_de_paiement).trigger('change');
-                }
-                
-                // Sélectionner les conditions locales
-                const localIds = response.local_list ? response.local_list.map(item => item.id) : [];
-                $('#editLocal').val(localIds).trigger('change');
-                
-                $('#editVenteModal').modal('show');
+                // Stocker les valeurs — appliquées après init Select2 dans shown.bs.modal
+                pendingLocalIds = response.local_list ? response.local_list.map(function(item) { return String(item.id); }) : [];
+                pendingRecouvrementVal = response.recouvrement_de_dette_jugement || '';
+                pendingPaiementVal = response.comportement_de_paiement || '';
+                bootstrap.Modal.getOrCreateInstance($('#editVenteModal')[0]).show();
             },
             error: function(xhr) {
-                if (xhr.status === 401) {
-                    refreshAccessToken();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: 'Impossible de charger les détails des conditions de vente.'
-                    });
-                }
+                if (xhr.status === 401) refreshAccessToken();
+                else Swal.fire({ icon: 'error', title: 'Erreur', text: "Impossible de charger les détails des conditions de vente." });
             }
         });
     });
-    
-    // Bouton pour supprimer les conditions
+
+    // Bouton Supprimer
     $(document).on('click', '.delete-vente-btn', function() {
         currentVenteId = $(this).data('id');
-        
-        $('#deleteConfirmationText').html(`
-            Êtes-vous sûr de vouloir supprimer les conditions de vente ?<br><br>
-            Cette action est irréversible.
-        `);
-        
-        $('#confirmDeleteModal').modal('show');
+        $('#deleteConfirmationText').html("{% trans "Êtes-vous sûr de vouloir supprimer les conditions de vente ?" %}<br><br>{% trans "Cette action est irréversible." %}");
+        bootstrap.Modal.getOrCreateInstance($('#confirmDeleteModal')[0]).show();
     });
     
     // Formulaire d'ajout
@@ -1671,7 +1614,8 @@ $(document).ready(function() {
                 'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#confirmDeleteModal').modal('hide');
+                var m = bootstrap.Modal.getInstance($('#confirmDeleteModal')[0]);
+                if (m) m.hide();
                 $btn.prop('disabled', false);
                 $btn.html('<i class="fas fa-trash me-2"></i>Confirmer la suppression');
                 

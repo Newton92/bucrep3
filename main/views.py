@@ -4406,11 +4406,18 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect_to_login(request.get_full_path())
     
-    # Récupérer toutes les conditions de vente disponibles
-    conditions_liste = ListeConditionVente.objects.all().order_by('nom')
-    conditions_json = json.dumps([
-        {'id': cond.id, 'nom': cond.nom} for cond in conditions_liste
-    ], default=str)
+    # Récupérer toutes les conditions de vente disponibles (bilingues)
+    _lang_v = get_language() or 'fr'
+    _qs_v = ListeConditionVente.objects.all().order_by('nom')
+    conditions_liste = [
+        {
+            'id': c.id,
+            'label': (c.nom_fr or c.nom_en or c.nom) if _lang_v.startswith('fr')
+                     else (c.nom_en or c.nom_fr or c.nom),
+        }
+        for c in _qs_v
+    ]
+    conditions_json = json.dumps(conditions_liste, default=str)
     
     # Préparer les choix pour les champs
     recouvrement_choices = [
