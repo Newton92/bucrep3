@@ -4306,14 +4306,19 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect_to_login(request.get_full_path())
     
-    # Récupérer toutes les conditions d'achat disponibles
-    conditions_liste = ListeConditionAchat.objects.all().order_by('nom')
-    conditions_json = json.dumps([
-        {'id': cond.id, 'nom': cond.nom} for cond in conditions_liste
-    ], default=str)
-    
-    print(conditions_liste)
-    print(conditions_json)
+    # Récupérer toutes les conditions d'achat disponibles (bilingues)
+    from django.utils.translation import get_language as _get_lang
+    _lang = _get_lang() or 'fr'
+    _qs = ListeConditionAchat.objects.all().order_by('nom')
+    conditions_liste = [
+        {
+            'id': c.id,
+            'label': (c.nom_fr or c.nom_en or c.nom) if _lang.startswith('fr')
+                     else (c.nom_en or c.nom_fr or c.nom),
+        }
+        for c in _qs
+    ]
+    conditions_json = json.dumps(conditions_liste, default=str)
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {

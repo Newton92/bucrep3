@@ -14383,16 +14383,8 @@ class ListeConditionAchat(models.Model):
     nom_fr = models.CharField(_("nom (français)"), max_length=200, blank=True, default="")
     nom_en = models.CharField(_("nom (anglais)"),  max_length=200, blank=True, default="")
 
-    @property
-    def nom_display(self):
-        from django.utils.translation import get_language
-        lang = get_language() or "fr"
-        if lang.startswith("fr"):
-            return self.nom_fr or self.nom_en or self.nom
-        return self.nom_en or self.nom_fr or self.nom
-
     def __str__(self):
-        return self.nom_display
+        return self.nom_fr or self.nom_en or self.nom
 
 
 class ListeConditionVente(models.Model):
@@ -14402,16 +14394,8 @@ class ListeConditionVente(models.Model):
     nom_fr = models.CharField(_("nom (français)"), max_length=200, blank=True, default="")
     nom_en = models.CharField(_("nom (anglais)"),  max_length=200, blank=True, default="")
 
-    @property
-    def nom_display(self):
-        from django.utils.translation import get_language
-        lang = get_language() or "fr"
-        if lang.startswith("fr"):
-            return self.nom_fr or self.nom_en or self.nom
-        return self.nom_en or self.nom_fr or self.nom
-
     def __str__(self):
-        return self.nom_display
+        return self.nom_fr or self.nom_en or self.nom
     
     
 class ListeImportation(models.Model):
