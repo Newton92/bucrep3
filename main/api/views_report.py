@@ -2182,16 +2182,17 @@ class GenerateReport(APIView):
         
         # 1. Récupération des propriétés et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
-        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur)
+        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur).prefetch_related("locaux")
         list_properties_and_assets_data = []
 
         # 2. Bouclez sur les objets pour construire une liste de dictionnaires
         for prop_asset in properties_and_assets:
+            locaux_labels = [str(local) for local in prop_asset.locaux.all()]
             list_properties_and_assets_data.append({
-                "locaux": prop_asset.locaux_ref.libelle if prop_asset.locaux_ref else prop_asset.locaux,
-                "branche": prop_asset.branche if prop_asset.branche else "Non spécifié",
-            })    
-            
+                "locaux": locaux_labels if locaux_labels else [],
+                "branche": prop_asset.branche if prop_asset.branche else "",
+            })
+
         # Recuperation des conditions d'achat et de vente de l'acheteur
         try:
             condition_achat = ConditionAchat.objects.get(acheteur=acheteur)
@@ -3587,16 +3588,17 @@ class GenerateReportCommandeAcheteur(APIView):
         
         # 1. Récupération des propriétés et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
-        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur)
+        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur).prefetch_related("locaux")
         list_properties_and_assets_data = []
 
         # 2. Bouclez sur les objets pour construire une liste de dictionnaires
         for prop_asset in properties_and_assets:
+            locaux_labels = [str(local) for local in prop_asset.locaux.all()]
             list_properties_and_assets_data.append({
-                "locaux": prop_asset.locaux_ref.libelle if prop_asset.locaux_ref else prop_asset.locaux,
-                "branche": prop_asset.branche if prop_asset.branche else "Non spécifié",
-            })    
-            
+                "locaux": locaux_labels if locaux_labels else [],
+                "branche": prop_asset.branche if prop_asset.branche else "",
+            })
+
         # Recuperation des conditions d'achat et de vente de l'acheteur
         try:
             condition_achat = ConditionAchat.objects.get(acheteur=acheteur)
