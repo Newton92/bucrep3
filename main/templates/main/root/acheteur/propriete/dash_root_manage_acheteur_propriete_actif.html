@@ -99,7 +99,7 @@
             <div class="row g-3 py-2" id="paRecord">
 
                 <!-- Local -->
-                <div class="col-12">
+                <div class="col-md-6">
                     <div class="d-flex align-items-center justify-content-between mb-1">
                         <div class="pa-section-label mb-0"><i class="bi bi-geo-alt me-1"></i>{% trans "Local" %}</div>
                         <span class="badge bg-primary rounded-pill">{{ propriete_actif.locaux.count }}</span>
@@ -115,16 +115,15 @@
                     </div>
                 </div>
 
-                <!-- Branch (inline éditable) -->
-                <div class="col-12">
+                <!-- Branch (lecture seule) -->
+                <div class="col-md-6">
                     <div class="pa-section-label mb-1"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
-                    <textarea class="form-control rich-editor" id="brancheInlineInput" rows="4"
-                              placeholder="{% trans 'Saisissez la branche...' %}">{{ propriete_actif.branche|default:'' }}</textarea>
-                    <div class="d-flex justify-content-end mt-2">
-                        <button class="btn btn-sm btn-primary d-flex align-items-center gap-1" id="btnSaveBranche">
-                            <i class="bi bi-save"></i>{% trans "Enregistrer Branch" %}
-                            <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
-                        </button>
+                    <div class="pa-section-value p-2 border rounded bg-light" id="brancheDisplay" style="min-height:2.5rem;">
+                        {% if propriete_actif.branche %}
+                            {{ propriete_actif.branche }}
+                        {% else %}
+                            <span class="text-muted small fst-italic">{% trans "Non renseigné" %}</span>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -241,7 +240,6 @@ $(document).ready(function() {
     var HAS_RECORD        = {% if has_propriete_actif %}true{% else %}false{% endif %};
     var isEditMode        = HAS_RECORD;
     var pendingLocauxIds  = [];
-    var currentLocauxIds  = [{% if propriete_actif %}{% for l in propriete_actif.locaux.all %}{{ l.id }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
 
     var S = {
         err:          "{{ t_err|escapejs }}",
@@ -270,28 +268,6 @@ $(document).ready(function() {
         ajouteLe:     "{{ t_ajoute_le|escapejs }}",
         maj:          "{{ t_maj|escapejs }}"
     };
-
-    // ── Sauvegarde inline Branch ──
-    $(document).on('click', '#btnSaveBranche', function() {
-        var $btn = $(this);
-        var branche = $('#brancheInlineInput').val().trim();
-        $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
-        $.ajax({
-            url: API_URL, type: 'PUT',
-            data: JSON.stringify({ branche: branche, locaux: currentLocauxIds }),
-            contentType: 'application/json',
-            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
-            success: function() {
-                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-                Swal.fire({ icon: 'success', title: S.ok, text: S.modif, timer: 1500, showConfirmButton: false });
-            },
-            error: function(xhr) {
-                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
-                if (xhr.status === 401) { refreshAccessToken(function() { $('#btnSaveBranche').click(); }); return; }
-                Swal.fire({ icon: 'error', title: S.err, text: S.errGeneric });
-            }
-        });
-    });
 
     // ── Init Select2 dans la modal ──
     $('#paModal').on('shown.bs.modal', function() {
@@ -333,7 +309,12 @@ $(document).ready(function() {
                 if (r.exists === false) return;
                 if (window.quillSetValue) window.quillSetValue('brancheInput', r.branche || '');
                 else document.getElementById('brancheInput').value = r.branche || '';
-                pendingLocauxIds = (r.locaux_list || []).map(function(l) { return String(l.id); });
+                // r.locaux = tableau d'IDs entiers retourné par le serializer
+                var ids = r.locaux || [];
+                if (!ids.length && r.locaux_list) {
+                    ids = r.locaux_list.map(function(l) { return l.id; });
+                }
+                pendingLocauxIds = ids.map(function(v) { return String(v); });
                 bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
             },
             error: function(xhr) {
