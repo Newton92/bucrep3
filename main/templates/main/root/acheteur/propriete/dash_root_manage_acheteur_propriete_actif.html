@@ -164,17 +164,11 @@
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-geo-alt me-1 text-primary"></i>{% trans "Local" %}
                             </label>
-                            <select multiple class="form-select form-select-sm" id="locauxSelect"
-                                    style="min-height:120px;">
+                            <select multiple class="select2-pa-local w-100" id="locauxSelect">
                                 {% for local in locaux %}
                                 <option value="{{ local.id }}">{{ local.nom }}</option>
-                                {% empty %}
-                                <option disabled>{% trans "Aucun local disponible" %}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text small">
-                                <i class="bi bi-info-circle me-1"></i>{% trans "Maintenez Ctrl pour sélectionner plusieurs locaux" %}
-                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
@@ -233,8 +227,9 @@ $(document).ready(function() {
     var API_URL      = '/api/acheteur/' + ACHETEUR_ID + '/propriete-actif/';
     var ACCESS_TOKEN  = '{{ access_token }}';
     var REFRESH_TOKEN = '{{ refresh_token }}';
-    var HAS_RECORD   = {% if has_propriete_actif %}true{% else %}false{% endif %};
-    var isEditMode   = HAS_RECORD;
+    var HAS_RECORD        = {% if has_propriete_actif %}true{% else %}false{% endif %};
+    var isEditMode        = HAS_RECORD;
+    var pendingLocauxIds  = [];
 
     var S = {
         err:          "{{ t_err|escapejs }}",
@@ -264,12 +259,28 @@ $(document).ready(function() {
         maj:          "{{ t_maj|escapejs }}"
     };
 
+    // ── Init Select2 dans la modal ──
+    $('#paModal').on('shown.bs.modal', function() {
+        if ($('#locauxSelect').data('select2')) { $('#locauxSelect').select2('destroy'); }
+        $('#locauxSelect').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            allowClear: true,
+            placeholder: "{% trans 'Sélectionnez les locaux...' %}",
+            dropdownParent: $('#paModal')
+        });
+        if (pendingLocauxIds.length) {
+            $('#locauxSelect').val(pendingLocauxIds).trigger('change');
+            pendingLocauxIds = [];
+        }
+    });
+
     // ── Ouvrir modal Ajout ──
     $(document).on('click', '#btnCreate, #btnCreateBody', function() {
         isEditMode = false;
+        pendingLocauxIds = [];
         $('#paModalTitle').html('<i class="bi bi-plus-circle me-2"></i>' + S.ajouter);
         $('#submitPABtn .btn-text').html('<i class="bi bi-check-lg me-1"></i>{% trans "Enregistrer" %}');
-        $('#locauxSelect option').prop('selected', false);
         $('#brancheInput').val('');
         bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
     });
@@ -286,10 +297,7 @@ $(document).ready(function() {
             success: function(r) {
                 if (r.exists === false) return;
                 $('#brancheInput').val(r.branche || '');
-                var ids = (r.locaux_list || []).map(function(l) { return String(l.id); });
-                $('#locauxSelect option').each(function() {
-                    $(this).prop('selected', ids.indexOf($(this).val()) !== -1);
-                });
+                pendingLocauxIds = (r.locaux_list || []).map(function(l) { return String(l.id); });
                 bootstrap.Modal.getOrCreateInstance($('#paModal')[0]).show();
             },
             error: function(xhr) {
@@ -358,8 +366,9 @@ $(document).ready(function() {
 
     // ── Reset modal ──
     $('#paModal').on('hidden.bs.modal', function() {
-        $('#locauxSelect option').prop('selected', false);
+        if ($('#locauxSelect').data('select2')) { $('#locauxSelect').val(null).trigger('change'); }
         $('#brancheInput').val('');
+        pendingLocauxIds = [];
     });
 
     // ── Helpers ──
