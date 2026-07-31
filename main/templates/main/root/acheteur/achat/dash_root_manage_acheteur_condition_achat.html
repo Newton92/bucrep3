@@ -194,25 +194,13 @@
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-house-fill me-1 text-success"></i>{% trans "Conditions Locales" %}
                             </label>
-                            <select multiple class="form-select form-select-sm select2-field" id="localSelect" name="local">
-                                {% for c in conditions_liste %}
-                                <option value="{{ c.id }}">{{ c.label }}</option>
-                                {% empty %}
-                                <option disabled>{% trans "Aucune condition disponible" %}</option>
-                                {% endfor %}
-                            </select>
+                            <select multiple class="form-select form-select-sm select2-field" id="localSelect" name="local"></select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">
                                 <i class="bi bi-globe-americas me-1 text-primary"></i>{% trans "Conditions d'Importation" %}
                             </label>
-                            <select multiple class="form-select form-select-sm select2-field" id="importationSelect" name="importation">
-                                {% for c in conditions_liste %}
-                                <option value="{{ c.id }}">{{ c.label }}</option>
-                                {% empty %}
-                                <option disabled>{% trans "Aucune condition disponible" %}</option>
-                                {% endfor %}
-                            </select>
+                            <select multiple class="form-select form-select-sm select2-field" id="importationSelect" name="importation"></select>
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">
@@ -295,9 +283,19 @@ $(document).ready(function() {
         reconnect:  "{{ t_reconnect|escapejs }}"
     };
 
+    // ── Peupler les selects depuis le JSON (évite tout problème de template) ──
+    var CONDITIONS_LIST = {{ conditions_json|safe }};
+    var $local  = $('#localSelect');
+    var $import = $('#importationSelect');
+    $.each(CONDITIONS_LIST, function(i, c) {
+        var opt = new Option(c.label, c.id, false, false);
+        $local.append(opt);
+        $import.append($(opt).clone());
+    });
+
     // ── Select2 ──
     $('.select2-field').select2({
-        theme: 'bootstrap-5', width: '100%', language: 'fr',
+        theme: 'bootstrap-5', width: '100%',
         allowClear: true, minimumResultsForSearch: 5,
         dropdownParent: $('body'),
         placeholder: '{% trans "Sélectionnez…" %}'
