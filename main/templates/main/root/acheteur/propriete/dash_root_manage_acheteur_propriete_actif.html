@@ -111,13 +111,12 @@
                 </div>
                 <div class="col-md-6">
                     <div class="pa-section-label"><i class="bi bi-diagram-3 me-1"></i>{% trans "Branch" %}</div>
-                    <div class="pa-section-value" id="brancheDisplay">
-                        {% if propriete_actif.branche %}
-                            {{ propriete_actif.branche }}
-                        {% else %}
-                            <span class="text-muted small">{% trans "Non renseigné" %}</span>
-                        {% endif %}
-                    </div>
+                    <textarea class="form-control form-control-sm" id="brancheInlineInput" rows="3"
+                              placeholder="{% trans 'Saisissez la branche...' %}">{{ propriete_actif.branche|default:'' }}</textarea>
+                    <button class="btn btn-sm btn-primary mt-2" id="btnSaveBranche">
+                        <i class="bi bi-save me-1"></i>{% trans "Enregistrer" %}
+                        <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+                    </button>
                 </div>
                 <div class="col-12 border-top pt-3 mt-1">
                     <div class="d-flex gap-4">
@@ -230,6 +229,7 @@ $(document).ready(function() {
     var HAS_RECORD        = {% if has_propriete_actif %}true{% else %}false{% endif %};
     var isEditMode        = HAS_RECORD;
     var pendingLocauxIds  = [];
+    var currentLocauxIds  = [{% if propriete_actif %}{% for l in propriete_actif.locaux.all %}{{ l.id }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
 
     var S = {
         err:          "{{ t_err|escapejs }}",
@@ -258,6 +258,28 @@ $(document).ready(function() {
         ajouteLe:     "{{ t_ajoute_le|escapejs }}",
         maj:          "{{ t_maj|escapejs }}"
     };
+
+    // ── Sauvegarde inline Branch ──
+    $(document).on('click', '#btnSaveBranche', function() {
+        var $btn = $(this);
+        var branche = $('#brancheInlineInput').val().trim();
+        $btn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
+        $.ajax({
+            url: API_URL, type: 'PUT',
+            data: JSON.stringify({ branche: branche, locaux: currentLocauxIds }),
+            contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN, 'X-CSRFToken': getCookie('csrftoken') },
+            success: function() {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                Swal.fire({ icon: 'success', title: S.ok, text: S.modif, timer: 1500, showConfirmButton: false });
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).find('.spinner-border').addClass('d-none');
+                if (xhr.status === 401) { refreshAccessToken(function() { $('#btnSaveBranche').click(); }); return; }
+                Swal.fire({ icon: 'error', title: S.err, text: S.errGeneric });
+            }
+        });
+    });
 
     // ── Init Select2 dans la modal ──
     $('#paModal').on('shown.bs.modal', function() {
