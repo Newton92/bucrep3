@@ -332,52 +332,56 @@
     font-size: 1.05rem;
 }
 
-/* Tags conditions premium */
-.condition-tags-section-premium {
-    margin-top: 1.5rem;
+/* Liste conditions premium */
+.condition-list-section-premium {
+    margin-top: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(145deg, rgba(102,16,242,0.03), rgba(111,66,193,0.02));
+    border-radius: 10px;
+    border: 1px solid rgba(102,16,242,0.09);
 }
 
-.condition-tags-title-premium {
-    font-weight: 600;
-    color: var(--color-primary-dark);
-    margin-bottom: 1rem;
+.condition-ol-premium {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.condition-li-premium {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
+    gap: 0.65rem;
+    padding: 0.45rem 0.75rem;
+    margin-bottom: 0.3rem;
+    border-radius: 0 6px 6px 0;
+    border-left: 3px solid #6610f2;
+    background: rgba(102,16,242,0.04);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #3d1080;
+    transition: background 0.15s;
 }
 
-.condition-tags-container-premium {
+.condition-li-premium:last-child {
+    margin-bottom: 0;
+}
+
+.condition-li-premium:hover {
+    background: rgba(102,16,242,0.09);
+}
+
+.condition-li-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #6610f2;
+    color: #fff;
+    border-radius: 50%;
+    width: 1.35rem;
+    height: 1.35rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: linear-gradient(145deg, rgba(10, 149, 202, 0.02), rgba(37, 173, 214, 0.01));
-    border-radius: 12px;
-    border: 1px solid var(--color-border);
-}
-
-.condition-tag-premium {
-    padding: 0.75rem 1.25rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid transparent;
-    box-shadow: 0 4px 12px rgba(102, 16, 242, 0.15);
-}
-
-.condition-tag-premium.local {
-    background: var(--local-gradient);
-    color: white;
-}
-
-.condition-tag-premium:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(102, 16, 242, 0.25);
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Badge choix premium */
@@ -863,8 +867,8 @@
         padding: 1.5rem !important;
     }
     
-    .condition-tags-container-premium {
-        padding: 0.75rem;
+    .condition-list-section-premium {
+        padding: 0.4rem 0.5rem;
     }
 }
 
@@ -887,11 +891,11 @@
         font-size: 0.95rem;
     }
     
-    .condition-tag-premium {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
+    .condition-li-premium {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
     }
-    
+
     .vente-actions-premium {
         flex-direction: column;
     }
@@ -901,6 +905,7 @@
 {% endblock %}
 
 {% block body %}
+{% get_current_language as LANG_CODE %}
 <div class="container-fluid">
     <!-- Page Header Compact -->
     <div class="page-header">
@@ -958,20 +963,22 @@
                                     {% trans "Conditions Locales" %}
                                     <span class="badge-count-premium">{{ condition_vente.local.count }}</span>
                                 </div>
-                                <div class="condition-tags-section-premium">
-                                    <div class="condition-tags-container-premium">
+                                <div class="condition-list-section-premium">
+                                    {% if condition_vente.local.count %}
+                                    <ul class="condition-ol-premium">
                                         {% for item in condition_vente.local.all %}
-                                            <span class="condition-tag-premium local">
-                                                <i class="fas fa-tag"></i>
-                                                {{ item.nom }}
-                                            </span>
-                                        {% empty %}
-                                            <div class="empty-content-message w-100">
-                                                <i class="fas fa-store fa-2x mb-3"></i>
-                                                <p class="mb-0">{% trans "Aucune condition locale spécifiée" %}</p>
-                                            </div>
+                                        <li class="condition-li-premium">
+                                            <span class="condition-li-num">{{ forloop.counter }}</span>
+                                            {% if LANG_CODE == 'fr' %}{{ item.nom_fr|default:item.nom }}{% else %}{{ item.nom_en|default:item.nom }}{% endif %}
+                                        </li>
                                         {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                    <div class="empty-content-message w-100">
+                                        <i class="fas fa-store fa-2x mb-3"></i>
+                                        <p class="mb-0">{% trans "Aucune condition locale spécifiée" %}</p>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1310,6 +1317,7 @@ $(document).ready(function() {
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/condition-vente/`;
     let ACCESS_TOKEN = '{{ access_token }}';
     const REFRESH_TOKEN = '{{ refresh_token }}';
+    const LANG_CODE = '{{ LANG_CODE }}';
     let currentVenteId = null;
 
     // Données bilingues depuis la vue Django
@@ -1389,15 +1397,17 @@ $(document).ready(function() {
 
     // Mettre à jour l'affichage après modification
     function updateVenteDisplay(venteData) {
-        // Mettre à jour les tags locaux
         const localTags = venteData.local_list || [];
-        let localTagsHtml = '';
+        let localListHtml = '';
         if (localTags.length > 0) {
-            localTags.forEach(function(item) {
-                localTagsHtml += `<span class="condition-tag-premium local"><i class="fas fa-tag"></i> ${item.nom}</span>`;
+            localListHtml = '<ul class="condition-ol-premium">';
+            localTags.forEach(function(item, idx) {
+                var label = (LANG_CODE === 'fr') ? (item.nom_fr || item.nom) : (item.nom_en || item.nom);
+                localListHtml += `<li class="condition-li-premium"><span class="condition-li-num">${idx + 1}</span>${label}</li>`;
             });
+            localListHtml += '</ul>';
         } else {
-            localTagsHtml = `<div class="empty-content-message w-100">
+            localListHtml = `<div class="empty-content-message w-100">
                 <i class="fas fa-store fa-2x mb-3"></i>
                 <p class="mb-0">{% trans "Aucune condition locale spécifiée" %}</p>
             </div>`;
@@ -1418,12 +1428,12 @@ $(document).ready(function() {
                 <i class="fas fa-credit-card fa-2x mb-3"></i>
                 <p class="mb-0">{% trans "Aucune information de paiement" %}</p>
             </div>`;
-        
+
         // Mettre à jour les compteurs
         const localCount = localTags.length;
-        
+
         // Mettre à jour le DOM
-        $('.vente-card-premium.local .condition-tags-container-premium').html(localTagsHtml);
+        $('.vente-card-premium.local .condition-list-section-premium').html(localListHtml);
         $('.vente-card-premium.jugement .vente-content-premium').html(jugementHtml);
         $('.vente-card-premium.paiement .vente-content-premium').html(paiementHtml);
         

@@ -4081,11 +4081,19 @@ class ConditionDeVenteSerializer(serializers.ModelSerializer):
         return obj.acheteur.nom if obj.acheteur else None
     
     def get_local_list(self, obj):
-        return [{'id': item.id, 'nom': item.nom} for item in obj.local.all()]
-    
+        return [
+            {
+                'id': item.id,
+                'nom': item.nom,
+                'nom_fr': item.nom_fr or item.nom,
+                'nom_en': item.nom_en or item.nom,
+            }
+            for item in obj.local.all()
+        ]
+
     def get_created_at_formatted(self, obj):
         return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
-    
+
     def get_updated_at_formatted(self, obj):
         return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
 
