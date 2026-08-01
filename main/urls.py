@@ -53,7 +53,7 @@ from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
 from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
-from main.api.views_scoring_delphi import ScoringDelphiAcheteurView, simuler_score_delphi
+from main.api.views_scoring_delphi import ScoringDelphiAcheteurView, simuler_score_delphi, autofill_delphi
 from main.api.views_scoring_rating import (
     get_annees_rating, precharger_bilan_rating,
     ScoringRatingCalculerView, ScoringRatingSauvegarderView,
@@ -5228,6 +5228,7 @@ urlpatterns = [
     # Score Commercial Delphi ACREMAC
     path('api/scoring/delphi/acheteur/<int:acheteur_id>/', ScoringDelphiAcheteurView.as_view(), name='api_scoring_delphi_acheteur'),
     path('api/scoring/delphi/acheteur/<int:acheteur_id>/simuler/', simuler_score_delphi, name='api_scoring_delphi_simuler'),
+    path('api/scoring/delphi/acheteur/<int:acheteur_id>/autofill/', autofill_delphi, name='api_scoring_delphi_autofill'),
 
     # Score / Rating ACREMAC (basé états financiers)
     path('api/scoring/rating/acheteur/<int:acheteur_id>/annees/', get_annees_rating, name='api_rating_annees'),

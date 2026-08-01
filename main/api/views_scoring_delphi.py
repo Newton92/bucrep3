@@ -46,6 +46,19 @@ class ScoringDelphiAcheteurView(APIView):
         return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def autofill_delphi(request, acheteur_id):
+    """
+    Retourne les valeurs financières calculées depuis les bilans existants,
+    sans modifier le ScoringDelphi. Utile pour pré-remplir le formulaire.
+    """
+    acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+    tmp = ScoringDelphi(acheteur=acheteur)
+    suggestions = tmp.prefill_from_bilan(force=True)
+    return Response({'suggestions': suggestions})
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def simuler_score_delphi(request, acheteur_id):

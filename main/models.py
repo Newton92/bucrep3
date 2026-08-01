@@ -7686,7 +7686,125 @@ class ScoringDelphi(SafeDeleteModel):
         else:
             return 'A', 5, _('Risque très faible')
 
+    def prefill_from_bilan(self, force=False):
+        """
+        Remplit les champs financiers nuls depuis les bilans existants.
+        Ordre : classique → syscohada → IFRS.
+        force=True recalcule même si les champs sont déjà renseignés.
+        Retourne un dict des valeurs suggérées.
+        """
+        needs = {
+            'ratio_liquidite':   force or self.ratio_liquidite is None,
+            'marge_nette':       force or self.marge_nette is None,
+            'ebitda_ratio':      force or self.ebitda_ratio is None,
+            'ratio_endettement': force or self.ratio_endettement is None,
+            'age_entreprise':    force or self.age_entreprise is None,
+        }
+        if not any(needs.values()):
+            return {}
+
+        suggestions = {}
+
+        def _sdiv(num, den, pct=False):
+            try:
+                n, d = float(num or 0), float(den or 0)
+                if d == 0:
+                    return None
+                return round((n / d) * (100 if pct else 1), 4)
+            except (TypeError, ValueError):
+                return None
+
+        acheteur = self.acheteur
+
+        # ── Bilan classique ────────────────────────────────────────────────
+        try:
+            actif_c = ActifC.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+            if actif_c:
+                passif_c = PassifC.objects.filter(acheteur=acheteur, annee=actif_c.annee).first()
+                res_c = ResultatC.objects.filter(acheteur=acheteur, annee=actif_c.annee).first()
+                if passif_c and res_c:
+                    if needs['ratio_liquidite'] and 'ratio_liquidite' not in suggestions:
+                        v = _sdiv(float(actif_c.total_II or 0) - float(actif_c.stocks or 0), passif_c.total_III)
+                        if v is not None:
+                            suggestions['ratio_liquidite'] = v
+                    if needs['marge_nette'] and 'marge_nette' not in suggestions:
+                        v = _sdiv(res_c.resultat_exercice, res_c.ca, pct=True)
+                        if v is not None:
+                            suggestions['marge_nette'] = v
+                    if needs['ebitda_ratio'] and 'ebitda_ratio' not in suggestions:
+                        v = _sdiv(res_c.excedent_brut_ex, res_c.ca, pct=True)
+                        if v is not None:
+                            suggestions['ebitda_ratio'] = v
+                    if needs['ratio_endettement'] and 'ratio_endettement' not in suggestions:
+                        v = _sdiv(passif_c.total_I, passif_c.total_general)
+                        if v is not None:
+                            suggestions['ratio_endettement'] = v
+        except Exception:
+            pass
+
+        # ── Bilan SYSCOHADA ────────────────────────────────────────────────
+        missing_sys = [k for k in ('ratio_liquidite', 'marge_nette', 'ebitda_ratio', 'ratio_endettement')
+                       if needs[k] and k not in suggestions]
+        if missing_sys:
+            try:
+                actif_s = ActifS.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee').first()
+                if actif_s:
+                    passif_s = PassifS.objects.filter(acheteur=acheteur, annee=actif_s.annee).first()
+                    res_s = ResultatS.objects.filter(acheteur=acheteur, annee=actif_s.annee).first()
+                    if passif_s and res_s:
+                        if 'ratio_liquidite' in missing_sys:
+                            stock = float(actif_s.stock_encours or 0)
+                            v = _sdiv(float(actif_s.total_actif_circulant) - stock, passif_s.total_passifs_courants)
+                            if v is not None:
+                                suggestions['ratio_liquidite'] = v
+                        if 'marge_nette' in missing_sys:
+                            v = _sdiv(res_s.resultat_net, res_s.chiffre_affaires, pct=True)
+                            if v is not None:
+                                suggestions['marge_nette'] = v
+                        if 'ebitda_ratio' in missing_sys:
+                            v = _sdiv(res_s.excedent_brute_exploitation, res_s.chiffre_affaires, pct=True)
+                            if v is not None:
+                                suggestions['ebitda_ratio'] = v
+                        if 'ratio_endettement' in missing_sys:
+                            v = _sdiv(passif_s.total_capitaux_propres_ressources_similaires, passif_s.total_passifs)
+                            if v is not None:
+                                suggestions['ratio_endettement'] = v
+            except Exception:
+                pass
+
+        # ── Bilan IFRS ────────────────────────────────────────────────────
+        missing_ifrs = [k for k in ('ratio_liquidite', 'marge_nette')
+                        if needs[k] and k not in suggestions]
+        if missing_ifrs:
+            try:
+                ri = RatiosIFRS.objects.filter(acheteur=acheteur).order_by('-annee__annee').first()
+                if ri:
+                    if 'ratio_liquidite' in missing_ifrs:
+                        v = ri.liquidite_generale
+                        if v:
+                            suggestions['ratio_liquidite'] = round(float(v), 4)
+                    if 'marge_nette' in missing_ifrs:
+                        v = ri.marge_nette
+                        if v:
+                            suggestions['marge_nette'] = round(float(v), 4)
+            except Exception:
+                pass
+
+        # ── Âge entreprise ────────────────────────────────────────────────
+        if needs['age_entreprise'] and 'age_entreprise' not in suggestions:
+            age = self._calculer_age()
+            if age:
+                suggestions['age_entreprise'] = round(float(age), 2)
+
+        # Appliquer aux champs concernés
+        for field, value in suggestions.items():
+            if needs.get(field):
+                setattr(self, field, value)
+
+        return suggestions
+
     def save(self, *args, **kwargs):
+        self.prefill_from_bilan()
         score = self.calculer_score()
         self.score_delphi = score
         self.bande, self.etoiles, self.niveau_risque = self.determiner_bande_et_risque(score)
