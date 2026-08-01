@@ -87,6 +87,7 @@ from main.models import (
     Scoring
 )
 from main.models import TelephoneAcheteur, PortableAcheteur, EmailAcheteur, AdresseAcheteur
+from main.models import ScoringRating, ScoringDelphi
 # from datetime import datetime as dt 
 from main.api.views_scoring_classique import *
 from main.api.views_scoring_anglais import *
@@ -2629,6 +2630,32 @@ class GenerateReport(APIView):
         
 
 
+        # ACREMAC Rating Score et Delphi Score
+        scorings_rating_qs = ScoringRating.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+        scoring_rating_entries = []
+        for sr in scorings_rating_qs:
+            sv = float(sr.score_final) if sr.score_final is not None else None
+            scoring_rating_entries.append({
+                "annee": str(sr.annee) if sr.annee else "",
+                "score_final": f"{sv:.2f}" if sv is not None else "-",
+                "rating": sr.rating or "-",
+                "classe_risque": sr.classe_risque or "-",
+                "decision": sr.decision or "-",
+                "red_flag": sr.red_flag,
+                "commentaire": sr.commentaire or "",
+            })
+        try:
+            _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+            scoring_delphi_ctx = {
+                "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
+                "bande": _sd.bande or "-",
+                "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
+                "niveau_risque": _sd.niveau_risque or "-",
+                "commentaire": _sd.commentaire or "",
+            }
+        except ScoringDelphi.DoesNotExist:
+            scoring_delphi_ctx = None
+
         telephones_acheteur = list(
             TelephoneAcheteur.objects.filter(acheteur=acheteur)
             .exclude(telephone__isnull=True)
@@ -3039,6 +3066,11 @@ class GenerateReport(APIView):
                 "score_value_annee_N2": score_value_ifrs_annee_N2,
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
             },
+            "scoring_rating": {
+                "entries": scoring_rating_entries,
+            },
+            "scoring_delphi": scoring_delphi_ctx,
+
             "operation_history": {
                 "title_23": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
@@ -4035,6 +4067,32 @@ class GenerateReportCommandeAcheteur(APIView):
         
 
 
+        # ACREMAC Rating Score et Delphi Score
+        scorings_rating_qs = ScoringRating.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+        scoring_rating_entries = []
+        for sr in scorings_rating_qs:
+            sv = float(sr.score_final) if sr.score_final is not None else None
+            scoring_rating_entries.append({
+                "annee": str(sr.annee) if sr.annee else "",
+                "score_final": f"{sv:.2f}" if sv is not None else "-",
+                "rating": sr.rating or "-",
+                "classe_risque": sr.classe_risque or "-",
+                "decision": sr.decision or "-",
+                "red_flag": sr.red_flag,
+                "commentaire": sr.commentaire or "",
+            })
+        try:
+            _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+            scoring_delphi_ctx = {
+                "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
+                "bande": _sd.bande or "-",
+                "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
+                "niveau_risque": _sd.niveau_risque or "-",
+                "commentaire": _sd.commentaire or "",
+            }
+        except ScoringDelphi.DoesNotExist:
+            scoring_delphi_ctx = None
+
         telephones_acheteur = list(
             TelephoneAcheteur.objects.filter(acheteur=acheteur)
             .exclude(telephone__isnull=True)
@@ -4480,6 +4538,11 @@ class GenerateReportCommandeAcheteur(APIView):
                 "score_value_annee_N2": score_value_ifrs_annee_N2,
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
             },
+            "scoring_rating": {
+                "entries": scoring_rating_entries,
+            },
+            "scoring_delphi": scoring_delphi_ctx,
+
             "operation_history": {
                 "title_31": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",

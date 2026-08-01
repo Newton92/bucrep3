@@ -2109,7 +2109,7 @@
             <div class="subsection-title">No financial profitability ratio data available for this balance sheet type.</div>
             {% endif %}
 
-            {% if financial_statements.etats_financiers_classiques.charts_data.charts_delais %}   
+            {% if financial_statements.etats_financiers_classiques.charts_data.charts_delais %}
             <div class="section-title">DELAIS</div>
             <img src="data:image/png;base64,{{ financial_statements.etats_financiers_classiques.charts_data.charts_delais }}"
                alt="Graphique des délais"
@@ -2122,6 +2122,7 @@
          </div>
          {% else %}
          {% endif %}
+         {% comment %}
          <br><br>
 
          <!-- Score ACREMAC -->
@@ -2248,6 +2249,7 @@
             <div class="subsection-title">Aucun scoring avec bilan classique disponible pour cet acheteur.</div>
             {% endif %}
          </div>
+         {% endcomment %}
       </div>
       {% elif header_report.bilan_report == 'ANGLAIS' %}
       <!-- Etats financiers Anglais -->
@@ -2420,7 +2422,7 @@
             <div class="subsection-title">No financial profitability ratio data available for this balance sheet type.</div>
             {% endif %}
 
-            {% if financial_statements.etats_financiers_anglais.charts_data.charts_delais %}   
+            {% if financial_statements.etats_financiers_anglais.charts_data.charts_delais %}
             <div class="section-title">DELAIS</div>
             <img src="data:image/png;base64,{{ financial_statements.etats_financiers_anglais.charts_data.charts_delais }}"
                alt="Graphique des délais"
@@ -2433,6 +2435,7 @@
          </div>
          {% else %}
          {% endif %}
+         {% comment %}
          <br><br>
 
 
@@ -2494,6 +2497,7 @@
             <div class="subsection-title">No scoring with English balance sheet available for this buyer.</div>
             {% endif %}
          </div>
+         {% endcomment %}
       </div>
 
       {% elif header_report.bilan_report == 'BANCAIRE' %}
@@ -2734,7 +2738,7 @@
             <div class="subsection-title">No financial profitability ratio data available for this balance sheet type.</div>
             {% endif %}
 
-            {% if financial_statements.etats_financiers_bancaires.charts_data.charts_delais %}   
+            {% if financial_statements.etats_financiers_bancaires.charts_data.charts_delais %}
             <div class="section-title">DELAIS</div>
             <img src="data:image/png;base64,{{ financial_statements.etats_financiers_bancaires.charts_data.charts_delais }}"
                alt="Graphique des délais"
@@ -2747,6 +2751,7 @@
          </div>
          {% else %}
          {% endif %}
+         {% comment %}
          <br><br>
 
 
@@ -2808,6 +2813,7 @@
             <div class="subsection-title">Aucun scoring avec bilan bancaire disponible pour cet acheteur.</div>
             {% endif %}
          </div>
+         {% endcomment %}
       </div>
 
       {% elif header_report.bilan_report == 'SYSCOHADA' %}
@@ -2975,7 +2981,7 @@
             <div class="subsection-title">No financial profitability ratio data available for this balance sheet type.</div>
             {% endif %}
 
-            {% if financial_statements.etats_financiers_syscohada.charts_data.charts_delais %}   
+            {% if financial_statements.etats_financiers_syscohada.charts_data.charts_delais %}
             <div class="section-title">DELAIS</div>
             <img src="data:image/png;base64,{{ financial_statements.etats_financiers_syscohada.charts_data.charts_delais }}"
                alt="Graphique des délais"
@@ -2988,6 +2994,7 @@
          </div>
          {% else %}
          {% endif %}
+         {% comment %}
          <br><br>
 
 
@@ -3049,6 +3056,7 @@
             <div class="subsection-title">Aucun scoring avec bilan bancaire disponible pour cet acheteur.</div>
             {% endif %}
          </div>
+         {% endcomment %}
       </div>
 
       {% elif header_report.bilan_report == 'IFRS' %}
@@ -3216,7 +3224,7 @@
             <div class="subsection-title">No financial profitability ratio data available for this balance sheet type.</div>
             {% endif %}
 
-            {% if financial_statements.etats_financiers_irfs_cobac.charts_data.charts_delais %}   
+            {% if financial_statements.etats_financiers_irfs_cobac.charts_data.charts_delais %}
             <div class="section-title">DELAIS</div>
             <img src="data:image/png;base64,{{ financial_statements.etats_financiers_irfs_cobac.charts_data.charts_delais }}"
                alt="Graphique des délais"
@@ -3229,6 +3237,7 @@
          </div>
          {% else %}
          {% endif %}
+         {% comment %}
          <br><br>
 
 
@@ -3290,6 +3299,7 @@
             <div class="subsection-title">Aucun scoring avec bilan bancaire disponible pour cet acheteur.</div>
             {% endif %}
          </div>
+         {% endcomment %}
       </div>
       {% else %}
       <!-- Etats financiers par défaut -->
@@ -3299,40 +3309,55 @@
       </div>
       {% endif %}
 
-      {% if scoring_manuel and scoring_manuel.has_data %}
+      <!-- ACREMAC Rating Score -->
       <div class="section">
-         <div class="section-title">{{ scoring_manuel.title|default:"SCORING MANUEL" }}</div>
-         <p>Ce score correspond au scoring manuel saisi pour chaque exercice disponible.</p>
-         {% for entry in scoring_manuel.annees %}
-         {% if entry.is_available %}
-         <div class="subsection-title">SCORE ANNEE {{ entry.label }} ({{ entry.annee }})</div>
-         <div class="score-image">
-            <img src="{% if entry.score_image_base64 %}{{ entry.score_image_base64 }}{% else %}{% static entry.score_image %}{% endif %}" alt="Score manuel {{ entry.label }}">
-         </div>
-         <br>
+         <div class="section-title">{% trans "ACREMAC RATING SCORE" %}</div>
+         {% if scoring_rating.entries %}
+         {% for entry in scoring_rating.entries %}
          <div class="shareholder-entry">
+            <div class="subsection-title">{{ entry.annee }}</div>
+            {% if entry.score_image_base64 %}
+            <div class="score-image">
+               <img src="{{ entry.score_image_base64 }}" alt="Score Rating {{ entry.annee }}">
+            </div>
+            <br>
+            {% endif %}
             <table>
                <tbody>
-                  <tr>
-                     <th>Score</th>
-                     <td style="color: #00cc00;">{{ entry.score }}</td>
-                  </tr>
-                  <tr>
-                     <th>Interprétation</th>
-                     <td>{{ entry.interpretation|default:"Non évalué" }}</td>
-                  </tr>
-                  <tr>
-                     <th>Commentaire</th>
-                     <td class="warning">{{ entry.commentaire|default:"-"|striptags|safe }}</td>
-                  </tr>
+                  <tr><th>{% trans "Score" %} (0-10)</th><td style="color: #00cc00; font-weight:bold;">{{ entry.score_final }}</td></tr>
+                  <tr><th>{% trans "Rating" %}</th><td>{{ entry.rating }}</td></tr>
+                  <tr><th>{% trans "Classe de risque" %}</th><td>{{ entry.classe_risque }}</td></tr>
+                  <tr><th>{% trans "Décision" %}</th><td>{{ entry.decision }}</td></tr>
+                  {% if entry.red_flag %}<tr><th colspan="2" style="color:red; font-weight:bold;">&#9888; RED FLAG — historique de paiement nul</th></tr>{% endif %}
+                  {% if entry.commentaire %}<tr><th>{% trans "Commentaire" %}</th><td>{{ entry.commentaire|safe }}</td></tr>{% endif %}
                </tbody>
             </table>
          </div>
-         <br>
-         {% endif %}
          {% endfor %}
+         {% else %}
+         <div class="subsection-title">{% trans "Aucun score Rating disponible pour cet acheteur." %}</div>
+         {% endif %}
       </div>
-      {% endif %}
+
+      <!-- Delphi Score -->
+      <div class="section">
+         <div class="section-title">{% trans "DELPHI SCORE" %}</div>
+         {% if scoring_delphi %}
+         <div class="shareholder-entry">
+            <table>
+               <tbody>
+                  <tr><th>{% trans "Score Delphi" %} (0-100)</th><td style="color: #00cc00; font-weight:bold;">{{ scoring_delphi.score_delphi }}</td></tr>
+                  <tr><th>{% trans "Bande de risque" %}</th><td>{{ scoring_delphi.bande }}</td></tr>
+                  <tr><th>{% trans "Étoiles" %}</th><td>{{ scoring_delphi.etoiles }}</td></tr>
+                  <tr><th>{% trans "Niveau de risque" %}</th><td>{{ scoring_delphi.niveau_risque }}</td></tr>
+                  {% if scoring_delphi.commentaire %}<tr><th>{% trans "Commentaire" %}</th><td>{{ scoring_delphi.commentaire|safe }}</td></tr>{% endif %}
+               </tbody>
+            </table>
+         </div>
+         {% else %}
+         <div class="subsection-title">{% trans "Aucun score Delphi disponible pour cet acheteur." %}</div>
+         {% endif %}
+      </div>
 
 
       <!-- Opérations & Historique -->

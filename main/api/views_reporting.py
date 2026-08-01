@@ -9,6 +9,7 @@ from main.models import Resume, RiskRating, RiskManagment, OpinionCreditAcremac,
 from main.models import ResponsableAcheteur, ConseilAdministration, CompositionCapitalSocial, CompositionAction, Structure
 from main.models import Annee, AnalyseSectorielle, Tendance, Geopolitics, Advice, Banquier
 from main.models import CompteFinancier, OperationEtHistorique, ScoringSansBilanAcheteur, ConditionAchat, ConditionDeVente, SommaireEtAvis
+from main.models import ScoringRating, ScoringDelphi
 
 from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
 
@@ -1590,6 +1591,36 @@ def generer_rapport_solvabilite(request):
                     interpretation_ifrs_annee_N2 = classe_risque_ifrs
 
         
+        # ACREMAC Rating Score (ScoringRating — par année de bilan)
+        scorings_rating_qs = ScoringRating.objects.filter(acheteur=acheteur).select_related('annee').order_by('-annee__annee')
+        scoring_rating_entries = []
+        for sr in scorings_rating_qs:
+            sv = float(sr.score_final) if sr.score_final is not None else None
+            img_idx = max(0, min(10, round(sv))) if sv is not None else 0
+            scoring_rating_entries.append({
+                "annee": str(sr.annee) if sr.annee else "",
+                "score_final": f"{sv:.2f}" if sv is not None else "-",
+                "score_image_base64": get_static_image_base64(f"scoring/{img_idx}.png"),
+                "rating": sr.rating or "-",
+                "classe_risque": sr.classe_risque or "-",
+                "decision": sr.decision or "-",
+                "red_flag": sr.red_flag,
+                "commentaire": sr.commentaire or "",
+            })
+
+        # Delphi Score (ScoringDelphi — OneToOne)
+        try:
+            _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+            scoring_delphi_ctx = {
+                "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
+                "bande": _sd.bande or "-",
+                "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
+                "niveau_risque": _sd.niveau_risque or "-",
+                "commentaire": _sd.commentaire or "",
+            }
+        except ScoringDelphi.DoesNotExist:
+            scoring_delphi_ctx = None
+
         # Recuperation des proprietes et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
         properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur).prefetch_related("locaux")
@@ -2221,6 +2252,11 @@ def generer_rapport_solvabilite(request):
                 "url_site": static_base_url,
             },
             
+            "scoring_rating": {
+                "entries": scoring_rating_entries,
+            },
+            "scoring_delphi": scoring_delphi_ctx,
+
             "operation_history": {
                 "title_17": _("HISTORIQUE DES OPERATIONS"),
                 "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else _t("Aucun commentaire disponible"),

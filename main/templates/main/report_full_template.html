@@ -881,55 +881,46 @@
   {% endwith %}
 
   <!-- ══════════════════════════════════ -->
-  <!--  17. SCORE@ACREMAC                 -->
+  <!--  17. ACREMAC RATING SCORE           -->
   <!-- ══════════════════════════════════ -->
-  <div class="sec-hdr"><h3>SCORE@ACREMAC</h3></div>
+  <div class="sec-hdr"><h3>{% trans "ACREMAC RATING SCORE" %}</h3></div>
   <div class="box">
-    <p style="text-align:justify;">
-      {% trans "Ce score est généré automatiquement par BUCREP à travers la sommation des éléments suivants : le site local, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code NACE. Cote de crédit :" %}
-    </p>
-    <p style="color:#5ab152">{% trans "10 — Sans risque" %}</p>
-    <p style="color:#7bc175">{% trans "9 — Risque très faible" %}</p>
-    <p style="color:#9cd097">{% trans "8 — Risque faible" %}</p>
-    <p style="color:#add8a9">{% trans "7 — Risque modéré" %}</p>
-    <p style="color:#cee8cb">{% trans "6 — Risque acceptable" %}</p>
-    <p style="color:#f19545">{% trans "5 — Risque moyennement élevé" %}</p>
-    <p style="color:#f7c033">{% trans "4 — Risque significatif" %}</p>
-    <p style="color:#f6bd8a">{% trans "3 — Risque important" %}</p>
-    <p style="color:#e93f33">{% trans "2 — Risque très important d'insolvabilité" %}</p>
-    <p>{% trans "1 — Risque extrêmement important d'insolvabilité" %}</p>
-    <p>{% trans "0 — Insolvabilité / Procédures de recouvrement" %}</p>
-
-    <!-- Scoring sans bilan -->
-    {% if scoring_sansbilan.score_png %}
-    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %}</div>
-    <img src="{% static scoring_sansbilan.score_png %}" alt="{% trans 'Score' %}" class="score-img">
-    {% endif %}
-
-    <!-- Scoring classique N, N-1, N-2 -->
-    {% if scoring_classique.score_value_annee_N %}
-    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N</div>
-    <img src="{% static scoring_classique.score_image_annee_N %}" alt="{% trans 'Score N' %}" class="score-img">
-    {% endif %}
-    {% if scoring_classique.score_value_annee_N1 %}
-    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N-1</div>
-    <img src="{% static scoring_classique.score_image_annee_N1 %}" alt="{% trans 'Score N-1' %}" class="score-img">
-    {% endif %}
-    {% if scoring_classique.score_value_annee_N2 %}
-    <div class="sub-hdr">{% trans "SCORE AUTOMATIQUE" %} N-2</div>
-    <img src="{% static scoring_classique.score_image_annee_N2 %}" alt="{% trans 'Score N-2' %}" class="score-img">
-    {% endif %}
-
-    <!-- Scoring manuel -->
-    {% if scoring_manuel.has_data %}
-    <div class="sub-hdr">{% trans "SCORING MANUEL" %}</div>
-    {% for entry in scoring_manuel.annees %}
-    {% if entry.is_available %}
-    <p><b>{% trans "Score" %} {{ entry.label }} ({{ entry.annee }}) :</b> {{ entry.score }} — {{ entry.interpretation }}</p>
-    <img src="{% static entry.score_image %}" alt="{% trans 'Score manuel' %}" class="score-img">
-    {% if entry.commentaire %}<span class="cmt-lbl">{% trans "Commentaire" %} :</span><br>{{ entry.commentaire }}<br>{% endif %}
-    {% endif %}
+    {% if scoring_rating.entries %}
+    {% for entry in scoring_rating.entries %}
+    <div class="sub-hdr">{{ entry.annee }}</div>
+    <table>
+      <tbody>
+        <tr><th>{% trans "Score" %} (0-10)</th><td style="color: #00cc00; font-weight:bold;">{{ entry.score_final }}</td></tr>
+        <tr><th>{% trans "Rating" %}</th><td>{{ entry.rating }}</td></tr>
+        <tr><th>{% trans "Classe de risque" %}</th><td>{{ entry.classe_risque }}</td></tr>
+        <tr><th>{% trans "Décision" %}</th><td>{{ entry.decision }}</td></tr>
+        {% if entry.red_flag %}<tr><th colspan="2" style="color:red; font-weight:bold;">&#9888; RED FLAG — historique de paiement nul</th></tr>{% endif %}
+        {% if entry.commentaire %}<tr><th>{% trans "Commentaire" %}</th><td>{{ entry.commentaire|safe }}</td></tr>{% endif %}
+      </tbody>
+    </table>
     {% endfor %}
+    {% else %}
+    <p><i>{% trans "Aucun score Rating disponible pour cet acheteur." %}</i></p>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════ -->
+  <!--  17b. DELPHI SCORE                 -->
+  <!-- ══════════════════════════════════ -->
+  <div class="sec-hdr"><h3>{% trans "DELPHI SCORE" %}</h3></div>
+  <div class="box">
+    {% if scoring_delphi %}
+    <table>
+      <tbody>
+        <tr><th>{% trans "Score Delphi" %} (0-100)</th><td style="color: #00cc00; font-weight:bold;">{{ scoring_delphi.score_delphi }}</td></tr>
+        <tr><th>{% trans "Bande de risque" %}</th><td>{{ scoring_delphi.bande }}</td></tr>
+        <tr><th>{% trans "Étoiles" %}</th><td>{{ scoring_delphi.etoiles }}</td></tr>
+        <tr><th>{% trans "Niveau de risque" %}</th><td>{{ scoring_delphi.niveau_risque }}</td></tr>
+        {% if scoring_delphi.commentaire %}<tr><th>{% trans "Commentaire" %}</th><td>{{ scoring_delphi.commentaire|safe }}</td></tr>{% endif %}
+      </tbody>
+    </table>
+    {% else %}
+    <p><i>{% trans "Aucun score Delphi disponible pour cet acheteur." %}</i></p>
     {% endif %}
   </div>
 
