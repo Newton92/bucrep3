@@ -1,0 +1,343 @@
+{% extends "main/root/base.html" %}
+{% load i18n %}
+{% load acheteur_navigation %}
+
+{% block title %}{% trans "Vérification ACX" %} — {{ acheteur.nom }}{% endblock %}
+
+{% block styles %}
+<style>
+  .acx-hero {
+    background: linear-gradient(135deg, #0a2342 0%, #1a4e8f 100%);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .acx-hero-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .acx-badge-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .72rem; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; border: 1.5px solid;
+  }
+  .status-open      { color: #0d6efd; border-color: #0d6efd; background: rgba(13,110,253,.08); }
+  .status-in_progress { color: #fd7e14; border-color: #fd7e14; background: rgba(253,126,20,.08); }
+  .status-on_hold   { color: #6c757d; border-color: #6c757d; background: rgba(108,117,125,.08); }
+  .status-closed    { color: #198754; border-color: #198754; background: rgba(25,135,84,.08); }
+
+  .acx-card { border: none; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+  .acx-card .card-header { background: #f8f9fa; border-bottom: 1px solid #e9ecef; border-radius: 10px 10px 0 0; }
+
+  .debtor-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+    transition: background .15s;
+  }
+  .debtor-row:last-child { border-bottom: none; }
+  .debtor-row:hover { background: #f8fbff; }
+  .debtor-avatar {
+    width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
+    background: linear-gradient(135deg, #0a95ca, #106cb2);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 1rem;
+  }
+  .debtor-name { font-weight: 700; font-size: .93rem; color: #1e3a5f; }
+  .debtor-meta { font-size: .78rem; color: #6c757d; }
+
+  .case-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #f0f5ff; border: 1px solid #d0deff;
+    border-radius: 6px; padding: 4px 10px;
+    font-size: .78rem; font-weight: 600; color: #1a4e8f;
+    margin: 3px 3px 3px 0;
+  }
+  .case-chip.closed { background: #f0fff4; border-color: #b2dfdb; color: #198754; }
+  .case-chip .case-amount { font-size: .72rem; color: #555; font-weight: 400; }
+
+  #acx-search-box { border-radius: 8px 0 0 8px; border-right: none; }
+  #acx-search-btn { border-radius: 0 8px 8px 0; }
+
+  #acx-not-connected { display: none; }
+  .acx-connect-card {
+    text-align: center; padding: 40px 20px;
+    border: 2px dashed #c3d6f0; border-radius: 12px;
+    background: #f8fbff;
+  }
+  .acx-connect-icon { font-size: 3rem; color: #b0c4de; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-3">
+
+  {# ── En-tête ── #}
+  <div class="acx-hero">
+    <div class="acx-hero-icon"><i class="bi bi-search text-white"></i></div>
+    <div class="flex-grow-1">
+      <h5 class="fw-bold text-white mb-0">{% trans "Vérification ACX — Recouvrement" %}</h5>
+      <small class="text-white-50">{{ acheteur.nom }}{% if acheteur.code %} · {{ acheteur.code }}{% endif %}</small>
+    </div>
+    <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}"
+       class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+    </a>
+  </div>
+
+  {% acheteur_page_nav "acx" %}
+
+  {# ── Barre de recherche ── #}
+  <div class="card acx-card mb-3">
+    <div class="card-body py-3">
+      <div class="d-flex gap-2 align-items-center">
+        <div class="input-group flex-grow-1">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
+          <input id="acx-search-box" type="text" class="form-control"
+                 value="{{ acheteur.nom }}"
+                 placeholder="{% trans "Nom de l'entreprise à rechercher dans ACX…" %}">
+          <button id="acx-search-btn" class="btn btn-primary px-4">
+            <i class="bi bi-arrow-right-circle me-1"></i>{% trans "Rechercher" %}
+          </button>
+        </div>
+      </div>
+      <div id="acx-status-line" class="mt-2 small text-muted" style="min-height:18px;"></div>
+    </div>
+  </div>
+
+  {# ── Message "non connecté" ── #}
+  <div id="acx-not-connected" class="mb-3">
+    <div class="acx-connect-card">
+      <div class="acx-connect-icon"><i class="bi bi-plug-fill"></i></div>
+      <h6 class="fw-bold text-dark mb-2">{% trans "Connexion ACX requise" %}</h6>
+      <p class="text-muted mb-3" style="font-size:.88rem;">
+        {% trans "Vous devez être connecté à l'application ACX pour accéder aux données de recouvrement." %}
+      </p>
+      <a id="acx-open-link" href="#" target="_blank" class="btn btn-primary">
+        <i class="bi bi-box-arrow-up-right me-2"></i>{% trans "Ouvrir ACX et se connecter" %}
+      </a>
+    </div>
+  </div>
+
+  {# ── Zone de résultats ── #}
+  <div id="acx-results-wrap">
+
+    <div class="row g-3">
+
+      {# ── Débiteurs ── #}
+      <div class="col-lg-5">
+        <div class="card acx-card h-100">
+          <div class="card-header d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-people-fill text-primary"></i>
+            <strong class="flex-grow-1">{% trans "Débiteurs similaires" %}</strong>
+            <span id="debtors-count" class="badge bg-secondary">—</span>
+          </div>
+          <div id="debtors-list" class="list-group list-group-flush" style="max-height:520px; overflow-y:auto;">
+            <div class="text-center text-muted py-5 small" id="debtors-empty">
+              <i class="bi bi-hourglass-split d-block mb-2" style="font-size:1.5rem;"></i>
+              {% trans "Lancement de la recherche…" %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── Dossiers en recouvrement ── #}
+      <div class="col-lg-7">
+        <div class="card acx-card h-100">
+          <div class="card-header d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-folder2-open text-warning"></i>
+            <strong class="flex-grow-1">{% trans "Dossiers en recouvrement" %}</strong>
+            <span id="cases-count" class="badge bg-secondary">—</span>
+          </div>
+          <div id="cases-list" style="max-height:520px; overflow-y:auto;">
+            <div class="text-center text-muted py-5 small" id="cases-empty">
+              <i class="bi bi-hourglass-split d-block mb-2" style="font-size:1.5rem;"></i>
+              {% trans "Lancement de la recherche…" %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const ACX_API   = "{{ acx_api_url|escapejs }}";
+  const ACX_APP   = ACX_API.replace(/\/api\/?$/, "");
+  const TOKEN_KEY = "acx_access";
+  const searchBox = document.getElementById("acx-search-box");
+  const searchBtn = document.getElementById("acx-search-btn");
+  const statusLine = document.getElementById("acx-status-line");
+  const notConn    = document.getElementById("acx-not-connected");
+  const resultsWrap = document.getElementById("acx-results-wrap");
+  const debtorsList = document.getElementById("debtors-list");
+  const casesList   = document.getElementById("cases-list");
+  const debtorsCount = document.getElementById("debtors-count");
+  const casesCount   = document.getElementById("cases-count");
+
+  // ── Mise à jour du lien "ouvrir ACX" ──
+  const openLink = document.getElementById("acx-open-link");
+  if (openLink) openLink.href = ACX_APP + "/fr";
+
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+
+  function setStatus(msg, cls = "text-muted") {
+    statusLine.className = "mt-2 small " + cls;
+    statusLine.textContent = msg;
+  }
+
+  function statusLabel(status) {
+    const labels = {
+      open:        "{% trans "Ouvert" %}",
+      in_progress: "{% trans "En cours" %}",
+      on_hold:     "{% trans "En attente" %}",
+      closed:      "{% trans "Clôturé" %}",
+    };
+    return labels[status] || status;
+  }
+
+  function fmtAmount(val, currency) {
+    if (!val) return "";
+    const n = parseFloat(val);
+    if (isNaN(n)) return val;
+    const fmt = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(n);
+    return fmt + (currency ? " " + currency : "");
+  }
+
+  function renderDebtors(debtors) {
+    debtorsCount.textContent = debtors.length;
+    debtorsCount.className = "badge " + (debtors.length ? "bg-primary" : "bg-secondary");
+
+    if (!debtors.length) {
+      debtorsList.innerHTML = `<div class="text-center text-muted py-4 small">
+        <i class="bi bi-inbox d-block mb-1" style="font-size:1.4rem;"></i>
+        {% trans "Aucun débiteur similaire trouvé dans ACX." %}</div>`;
+      return;
+    }
+    debtorsList.innerHTML = debtors.map(d => {
+      const initials = (d.full_name || "?").trim().split(/\s+/).slice(0, 2)
+        .map(w => w[0]).join("").toUpperCase();
+      return `<div class="debtor-row">
+        <div class="debtor-avatar">${initials}</div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="debtor-name">${escHtml(d.full_name)}</div>
+          <div class="debtor-meta">
+            ${d.type === "company" ? '<i class="bi bi-building me-1"></i>' : '<i class="bi bi-person me-1"></i>'}
+            ${d.city ? escHtml(d.city) + " · " : ""}
+            ${d.country ? escHtml(d.country) : ""}
+            ${d.tax_id ? ' · <span class="text-muted">NIF : ' + escHtml(d.tax_id) + "</span>" : ""}
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderCases(cases) {
+    casesCount.textContent = cases.length;
+    casesCount.className = "badge " + (cases.length ? "bg-warning text-dark" : "bg-secondary");
+
+    if (!cases.length) {
+      casesList.innerHTML = `<div class="text-center text-muted py-4 small">
+        <i class="bi bi-inbox d-block mb-1" style="font-size:1.4rem;"></i>
+        {% trans "Aucun dossier en recouvrement trouvé pour ce nom." %}</div>`;
+      return;
+    }
+
+    casesList.innerHTML = `<div style="padding:12px 16px;">` +
+      cases.map(c => {
+        const statusCls = "status-" + (c.status || "");
+        const isClosed  = c.status === "closed";
+        const amt = fmtAmount(c.original_amount, c.currency);
+        const bal = fmtAmount(c.balance_amount, c.currency);
+        const duDate = c.due_date ? new Date(c.due_date).toLocaleDateString("fr-FR") : "";
+        return `<div class="mb-3 p-3 rounded-3" style="background:#f8f9fa; border:1px solid #e9ecef;">
+          <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+            <div>
+              <span class="fw-bold" style="font-size:.92rem; color:#1e3a5f;">${escHtml(c.title || c.reference)}</span>
+              <span class="text-muted ms-2" style="font-size:.75rem;">${escHtml(c.reference)}</span>
+            </div>
+            <span class="acx-badge-status ${statusCls}">${statusLabel(c.status)}</span>
+          </div>
+          <div class="debtor-meta mb-2">
+            <i class="bi bi-person-fill me-1"></i>${escHtml(c.debtor?.full_name || "—")}
+            ${c.creditor_name ? ' · <i class="bi bi-bank me-1"></i>' + escHtml(c.creditor_name) : ""}
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            ${amt ? `<span class="case-chip"><i class="bi bi-cash-coin"></i>{% trans "Montant" %} <span class="case-amount">${amt}</span></span>` : ""}
+            ${bal ? `<span class="case-chip ${isClosed ? "closed" : ""}"><i class="bi bi-hourglass-split"></i>{% trans "Solde" %} <span class="case-amount">${bal}</span></span>` : ""}
+            ${duDate ? `<span class="case-chip"><i class="bi bi-calendar-event"></i>${duDate}</span>` : ""}
+          </div>
+        </div>`;
+      }).join("") + `</div>`;
+  }
+
+  function escHtml(str) {
+    return String(str || "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  async function doSearch(q) {
+    const token = getToken();
+    if (!token) {
+      notConn.style.display = "block";
+      resultsWrap.style.display = "none";
+      return;
+    }
+    notConn.style.display = "none";
+    resultsWrap.style.display = "block";
+
+    if (!q.trim()) { setStatus("{% trans "Saisissez un nom à rechercher." %}"); return; }
+
+    setStatus("{% trans "Recherche en cours…" %}");
+    debtorsList.innerHTML = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>{% trans "Chargement…" %}</div>`;
+    casesList.innerHTML   = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>{% trans "Chargement…" %}</div>`;
+
+    const headers = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+
+    try {
+      const [dRes, cRes] = await Promise.all([
+        fetch(ACX_API.replace(/\/$/, "") + "/debtors/?q=" + encodeURIComponent(q), { headers }),
+        fetch(ACX_API.replace(/\/$/, "") + "/cases/?q="   + encodeURIComponent(q), { headers }),
+      ]);
+
+      if (dRes.status === 401 || cRes.status === 401) {
+        notConn.style.display = "block";
+        resultsWrap.style.display = "none";
+        setStatus("{% trans "Session ACX expirée — veuillez vous reconnecter." %}", "text-danger");
+        return;
+      }
+
+      const debtors = dRes.ok ? await dRes.json() : [];
+      const cases   = cRes.ok ? await cRes.json() : [];
+
+      renderDebtors(Array.isArray(debtors) ? debtors : (debtors.results || []));
+      renderCases(Array.isArray(cases)   ? cases   : (cases.results   || []));
+
+      const total = (debtors.length || 0) + (cases.length || 0);
+      setStatus(
+        total
+          ? `{% trans "Résultats pour" %} « ${escHtml(q)} » — ${debtors.length || 0} {% trans "débiteur(s)" %}, ${cases.length || 0} {% trans "dossier(s)" %}.`
+          : `{% trans "Aucun résultat trouvé pour" %} « ${escHtml(q)} ».`,
+        total ? "text-success" : "text-warning"
+      );
+    } catch (e) {
+      setStatus("{% trans "Erreur de connexion à ACX." %}", "text-danger");
+      debtorsList.innerHTML = `<div class="text-center text-danger py-4 small"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Erreur réseau." %}</div>`;
+      casesList.innerHTML   = `<div class="text-center text-danger py-4 small"><i class="bi bi-exclamation-triangle me-1"></i>{% trans "Erreur réseau." %}</div>`;
+    }
+  }
+
+  searchBtn.addEventListener("click", () => doSearch(searchBox.value));
+  searchBox.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(searchBox.value); });
+
+  // Lancement automatique au chargement
+  doSearch(searchBox.value);
+})();
+</script>
+{% endblock %}

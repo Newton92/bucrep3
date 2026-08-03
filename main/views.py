@@ -2452,6 +2452,33 @@ def dash_root_manage_acheteur_scoring_delphi(request, acheteur_id):
     )
 
 
+@login_required
+def dash_root_manage_acheteur_acx(request, acheteur_id):
+    """Page de vérification ACX — débiteurs similaires en recouvrement."""
+    from django.conf import settings as django_settings
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related('statut_entreprise', 'forme_juridique', 'pays', 'ville'),
+        id=acheteur_id,
+    )
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        return redirect_to_login(request.get_full_path())
+
+    context = {
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur": acheteur,
+        "id_acheteur": acheteur_id,
+        "acx_api_url": getattr(django_settings, "ACX_API_URL", "http://107.172.88.238:8008/api"),
+    }
+    return render(request, "main/root/acheteur/scoring/dash_root_manage_acheteur_acx.html", context)
+
+
 # views.py - Ajoutez cette vue
 @login_required
 def dash_root_manage_acheteur_scoring_manuel(request, acheteur_id):

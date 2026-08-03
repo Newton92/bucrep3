@@ -907,6 +907,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_scoring_rating",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/acx-recouvrement/",
+        dash_root_manage_acheteur_acx,
+        name="dash_root_manage_acheteur_acx",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-rapports/",
         dash_root_manage_acheteur_report_solvency,
         name="dash_root_manage_acheteur_report_solvency",

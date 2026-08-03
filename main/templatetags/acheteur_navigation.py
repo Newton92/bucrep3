@@ -18,6 +18,7 @@ ACHETEUR_PAGES = [
     ('scoring_manuel',       'dash_root_manage_acheteur_scoring_manuel',      'Scoring manuel'),
     ('scoring_delphi',       'dash_root_manage_acheteur_scoring_delphi',      'Score Delphi'),
     ('scoring_rating',       'dash_root_manage_acheteur_scoring_rating',      'Score Rating'),
+    ('acx',                  'dash_root_manage_acheteur_acx',                 'Vérification ACX'),
     ('advice',               'dash_root_manage_acheteur_advice',              'Conseils'),
     ('membre_conseil',       'dash_root_manage_acheteur_membre_conseil',      'Conseil d\'administration'),
     ('composition_capital',  'dash_root_manage_acheteur_composition_capital', 'Capital social'),

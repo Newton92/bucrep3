@@ -82,6 +82,9 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[
 PUBLIC_HOST  = env("DJANGO_PUBLIC_HOST",  default="localhost:8000")
 PRIVATE_HOST = env("DJANGO_PRIVATE_HOST", default="localhost:8001")
 
+# URL de l'API ACX (plateforme de recouvrement)
+ACX_API_URL = env("ACX_API_URL", default="http://107.172.88.238:8008/api")
+
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
     # Production
