@@ -82,8 +82,11 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[
 PUBLIC_HOST  = env("DJANGO_PUBLIC_HOST",  default="localhost:8000")
 PRIVATE_HOST = env("DJANGO_PRIVATE_HOST", default="localhost:8001")
 
-# URL de l'API ACX (plateforme de recouvrement)
-ACX_API_URL = env("ACX_API_URL", default="http://107.172.88.238:8008/api")
+# Intégration ACX (plateforme de recouvrement ACREMAC)
+ACX_API_URL          = env("ACX_API_URL",          default="https://acx-acremac.net/api")
+ACX_APP_URL          = env("ACX_APP_URL",           default="https://app.acx-acremac.net")
+ACX_SERVICE_USERNAME = env("ACX_SERVICE_USERNAME",  default="")
+ACX_SERVICE_PASSWORD = env("ACX_SERVICE_PASSWORD",  default="")
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [

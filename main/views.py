@@ -2474,7 +2474,7 @@ def dash_root_manage_acheteur_acx(request, acheteur_id):
         "refresh_token": refresh_token,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
-        "acx_api_url": getattr(django_settings, "ACX_API_URL", "http://107.172.88.238:8008/api"),
+        "acx_app_url": getattr(django_settings, "ACX_APP_URL", "https://app.acx-acremac.net"),
     }
     return render(request, "main/root/acheteur/scoring/dash_root_manage_acheteur_acx.html", context)
 
