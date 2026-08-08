@@ -102,7 +102,7 @@ class ReportCommentsTests(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         # create acheteur and related objects
-        from main.models import Acheteur, RegistreCommerce, Cotisation, ProduitService, Marque, Certification, InnovationDeveloppement, ProcedureCollective
+        from main.models import Acheteur, RegistreCommerce, ProduitService, Marque, Certification, InnovationDeveloppement, ProcedureCollective
         self.acheteur = Acheteur.objects.create(nom="TestAcheteur")
         # add one record of each type with commentaire
         RegistreCommerce.objects.create(
@@ -111,12 +111,6 @@ class ReportCommentsTests(APITestCase):
             date_inscription="2023-01-01",
             est_actif=True,
             commentaire="reg comment"
-        )
-        Cotisation.objects.create(
-            acheteur=self.acheteur,
-            numero="C123",
-            date_affiliation="2023-01-01",
-            commentaire="cot comment"
         )
         ProduitService.objects.create(
             acheteur=self.acheteur,

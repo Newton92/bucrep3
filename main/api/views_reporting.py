@@ -1222,17 +1222,6 @@ def generer_rapport_solvabilite(request):
             })
             
             
-        # Recuperation des cotisations sociales de l'acheteur
-        cotisations = Cotisation.objects.filter(acheteur=acheteur)
-        list_cotisations_data = []
-        for cotisation in cotisations:
-            list_cotisations_data.append({
-                "numero": cotisation.numero if cotisation.numero else "",
-                "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "",
-                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "",
-            })
-            
-            
         # Recuperation des produits et services de l'acheteur
         produits_services = ProduitService.objects.filter(acheteur=acheteur)
         list_produits_services_data = []
@@ -1933,10 +1922,6 @@ def generer_rapport_solvabilite(request):
             "procedures_collectives": {
                 "title_15": _("PROCEDURES & COLLECTIVES"),
                 "procedures_collectives": list_procedures_data if list_procedures_data else ["Aucune procédure ou collective disponible"],
-            },
-            "cotisations": {
-                "title_16": _("COTISATIONS SOCIALES"),
-                "cotisations": list_cotisations_data if list_cotisations_data else ["Aucune cotisation disponible"],
             },
             "certifications": {
                 "title_17": _("CERTIFICATIONS"),

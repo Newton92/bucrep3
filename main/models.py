@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import datetime
 import os
 import re
@@ -5120,77 +5120,6 @@ class IdentifiantFiscal(Model):
     def total_champs(self):
         return 5
 
-
-class Cotisation(Model):
-    """Modele metier: Cotisation."""
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="cotisations",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro de sécurité sociale"),
-    )
-    numero = models.CharField(
-        _("Numéro de sécurité sociale"),
-        max_length=255,
-        help_text=_("Numéro de sécurité sociale de l'entreprise"),
-    )
-    date_affiliation = models.DateField(
-        _("Date d'affiliation"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'affiliation à la sécurité sociale"),
-    )
-
-    couleur_commentaire = models.ForeignKey(
-        "CouleurCommentaire",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire"),
-    )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_cotisations_sociales',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_cotisations_sociales',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Cotisation Sociale")
-        verbose_name_plural = _("Cotisations Sociales")
-
-    def __str__(self):
-        return f"Cotisations Sociales de {self.acheteur.nom}"
 
 
 class CodeNaceAcheteur(Model):

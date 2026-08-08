@@ -2666,7 +2666,6 @@ AUTO_REGISTERED_MODELS = [
     ConditionDeVente,
     ConformiteReglementation,
     ConseilAdministration,
-    Cotisation,
     CredendoCommande,
     DocDownload,
     Document,

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import re
 import random
 import threading
@@ -9385,96 +9385,6 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
     
     
 
-
-@login_required
-def dash_root_manage_cotisation_acheteur(request, acheteur_id):
-    """
-    Vue pour la gestion des cotisations sociales d'un acheteur
-    """
-    
-    # Récupérer l'acheteur avec préfetch pour optimiser
-    acheteur = get_object_or_404(
-        Acheteur.objects.select_related(
-            'statut_entreprise',
-            'forme_juridique',
-            'pays',
-            'province',
-            'ville'
-        ).prefetch_related('cotisations'),
-        id=acheteur_id
-    )
-
-    # Récupérer toutes les cotisations sociales de l'acheteur
-    cotisations_list = Cotisation.objects.filter(
-        acheteur=acheteur
-    ).order_by('-created_at')
-    cotisations_avec_date = cotisations_list.filter(date_affiliation__isnull=False).count()
-    cotisations_sans_date = cotisations_list.filter(date_affiliation__isnull=True).count()
-
-    # Génération des tokens JWT
-    try:
-        refresh = RefreshToken.for_user(request.user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-    except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
-        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect_to_login(request.get_full_path())
-    
-    coloration_list = CouleurCommentaire.objects.all()
-
-    # Préparer les données de l'acheteur pour le template
-    acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
-        'activite_principale': acheteur.activite_principale or 'Non spécifié',
-        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
-        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
-        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
-        'cotisations_count': cotisations_list.count(),
-    }
-    
-    # Convertir en JSON sécurisé pour JavaScript
-    acheteur_json = json.dumps(acheteur_data, default=str)
-    
-    # Préparer les données pour le template
-    cotisations_data = []
-    for cotisation in cotisations_list:
-        cotisations_data.append({
-            'id': cotisation.id,
-            'numero': cotisation.numero or '',
-            'date_affiliation': cotisation.date_affiliation.isoformat() if cotisation.date_affiliation else None,
-            'date_affiliation_display': cotisation.date_affiliation.strftime('%d/%m/%Y') if cotisation.date_affiliation else 'Non spécifiée',
-            'created_at': cotisation.created_at.isoformat() if cotisation.created_at else None,
-            'updated_at': cotisation.updated_at.isoformat() if cotisation.updated_at else None,
-            'created_at_display': cotisation.created_at.strftime('%d/%m/%Y %H:%M') if cotisation.created_at else '',
-            'updated_at_display': cotisation.updated_at.strftime('%d/%m/%Y %H:%M') if cotisation.updated_at else '',
-        })
-    
-    cotisations_json = json.dumps(cotisations_data, default=str)
-    
-    context = {
-        "acheteurs_active": "active",
-        "user": request.user,
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "acheteur_json": acheteur_json,
-        "cotisations": cotisations_list,
-        "cotisations_count": cotisations_list.count(),
-        "cotisations_avec_date": cotisations_avec_date,
-        "cotisations_sans_date": cotisations_sans_date,
-        "cotisations_json": cotisations_json or '[]',
-        "coloration_list": coloration_list,
-        "acheteur": acheteur,
-        "id_acheteur": acheteur_id,
-    }
-    return render(
-        request,
-        "main/root/acheteur/cotisation/dash_root_cotisation_acheteur.html",
-        context,
-    )
     
     
 

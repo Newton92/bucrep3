@@ -3506,17 +3506,6 @@ class GenerateReportCommandeAcheteur(APIView):
             })
             
             
-        # Recuperation des cotisations sociales de l'acheteur
-        cotisations = Cotisation.objects.filter(acheteur=acheteur)
-        list_cotisations_data = []
-        for cotisation in cotisations:
-            list_cotisations_data.append({
-                "numero": cotisation.numero if cotisation.numero else "Non spécifié",
-                "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "Non spécifié",
-                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "Non spécifié",
-            })
-            
-            
         # Recuperation des produits et services de l'acheteur
         produits_services = ProduitService.objects.filter(acheteur=acheteur)
         list_produits_services_data = []
@@ -4315,10 +4304,6 @@ class GenerateReportCommandeAcheteur(APIView):
             "procedures_collectives": {
                 "title_15": _("PROCEDURES & COLLECTIVES"),
                 "procedures_collectives": list_procedures_data if list_procedures_data else ["No collective procedure available"],
-            },
-            "cotisations": {
-                "title_16": _("COTISATIONS SOCIALES"),
-                "cotisations": list_cotisations_data if list_cotisations_data else ["No contribution available"],
             },
             "certifications": {
                 "title_17": _("CERTIFICATIONS"),

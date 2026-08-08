@@ -1,4 +1,4 @@
-# main/urls.py
+﻿# main/urls.py
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -810,11 +810,6 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/produits-services/",
         dash_root_manage_produit_service_acheteur,
         name="dash_root_manage_produit_service_acheteur",
-    ),
-    path(
-        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/cotisations/",
-        dash_root_manage_cotisation_acheteur,
-        name="dash_root_manage_cotisation_acheteur",
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/swot/",
@@ -4152,38 +4147,6 @@ urlpatterns = [
     
     
     
-    path(
-        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
-        ListAcheteurCotisationView.as_view(),
-        name="list-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
-        SearchAcheteurCotisationView.as_view(),
-        name="search-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
-        AddAcheteurCotisationView.as_view(),
-        name="add-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
-        EditAcheteurCotisationView.as_view(),
-        name="edit-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
-        DeleteAcheteurCotisationView.as_view(),
-        name="delete-cotisation-acheteur",
-    ),
-    # Cotisations sociales
-    path('api/acheteur/<int:acheteur_id>/cotisations-oneview/', 
-        AcheteurCotisationListOneView.as_view(), 
-        name='acheteur-cotisations-list-oneview'),
-    path('api/acheteur/<int:acheteur_id>/cotisations-oneview/<int:cotisation_id>/', 
-        AcheteurCotisationDetailOneView.as_view(), 
-        name='acheteur-cotisation-detail-oneview'),
     
     
     
@@ -4213,31 +4176,6 @@ urlpatterns = [
         "api/acheteur/<int:acheteur_id>/supprimer-des-documents/",
         DeleteAcheteurDocumentView.as_view(),
         name="delete-document-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
-        ListAcheteurCotisationView.as_view(),
-        name="list-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
-        SearchAcheteurCotisationView.as_view(),
-        name="search-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
-        AddAcheteurCotisationView.as_view(),
-        name="add-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
-        EditAcheteurCotisationView.as_view(),
-        name="edit-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
-        DeleteAcheteurCotisationView.as_view(),
-        name="delete-cotisation-acheteur",
     ),
     
     
@@ -4345,36 +4283,6 @@ urlpatterns = [
     ),
     
     
-    path(
-        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
-        ListAcheteurCotisationView.as_view(),
-        name="list-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
-        SearchAcheteurCotisationView.as_view(),
-        name="search-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
-        AddAcheteurCotisationView.as_view(),
-        name="add-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
-        EditAcheteurCotisationView.as_view(),
-        name="edit-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/detail-cotisation/<int:cotisation_id>/",
-        DetailAcheteurCotisationView.as_view(),
-        name="detail-cotisation-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
-        DeleteAcheteurCotisationView.as_view(),
-        name="delete-cotisation-acheteur",
-    ),
     
     
     path(
