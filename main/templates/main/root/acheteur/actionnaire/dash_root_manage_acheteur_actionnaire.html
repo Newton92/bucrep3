@@ -65,15 +65,6 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
-                <div class="actn-stat-icon bg-warning text-white"><i class="bi bi-palette-fill"></i></div>
-                <div>
-                    <div class="fw-bold fs-5 lh-1">{{ stats.avec_couleur }}</div>
-                    <div class="text-muted small">{% trans "Avec Couleur" %}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card card-body py-2 px-3 d-flex flex-row align-items-center gap-2">
                 <div class="actn-stat-icon text-white" style="background:#6f42c1;"><i class="bi bi-chat-text-fill"></i></div>
                 <div>
                     <div class="fw-bold fs-5 lh-1">{{ stats.avec_commentaire }}</div>
@@ -152,7 +143,6 @@
                             <th width="40"><input class="form-check-input" type="checkbox" id="toggleAll"></th>
                             <th>{% trans "Actionnaire" %}</th>
                             <th>{% trans "Pourcentage" %}</th>
-                            <th>{% trans "Couleur" %}</th>
                             <th>{% trans "Commentaire" %}</th>
                             <th>{% trans "Actions" %}</th>
                         </tr>
@@ -433,7 +423,6 @@ $(document).ready(function() {
         }
         $.each(list, function(i, a) {
             var pct = a.pourcentage || 0;
-            var couleur = a.couleur_commentaire ? (a.couleur_commentaire.code_couleur || '#6c757d') : null;
             var initial = a.nom ? a.nom.charAt(0).toUpperCase() : '?';
             var commentTxt = a.commentaire ? (a.commentaire.length > 50 ? a.commentaire.substring(0, 50) + '...' : a.commentaire) : S.none;
             var checked = selectedActionnaires.has(String(a.id)) ? 'checked' : '';
@@ -447,7 +436,6 @@ $(document).ready(function() {
                   '</div></div></td>' +
                 '<td><span class="badge bg-primary" style="font-size:.78rem;">' + pct + '%</span>' +
                   '<div class="percentage-bar" style="max-width:80px;"><div class="percentage-fill" style="width:' + pct + '%;"></div></div></td>' +
-                '<td>' + (couleur ? '<span class="badge" style="background:' + couleur + ';color:#fff;">' + a.couleur_commentaire.couleur + '</span>' : '<span class="text-muted small">' + S.nonSpec + '</span>') + '</td>' +
                 '<td><span class="text-muted small" title="' + (a.commentaire || '').replace(/"/g, '&quot;') + '">' + commentTxt + '</span></td>' +
                 '<td><div class="btn-group btn-group-sm">' +
                   '<button class="btn btn-outline-primary edit-btn" data-id="' + a.id + '" title="' + S.editBtn + '"><i class="bi bi-pencil"></i></button>' +
@@ -493,7 +481,7 @@ $(document).ready(function() {
         var prenom = $('#prenom').val().trim();
         if (!nom || nom.length < 2) { Swal.fire({ icon: 'error', title: S.err, text: S.nomMin }); $('#nom').focus(); return; }
         if (!prenom || prenom.length < 2) { Swal.fire({ icon: 'error', title: S.err, text: S.prenomMin }); $('#prenom').focus(); return; }
-        var formData = { nom: nom, prenom: prenom, couleur_commentaire: null, commentaire: $('#commentaire').val().trim() };
+        var formData = { nom: nom, prenom: prenom, commentaire: $('#commentaire').val().trim() };
         var pctVal = $('#pourcentage').val().trim();
         if (pctVal !== '') {
             pctVal = pctVal.replace(',', '.');
@@ -537,7 +525,6 @@ $(document).ready(function() {
         var formData = {
             nom: $('#editNom').val().trim().toUpperCase(),
             prenom: $('#editPrenom').val().trim(),
-            couleur_commentaire: null,
             commentaire: $('#editCommentaire').val().trim()
         };
         var pctVal = $('#editPourcentage').val().trim();
