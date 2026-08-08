@@ -556,6 +556,10 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+{% trans "Veuillez sélectionner un code NACE à l'étape ③." as t_msg_etape3 %}
+{% trans "Erreur lors de l'opération." as t_msg_erreur_op %}
+{% trans "Sélectionnez d'abord une catégorie..." as t_msg_sel_cat %}
+{% trans "Sélectionnez d'abord un groupe..." as t_msg_sel_grp %}
 $(document).ready(function() {
     const ACHETEUR_ID = '{{ acheteur.id }}';
     const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-nace-oneview/`;
@@ -566,6 +570,10 @@ $(document).ready(function() {
     let currentCodeNaceId = null;
     let addSubcategories  = [];
     let editSubcategories = [];
+    var MSG_ETAPE3    = '{{ t_msg_etape3|escapejs }}';
+    var MSG_ERREUR_OP = '{{ t_msg_erreur_op|escapejs }}';
+    var MSG_SEL_CAT   = '{{ t_msg_sel_cat|escapejs }}';
+    var MSG_SEL_GRP   = '{{ t_msg_sel_grp|escapejs }}';
 
     // Labels complets pour le niveau Groupe (préfixe du code avant le point)
     const NACE_GROUPE_LABELS = {
@@ -825,7 +833,7 @@ $(document).ready(function() {
     $('#addCodeNaceForm').on('submit', function(e) {
         e.preventDefault();
         const codeId = $('#addNaceCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
+        if (!codeId) { showError('{% trans "Sélection requise" %}', MSG_ETAPE3); return; }
         submitForm('POST', { code: codeId, acheteur: ACHETEUR_ID }, '#submitAddBtn', '#addCodeNaceModal');
     });
 
@@ -834,7 +842,7 @@ $(document).ready(function() {
         e.preventDefault();
         if (!currentCodeNaceId) return;
         const codeId = $('#editNaceCode').val();
-        if (!codeId) { showError('{% trans "Sélection requise" %}', '{% trans "Veuillez sélectionner un code NACE à l\'étape ③." %}'); return; }
+        if (!codeId) { showError('{% trans "Sélection requise" %}', MSG_ETAPE3); return; }
         submitForm('PUT', { code: codeId }, '#submitEditBtn', '#editCodeNaceModal', currentCodeNaceId);
     });
 
@@ -864,7 +872,7 @@ $(document).ready(function() {
                     refreshAccessToken(() => submitForm(method, data, btnSel, modalSel, codeNaceId));
                     return;
                 }
-                let msg = '{% trans "Erreur lors de l\'opération." %}';
+                let msg = MSG_ERREUR_OP;
                 if (xhr.responseJSON) {
                     msg = xhr.responseJSON.detail || xhr.responseJSON.code?.join?.('\n') || msg;
                 }
@@ -941,15 +949,15 @@ $(document).ready(function() {
     // ── Reset modals ──────────────────────────────────────────
     $('#addCodeNaceModal').on('hidden.bs.modal', function() {
         $('#addCodeNaceForm')[0].reset();
-        $('#addNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
-        $('#addNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
+        $('#addNaceGroupe').empty().append('<option value="">' + MSG_SEL_CAT + '</option>').prop('disabled', true);
+        $('#addNaceCode').empty().append('<option value="">' + MSG_SEL_GRP + '</option>').prop('disabled', true);
         addSubcache.data = [];
         hidePreview();
     });
     $('#editCodeNaceModal').on('hidden.bs.modal', function() {
         $('#editCodeNaceForm')[0].reset();
-        $('#editNaceGroupe').empty().append('<option value="">{% trans "Sélectionnez d\'abord une catégorie..." %}</option>').prop('disabled', true);
-        $('#editNaceCode').empty().append('<option value="">{% trans "Sélectionnez d\'abord un groupe..." %}</option>').prop('disabled', true);
+        $('#editNaceGroupe').empty().append('<option value="">' + MSG_SEL_CAT + '</option>').prop('disabled', true);
+        $('#editNaceCode').empty().append('<option value="">' + MSG_SEL_GRP + '</option>').prop('disabled', true);
         editSubcache.data = [];
         currentCodeNaceId = null;
     });
