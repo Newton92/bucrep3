@@ -4296,11 +4296,6 @@ urlpatterns = [
         name="add-swot-acheteur",
     ),
     path(
-        "api/acheteur/<int:acheteur_id>/detail-swot/",
-        DetailAcheteurSwotView.as_view(),
-        name="detail-swot-acheteur",
-    ),
-    path(
         "api/acheteur/<int:acheteur_id>/editer-swot/",
         EditAcheteurSwotView.as_view(),
         name="edit-swot-acheteur",
