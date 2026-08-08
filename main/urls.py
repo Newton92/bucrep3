@@ -4318,11 +4318,6 @@ urlpatterns = [
         name="add-registre-commerce-acheteur",
     ),
     path(
-        "api/acheteur/<int:acheteur_id>/detail-registre-commerce/",
-        DetailAcheteurRegistreCommerceView.as_view(),
-        name="detail-registre-commerce-acheteur",
-    ),
-    path(
         "api/acheteur/<int:acheteur_id>/editer-registre-commerce/",
         EditAcheteurRegistreCommerceView.as_view(),
         name="edit-registre-commerce-acheteur",
@@ -4348,11 +4343,6 @@ urlpatterns = [
         "api/acheteur/<int:acheteur_id>/ajouter-procedure-collective/",
         AddAcheteurProcedureCollectiveView.as_view(),
         name="add-procedure-collective-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/detail-procedure-collective/<int:procedure_id>/",
-        DetailAcheteurProcedureCollectiveView.as_view(),
-        name="detail-procedure-collective-acheteur",
     ),
     path(
         "api/acheteur/<int:acheteur_id>/editer-procedure-collective/<int:procedure_id>/",
@@ -4382,11 +4372,6 @@ urlpatterns = [
         name="add-document-acheteur",
     ),
     path(
-        "api/acheteur/<int:acheteur_id>/detail-document/<int:document_id>/",
-        DetailAcheteurDocumentView.as_view(),
-        name="detail-document-acheteur",
-    ),
-    path(
         "api/acheteur/<int:acheteur_id>/editer-document/<int:document_id>/",
         EditAcheteurDocumentView.as_view(),
         name="edit-document-acheteur",
@@ -4407,11 +4392,6 @@ urlpatterns = [
         "api/acheteur/<int:acheteur_id>/ajouter-adresse/",
         AddAcheteurAdresseView.as_view(),
         name="add-adresse-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/detail-adresse/<int:adresse_id>/",
-        DetailAcheteurAdresseView.as_view(),
-        name="detail-adresse-acheteur",
     ),
     path(
         "api/acheteur/<int:acheteur_id>/editer-adresse/<int:adresse_id>/",
