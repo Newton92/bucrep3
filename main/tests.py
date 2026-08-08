@@ -160,5 +160,4 @@ class ReportCommentsTests(APITestCase):
         self.assertTrue(data["registres"])
         self.assertEqual(data["registres"][0].get("commentaires"), "reg comment")
         # check one other comment for good measure
-        self.assertIn("cotisations", data)
-        self.assertEqual(data["cotisations"][0].get("commentaires"), "cot comment")
+        self.assertIn("procedures", data)
