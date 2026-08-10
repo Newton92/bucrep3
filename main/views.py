@@ -10862,22 +10862,61 @@ def dash_validateur_3(request):
     return render(request, "main/validateur/dash_root.html", context)
 
 
-#@login_required
+@login_required
 def dash_validateur(request):
-    print(f"DEBUG: dash_validateur - Utilisateur authentifié ? {request.user.is_authenticated}")
-    if request.user.is_authenticated:
-        print(f"DEBUG: dash_validateur - Nom d'utilisateur : {request.user.username}")
-        print(f"DEBUG: dash_validateur - Clé de session : {request.session.session_key}")
-    else:
-        print("DEBUG: dash_validateur - Utilisateur non authentifié malgré #@login_required (devrait rediriger).")
-
     user = request.user
+
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    # Le validateur est verrouillé sur son pays d'affectation
+    selected_pays_id = user.pays_id if user.pays_id else None
+
+    commandes = Commande.objects.all()
+    acheteurs = Acheteur.objects.all()
+    alertes = Warning.objects.all()
+    if selected_pays_id:
+        commandes = commandes.filter(pays_id=selected_pays_id)
+        acheteurs = acheteurs.filter(pays_id=selected_pays_id)
+        alertes = alertes.filter(acheteurs__pays_id=selected_pays_id).distinct()
+
+    pays_map_qs = (
+        Pays.objects
+        .filter(afficher_au_dashboard=True, is_active=True)
+        .annotate(nb_acheteurs=Count('acheteur'))
+        .values('id', 'nom', 'code', 'nb_acheteurs')
+    )
+    pays_map_data = json.dumps([
+        {'id': p['id'], 'nom': p['nom'], 'code': p['code'], 'nb_acheteurs': p['nb_acheteurs']}
+        for p in pays_map_qs
+    ])
+
+    total_pays = Pays.objects.filter(is_active=True).count()
+    actifs_count = pays_map_qs.count()
+    inactifs_count = max(0, total_pays - actifs_count)
+
     context = {
-        "users_active": "active",
+        "dash_active": "active",
         "user": user,
-        # Supprimez la génération de tokens refresh/access ici comme suggéré précédemment
+        "refresh": refresh_token,
+        "access": access_token,
+        "access_token": access_token,
+        "commandes": commandes,
+        "acheteurs": acheteurs,
+        "alertes": alertes,
+        "current_date": timezone.now().date(),
+        "current_time": timezone.now().time(),
+        "pays_map_data": pays_map_data,
+        "total_pays": total_pays,
+        "actifs_count": actifs_count,
+        "inactifs_count": inactifs_count,
     }
-    return render(request, "main/validateur/dash_root.html", context)
+    return render(request, "main/root/dash_root.html", context)
 
 
 @login_required
