@@ -2883,11 +2883,11 @@ class GenerateReport(APIView):
                 },
                 "advice": {
                     "title_advice": _("CONSEILS D'ACREMAC"),
-                    "points_forts": advice.points_forts if advice and advice.points_forts else "",
-                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
-                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                    "forces": advice.forces if advice and advice.forces else "",
+                    "faiblesses": advice.faiblesses if advice and advice.faiblesses else "",
+                    "opportunites": advice.opportunites if advice and advice.opportunites else "",
                     "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
-                    "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+                    "menaces": advice.menaces if advice and advice.menaces else "",
                 },
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
@@ -2896,11 +2896,11 @@ class GenerateReport(APIView):
             },
             "advice": {
                 "title_advice": _("CONSEILS D'ACREMAC"),
-                "points_forts": advice.points_forts if advice and advice.points_forts else "",
-                "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
-                "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                "forces": advice.forces if advice and advice.forces else "",
+                "faiblesses": advice.faiblesses if advice and advice.faiblesses else "",
+                "opportunites": advice.opportunites if advice and advice.opportunites else "",
                 "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
-                "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+                "menaces": advice.menaces if advice and advice.menaces else "",
             },
             "banking_data": {
                 "title_14": _("DONNEES BANCAIRES"),
@@ -3450,13 +3450,6 @@ class GenerateReportCommandeAcheteur(APIView):
         except Geopolitics.DoesNotExist:
             geopolitics = None
 
-        # Recuperation de l'analyse SWOT sur l'acheteur
-        try:
-            swot_analysis = Swot.objects.get(acheteur=acheteur)
-        except Swot.DoesNotExist:
-            swot_analysis = None
-            
-            
         # Recuperation des registres de commerce de l'acheteur
         registres = RegistreCommerce.objects.filter(acheteur=acheteur)
         list_registres_data = []
@@ -4344,31 +4337,24 @@ class GenerateReportCommandeAcheteur(APIView):
                 },
                 "advice": {
                     "title_advice": _("CONSEILS D'ACREMAC"),
-                    "points_forts": advice.points_forts if advice and advice.points_forts else "",
-                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
-                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                    "forces": advice.forces if advice and advice.forces else "",
+                    "faiblesses": advice.faiblesses if advice and advice.faiblesses else "",
+                    "opportunites": advice.opportunites if advice and advice.opportunites else "",
                     "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
-                    "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+                    "menaces": advice.menaces if advice and advice.menaces else "",
                 },
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
                     "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "Non spécifié",
                 },
-                # Nouveau
-                "swot": {
-                    "forces": swot_analysis.forces if swot_analysis and swot_analysis.forces else "Non spécifié",
-                    "faiblesses": swot_analysis.faiblesses if swot_analysis and swot_analysis.faiblesses else "Non spécifié",
-                    "opportunites": swot_analysis.opportunites if swot_analysis and swot_analysis.opportunites else "Non spécifié",
-                    "menaces": swot_analysis.menaces if swot_analysis and swot_analysis.menaces else "Non spécifié",
-                },
             },
             "advice": {
                 "title_advice": _("CONSEILS D'ACREMAC"),
-                "points_forts": advice.points_forts if advice and advice.points_forts else "",
-                "points_faibles": advice.points_faibles if advice and advice.points_faibles else "",
-                "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "",
+                "forces": advice.forces if advice and advice.forces else "",
+                "faiblesses": advice.faiblesses if advice and advice.faiblesses else "",
+                "opportunites": advice.opportunites if advice and advice.opportunites else "",
                 "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "",
-                "risque_potentiel_court_terme": advice.risque_potentiel_court_terme if advice and advice.risque_potentiel_court_terme else "",
+                "menaces": advice.menaces if advice and advice.menaces else "",
             },
             "banking_data": {
                 "title_23": _("DONNEES BANCAIRES"),

@@ -4661,79 +4661,6 @@ class Document(Model):
         return f"{self.titre} - {self.acheteur.nom}"
 
 
-class Swot(Model):
-    """Modele metier: Swot."""
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="swot",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'analyse SWOT"),
-    )
-    forces = models.TextField(
-        _("Forces"), null=True, blank=True, help_text=_("Forces de l'entreprise")
-    )
-    faiblesses = models.TextField(
-        _("Faiblesses"),
-        null=True,
-        blank=True,
-        help_text=_("Faiblesses de l'entreprise"),
-    )
-    opportunites = models.TextField(
-        _("Opportunités"),
-        null=True,
-        blank=True,
-        help_text=_("Opportunités de l'entreprise"),
-    )
-    menaces = models.TextField(
-        _("Menaces"), null=True, blank=True, help_text=_("Menaces de l'entreprise")
-    )
-
-    couleur_commentaire = models.ForeignKey(
-        "CouleurCommentaire",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire"),
-    )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="swots_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="swots_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("SWOT")
-        verbose_name_plural = _("SWOT")
-
-    def __str__(self):
-        return f"SWOT de {self.acheteur.nom}"
-
-
 class ProduitService(Model):
     """Modele metier: ProduitService."""
     
@@ -6870,20 +6797,19 @@ class Advice(Model):
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
     
-    points_forts = models.TextField(
-        max_length=10000000, blank=True, null=True, verbose_name=_("Points forts")
+    forces = models.TextField(
+        max_length=10000000, blank=True, null=True, verbose_name=_("Forces")
     )
-    points_faibles = models.TextField(
-        max_length=10000000, blank=True, null=True, verbose_name=_("Points faibles")
+    faiblesses = models.TextField(
+        max_length=10000000, blank=True, null=True, verbose_name=_("Faiblesses")
     )
-    
-    dynamisme_court_terme = models.TextField(
-        max_length=10000000, blank=True, null=True, verbose_name=_("Dynamisme à court terme")
+    opportunites = models.TextField(
+        max_length=10000000, blank=True, null=True, verbose_name=_("Opportunités")
     )
     dynamisme_long_terme = models.TextField(
         max_length=10000000, blank=True, null=True, verbose_name=_("Dynamisme à long terme")
     )
-    risque_potentiel_court_terme = models.TextField(max_length=10000000, blank=True, null=True, verbose_name=_("Risques potentiels à court terme"))
+    menaces = models.TextField(max_length=10000000, blank=True, null=True, verbose_name=_("Menaces"))
     
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6920,13 +6846,13 @@ class Advice(Model):
     def get_summary(self):
         """Retourne un résumé des conseils"""
         return {
-            'has_points_forts': bool(self.points_forts and self.points_forts.strip()),
-            'has_points_faibles': bool(self.points_faibles and self.points_faibles.strip()),
-            'has_dynamisme_court_terme': bool(self.dynamisme_court_terme and self.dynamisme_court_terme.strip()),
+            'has_forces': bool(self.forces and self.forces.strip()),
+            'has_faiblesses': bool(self.faiblesses and self.faiblesses.strip()),
+            'has_opportunites': bool(self.opportunites and self.opportunites.strip()),
             'has_dynamisme_long_terme': bool(self.dynamisme_long_terme and self.dynamisme_long_terme.strip()),
-            'has_risque_court_terme': bool(self.risque_potentiel_court_terme and self.risque_potentiel_court_terme.strip()),
-            'points_forts_length': len(self.points_forts) if self.points_forts else 0,
-            'points_faibles_length': len(self.points_faibles) if self.points_faibles else 0,
+            'has_menaces': bool(self.menaces and self.menaces.strip()),
+            'forces_length': len(self.forces) if self.forces else 0,
+            'faiblesses_length': len(self.faiblesses) if self.faiblesses else 0,
         }
     
     def is_complete(self, threshold=50):
@@ -6939,8 +6865,7 @@ class Advice(Model):
             if key.startswith('has_') and value
         ])
         
-        # 5 champs possibles (points_forts, points_faibles, dynamisme_court_terme, 
-        # dynamisme_long_terme, risque_potentiel_court_terme)
+        # 5 champs possibles (forces, faiblesses, opportunites, dynamisme_long_terme, menaces)
         total_fields = 5
         
         # Calculer le pourcentage de complétion

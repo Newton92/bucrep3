@@ -812,11 +812,6 @@ urlpatterns = [
         name="dash_root_manage_produit_service_acheteur",
     ),
     path(
-        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/swot/",
-        dash_root_manage_swot_acheteur,
-        name="dash_root_manage_swot_acheteur",
-    ),
-    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/registre-commerce/",
         dash_root_manage_registre_commerce_acheteur,
         name="dash_root_manage_registre_commerce_acheteur",
@@ -3915,38 +3910,6 @@ urlpatterns = [
     
     
     
-    path(
-        "api/acheteur/<int:acheteur_id>/liste-des-analyses-swot/",
-        ListAcheteurSwotView.as_view(),
-        name="list-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/recherche-swot/",
-        SearchAcheteurSwotView.as_view(),
-        name="search-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/ajouter-une-analyse-swot/",
-        AddAcheteurSwotView.as_view(),
-        name="add-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/editer-une-analyse-swot/<int:swot_id>/",
-        EditAcheteurSwotView.as_view(),
-        name="edit-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/supprimer-des-analyses-swot/",
-        DeleteAcheteurSwotView.as_view(),
-        name="delete-swot-acheteur",
-    ),
-    # Dans votre fichier urls.py API
-    path('api/acheteur/<int:acheteur_id>/swot-oneview/', 
-         AcheteurSwotListOneView.as_view(), 
-         name='acheteur-swot-list-oneview'),
-    path('api/acheteur/<int:acheteur_id>/swot-oneview/<int:swot_id>/', 
-         AcheteurSwotDetailOneView.as_view(), 
-         name='acheteur-swot-detail-oneview'),
     
     
     
@@ -4285,26 +4248,6 @@ urlpatterns = [
     
     
     
-    path(
-        "api/acheteur/<int:acheteur_id>/liste-swot/",
-        ListAcheteurSwotView.as_view(),
-        name="list-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/ajouter-swot/",
-        AddAcheteurSwotView.as_view(),
-        name="add-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/editer-swot/",
-        EditAcheteurSwotView.as_view(),
-        name="edit-swot-acheteur",
-    ),
-    path(
-        "api/acheteur/<int:acheteur_id>/supprimer-swot/",
-        DeleteAcheteurSwotView.as_view(),
-        name="delete-swot-acheteur",
-    ),
     
     
     path(

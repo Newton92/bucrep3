@@ -4233,13 +4233,13 @@ class GetAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            "id", 
-            "points_forts", 
-            "points_faibles", 
-            "dynamisme_court_terme", 
-            "dynamisme_long_terme", 
-            "risque_potentiel_court_terme",
-            "created_at", 
+            "id",
+            "forces",
+            "faiblesses",
+            "opportunites",
+            "dynamisme_long_terme",
+            "menaces",
+            "created_at",
             "updated_at"
         ]
         read_only_fields = ["created_at", "updated_at"]
@@ -4249,12 +4249,12 @@ class AddAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            "acheteur", 
-            "points_forts", 
-            "points_faibles", 
-            "dynamisme_court_terme", 
-            "dynamisme_long_terme", 
-            "risque_potentiel_court_terme"
+            "acheteur",
+            "forces",
+            "faiblesses",
+            "opportunites",
+            "dynamisme_long_terme",
+            "menaces"
         ]
 
 
@@ -4262,11 +4262,11 @@ class EditAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            "points_forts", 
-            "points_faibles", 
-            "dynamisme_court_terme", 
-            "dynamisme_long_terme", 
-            "risque_potentiel_court_terme"
+            "forces",
+            "faiblesses",
+            "opportunites",
+            "dynamisme_long_terme",
+            "menaces"
         ]
 
 
@@ -9617,179 +9617,6 @@ class EditDocumentSerializer(serializers.ModelSerializer):
         
         
         
-class SwotSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()
-
-    class Meta:
-        model = Swot
-        fields = "__all__"
-
-class GetSwotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Swot
-        fields = "__all__"
-
-class AddSwotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Swot
-        fields = [
-            "acheteur",
-            "forces",
-            "faiblesses",
-            "opportunites",
-            "menaces",
-            "couleur_commentaire",
-            "commentaire",
-        ]
-
-class EditSwotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Swot
-        fields = [
-            "forces",
-            "faiblesses",
-            "opportunites",
-            "menaces",
-            "couleur_commentaire",
-            "commentaire",
-        ]
-        
-        
-###########################################################################    
-#    
-# SWOT ACHETEUR 
-#    
-###########################################################################   
-
-class SwotOneSerializer(serializers.ModelSerializer):
-    created_by = UserSimpleOneSerializer(read_only=True)
-    updated_by = UserSimpleOneSerializer(read_only=True)
-    acheteur_info = serializers.SerializerMethodField()
-    forces_count = serializers.SerializerMethodField()
-    faiblesses_count = serializers.SerializerMethodField()
-    opportunites_count = serializers.SerializerMethodField()
-    menaces_count = serializers.SerializerMethodField()
-    total_elements = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Swot
-        fields = [
-            'id', 
-            'acheteur', 
-            'acheteur_info',
-            'forces',
-            'faiblesses',
-            'opportunites',
-            'menaces',
-            'couleur_commentaire',
-            'commentaire',
-            'forces_count',
-            'faiblesses_count',
-            'opportunites_count',
-            'menaces_count',
-            'total_elements',
-            'created_at', 
-            'updated_at',
-            'created_by', 
-            'updated_by'
-        ]
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
-    
-    def get_acheteur_info(self, obj):
-        if obj.acheteur:
-            return {
-                'id': obj.acheteur.id,
-                'nom': obj.acheteur.nom,
-                'code': obj.acheteur.code,
-                'sigle': obj.acheteur.sigle
-            }
-        return None
-    
-    def get_forces_count(self, obj):
-        if obj.forces:
-            return len([f for f in obj.forces.split('\n') if f.strip()])
-        return 0
-    
-    def get_faiblesses_count(self, obj):
-        if obj.faiblesses:
-            return len([f for f in obj.faiblesses.split('\n') if f.strip()])
-        return 0
-    
-    def get_opportunites_count(self, obj):
-        if obj.opportunites:
-            return len([o for o in obj.opportunites.split('\n') if o.strip()])
-        return 0
-    
-    def get_menaces_count(self, obj):
-        if obj.menaces:
-            return len([m for m in obj.menaces.split('\n') if m.strip()])
-        return 0
-    
-    def get_total_elements(self, obj):
-        return (self.get_forces_count(obj) + 
-                self.get_faiblesses_count(obj) + 
-                self.get_opportunites_count(obj) + 
-                self.get_menaces_count(obj))
-
-class SwotDetailOneSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Swot
-        fields = ['id', 'acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
-
-class AddSwotOneSerializer(serializers.ModelSerializer):
-    acheteur = serializers.PrimaryKeyRelatedField(
-        queryset=Acheteur.objects.all()
-    )
-    
-    class Meta:
-        model = Swot
-        fields = ['acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
-    
-    def validate(self, data):
-        """Validation globale de l'analyse SWOT"""
-        acheteur = data.get('acheteur')
-        
-        # Vérifier si une analyse SWOT existe déjà pour cet acheteur
-        existing = Swot.objects.filter(acheteur=acheteur).exists()
-        
-        if existing and self.instance is None:
-            raise serializers.ValidationError({
-                'acheteur': 'Une analyse SWOT existe déjà pour cet acheteur.'
-            })
-        
-        # Validation du contenu (au moins un champ doit être rempli)
-        forces = data.get('forces', '')
-        faiblesses = data.get('faiblesses', '')
-        opportunites = data.get('opportunites', '')
-        menaces = data.get('menaces', '')
-        
-        if not any([forces, faiblesses, opportunites, menaces]):
-            raise serializers.ValidationError({
-                'non_field_errors': 'Au moins un des champs (forces, faiblesses, opportunités, menaces) doit être renseigné.'
-            })
-        
-        return data
-
-class EditSwotOneSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Swot
-        fields = ['forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
-    
-    def validate(self, data):
-        """Validation pour l'édition"""
-        # Validation du contenu (au moins un champ doit être rempli)
-        forces = data.get('forces', self.instance.forces if self.instance else '')
-        faiblesses = data.get('faiblesses', self.instance.faiblesses if self.instance else '')
-        opportunites = data.get('opportunites', self.instance.opportunites if self.instance else '')
-        menaces = data.get('menaces', self.instance.menaces if self.instance else '')
-        
-        if not any([forces, faiblesses, opportunites, menaces]):
-            raise serializers.ValidationError({
-                'non_field_errors': 'Au moins un des champs (forces, faiblesses, opportunités, menaces) doit être renseigné.'
-            })
-        
-        return data
         
         
         

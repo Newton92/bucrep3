@@ -2716,7 +2716,7 @@ AUTO_REGISTERED_MODELS = [
     StrategiePlanification,
     Structure,
     SuiviCommande,
-    Swot,
+
     TelephoneAcheteur,
     Tendance,
     UserReportQuota,

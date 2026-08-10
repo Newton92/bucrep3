@@ -4648,11 +4648,11 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
     if advice:
         advice_data = {
             'id': advice.id,
-            'points_forts': advice.points_forts or '',
-            'points_faibles': advice.points_faibles or '',
-            'dynamisme_court_terme': advice.dynamisme_court_terme or '',
+            'forces': advice.forces or '',
+            'faiblesses': advice.faiblesses or '',
+            'opportunites': advice.opportunites or '',
             'dynamisme_long_terme': advice.dynamisme_long_terme or '',
-            'risque_potentiel_court_terme': advice.risque_potentiel_court_terme or '',
+            'menaces': advice.menaces or '',
             'created_at': advice.created_at.isoformat() if advice.created_at else None,
             'updated_at': advice.updated_at.isoformat() if advice.updated_at else None,
         }
@@ -9155,41 +9155,6 @@ def dash_root_manage_acheteur_telephone(request, acheteur_id):
         context,
     )
 
-
-@login_required
-def dash_root_manage_acheteur_swot(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    try:
-        acheteur_actuel = Acheteur.objects.get(id=acheteur_id)
-    except Acheteur.DoesNotExist:
-        return render(
-            request, "main/error_page.html", {"error": _("Acheteur non trouvé.")}
-        )
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "acheteur": acheteur_actuel,
-    }
-    return render(
-        request,
-        "main/root/acheteur/swot/dash_root_manage_acheteur_swot.html",
-        context,
-    )
     
     
     
@@ -9411,107 +9376,6 @@ def dash_root_modele_age_societe(request):
     
     
 
-
-@login_required
-def dash_root_manage_swot_acheteur(request, acheteur_id):
-    """
-    Vue pour la gestion de l'analyse SWOT d'un acheteur
-    """
-    
-    # Récupérer l'acheteur avec préfetch pour optimiser
-    acheteur = get_object_or_404(
-        Acheteur.objects.select_related(
-            'statut_entreprise',
-            'forme_juridique',
-            'pays',
-            'province',
-            'ville'
-        ).prefetch_related('swot'),
-        id=acheteur_id
-    )
-
-    # Récupérer l'analyse SWOT de l'acheteur
-    swot_analysis = Swot.objects.filter(acheteur=acheteur).first()
-    
-    # Génération des tokens JWT
-    try:
-        refresh = RefreshToken.for_user(request.user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-    except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
-        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect_to_login(request.get_full_path())
-    
-    coloration_list = CouleurCommentaire.objects.all()
-
-    # Préparer les données de l'acheteur pour le template
-    acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
-        'activite_principale': acheteur.activite_principale or 'Non spécifié',
-        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
-        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
-        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
-        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
-    }
-    
-    # Convertir en JSON sécurisé pour JavaScript
-    acheteur_json = json.dumps(acheteur_data, default=str)
-    
-    # Préparer les données SWOT pour le template
-    swot_data = None
-    if swot_analysis:
-        swot_data = {
-            'id': swot_analysis.id,
-            'forces': swot_analysis.forces or '',
-            'faiblesses': swot_analysis.faiblesses or '',
-            'opportunites': swot_analysis.opportunites or '',
-            'menaces': swot_analysis.menaces or '',
-            'commentaire': swot_analysis.commentaire or '',
-            'created_at': swot_analysis.created_at,
-            'updated_at': swot_analysis.updated_at,
-        }
-    
-    # Compter le nombre d'éléments dans chaque catégorie
-    forces_count = 0
-    faiblesses_count = 0
-    opportunites_count = 0
-    menaces_count = 0
-    
-    if swot_analysis:
-        forces_count = len([f for f in (swot_analysis.forces or '').split('\n') if f.strip()])
-        faiblesses_count = len([f for f in (swot_analysis.faiblesses or '').split('\n') if f.strip()])
-        opportunites_count = len([o for o in (swot_analysis.opportunites or '').split('\n') if o.strip()])
-        menaces_count = len([m for m in (swot_analysis.menaces or '').split('\n') if m.strip()])
-    
-    total_elements = forces_count + faiblesses_count + opportunites_count + menaces_count
-    
-    context = {
-        "acheteurs_active": "active",
-        "user": request.user,
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "acheteur_json": acheteur_json,
-        "swot": swot_analysis,
-        "swot_data": swot_data,
-        "swot_exists": swot_analysis is not None,
-        "acheteur": acheteur,
-        "id_acheteur": acheteur_id,
-        "forces_count": forces_count,
-        "faiblesses_count": faiblesses_count,
-        "opportunites_count": opportunites_count,
-        "menaces_count": menaces_count,
-        "total_elements": total_elements,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/swot/dash_root_swot_acheteur.html",
-        context,
-    )
     
     
     

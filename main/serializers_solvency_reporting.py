@@ -196,8 +196,8 @@ class ReportAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            'points_forts', 'points_faibles', 'dynamisme_court_terme',
-            'dynamisme_long_terme'
+            'forces', 'faiblesses', 'opportunites',
+            'dynamisme_long_terme', 'menaces'
         ]
 
 class ReportScoringSansBilanSerializer(serializers.ModelSerializer):
