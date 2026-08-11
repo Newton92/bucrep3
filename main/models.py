@@ -1964,6 +1964,24 @@ class Acheteur(Model):
         verbose_name=_("Mis à jour par")
     )
 
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        verbose_name=_("Latitude"),
+        help_text=_("Latitude géographique de l'entreprise (ex : 0.390564)"),
+    )
+
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        verbose_name=_("Longitude"),
+        help_text=_("Longitude géographique de l'entreprise (ex : 9.453629)"),
+    )
+
     creation_complete = models.BooleanField(
         default=False,
         verbose_name=_("Création complète"),

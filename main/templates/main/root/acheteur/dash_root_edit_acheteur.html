@@ -245,7 +245,7 @@ body { background:#f0f4f8; }
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="form-label mb-0">
-                                <i class="bi bi-map me-1"></i>{% trans "Carte" %}
+                                <i class="bi bi-map me-1"></i>{% trans "Localisation sur la carte" %}
                                 <span class="text-muted fw-normal" style="font-size:.7rem;">— {% trans "optionnel" %}</span>
                             </label>
                             <div class="d-flex gap-1">
@@ -258,6 +258,36 @@ body { background:#f0f4f8; }
                             </div>
                         </div>
                         <div class="map-wrap"><div id="map"></div></div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted mb-1">
+                                    <i class="bi bi-geo me-1"></i>{% trans "Latitude" %}
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text" style="font-size:.75rem;">LAT</span>
+                                    <input type="number" class="form-control form-control-sm" id="latitude_visible"
+                                           step="0.000001" min="-90" max="90"
+                                           placeholder="{% trans "Ex : 0.390564" %}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted mb-1">
+                                    <i class="bi bi-geo me-1"></i>{% trans "Longitude" %}
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text" style="font-size:.75rem;">LNG</span>
+                                    <input type="number" class="form-control form-control-sm" id="longitude_visible"
+                                           step="0.000001" min="-180" max="180"
+                                           placeholder="{% trans "Ex : 9.453629" %}">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3" id="btn-apply-coords" style="font-size:.77rem;">
+                                    <i class="bi bi-pin-map me-1"></i>{% trans "Appliquer les coordonnées" %}
+                                </button>
+                                <span class="text-muted small ms-2" id="coords-hint" style="font-size:.72rem;">{% trans "Cliquez sur la carte ou saisissez les coordonnées ci-dessus" %}</span>
+                            </div>
+                        </div>
                         <input type="hidden" id="latitude"  name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
                     </div>
@@ -478,7 +508,21 @@ $(document).ready(function () {
         $('#btn-clear-marker').on('click', function(){
             if (window._mapMarker){ map.removeLayer(window._mapMarker); window._mapMarker=null; }
             $('#latitude,#longitude').val('');
+            $('#latitude_visible,#longitude_visible').val('');
             $(this).hide();
+        });
+
+        $('#btn-apply-coords').on('click', function(){
+            var lat = parseFloat($('#latitude_visible').val());
+            var lng = parseFloat($('#longitude_visible').val());
+            if (isNaN(lat) || isNaN(lng)) return;
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+            map.flyTo([lat, lng], 14);
+            placeMarker(lat, lng);
+        });
+
+        $('#latitude_visible, #longitude_visible').on('keydown', function(e){
+            if (e.key === 'Enter') { e.preventDefault(); $('#btn-apply-coords').trigger('click'); }
         });
 
         setTimeout(function(){ if(map) map.invalidateSize(); }, 300);
@@ -499,8 +543,12 @@ $(document).ready(function () {
     }
 
     function updateCoords(lat, lng) {
-        $('#latitude').val(Math.round(lat*1e6)/1e6);
-        $('#longitude').val(Math.round(lng*1e6)/1e6);
+        var latR = Math.round(lat*1e6)/1e6;
+        var lngR = Math.round(lng*1e6)/1e6;
+        $('#latitude').val(latR);
+        $('#longitude').val(lngR);
+        $('#latitude_visible').val(latR);
+        $('#longitude_visible').val(lngR);
     }
 
     // ── Quill ──
@@ -551,8 +599,8 @@ $(document).ready(function () {
         }
         if (descriptionQuill) descriptionQuill.root.innerHTML = a.description || '';
         if (commentaireQuill) commentaireQuill.root.innerHTML = a.commentaire || '';
-        if (a.latitude)  $('#latitude').val(a.latitude);
-        if (a.longitude) $('#longitude').val(a.longitude);
+        if (a.latitude)  { $('#latitude').val(a.latitude);  $('#latitude_visible').val(a.latitude);  }
+        if (a.longitude) { $('#longitude').val(a.longitude); $('#longitude_visible').val(a.longitude); }
     }
 
     function updateHeader(a) {

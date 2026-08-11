@@ -1270,7 +1270,7 @@ class AddAcheteurSerializerTwo(serializers.ModelSerializer):
 
 class AddAcheteurSerializer(serializers.ModelSerializer):
     site_internet = DomainNameField()
-    
+
     class Meta:
         model = Acheteur
         fields = [
@@ -1280,7 +1280,8 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
             "code_postal", "fax", "boite_postale",
             "site_internet", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
-            "commentaire", "code", "created_by"
+            "commentaire", "code", "created_by",
+            "latitude", "longitude",
         ]
         read_only_fields = ["created_at", "updated_at", "code"]
 
@@ -1491,7 +1492,7 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
             "code_postal", "fax", "boite_postale",
             "site_internet", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
-            "commentaire"
+            "commentaire", "latitude", "longitude",
         ]
 
     def validate_site_internet(self, value):
@@ -1586,7 +1587,8 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
             "code_postal", "fax", "boite_postale", "site_internet",
             "site_internet_formatted", "numero_adresse", "rue_adresse",
             "ville", "province", "pays", "region", "couleur_commentaire",
-            "commentaire", "created_at", "updated_at"
+            "commentaire", "created_at", "updated_at",
+            "latitude", "longitude",
         ]
         read_only_fields = fields
 
