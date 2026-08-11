@@ -3848,17 +3848,27 @@ def get_structured_actif_anglais_data(acheteur, years):
 
     structure_map = {
         "NON-CURRENT ASSETS": [
-            {'label': "Property, plant and equipment", 'key': 'biens_installations_equipements', 'is_total': True},
+            {'label': "Property, plant and equipment",                    'key': 'biens_installations_equipements'},
+            {'label': "Right-of-use assets",                              'key': 'droit_utilisation'},
+            {'label': "Intangible assets",                                'key': 'immobilisations_incorporelles'},
+            {'label': "Goodwill",                                         'key': 'goodwill'},
+            {'label': "Deferred tax assets",                              'key': 'actif_impot_differe'},
+            {'label': "Investment in associates",                         'key': 'investissements_associes'},
+            {'label': "Loans receivable (non-current)",                   'key': 'creances_pret_non_courant'},
+            {'label': "Financial assets at fair value through P&L",       'key': 'actifs_financiers_juste_valeur_resultat'},
+            {'label': "TOTAL NON-CURRENT ASSETS",                        'key': 'total_actifs_non_courants', 'is_total': True},
         ],
         "CURRENT ASSETS": [
-            {'label': "Inventory", 'key': 'inventaire'},
-            {'label': "Trade and other receivables", 'key': 'creances_commerciales_autres_creances'},
-            {'label': "Current tax assets", 'key': 'actif_impots_courant'},
-            {'label': "Cash and bank", 'key': 'caisses_banques'},
-            {'label': "TOTAL CURRENT ASSETS", 'key': 'total_actifs_courants', 'is_total': True},
+            {'label': "Inventory",                                        'key': 'inventaire'},
+            {'label': "Trade and other receivables",                      'key': 'creances_commerciales_autres_creances'},
+            {'label': "Income tax receivable",                            'key': 'actif_impots_courant'},
+            {'label': "Loans receivable (current)",                       'key': 'creances_pret_courant'},
+            {'label': "Cash and cash equivalents",                        'key': 'caisses_banques'},
+            {'label': "Derivative financial assets",                      'key': 'actifs_financiers_derives'},
+            {'label': "TOTAL CURRENT ASSETS",                            'key': 'total_actif_circulant', 'is_total': True},
         ],
         "TOTAL ASSETS": [
-            {'label': "TOTAL ASSETS", 'key': 'total_actif', 'is_final_total': True},
+            {'label': "TOTAL ASSETS",                                     'key': 'total_actif', 'is_final_total': True},
         ]
     }
 
@@ -3876,24 +3886,34 @@ def get_structured_passif_anglais_data(acheteur, years):
 
     structure_map = {
         "SHAREHOLDERS' EQUITY": [
-            {'label': "Share capital and reserves", 'key': 'capital_reserves'},
-            {'label': "Issued capital", 'key': 'capital_declare'},
-            {'label': "Retained earnings", 'key': 'benefices_non_distribues'},
-            {'label': "TOTAL EQUITY", 'key': 'total_fonds_propres', 'is_total': True},
+            {'label': "Share capital",                                    'key': 'capital_social'},
+            {'label': "Share premium",                                    'key': 'prime_emission'},
+            {'label': "Cash flow hedge reserve",                          'key': 'reserve_couverture_tresorerie'},
+            {'label': "Cost of hedging reserve",                          'key': 'reserve_cout_couverture'},
+            {'label': "Foreign currency translation reserve",             'key': 'reserve_conversion_devise'},
+            {'label': "Retained earnings",                                'key': 'benefices_non_distribues'},
+            {'label': "Net result of the year",                           'key': 'resultat_net_exercice'},
+            {'label': "Distributable reserve",                            'key': 'reserve_distribuable'},
+            {'label': "TOTAL EQUITY",                                     'key': 'total_fonds_propres', 'is_total': True},
         ],
         "NON-CURRENT LIABILITIES": [
-            {'label': "Bank loans", 'key': 'pret_bancaire'},
-            {'label': "Directors' current accounts", 'key': 'compte_courant_administrateurs'},
-            {'label': "TOTAL NON-CURRENT LIABILITIES", 'key': 'total_passifs_non_courants', 'is_total': True},
+            {'label': "Financial debts (bank loan)",                      'key': 'dettes_financieres_pret_bancaire'},
+            {'label': "Long term trade liabilities",                      'key': 'dettes_commerciales_long_terme'},
+            {'label': "Directors current account",                        'key': 'compte_courant_administrateurs'},
+            {'label': "Long term provisions",                             'key': 'provisions_long_terme'},
+            {'label': "Other long term liabilities",                      'key': 'autres_passifs_long_terme'},
+            {'label': "TOTAL NON-CURRENT LIABILITIES",                   'key': 'total_passif_long_terme', 'is_total': True},
         ],
         "CURRENT LIABILITIES": [
-            {'label': "Trade and other payables", 'key': 'dettes_commerciales_autres_dettes'},
-            {'label': "Bank overdraft", 'key': 'decouvert_bancaire'},
-            {'label': "Taxation", 'key': 'impots'},
-            {'label': "TOTAL CURRENT LIABILITIES", 'key': 'total_passifs_courants', 'is_total': True},
+            {'label': "Trade and other payables",                         'key': 'dettes_commerciales_autres_dettes'},
+            {'label': "Lease liabilities",                                'key': 'dettes_location'},
+            {'label': "Employee benefits",                                'key': 'avantages_employes'},
+            {'label': "Income tax payable",                               'key': 'impots'},
+            {'label': "Derivative financial liabilities",                 'key': 'passifs_financiers_derives'},
+            {'label': "TOTAL CURRENT LIABILITIES",                       'key': 'total_passif_circulant', 'is_total': True},
         ],
-        "TOTAL LIABILITIES AND EQUITY": [
-            {'label': "TOTAL LIABILITIES AND EQUITY", 'key': 'total_passif', 'is_final_total': True},
+        "TOTAL EQUITY AND LIABILITIES": [
+            {'label': "TOTAL EQUITY AND LIABILITIES",                    'key': 'total_capitaux_propres_et_passif', 'is_final_total': True},
         ]
     }
 
