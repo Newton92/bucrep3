@@ -553,6 +553,7 @@ $(document).ready(function () {
 
     // ── Quill ──
     var QUILL_TOOLBAR = [
+        [{ 'size': ['10px','11px','12px','13px','14px','16px','18px','20px','24px','28px','32px','36px'] }],
         [{header:[1,2,3,false]}],
         ['bold','italic','underline','strike'],
         [{color:[]},{background:[]}],
@@ -571,6 +572,17 @@ $(document).ready(function () {
         placeholder:'{% trans "Votre commentaire sur cet acheteur..." %}',
         modules:{ toolbar: QUILL_TOOLBAR }
     });
+
+    function syncQuillSizePicker(quill, editorId) {
+        quill.on('selection-change', function(range) {
+            if (!range) return;
+            var fmt = quill.getFormat(range);
+            var lbl = document.querySelector('#' + editorId + ' .ql-size .ql-picker-label');
+            if (lbl) lbl.setAttribute('data-value', fmt.size || '');
+        });
+    }
+    syncQuillSizePicker(descriptionQuill, 'descriptionEditor');
+    syncQuillSizePicker(commentaireQuill, 'commentaireEditor');
 
     // ── Remplissage ──
     function fillForm(a) {
@@ -597,8 +609,8 @@ $(document).ready(function () {
             loadVillesParPays(a.pays.id, a.ville ? a.ville.id : null);
             loadRegionsParPays(a.pays.id, a.region ? a.region.id : null);
         }
-        if (descriptionQuill) descriptionQuill.root.innerHTML = a.description || '';
-        if (commentaireQuill) commentaireQuill.root.innerHTML = a.commentaire || '';
+        if (descriptionQuill) descriptionQuill.clipboard.dangerouslyPasteHTML(a.description || '');
+        if (commentaireQuill) commentaireQuill.clipboard.dangerouslyPasteHTML(a.commentaire || '');
         if (a.latitude)  { $('#latitude').val(a.latitude);  $('#latitude_visible').val(a.latitude);  }
         if (a.longitude) { $('#longitude').val(a.longitude); $('#longitude_visible').val(a.longitude); }
     }
