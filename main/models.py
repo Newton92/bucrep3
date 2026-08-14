@@ -1802,7 +1802,7 @@ class Acheteur(Model):
     
     code = models.CharField(
         _("Code"),
-        max_length=255,
+        max_length=1000,
         null=True,
         blank=True,
         help_text=_("Code unique de l'acheteur"),
@@ -1819,7 +1819,7 @@ class Acheteur(Model):
     
     activite_principale = models.CharField(
         _("Activité Principale"),
-        max_length=255,
+        max_length=1000,
         blank=True,
         help_text=_("Activité principale de l'entreprise"),
     )
@@ -1833,7 +1833,7 @@ class Acheteur(Model):
     )
 
     sigle = models.CharField(
-        _("Sigle"), max_length=255, blank=True, help_text=_("Sigle de l'entreprise")
+        _("Sigle"), max_length=1000, blank=True, help_text=_("Sigle de l'entreprise")
     )
 
     description = models.TextField(
@@ -1860,28 +1860,28 @@ class Acheteur(Model):
     )
 
     code_postal = models.CharField(
-        max_length=200, blank=True, help_text=_("Code postal de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Code postal de l'entreprise")
     )
 
     fax = models.CharField(
-        max_length=300, blank=True, help_text=_("Numéro de fax de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Numéro de fax de l'entreprise")
     )
 
     boite_postale = models.CharField(
-        max_length=200, blank=True, help_text=_("Boîte postale de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Boîte postale de l'entreprise")
     )
 
 
     site_internet = models.URLField(
-        max_length=300, blank=True, help_text=_("Site internet de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Site internet de l'entreprise")
     )
 
     numero_adresse = models.CharField(
-        max_length=200, blank=True, help_text=_("Numéro de l'adresse de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Numéro de l'adresse de l'entreprise")
     )
 
     rue_adresse = models.CharField(
-        max_length=200, blank=True, help_text=_("Rue de l'adresse de l'entreprise")
+        max_length=1000, blank=True, help_text=_("Rue de l'adresse de l'entreprise")
     )
 
     pays = models.ForeignKey(
