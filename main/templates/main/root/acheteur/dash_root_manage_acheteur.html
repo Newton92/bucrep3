@@ -386,13 +386,13 @@ body { background: var(--c-bg); }
                     </div>
                     <div id="spNav" class="sp-nav">
                         <button id="spPrev" class="sp-nav-btn" type="button" disabled>
-                            <i class="bi bi-chevron-left" style="flex-shrink:0;"></i>
-                            <span class="sp-nav-lbl" id="spPrevLabel">{% trans "Précédent" %}</span>
+                            <i class="bi bi-arrow-left" style="flex-shrink:0;"></i>
+                            <span class="sp-nav-lbl" id="spPrevLabel">{% trans "Retour" %}</span>
                         </button>
                         <span id="spNavCounter" class="sp-nav-counter"></span>
-                        <button id="spNext" class="sp-nav-btn" type="button">
-                            <span class="sp-nav-lbl" id="spNextLabel">{% trans "Suivant" %}</span>
-                            <i class="bi bi-chevron-right" style="flex-shrink:0;"></i>
+                        <button id="spNext" class="sp-nav-btn" type="button" disabled>
+                            <span class="sp-nav-lbl" id="spNextLabel">{% trans "Avant" %}</span>
+                            <i class="bi bi-arrow-right" style="flex-shrink:0;"></i>
                         </button>
                     </div>
                 </div>
@@ -811,10 +811,13 @@ body { background: var(--c-bg); }
         var spNextLabel  = document.getElementById('spNextLabel');
         var spNavCounter = document.getElementById('spNavCounter');
         var links        = document.querySelectorAll('#spList .sp-link');
-        var SP_KEY       = 'spSection_' + ID;   /* clé localStorage par acheteur */
-        var currentIdx   = -1;
+        var SP_KEY       = 'spSection_' + ID;
 
-        /* Extraire le texte visible d'un sp-link (sans les icônes) */
+        /* Historique de navigation (back/forward comme un navigateur) */
+        var navHistory = [];   /* [{url, link}, ...] */
+        var navPos     = -1;   /* position courante dans navHistory */
+
+        /* Extraire le texte visible d'un sp-link (sans les icônes <i>) */
         function getLinkLabel(link){
             var text = '';
             link.childNodes.forEach(function(n){
@@ -826,33 +829,57 @@ body { background: var(--c-bg); }
         function updateNav(){
             if(!spNav) return;
             spNav.style.display = 'flex';
-            var total = links.length;
-            spPrev.disabled = (currentIdx <= 0);
-            spNext.disabled = (currentIdx >= total - 1);
-            spPrevLabel.textContent = currentIdx > 0
-                ? getLinkLabel(links[currentIdx - 1])
-                : '{% trans "Précédent" %}';
-            spNextLabel.textContent = currentIdx < total - 1
-                ? getLinkLabel(links[currentIdx + 1])
-                : '{% trans "Suivant" %}';
-            spNavCounter.textContent = (currentIdx + 1) + ' / ' + total;
+            spPrev.disabled = (navPos <= 0);
+            spNext.disabled = (navPos >= navHistory.length - 1);
+            spPrevLabel.textContent = navPos > 0
+                ? getLinkLabel(navHistory[navPos - 1].link)
+                : '{% trans "Retour" %}';
+            spNextLabel.textContent = navPos < navHistory.length - 1
+                ? getLinkLabel(navHistory[navPos + 1].link)
+                : '{% trans "Avant" %}';
+            /* compteur : position dans l'historique */
+            spNavCounter.textContent = navHistory.length > 1
+                ? (navPos + 1) + ' / ' + navHistory.length
+                : '';
         }
 
-        function loadSection(url, activeLink, save){
+        /*
+         * renderSection : charge l'iframe sans toucher à l'historique.
+         * Appelé par navigateToEntry() et indirectement par goBack/goForward.
+         */
+        function renderSection(url, activeLink){
             links.forEach(function(l){ l.classList.remove('active'); });
             activeLink.classList.add('active');
             placeholder.style.display = 'none';
             loading.classList.add('show');
             iframe.style.display = 'none';
             iframe.src = url;
-            if(save !== false){
-                try { localStorage.setItem(SP_KEY, url); } catch(e){}
-            }
-            /* scroll gauche vers l'item actif */
             activeLink.scrollIntoView({ block:'nearest' });
-            /* mise à jour de l'index et des boutons de navigation */
-            currentIdx = -1;
-            links.forEach(function(l, i){ if(l === activeLink) currentIdx = i; });
+            try { localStorage.setItem(SP_KEY, url); } catch(e){}
+        }
+
+        /*
+         * navigateTo : clic utilisateur → on coupe le futur et on pousse une nouvelle entrée.
+         */
+        function navigateTo(url, lnk){
+            /* éviter de repousser la même page si déjà là */
+            if(navPos >= 0 && navHistory[navPos].url === url) return;
+            /* couper toutes les entrées après la position courante */
+            navHistory = navHistory.slice(0, navPos + 1);
+            navHistory.push({ url: url, link: lnk });
+            navPos = navHistory.length - 1;
+            renderSection(url, lnk);
+            updateNav();
+        }
+
+        /*
+         * navigateToEntry : déplacement dans l'historique existant (back / forward).
+         */
+        function navigateToEntry(pos){
+            if(pos < 0 || pos >= navHistory.length) return;
+            navPos = pos;
+            var entry = navHistory[navPos];
+            renderSection(entry.url, entry.link);
             updateNav();
         }
 
@@ -864,37 +891,33 @@ body { background: var(--c-bg); }
                 }
             });
 
+            /* Clics sur la liste de gauche */
             links.forEach(function(link){
                 link.addEventListener('click', function(e){
                     e.preventDefault();
                     var url = this.dataset.url;
                     if(!url) return;
-                    if(this.classList.contains('active') && iframe.src === url) return;
-                    loadSection(url, this);
+                    navigateTo(url, this);
                 });
             });
 
+            /* Bouton Retour (← back) */
             if(spPrev){
                 spPrev.addEventListener('click', function(){
-                    if(currentIdx > 0){
-                        var lnk = links[currentIdx - 1];
-                        loadSection(lnk.dataset.url, lnk);
-                    }
+                    navigateToEntry(navPos - 1);
                 });
             }
+
+            /* Bouton Avant (forward →) */
             if(spNext){
                 spNext.addEventListener('click', function(){
-                    if(currentIdx < links.length - 1){
-                        var lnk = links[currentIdx + 1];
-                        loadSection(lnk.dataset.url, lnk);
-                    }
+                    navigateToEntry(navPos + 1);
                 });
             }
 
-            /* Restaurer la section active depuis localStorage, sinon charger la première */
+            /* Restaurer la section depuis localStorage, sinon la première */
             var savedUrl = '';
             try { savedUrl = localStorage.getItem(SP_KEY) || ''; } catch(e){}
-
             var initialLink = links[0];
             if(savedUrl){
                 links.forEach(function(l){
@@ -902,7 +925,7 @@ body { background: var(--c-bg); }
                 });
             }
             if(initialLink){
-                loadSection(initialLink.dataset.url, initialLink, false);
+                navigateTo(initialLink.dataset.url, initialLink);
             }
         }
     }());
