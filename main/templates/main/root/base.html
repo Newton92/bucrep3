@@ -1395,11 +1395,11 @@
                 <div id="globalNav">
                     <button id="gnavBack" class="gnav-btn" type="button" disabled>
                         <i class="bi bi-arrow-left" style="flex-shrink:0;font-size:.8rem;"></i>
-                        <span class="gnav-lbl" id="gnavBackLbl"></span>
+                        <span class="gnav-lbl">{% trans "Retour" %}</span>
                     </button>
                     <span id="gnavCounter" class="gnav-counter"></span>
                     <button id="gnavFwd" class="gnav-btn" type="button" disabled>
-                        <span class="gnav-lbl" id="gnavFwdLbl"></span>
+                        <span class="gnav-lbl">{% trans "Avant" %}</span>
                         <i class="bi bi-arrow-right" style="flex-shrink:0;font-size:.8rem;"></i>
                     </button>
                 </div>
@@ -2212,115 +2212,119 @@
     <!-- ── Navigation globale back / forward ── -->
     <script>
     (function(){
-        /* Pas de barre en mode embed (iframe) */
-        if(window.self !== window.top) return;
+        if(window.self !== window.top) return;   /* pas de barre dans les iframes */
 
         var STACK_KEY = 'appNavStack';
         var POS_KEY   = 'appNavPos';
         var DIR_KEY   = 'appNavDir';
 
-        var stack = [], pos = -1, dir = '';
-        try {
-            stack = JSON.parse(sessionStorage.getItem(STACK_KEY) || '[]');
-            pos   = parseInt(sessionStorage.getItem(POS_KEY) || '-1', 10);
-            dir   = sessionStorage.getItem(DIR_KEY) || '';
-            sessionStorage.removeItem(DIR_KEY);
-        } catch(e){}
+        function ss(k)    { try { return sessionStorage.getItem(k); }    catch(e){ return null; } }
+        function ssSet(k,v){ try { sessionStorage.setItem(k, v); }        catch(e){} }
+        function ssDel(k)  { try { sessionStorage.removeItem(k); }        catch(e){} }
+        function readStack(){ try { return JSON.parse(ss(STACK_KEY) || '[]'); } catch(e){ return []; } }
+        function readPos()  { var v = parseInt(ss(POS_KEY) || '-1', 10); return isNaN(v) ? -1 : v; }
 
-        /* Nom de page : partie avant " | " ou " - " dans le titre */
-        function pageName(){
-            var t = document.title || '';
-            var i = t.indexOf(' | ');
-            if(i > 0) return t.substring(0, i).trim();
-            i = t.indexOf(' - ');
-            if(i > 0) return t.substring(0, i).trim();
-            return t.trim() || location.pathname;
+        function saveState(stack, pos){
+            ssSet(STACK_KEY, JSON.stringify(stack));
+            ssSet(POS_KEY, pos);
         }
 
-        /* Type de navigation (back_forward, reload, navigate) */
-        var navType = 'navigate';
-        try {
-            var e = performance.getEntriesByType('navigation')[0];
-            if(e) navType = e.type;
-        } catch(x){}
-
-        var current = { url: location.href, name: pageName() };
-
-        if(dir === 'back'){
-            pos = Math.max(0, pos - 1);
-        } else if(dir === 'forward'){
-            pos = Math.min(stack.length - 1, pos + 1);
-        } else if(navType === 'reload'){
-            /* rechargement : on reste en place, on met à jour le nom */
-            if(pos >= 0 && pos < stack.length) stack[pos].name = current.name;
-        } else if(navType === 'back_forward'){
-            /* bouton natif du navigateur : chercher l'URL dans la pile */
-            var found = -1;
-            for(var k = 0; k < stack.length; k++){
-                if(stack[k].url === current.url){ found = k; }
-            }
-            if(found >= 0){ pos = found; }
-            else {
-                /* URL inconnue : traiter comme navigation normale */
-                stack = stack.slice(0, pos + 1);
-                stack.push(current);
-                pos = stack.length - 1;
-            }
-        } else {
-            /* Navigation normale : tronquer le futur et empiler */
-            stack = stack.slice(0, pos + 1);
-            /* Éviter un doublon si même URL (ex: formulaire submit vers même page) */
-            if(!stack.length || stack[stack.length - 1].url !== current.url){
-                stack.push(current);
-            }
-            pos = stack.length - 1;
-        }
-
-        /* Garder max 60 entrées */
-        if(stack.length > 60){ stack = stack.slice(stack.length - 60); pos = Math.min(pos, stack.length - 1); }
-
-        try {
-            sessionStorage.setItem(STACK_KEY, JSON.stringify(stack));
-            sessionStorage.setItem(POS_KEY, pos);
-        } catch(e){}
-
-        function updateBar(){
-            var bar     = document.getElementById('globalNav');
-            var btnBack = document.getElementById('gnavBack');
-            var btnFwd  = document.getElementById('gnavFwd');
-            var lblBack = document.getElementById('gnavBackLbl');
-            var lblFwd  = document.getElementById('gnavFwdLbl');
-            var counter = document.getElementById('gnavCounter');
+        function updateBar(stack, pos){
+            var bar = document.getElementById('globalNav');
             if(!bar) return;
-
             var canBack = pos > 0;
             var canFwd  = pos < stack.length - 1;
-
             bar.style.display = (canBack || canFwd) ? 'flex' : 'none';
-
-            btnBack.disabled = !canBack;
-            btnFwd.disabled  = !canFwd;
-            lblBack.textContent = '{% trans "Retour" %}';
-            lblFwd.textContent  = '{% trans "Avant" %}';
-            counter.textContent = stack.length > 1 ? (pos + 1) + ' / ' + stack.length : '';
+            var bk = document.getElementById('gnavBack');
+            var fw = document.getElementById('gnavFwd');
+            if(bk) bk.disabled = !canBack;
+            if(fw) fw.disabled  = !canFwd;
+            var ctr = document.getElementById('gnavCounter');
+            if(ctr) ctr.textContent = stack.length > 1 ? (pos + 1) + ' / ' + stack.length : '';
         }
 
+        /*
+         * processLoad : calcule la nouvelle position dans l'historique.
+         * fromBfcache = true quand la page est restaurée depuis le cache navigateur
+         * sans re-exécution du script (événement pageshow.persisted).
+         */
+        function processLoad(fromBfcache){
+            var stack = readStack();
+            var pos   = readPos();
+            var dir   = ss(DIR_KEY) || '';
+            ssDel(DIR_KEY);
+
+            var curUrl = location.href;
+
+            if(dir === 'back'){
+                pos = Math.max(0, pos - 1);
+
+            } else if(dir === 'forward'){
+                pos = Math.min(stack.length - 1, pos + 1);
+
+            } else if(fromBfcache){
+                /* Restauration bfcache sans notre flag → bouton natif du navigateur.
+                   On cherche l'URL courante dans la pile pour retrouver la position. */
+                var f = -1;
+                for(var k = 0; k < stack.length; k++){
+                    if(stack[k].url === curUrl){ f = k; break; }
+                }
+                if(f >= 0) pos = f;
+
+            } else {
+                var type = 'navigate';
+                try { var e = performance.getEntriesByType('navigation')[0]; if(e) type = e.type; } catch(x){}
+
+                if(type === 'reload'){
+                    /* rechargement : position inchangée */
+
+                } else if(type === 'back_forward'){
+                    /* bouton natif (page non en bfcache) : chercher l'URL */
+                    var f2 = -1;
+                    for(var j = 0; j < stack.length; j++){
+                        if(stack[j].url === curUrl){ f2 = j; break; }
+                    }
+                    if(f2 >= 0) pos = f2;
+                    else { stack = stack.slice(0, pos + 1); stack.push({url:curUrl}); pos = stack.length - 1; }
+
+                } else {
+                    /* navigation normale : tronquer le futur, empiler */
+                    stack = stack.slice(0, pos + 1);
+                    if(!stack.length || stack[stack.length - 1].url !== curUrl){
+                        stack.push({url: curUrl});
+                    }
+                    pos = stack.length - 1;
+                }
+            }
+
+            if(stack.length > 60){ stack = stack.slice(-60); pos = Math.min(pos, stack.length - 1); }
+            saveState(stack, pos);
+            return {stack: stack, pos: pos};
+        }
+
+        var state = processLoad(false);
+
         document.addEventListener('DOMContentLoaded', function(){
-            updateBar();
-            var btnBack = document.getElementById('gnavBack');
-            var btnFwd  = document.getElementById('gnavFwd');
-            if(btnBack){
-                btnBack.addEventListener('click', function(){
-                    try { sessionStorage.setItem(DIR_KEY, 'back'); } catch(e){}
-                    window.history.back();
-                });
-            }
-            if(btnFwd){
-                btnFwd.addEventListener('click', function(){
-                    try { sessionStorage.setItem(DIR_KEY, 'forward'); } catch(e){}
-                    window.history.forward();
-                });
-            }
+            updateBar(state.stack, state.pos);
+
+            var bk = document.getElementById('gnavBack');
+            var fw = document.getElementById('gnavFwd');
+            if(bk) bk.addEventListener('click', function(){
+                ssSet(DIR_KEY, 'back');
+                window.history.back();
+            });
+            if(fw) fw.addEventListener('click', function(){
+                ssSet(DIR_KEY, 'forward');
+                window.history.forward();
+            });
+        });
+
+        /* Bfcache : page restaurée depuis le cache — le script ne se ré-exécute pas,
+           mais pageshow se déclenche. On recalcule position et état des boutons. */
+        window.addEventListener('pageshow', function(ev){
+            if(!ev.persisted) return;
+            state = processLoad(true);
+            updateBar(state.stack, state.pos);
         });
     })();
     </script>
