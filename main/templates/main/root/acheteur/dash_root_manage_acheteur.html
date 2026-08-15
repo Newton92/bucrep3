@@ -125,7 +125,8 @@ body { background: var(--c-bg); }
 }
 .sp-list::-webkit-scrollbar { width:3px; }
 .sp-list::-webkit-scrollbar-thumb { background:rgba(10,149,202,.3); border-radius:3px; }
-.sp-frame { flex:1; overflow:hidden; position:relative; background:#f0f6fb; }
+.sp-frame { flex:1; overflow:hidden; position:relative; background:#f0f6fb; display:flex; flex-direction:column; }
+.sp-inner { flex:1; overflow:hidden; position:relative; }
 .sp-frame iframe { width:100%; height:100%; border:none; background:#f0f6fb; }
 .sp-placeholder {
     position:absolute; inset:0; display:flex; flex-direction:column;
@@ -139,6 +140,27 @@ body { background: var(--c-bg); }
     z-index:5;
 }
 .sp-loading.show { display:flex; }
+.sp-nav {
+    display:none; align-items:center; justify-content:space-between; gap:.5rem;
+    padding:.4rem .75rem; background:#fff;
+    border-top:1px solid var(--c-border); flex-shrink:0; min-height:46px;
+}
+.sp-nav-btn {
+    display:inline-flex; align-items:center; gap:.35rem;
+    padding:.3rem .7rem; font-size:.78rem; font-weight:500;
+    border:1px solid var(--c-border); border-radius:6px;
+    background:#fff; color:var(--c-text); cursor:pointer;
+    transition:background .15s, color .15s, border-color .15s;
+    max-width:210px; min-width:80px; overflow:hidden;
+}
+.sp-nav-btn span.sp-nav-lbl { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sp-nav-btn:hover:not(:disabled) { background:var(--c-primary); color:#fff; border-color:var(--c-primary); }
+.sp-nav-btn:disabled { opacity:.32; cursor:not-allowed; }
+.sp-nav-counter {
+    font-size:.72rem; font-weight:600; color:#94a3b8;
+    background:#f0f6fb; border-radius:20px; padding:.2rem .65rem;
+    border:1px solid var(--c-border); flex-shrink:0; white-space:nowrap;
+}
 
 /* ── Detail list (dans split-panel) ── */
 .dl-list { display:flex; flex-direction:column; gap:0; }
@@ -350,16 +372,29 @@ body { background: var(--c-bg); }
                     </div>
                 </div>
 
-                {# — Zone droite : iframe — #}
+                {# — Zone droite : iframe + barre de navigation — #}
                 <div class="sp-frame">
-                    <div class="sp-placeholder" id="spPlaceholder">
-                        <i class="bi bi-layout-text-sidebar-reverse"></i>
-                        <p>{% trans "Sélectionnez une section dans la liste" %}</p>
+                    <div class="sp-inner">
+                        <div class="sp-placeholder" id="spPlaceholder">
+                            <i class="bi bi-layout-text-sidebar-reverse"></i>
+                            <p>{% trans "Sélectionnez une section dans la liste" %}</p>
+                        </div>
+                        <div class="sp-loading" id="spLoading">
+                            <div class="spinner-border text-primary" role="status" style="width:1.8rem;height:1.8rem;"></div>
+                        </div>
+                        <iframe id="spIframe" src="" style="display:none;"></iframe>
                     </div>
-                    <div class="sp-loading" id="spLoading">
-                        <div class="spinner-border text-primary" role="status" style="width:1.8rem;height:1.8rem;"></div>
+                    <div id="spNav" class="sp-nav">
+                        <button id="spPrev" class="sp-nav-btn" type="button" disabled>
+                            <i class="bi bi-chevron-left" style="flex-shrink:0;"></i>
+                            <span class="sp-nav-lbl" id="spPrevLabel">{% trans "Précédent" %}</span>
+                        </button>
+                        <span id="spNavCounter" class="sp-nav-counter"></span>
+                        <button id="spNext" class="sp-nav-btn" type="button">
+                            <span class="sp-nav-lbl" id="spNextLabel">{% trans "Suivant" %}</span>
+                            <i class="bi bi-chevron-right" style="flex-shrink:0;"></i>
+                        </button>
                     </div>
-                    <iframe id="spIframe" src="" style="display:none;"></iframe>
                 </div>
 
             </div>
@@ -766,11 +801,42 @@ body { background: var(--c-bg); }
 
     /* ── Split-panel ── */
     (function(){
-        var iframe      = document.getElementById('spIframe');
-        var placeholder = document.getElementById('spPlaceholder');
-        var loading     = document.getElementById('spLoading');
-        var links       = document.querySelectorAll('#spList .sp-link');
-        var SP_KEY      = 'spSection_' + ID;   /* clé localStorage par acheteur */
+        var iframe       = document.getElementById('spIframe');
+        var placeholder  = document.getElementById('spPlaceholder');
+        var loading      = document.getElementById('spLoading');
+        var spNav        = document.getElementById('spNav');
+        var spPrev       = document.getElementById('spPrev');
+        var spNext       = document.getElementById('spNext');
+        var spPrevLabel  = document.getElementById('spPrevLabel');
+        var spNextLabel  = document.getElementById('spNextLabel');
+        var spNavCounter = document.getElementById('spNavCounter');
+        var links        = document.querySelectorAll('#spList .sp-link');
+        var SP_KEY       = 'spSection_' + ID;   /* clé localStorage par acheteur */
+        var currentIdx   = -1;
+
+        /* Extraire le texte visible d'un sp-link (sans les icônes) */
+        function getLinkLabel(link){
+            var text = '';
+            link.childNodes.forEach(function(n){
+                if(n.nodeType === 3) text += n.textContent;
+            });
+            return text.trim();
+        }
+
+        function updateNav(){
+            if(!spNav) return;
+            spNav.style.display = 'flex';
+            var total = links.length;
+            spPrev.disabled = (currentIdx <= 0);
+            spNext.disabled = (currentIdx >= total - 1);
+            spPrevLabel.textContent = currentIdx > 0
+                ? getLinkLabel(links[currentIdx - 1])
+                : '{% trans "Précédent" %}';
+            spNextLabel.textContent = currentIdx < total - 1
+                ? getLinkLabel(links[currentIdx + 1])
+                : '{% trans "Suivant" %}';
+            spNavCounter.textContent = (currentIdx + 1) + ' / ' + total;
+        }
 
         function loadSection(url, activeLink, save){
             links.forEach(function(l){ l.classList.remove('active'); });
@@ -784,6 +850,10 @@ body { background: var(--c-bg); }
             }
             /* scroll gauche vers l'item actif */
             activeLink.scrollIntoView({ block:'nearest' });
+            /* mise à jour de l'index et des boutons de navigation */
+            currentIdx = -1;
+            links.forEach(function(l, i){ if(l === activeLink) currentIdx = i; });
+            updateNav();
         }
 
         if(iframe){
@@ -803,6 +873,23 @@ body { background: var(--c-bg); }
                     loadSection(url, this);
                 });
             });
+
+            if(spPrev){
+                spPrev.addEventListener('click', function(){
+                    if(currentIdx > 0){
+                        var lnk = links[currentIdx - 1];
+                        loadSection(lnk.dataset.url, lnk);
+                    }
+                });
+            }
+            if(spNext){
+                spNext.addEventListener('click', function(){
+                    if(currentIdx < links.length - 1){
+                        var lnk = links[currentIdx + 1];
+                        loadSection(lnk.dataset.url, lnk);
+                    }
+                });
+            }
 
             /* Restaurer la section active depuis localStorage, sinon charger la première */
             var savedUrl = '';
