@@ -19,6 +19,7 @@ from main.models import (
 )
 
 
+
 # ─────────────────────────────────────────────────────────────
 #  Helpers Excel
 # ─────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ def _get_listing_queryset(params):
         .prefetch_related(
             Prefetch("adresses",  queryset=AdresseAcheteur.objects.all()),
             Prefetch("portables", queryset=PortableAcheteur.objects.all()),
+            Prefetch("emails",    queryset=EmailAcheteur.objects.all()),
             Prefetch("resume_set", queryset=Resume.objects.order_by("-created_at")),
         )
 
