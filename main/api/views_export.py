@@ -164,15 +164,11 @@ class ExportListingDataAPIView(APIView):
 
 
 class ExportListingFileAPIView(APIView):
-    """GET /api/exports/listing/export/?format=excel|csv — téléchargement fichier."""
+    """GET /api/exports/listing/export/?export_format=excel|csv — téléchargement fichier."""
     permission_classes = [IsAuthenticated]
 
-    def get_format_suffix(self, **kwargs):
-        # Empêche DRF d'intercepter ?format=excel comme un format suffix de renderer
-        return None
-
     def get(self, request):
-        fmt = request.query_params.get("format", "excel").lower()
+        fmt = request.query_params.get("export_format", "excel").lower()
         qs  = _get_listing_queryset(request.query_params)
         rows = [_listing_row(a) for a in qs]
         ts   = datetime.now().strftime("%Y%m%d_%H%M")
@@ -238,14 +234,11 @@ class ExportDecompteDataAPIView(APIView):
 
 
 class ExportDecompteFileAPIView(APIView):
-    """GET /api/exports/decompte/export/?format=excel|csv — téléchargement fichier."""
+    """GET /api/exports/decompte/export/?export_format=excel|csv — téléchargement fichier."""
     permission_classes = [IsAuthenticated]
 
-    def get_format_suffix(self, **kwargs):
-        return None
-
     def get(self, request):
-        fmt  = request.query_params.get("format", "excel").lower()
+        fmt  = request.query_params.get("export_format", "excel").lower()
         qs   = _get_decompte_queryset(request.query_params)
         rows = [_decompte_row(c) for c in qs]
         ts   = datetime.now().strftime("%Y%m%d_%H%M")
