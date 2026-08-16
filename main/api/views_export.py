@@ -79,6 +79,7 @@ def _get_listing_queryset(params):
 def _listing_row(acheteur):
     adresse  = acheteur.adresses.first()
     portable = acheteur.portables.first()
+    email    = acheteur.emails.first()
     resume   = acheteur.resume_set.first()
     return [
         acheteur.nom or "",
@@ -86,7 +87,7 @@ def _listing_row(acheteur):
             " ".join(filter(None, [acheteur.numero_adresse, acheteur.rue_adresse])) or ""
         ),
         portable.portable if portable else "",
-        acheteur.email or "",
+        email.email if email else "",
         acheteur.code or "",
         int(resume.chiffre_affaire) if (resume and resume.chiffre_affaire) else "",
     ]
