@@ -1705,10 +1705,17 @@
             updateGlobalNotifBadge();
         }
 
+        var globalNotificationRetries = 0;
+        var GLOBAL_NOTIF_MAX_RETRIES  = 3;
+
         function connectGlobalNotifications() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${wsProtocol}//${window.location.host}/ws/notifications/`;
             globalNotificationSocket = new WebSocket(wsUrl);
+
+            globalNotificationSocket.onopen = function() {
+                globalNotificationRetries = 0;
+            };
 
             globalNotificationSocket.onmessage = function(event) {
                 const data = JSON.parse(event.data);
@@ -1720,6 +1727,10 @@
             };
 
             globalNotificationSocket.onclose = function() {
+                if (globalNotificationRetries >= GLOBAL_NOTIF_MAX_RETRIES) {
+                    return;
+                }
+                globalNotificationRetries++;
                 if (globalNotificationReconnectTimer) {
                     clearTimeout(globalNotificationReconnectTimer);
                 }
