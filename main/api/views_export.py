@@ -1,7 +1,6 @@
 """API views pour le module Gestion des Exportations (Listing & Décompte)."""
 import csv
 import io
-import logging
 from datetime import datetime
 
 from django.http import HttpResponse
@@ -9,8 +8,6 @@ from django.db.models import Q, Prefetch
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-logger = logging.getLogger(__name__)
 
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -170,16 +167,11 @@ class ExportListingFileAPIView(APIView):
     """GET /api/exports/listing/export/?format=excel|csv — téléchargement fichier."""
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        logger.warning("DEBUG ExportListingFileAPIView.get() — user=%s auth=%s params=%s",
-                       request.user, request.successful_authenticator, dict(request.query_params))
-        try:
-            return self._do_export(request)
-        except Exception as exc:
-            logger.error("DEBUG ExportListingFileAPIView EXCEPTION: %s", exc, exc_info=True)
-            raise
+    def get_format_suffix(self, **kwargs):
+        # Empêche DRF d'intercepter ?format=excel comme un format suffix de renderer
+        return None
 
-    def _do_export(self, request):
+    def get(self, request):
         fmt = request.query_params.get("format", "excel").lower()
         qs  = _get_listing_queryset(request.query_params)
         rows = [_listing_row(a) for a in qs]
@@ -248,6 +240,9 @@ class ExportDecompteDataAPIView(APIView):
 class ExportDecompteFileAPIView(APIView):
     """GET /api/exports/decompte/export/?format=excel|csv — téléchargement fichier."""
     permission_classes = [IsAuthenticated]
+
+    def get_format_suffix(self, **kwargs):
+        return None
 
     def get(self, request):
         fmt  = request.query_params.get("format", "excel").lower()
