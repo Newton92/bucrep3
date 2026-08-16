@@ -1,0 +1,365 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+:root {
+    --primary: #0d80be; --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #0a6ca0);
+    --success: #059669; --warning: #d97706; --purple: #7c3aed;
+    --border-radius: 14px; --box-shadow: 0 4px 20px rgba(13,110,178,.08);
+}
+body { background: linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-apple-system,sans-serif; }
+
+.page-hero {
+    background: var(--primary-gradient); border-radius:var(--border-radius);
+    padding:24px 28px; margin-bottom:22px; color:#fff;
+    box-shadow:0 10px 30px rgba(13,110,178,.2);
+}
+.info-card { background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); overflow:hidden; margin-bottom:20px; }
+.info-card .card-hdr { background:linear-gradient(135deg,#f8fafc,#eef2f6); padding:14px 20px; border-bottom:2px solid rgba(13,110,178,.1); }
+.info-card .card-hdr h6 { margin:0; font-weight:700; color:#334155; display:flex; align-items:center; gap:.6rem; }
+.info-card .card-hdr h6 i { color:var(--primary); }
+.info-card .card-body { padding:20px; }
+
+.field-row { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+.field-row:last-child { border-bottom:none; }
+.field-label { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; font-weight:600; min-width:140px; padding-top:2px; }
+.field-value { font-size:.88rem; font-weight:500; color:#334155; }
+
+.badge-status { font-size:.78rem; font-weight:700; border-radius:8px; padding:4px 12px; display:inline-block; }
+.s-nouvelle { background:#e0f2fe; color:#0369a1; }
+.s-en_cours { background:#fef3c7; color:#92400e; }
+.s-rapport_soumis { background:#f3e8ff; color:#7c3aed; }
+.s-rapport_valide { background:#d1fae5; color:#065f46; }
+
+/* Zone rapport */
+.rapport-zone { border-radius:var(--border-radius); padding:22px; border:2px dashed #cbd5e1; background:#f8fafc; }
+.rapport-zone.submitted { border-color:var(--purple); background:#faf5ff; border-style:solid; }
+.rapport-zone.validated { border-color:var(--success); background:#f0fdf4; border-style:solid; }
+
+.btn-soumettre {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color:#fff; border:none; border-radius:10px; padding:10px 24px;
+    font-weight:700; font-size:.88rem; transition: all .2s;
+    display:inline-flex; align-items:center; gap:8px;
+}
+.btn-soumettre:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,.35); color:#fff; }
+.btn-soumettre:disabled { opacity:.65; transform:none; cursor:not-allowed; }
+
+.alert-submitted {
+    background:#f3e8ff; border:1.5px solid #c4b5fd;
+    border-radius:10px; padding:16px 20px; color:#4c1d95;
+}
+.alert-validated {
+    background:#d1fae5; border:1.5px solid #6ee7b7;
+    border-radius:10px; padding:16px 20px; color:#065f46;
+}
+
+.btn-preview {
+    background: linear-gradient(135deg, #0d80be, #0a6ca0);
+    color:#fff; border:none; border-radius:8px; padding:8px 18px;
+    font-weight:600; font-size:.82rem; display:inline-flex; align-items:center; gap:6px;
+}
+.btn-preview:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(13,110,178,.3); color:#fff; }
+
+.pdf-frame-container {
+    width:100%; height:750px; border-radius:10px; overflow:hidden;
+    border:2px solid #e2e8f0; background:#f1f5f9;
+}
+.pdf-frame-container iframe { width:100%; height:100%; border:none; }
+
+#loading-overlay { text-align:center; padding:60px; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+
+    <div class="page-hero d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:44px;height:44px;background:rgba(255,255,255,.15)">
+                <i class="bi bi-file-earmark-text fs-5"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold" id="heroRef">{% trans "Chargement…" %}</h5>
+                <p class="mb-0 opacity-75" style="font-size:.82rem" id="heroEntreprise">—</p>
+            </div>
+        </div>
+        <a href="{% url 'dash_analyste_commande' %}" class="btn btn-sm"
+           style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:30px;padding:6px 16px;font-weight:600">
+            <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+        </a>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3">{% trans "Chargement de la commande…" %}</p>
+    </div>
+
+    <div id="page-content" style="display:none">
+        <div class="row g-4">
+
+            <!-- Infos commande -->
+            <div class="col-lg-5">
+                <div class="info-card">
+                    <div class="card-hdr">
+                        <h6><i class="bi bi-info-circle"></i>{% trans "Informations commande" %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Référence" %}</span>
+                            <span class="field-value fw-bold" id="fRef">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Entreprise" %}</span>
+                            <span class="field-value" id="fEntreprise">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Type rapport" %}</span>
+                            <span class="field-value" id="fType">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Pays" %}</span>
+                            <span class="field-value" id="fPays">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Statut" %}</span>
+                            <span class="field-value" id="fStatut">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Date création" %}</span>
+                            <span class="field-value" id="fDate">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone rapport -->
+            <div class="col-lg-7">
+                <div class="info-card">
+                    <div class="card-hdr">
+                        <h6><i class="bi bi-file-earmark-pdf"></i>{% trans "Rapport" %}</h6>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- État : pas encore de rapport ou en cours -->
+                        <div id="zone-en_cours" class="rapport-zone" style="display:none">
+                            <p class="text-muted mb-3" style="font-size:.86rem">
+                                <i class="bi bi-info-circle me-1"></i>
+                                {% trans "Déposez le fichier rapport, puis cliquez sur « Soumettre pour validation » lorsque votre travail est terminé." %}
+                            </p>
+                            <div id="no-rapport-msg" class="mb-3" style="display:none">
+                                <div class="alert alert-warning py-2 px-3" style="font-size:.83rem;border-radius:8px">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    {% trans "Aucun fichier rapport n'a encore été déposé. Déposez-en un avant de soumettre." %}
+                                </div>
+                            </div>
+                            <button class="btn-soumettre" id="btnSoumettre" disabled>
+                                <i class="bi bi-send-check"></i>
+                                {% trans "Soumettre pour validation" %}
+                            </button>
+                            <p class="text-muted mt-2 mb-0" style="font-size:.75rem">
+                                {% trans "Cette action notifie les validateurs et verrouille la commande." %}
+                            </p>
+                        </div>
+
+                        <!-- État : soumis, en attente -->
+                        <div id="zone-rapport_soumis" class="rapport-zone submitted" style="display:none">
+                            <div class="alert-submitted mb-3">
+                                <i class="bi bi-clock-history me-2"></i>
+                                <strong>{% trans "En attente de validation" %}</strong><br>
+                                <span style="font-size:.83rem">{% trans "Votre rapport a été soumis. Les validateurs de votre pays ont été notifiés." %}</span>
+                            </div>
+                            <button class="btn-preview" id="btnPreviewSoumis">
+                                <i class="bi bi-eye"></i> {% trans "Prévisualiser le rapport" %}
+                            </button>
+                        </div>
+
+                        <!-- État : validé -->
+                        <div id="zone-rapport_valide" class="rapport-zone validated" style="display:none">
+                            <div class="alert-validated mb-3">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <strong>{% trans "Rapport validé" %}</strong><br>
+                                <span id="valide-info" style="font-size:.83rem"></span>
+                            </div>
+                            <button class="btn-preview" id="btnPreviewValide">
+                                <i class="bi bi-eye"></i> {% trans "Prévisualiser le rapport" %}
+                            </button>
+                        </div>
+
+                        <!-- Zone PDF inline -->
+                        <div id="zone-pdf" class="mt-4" style="display:none">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong style="font-size:.85rem; color:#334155">
+                                    <i class="bi bi-file-pdf text-danger me-1"></i>{% trans "Aperçu du rapport (lecture seule)" %}
+                                </strong>
+                                <button class="btn btn-sm btn-outline-secondary" id="btnClosePdf" style="border-radius:6px;font-size:.75rem">
+                                    <i class="bi bi-x-lg"></i> {% trans "Fermer" %}
+                                </button>
+                            </div>
+                            <div class="pdf-frame-container">
+                                <iframe id="pdfFrame" src="" title="Rapport PDF" sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+(function () {
+    'use strict';
+    var COMMANDE_ID = {{ id_commande }};
+    var commandeStatus = '';
+    var hasRapport = false;
+
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function statusBadge(s) {
+        var labels = {
+            'nouvelle':'{% trans "Nouvelle" %}', 'en_cours':'{% trans "En cours" %}',
+            'rapport_soumis':'{% trans "Rapport soumis" %}', 'rapport_valide':'{% trans "Rapport validé" %}',
+            'envoye_client':'{% trans "Envoyé client" %}', 'terminee':'{% trans "Terminée" %}'
+        };
+        return '<span class="badge-status s-' + s + '">' + (labels[s] || s) + '</span>';
+    }
+
+    function showZone(status) {
+        ['en_cours', 'rapport_soumis', 'rapport_valide'].forEach(function(z) {
+            document.getElementById('zone-' + z).style.display = 'none';
+        });
+        var z = document.getElementById('zone-' + status);
+        if (z) z.style.display = '';
+        else {
+            document.getElementById('zone-en_cours').style.display = '';
+        }
+    }
+
+    function loadCommande() {
+        fetch('/api/orders/module/' + COMMANDE_ID + '/', { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(c) {
+            commandeStatus = c.status;
+            document.getElementById('heroRef').textContent = c.notre_ref || ('#' + c.id);
+            document.getElementById('heroEntreprise').textContent = c.raison_sociale || '—';
+            document.getElementById('fRef').textContent = c.notre_ref || c.id;
+            document.getElementById('fEntreprise').textContent = c.raison_sociale || '—';
+            document.getElementById('fType').textContent = c.type_rapport || '—';
+            document.getElementById('fPays').textContent = (c.pays && c.pays.nom) ? c.pays.nom : '—';
+            document.getElementById('fStatut').innerHTML = statusBadge(c.status);
+            document.getElementById('fDate').textContent = c.created_at ? c.created_at.slice(0,10) : '—';
+
+            return fetch('/api/orders/module/' + COMMANDE_ID + '/rapport/info/', { credentials: 'same-origin' });
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(info) {
+            hasRapport = info.has_rapport;
+
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('page-content').style.display = '';
+
+            if (commandeStatus === 'rapport_valide') {
+                var validInfo = '';
+                if (info.validation) {
+                    validInfo = '{% trans "Validé par" %} ' + esc(info.validation.validateur || '—');
+                    if (info.validation.commentaire) validInfo += ' — ' + esc(info.validation.commentaire);
+                }
+                document.getElementById('valide-info').textContent = validInfo || '{% trans "Rapport approuvé." %}';
+                showZone('rapport_valide');
+            } else if (commandeStatus === 'rapport_soumis') {
+                showZone('rapport_soumis');
+            } else {
+                showZone('en_cours');
+                if (!hasRapport) {
+                    document.getElementById('no-rapport-msg').style.display = '';
+                    document.getElementById('btnSoumettre').disabled = true;
+                } else {
+                    document.getElementById('btnSoumettre').disabled = false;
+                }
+            }
+        })
+        .catch(function() {
+            document.getElementById('loading-overlay').innerHTML =
+                '<div class="text-danger"><i class="bi bi-exclamation-circle fs-2"></i><p class="mt-2">{% trans "Erreur de chargement de la commande." %}</p></div>';
+        });
+    }
+
+    function openPdf() {
+        var frame = document.getElementById('pdfFrame');
+        frame.src = '/api/orders/module/' + COMMANDE_ID + '/rapport/preview/';
+        document.getElementById('zone-pdf').style.display = '';
+        document.getElementById('zone-pdf').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('btnSoumettre').addEventListener('click', function() {
+        Swal.fire({
+            title: '{% trans "Confirmer la soumission" %}',
+            text: '{% trans "Une fois soumis, le rapport sera transmis aux validateurs. Cette action est irréversible." %}',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '{% trans "Oui, soumettre" %}',
+            cancelButtonText: '{% trans "Annuler" %}',
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+            var btn = document.getElementById('btnSoumettre');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-1" style="width:14px;height:14px"></div>{% trans "Soumission…" %}';
+
+            fetch('/api/orders/module/' + COMMANDE_ID + '/soumettre-validation/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-CSRFToken': getCsrf() },
+            })
+            .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (res.ok) {
+                    Swal.fire('{% trans "Soumis !" %}', '{% trans "Les validateurs ont été notifiés." %}', 'success')
+                    .then(function() { location.reload(); });
+                } else {
+                    Swal.fire('{% trans "Erreur" %}', res.data.detail || '{% trans "Une erreur est survenue." %}', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send-check"></i> {% trans "Soumettre pour validation" %}';
+                }
+            })
+            .catch(function() {
+                Swal.fire('{% trans "Erreur" %}', '{% trans "Erreur réseau." %}', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-check"></i> {% trans "Soumettre pour validation" %}';
+            });
+        });
+    });
+
+    var previewSoumis = document.getElementById('btnPreviewSoumis');
+    var previewValide = document.getElementById('btnPreviewValide');
+    if (previewSoumis) previewSoumis.addEventListener('click', openPdf);
+    if (previewValide) previewValide.addEventListener('click', openPdf);
+
+    document.getElementById('btnClosePdf').addEventListener('click', function() {
+        document.getElementById('zone-pdf').style.display = 'none';
+        document.getElementById('pdfFrame').src = '';
+    });
+
+    function getCsrf() {
+        var m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
+
+    loadCommande();
+}());
+</script>
+{% endblock %}

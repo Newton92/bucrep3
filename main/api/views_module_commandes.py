@@ -1,6 +1,7 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
+from django.http import FileResponse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +15,8 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 from main.models import Commande, AffectationAnalyste, Rapport, ValidationRapport, SuiviCommande, Notification
 from main.serializers import CommandeSerializer, RapportSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -128,3 +131,188 @@ class EnvoyerRapportClientAPIView(APIView):
             )
             
         return Response({"detail": "Rapport envoyé au client avec succès."}, status=status.HTTP_200_OK)
+
+
+# ─── Workflow validation rapport ───────────────────────────────────────────────
+
+class SoumettreRapportValidationAPIView(APIView):
+    """POST — Analyste soumet le rapport pour validation."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, commande_id):
+        user = request.user
+        if user.role != 'Analyste':
+            return Response({"detail": "Réservé aux analystes."}, status=status.HTTP_403_FORBIDDEN)
+
+        commande = get_object_or_404(Commande, pk=commande_id)
+
+        if not AffectationAnalyste.objects.filter(commande=commande, analyste=user).exists():
+            return Response({"detail": "Vous n'êtes pas affecté à cette commande."}, status=status.HTTP_403_FORBIDDEN)
+
+        if commande.status != 'en_cours':
+            return Response({"detail": f"La commande doit être en cours (statut actuel : {commande.status})."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
+        if not rapport or not rapport.fichier:
+            return Response({"detail": "Aucun fichier rapport n'a été déposé pour cette commande."}, status=status.HTTP_400_BAD_REQUEST)
+
+        nom_analyste = user.get_full_name() or user.username
+        msg = (
+            f"Le rapport pour la commande {commande.notre_ref} a été soumis pour validation "
+            f"par {nom_analyste}."
+        )
+
+        with transaction.atomic():
+            commande.status = 'rapport_soumis'
+            commande.save(update_fields=['status'])
+
+            SuiviCommande.objects.create(
+                commande=commande,
+                user=user,
+                type='SOUMISSION',
+                action=msg,
+                commentaire='',
+            )
+
+            destinataires = User.objects.filter(
+                Q(role='Validateur') | Q(role='Root'),
+                pays=commande.pays,
+            ).exclude(pk=user.pk)
+
+            for dest in destinataires:
+                Notification.objects.create(user=dest, type='RAPPORT_SOUMIS', message=msg)
+                if dest.email:
+                    try:
+                        send_mail(
+                            subject=f"[BUCREP] Rapport soumis — {commande.notre_ref}",
+                            message=msg,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[dest.email],
+                            fail_silently=True,
+                        )
+                    except Exception:
+                        pass
+
+        return Response({"detail": "Rapport soumis pour validation.", "status": "rapport_soumis"}, status=status.HTTP_200_OK)
+
+
+class RapportPreviewAPIView(APIView):
+    """GET — Sert le PDF du rapport en lecture seule (inline, non téléchargeable)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, commande_id):
+        commande = get_object_or_404(Commande, pk=commande_id)
+        user = request.user
+
+        is_analyste_affecte = (
+            user.role == 'Analyste'
+            and AffectationAnalyste.objects.filter(commande=commande, analyste=user).exists()
+        )
+        is_validateur_root = (
+            user.role in ['Validateur', 'Root']
+            and user.pays_id == commande.pays_id
+        )
+
+        if not (is_analyste_affecte or is_validateur_root):
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        if commande.status not in ['rapport_soumis', 'rapport_valide']:
+            return Response({"detail": "Aucun rapport soumis pour cette commande."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
+        if not rapport or not rapport.fichier:
+            return Response({"detail": "Fichier rapport introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            file_obj = rapport.fichier.open('rb')
+            response = FileResponse(file_obj, content_type='application/pdf')
+            response['Content-Disposition'] = f'inline; filename="rapport_{commande.notre_ref}.pdf"'
+            response['X-Frame-Options'] = 'SAMEORIGIN'
+            return response
+        except (FileNotFoundError, OSError):
+            return Response({"detail": "Fichier introuvable sur le serveur."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RapportInfoAPIView(APIView):
+    """GET — Retourne les métadonnées du rapport pour une commande."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, commande_id):
+        commande = get_object_or_404(Commande, pk=commande_id)
+        rapport = Rapport.objects.filter(commande=commande).select_related('analyste').order_by('-date_soumission').first()
+
+        validation = None
+        if rapport:
+            try:
+                v = rapport.validationrapport
+                validation = {
+                    'status': v.status,
+                    'validateur': v.validateur.get_full_name() or v.validateur.username if v.validateur else None,
+                    'commentaire': v.commentaire,
+                    'date_validation': v.date_validation.isoformat() if v.date_validation else None,
+                }
+            except Exception:
+                pass
+
+        return Response({
+            'commande_status': commande.status,
+            'has_rapport': rapport is not None and bool(rapport.fichier),
+            'rapport_id': rapport.pk if rapport else None,
+            'analyste': rapport.analyste.get_full_name() or rapport.analyste.username if rapport and rapport.analyste else None,
+            'date_soumission': rapport.date_soumission.isoformat() if rapport else None,
+            'validation': validation,
+        })
+
+
+class ValiderRapportAPIView(APIView):
+    """POST — Validateur ou Root valide le rapport d'une commande."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, commande_id):
+        user = request.user
+        if user.role not in ['Validateur', 'Root']:
+            return Response({"detail": "Réservé aux validateurs et administrateurs."}, status=status.HTTP_403_FORBIDDEN)
+
+        commande = get_object_or_404(Commande, pk=commande_id)
+
+        if user.pays_id != commande.pays_id:
+            return Response({"detail": "Vous n'êtes pas habilité à valider les rapports de ce pays."}, status=status.HTTP_403_FORBIDDEN)
+
+        if commande.status != 'rapport_soumis':
+            return Response({"detail": "Ce rapport n'est pas en attente de validation."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rapport = Rapport.objects.filter(commande=commande).select_related('analyste').order_by('-date_soumission').first()
+        if not rapport:
+            return Response({"detail": "Aucun rapport trouvé pour cette commande."}, status=status.HTTP_404_NOT_FOUND)
+
+        commentaire = request.data.get('commentaire', '')
+        nom_validateur = user.get_full_name() or user.username
+
+        with transaction.atomic():
+            ValidationRapport.objects.update_or_create(
+                rapport=rapport,
+                defaults={
+                    'validateur': user,
+                    'status': 'valide',
+                    'commentaire': commentaire,
+                }
+            )
+            commande.status = 'rapport_valide'
+            commande.validateur = user
+            commande.save(update_fields=['status', 'validateur'])
+
+            msg_validateur = f"Rapport validé par {nom_validateur}."
+            if commentaire:
+                msg_validateur += f" Commentaire : {commentaire}"
+            SuiviCommande.objects.create(
+                commande=commande,
+                user=user,
+                type='VALIDATION',
+                action=msg_validateur,
+                commentaire=commentaire,
+            )
+
+            msg_analyste = f"Votre rapport pour la commande {commande.notre_ref} a été validé par {nom_validateur}."
+            Notification.objects.create(user=rapport.analyste, type='VALIDATION', message=msg_analyste)
+
+        return Response({"detail": "Rapport validé avec succès.", "status": "rapport_valide"}, status=status.HTTP_200_OK)

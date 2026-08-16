@@ -1,0 +1,367 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+:root {
+    --primary: #0d80be; --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #0a6ca0);
+    --purple: #7c3aed; --success: #059669;
+    --border-radius: 14px; --box-shadow: 0 4px 20px rgba(13,110,178,.08);
+}
+body { background: linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-apple-system,sans-serif; }
+
+.page-hero {
+    background: linear-gradient(135deg,#7c3aed,#6d28d9);
+    border-radius:var(--border-radius); padding:24px 28px; margin-bottom:22px;
+    color:#fff; box-shadow:0 10px 30px rgba(124,58,237,.25);
+}
+.info-card { background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); overflow:hidden; margin-bottom:20px; }
+.info-card .card-hdr { background:linear-gradient(135deg,#f8fafc,#eef2f6); padding:14px 20px; border-bottom:2px solid rgba(124,58,237,.12); }
+.info-card .card-hdr h6 { margin:0; font-weight:700; color:#334155; display:flex; align-items:center; gap:.6rem; }
+.info-card .card-hdr h6 i { color:var(--purple); }
+.info-card .card-body { padding:20px; }
+
+.field-row { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+.field-row:last-child { border-bottom:none; }
+.field-label { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; font-weight:600; min-width:140px; padding-top:2px; }
+.field-value { font-size:.88rem; font-weight:500; color:#334155; }
+
+.badge-status { font-size:.78rem; font-weight:700; border-radius:8px; padding:4px 12px; display:inline-block; }
+.s-rapport_soumis { background:#f3e8ff; color:#7c3aed; }
+.s-rapport_valide { background:#d1fae5; color:#065f46; }
+.s-en_cours { background:#fef3c7; color:#92400e; }
+
+.pdf-zone { border-radius:var(--border-radius); background:#fff; box-shadow:var(--box-shadow); overflow:hidden; }
+.pdf-zone .zone-hdr {
+    background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff;
+    padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+}
+.pdf-zone .zone-hdr h6 { margin:0; font-weight:700; }
+
+.pdf-frame-container {
+    width:100%; height:750px; background:#f1f5f9;
+}
+.pdf-frame-container iframe { width:100%; height:100%; border:none; display:block; }
+
+.validate-zone { border-radius:var(--border-radius); background:#fff; box-shadow:var(--box-shadow); padding:22px; margin-bottom:20px; }
+
+.flag-banner {
+    display:flex; align-items:center; gap:12px;
+    background:#f3e8ff; border:2px solid #c4b5fd; border-radius:10px;
+    padding:16px 20px; margin-bottom:20px; color:#4c1d95;
+}
+.flag-banner .flag-icon { font-size:1.8rem; animation:pulse-flag 2s infinite; }
+@keyframes pulse-flag {
+    0%,100% { transform:scale(1); }
+    50%      { transform:scale(1.15); }
+}
+
+.validated-banner {
+    display:flex; align-items:center; gap:12px;
+    background:#d1fae5; border:2px solid #6ee7b7; border-radius:10px;
+    padding:16px 20px; margin-bottom:20px; color:#065f46;
+}
+
+.btn-valider {
+    background: linear-gradient(135deg,#059669,#047857);
+    color:#fff; border:none; border-radius:10px; padding:11px 26px;
+    font-weight:700; font-size:.9rem; display:inline-flex; align-items:center; gap:8px;
+    transition: all .2s;
+}
+.btn-valider:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(5,150,105,.35); color:#fff; }
+.btn-valider:disabled { opacity:.65; transform:none; cursor:not-allowed; }
+
+#loading-overlay { text-align:center; padding:60px; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+
+    <div class="page-hero d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:44px;height:44px;background:rgba(255,255,255,.15)">
+                <i class="bi bi-shield-check fs-5"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold" id="heroRef">{% trans "Chargement…" %}</h5>
+                <p class="mb-0 opacity-75" style="font-size:.82rem" id="heroEntreprise">—</p>
+            </div>
+        </div>
+        <a href="{% url 'dash_validateur_commande' %}" class="btn btn-sm"
+           style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:30px;padding:6px 16px;font-weight:600">
+            <i class="bi bi-arrow-left me-1"></i>{% trans "Retour" %}
+        </a>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3">{% trans "Chargement de la commande…" %}</p>
+    </div>
+
+    <div id="page-content" style="display:none">
+
+        <!-- Bandeau statut -->
+        <div id="flag-soumis" class="flag-banner" style="display:none">
+            <span class="flag-icon">🚩</span>
+            <div>
+                <strong style="font-size:.95rem">{% trans "Rapport en attente de validation" %}</strong><br>
+                <span style="font-size:.83rem" id="submitInfo">{% trans "Soumis par l'analyste." %}</span>
+            </div>
+        </div>
+        <div id="flag-valide" class="validated-banner" style="display:none">
+            <i class="bi bi-check-circle-fill fs-3"></i>
+            <div>
+                <strong style="font-size:.95rem">{% trans "Rapport déjà validé" %}</strong><br>
+                <span style="font-size:.83rem" id="valideInfo"></span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Infos commande -->
+            <div class="col-lg-4">
+                <div class="info-card">
+                    <div class="card-hdr">
+                        <h6><i class="bi bi-info-circle"></i>{% trans "Informations commande" %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Référence" %}</span>
+                            <span class="field-value fw-bold" id="fRef">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Entreprise" %}</span>
+                            <span class="field-value" id="fEntreprise">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Type rapport" %}</span>
+                            <span class="field-value" id="fType">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Pays" %}</span>
+                            <span class="field-value" id="fPays">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Statut" %}</span>
+                            <span class="field-value" id="fStatut">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Analyste" %}</span>
+                            <span class="field-value" id="fAnalyste">—</span>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">{% trans "Soumis le" %}</span>
+                            <span class="field-value" id="fSoumis">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone validation (si rapport_soumis) -->
+                <div id="validate-zone" class="validate-zone" style="display:none">
+                    <h6 class="fw-700 mb-3" style="color:#334155">
+                        <i class="bi bi-check2-circle me-2 text-success"></i>{% trans "Valider le rapport" %}
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.78rem;font-weight:600;color:#475569">
+                            {% trans "Commentaire (optionnel)" %}
+                        </label>
+                        <textarea id="commentaireValidation" rows="3" class="form-control form-control-sm"
+                            style="border-radius:8px;font-size:.83rem"
+                            placeholder="{% trans 'Observations du validateur…' %}"></textarea>
+                    </div>
+                    <button class="btn-valider" id="btnValider">
+                        <i class="bi bi-check-circle-fill"></i>
+                        {% trans "Valider le rapport" %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- PDF viewer -->
+            <div class="col-lg-8">
+                <div class="pdf-zone">
+                    <div class="zone-hdr">
+                        <h6><i class="bi bi-file-earmark-pdf me-2"></i>{% trans "Rapport — lecture seule" %}</h6>
+                        <span style="font-size:.75rem;opacity:.8">{% trans "Téléchargement désactivé" %}</span>
+                    </div>
+                    <div id="pdf-loading" style="text-align:center;padding:60px;color:#94a3b8">
+                        <div class="spinner-border text-primary mb-3"></div>
+                        <p>{% trans "Chargement du rapport…" %}</p>
+                    </div>
+                    <div id="pdf-error" style="display:none;text-align:center;padding:60px;color:#ef4444">
+                        <i class="bi bi-exclamation-circle d-block fs-1 mb-2"></i>
+                        <p id="pdf-error-msg">{% trans "Impossible de charger le rapport." %}</p>
+                    </div>
+                    <div class="pdf-frame-container" id="pdf-frame-container" style="display:none">
+                        <iframe id="pdfFrame" src="" title="Rapport PDF"
+                            sandbox="allow-same-origin allow-scripts allow-forms"></iframe>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+(function () {
+    'use strict';
+    var COMMANDE_ID = {{ id_commande }};
+    var commandeStatus = '';
+
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function statusBadge(s) {
+        var labels = {
+            'rapport_soumis':'{% trans "Rapport soumis" %}',
+            'rapport_valide':'{% trans "Rapport validé" %}',
+            'en_cours':'{% trans "En cours" %}',
+        };
+        return '<span class="badge-status s-' + s + '">' + (labels[s] || s) + '</span>';
+    }
+
+    function getCsrf() {
+        var m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
+
+    function loadPdf() {
+        document.getElementById('pdf-loading').style.display = '';
+        document.getElementById('pdf-error').style.display = 'none';
+        document.getElementById('pdf-frame-container').style.display = 'none';
+
+        var previewUrl = '/api/orders/module/' + COMMANDE_ID + '/rapport/preview/';
+
+        fetch(previewUrl, { credentials: 'same-origin' })
+        .then(function(r) {
+            if (!r.ok) {
+                return r.json().then(function(d) { throw new Error(d.detail || '{% trans "Erreur de chargement." %}'); });
+            }
+            document.getElementById('pdf-loading').style.display = 'none';
+            document.getElementById('pdf-frame-container').style.display = '';
+            document.getElementById('pdfFrame').src = previewUrl + '?t=' + Date.now();
+        })
+        .catch(function(err) {
+            document.getElementById('pdf-loading').style.display = 'none';
+            document.getElementById('pdf-error-msg').textContent = err.message;
+            document.getElementById('pdf-error').style.display = '';
+        });
+    }
+
+    function loadPage() {
+        fetch('/api/orders/module/' + COMMANDE_ID + '/', { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(c) {
+            commandeStatus = c.status;
+            document.getElementById('heroRef').textContent = c.notre_ref || ('#' + c.id);
+            document.getElementById('heroEntreprise').textContent = c.raison_sociale || '—';
+            document.getElementById('fRef').textContent = c.notre_ref || c.id;
+            document.getElementById('fEntreprise').textContent = c.raison_sociale || '—';
+            document.getElementById('fType').textContent = c.type_rapport || '—';
+            document.getElementById('fPays').textContent = (c.pays && c.pays.nom) ? c.pays.nom : '—';
+            document.getElementById('fStatut').innerHTML = statusBadge(c.status);
+
+            return fetch('/api/orders/module/' + COMMANDE_ID + '/rapport/info/', { credentials: 'same-origin' });
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(info) {
+            document.getElementById('fAnalyste').textContent = info.analyste || '—';
+            document.getElementById('fSoumis').textContent = info.date_soumission ? info.date_soumission.slice(0, 10) : '—';
+            document.getElementById('submitInfo').textContent =
+                (info.analyste ? '{% trans "Soumis par" %} ' + info.analyste : '{% trans "Soumis par l\'analyste." %}') +
+                (info.date_soumission ? ' — ' + info.date_soumission.slice(0, 10) : '');
+
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('page-content').style.display = '';
+
+            if (commandeStatus === 'rapport_soumis') {
+                document.getElementById('flag-soumis').style.display = 'flex';
+                document.getElementById('validate-zone').style.display = '';
+            } else if (commandeStatus === 'rapport_valide') {
+                var valInfo = '{% trans "Rapport approuvé." %}';
+                if (info.validation) {
+                    valInfo = '{% trans "Validé par" %} ' + esc(info.validation.validateur || '—');
+                    if (info.validation.date_validation) valInfo += ' — ' + info.validation.date_validation.slice(0, 10);
+                    if (info.validation.commentaire) valInfo += '. ' + esc(info.validation.commentaire);
+                }
+                document.getElementById('valideInfo').textContent = valInfo;
+                document.getElementById('flag-valide').style.display = 'flex';
+            }
+
+            if (info.has_rapport && ['rapport_soumis', 'rapport_valide'].indexOf(commandeStatus) !== -1) {
+                loadPdf();
+            } else {
+                document.getElementById('pdf-loading').style.display = 'none';
+                document.getElementById('pdf-error-msg').textContent = '{% trans "Aucun rapport déposé ou rapport non encore soumis." %}';
+                document.getElementById('pdf-error').style.display = '';
+            }
+        })
+        .catch(function() {
+            document.getElementById('loading-overlay').innerHTML =
+                '<div class="text-danger"><i class="bi bi-exclamation-circle fs-2"></i><p class="mt-2">{% trans "Erreur de chargement." %}</p></div>';
+        });
+    }
+
+    document.getElementById('btnValider').addEventListener('click', function() {
+        var commentaire = document.getElementById('commentaireValidation').value.trim();
+        Swal.fire({
+            title: '{% trans "Confirmer la validation" %}',
+            html: '{% trans "Vous allez valider définitivement ce rapport. Cette action sera enregistrée." %}',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#059669',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="bi bi-check-circle-fill me-1"></i>{% trans "Oui, valider" %}',
+            cancelButtonText: '{% trans "Annuler" %}',
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            var btn = document.getElementById('btnValider');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm me-1" style="width:14px;height:14px"></div>{% trans "Validation…" %}';
+
+            fetch('/api/orders/module/' + COMMANDE_ID + '/valider/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrf(),
+                },
+                body: JSON.stringify({ commentaire: commentaire }),
+            })
+            .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (res.ok) {
+                    Swal.fire({
+                        title: '{% trans "Rapport validé !" %}',
+                        text: '{% trans "L\'analyste a été notifié de la validation." %}',
+                        icon: 'success',
+                        confirmButtonColor: '#059669',
+                    }).then(function() { location.reload(); });
+                } else {
+                    Swal.fire('{% trans "Erreur" %}', res.data.detail || '{% trans "Une erreur est survenue." %}', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> {% trans "Valider le rapport" %}';
+                }
+            })
+            .catch(function() {
+                Swal.fire('{% trans "Erreur" %}', '{% trans "Erreur réseau." %}', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> {% trans "Valider le rapport" %}';
+            });
+        });
+    });
+
+    loadPage();
+}());
+</script>
+{% endblock %}

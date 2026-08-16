@@ -1,0 +1,256 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<style>
+:root {
+    --primary: #0d80be; --primary-dark: #0a6ca0;
+    --primary-gradient: linear-gradient(135deg, #0d80be, #0a6ca0);
+    --purple: #7c3aed; --border-radius: 14px;
+    --box-shadow: 0 4px 20px rgba(13,110,178,.08);
+}
+body { background: linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-apple-system,sans-serif; }
+
+.page-hero {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    border-radius:var(--border-radius); padding:26px 30px; margin-bottom:22px;
+    color:#fff; box-shadow:0 10px 30px rgba(124,58,237,.25);
+}
+
+.filter-card { background:#fff; border-radius:var(--border-radius); padding:18px 22px; box-shadow:var(--box-shadow); margin-bottom:20px; }
+.filter-card .form-label { font-size:.77rem; font-weight:600; color:#475569; margin-bottom:4px; }
+
+.table-card { background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); overflow:hidden; }
+.table-card .card-header {
+    background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff;
+    padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+}
+.table-card .card-header h6 { margin:0; font-weight:700; font-size:.9rem; }
+.table thead th {
+    background:#f1f5f9; color:#475569; font-size:.72rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em; border-bottom:2px solid #e2e8f0;
+    padding:10px 14px; white-space:nowrap;
+}
+.table tbody td { font-size:.82rem; padding:10px 14px; vertical-align:middle; border-bottom:1px solid #f1f5f9; }
+.table tbody tr:last-child td { border-bottom:none; }
+.table tbody tr:hover { background:#faf5ff; }
+
+.flag-soumis {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#7c3aed; color:#fff; font-size:.7rem; font-weight:700;
+    border-radius:20px; padding:3px 10px;
+    animation: pulse-flag 2s infinite;
+}
+@keyframes pulse-flag {
+    0%,100% { box-shadow:0 0 0 0 rgba(124,58,237,.4); }
+    50%      { box-shadow:0 0 0 7px rgba(124,58,237,0); }
+}
+
+.badge-status { font-size:.72rem; font-weight:600; border-radius:6px; padding:3px 10px; display:inline-block; }
+.s-rapport_soumis { background:#f3e8ff; color:#7c3aed; }
+.s-rapport_valide { background:#d1fae5; color:#065f46; }
+.s-en_cours { background:#fef3c7; color:#92400e; }
+.s-nouvelle { background:#e0f2fe; color:#0369a1; }
+
+.btn-manage { font-size:.77rem; font-weight:600; border-radius:7px; padding:5px 12px; }
+.btn-manage-purple {
+    background: linear-gradient(135deg,#7c3aed,#6d28d9);
+    color:#fff; border:none; font-size:.77rem; font-weight:600; border-radius:7px; padding:5px 12px;
+}
+.btn-manage-purple:hover { color:#fff; transform:translateY(-1px); box-shadow:0 6px 16px rgba(124,58,237,.3); }
+
+.pagination .page-link { border-radius:7px !important; font-size:.8rem; color:var(--purple); border:1.5px solid #e2e8f0; margin:0 2px; }
+.pagination .page-item.active .page-link { background:var(--purple); border-color:var(--purple); color:#fff; }
+.empty-state { text-align:center; padding:48px 24px; color:#94a3b8; }
+.loading-row { text-align:center; padding:40px; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+
+    <div class="page-hero">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:46px;height:46px;background:rgba(255,255,255,.15)">
+                <i class="bi bi-shield-check fs-5"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold">{% trans "Rapports à valider" %}</h4>
+                <p class="mb-0 opacity-75" style="font-size:.83rem">{% trans "Commandes soumises pour validation dans votre pays" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">{% trans "Recherche" %}</label>
+                <input type="text" id="filterSearch" class="form-control form-control-sm" placeholder="{% trans 'Réf. commande, raison sociale…' %}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Statut" %}</label>
+                <select id="filterStatus" class="form-select form-select-sm">
+                    <option value="rapport_soumis">{% trans "En attente de validation" %}</option>
+                    <option value="">{% trans "Tous les statuts" %}</option>
+                    <option value="rapport_valide">{% trans "Déjà validés" %}</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-sm flex-grow-1 fw-600" id="btnFilter"
+                        style="border-radius:7px;font-weight:600;background:#7c3aed;color:#fff;border:none">
+                    <i class="bi bi-funnel me-1"></i>{% trans "Filtrer" %}
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" id="btnReset" style="border-radius:7px">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="card-header">
+            <h6><i class="bi bi-list-check me-2"></i><span id="totalLabel">{% trans "Chargement…" %}</span></h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>{% trans "RÉFÉRENCE" %}</th>
+                        <th>{% trans "ENTREPRISE" %}</th>
+                        <th>{% trans "TYPE" %}</th>
+                        <th>{% trans "STATUT" %}</th>
+                        <th>{% trans "SOUMIS LE" %}</th>
+                        <th>{% trans "ACTION" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="commandeBody">
+                    <tr><td colspan="6" class="loading-row">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <small class="text-muted" id="pageInfo"></small>
+            <nav><ul class="pagination pagination-sm mb-0" id="pagination"></ul></nav>
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+    var currentPage = 1;
+    var currentParams = { status: 'rapport_soumis' };
+
+    function buildQuery(page) {
+        var p = Object.assign({}, currentParams, { page: page, page_size: 15 });
+        return Object.entries(p).filter(function(e){ return e[1] !== ''; })
+            .map(function(e){ return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]); }).join('&');
+    }
+
+    function statusBadge(s) {
+        var labels = {
+            'rapport_soumis': '{% trans "En attente" %}',
+            'rapport_valide': '{% trans "Validé" %}',
+            'en_cours':       '{% trans "En cours" %}',
+        };
+        var flag = s === 'rapport_soumis'
+            ? '<span class="flag-soumis ms-2"><i class="bi bi-flag-fill"></i> {% trans "À valider" %}</span>'
+            : '';
+        return '<span class="badge-status s-' + s + '">' + (labels[s] || s) + '</span>' + flag;
+    }
+
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function load(page) {
+        currentPage = page;
+        document.getElementById('commandeBody').innerHTML =
+            '<tr><td colspan="6" class="loading-row"><div class="spinner-border spinner-border-sm text-primary me-2"></div></td></tr>';
+
+        fetch('/api/orders/module/?' + buildQuery(page), { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var rows = data.results || [];
+            document.getElementById('totalLabel').textContent = data.count + ' {% trans "commande(s)" %}';
+
+            if (rows.length === 0) {
+                document.getElementById('commandeBody').innerHTML =
+                    '<tr><td colspan="6" class="empty-state"><i class="bi bi-inbox d-block fs-2 mb-2"></i>{% trans "Aucun rapport en attente de validation." %}</td></tr>';
+                return;
+            }
+            document.getElementById('commandeBody').innerHTML = rows.map(function(c) {
+                var date = c.updated_at ? c.updated_at.slice(0, 10) : (c.created_at ? c.created_at.slice(0, 10) : '—');
+                var manageUrl = '/validateur-dashboard/commandes/manager-une-commande/' + c.id + '/';
+                var btnClass = c.status === 'rapport_soumis' ? 'btn-manage-purple' : 'btn btn-outline-secondary btn-manage';
+                var btnIcon = c.status === 'rapport_soumis' ? 'bi-shield-check' : 'bi-eye';
+                var btnLabel = c.status === 'rapport_soumis' ? '{% trans "Valider" %}' : '{% trans "Voir" %}';
+                return '<tr>' +
+                    '<td><strong>' + esc(c.notre_ref || c.id) + '</strong></td>' +
+                    '<td>' + esc(c.raison_sociale || '—') + '</td>' +
+                    '<td><span class="text-muted small">' + esc(c.type_rapport || '—') + '</span></td>' +
+                    '<td>' + statusBadge(c.status) + '</td>' +
+                    '<td>' + date + '</td>' +
+                    '<td><a href="' + manageUrl + '" class="' + btnClass + '">' +
+                        '<i class="bi ' + btnIcon + ' me-1"></i>' + btnLabel + '</a></td>' +
+                    '</tr>';
+            }).join('');
+
+            renderPagination(data);
+        })
+        .catch(function() {
+            document.getElementById('commandeBody').innerHTML =
+                '<tr><td colspan="6" class="empty-state text-danger"><i class="bi bi-exclamation-circle d-block fs-2 mb-2"></i>{% trans "Erreur de chargement." %}</td></tr>';
+        });
+    }
+
+    function renderPagination(data) {
+        var pg = document.getElementById('pagination');
+        var info = document.getElementById('pageInfo');
+        var start = (data.current_page - 1) * data.page_size + 1;
+        var end = Math.min(data.current_page * data.page_size, data.count);
+        info.textContent = data.count > 0 ? (start + '–' + end + ' / ' + data.count) : '';
+        if (data.total_pages <= 1) { pg.innerHTML = ''; return; }
+        var p = data.current_page; var html = '';
+        html += '<li class="page-item' + (p <= 1 ? ' disabled' : '') + '"><a class="page-link" data-page="' + (p-1) + '">‹</a></li>';
+        for (var i = Math.max(1, p-2); i <= Math.min(data.total_pages, p+2); i++) {
+            html += '<li class="page-item' + (i===p?' active':'') + '"><a class="page-link" data-page="' + i + '">' + i + '</a></li>';
+        }
+        html += '<li class="page-item' + (p >= data.total_pages ? ' disabled' : '') + '"><a class="page-link" data-page="' + (p+1) + '">›</a></li>';
+        pg.innerHTML = html;
+        pg.querySelectorAll('[data-page]').forEach(function(el) {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                var p2 = parseInt(this.dataset.page);
+                if (p2 >= 1 && p2 <= data.total_pages) load(p2);
+            });
+        });
+    }
+
+    document.getElementById('btnFilter').addEventListener('click', function() {
+        currentParams = {
+            search: document.getElementById('filterSearch').value.trim(),
+            status: document.getElementById('filterStatus').value,
+        };
+        load(1);
+    });
+    document.getElementById('btnReset').addEventListener('click', function() {
+        document.getElementById('filterSearch').value = '';
+        document.getElementById('filterStatus').value = 'rapport_soumis';
+        currentParams = { status: 'rapport_soumis' };
+        load(1);
+    });
+    document.getElementById('filterSearch').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('btnFilter').click();
+    });
+
+    load(1);
+}());
+</script>
+{% endblock %}

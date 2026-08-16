@@ -13,6 +13,12 @@ from main.api.views_bilans_anglais import *
 
 from main.api.views_commande import *
 from main.api.views_order import *
+from main.api.views_module_commandes import (
+    SoumettreRapportValidationAPIView,
+    RapportPreviewAPIView,
+    RapportInfoAPIView,
+    ValiderRapportAPIView,
+)
 from main.api.views_localisation import *
 from main.api.views_modele import *
 from main.api.views_modules_acheteur import *
@@ -2925,6 +2931,26 @@ urlpatterns = [
         "api/orders/module/<int:commande_id>/timeline/export/",
         OrderModuleTimelineExportView.as_view(),
         name="order-module-timeline-export",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/soumettre-validation/",
+        SoumettreRapportValidationAPIView.as_view(),
+        name="soumettre-validation",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/rapport/preview/",
+        RapportPreviewAPIView.as_view(),
+        name="rapport-preview",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/rapport/info/",
+        RapportInfoAPIView.as_view(),
+        name="rapport-info",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/valider/",
+        ValiderRapportAPIView.as_view(),
+        name="valider-rapport",
     ),
     path(
         "api/recherche-commande/", SearchCommandeView.as_view(), name="search-commande"

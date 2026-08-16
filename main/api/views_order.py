@@ -121,6 +121,12 @@ def _apply_list_filters(queryset, request):
     if date_to:
         queryset = queryset.filter(created_at__date__lte=date_to)
 
+    analyste_id = (request.query_params.get("analyste_id") or "").strip()
+    if analyste_id == "me":
+        queryset = queryset.filter(affectationanalyste__analyste=request.user)
+    elif analyste_id.isdigit():
+        queryset = queryset.filter(affectationanalyste__analyste_id=int(analyste_id))
+
     return queryset
 
 
