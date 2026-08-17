@@ -542,11 +542,11 @@ class CommandesClientRapportAPIView(APIView):
 
         today = timezone.now().date()
         if periode == 'today':
-            qs = qs.filter(date_recept_commande__date=today)
+            qs = qs.filter(date_recept_commande=today)
         elif periode == '7days':
-            qs = qs.filter(date_recept_commande__date__gte=today - timedelta(days=7))
+            qs = qs.filter(date_recept_commande__gte=today - timedelta(days=7))
         elif periode == '30days':
-            qs = qs.filter(date_recept_commande__date__gte=today - timedelta(days=30))
+            qs = qs.filter(date_recept_commande__gte=today - timedelta(days=30))
 
         data = []
         for c in qs:
