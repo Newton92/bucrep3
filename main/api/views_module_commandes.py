@@ -480,8 +480,7 @@ class HistoriqueEmailsCommandeAPIView(APIView):
 
 class ClientsAvecRapportAPIView(APIView):
     """
-    GET — Liste des clients ayant au moins une commande avec rapport_valide ou envoye_client
-    dans le pays de l'utilisateur connecté.
+    GET — Liste tous les clients actifs (role=Client) sans filtre activation.
     URL : /api/orders/module/clients-rapport/
     """
     permission_classes = [IsAuthenticated]
@@ -491,24 +490,21 @@ class ClientsAvecRapportAPIView(APIView):
         if user.role not in ['Root', 'Validateur']:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
-        commandes = Commande.objects.filter(
-            status__in=['rapport_valide', 'envoye_client'],
-            pays=user.pays,
-        ).select_related('client').exclude(client__isnull=True)
+        qs = User.objects.filter(
+            role__iexact='Client',
+            is_active=True,
+        ).order_by('last_name', 'first_name', 'username')
 
-        seen = {}
-        for cmd in commandes:
-            c = cmd.client
-            if c and c.pk not in seen:
-                nom = ' '.join(filter(None, [c.first_name, c.last_name])) or c.username
-                seen[c.pk] = {
-                    'id': c.pk,
-                    'username': c.username,
-                    'nom': nom,
-                    'email': c.email or '',
-                }
+        clients = []
+        for c in qs:
+            nom = ' '.join(filter(None, [c.first_name, c.last_name])) or c.username
+            clients.append({
+                'id': c.pk,
+                'username': c.username,
+                'nom': nom,
+                'email': c.email or '',
+            })
 
-        clients = sorted(seen.values(), key=lambda x: x['nom'].lower())
         return Response({'count': len(clients), 'data': clients})
 
 
@@ -530,8 +526,10 @@ class CommandesClientRapportAPIView(APIView):
         qs = Commande.objects.filter(
             client_id=client_id,
             status__in=['rapport_valide', 'envoye_client'],
-            pays=user.pays,
         ).select_related('acheteur', 'client', 'pays').order_by('-date_recept_commande')
+        # Validateur : limité à son pays. Root : accès global.
+        if user.role == 'Validateur' and user.pays_id:
+            qs = qs.filter(pays=user.pays)
 
         today = timezone.now().date()
         if periode == 'today':
