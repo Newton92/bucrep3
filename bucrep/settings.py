@@ -121,7 +121,7 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")  # Whether to use TLS for SMTP (True/F
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL")  # Whether to use SSL for SMTP (True/False)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")  # SMTP username (e.g., your_email@gmail.com)
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")  # SMTP password
-DEFAULT_FROM_EMAIL = "bucrepcontact@gmail.com"  # Ou env('EMAIL_HOST_USER')
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=env("EMAIL_HOST_USER"))
 
 
 # Configuration de Celery

@@ -810,8 +810,11 @@ class HistoriqueEnvoisAPIView(APIView):
             data = []
             for envoi in envois:
                 commandes = envoi.commands.all().values('id', 'reference_client', 'raison_sociale')
-                pieces_jointes = envoi.mailattachment_set.count()
-                
+                try:
+                    pieces_jointes = envoi.mailattachment_set.count()
+                except Exception:
+                    pieces_jointes = 0
+
                 data.append({
                     'id': envoi.id,
                     'date_sent': envoi.date_sent.strftime('%d/%m/%Y %H:%M'),
@@ -866,13 +869,16 @@ class DetailEnvoiAPIView(APIView):
             
             # Récupérer les pièces jointes
             pieces_jointes = []
-            for att in envoi.mailattachment_set.all():
-                pieces_jointes.append({
-                    'id': att.id,
-                    'nom': os.path.basename(att.upload.name),
-                    'taille': att.upload.size if att.upload else 0,
-                    'url': att.upload.url if att.upload else None
-                })
+            try:
+                for att in envoi.mailattachment_set.all():
+                    pieces_jointes.append({
+                        'id': att.id,
+                        'nom': os.path.basename(att.upload.name),
+                        'taille': att.upload.size if att.upload else 0,
+                        'url': att.upload.url if att.upload else None
+                    })
+            except Exception:
+                pieces_jointes = []
             
             data = {
                 'id': envoi.id,
@@ -1085,7 +1091,10 @@ class StatistiquesAPIView(APIView):
             pieces_par_envoi = []
             for envoi in envois:
                 commandes_par_envoi.append(envoi.commands.count())
-                pieces_par_envoi.append(envoi.mailattachment_set.count())
+                try:
+                    pieces_par_envoi.append(envoi.mailattachment_set.count())
+                except Exception:
+                    pieces_par_envoi.append(0)
             
             # Top clients
             top_clients = Counter()
