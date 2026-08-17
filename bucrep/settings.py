@@ -119,9 +119,14 @@ EMAIL_HOST = env("EMAIL_HOST")  # SMTP server host
 EMAIL_PORT = env("EMAIL_PORT")  # SMTP server port
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")  # Whether to use TLS for SMTP (True/False)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL")  # Whether to use SSL for SMTP (True/False)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")  # SMTP username (e.g., your_email@gmail.com)
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")  # SMTP password
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=env("EMAIL_HOST_USER"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+# Relais interne sans auth : FROM = DEFAULT_FROM_EMAIL > EMAIL_HOST_USER > adresse par défaut
+DEFAULT_FROM_EMAIL = (
+    env("DEFAULT_FROM_EMAIL", default="")
+    or env("EMAIL_HOST_USER", default="")
+    or "noreply@bucrep.net"
+)
 
 
 # Configuration de Celery
