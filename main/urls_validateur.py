@@ -431,6 +431,11 @@ urlpatterns = [
         name="dash_validateur_manage_acheteur_report_web",
     ),
     path(
+        "validateur-dashboard/emailing/rapports/",
+        dash_validateur_emailing_rapports,
+        name="dash_validateur_emailing_rapports",
+    ),
+    path(
         "validateur-dashboard/commandes/liste-des-commandes",
         dash_validateur_commande,
         name="dash_validateur_commande",

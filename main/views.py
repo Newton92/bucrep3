@@ -7232,6 +7232,19 @@ def dash_root_manage_commande(request, commande_id):
 
 
 @login_required
+def dash_root_emailing_rapports(request):
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "emailing_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+    return render(request, "main/root/emails/dash_root_emailing_rapports.html", context)
+
+
+@login_required
 def dash_root_email_rapport(request, commande_id):
     user = request.user
     refresh = RefreshToken.for_user(user)
@@ -13158,6 +13171,19 @@ def dash_validateur_manage_commande(request, commande_id):
         "id_commande": id_commande,
     }
     return render(request, "main/validateur/orders/dash_root_manage_commande.html", context)
+
+
+@login_required
+def dash_validateur_emailing_rapports(request):
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "emailing_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+    return render(request, "main/root/emails/dash_root_emailing_rapports.html", context)
 
 
 @login_required

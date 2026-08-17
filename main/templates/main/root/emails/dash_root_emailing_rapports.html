@@ -1,0 +1,344 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block styles %}
+<style>
+:root {
+    --primary: #0d80be; --primary-dark: #0558a0;
+    --primary-gradient: linear-gradient(135deg,#0d80be,#0558a0);
+    --success: #059669; --warning: #d97706; --danger: #dc2626;
+    --border-radius: 14px; --box-shadow: 0 4px 20px rgba(13,110,178,.08);
+}
+body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-apple-system,sans-serif; }
+
+/* Hero */
+.page-hero {
+    background:var(--primary-gradient); border-radius:var(--border-radius);
+    padding:26px 30px; margin-bottom:22px;
+    color:#fff; box-shadow:0 10px 30px rgba(13,128,190,.25);
+}
+
+/* Stats */
+.stats-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:22px; }
+.stat-card {
+    background:#fff; border-radius:var(--border-radius); padding:18px 20px;
+    box-shadow:var(--box-shadow); display:flex; align-items:center; gap:14px;
+}
+.stat-icon { width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem; }
+.stat-icon.si-total   { background:#dbeafe;color:#1d4ed8; }
+.stat-icon.si-valide  { background:#d1fae5;color:#059669; }
+.stat-icon.si-envoye  { background:#e0f2fe;color:#0284c7; }
+.stat-icon.si-success { background:#ecfdf5;color:#047857; }
+.stat-num { font-size:1.5rem;font-weight:800;color:#1e293b;line-height:1; }
+.stat-label { font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px; }
+
+/* Filter */
+.filter-card { background:#fff; border-radius:var(--border-radius); padding:16px 20px; box-shadow:var(--box-shadow); margin-bottom:18px; }
+
+/* Table */
+.table-card { background:#fff; border-radius:var(--border-radius); box-shadow:var(--box-shadow); overflow:hidden; }
+.table-card .card-hdr {
+    background:var(--primary-gradient); color:#fff;
+    padding:13px 20px; display:flex; align-items:center; justify-content:space-between;
+}
+.table-card .card-hdr h6 { margin:0; font-weight:700; font-size:.88rem; }
+.htable thead th {
+    background:#f8fafc; color:#475569; font-size:.71rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em;
+    border-bottom:2px solid #e2e8f0; padding:10px 14px; white-space:nowrap;
+}
+.htable tbody td { font-size:.83rem; padding:10px 14px; vertical-align:middle; border-bottom:1px solid #f1f5f9; color:#1e293b; }
+.htable tbody tr:last-child td { border-bottom:none; }
+.htable tbody tr:hover { background:#f0f9ff; }
+
+.badge-status { font-size:.72rem; font-weight:700; border-radius:6px; padding:3px 10px; display:inline-block; }
+.s-rapport_valide { background:#d1fae5;color:#065f46; }
+.s-envoye_client  { background:#dbeafe;color:#1d4ed8; }
+
+.pill-envois { background:#f1f5f9;color:#475569;font-size:.72rem;font-weight:700;border-radius:20px;padding:2px 9px; }
+.pill-envois.has-sends { background:#d1fae5;color:#065f46; }
+
+.btn-action {
+    display:inline-flex;align-items:center;gap:5px;
+    background:var(--primary-gradient);color:#fff;border:none;
+    border-radius:8px;padding:5px 14px;font-size:.78rem;font-weight:700;
+    text-decoration:none;transition:transform .15s,box-shadow .15s;
+}
+.btn-action:hover { color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,128,190,.3); }
+
+.empty-state { text-align:center;padding:48px 24px;color:#94a3b8; }
+.loading-row { text-align:center;padding:40px;color:#94a3b8; }
+
+/* Pagination */
+.pagination .page-link { border-radius:7px!important;font-size:.8rem;color:var(--primary);border:1.5px solid #e2e8f0;margin:0 2px; }
+.pagination .page-item.active .page-link { background:var(--primary);border-color:var(--primary);color:#fff; }
+
+/* Tab nav */
+.tab-nav { display:flex; gap:8px; flex-wrap:wrap; }
+.tab-btn {
+    padding:6px 18px;border-radius:8px;font-size:.8rem;font-weight:700;border:2px solid #e2e8f0;
+    background:#fff;color:#64748b;cursor:pointer;transition:all .15s;
+}
+.tab-btn.active { background:var(--primary-gradient);color:#fff;border-color:transparent; }
+.tab-btn:hover:not(.active) { border-color:var(--primary);color:var(--primary); }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-0">
+
+    <!-- HERO -->
+    <div class="page-hero d-flex align-items-center gap-3">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi bi-envelope-paper-fill fs-4"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">{% trans "Envoi des rapports par email" %}</h4>
+            <p class="mb-0 opacity-75" style="font-size:.83rem">{% trans "Rapports validés prêts à être transmis aux clients" %}</p>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon si-valide"><i class="bi bi-patch-check"></i></div>
+            <div>
+                <div class="stat-num" id="statValide">—</div>
+                <div class="stat-label">{% trans "À envoyer" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-envoye"><i class="bi bi-send-check"></i></div>
+            <div>
+                <div class="stat-num" id="statEnvoye">—</div>
+                <div class="stat-label">{% trans "Déjà envoyés" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-total"><i class="bi bi-envelope-fill"></i></div>
+            <div>
+                <div class="stat-num" id="statTotalEmails">—</div>
+                <div class="stat-label">{% trans "Emails envoyés" %}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-success"><i class="bi bi-graph-up-arrow"></i></div>
+            <div>
+                <div class="stat-num" id="statTaux">—</div>
+                <div class="stat-label">{% trans "Taux de succès" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTRES + TABS -->
+    <div class="filter-card d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+        <div class="tab-nav">
+            <button class="tab-btn active" data-status="rapport_valide">
+                <i class="bi bi-hourglass-split me-1"></i>{% trans "À envoyer" %}
+            </button>
+            <button class="tab-btn" data-status="envoye_client">
+                <i class="bi bi-send-check me-1"></i>{% trans "Déjà envoyés" %}
+            </button>
+            <button class="tab-btn" data-status="">
+                <i class="bi bi-list me-1"></i>{% trans "Tous" %}
+            </button>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="filterSearch" class="form-control form-control-sm" style="border-radius:8px;max-width:220px"
+                   placeholder="{% trans 'Réf. ou raison sociale…' %}">
+            <button id="btnFilter" class="btn btn-primary btn-sm" style="border-radius:8px">
+                <i class="bi bi-funnel"></i>
+            </button>
+            <button id="btnReset" class="btn btn-outline-secondary btn-sm" style="border-radius:8px">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div class="card-hdr">
+            <h6><i class="bi bi-list-ul me-2"></i><span id="tableLabel">{% trans "Chargement…" %}</span></h6>
+        </div>
+        <div class="table-responsive">
+            <table class="htable table mb-0">
+                <thead>
+                    <tr>
+                        <th>{% trans "RÉFÉRENCE" %}</th>
+                        <th>{% trans "ENTREPRISE" %}</th>
+                        <th>{% trans "TYPE" %}</th>
+                        <th>{% trans "STATUT" %}</th>
+                        <th>{% trans "EMAILS ENVOYÉS" %}</th>
+                        <th>{% trans "ACTION" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="6" class="loading-row">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <small class="text-muted" id="pageInfo"></small>
+            <nav><ul class="pagination pagination-sm mb-0" id="pagination"></ul></nav>
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+
+    var ROLE = '{{ request.user.role }}';
+    var emailPageBase = ROLE === 'Validateur'
+        ? '/validateur-dashboard/commandes/manager-une-commande/'
+        : '/root-dashboard/commandes/manager-une-commande/';
+
+    var currentPage    = 1;
+    var currentStatus  = 'rapport_valide';
+    var currentSearch  = '';
+
+    /* ── Query builder ─────────────────────────────────────── */
+    function buildQuery(page) {
+        var params = { page: page, page_size: 15 };
+        if (currentStatus) params.status = currentStatus;
+        if (currentSearch) params.search = currentSearch;
+        return Object.entries(params).map(function(e){
+            return encodeURIComponent(e[0]) + '=' + encodeURIComponent(e[1]);
+        }).join('&');
+    }
+
+    /* ── Load stats ────────────────────────────────────────── */
+    function loadStats() {
+        fetch('/api/emailing/statistiques/', {credentials:'same-origin'})
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+            var total   = d.total_envois   || 0;
+            var success = d.envois_reussis || 0;
+            var taux    = total > 0 ? Math.round(success / total * 100) + '%' : '—';
+            document.getElementById('statTotalEmails').textContent = total;
+            document.getElementById('statTaux').textContent = taux;
+        }).catch(function(){});
+
+        /* compter les rapports_valide et envoye_client */
+        Promise.all([
+            fetch('/api/orders/module/?status=rapport_valide&page_size=1', {credentials:'same-origin'}).then(function(r){ return r.json(); }),
+            fetch('/api/orders/module/?status=envoye_client&page_size=1', {credentials:'same-origin'}).then(function(r){ return r.json(); }),
+        ]).then(function(results) {
+            document.getElementById('statValide').textContent  = results[0].count || 0;
+            document.getElementById('statEnvoye').textContent  = results[1].count || 0;
+        }).catch(function(){});
+    }
+
+    /* ── Load table ────────────────────────────────────────── */
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function load(page) {
+        currentPage = page;
+        document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="6" class="loading-row"><div class="spinner-border spinner-border-sm text-primary me-2"></div></td></tr>';
+
+        fetch('/api/orders/module/?' + buildQuery(page), {credentials:'same-origin'})
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var rows = data.results || [];
+            document.getElementById('tableLabel').textContent = data.count + ' {% trans "commande(s)" %}';
+
+            if (rows.length === 0) {
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="6" class="empty-state"><i class="bi bi-inbox d-block fs-2 mb-2"></i>{% trans "Aucune commande trouvée." %}</td></tr>';
+                renderPagination(data);
+                return;
+            }
+
+            document.getElementById('tableBody').innerHTML = rows.map(function(c) {
+                var statusBadge = c.status === 'rapport_valide'
+                    ? '<span class="badge-status s-rapport_valide">{% trans "Prêt à envoyer" %}</span>'
+                    : '<span class="badge-status s-envoye_client">{% trans "Envoyé client" %}</span>';
+
+                var nbSends = c.nb_emails_envoyes || 0;
+                var sendPill = nbSends > 0
+                    ? '<span class="pill-envois has-sends"><i class="bi bi-envelope-check me-1"></i>' + nbSends + '</span>'
+                    : '<span class="pill-envois">{% trans "Aucun" %}</span>';
+
+                var emailUrl = emailPageBase + c.id + '/email/';
+
+                return '<tr>' +
+                    '<td><strong class="text-primary">' + esc(c.notre_ref || c.id) + '</strong></td>' +
+                    '<td>' + esc(c.raison_sociale || '—') + '</td>' +
+                    '<td><small class="text-muted">' + esc(c.type_rapport || '—') + '</small></td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td>' + sendPill + '</td>' +
+                    '<td><a href="' + emailUrl + '" class="btn-action">' +
+                        '<i class="bi bi-envelope-paper"></i> {% trans "Gérer" %}' +
+                    '</a></td>' +
+                    '</tr>';
+            }).join('');
+            renderPagination(data);
+        })
+        .catch(function() {
+            document.getElementById('tableBody').innerHTML =
+                '<tr><td colspan="6" class="empty-state text-danger"><i class="bi bi-exclamation-circle d-block fs-2 mb-2"></i>{% trans "Erreur de chargement." %}</td></tr>';
+        });
+    }
+
+    function renderPagination(data) {
+        var pg   = document.getElementById('pagination');
+        var info = document.getElementById('pageInfo');
+        var p    = data.current_page || currentPage;
+        var total = data.total_pages || 1;
+        var start = (p - 1) * (data.page_size || 15) + 1;
+        var end   = Math.min(p * (data.page_size || 15), data.count || 0);
+        info.textContent = data.count > 0 ? (start + '–' + end + ' / ' + data.count) : '';
+        if (total <= 1) { pg.innerHTML = ''; return; }
+        var html = '';
+        html += '<li class="page-item' + (p <= 1 ? ' disabled' : '') + '"><a class="page-link" data-page="' + (p-1) + '">‹</a></li>';
+        for (var i = Math.max(1,p-2); i <= Math.min(total,p+2); i++) {
+            html += '<li class="page-item' + (i===p?' active':'') + '"><a class="page-link" data-page="' + i + '">' + i + '</a></li>';
+        }
+        html += '<li class="page-item' + (p >= total ? ' disabled' : '') + '"><a class="page-link" data-page="' + (p+1) + '">›</a></li>';
+        pg.innerHTML = html;
+        pg.querySelectorAll('[data-page]').forEach(function(el){
+            el.addEventListener('click', function(e){
+                e.preventDefault();
+                var pp = parseInt(this.dataset.page);
+                if (pp >= 1 && pp <= total) load(pp);
+            });
+        });
+    }
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+            this.classList.add('active');
+            currentStatus = this.dataset.status;
+            load(1);
+        });
+    });
+
+    /* ── Filter ────────────────────────────────────────────── */
+    document.getElementById('btnFilter').addEventListener('click', function() {
+        currentSearch = document.getElementById('filterSearch').value.trim();
+        load(1);
+    });
+    document.getElementById('btnReset').addEventListener('click', function() {
+        currentSearch = '';
+        document.getElementById('filterSearch').value = '';
+        load(1);
+    });
+    document.getElementById('filterSearch').addEventListener('keydown', function(e){
+        if (e.key === 'Enter') document.getElementById('btnFilter').click();
+    });
+
+    /* ── Init ──────────────────────────────────────────────── */
+    loadStats();
+    load(1);
+
+}());
+</script>
+{% endblock %}

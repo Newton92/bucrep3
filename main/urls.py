@@ -725,6 +725,11 @@ urlpatterns = [
         name="dash_root_manage_acheteur_report_web",
     ),
     path(
+        "root-dashboard/emailing/rapports/",
+        dash_root_emailing_rapports,
+        name="dash_root_emailing_rapports",
+    ),
+    path(
         "root-dashboard/commandes/liste-des-commandes",
         dash_root_commande,
         name="dash_root_commande",
