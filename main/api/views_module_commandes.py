@@ -358,13 +358,12 @@ class EnvoyerEmailRapportCommandeAPIView(APIView):
 
         html_content = render_to_string('main/emails/email_rapport_valide.html', {
             'destinataire_nom': destinataire.split('@')[0].replace('.', ' ').replace('_', ' ').capitalize(),
-            'notre_ref': commande.notre_ref,
-            'raison_sociale': raison_sociale,
-            'pays': pays_nom,
-            'type_rapport': type_rapport_val,
-            'date_envoi': timezone.now(),
+            'body': message_perso or f"Veuillez trouver en pièce jointe le rapport de solvabilité pour la commande {commande.notre_ref}.",
+            'titre1': commande.notre_ref,
+            'titre2': raison_sociale,
+            'titre3': f"{type_rapport_val or 'Standard'} — {pays_nom or ''}".strip(' —'),
             'expediteur_nom': expediteur_nom,
-            'message_personnalise': message_perso or None,
+            'date_envoi': timezone.now(),
         })
 
         texte_brut = (
