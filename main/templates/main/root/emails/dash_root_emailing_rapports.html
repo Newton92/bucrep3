@@ -605,18 +605,30 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
             btn.innerHTML = '<i class="bi bi-send-fill"></i> {% trans "Envoyer le rapport" %}';
             if (res.ok) {
                 showToast(res.data.detail || '{% trans "Rapport envoyé avec succès !" %}', 'ok');
+                document.getElementById('sendAlert').classList.add('d-none');
                 document.getElementById('rteEditor').innerHTML = '';
                 document.getElementById('fCC').value = '';
                 document.querySelectorAll('.doc-checkbox:checked').forEach(function(cb){ cb.checked = false; cb.closest('.doc-item').classList.remove('checked'); });
                 loadHistoriqueCommande(currentCommande.id);
             } else {
-                showToast(res.data.detail || '{% trans "Erreur lors de l\'envoi." %}', 'err');
+                /* Afficher le détail complet de l'erreur dans la zone alerte */
+                var errLines = [res.data.detail || '{% trans "Erreur inconnue" %}'];
+                if (res.data.smtp_host) errLines.push('SMTP : ' + res.data.smtp_host + ':' + res.data.smtp_port);
+                if (res.data.from_email) errLines.push('De : ' + res.data.from_email);
+                if (res.data.to) errLines.push('À : ' + res.data.to);
+                if (res.data.traceback) { console.error('[SMTP ERROR]\n' + res.data.traceback); errLines.push('(Traceback complet dans la console navigateur)'); }
+                document.getElementById('sendAlert').classList.remove('d-none');
+                document.getElementById('sendAlertMsg').innerHTML = errLines.map(function(l){ return '<div>' + l + '</div>'; }).join('');
+                showToast('{% trans "Échec de l\'envoi — voir le détail ci-dessus." %}', 'err');
             }
         })
-        .catch(function() {
+        .catch(function(netErr) {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-send-fill"></i> {% trans "Envoyer le rapport" %}';
-            showToast('{% trans "Erreur réseau. Veuillez réessayer." %}', 'err');
+            console.error('Network error:', netErr);
+            document.getElementById('sendAlert').classList.remove('d-none');
+            document.getElementById('sendAlertMsg').textContent = '{% trans "Erreur réseau — la réponse du serveur n\'est pas au format JSON. Vérifiez la console." %}';
+            showToast('{% trans "Erreur réseau." %}', 'err');
         });
     });
 
