@@ -320,16 +320,15 @@ textarea.fcontrol { resize:vertical; min-height:100px; }
 
     /* ── Clients ── */
     function loadClients() {
-        fetch('/api/gestion-des-mails/clients/', {credentials:'same-origin'})
+        fetch('/api/orders/module/clients-rapport/', {credentials:'same-origin'})
         .then(function(r){ return r.json(); })
         .then(function(d) {
             var sel = document.getElementById('selClient');
             sel.innerHTML = '<option value="">— {% trans "Choisir un client" %} —</option>';
             (d.data || []).forEach(function(c) {
-                var nom = [c.first_name, c.last_name].filter(Boolean).join(' ') || c.username;
                 var opt = document.createElement('option');
                 opt.value = c.id;
-                opt.textContent = nom + (c.email ? ' (' + c.email + ')' : '');
+                opt.textContent = c.nom + (c.email ? ' (' + c.email + ')' : '');
                 opt.dataset.email = c.email || '';
                 sel.appendChild(opt);
             });
@@ -345,35 +344,18 @@ textarea.fcontrol { resize:vertical; min-height:100px; }
         sel.innerHTML = '<option value="">{% trans "Chargement…" %}</option>';
         resetCommandeUI();
 
-        /* On utilise l'API orders/module/ avec filtres client_id + status */
-        var params = 'client_id=' + clientId + '&page_size=100';
-        if (currentPeriode !== 'all') {
-            var today = new Date();
-            if (currentPeriode === 'today') {
-                var d = today.toISOString().slice(0,10);
-                params += '&date_after=' + d + '&date_before=' + d;
-            } else {
-                var days = currentPeriode === '7days' ? 7 : 30;
-                var t = new Date(today); t.setDate(t.getDate() - days);
-                params += '&date_after=' + t.toISOString().slice(0,10);
-            }
-        }
+        var url = '/api/orders/module/clients-rapport/' + clientId + '/commandes/?periode=' + currentPeriode;
 
-        /* On charge rapport_valide et envoye_client */
-        Promise.all([
-            fetch('/api/orders/module/?' + params + '&status=rapport_valide', {credentials:'same-origin'}).then(function(r){return r.json();}),
-            fetch('/api/orders/module/?' + params + '&status=envoye_client',  {credentials:'same-origin'}).then(function(r){return r.json();}),
-        ]).then(function(results) {
-            var rows = (results[0].results || []).concat(results[1].results || []);
-            /* trier par date desc */
-            rows.sort(function(a,b){ return new Date(b.date_recept_commande||b.created_at) - new Date(a.date_recept_commande||a.created_at); });
-
+        fetch(url, {credentials:'same-origin'})
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+            var rows = d.data || [];
             sel.innerHTML = '<option value="">— {% trans "Choisir une commande" %} —</option>';
             rows.forEach(function(c) {
                 var opt = document.createElement('option');
                 opt.value = c.id;
                 var label = (c.notre_ref || c.id) + ' — ' + (c.raison_sociale || '');
-                if (c.status === 'envoye_client') label += ' ✓';
+                if (c.email_envoye || c.status === 'envoye_client') label += ' ✓';
                 opt.textContent = label;
                 opt.dataset.json = JSON.stringify(c);
                 sel.appendChild(opt);

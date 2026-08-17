@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 import os
 from main.models import Commande, AffectationAnalyste, Rapport, ValidationRapport, SuiviCommande, Notification, MailInfo
+from datetime import timedelta
 from main.serializers import CommandeSerializer, RapportSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -475,3 +476,83 @@ class HistoriqueEmailsCommandeAPIView(APIView):
             'last_sent': results[0]['date_sent'] if results else None,
             'results': results,
         })
+
+
+class ClientsAvecRapportAPIView(APIView):
+    """
+    GET — Liste des clients ayant au moins une commande avec rapport_valide ou envoye_client
+    dans le pays de l'utilisateur connecté.
+    URL : /api/orders/module/clients-rapport/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role not in ['Root', 'Validateur']:
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        commandes = Commande.objects.filter(
+            status__in=['rapport_valide', 'envoye_client'],
+            pays=user.pays,
+        ).select_related('client').exclude(client__isnull=True)
+
+        seen = {}
+        for cmd in commandes:
+            c = cmd.client
+            if c and c.pk not in seen:
+                nom = ' '.join(filter(None, [c.first_name, c.last_name])) or c.username
+                seen[c.pk] = {
+                    'id': c.pk,
+                    'username': c.username,
+                    'nom': nom,
+                    'email': c.email or '',
+                }
+
+        clients = sorted(seen.values(), key=lambda x: x['nom'].lower())
+        return Response({'count': len(clients), 'data': clients})
+
+
+class CommandesClientRapportAPIView(APIView):
+    """
+    GET — Commandes d'un client avec rapport_valide ou envoye_client,
+    filtrées par période optionnelle.
+    URL : /api/orders/module/clients-rapport/<client_id>/commandes/
+    Params : periode = today | 7days | 30days | all (défaut)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, client_id):
+        user = request.user
+        if user.role not in ['Root', 'Validateur']:
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        periode = request.query_params.get('periode', 'all')
+        qs = Commande.objects.filter(
+            client_id=client_id,
+            status__in=['rapport_valide', 'envoye_client'],
+            pays=user.pays,
+        ).select_related('acheteur', 'client', 'pays').order_by('-date_recept_commande')
+
+        today = timezone.now().date()
+        if periode == 'today':
+            qs = qs.filter(date_recept_commande__date=today)
+        elif periode == '7days':
+            qs = qs.filter(date_recept_commande__date__gte=today - timedelta(days=7))
+        elif periode == '30days':
+            qs = qs.filter(date_recept_commande__date__gte=today - timedelta(days=30))
+
+        data = []
+        for c in qs:
+            data.append({
+                'id': c.pk,
+                'notre_ref': c.notre_ref or '',
+                'raison_sociale': c.raison_sociale or '',
+                'type_rapport': c.type_rapport or '',
+                'status': c.status,
+                'date_recept_commande': c.date_recept_commande.isoformat() if c.date_recept_commande else None,
+                'acheteur_id': c.acheteur_id,
+                'acheteur_nom': c.acheteur.nom if c.acheteur else '',
+                'email_envoye': c.email_envoye,
+            })
+
+        return Response({'count': len(data), 'data': data})
