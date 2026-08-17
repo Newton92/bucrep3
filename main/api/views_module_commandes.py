@@ -211,15 +211,15 @@ class RapportPreviewAPIView(APIView):
             user.role == 'Analyste'
             and AffectationAnalyste.objects.filter(commande=commande, analyste=user).exists()
         )
-        is_validateur_root = (
-            user.role in ['Validateur', 'Root']
-            and user.pays_id == commande.pays_id
+        # Root : accès global. Validateur : limité à son pays.
+        is_validateur_root = user.role in ['Validateur', 'Root'] and (
+            user.role == 'Root' or user.pays_id == commande.pays_id
         )
 
         if not (is_analyste_affecte or is_validateur_root):
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
 
-        if commande.status not in ['rapport_soumis', 'rapport_valide']:
+        if commande.status not in ['rapport_soumis', 'rapport_valide', 'envoye_client', 'terminee']:
             return Response({"detail": "Aucun rapport soumis pour cette commande."}, status=status.HTTP_400_BAD_REQUEST)
 
         rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
@@ -278,7 +278,8 @@ class ValiderRapportAPIView(APIView):
 
         commande = get_object_or_404(Commande, pk=commande_id)
 
-        if user.pays_id != commande.pays_id:
+        # Validateur : limité à son pays. Root : accès global.
+        if user.role == 'Validateur' and user.pays_id and user.pays_id != commande.pays_id:
             return Response({"detail": "Vous n'êtes pas habilité à valider les rapports de ce pays."}, status=status.HTTP_403_FORBIDDEN)
 
         if commande.status != 'rapport_soumis':
@@ -332,10 +333,11 @@ class EnvoyerEmailRapportCommandeAPIView(APIView):
 
         commande = get_object_or_404(Commande, pk=commande_id)
 
-        if user.pays_id != commande.pays_id:
+        # Validateur : limité à son pays. Root : accès global.
+        if user.role == 'Validateur' and user.pays_id and user.pays_id != commande.pays_id:
             return Response({"detail": "Vous n'êtes pas habilité à agir sur les commandes de ce pays."}, status=status.HTTP_403_FORBIDDEN)
 
-        if commande.status not in ['rapport_valide', 'envoye_client']:
+        if commande.status not in ['rapport_valide', 'envoye_client', 'terminee']:
             return Response({"detail": "Le rapport doit être validé avant envoi."}, status=status.HTTP_400_BAD_REQUEST)
 
         rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
@@ -525,7 +527,7 @@ class CommandesClientRapportAPIView(APIView):
         periode = request.query_params.get('periode', 'all')
         qs = Commande.objects.filter(
             client_id=client_id,
-            status__in=['rapport_valide', 'envoye_client'],
+            status__in=['rapport_valide', 'envoye_client', 'terminee'],
         ).select_related('acheteur', 'client', 'pays').order_by('-date_recept_commande')
         # Validateur : limité à son pays. Root : accès global.
         if user.role == 'Validateur' and user.pays_id:
