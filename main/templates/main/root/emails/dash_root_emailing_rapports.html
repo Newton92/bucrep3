@@ -335,8 +335,9 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
 (function () {
     'use strict';
 
-    var ROLE    = '{{ request.user.role }}';
-    var PAYS_ID = '{{ selected_pays_id }}';   /* pays actif sélectionné via toolbar */
+    var ROLE         = '{{ request.user.role }}';
+    var PAYS_ID      = '{{ selected_pays_id }}';
+    var ACCESS_TOKEN = '{{ access }}';
 
     var currentPeriode  = 'today';
     var currentClientId = null;
@@ -378,7 +379,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
 
     /* ── Clients ── */
     function loadClients() {
-        fetch('/api/orders/module/clients-rapport/', {credentials:'same-origin'})
+        fetch('/api/orders/module/clients-rapport/', {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(d) {
             var sel = document.getElementById('selClient');
@@ -405,7 +406,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         var url = '/api/orders/module/clients-rapport/' + clientId + '/commandes/?periode=' + currentPeriode;
         if (PAYS_ID) url += '&pays_id=' + PAYS_ID;
 
-        fetch(url, {credentials:'same-origin'})
+        fetch(url, {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(d) {
             var rows = d.data || [];
@@ -432,7 +433,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         resetCommandeUI();
         if (!commande) return;
 
-        fetch('/api/orders/module/' + commande.id + '/rapport/info/', {credentials:'same-origin'})
+        fetch('/api/orders/module/' + commande.id + '/rapport/info/', {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(info) {
             hasRapport = info.has_rapport;
@@ -496,7 +497,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         fetch('/api/orders/module/' + currentCommande.id + '/generer-rapport/', {
             method: 'POST',
             credentials: 'same-origin',
-            headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+            headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf(),'Authorization':'Bearer '+ACCESS_TOKEN},
             body: '{}',
         })
         .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
@@ -524,7 +525,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         document.getElementById('docList').innerHTML = '<div class="doc-empty"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
         document.getElementById('docCount').textContent = '';
 
-        fetch('/api/gestion-des-mails/acheteurs/' + acheteurId + '/documents/', {credentials:'same-origin'})
+        fetch('/api/gestion-des-mails/acheteurs/' + acheteurId + '/documents/', {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(d) {
             var docs = d.data || [];
@@ -590,7 +591,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         fetch('/api/orders/module/' + currentCommande.id + '/envoyer-email/', {
             method: 'POST',
             credentials: 'same-origin',
-            headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+            headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf(),'Authorization':'Bearer '+ACCESS_TOKEN},
             body: JSON.stringify({
                 destinataire:         clientEmail,
                 sujet:                'Rapport de solvabilité — ' + (currentCommande.notre_ref || ''),
@@ -638,7 +639,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
             '<tr><td colspan="6" class="empty-st"><div class="spinner-border spinner-border-sm text-primary me-2"></div></td></tr>';
         document.getElementById('histLabel').textContent = '{% trans "Historique des envois" %}' + (currentCommande ? ' — ' + currentCommande.notre_ref : '');
 
-        fetch('/api/orders/module/' + commandeId + '/emails/', {credentials:'same-origin'})
+        fetch('/api/orders/module/' + commandeId + '/emails/', {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(d) {
             document.getElementById('histStats').textContent =
@@ -653,7 +654,7 @@ body { background:linear-gradient(135deg,#f5f7fa,#e9ecef); font-family:'Inter',-
         document.getElementById('histBody').innerHTML =
             '<tr><td colspan="6" class="empty-st"><div class="spinner-border spinner-border-sm text-primary me-2"></div></td></tr>';
 
-        fetch('/api/emailing/historique/', {credentials:'same-origin'})
+        fetch('/api/emailing/historique/', {credentials:'same-origin', headers:{'Authorization':'Bearer '+ACCESS_TOKEN}})
         .then(function(r){ return r.json(); })
         .then(function(d) { renderHistTableGlobal((d.results || d.data || []).slice(0,50)); })
         .catch(function(){ renderHistTable([]); });
