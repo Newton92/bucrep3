@@ -18,6 +18,8 @@ from main.api.views_module_commandes import (
     RapportPreviewAPIView,
     RapportInfoAPIView,
     ValiderRapportAPIView,
+    EnvoyerEmailRapportCommandeAPIView,
+    HistoriqueEmailsCommandeAPIView,
 )
 from main.api.views_localisation import *
 from main.api.views_modele import *
@@ -731,6 +733,11 @@ urlpatterns = [
         "root-dashboard/commandes/manager-une-commande/<int:commande_id>/",
         dash_root_manage_commande,
         name="dash_root_manage_commande",
+    ),
+    path(
+        "root-dashboard/commandes/manager-une-commande/<int:commande_id>/email/",
+        dash_root_email_rapport,
+        name="dash_root_email_rapport",
     ),
     path(
         "root-dashboard/warnings/liste-des-alertes/",
@@ -2951,6 +2958,16 @@ urlpatterns = [
         "api/orders/module/<int:commande_id>/valider/",
         ValiderRapportAPIView.as_view(),
         name="valider-rapport",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/envoyer-email/",
+        EnvoyerEmailRapportCommandeAPIView.as_view(),
+        name="envoyer-rapport-email",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/emails/",
+        HistoriqueEmailsCommandeAPIView.as_view(),
+        name="historique-emails-commande",
     ),
     path(
         "api/recherche-commande/", SearchCommandeView.as_view(), name="search-commande"

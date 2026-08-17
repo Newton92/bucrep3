@@ -15,9 +15,11 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
-from main.models import Commande, AffectationAnalyste, Rapport, ValidationRapport, SuiviCommande, Notification
+import os
+from main.models import Commande, AffectationAnalyste, Rapport, ValidationRapport, SuiviCommande, Notification, MailInfo
 from main.serializers import CommandeSerializer, RapportSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -316,3 +318,161 @@ class ValiderRapportAPIView(APIView):
             Notification.objects.create(user=rapport.analyste, type='VALIDATION', message=msg_analyste)
 
         return Response({"detail": "Rapport validé avec succès.", "status": "rapport_valide"}, status=status.HTTP_200_OK)
+
+
+class EnvoyerEmailRapportCommandeAPIView(APIView):
+    """POST — Root ou Validateur envoie le rapport validé par email."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, commande_id):
+        user = request.user
+        if user.role not in ['Root', 'Validateur']:
+            return Response({"detail": "Réservé aux administrateurs et validateurs."}, status=status.HTTP_403_FORBIDDEN)
+
+        commande = get_object_or_404(Commande, pk=commande_id)
+
+        if user.pays_id != commande.pays_id:
+            return Response({"detail": "Vous n'êtes pas habilité à agir sur les commandes de ce pays."}, status=status.HTTP_403_FORBIDDEN)
+
+        if commande.status not in ['rapport_valide', 'envoye_client']:
+            return Response({"detail": "Le rapport doit être validé avant envoi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
+        if not rapport or not rapport.fichier:
+            return Response({"detail": "Aucun fichier rapport disponible pour cette commande."}, status=status.HTTP_404_NOT_FOUND)
+
+        destinataire = (request.data.get('destinataire') or '').strip()
+        sujet = (request.data.get('sujet') or f"Rapport de solvabilité — {commande.notre_ref}").strip()
+        message_perso = (request.data.get('message_personnalise') or '').strip()
+        cc_raw = (request.data.get('cc_emails') or '').strip()
+
+        if not destinataire:
+            return Response({"detail": "L'adresse email du destinataire est requise."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cc_list = [e.strip() for e in cc_raw.replace(',', ';').split(';') if e.strip()]
+
+        expediteur_nom = user.get_full_name() or user.username
+        raison_sociale = getattr(commande, 'raison_sociale', None) or str(commande)
+        pays_nom = str(commande.pays) if getattr(commande, 'pays', None) else None
+        type_rapport_val = getattr(commande, 'type_rapport', None)
+
+        html_content = render_to_string('main/emails/email_rapport_valide.html', {
+            'destinataire_nom': destinataire.split('@')[0].replace('.', ' ').replace('_', ' ').capitalize(),
+            'notre_ref': commande.notre_ref,
+            'raison_sociale': raison_sociale,
+            'pays': pays_nom,
+            'type_rapport': type_rapport_val,
+            'date_envoi': timezone.now(),
+            'expediteur_nom': expediteur_nom,
+            'message_personnalise': message_perso or None,
+        })
+
+        texte_brut = (
+            f"Bonjour,\n\n"
+            f"Veuillez trouver en pièce jointe le rapport de solvabilité pour la commande {commande.notre_ref}.\n\n"
+            f"Entreprise : {raison_sociale}\n"
+            f"Référence  : {commande.notre_ref}\n\n"
+            f"{'Message : ' + message_perso + chr(10) + chr(10) if message_perso else ''}"
+            f"Cordialement,\nL'équipe BUCREP / ACREMAC"
+        )
+
+        success = False
+        err_msg = ''
+        try:
+            msg = EmailMultiAlternatives(
+                subject=sujet,
+                body=texte_brut,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[destinataire],
+                cc=cc_list,
+            )
+            msg.attach_alternative(html_content, 'text/html')
+
+            with rapport.fichier.open('rb') as f:
+                pdf_bytes = f.read()
+            filename = os.path.basename(rapport.fichier.name) or f"rapport_{commande.notre_ref}.pdf"
+            msg.attach(filename, pdf_bytes, 'application/pdf')
+            msg.send(fail_silently=False)
+            success = True
+        except Exception as exc:
+            err_msg = str(exc)
+
+        with transaction.atomic():
+            mail_info = MailInfo.objects.create(
+                user=user,
+                subject=sujet,
+                cc_emails=';'.join([destinataire] + cc_list),
+                success=success,
+                formats_generes={'to': destinataire, 'cc': cc_list},
+            )
+            mail_info.commands.add(commande)
+
+            action_msg = (
+                f"Email envoyé à {destinataire} — Sujet : {sujet}"
+                if success else
+                f"[ERREUR] Tentative d'envoi à {destinataire} — {err_msg}"
+            )
+            SuiviCommande.objects.create(
+                commande=commande,
+                user=user,
+                type='ENVOI_CLIENT',
+                action=action_msg,
+                commentaire=message_perso,
+            )
+
+            if success and commande.status == 'rapport_valide':
+                commande.status = 'envoye_client'
+                commande.save(update_fields=['status'])
+
+        if success:
+            return Response({"detail": "Rapport envoyé avec succès.", "mail_info_id": mail_info.pk}, status=status.HTTP_200_OK)
+        return Response({"detail": f"Erreur lors de l'envoi : {err_msg}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HistoriqueEmailsCommandeAPIView(APIView):
+    """GET — Historique des envois email pour une commande."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, commande_id):
+        user = request.user
+        if user.role not in ['Root', 'Validateur']:
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        commande = get_object_or_404(Commande, pk=commande_id)
+
+        if user.pays_id != commande.pays_id:
+            return Response({"detail": "Accès refusé pour ce pays."}, status=status.HTTP_403_FORBIDDEN)
+
+        mail_infos = (
+            MailInfo.objects.filter(commands=commande)
+            .select_related('user')
+            .order_by('-date_sent')
+        )
+
+        results = []
+        for mi in mail_infos:
+            fg = mi.formats_generes or {}
+            if isinstance(fg, dict):
+                to_email = fg.get('to', '')
+                cc_emails_list = fg.get('cc', [])
+            else:
+                to_email = ''
+                cc_emails_list = []
+            results.append({
+                'id': mi.pk,
+                'date_sent': mi.date_sent.isoformat(),
+                'to': to_email,
+                'cc': cc_emails_list,
+                'subject': mi.subject or '',
+                'success': mi.success,
+                'sent_by': mi.user.get_full_name() or mi.user.username,
+            })
+
+        nb_success = sum(1 for r in results if r['success'])
+        return Response({
+            'count': len(results),
+            'nb_success': nb_success,
+            'nb_failed': len(results) - nb_success,
+            'last_sent': results[0]['date_sent'] if results else None,
+            'results': results,
+        })

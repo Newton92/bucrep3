@@ -7232,6 +7232,25 @@ def dash_root_manage_commande(request, commande_id):
 
 
 @login_required
+def dash_root_email_rapport(request, commande_id):
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    commande = Commande.objects.filter(id=commande_id).first()
+    if not commande:
+        messages.error(request, "Commande introuvable.")
+        return redirect("dash_root_order")
+    context = {
+        "requests_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_commande": commande_id,
+        "commande": commande,
+    }
+    return render(request, "main/root/orders/dash_root_email_rapport.html", context)
+
+
+@login_required
 def dash_root_alerte(request):
     token = request.GET.get("token")
     if not token:
@@ -13139,6 +13158,25 @@ def dash_validateur_manage_commande(request, commande_id):
         "id_commande": id_commande,
     }
     return render(request, "main/validateur/orders/dash_root_manage_commande.html", context)
+
+
+@login_required
+def dash_validateur_email_rapport(request, commande_id):
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    commande = Commande.objects.filter(id=commande_id).first()
+    if not commande:
+        messages.error(request, "Commande introuvable.")
+        return redirect("dash_validateur_commande")
+    context = {
+        "requests_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_commande": commande_id,
+        "commande": commande,
+    }
+    return render(request, "main/root/orders/dash_root_email_rapport.html", context)
 
 
 @login_required

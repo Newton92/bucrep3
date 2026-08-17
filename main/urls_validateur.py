@@ -441,6 +441,11 @@ urlpatterns = [
         name="dash_validateur_manage_commande",
     ),
     path(
+        "validateur-dashboard/commandes/manager-une-commande/<int:commande_id>/email/",
+        dash_validateur_email_rapport,
+        name="dash_validateur_email_rapport",
+    ),
+    path(
         "validateur-dashboard/warnings/liste-des-alertes/",
         dash_validateur_alerte,
         name="dash_validateur_alerte",
