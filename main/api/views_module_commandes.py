@@ -442,7 +442,8 @@ class HistoriqueEmailsCommandeAPIView(APIView):
 
         commande = get_object_or_404(Commande, pk=commande_id)
 
-        if user.pays_id != commande.pays_id:
+        # Validateur : limité à son pays. Root : accès global.
+        if user.role == 'Validateur' and user.pays_id and user.pays_id != commande.pays_id:
             return Response({"detail": "Accès refusé pour ce pays."}, status=status.HTTP_403_FORBIDDEN)
 
         mail_infos = (
@@ -567,17 +568,12 @@ class CommandesClientRapportAPIView(APIView):
 
 class GenererRapportCommandeAPIView(APIView):
     """
-    POST — Génère un rapport PDF provisoire pour une commande qui n'en a pas encore.
-    Utilise generate_pdf_report (ReportLab) et sauvegarde dans Rapport.fichier.
+    POST — Génère un rapport PDF provisoire (WeasyPrint) pour une commande sans fichier.
     URL : /api/orders/module/<id>/generer-rapport/
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, commande_id):
-        from io import BytesIO
-        from django.core.files.base import ContentFile
-        from main.api.views_api_emailling import generate_pdf_report
-
         user = request.user
         if user.role not in ['Root', 'Validateur']:
             return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
@@ -593,17 +589,68 @@ class GenererRapportCommandeAPIView(APIView):
                 rapport.fichier.open('rb').close()
                 return Response({"detail": "Un rapport PDF existe déjà.", "already_exists": True, "rapport_id": rapport.pk})
             except (FileNotFoundError, OSError):
-                pass  # fichier manquant → régénérer
+                pass
 
-        pdf_bytes = generate_pdf_report(commande)
+        try:
+            from io import BytesIO
+            from django.core.files.base import ContentFile
+            from weasyprint import HTML as WeasyHTML
 
-        if not rapport:
-            rapport = Rapport(commande=commande, analyste=user)
+            date_str = timezone.now().strftime('%d/%m/%Y')
+            acheteur_nom = commande.acheteur.nom if commande.acheteur else '—'
+            pays_nom = commande.pays.nom if commande.pays else '—'
 
-        filename = f"rapport_{commande.notre_ref or commande.pk}.pdf".replace('/', '_')
-        rapport.fichier.save(filename, ContentFile(pdf_bytes), save=True)
+            html = f"""<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+  body{{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:40px;}}
+  h1{{color:#0d80be;border-bottom:3px solid #0d80be;padding-bottom:8px;}}
+  h2{{color:#0558a0;margin-top:28px;}}
+  table{{width:100%;border-collapse:collapse;margin-top:10px;}}
+  th{{background:#0d80be;color:#fff;padding:8px 12px;text-align:left;font-size:12px;}}
+  td{{padding:7px 12px;border-bottom:1px solid #e2e8f0;}}
+  tr:nth-child(even) td{{background:#f8fafc;}}
+  .badge{{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}}
+  .footer{{margin-top:60px;color:#888;font-size:11px;border-top:1px solid #e2e8f0;padding-top:12px;}}
+</style>
+</head><body>
+<h1>Rapport de Solvabilité — BUCREP / ACREMAC</h1>
+<h2>Informations sur la commande</h2>
+<table>
+  <tr><th>Champ</th><th>Valeur</th></tr>
+  <tr><td>Référence interne</td><td><strong>{commande.notre_ref or '—'}</strong></td></tr>
+  <tr><td>Référence client</td><td>{commande.reference_client or '—'}</td></tr>
+  <tr><td>Entreprise analysée</td><td><strong>{commande.raison_sociale or '—'}</strong></td></tr>
+  <tr><td>Acheteur</td><td>{acheteur_nom}</td></tr>
+  <tr><td>Type de rapport</td><td>{commande.type_rapport or 'Standard'}</td></tr>
+  <tr><td>Pays</td><td>{pays_nom}</td></tr>
+  <tr><td>Statut</td><td>{commande.get_status_display()}</td></tr>
+  <tr><td>Date de réception</td><td>{commande.date_recept_commande.strftime('%d/%m/%Y') if commande.date_recept_commande else '—'}</td></tr>
+</table>
+<div class="footer">
+  Généré le {date_str} par {user.get_full_name() or user.username} — BUCREP / ACREMAC<br>
+  Ce document est un rapport provisoire généré automatiquement.
+</div>
+</body></html>"""
 
-        return Response({
-            "detail": "Rapport PDF généré avec succès.",
-            "rapport_id": rapport.pk,
-        })
+            pdf_bytes = WeasyHTML(string=html).write_pdf()
+
+        except Exception as exc:
+            return Response(
+                {"detail": f"Erreur lors de la génération du PDF : {exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        try:
+            from django.core.files.base import ContentFile
+            if not rapport:
+                rapport = Rapport(commande=commande, analyste=user)
+            filename = f"rapport_{str(commande.notre_ref or commande.pk).replace('/', '_')}.pdf"
+            rapport.fichier.save(filename, ContentFile(pdf_bytes), save=True)
+        except Exception as exc:
+            return Response(
+                {"detail": f"Erreur lors de la sauvegarde du PDF : {exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response({"detail": "Rapport PDF généré avec succès.", "rapport_id": rapport.pk})
