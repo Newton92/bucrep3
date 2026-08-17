@@ -22,6 +22,7 @@ from main.api.views_module_commandes import (
     HistoriqueEmailsCommandeAPIView,
     ClientsAvecRapportAPIView,
     CommandesClientRapportAPIView,
+    GenererRapportCommandeAPIView,
 )
 from main.api.views_localisation import *
 from main.api.views_modele import *
@@ -2975,6 +2976,11 @@ urlpatterns = [
         "api/orders/module/<int:commande_id>/emails/",
         HistoriqueEmailsCommandeAPIView.as_view(),
         name="historique-emails-commande",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/generer-rapport/",
+        GenererRapportCommandeAPIView.as_view(),
+        name="generer-rapport-commande",
     ),
     path(
         "api/orders/module/clients-rapport/",

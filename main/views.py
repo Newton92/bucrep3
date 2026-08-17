@@ -7235,11 +7235,13 @@ def dash_root_manage_commande(request, commande_id):
 def dash_root_emailing_rapports(request):
     user = request.user
     refresh = RefreshToken.for_user(user)
+    selected_pays_id = _resolve_pays_id(request)
     context = {
         "emailing_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "selected_pays_id": selected_pays_id or '',
     }
     return render(request, "main/root/emails/dash_root_emailing_rapports.html", context)
 
@@ -13177,11 +13179,13 @@ def dash_validateur_manage_commande(request, commande_id):
 def dash_validateur_emailing_rapports(request):
     user = request.user
     refresh = RefreshToken.for_user(user)
+    selected_pays_id = _resolve_pays_id(request)
     context = {
         "emailing_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "selected_pays_id": selected_pays_id or '',
     }
     return render(request, "main/root/emails/dash_root_emailing_rapports.html", context)
 

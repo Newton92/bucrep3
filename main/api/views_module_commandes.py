@@ -529,8 +529,15 @@ class CommandesClientRapportAPIView(APIView):
             client_id=client_id,
             status__in=['rapport_valide', 'envoye_client', 'terminee'],
         ).select_related('acheteur', 'client', 'pays').order_by('-date_recept_commande')
-        # Validateur : limité à son pays. Root : accès global.
-        if user.role == 'Validateur' and user.pays_id:
+
+        # Filtrer par pays actif (passé depuis le front) ou pays du Validateur
+        pays_id_param = request.query_params.get('pays_id')
+        if pays_id_param:
+            try:
+                qs = qs.filter(pays_id=int(pays_id_param))
+            except (ValueError, TypeError):
+                pass
+        elif user.role == 'Validateur' and user.pays_id:
             qs = qs.filter(pays=user.pays)
 
         today = timezone.now().date()
@@ -556,3 +563,47 @@ class CommandesClientRapportAPIView(APIView):
             })
 
         return Response({'count': len(data), 'data': data})
+
+
+class GenererRapportCommandeAPIView(APIView):
+    """
+    POST — Génère un rapport PDF provisoire pour une commande qui n'en a pas encore.
+    Utilise generate_pdf_report (ReportLab) et sauvegarde dans Rapport.fichier.
+    URL : /api/orders/module/<id>/generer-rapport/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, commande_id):
+        from io import BytesIO
+        from django.core.files.base import ContentFile
+        from main.api.views_api_emailling import generate_pdf_report
+
+        user = request.user
+        if user.role not in ['Root', 'Validateur']:
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+
+        commande = get_object_or_404(Commande, pk=commande_id)
+
+        if user.role == 'Validateur' and user.pays_id and user.pays_id != commande.pays_id:
+            return Response({"detail": "Accès non autorisé pour ce pays."}, status=status.HTTP_403_FORBIDDEN)
+
+        rapport = Rapport.objects.filter(commande=commande).order_by('-date_soumission').first()
+        if rapport and rapport.fichier:
+            try:
+                rapport.fichier.open('rb').close()
+                return Response({"detail": "Un rapport PDF existe déjà.", "already_exists": True, "rapport_id": rapport.pk})
+            except (FileNotFoundError, OSError):
+                pass  # fichier manquant → régénérer
+
+        pdf_bytes = generate_pdf_report(commande)
+
+        if not rapport:
+            rapport = Rapport(commande=commande, analyste=user)
+
+        filename = f"rapport_{commande.notre_ref or commande.pk}.pdf".replace('/', '_')
+        rapport.fichier.save(filename, ContentFile(pdf_bytes), save=True)
+
+        return Response({
+            "detail": "Rapport PDF généré avec succès.",
+            "rapport_id": rapport.pk,
+        })
