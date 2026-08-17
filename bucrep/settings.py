@@ -113,7 +113,8 @@ GEONAMES_USERNAME = "yannick1987"
 
 
 # Email Configuration using SMTP for sending emails
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "bucrep.email_backend.SkipCertVerifyEmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = env("EMAIL_HOST")  # SMTP server host
 EMAIL_PORT = env("EMAIL_PORT")  # SMTP server port
