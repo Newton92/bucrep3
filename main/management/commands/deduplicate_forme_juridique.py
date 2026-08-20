@@ -23,6 +23,7 @@ from main.models import (
     FormeJuridique,
     ScoringSansBilanAcheteur,
 )
+from main.serializers import FORME_JURIDIQUE_EN, FORME_JURIDIQUE_LIBELLE_EN
 
 # Codes considérés comme « canoniques » (issus de import_forme_juridique.py)
 CODES_STANDARDS = {
@@ -35,12 +36,18 @@ CODES_STANDARDS = {
 }
 
 
-def normalize(libelle):
-    return (libelle or "").strip().lower()
+def en_label(fj):
+    """Renvoie la traduction anglaise d'un FormeJuridique (grouping key)."""
+    if fj.code and fj.code in FORME_JURIDIQUE_EN:
+        return FORME_JURIDIQUE_EN[fj.code].strip().lower()
+    if fj.libelle and fj.libelle in FORME_JURIDIQUE_LIBELLE_EN:
+        return FORME_JURIDIQUE_LIBELLE_EN[fj.libelle].strip().lower()
+    # Fallback : libellé FR normalisé
+    return (fj.libelle or "").strip().lower()
 
 
 class Command(BaseCommand):
-    help = "Déduplique les FormeJuridique en conservant un enregistrement par libellé"
+    help = "Déduplique les FormeJuridique (groupe par traduction EN)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -55,10 +62,10 @@ class Command(BaseCommand):
         # Récupère tous les enregistrements, y compris soft-deleted
         all_fj = list(FormeJuridique.all_objects.all().order_by("id"))
 
-        # Regroupe par libellé normalisé
+        # Regroupe par traduction anglaise (ce qui est affiché dans le select2)
         groups = {}
         for fj in all_fj:
-            key = normalize(fj.libelle)
+            key = en_label(fj)
             groups.setdefault(key, []).append(fj)
 
         total_deleted = 0
