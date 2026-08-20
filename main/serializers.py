@@ -564,6 +564,12 @@ FORME_JURIDIQUE_EN = {
     "SPRL":     "Private limited liability company (SPRL)",
     "SSPJ":     "Company without legal personality",
     "SYNDIC":   "Condominium association",
+    # ── Formes anglophones / Afrique du Sud ──
+    "PART":     "Partnership",
+    "PTY_LTD":  "(Pty) Ltd",
+    "NPC":      "Non-Profit Company (NPC)",
+    "CC":       "Close Corporation (CC)",
+    "JV":       "Joint Venture (JV)",
 }
 
 # ── Traduction par libelle exact DB (fallback si code absent ou inconnu) ──
@@ -622,6 +628,11 @@ FORME_JURIDIQUE_LIBELLE_EN = {
     "Etablissement Public à Caractère Industriel et Commercial (EPIC)":   "Public Industrial and Commercial Establishment (EPIC)",
     "Filiale":                                                             "Subsidiary",
     "Succursale":                                                          "Branch",
+    # ── Formes anglophones / Afrique du Sud ──
+    "(Pty) Ltd":                                                           "(Pty) Ltd",
+    "Société à but non lucratif (SBN)":                                   "Non-Profit Company (NPC)",
+    "Close Corporation (CC)":                                              "Close Corporation (CC)",
+    "Joint Venture (JV)":                                                  "Joint Venture (JV)",
 }
 
 

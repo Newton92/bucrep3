@@ -40,6 +40,12 @@ FORMES = [
     ("SPRL",     "Société privée à responsabilité limitée (SPRL)",                     0.50),
     ("SSPJ",     "Sociétés sans personnalité juridique",                               0.00),
     ("SYNDIC",   "Syndicat de copropriété",                                             0.10),
+    # ── Formes anglophones / Afrique du Sud ──
+    ("PART",     "Partenariat",                                                         0.20),
+    ("PTY_LTD",  "(Pty) Ltd",                                                           0.50),
+    ("NPC",      "Société à but non lucratif (SBN)",                                   0.10),
+    ("CC",       "Close Corporation (CC)",                                              0.50),
+    ("JV",       "Joint Venture (JV)",                                                  0.30),
 ]
 
 
