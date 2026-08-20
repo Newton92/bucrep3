@@ -96,7 +96,8 @@ class Command(BaseCommand):
                     ScoringSansBilanAcheteur.objects.filter(forme_juridique_id__in=loser_ids).update(
                         forme_juridique=winner
                     )
-                    # Colonne nouvelle_forme_juridique_id (utilitaires — peut ne pas exister)
+                    # Colonne nouvelle_forme_juridique_id (peut ne pas exister en DB)
+                    sp = transaction.savepoint()
                     try:
                         with connection.cursor() as cur:
                             cur.execute(
@@ -105,8 +106,9 @@ class Command(BaseCommand):
                                 "WHERE nouvelle_forme_juridique_id = ANY(%s)",
                                 [winner.id, loser_ids],
                             )
+                        transaction.savepoint_commit(sp)
                     except Exception:
-                        pass
+                        transaction.savepoint_rollback(sp)
 
                     # Hard-delete (bypass SafeDelete)
                     FormeJuridique.all_objects.filter(id__in=loser_ids).delete()
