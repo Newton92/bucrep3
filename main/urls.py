@@ -1019,6 +1019,11 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path("validateur-dashboard/", dash_validateur, name="dash_validateur"),
+    path(
+        "validateur-dashboard/emailing/rapports/",
+        dash_validateur_emailing_rapports,
+        name="dash_validateur_emailing_rapports",
+    ),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR VALIDATEUR                                                                                       #
