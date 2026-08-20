@@ -15,7 +15,7 @@ Usage :
 """
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import connection, transaction
 
 from main.models import (
     Acheteur,
@@ -23,12 +23,6 @@ from main.models import (
     FormeJuridique,
     ScoringSansBilanAcheteur,
 )
-
-try:
-    from main.utilitaires.models import DonneesEnregistrement as UtilDonneesEnreg
-    HAS_UTIL = True
-except ImportError:
-    HAS_UTIL = False
 
 # Codes considérés comme « canoniques » (issus de import_forme_juridique.py)
 CODES_STANDARDS = {
@@ -102,10 +96,17 @@ class Command(BaseCommand):
                     ScoringSansBilanAcheteur.objects.filter(forme_juridique_id__in=loser_ids).update(
                         forme_juridique=winner
                     )
-                    if HAS_UTIL:
-                        UtilDonneesEnreg.objects.filter(
-                            nouvelle_forme_juridique_id__in=loser_ids
-                        ).update(nouvelle_forme_juridique=winner)
+                    # Colonne nouvelle_forme_juridique_id (utilitaires — peut ne pas exister)
+                    try:
+                        with connection.cursor() as cur:
+                            cur.execute(
+                                "UPDATE main_donneesenregistrement "
+                                "SET nouvelle_forme_juridique_id = %s "
+                                "WHERE nouvelle_forme_juridique_id = ANY(%s)",
+                                [winner.id, loser_ids],
+                            )
+                    except Exception:
+                        pass
 
                     # Hard-delete (bypass SafeDelete)
                     FormeJuridique.all_objects.filter(id__in=loser_ids).delete()
