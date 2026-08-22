@@ -1721,7 +1721,7 @@
         }
 
         var globalNotificationRetries = 0;
-        var GLOBAL_NOTIF_MAX_RETRIES  = 3;
+        var GLOBAL_NOTIF_MAX_RETRIES  = 0;  /* no retry — WS proxy not yet configured server-side */
 
         function connectGlobalNotifications() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -2385,6 +2385,25 @@
         window.addEventListener('resize', function () {
             document.querySelectorAll('.modal.show').forEach(fixModalBodyHeight);
         });
+
+        /* Bootstrap 5 sets aria-hidden="true" on <main> when a modal opens because
+           <main> is a body-level element. But modals live inside <main>, so the
+           focused modal element ends up with an aria-hidden ancestor — which the
+           browser blocks and warns about. Removing it immediately via MutationObserver
+           keeps the DOM clean without any timing gap. */
+        (function () {
+            var mainEl = document.querySelector('main');
+            if (!mainEl) return;
+            new MutationObserver(function (mutations) {
+                for (var i = 0; i < mutations.length; i++) {
+                    if (mutations[i].attributeName === 'aria-hidden' &&
+                            mainEl.getAttribute('aria-hidden') === 'true') {
+                        mainEl.removeAttribute('aria-hidden');
+                        break;
+                    }
+                }
+            }).observe(mainEl, { attributes: true, attributeFilter: ['aria-hidden'] });
+        })();
     })();
     </script>
 </body>
