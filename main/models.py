@@ -3474,13 +3474,14 @@ class AntecedantsJuridique(Model):
     
     @property
     def commentaire_preview(self):
-        """Retourne un aperçu du commentaire (100 premiers caractères)"""
-        if self.commentaire:
-            if len(self.commentaire) > 100:
-                return self.commentaire[:100] + '...'
-            return self.commentaire
-        return ''
-    
+        """Retourne un aperçu en texte brut (sans HTML ni images)."""
+        if not self.commentaire:
+            return ''
+        import re
+        text = re.sub(r'<[^>]+>', ' ', self.commentaire)
+        text = ' '.join(text.split())
+        return text[:100] + '…' if len(text) > 100 else text
+
     def get_antecedent_summary(self):
         """Retourne un résumé de l'antécédent"""
         antecedents = []

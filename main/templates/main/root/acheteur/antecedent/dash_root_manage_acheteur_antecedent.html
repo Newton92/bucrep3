@@ -482,8 +482,13 @@ $(document).ready(function() {
         }
         $.each(list, function(i, a) {
             var checked = selectedAntecedents.has(String(a.id)) ? 'checked' : '';
-            var rawComment = (a.commentaire_preview || '').replace(/<[^>]+>/g, '').trim();
-            var commentTxt = rawComment ? (rawComment.length > 50 ? rawComment.substring(0, 50) + '…' : rawComment) : '<span class="text-muted">—</span>';
+            var rawComment = (function(html) {
+                var d = document.createElement('div');
+                d.innerHTML = html || '';
+                d.querySelectorAll('img, video, iframe, svg').forEach(function(el) { el.remove(); });
+                return (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim();
+            })(a.commentaire_preview || a.commentaire || '');
+            var commentTxt = rawComment ? (rawComment.length > 60 ? rawComment.substring(0, 60) + '…' : rawComment) : '<span class="text-muted">—</span>';
             tbody.append(
                 '<tr data-id="' + a.id + '">' +
                 '<td><input class="form-check-input row-checkbox" type="checkbox" data-id="' + a.id + '" ' + checked + '></td>' +

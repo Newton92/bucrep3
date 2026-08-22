@@ -551,38 +551,77 @@ $(document).ready(function () {
         $('#longitude_visible').val(lngR);
     }
 
-    // ── Quill ──
+    // ── Quill : formats et barre d'outils complète ──
+    (function() {
+        var Size = Quill.import('attributors/style/size');
+        Size.whitelist = ['10px','11px','12px','13px','14px','16px','18px','20px','24px','28px','32px','36px'];
+        Quill.register(Size, true);
+        var Font = Quill.import('attributors/class/font');
+        Font.whitelist = ['arial','georgia','verdana','trebuchet','courier','times'];
+        Quill.register(Font, true);
+    })();
+
     var QUILL_TOOLBAR = [
-        [{ 'size': ['10px','11px','12px','13px','14px','16px','18px','20px','24px','28px','32px','36px'] }],
-        [{header:[1,2,3,false]}],
-        ['bold','italic','underline','strike'],
-        [{color:[]},{background:[]}],
-        [{list:'ordered'},{list:'bullet'}],
-        ['link','blockquote'],['clean']
+        [{ 'font': [] }, { 'size': ['10px','11px','12px','13px','14px','16px','18px','20px','24px','28px','32px','36px'] }],
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'script': 'sub' }, { 'script': 'super' }],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'align': [] }],
+        [{ 'direction': 'rtl' }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'indent': '-1' }, { 'indent': '+1' }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        ['clean']
     ];
 
+    function makeQuillImageHandler(quill) {
+        return function() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.click();
+            input.onchange = function() {
+                var file = input.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var range = quill.getSelection(true);
+                    quill.insertEmbed(range ? range.index : 0, 'image', e.target.result);
+                    quill.setSelection((range ? range.index : 0) + 1);
+                };
+                reader.readAsDataURL(file);
+            };
+        };
+    }
+
     var descriptionQuill = new Quill('#descriptionEditor', {
-        theme:'snow',
-        placeholder:'{% trans "Description détaillée de l\'acheteur..." %}',
-        modules:{ toolbar: QUILL_TOOLBAR }
+        theme: 'snow',
+        placeholder: '{% trans "Description détaillée de l\'acheteur..." %}',
+        modules: { toolbar: { container: QUILL_TOOLBAR } }
     });
+    descriptionQuill.getModule('toolbar').addHandler('image', makeQuillImageHandler(descriptionQuill));
 
     var commentaireQuill = new Quill('#commentaireEditor', {
-        theme:'snow',
-        placeholder:'{% trans "Votre commentaire sur cet acheteur..." %}',
-        modules:{ toolbar: QUILL_TOOLBAR }
+        theme: 'snow',
+        placeholder: '{% trans "Votre commentaire sur cet acheteur..." %}',
+        modules: { toolbar: { container: QUILL_TOOLBAR } }
     });
+    commentaireQuill.getModule('toolbar').addHandler('image', makeQuillImageHandler(commentaireQuill));
 
-    function syncQuillSizePicker(quill, editorId) {
+    function syncQuillPickers(quill, editorId) {
         quill.on('selection-change', function(range) {
             if (!range) return;
             var fmt = quill.getFormat(range);
-            var lbl = document.querySelector('#' + editorId + ' .ql-size .ql-picker-label');
-            if (lbl) lbl.setAttribute('data-value', fmt.size || '');
+            var sizeLbl = document.querySelector('#' + editorId + ' .ql-size .ql-picker-label');
+            if (sizeLbl) sizeLbl.setAttribute('data-value', fmt.size || '');
+            var fontLbl = document.querySelector('#' + editorId + ' .ql-font .ql-picker-label');
+            if (fontLbl) fontLbl.setAttribute('data-value', fmt.font || '');
         });
     }
-    syncQuillSizePicker(descriptionQuill, 'descriptionEditor');
-    syncQuillSizePicker(commentaireQuill, 'commentaireEditor');
+    syncQuillPickers(descriptionQuill, 'descriptionEditor');
+    syncQuillPickers(commentaireQuill, 'commentaireEditor');
 
     // ── Remplissage ──
     function fillForm(a) {
