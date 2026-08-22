@@ -2501,7 +2501,19 @@ class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
 
 
 class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour l'ajout d'un antécédent - SIMPLIFIÉ"""
+    """Serializer pour l'ajout d'un antécédent - tous les champs optionnels sauf acheteur"""
+
+    dossier_faillite = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    jugement_cour = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    antecedant_redressement = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    Autre = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    commentaire = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = AntecedantsJuridique
         fields = [
@@ -2509,43 +2521,38 @@ class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'Autre',  # Utiliser 'Autre' directement
+            'Autre',
             'couleur_commentaire',
             'commentaire'
         ]
     
-    def validate(self, data):
-        fields_to_check = ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre']
-        if not any(data.get(field) for field in fields_to_check):
-            raise serializers.ValidationError({
-                'non_field_errors': 'Au moins un champ (dossier de faillite, jugement, redressement ou autre) doit être rempli.'
-            })
-        return data
-    
 
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour la modification d'un antécédent"""
-    # Ajouter un champ 'autre' qui pointe vers 'Autre'
+    """Serializer pour la modification d'un antécédent - tous les champs optionnels"""
+
+    dossier_faillite = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    jugement_cour = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    antecedant_redressement = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     autre = serializers.CharField(
         source='Autre',
         required=False,
         allow_blank=True,
-        allow_null=True
+        allow_null=True,
     )
-    
     couleur_commentaire = serializers.PrimaryKeyRelatedField(
         queryset=CouleurCommentaire.objects.all(),
         required=False,
-        allow_null=True
+        allow_null=True,
     )
-    
+    commentaire = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = AntecedantsJuridique
         fields = [
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'autre',  # Utiliser 'autre' ici
+            'autre',
             'couleur_commentaire',
             'commentaire'
         ]
