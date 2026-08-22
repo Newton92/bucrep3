@@ -871,21 +871,7 @@
         <meta charset="UTF-8">
     {% endblock %}
     
-    <!-- Correctif global : modal scrollable sur petits écrans.
-         Sélecteur double (.modal .modal-*) pour surpasser les !important locaux
-         des templates enfants qui ont la même spécificité. -->
-    <style>
-    .modal .modal-content {
-        max-height: 90vh !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    .modal .modal-body {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        flex: 1 1 auto !important;
-    }
-    </style>
+    {% comment %} scroll modal — géré en JS ci-dessous {% endcomment %}
 
     {% block styles %}{% endblock %}
 
@@ -2370,5 +2356,36 @@
     </script>
 
     {% block scripts %}{% endblock %}
+
+    <script>
+    /* Scroll global pour tous les modals Bootstrap sur petits écrans.
+       Calcule max-height du .modal-body à partir de l'espace réel disponible
+       sans toucher à overflow sur .modal-dialog / .modal-content (pour Select2). */
+    (function () {
+        function fixModalBodyHeight(modalEl) {
+            var body   = modalEl.querySelector('.modal-body');
+            if (!body) return;
+            var header = modalEl.querySelector('.modal-header');
+            var footer = modalEl.querySelector('.modal-footer');
+            var margin = 32; /* 2 × 16 px de marge Bootstrap */
+            var used   = (header ? header.offsetHeight : 0)
+                       + (footer ? footer.offsetHeight : 0)
+                       + margin;
+            var maxH   = Math.floor(window.innerHeight * 0.90) - used;
+            body.style.maxHeight  = Math.max(120, maxH) + 'px';
+            body.style.overflowY  = 'auto';
+            body.style.overflowX  = 'hidden';
+        }
+
+        document.addEventListener('shown.bs.modal', function (e) {
+            fixModalBodyHeight(e.target);
+        });
+
+        /* Recalcule si la fenêtre est redimensionnée pendant qu'un modal est ouvert */
+        window.addEventListener('resize', function () {
+            document.querySelectorAll('.modal.show').forEach(fixModalBodyHeight);
+        });
+    })();
+    </script>
 </body>
 </html>
