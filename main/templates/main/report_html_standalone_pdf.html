@@ -235,35 +235,39 @@
          .bank-entry {
          margin-bottom: 10px;
          page-break-inside: avoid;
-         }
-         .bank-table {
-         width: 100%;
-         border-collapse: collapse;
          border: 1px solid #b8cfe0;
+         border-radius: 5px;
+         overflow: hidden;
          }
-         .bank-table .bank-header {
+         .bank-name-header {
          background-color: #000066;
          color: white;
          font-weight: bold;
          font-size: 10pt;
-         padding: 5px 10px;
-         text-align: left;
+         padding: 5px 12px;
+         }
+         .bank-table {
+         width: 100%;
+         border-collapse: collapse;
          border: none;
+         margin-bottom: 0;
          }
          .bank-table .bank-label {
          font-weight: bold;
-         width: 32%;
+         width: 18%;
          padding: 3px 10px;
          background-color: #f0f4f9;
          border: 1px solid #d0dde8;
          vertical-align: top;
          text-align: right;
          white-space: nowrap;
+         font-size: 9pt;
          }
          .bank-table .bank-value {
          padding: 3px 10px;
          border: 1px solid #d0dde8;
          vertical-align: top;
+         font-size: 9pt;
          }
          /* Commentaires */
          .warning {
@@ -1334,35 +1338,25 @@
             {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
             {% for bank in banking_data.data_banks %}
             <div class="bank-entry">
+               <div class="bank-name-header">{{ bank.nom_banque|default:"&mdash;" }}</div>
                <table class="bank-table">
-                  <thead>
-                     <tr>
-                        <td colspan="2" class="bank-header">{{ bank.nom_banque|default:"&mdash;" }}</td>
-                     </tr>
-                  </thead>
                   <tbody>
-                     {% if bank.numero_compte %}
                      <tr>
                         <td class="bank-label">{% trans "Numéro de compte" %}</td>
-                        <td class="bank-value">{{ bank.numero_compte }}</td>
-                     </tr>
-                     {% endif %}
-                     {% if bank.type_relation %}
-                     <tr>
+                        <td class="bank-value">{{ bank.numero_compte|default:"&mdash;" }}</td>
                         <td class="bank-label">{% trans "Type de relation" %}</td>
-                        <td class="bank-value">{{ bank.type_relation }}</td>
+                        <td class="bank-value">{{ bank.type_relation|default:"&mdash;" }}</td>
                      </tr>
-                     {% endif %}
-                     {% if bank.numero or bank.rue or bank.ville or bank.code_postal %}
                      <tr>
                         <td class="bank-label">{% trans "Adresse" %}</td>
-                        <td class="bank-value">{{ bank.numero }} {{ bank.rue }}{% if bank.code_postal or bank.ville %}, {{ bank.code_postal }} {{ bank.ville }}{% endif %}</td>
+                        <td class="bank-value" colspan="3">
+                           {% if bank.numero or bank.rue or bank.ville or bank.code_postal %}{{ bank.numero }} {{ bank.rue }}{% if bank.code_postal or bank.ville %}, {{ bank.code_postal }} {{ bank.ville }}{% endif %}{% else %}&mdash;{% endif %}
+                        </td>
                      </tr>
-                     {% endif %}
                      {% if bank.commentaire %}
                      <tr>
                         <td class="bank-label">{% trans "Commentaire" %}</td>
-                        <td class="bank-value warning">{{ bank.commentaire|safe }}</td>
+                        <td class="bank-value warning" colspan="3">{{ bank.commentaire|safe }}</td>
                      </tr>
                      {% endif %}
                   </tbody>
