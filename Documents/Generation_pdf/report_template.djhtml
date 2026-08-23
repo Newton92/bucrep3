@@ -1,0 +1,2283 @@
+{% load static %}
+{% load report_extras %}
+{% load qr_code %}
+{% load i18n %}
+
+{% load humanize %}
+
+<html></html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      0me="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font-awesome/css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
+    <link rel="stylesheet" href="{% static 'iCheck/skins/flat/green.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-progressbar/css/bootstrap-progressbar-3.3.4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'google-code-prettify/bin/prettify.min.css' %}">
+    <link rel="stylesheet" href="{% static 'select2/dist/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'switchery/dist/switchery.min.css' %}">
+    <link rel="stylesheet" href="{% static 'starrr/dist/starrr.css' %}">
+
+
+    <link rel="stylesheet" href="{% static 'jqvmap/dist/jqvmap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-daterangepicker/daterangepicker.css' %}">
+
+
+    <link rel="stylesheet" href="{% static 'datatables.net-bs/css/dataTables.bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}">
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+
+    <script
+      src="https://code.jquery.com/jquery-2.2.4.js"
+      integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI="
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <title>BUCREP RAPPORT PDF</title>
+
+    <style>
+
+    /* styles.css */
+@font-face {
+  font-family: "AppSans";
+  src: url("templates/fonts/DejaVuSans.ttf") format("truetype"); /* ou OTF/WOFF/WOFF2 */
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "AppSans";
+  src: url("fonts/DejaVuSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: bold;
+}
+html, body { font-family: "AppSans", sans-serif; }
+
+/* Conseillé pour stabiliser les chiffres */
+:root { font-variant-numeric: lining-nums tabular-nums; }
+
+
+  .container{
+   background: url("https://backendbucrep.acremac.net/static/img/FILIGRANE.png");
+
+
+
+   /*background-repeat: repeat;*/
+   vertical-align: middle;
+   //background: #958A8A
+
+     }
+	   table  {
+	 	   width: 100%;
+	 	   line-height: normal;
+	   }
+
+	   .table_bilan td{
+	 	   padding-right: 10px;
+	 	   line-height: 2;
+            left: 10px;
+            margin:2px;
+
+	   }
+	   strong{
+	 	   margin-left: 15px;
+	   }
+
+	   h5{
+	 	   text-decoration: underline;
+	 	   margin-left: 0px;
+	 	   font-style: bold;
+	 	   font-size: 16px;
+	 	   margin-top: 15px;
+	 	   font-weight: 600;
+	   }
+	   b{
+	   font-style: bold;
+	   }
+
+     h3{
+	     font-size: 19px;
+	     padding: 5px;
+     }
+	   td {
+	 	   vertical-align: top;
+	   }
+
+     /*Risk Rating*/
+
+	   /* Float four columns side by side */
+     .column {
+       float: left;
+       width: 100%;
+       padding: 0 10px;
+       background:red;
+     }
+
+     /* Remove extra left and right margins, due to padding */
+     .row {margin: 0 -5px;}
+
+     /* Clear floats after the columns */
+     .row:after {
+       content: "";
+       display: table;
+       clear: both;
+     }
+
+
+
+     /* Responsive columns */
+     @media screen and (max-width: 60px) {
+       .column {
+         width: 100%;
+         display: block;
+         margin-bottom: 20px;
+       }
+     }
+
+     /* Style the counter cards */
+     .card {
+	     margin-top: 30px;
+	     margin-bottom: 30px;
+       box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+       padding: 16px;
+       text-align: center;
+       background-color: #f1f1f1;
+
+     }
+
+     .contenu {
+	     text-align:right;
+     }
+
+
+     #indic tr{height:22px;}#indic tr td:first-of-type{width:170px;}
+
+
+
+
+    .indibar,.indidot{position:relative;display:block;box-sizing:border-box;}
+    .indibar{
+      top:4px;border-radius:2px;height:12px;width:100%;background-image:linear-gradient(to right, #860000, #9A9203, #06572B);
+      background-image:-webkit-linear-gradient(left, #860000, #9A9203, #06572B);
+    }
+    .indidot{margin-top:-11px;width:10%;color:#blue;text-shadow:1px 1px 1px #333;text-align:center;font-size:20px;}
+
+
+
+    .std100 tr>*{text-align:left;}.std100 tr>*:last-of-type{text-align:right;}
+
+     h1{font-weight: 800; line-height: 50px; }
+
+     @page {
+
+
+       @top-left {
+         content: url("https://backendbucrep.acremac.net/static/img/header.png") ;
+         margin-left:-80px;
+         margin-bottom:15px
+       }
+
+       @top-center {
+       }
+
+       /* @top-right{
+          content: "{{entete_text|default_if_none:""}}  {{entete_text2|default_if_none:""}}";
+          margin-left:-80px;
+          margin-bottom:15px
+          }*/
+
+
+
+
+       @bottom-left {
+	       content: url("https://backendbucrep.acremac.net/static/img/footer_top.png");
+         margin-top :-30px
+
+       }
+
+       @bottom-right {
+
+
+       }
+       @bottom-center {
+    	   width:20%;
+         content: "Page " counter(page) " sur " counter(pages);
+         color:#3c285e
+       }
+
+     }
+
+     table.fixed-table
+     {
+       width:100%;
+       table-layout:fixed;
+     }
+
+     table.fixed-table td
+     {
+       /* white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;*/
+     }
+
+    </style>
+
+  </head>
+
+
+
+  <body style="">
+    <div class="container">
+      <div class="row mt-4">
+        <div class="col-12 text-center mb-4">
+          <img src="https://backendbucrep.acremac.net/static/img/Logo-acremac.jpg" alt="" style="width: 250px" />
+          {% qr_from_text url_qr size=2 image_format='png' %}
+        </div>
+      </div>
+		  <p id="grouped" width="400" height="225"></p>
+
+
+      <p class="" style="text-align:right; font-size: 11px">
+        © ACREMAC Services {{ acheteur.ville.pays }}<br />
+        email : <a href="mailto:credit.report@acremac.com">credit.report@acremac.com</a><br />
+        {% now 'l j Y H:i' %} (GMT)
+      </p>
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h1 style="font-family: ;"> {% trans "RAPPORT DE SOLVABILITE" %}</h1>
+        </div>
+      </div>
+
+
+      <br/>
+
+      {% if commande %}
+      <div  style="border: 1px solid #e4c010; border-radius:10px">
+
+        <table class="fixed-table">
+          <tr style="width:100%">
+            <td style="width:20%" class="contenu"  valign="center"><b>{% trans "Nom du client" %} :</b></td>
+            <td style="width:30%" valign="center">
+                {% if commande.type_commande == "NORMALE"%}
+                    {{ commande.client.first_name|default_if_none:"" }}
+                {% else %}
+                     {{ commande.client_nom|default_if_none:"" }}
+                {% endif %}
+            </td>
+
+            <td style="width:30%" class="contenu"  valign="center"><b>{% trans "Date réception demande" %} :</b></td>
+            <td style="width:30%"  valign="center">
+              {{ commande.date_recept_commande|default_if_none:"" }}
+            </td>
+          </tr>
+
+          <tr>
+
+            <td style="width:20%"  class="contenu"><b>{% trans "Référence client" %} :</b></td>
+            <td style="width:30%" >
+              {{ commande.reference_client|default_if_none:""}}
+            </td>
+
+            <td style="width:20%"  class="contenu"><b>{% trans "Date du rapport" %} :</b></td>
+            <td style="width:30%">
+               {{ commande.date_rapport|default_if_none:""}}
+            </td>
+
+          </tr>
+
+          <tr>
+            <td style="width:20%" class="contenu"><b>{% trans "Notre référence" %} :</b></td>
+            <td style="width:30%">
+              {{ commande.notre_ref|default_if_none:""}}
+            </td>
+
+            {% if commande.delais is not None %}
+              <td style="width:20%" class="contenu"><b>{% trans "Délais en jour" %} :</b></td>
+              <td style="width:30%">
+                {{ commande.delais}}
+              </td>
+            {% endif %}
+            </tr>
+
+
+
+             {% if commande.client.first_name == "ALLIANZ TRADE"%}
+
+                    <tr>
+                        <td style="width:20%" class="contenu"><b>{% trans "CIN" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.company_identification_number|default_if_none:""}}
+                        </td>
+
+                        <td style="width:20%" class="contenu"><b>{% trans "Address Additional" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.address_additional|default_if_none:""}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="width:20%" class="contenu"><b>{% trans "State" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.state|default_if_none:""}}
+                        </td>
+
+                        <td style="width:20%" class="contenu"><b>{% trans "Postcode" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.postcode|default_if_none:""}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="width:20%" class="contenu"><b>{% trans "Post office" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.post_office|default_if_none:""}}
+                        </td>
+
+                        <td style="width:20%" class="contenu"><b>{% trans "Provider" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.provider|default_if_none:""}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        {% if commande.type_rapport is not None %}
+                              <td width="25%" class="contenu"> <b>{% trans "Type de rapport" %} :</b></td>
+                              <td width="30%">
+                                {{ commande.type_rapport}}
+                              </td>
+                        {% endif %}
+
+                        <td style="width:20%" class="contenu"><b>{% trans "Comments" %} :</b></td>
+                        <td style="width:30%">
+                          {{ commande.comments|default_if_none:""}}
+                        </td>
+
+
+                    </tr>
+
+
+
+             {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </table>
+      </div>
+
+      {% endif %}
+      <br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "IDENTIFICATION" %}</strong></h3>
+        </div>
+      </div>
+
+      <br>
+
+            <div  style="border: 1px solid #e4c010; border-radius:10px">
+
+        {% if commande != None %}
+
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-12" style="margin-top: 10px"><h5><strong>{% trans "DONNEES DU CLIENT" %}</strong></h5></div>
+            </div>
+          </div>
+
+          <table>
+              <tr>
+                <td style=" width: 30%" class="contenu"><b>{% trans "Raison sociale" %} :</b></td>
+                <td style=" width: 70%">
+                  {{ commande.raison_sociale}}
+                </td>
+              </tr>
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Adresse" %} :</b> </td>
+                <td width="40%">
+                  {{ commande.numero_adresse|default_if_none:""}}
+                    {{ commande.rue_adresse|default_if_none:""}} {{ commande.code_postale_adresse|default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="15%" class="contenu"><b>{% trans "Ville" %} :</b></td>
+                <td width="35%">
+                  {{ commande.ville|default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Pays" %} :</b></td>
+                <td width="40%">
+                  {{ commande.ville.pays |default_if_none:""}}
+                </td>
+              </tr>
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Téléphone" %} :</b></td>
+                <td width="40%">
+                  {{ commande.telephone |default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Email" %} :</b></td>
+                <td width="40%">
+                  {{ commande.email |default_if_none:""}}
+                </td>
+              </tr>
+            {% endif %}
+          </table>
+          <br>
+
+
+
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><b>{% trans "DONNEES ACREMAC" %}</b></h5></div>
+          </div>
+        </div>
+
+        <table>
+
+            <tr>
+              <td style=" width: 30%" class="contenu"><b>{% trans "Raison sociale" %} :</b></td>
+              <td style=" width: 70%">
+                {{acheteur.nom}}
+              </td>
+            </tr>
+
+
+
+            <tr>
+              <td width="10%" class="contenu"><b>{% trans "Sigle" %} :</b></td>
+              <td width="40%">
+                {{acheteur.sigle|default_if_none:"" }}
+              </td>
+            </tr>
+
+            <tr>
+              <td width="10%" class="contenu"><b>{% trans "Numéro interne ACREMAC" %} :</b></td>
+              <td width="40%">
+                {{acheteur.id|default_if_none:"" }}
+              </td>
+            </tr>
+
+            {% for tel in telephone_acheteur %}
+                <tr>
+                  <td width="15%" class="contenu"><b>{% trans "Téléphone" %} {{ forloop.counter }} :</b></td>
+                  <td width="35%">
+                    {{tel.telephone|default_if_none:""}}
+                  </td>
+                </tr>
+
+            {% endfor %}
+
+
+
+
+              <tr>
+                <td width="15%" class="contenu"><b>{% trans "Adresse" %} : </b></td>
+                <td width="35%">
+                  {{ acheteur.numero_adresse|default_if_none:""}}
+                    {{ acheteur.rue_adresse|default_if_none:""}} {{ acheteur.code_postale_adresse|default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "BP" %} :</b></td>
+                <td width="40%">
+                  {{acheteur.boite_postale|default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="15%" class="contenu"><b>{% trans "Fax" %} :</b></td>
+                <td width="35%">
+                  {{ acheteur.fax|default_if_none:""}}
+                </td>
+              </tr>
+
+
+              {% if acheteur.region %}
+              <tr>
+                <td width="10%" class="contenu"><b>Region :</b></td>
+                <td width="40%">
+                  {{ acheteur.region |default_if_none:""}}
+                </td>
+              </tr>
+              {% endif %}
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Ville" %} :</b></td>
+                <td width="40%">
+                  {{ acheteur.ville |default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="15%" class="contenu"><b>{% trans "Site internet" %} : </b></td>
+                <td width="35%">
+                  {{ acheteur.site_internet |default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="10%" class="contenu"><b>{% trans "Pays" %} :</b> </td>
+                <td width="40%">
+                  {{ acheteur.ville.pays |default_if_none:""}}
+                </td>
+              </tr>
+
+
+              <tr>
+                <td style="width:15%" class="contenu"><b>{% trans "Code NACE" %} :</b></td>
+                <td style="width:75%">
+                  {{ acheteur.code_nace|default_if_none:""}}
+                </td>
+              </tr>
+
+            {% for port in portable_acheteur %}
+                <tr>
+                  <td width="15%" class="contenu"><b>{% trans "Portable" %} {{ forloop.counter }} :</b></td>
+                  <td width="35%">
+                    {{port.portable|default_if_none:""}}
+                  </td>
+                </tr>
+            {% endfor %}
+
+
+              {% for em in email_acheteur %}
+                <tr>
+                  <td width="15%" class="contenu"><b>{% trans "Email" %} {{ forloop.counter }} :</b></td>
+                  <td width="35%">
+                    {{em.email|default_if_none:""}}
+                  </td>
+                </tr>
+
+            {% endfor %}
+
+
+              <tr>
+                <td style=" width: 15%" class="contenu"><b>{% trans "Activité principale" %} : </b></td>
+                <td style=" width: 75%">
+                  <span style="style="text-align: justify; text-justify: inter-word">
+
+                    {% autoescape off %}
+                        {%  traduit acheteur.activite_principale  %}
+                    {% endautoescape %}
+
+                  </span>
+                </td>
+              </tr>
+        </table>
+
+          <br>
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12">
+                <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                <span style="color:{{acheteur.couleur_commentaire.code }};text-align: justify; text-justify: inter-word; width: 20%;">
+                  {% autoescape off %}
+                    {%  traduit acheteur.commentaire|default_if_none:""|linebreaksbr %}
+                  {% endautoescape %}
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+      </div>
+
+
+       <br>
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><b>{% trans "RÉSUMÉ" %}</b></h3>
+          </div>
+        </div>
+        <br>
+
+        {% with donnees_enregistrement=acheteur.donneesenregistrement_set.first %}
+          {% with resume=acheteur.resume_set.first %}
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+          <br>
+          <table>
+
+
+                <tr>
+                  <td style=" width: 15%"  class="contenu"><b>{% trans "Date de création" %} :</b></td>
+                  <td style=" width: 30%" >
+                    {{resume.date_creation|default_if_none:""}}
+                  </td>
+                </tr>
+                <tr>
+
+
+               <tr>
+                <td style=" width: 15%"  class="contenu"><b>{% trans "Capitaux propres" %} :</b></td>
+                <td style=" width: 30%" >
+                    {% if resume.capitaux_propre != None and resume.capitaux_propre != 0 %}
+                        <span>{{resume.capitaux_propre|default_if_none:""|intcomma}}&nbsp;&nbsp;{{resume.devise.code|default_if_none:""}}</span>
+                    {% endif %}
+                </td>
+                </tr>
+
+                <tr>
+                  <td width="15%" class="contenu para"><b>{% trans "Capital social" %} :</b></td>
+                  <td width="35%">
+                  {% if resume.capital_social != None or  resume.capital_social != 0 %}
+                    <span>{{resume.capital_social|default_if_none:""|intcomma}}&nbsp;&nbsp; {{resume.devise.code|default_if_none:""}}</span>
+                    {% endif %}
+                  </td>
+               <tr>
+
+
+                <tr>
+                  <td style=" width: 15%"  class="contenu"><b>{% trans "Nombre d'employés" %} :</b></td>
+                    <td style=" width: 28%" >
+
+                      <span>{{resume.nombre_employe|default_if_none:""|intcomma}}</span>
+                    </td>
+                </tr>
+
+
+                <tr>
+                  <td width="15%" class="contenu"><b>{% trans "Chiffre d'affaires" %} :</b></td>
+                   <td width="35%">
+                    {% if resume.chiffre_affaire != None and resume.chiffre_affaire != 0 %}
+                        <span>{{resume.chiffre_affaire|default_if_none:""|intcomma}}&nbsp;&nbsp;{{resume.devise.code|default_if_none:""}}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="15%" class="contenu"><b>{% trans "Résultat Net" %} :</b></td>
+                  <td width="35%">
+                    {% if resume.resultat_net != None and resume.resultat_net != 0 %}
+                        <span>{{resume.resultat_net|default_if_none:""|intcomma}}&nbsp;&nbsp;{{resume.devise.code|default_if_none:""}}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+
+
+              <tr>
+                <td style=" width: 15%"  class="contenu"><b>{% trans "Forme Juridique" %} :</b></td>
+                <td style=" width: 33%" >
+                  <span>{{donnees_enregistrement.forme_juridique|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+          </table>
+            <br>
+            <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{resume.couleur_commentaire.code }}; ">
+
+                  {% autoescape off %}
+                    {% traduit resume.commentaire|default_if_none:""|linebreaksbr %}
+                  {% endautoescape %}
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        </div>
+        {% endwith %}
+        {% endwith %}
+        <br>
+
+
+
+    <br>
+
+          <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+            <div class="col-12 text-center">
+              <h3><strong>{% trans "RISK RATING" %}</strong></h3>
+            </div>
+          </div>
+          <br>
+
+          <div style="border: 1px solid #e4c010; border-radius:10px">
+
+
+            <div class="col col-sm-12 col-md-12">
+
+                <div class="row">
+                  <div class="col col-sm-12">
+                    <center>
+                      <img src="https://backendbucrep.acremac.net/static/images/{{numRisk}}.svg" alt="" class="summary" style="width: 400px"/>
+                      <center/>
+                  </div>
+                </div>
+
+
+                <div class="row" width="100%">
+                  <div >
+                    <b style="color:#e3c111; margin-top: 30px;text-align: justify;" style="text-justify: inter-word;">{% trans "Analyse" %} :</b>
+                    <p style="text-align: justify;" style="text-justify: inter-word;">
+
+                    {% autoescape off %}
+                      {% traduit riskrating.analyse|linebreaksbr|default_if_none:"" %}
+                    {% endautoescape %}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="row" width="100%">
+                  <div >
+                    <b style="color:#e3c111; margin-top: 30px">{% trans "Interprétation" %} :</b>
+                    <p style="text-align: justify;" style="text-justify: inter-word;">
+                    {% autoescape off %}
+                      {% traduit riskrating.interpretation|linebreaksbr|default_if_none:"" %}
+                    {% endautoescape %}
+                    </p>
+                  </div>
+                </div>
+
+            </div>
+
+
+
+              <div class="">
+                <div class="row">
+                  <div class="col col-sm-12"><h5><b>{% trans "LIMITE DE CREDIT" %}</b></h5></div>
+                </div>
+              </div>
+              <table>
+                  <tr>
+                    <td style="width:  30%" class="contenu"><b>{% trans "Credit demandé" %} :</b></td>
+                    <td style="width:  65%">
+                      <span>{{ commande.credit_demande|default_if_none:"" |floatformat:"2"|intcomma}} &nbsp;&nbsp;{{ commande.devise_credit.code|default_if_none:""}}</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="width:  25%" class="contenu"><b>{% trans "Crédit recommandé" %} : </b></td>
+                    <td style="width:  65%">
+                      <span>{{commande.credit_recommande|default_if_none:"" |floatformat:"2"|intcomma}} &nbsp;&nbsp;{{ commande.devise_credit.code|default_if_none:""}}
+                      </span>
+                    </td>
+                  </tr>
+              </table>
+
+
+          {% for tend in tendance %}
+
+
+            <div class="">
+              <div class="row">
+                <div class="col col-sm-12"><h5><b>{% trans "TENDANCE" %}</b></h5></div>
+              </div>
+            </div>
+
+            <table>
+
+                <tr>
+                  <td width="25%" class="contenu"><b>{% trans "Avis commercial" %} :</b></td>
+                  <td width="70%;text-align: justify;" style="text-justify: inter-word;">
+
+                          <div><p style="color:{{ tend.avis_commercial.couleur }}">
+
+                            {% autoescape off %}
+                              {% trans tend.avis_commercial.libelle|default_if_none:''|linebreaksbr|safe %}
+                            {% endautoescape %}
+
+                        </p></div>
+
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="width:  30%" class="contenu"><b>{% trans "Plus d'informations sur la notation" %} </b></td>
+                  <td style="width:  70%;text-align: justify;" style="text-justify: inter-word;">
+                    <span style="text-align: justify;" style="text-justify: inter-word;"><b>:</b>
+                        {{ tend.plus_informations|default_if_none:""|linebreaksbr }}
+                     </span>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="width:  25%" class="contenu"><b>{% trans "Principaux concurrents" %} :</b></td>
+                  <td style="width:  65%;text-align: justify;" style="text-justify: inter-word;">
+                    <span style="text-align: justify;" style="text-justify: inter-word;">
+                    {% autoescape off %}
+                        {% traduit tend.principaux_concurrent|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                    </span>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="width:  25%" class="contenu"><b>{% trans "Presse/Medias" %} :</b></td>
+                  <td style="width:  65%;text-align: justify;" style="text-justify: inter-word;">
+                    <span style="text-align: justify;" style="text-justify: inter-word;">
+                    {% autoescape off %}
+                        {% traduit tend.presse_media|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                    </span>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="width:  25%" class="contenu"><b>{% trans "Alarmes" %} :</b></td>
+                  <td style="width:  65%;text-align: justify;" style="text-justify: inter-word;">
+                    <span>
+
+                            {{ tend.alarmes|default_if_none:""|linebreaksbr }}
+                    </span>
+                  </td>
+                </tr>
+
+            </table>
+
+                <div class="col">
+                  <div class="row">
+                    <div class="col col-sm-12">
+                      <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                      <div style="text-align: justify; text-justify: inter-word;color:{{tend.couleur_commentaire.code }};">
+                      {% autoescape off %}
+                        {% traduit tendance.commentaire|default_if_none:""|linebreaksbr %}
+                      {% endautoescape %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              {% endfor %}
+
+
+
+          </div>
+
+
+
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "DONNEES D'ENREGISTREMENT" %}</strong></h3>
+        </div>
+      </div>
+
+      <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><b>{% trans "FAITS MARQUANTS" %}</b></h5></div>
+          </div>
+        </div>
+
+          <div class="row">
+
+              <div class="" style="text-align: right; width: 30%;">
+                  <b>{% trans "Date de création" %} :</b>
+              </div>
+
+              <div class="" style="align-content: start; width: 70%;">
+                  <span>&nbsp;{{donnees_enregistrement.date_creation|default_if_none:""}}</span>
+              </div>
+
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                 <b> {% trans "Date de registre" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.date_registre|default_if_none:""}}</span>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                  <b>{% trans "Nom anterieur" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.nom_anterieur|default_if_none:""}}</span>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                  <b>{% trans "N°de registre de commerce" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.numero_registre_commerce|default_if_none:""}}</span>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                  <b>{% trans "N° Fiscal" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.numero_fiscale|default_if_none:""}}</span>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                  <b>{% trans "Statut du Registre" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.statut_registre|default_if_none:""}}</span>
+              </div>
+          </div>
+
+          <div class="row">
+              <div class=""  style="text-align: right; width: 30%;">
+                  <b>{% trans "Forme juridique" %} :</b>
+              </div>
+              <div class=""  style="text-align: start; width: 70%">
+                  <span>&nbsp;{{donnees_enregistrement.forme_juridique|default_if_none:""}}</span>
+              </div>
+          </div>
+
+           <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{donnees_enregistrement.couleur_commentaire.code }};">
+                    {% autoescape off %}
+                        {% traduit donnees_enregistrement.commentaire|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                    </div>
+                </div>
+              </div>
+            </div>
+
+        </div>
+
+
+
+          <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+            <div class="col-12 text-center">
+              <h3><strong>{% trans "ANTECEDANTS JURIDIQUES" %}</strong></h3>
+            </div>
+          </div>
+
+          <br>
+          <div style="border: 1px solid #e4c010; border-radius:10px">
+            {% with antecedants_juridique=acheteur.antecedantsjuridique_set.first %}
+            <table style="width:100%">
+
+                <tr>
+                  <td style=" width:30%" class="contenu"><b>{% trans "Dossiers de faillite" %} :</b></td>
+                  <td style="width:70%">
+                    <span>
+                    {% autoescape off %}
+                        {% traduit antecedants_juridique.dossier_faillite|default_if_none:"" %}
+                    {% endautoescape %}
+
+                    </span>
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" style=" width:30%" class="contenu"><b>{% trans "Jugements de la Cour" %} :</b></td>
+                  <td width="80%">
+                    <span>
+                    {% autoescape off %}
+                        {% traduit antecedants_juridique.jugement_cour|default_if_none:"" %}</span>
+                    {% endautoescape %}
+                  </td>
+                </tr>
+
+                  <tr>
+                    <td width="20%" style=" width:30%" class="contenu"><b>{% trans "Antécedents de redressement" %} :</b></td>
+                    <td width="80%">
+
+                      <span>
+                      {% autoescape off %}
+                        {% traduit antecedants_juridique.antecedant_redressement|default_if_none:"" %}
+                      {% endautoescape %}
+                      </span>
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td width="20%" style=" width:30%" class="contenu"><b>{% trans "Autre" %} :</b></td>
+                    <td width="80%">
+                      <span>
+                          {% autoescape off %}
+                            {% traduit antecedants_juridique.Autre|default_if_none:"" %}
+                          {% endautoescape %}
+                      </span>
+                    </td>
+                  </tr>
+            </table>
+
+                <br>
+                <div class="col">
+                  <div class="row">
+                    <p style="text-align: justify;" style="text-justify: inter-word;">
+                      <strong style="color:#e3c111">{% trans "Commentaire" %} :</strong>
+                      <!-- {{ antecedants_juridique.commentaire}} -->
+
+                      <span style="color:{{antecedants_juridique.couleur_commentaire.code }}">
+                      {% autoescape off %}
+                        {% traduit antecedants_juridique.commentaire|default_if_none:""|linebreaksbr %}
+                      {% endautoescape %}
+                    </span>
+
+                    </p>
+                  </div>
+                </div>
+            {% endwith %}
+            <br>
+          </div>
+
+
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "GESTION ET PERSONNEL" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+
+          {% for field in gestion_personnelle %}
+              <table>
+
+                  <tr>
+                    <td  style=" width: 30%"  class="contenu"><b> {% trans "NOM(S) & PRENOM(S)" %} :</b></td>
+                    <td style=" width: 70%">
+                      <span>{{field.nom|default_if_none:""}} {{field.prenom |default_if_none:""}}</span>
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td width="20%" class="contenu"><b>{% trans "POSTE" %} :</b></td>
+                    <td width="80%">
+                      <span>{{field.poste|default_if_none:""}}</span>
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td width="20%" class="contenu"><b>{% trans "NATIONALITE" %} :</b></td>
+                    <td width="80%">
+                      <span>
+                          {% autoescape off %}
+                            {% traduit field.nationalite|default_if_none:"" %}
+                           {% endautoescape %}
+                      </span>
+                    </td>
+                  </tr>
+
+
+          </table>
+
+          <br>
+
+
+            <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+                    {% autoescape off %}
+                      {% traduit field.commentaire|default_if_none:""|linebreaksbr %}</div>
+                   {% endautoescape %}
+                </div>
+              </div>
+            </div>
+
+
+
+                <br>
+
+           {% endfor %}
+          </div>
+
+
+
+      <br/>
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+
+          <div class="col-12 text-center mb-4">
+            <img src="https://backendbucrep.acremac.net/static/img/{{management_statg}}" alt="" class="summary" style="width: 400px"/>
+          </div>
+
+
+          <hr>
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-12"><h5><strong>{% trans "CONSEIL D'ADMINISTRATION" %}</strong></h5></div>
+            </div>
+          </div>
+
+
+          {% for field in conseil_administration %}
+            <table>
+              <tr>
+                <td style="width:30%"  class="contenu"><b> {% trans "Nom" %} :</b></td>
+                <td style="width:70%">
+                  <span>{{field.nom|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td width="20%" class="contenu"><b>{% trans "Fonction" %} :</b></td>
+                <td width="80%">
+                  <span>{{field.fonction_dans_le_conseil|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td width="20%" class="contenu"><b>{% trans "Adresse" %} :</b></td>
+                <td width="80%">
+                  <span>{{field.numero_adresse|default_if_none:""}}  {{field.rue_adresse|default_if_none:""}} {{field.code_postale_adresse|default_if_none:"" }}</span>
+                </td>
+              </tr>
+
+
+            </table>
+
+
+
+            <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+                    {% autoescape off %}
+                      {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                   {% endautoescape %}
+                </div>
+                </div>
+              </div>
+            </div>
+
+
+            <br>
+            {% endfor %}
+      </div>
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><b>{% trans "CAPITAL SOCIAL" %}</b></h3>
+        </div>
+      </div>
+      <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><b>{% trans "COMPOSITION" %}</b></h5></div>
+          </div>
+        </div>
+        {% with capital_social=acheteur.compositioncapitalsocial_set.first %}
+        <table>
+
+            <tr>
+              <td  style=" width: 30%"  class="contenu"><b> {% trans "Capital émis" %} :</b></td>
+              <td  style=" width: 70%" >
+
+                <span>{{capital_social.emis|floatformat:"0"|intcomma}} &nbsp;&nbsp;  {{capital_social.devise.code |default_if_none:""}}</span>
+              </td>
+            </tr>
+
+            <tr>
+              <td width="20%" class="contenu"><b>{% trans "Capital Publié" %} :</b></td>
+              <td width="80%">
+
+                <span>  {{capital_social.publie |floatformat:"0"|intcomma}} &nbsp;&nbsp; {{capital_social.devise.code|default_if_none:""}}</span>
+              </td>
+            </tr>
+
+
+             <tr>
+              <td width="20%" class="contenu"><b>{% trans "Capital Libéré" %} :</b></td>
+              <td width="80%">
+
+                <span>{{capital_social.libere |floatformat:"0"|intcomma}} &nbsp;&nbsp; {{ capital_social.devise.code|default_if_none:""}}</b>
+              </td>
+            </tr>
+
+        </table>
+
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12">
+                <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                <div style="text-align: justify; text-justify: inter-word;color:{{capital_social.couleur_commentaire.code }};">
+                  {% autoescape off %}
+                    {% traduit capital_social.commentaire|default_if_none:""|linebreaksbr %}
+                  {% endautoescape %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endwith %}
+        <br>
+      </div>
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "ACTIONNARIAT / PROPRIÉTAIRES" %}</strong></h3>
+        </div>
+      </div>
+      <br>
+
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><strong>{% trans "COMPOSITION" %}</strong></h5></div>
+          </div>
+        </div>
+
+          {% for field in acheteur.compositionaction_set.all %}
+           <table>
+
+                <tr>
+                  <td style=" width: 30%"   class="contenu"><b> {% trans "Nom" %} : </b></td>
+                  <td style=" width: 80%"  >
+                    <span>{{field.nom|default_if_none:""}}</span>
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"> <b>{% trans "Prénom" %} : </b></td>
+                  <td width="80%">
+                    <span>{{field.prenom|default_if_none:""}}</span>
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "% part social / actions" %} : </b></td>
+                  <td width="80%">
+                    <span>{{field.pourcentage|default_if_none:"" |floatformat:"2"|intcomma}}</span>
+                  </td>
+                </tr>
+
+                </table><br>
+
+
+
+            <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+                    {% autoescape off %}
+                      {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+
+
+      </div>
+
+
+
+        <br>
+
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "AFFILIATIONS CORPORATIVES" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-12"><h5><strong>{% trans "LIEN AVEC D'AUTRES SOCIETES" %}</strong></h5></div>
+            </div>
+          </div>
+
+          {% for field in acheteur.structure_set.all %}
+          <table>
+
+
+              <tr>
+                <td style="width:30%" class="contenu"> <b>{% trans "Nom" %} : </b></td>
+                <td width="80%">
+                  <span>{{field.nom|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+
+              <tr>
+                <td style=" width: 20%" class="contenu"><b>{% trans "Type d'affiliation" %} : </b></td>
+                <td style=" width: 80%">
+                  <span>{{field.type_affiliation|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+
+              <tr>
+                <td width="20%" class="contenu"><b>{% trans "Adresse" %} : </b></td>
+                <td width="80%">
+                  <span>{{field.numero_adresse|default_if_none:""}}  {{field.rue_adresse|default_if_none:""}} {{field.code_postale_adresse|default_if_none:"" }}</span>
+                </td>
+              </tr>
+
+
+          </table>
+
+           <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+
+                    {% autoescape off %}
+                      {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                </div>
+                </div>
+              </div>
+            </div>
+
+             {% endfor %}
+          <br>
+        </div>
+
+
+
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "ANALYSE SECTORIELLE" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+          {% with analyse_sectorielle=acheteur.analysesectorielle_set.first %}
+
+              <div class="col">
+                <div class="row">
+                  <div class="col col-sm-12" style="color:; text-align: justify; text-justify: inter-word;">
+                    <b style="color:#e3c111; width:16%" >{% trans "Analyse Sectorielle" %} : </b><br/>
+                    <span style="color:; text-align: justify; text-justify: inter-word;">
+                    {% autoescape off %}
+                        {% traduit analyse_sectorielle.commentaire|default_if_none:""|linebreaksbr %}
+                    {% endautoescape %}
+                  </span>
+                  </div>
+                </div>
+              </div><br/>
+
+
+          {% endwith %}
+        </div>
+
+
+
+        {% for advice in  advice_av %}
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "CONSEILS D'ACREMAC" %} </strong></h3>
+        </div>
+      </div>
+      <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+
+
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12" style="color:; text-align: justify; text-justify: inter-word;">
+                <b style="color:#e3c111; width:16%" > {% trans "Points forts" %} :</b><br/>
+                <span style="color: black; text-align: justify; text-justify: inter-word;">
+                  {% autoescape off %}
+                    {% traduit advice.points_forts|default_if_none:""|linebreaksbr  %}
+                 {% endautoescape %}
+              </span>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12" style="color:; text-align: justify; text-justify: inter-word;">
+                <b style="color:#e3c111; width:16%" >{% trans "Points faibles" %} :</b><br/>
+                <span style="color:; text-align: justify; text-justify: inter-word;">
+                  {% autoescape off %}
+                    {% traduit advice.points_faibles|default_if_none:""|linebreaksbr  %}
+                  {% endautoescape %}
+              </span>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12" style="color:; text-align: justify; text-justify: inter-word;">
+                <b style="color:#e3c111; width:16%" >{% trans "Dynamisme à court terme" %} :</b><br/>
+                <span style="color:; text-align: justify; text-justify: inter-word;">
+                {% autoescape off %}
+                    {% traduit advice.dynamisme_court_terme|default_if_none:""|linebreaksbr %}
+                {% endautoescape %}
+              </span>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="col">
+            <div class="row">
+              <div class="col col-sm-12" style="color:; text-align: justify; text-justify: inter-word;">
+                <b style="color:#e3c111; width:16%" >{% trans "Risques potentiels à court terme" %} :</b><br/>
+                <span style="color:; text-align: justify; text-justify: inter-word;">
+                   {% autoescape off %}
+                    {% traduit advice.risque_potentiel_court_terme|default_if_none:""|linebreaksbr %}
+                  {% endautoescape %}
+              </span>
+              </div>
+            </div>
+          </div>
+
+        <br/>
+        {% endfor %}
+
+      </div>
+
+
+
+       {% for  geopo in geopolitics %}
+
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "RISQUE PAYS" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+
+        <div class="col" style="text-align: justify; text-justify: inter-word;">
+
+              <b style="color:#e3c111; width:16%" >{% trans "Données politiques" %} : </b><br/>
+              <span style="color:; text-align: justify; text-justify: inter-word;">
+
+                {% autoescape off %}
+                  {% traduit geopo.donnees_politiques|default_if_none:""|linebreaksbr  %}
+                {% endautoescape %}
+              </span>
+
+        </div>
+
+
+            <div class="col" style="text-align: justify; text-justify: inter-word;" >
+              <b style="color:#e3c111; width:16%" >{% trans "Indicateurs politiques" %} : </b><br/>
+
+
+                <table class="std100" id="indic">
+                  <tbody>
+                    <tr style="">
+                      <td >{% trans "Stabilité politique" %}: </td>
+                      <td class="contenu" style="height: 20px;"><div class="indibar"></div><div class="indidot" style="left:{{ stabilite_eco}}%;">◈</div></td>
+                    </tr>
+                    <tr>
+                      <td>{% trans "Etat de droit" %}:</td>
+                      <td><div class="indibar"></div><div class="indidot" style="left:{{etat_droit}}%;">◈</div></td>
+                    </tr>
+                    <tr>
+                      <td>{% trans "Efficacité" %}:</td>
+                      <td><div class="indibar"></div><div class="indidot" style="left:{{ efficacite}}%;">◈</div></td>
+                    </tr>
+
+                    <tr>
+                      <td>{% trans "Qualité réglementaire" %}:</td>
+                      <td><div class="indibar"></div><div class="indidot" style="left:{{ qualite}}%;">◈</div></td>
+                    </tr>
+                    <tr>
+                      <td>{% trans "Liberté d'expression" %}:</td>
+                      <td style="width: 70%"><div class="indibar"></div><div class="indidot" style="left:{{ liberte_expression}}%;">◈</div></td>
+                    </tr>
+
+                </tbody>
+            </table>
+          </div>
+
+          <div class="col" style="text-align: justify; text-justify: inter-word;" >
+                <b style="color:#e3c111; width:16%" >{% trans "Données économiques" %} : </b><br/>
+                <span style="color:; text-align: justify; text-justify: inter-word;">
+                  {% autoescape off %}
+                    {% traduit geopo.donnees_economiques|default_if_none:""|linebreaksbr  %}
+                  {% endautoescape %}
+                </span>
+          </div>
+
+        </div>
+        {% endfor %}
+
+
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "BANQUES & FINANCEMENTS" %}</strong></h3>
+        </div>
+      </div>
+      <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><strong>{% trans "BANQUIERS" %}</strong></h5></div>
+          </div>
+        </div>
+
+          {% for field in acheteur.banquier_set.all %}
+          <table>
+
+                <tr>
+                  <td style="width:30%" class="contenu"><b>{% trans "Nom" %} : </b></td>
+                  <td width="80%">
+                    {{field.nom_banque|default_if_none:""}}
+                  </td>
+                </tr>
+
+
+              <tr>
+                <td class="contenu"><b>{% trans "Adresse" %}  : </b></td>
+                <td width="80%" style="text-align: justify; text-justify: inter-word;">
+                  <span>{{field.numero_adresse|default_if_none:""}}  {{field.rue_adresse|default_if_none:""}} {{field.code_postale_adresse |default_if_none:""}}</span>
+                </td>
+              </tr>
+
+
+              <tr>
+                <td style=" width: 20%"  class="contenu"><b>{% trans "Type de relation" %} : </b></td>
+                <td style=" width: 80%">
+                  <span>{{field.type_relation|default_if_none:""}}</span>
+                </td>
+              </tr>
+
+
+                <tr>
+                  <td style=" width: 20%" class="contenu"><b>{% trans "Numéro de compte" %}  : </b></td>
+                  <td style=" width: 80%">
+                    <span>{{field.numero_compte|default_if_none:""}}</span>
+                  </td>
+                </tr>
+
+
+        </table>
+        <br>
+
+
+         <div class="col">
+              <div class="row">
+                <div class="col col-sm-12">
+                  <b style="color:#e3c111; width:16%" >{% trans "Commentaire" %} :</b><br/>
+                  <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+                  {% autoescape off %}
+                    {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                  {% endautoescape %}
+                </div>
+                </div>
+              </div>
+            </div>
+
+          {% endfor %}
+
+      </div>
+      <br>
+
+
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "COMPTES FINANCIERS" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-12"><h5><strong>{% trans "DESCRIPTION" %}</strong></h5></div>
+            </div>
+          </div>
+          {% for field in comptefinancier %}
+            <table>
+
+                <tr>
+                  <td width="20%" style="width:30%" class="contenu"> <b>{% trans "Requis pour déposer" %} : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %}  {{field.requis_pour_deposer|default_if_none:""}}{% endif %}
+                  </td>
+                </tr>
+
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Cabinet comptable" %} : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %}  {{field.cabinet|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Cabinet crédible pour ACREMAC" %} : </b></td>
+                  <td width="80%">
+                  {% if avec_bilan %}  {{field.credibilite_cabinet|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "La source" %} : </b></td>
+                  <td width="80%">
+                  {% if avec_bilan %}   {{field.source|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Présentation" %} : </b></td>
+                  <td width="80%">
+                   {% if avec_bilan %}  {{field.presentation|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Début comptes" %} N :</b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.date_compte|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Clôture comptes" %} N : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.date_fin|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Début comptes" %} N-1 : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.date_compte_n_moins_un|default_if_none:""}}{% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Clôture comptes" %} N-1 : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.date_fin_n_moins_un|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Début comptes" %} N-2 : </b></td>
+                  <td width="80%">
+                     {% if avec_bilan %} {{field.date_compte_n_moins_deux|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Clôture comptes" %} N-2 : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.date_fin_n_moins_deux|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Type de comptes" %} : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.type_compte|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td width="20%" class="contenu"><b>{% trans "Devise" %} : </b></td>
+                  <td width="80%">
+                    {% if avec_bilan %} {{field.devise|default_if_none:""}} {% endif %}
+                  </td>
+                </tr>
+
+            </table>
+
+
+              <div class="col">
+                <div class="row">
+                  <div class="col col-sm-12">
+                    <b style="color:#e3c111">{% trans "Commentaire" %} : </b><br/>
+                      <div style="text-align: justify; text-justify: inter-word;color:{{field.couleur_commentaire.code }}; ">
+                        {% autoescape off %}
+                          {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                        {% endautoescape %}
+                      </div>
+                   </div>
+                </div>
+              </div>
+
+
+
+
+          {%endfor%}
+
+
+
+
+          <br>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+    {%  if avec_bilan %}
+        {% if comptefinancier_num.type_bilan  %}
+          {% with "report/"|add:comptefinancier_num.type_bilan|add:".djhtml" as etats_financiers %}
+            {% include etats_financiers %}
+          {% endwith %}
+        {% endif %}
+    {% endif %}
+
+
+
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>SCORE@ACREMAC</strong></h3>
+        </div>
+      </div><br>
+      <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+
+        <div class="col col-sm-12">
+          <table>
+            <tr>
+              <td style="width:100%;text-align: justify; text-justify: inter-word;">
+                <p style="text-align: justify;" style="text-justify: inter-word;">
+                              {% trans "Ce score est généré automatiquement par bucrep à travers les sommations des éléments suivants :Le site locaux, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code Nace. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque. Cote de crédit :"%}
+                </p>
+                <p style="color:#5ab152"> {% trans "10- Sans risque" %}</p>
+                <p style="color:#7bc175"> {% trans "9- Risque très faible" %}</p>
+                <p style="color:#9cd097"> {% trans "8- Risque faible" %}</p>
+                <p style="color:#add8a9"> {% trans "7- Risque modéré" %}</p>
+                <p style="color:#cee8cb"> {% trans "6- Risque acceptable" %}</p>
+                <p style="color:#f19545"> {% trans "5- Risque moyennement élevé" %}</p>
+                <p style="color:#f7c033"> {% trans "4- Risque significatif" %}</p>
+                <p style="color:#f6bd8a"> {% trans "3- Risque important" %}</p>
+                <p style="color:#e93f33"> {% trans "2- Risque très important d'insolvabilité" %}</p>
+                <p style=""> {% trans "1- Risque extrêmement important d'insolvabilité" %}</p>
+                <p style=""> {% trans "0- Insolvabilité/Procédures de recouvrement" %}</p>
+
+
+              </td>
+            </tr>
+
+            <tr>
+              <td style="width:100%;text-align: justify; text-justify: inter-word;" >
+              </td>
+            </tr>
+
+          </table>
+
+        </div>
+
+
+        {% if annee %}
+          {% if annee_nn %}
+            <div style=" background-color: #000066; width: 30%;text-align:center; color: white">{% trans "SCORE AUTOMATIQUE" %} {{annee}}</div>
+            <img src="https://backendbucrep.acremac.net/static/scoring_automatique/{{scoring_automatique.0 |floatformat:'0' }}.png" style="width: 100%; height: auto;" />
+          {% endif %}
+
+          {% if annee_nn_moins_un %}
+            <div style=" background-color: #000066; width: 30%;text-align:center; color: white">{% trans "SCORE AUTOMATIQUE" %} {{annee|add:"-1"}}</div>
+            <img src="https://backendbucrep.acremac.net/static/scoring_automatique/{{scoring_automatique.1 |floatformat:'0' }}.png" style="width: 100%; height: auto;" />
+          {% endif %}
+
+          {% if annee_nn_moins_deux %}
+            <div style=" background-color: #000066; width: 30%;text-align:center; color: white">{% trans "SCORE AUTOMATIQUE" %} {{annee|add:"-2"}}</div>
+            <img src="https://backendbucrep.acremac.net/static/scoring_automatique/{{scoring_automatique.2 |floatformat:'0' }}.png" style="width: 100%; height: auto;" />
+          {% endif %}
+        {% endif %}
+
+
+       <br>
+      </div>
+
+
+
+
+      {% if sans_etat_fin %}
+        <div style=" background-color: #000066; width: 30%;text-align:center; color: white">{% trans "SCORE AUTOMATIQUE" %}</div>
+        <img src="https://backendbucrep.acremac.net/static/scoring_automatique/{{scoring_automatique.0 |floatformat:'0' }}.png" style="width: 100%; height: auto;" />
+      {% endif %}
+
+
+
+
+
+    {% if scoring_manuel %}
+    <br>
+    <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+
+        {% for score in scoring_manuel %}
+
+          {% if score.score %}
+            <div style=" background-color: #000066; width: 30%;text-align:center; color: white">{% trans "SCORE MANUEL" %} {{score.annee}}</div>
+            <img src="https://backendbucrep.acremac.net/static/scoring_automatique/{{score.score |floatformat:'0' }}.png" style="width: 100%; height: auto;" />
+          {% endif %}
+
+
+          {% if score.commentaire != '' %}
+            <div>
+              <p style="text-align: justify;" style="text-justify: inter-word;">
+                <strong style="color:#e3c111">{% trans "Commentaire" %}:</strong>
+                <div style="text-align: justify; text-justify: inter-word;">
+                   {% autoescape off %}
+                    {% traduit score.commentaire|default_if_none:""|linebreaksbr %}
+                   {% endautoescape %}
+                 </div>
+              </p>
+            </div>
+          {% endif %}
+
+         {% endfor %}
+         </div>
+
+    {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+
+      <div class="col-12 text-center">
+        <h3><strong>{% trans "OPERATIONS & HISTORIQUE" %}</strong></h3>
+      </div>
+    </div>
+    <br>
+    {% for op in acheteur.operationethistorique_set.all %}
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <br>
+
+
+            <div class="">
+              <div class="row">
+                <div class="col col-sm-12"><h5><b>{% trans "Activités" %} : </b></h5></div>
+              </div>
+            </div>
+
+            <table>
+              <tr>
+                <td style=" width: 22%" class="contenu"><b>{% trans "Description complète" %} :</b>  </td>
+                <td style=" width: 78%;text-align: justify; text-justify: inter-word;">
+                  <p style="text-align: justify; text-justify: inter-word;">
+                    {% autoescape off %}
+                      {% traduit op.description_complete_activite|default_if_none:""|linebreaksbr  %}
+                    {% endautoescape %}
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <div class="">
+              <div class="row">
+                <div class="col col-sm-12"><p><h5><b>{% trans "Achats" %}</b></h5></p></div>
+              </div>
+            </div>
+            <table>
+              <tr>
+                  <td style=" width: 22%" class="contenu"><b>{% trans "Import" %} :</b></td>
+                  <td style=" width: 78%">
+
+
+                      {% for val in op.importation.all %}
+                          <div><p>
+                            {% autoescape off %}
+                              {% trans val.libelle|default_if_none:''|linebreaksbr|safe %}
+                            {% endautoescape %}
+                        </p></div>
+                      {% endfor %}
+
+
+                  </td>
+              </tr>
+            </table>
+
+
+
+            <div class="">
+              <div class="row">
+                <div class="col col-sm-12"><p><h5><b>{% trans "Historique" %} ; </b></h5></p></div>
+              </div>
+            </div>
+            <div class="">
+              <div class="row">
+                <div class="col col-sm-12"><p>
+                {% autoescape off %}
+                  {% traduit op.historique|default_if_none:""|linebreaksbr %}
+                {% endautoescape %}
+              </p></div>
+              </div>
+            </div>
+
+
+        <br>
+      </div>
+    {% endfor %}
+    <br>
+
+
+
+    <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+      <div class="col-12 text-center">
+        <h3><strong>{% trans "PROPRIÉTÉ & ACTIFS" %}</strong></h3>
+      </div>
+    </div>
+    <br>
+    {% for p in acheteur.proprieteetactif_set.all %}
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <br>
+        <table>
+          <tr>
+            <td style="width:15%" class="contenu"><b>{% trans "Locaux" %} :</b></td>
+            <td style=" width: 85%;text-align: justify; text-justify: inter-word;">
+
+                {% for val in p.locaux.all %}
+                  <div><p>{% trans val.nom|default_if_none:'' %}</p></div>
+                {% endfor %}
+
+            </td>
+          </tr>
+          <tr>
+            <td style="width:15%" class="contenu"><b>{% trans "Branche" %} :</b></td>
+            <td style=" width: 85%;text-align: justify; text-justify: inter-word;">
+              <div><p>
+              {% autoescape off %}
+                {% traduit p.branche|default_if_none:""|linebreaksbr %}
+              {% endautoescape %}
+            </p></div>
+            </td>
+          </tr>
+        </table><br>
+      </div>
+    {% endfor %}
+    <br>
+
+
+
+     <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+      <div class="col-12 text-center">
+        <h3><strong>{% trans "PAIEMENTS" %}</strong></h3>
+      </div>
+    </div>
+    <br>
+    {% for c in acheteur.conditionachat_set.all %}
+      <div style="border: 1px solid #e4c010; border-radius:10px">
+        <br>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h5><strong>{% trans "Conditions d'achat" %} </strong></h5></div>
+          </div>
+        </div>
+        <table>
+    	    <tr>
+    		    <td width="32%" class="contenu"><b>{% trans "Local" %} :</b></td>
+    		    <td width="80%" style="text-align: justify; text-justify: inter-word;">
+
+
+              {% for val in c.local.all %}
+                  <div><p>{% trans val.nom|default_if_none:'' %}</p></div>
+              {% endfor %}
+
+
+    		    </td>
+    	    </tr>
+    	    <tr>
+    	      <td width="20%" class="contenu"><b>{% trans "Import" %} :</b></td>
+    		    <td width="80%" style="text-align: justify; text-justify: inter-word;">
+
+               {% for val in c.importation.all %}
+                  <div><p>{% trans val.nom|default_if_none:'' %}</p></div>
+              {% endfor %}
+
+    		    </td>
+    	    </tr>
+    	    <tr>
+    	 	    <td style="width:32%;" class="contenu"><b>{% trans "Clients" %} :</b></td>
+            <td style="width:68%;text-align: justify; text-justify: inter-word;">
+
+              {% autoescape off %}
+    			       {% traduit  c.les_clients|default_if_none:""|linebreaksbr %}
+              {% endautoescape %}
+
+    		    </td>
+    	    </tr>
+    	    <tr>
+    	 	    <td width="20%" class="contenu"><b>{% trans "Fournisseurs" %} :</b></td>
+    		    <td width="80%" style="text-align: justify; text-justify: inter-word;">
+              {% autoescape off %}
+                {{ c.fournisseur|linebreaksbr }}
+              {% endautoescape %}
+    		    </td>
+    	    </tr>
+        </table>
+    {% endfor %}
+    <br>
+
+
+
+    <div class="">
+      <div class="row">
+        <div class="col col-sm-12"><h5><strong>{% trans "Condition de vente" %}</strong></h5></div>
+      </div>
+    </div>
+    {% for c in acheteur.conditiondevente_set.all %}
+      <table>
+    	  <tr>
+    		  <td style="width:10%;"  class="contenu"><b>Local : </b></td>
+    		  <td style="width:90%;"  style="text-align: justify; text-justify: inter-word;">
+             {% for val in c.local.all %}
+                  <div><p>{% trans val.nom|default_if_none:'' %}</p></div>
+              {% endfor %}
+    		  </td>
+    	  </tr>
+        <tr>
+          <td style="width:32%;"  class="contenu"><strong>{% trans "Recouvrements de dette /Jugements" %} :</strong></td>
+          <td style="width:70%;" class="">
+            <span> {{c.recouvrement_de_dette_jugement|default_if_none:""}}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="width:30%;"  class="contenu"><strong>{% trans "Comportement de paiement" %}: </strong></td>
+          <td style="width:70%;" class="">
+            <span> {{c.comportement_de_paiement|default_if_none:""}}</span>
+          </td>
+        </tr>
+      </table>
+    {% endfor %}
+    <br>
+      </div>
+
+
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "CONCLUSION ET AVIS" %}</strong></h3>
+        </div>
+      </div>
+      <div  style="border: 1px solid #e4c010; border-radius:10px">
+        <div class="col col-sm-12">
+          <div class="row">
+            <p style="text-align: justify;" style="text-justify: inter-word;">
+              <b style="color:#e3c111">{% trans "Commentaire" %}</b>
+            </p>
+            <p style="color:{{field.couleur_commentaire.code }};text-align: justify; text-justify: inter-word; word-wrap: break-word; with:100%">
+                  {% for field in acheteur.sommaireetavis_set.all %}
+                  <span style="color:{{field.couleur_commentaire.code }}"> <br/>
+                    {% autoescape off %}
+                      {% traduit field.commentaire|default_if_none:""|linebreaksbr %}
+                    {% endautoescape  %}
+                 </span>
+                  {%endfor%}
+            </p>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "NOTES D'INVESTIGATION" %}</strong></h3>
+        </div>
+      </div>
+      <br/>
+      <div  style="border: 1px solid #e4c010; border-radius:10px"><br/>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h4><strong>{% trans "Sources" %}: </strong></h4></div>
+          </div>
+        </div>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h6><strong> - {% trans "Tribunal de commerce (registre du commerce)" %}</strong> </h6></div>
+          </div>
+        </div>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h6><strong> - {% trans "Chambres de commerce et métiers" %}</strong></h6></div>
+          </div>
+        </div>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h6><strong> - {% trans "Banques" %}</strong></h6></div>
+          </div>
+        </div>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h6><strong> - {% trans "Groupement de sociétés" %}</strong></h6></div>
+          </div>
+        </div>
+        <div class="">
+          <div class="row">
+            <div class="col col-sm-12"><h6><strong> - {% trans "La société a enquêté" %} </strong></h6></div>
+          </div>
+        </div><br/>
+      </div>
+      <br/>
+
+
+      <div  style="border: 1px solid #e4c010; border-radius:10px"><br/>
+        <div class="col-12 text-center">
+          <span>© ACREMAC</span>
+        </div> <br>
+
+        <div class="col col-sm-12">
+          <p style="text-align: justify;" style="text-justify: inter-word;">
+            {% trans "Nos renseignements sont confidentiels et ne peuvent être divulgues sous peine de dommages et intérêts. Acremac s'oblige à mettre en œuvre avec diligence les moyens dont elle dispose sans être tenue par des obligations de résultat." %}
+          </p>
+
+        </div></div><br>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <script type="text/javascript">
+
+
+
+
+
+     new Chart(document.getElementById("bar-chart-grouped"), {
+       type: 'bar',
+       data: {
+         labels: ["1900", "1950", "1999", "2050"],
+         datasets: [
+           {
+             label: "Africa",
+             backgroundColor: "#3e95cd",
+             data: [133,221,783,2478]
+           }, {
+             label: "Europe",
+             backgroundColor: "#8e5ea2",
+             data: [408,547,675,734]
+           },
+           {
+             label: "Asie",
+             backgroundColor: "#8e5e00",
+             data: [408,547,675,734]
+           }
+         ]
+       },
+       options: {
+         title: {
+           display: true,
+           text: 'Population growth (millions)'
+         }
+       }
+     });
+
+    </script>
+
+
+  </body>
+</html>

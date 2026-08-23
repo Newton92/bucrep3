@@ -1,0 +1,1257 @@
+{% load static %}
+{% load report_extras %}
+{% load qr_code %}
+{% load i18n %}
+
+{% load humanize %}
+
+
+
+
+    {% if annee %}
+      {% if actifs.0 %}
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "ACTIF" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+        <div style="border: 1px solid #e4c010; border-radius:10px">
+          <h5><strong>{% trans "ELEMENTS NETS DU BILAN ACTIF" %}</strong></h5> <br>
+          <table class="table_bilan">
+         	  <thead>
+         	    <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in actifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+    			    <tr>
+		    		    <td width="40%">{% trans "Capital sousc. non app" %}.</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.capital_souscrit_non_app|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color actifs.0 actifs.1 'capital_souscrit_non_app' %}">{% var actifs.0 actifs.1 'capital_souscrit_non_app' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <br>
+          <h5><strong>{% trans "ACTIF IMMOBILISE" %}</strong></h5>
+          <table class="table_bilan">
+         	  <thead>
+         	    <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in actifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+                <td width="40%">{% trans "Eléments incorporels" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.elements_incorporels|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style="color: {% var_color actifs.0 actifs.1 'elements_incorporels' %}">{% var actifs.0 actifs.1 'elements_incorporels' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab actifs 'frais_recherche_developpement' 'autres_immobilisations_incorporelles' %}
+              {% endautoescape%}
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "Eléments corporels" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.elements_corporels|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style="color: {% var_color actifs.0 actifs.1 'elements_corporels' %}">{% var actifs.0 actifs.1 'elements_corporels' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+              {% autoescape off %}
+		    	      {% tab actifs 'terrains' 'avances_et_acptes' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "Eléments financiers" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.elements_financiers|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"   style=" color: {% var_color actifs.0 actifs.1 'elements_financiers' %}">{% var actifs.0 actifs.1 'elements_financiers' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab actifs 'participations' 'autres' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL I</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.total_I|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color actifs.0 actifs.1 'total_I' %}">{% var actifs.0 actifs.1 'total_I' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <br>
+
+          <h5><strong>{% trans "ACTIF CIRCULANT" %}</strong></h5>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in actifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+    			    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td style="width: 30%;">{% trans "Stocks" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.stocks|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color actifs.0 actifs.1 'stocks' %}">{% var actifs.0 actifs.1 'stocks' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab actifs 'stocks_mp' 'stocks_mses' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "Créances" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.creances|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color actifs.0 actifs.1 'creances' %}">{% var actifs.0 actifs.1 'creances' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab actifs 'avances_acptes_verses' 'autres_creances' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "Disponibilités & Vmp" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.disponibilites_vmp|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color actifs.0 actifs.1 'disponibilites_vmp' %}">{% var actifs.0 actifs.1 'disponibilites_vmp' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab actifs 'valeurs_a_encaisser' 'banques_cheques_postaux_caisse' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL II</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.total_II|floatformat:"2"|intcomma}}</td>
+		    		      {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"   style=" color: {% var_color actifs.0 actifs.1 'total_II' %}">{% var actifs.0 actifs.1 'total_II' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+     		    </tbody>
+          </table>
+          <br>
+
+          <div class="row">
+            <div class="col col-sm-12"><h5><strong><U>{% trans "COMPTES DE REGUL" %}</U></strong></h5></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <thead>
+                <tr>
+                  <th  style="width: 32%;"></th>
+                  {% for a in actifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	      </tr>
+         	    </thead>
+         	  </thead>
+    		    <tbody>
+    			    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "Comptes de regul" %}</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.compte_regul|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"    style=" color: {% var_color actifs.0 actifs.1 'compte_regul' %}">{% var actifs.0 actifs.1 'compte_regul' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+              {% autoescape off %}
+		    	      {% tab actifs 'cca' 'eca' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL III</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.total_III|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color actifs.0 actifs.1 'total_III' %}">{% var actifs.0 actifs.1 'total_III' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+				      <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL GENERAL</td>
+                {% for a in actifs %}
+                  {% if a %}
+		    		        <td width="15%">{{a.general_total|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color actifs.0 actifs.1 'general_total' %}" >{% var actifs.0 actifs.1 'general_total' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <br>
+
+          <div class="row">
+            <div class="col col-sm-12"><h5><strong>{% trans "INFOS HORS BILAN" %}</strong></h5></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in actifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab actifs 'eene' 'provisions_vmp' %}
+              {% endautoescape%}
+    		    </tbody>
+          </table>
+</br>
+        </div>
+        </br>
+      {% endif %}
+      {% if passifs.0 %}
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "PASSIF" %}</strong></h3>
+          </div>
+        </div> <br>
+
+        <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+          <h5><strong>{% trans "ELEMENTS BILAN PASSIF" %}</strong></h5> <br>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in passifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+    			    <tr>
+		    		    <td style="width: 32%;">{% trans "CAPITAUX PROPRES" %}</td>
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab passifs 'capital_social' 'provision_regl' %}
+              {% endautoescape%}
+
+		    	    <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL I</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_I|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color passifs.0 passifs.1 'total_I' %}">{% var passifs.0 passifs.1 'total_I' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong>{% trans "DETTES FINANCIERES ET RESSOURCES" %}</strong></h5></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in passifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab passifs 'emprunts' 'provision_financiere_risque_charge' %}
+              {% endautoescape%}
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "TOTAL II | DETTES FINANCIERES" %}</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_II|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color passifs.0 passifs.1 'total_II' %}">{% var passifs.0 passifs.1 'total_II' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "TOTAL I + II | RESSOURCES STABLES" %}</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_I_II|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color passifs.0 passifs.1 'total_I_II' %}">{% var passifs.0 passifs.1 'total_I_II' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong>{% trans "PASSIF CIRCULANT" %}</strong></h5></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in passifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab passifs 'dettes_fournisseurs_divers' 'autres_dettes' %}
+              {% endautoescape%}
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL III</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_III|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"   style=" color: {% var_color passifs.0 passifs.1 'total_III' %}">{% var passifs.0 passifs.1 'total_III' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong>{% trans "TRESORERIE PASSIF" %}</strong></h5></div>
+          </div><br>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in passifs %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+		    	    </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab passifs 'banques_credit_escompte' 'banques_decouvert' %}
+              {% endautoescape%}
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL IV</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_IV|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color passifs.0 passifs.1 'total_IV' %}">{% var passifs.0 passifs.1 'total_IV' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab passifs 'ecart_conversion_passif' 'ecart_conversion_passif' %}
+              {% endautoescape%}
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "TOTAL GENERAL" %}</td>
+                {% for p in passifs %}
+                  {% if p %}
+		    		        <td width="15%">{{p.total_general|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color passifs.0 passifs.1 'total_general' %}">{% var passifs.0 passifs.1 'total_general' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+        </div>
+        <br>
+      {% endif %}
+
+      {% if resultats.0 %}
+        <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+          <div class="col-12 text-center">
+            <h3><strong>{% trans "COMPTE DE RESULTAT" %}</strong></h3>
+          </div>
+        </div>
+        <br>
+
+        <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+              </tr>
+         	  </thead>
+    		    <tbody>
+		    	    <div >
+		    		    <h5>{% trans "EXPLOITATION" %}</h5>
+		    	    </div>
+		    	    <tr>
+					      <td width="40%"><b>{% trans "Produits d'exploitation" %}</b></td>
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab resultats 'vente_de_mdses' 'production_imblise' %}
+              {% endautoescape%}
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >CA</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.ca|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'ca' %}">{% var resultats.0 resultats.1 'ca' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab resultats 'subventions_exploitations' 'autres_produits' %}
+              {% endautoescape%}
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >TOTAL I</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.total_I|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'total_I' %}">{% var resultats.0 resultats.1 'total_I' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab resultats 'achat_mdses' 'variation_stock_mdses' %}
+              {% endautoescape%}
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "MARGE BRUT" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.marge_brute|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color resultats.0 resultats.1 'marge_brute' %}">{% var resultats.0 resultats.1 'marge_brute' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <table class="table_bilan">
+            <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+              </tr>
+         	  </thead>
+            <tbody>
+              {% autoescape off %}
+		    	      {% tab resultats 'achat_mp_autres_appro' 'autres_charges_valeur_ajoutee' %}
+              {% endautoescape%}
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "VALEUR AJOUTÉE" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.valeur_ajoutee|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'valeur_ajoutee' %}">{% var resultats.0 resultats.1 'valeur_ajoutee' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+              {% autoescape off %}
+		    	      {% tab resultats 'charges_personnel' 'charges_personnel' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "EXCÉDENT BRUT D'EX" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.excedent_brut_ex|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'excedent_brut_ex' %}">{% var resultats.0 resultats.1 'excedent_brut_ex' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab resultats 'dotation_aux_amorts' 'autres_charges_excedent_brute' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "RÉSULTAT D'EXPLOITATION" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.resultat_exploitation|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'resultat_exploitation' %}">{% var resultats.0 resultats.1 'resultat_exploitation' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+            </tbody>
+          </table>
+
+          <div class="row" style="background-color: #3b275D; color: white;">
+            <div class="col col-sm-12 text-center"><h3><strong>{% trans "Résultat d'exploitation" %}</strong></h3></div>
+          </div>
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-4"><h5><strong>{% trans "FINANCIER" %}</strong></h5></div>
+            </div>
+          </div>
+
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+              </tr>
+         	  </thead>
+    		    <tbody>
+    			    <tr>
+		    		    <td width="40%"><b>{% trans "Produits financiers" %}</b></td>
+		    	    </tr>
+              {% autoescape off %}
+		    	      {% tab resultats 'revenus_fin_assimiles' 'prod_nets_cessions_vmp' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL I</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.financier_total_I|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'financier_total_I' %}">{% var resultats.0 resultats.1 'financier_total_I' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <div class="">
+            <div class="row">
+              <div class="col col-sm-4"><h5><strong><U>{% trans "Charges financières" %}</strong></U></div>
+                <div class="col col-sm-8"><h5></h5></div>
+            </div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+              </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab resultats 'dap' 'ch_nettes_cessions_vmp' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL II</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.financier_total_II|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color resultats.0 resultats.1 'financier_total_II' %}">{% var resultats.0 resultats.1 'financier_total_II' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%" >{% trans "RESULTAT FINANCIER (I-II)" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.resultat_financier|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'resultat_financier' %}">{% var resultats.0 resultats.1 'resultat_financier' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              <tr style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "RESULTAT COURANT AVANT IMPOTS" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.resultat_courant_avant_impots|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color resultats.0 resultats.1 'resultat_courant_avant_impots' %}">{% var resultats.0 resultats.1 'resultat_courant_avant_impots' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong>{% trans "EXCEPTIONNEL" %}L</strong></div>
+          </div>
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong><U>{% trans "Produits Exceptionnels" %}</U></strong></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+              </tr>
+         	  </thead>
+    		    <tbody>
+              {% autoescape off %}
+		    	      {% tab resultats 'sur_op_gestion_prod_except' 'reprise_prov_transfert' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL I</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.excep_total_I|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}{% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color resultats.0 resultats.1 'excep_total_I' %}">{% var resultats.0 resultats.1 'excep_total_I' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+    		    </tbody>
+          </table>
+          <div class="row">
+            <div class="col col-sm-4"><h5><strong><U>{% trans "Charges Exceptionnelles" %}</U></strong></div>
+          </div>
+          <table class="table_bilan">
+         	  <thead>
+              <tr>
+                <th  style="width: 32%;"></th>
+                {% for a in resultats %}<th style="width: 17%">FY {{ a.annee }}</th>{% if forloop.counter == 2 %}<th style="width: 17%">VAR</th>{% endif %}{% endfor %}
+         	    </tr>
+         	  </thead>
+            <tbody>
+    			    {% autoescape off %}
+		    	      {% tab resultats 'sur_op_gestion_charg_except' 'dap_et_transfert_charg_except' %}
+              {% endautoescape%}
+
+		    	    <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">TOTAL II</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.excep_total_II|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%" style=" color: {% var_color resultats.0 resultats.1 'excep_total_II' %}">{% var resultats.0 resultats.1 'excep_total_II' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+              <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "RESULTAT EXCEP (I - II)" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.resultat_excep|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'resultat_excep' %}">{% var resultats.0 resultats.1 'resultat_excep' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+              {% autoescape off %}
+		    	      {% tab resultats 'participation_salairies' 'impot_sur_benefices' %}
+              {% endautoescape%}
+
+              <tr  style="background-color: #e3c111 ; color : #000; font-weight: 700">
+		    		    <td width="40%">{% trans "RESULTAT EXERCICE" %}</td>
+                {% for r in resultats %}
+                  {% if r %}
+		    		        <td width="15%">{{r.resultat_exercice|floatformat:"2"|intcomma}}</td>
+                  {% else %}
+                    <td width="15%">0</td>
+                  {% endif %}
+                  {% if forloop.counter == 2 %}
+		    		        <td width="15%"  style=" color: {% var_color resultats.0 resultats.1 'resultat_exercice' %}">{% var resultats.0 resultats.1 'resultat_exercice' %} %</td>
+                  {% endif %}
+                {% endfor %}
+		    	    </tr>
+
+    		    </tbody>
+          </table>
+          <br>
+        </div>
+        <br>
+      {% endif %}
+
+      <div class="row mt-2" style="background-color: #000066; color: white;border-radius: 10px;">
+        <div class="col-12 text-center">
+          <h3><strong>{% trans "RATIOS" %}</strong></h3>
+        </div>
+      </div> <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+        <h5><strong>{% trans "STRUCTURE FINANCIERE" %}</strong></h5> <br>
+        <table class="table_bilan">
+         	<thead>
+         	  <tr>
+              <th  style="width: 32%;"></th>
+              <th style="width: 17%;">FY {{annee}}</th>
+
+
+              {% if annee_nn_moins_un %}
+                <th style="width: 17%;">FY {{annee|add:"-1"}}</th>
+              {% endif %}
+
+
+              {% if annee_nn and  annee_nn_moins_un %}
+                <th style="width: 17%;">VAR</th>
+              {% endif %}
+
+              {% if annee_nn_moins_deux %}
+                <th style="width: 17%;">FY {{annee|add:"-2"}}</th>
+              {% endif %}
+
+		    	  </tr>
+         	</thead>
+
+    	    <tbody>
+    			  <tr>
+		    		  <td style="width: 32%;">{% trans "Fonds de roulement" %}</td>
+		    		  
+              <td style="width: 17%;">{{ratio.fonds_de_roulement.0|floatformat:"2"|intcomma}}</td>
+		    		  
+              {% if annee_nn_moins_un %}
+                <td style="width: 17%;">{{ratio.fonds_de_roulement.1|floatformat:"2"|intcomma}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+                <td style="width: 17%; color: {% if ratio.fonds_de_roulement.var > 0 %}green{%elif ratio.fonds_de_roulement.var < 0  %} red {% endif %}">{{ratio.fonds_de_roulement.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} <td style="width: 17%;">{{ratio.fonds_de_roulement.2|floatformat:"2"|intcomma}} </td> {% endif %}
+		    	  </tr>
+		    	  
+
+
+            <tr>
+		    		  <td width="40%">{% trans "Fdr normatif" %}</td>
+		    		  <td width="15%">{{ratio.fdr_normatif.0|floatformat:"2"|intcomma}} </td>
+
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.fdr_normatif.1|floatformat:"2"|intcomma}} </td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.fdr_normatif.var > 0 %}green{%elif ratio.fdr_normatif.var < 0  %} red {% endif %}">{{ratio.fdr_normatif.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} <td width="15%">{{ratio.fdr_normatif.2| floatformat:"2"|intcomma}} </td> {% endif %}
+		    	  </tr>
+
+		    	  <tr>
+		    		  <td width="40%">{% trans "Autonomie financière" %}</td>
+		    		  <td width="15%">{{ratio.autonomie_fin.0| multiply:100|floatformat:"2"|intcomma}} %</td>
+
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.autonomie_fin.1| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%"  style="color: {% if ratio.autonomie_fin.var > 0 %}green{%elif ratio.autonomie_fin.var < 0  %} red {% endif %}">{{ratio.autonomie_fin.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} <td width="15%">{{ratio.autonomie_fin.2| multiply:100|floatformat:"2"|intcomma}} %</td> {% endif %}
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "Liquidité réduite" %}</td>
+		    		  <td width="15%">{{ratio.liquidite_reduite.0| multiply:100|floatformat:"2"|intcomma}} %</td>
+
+  		    		 {% if annee_nn_moins_un %} 
+                <td width="15%">{{ratio.liquidite_reduite.1| multiply:100|floatformat:"2"|intcomma}} %</td>
+               {% endif %}
+
+		    		  {% if annee_nn and  annee_nn_moins_un %}
+                <td width="15%" style="color: {% if ratio.liquidite_reduite.var > 0 %}green{%elif ratio.liquidite_reduite.var < 0  %} red {% endif %}">{{ratio.liquidite_reduite.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+		    		  
+              {% if annee_nn_moins_deux %} <td width="15%">{{ratio.liquidite_reduite.2| multiply:100|floatformat:"2"|intcomma}} %</td> {% endif %}
+
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "liquidité immédiate" %}</td>
+		    		  
+              <td width="15%">{{ratio.liquidite_immediate.0| multiply:100|floatformat:"2"|intcomma}} %</td>
+
+		    		  {% if annee_nn_moins_un %}
+                <td width="15%">{{ratio.liquidite_immediate.1| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.liquidite_immediate.var > 0 %}green{%elif ratio.liquidite_immediate.var < 0  %} red {% endif %}">{{ratio.liquidite_immediate.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.liquidite_immediate.2| multiply:100|floatformat:"2"|intcomma}} %</td> 
+              {% endif %}
+
+		    	  </tr>
+    		  </tbody>
+        </table>
+
+        <h5><strong>{% trans "RENTABILITE FINANCIERE" %}</strong></h5>
+
+        <table class="table_bilan">
+         	<thead>
+         	   <tr>
+              <th  style="width: 32%;"></th>
+              <th style="width: 17%;">FY {{annee}}</th>
+
+
+              {% if annee_nn_moins_un %}
+                <th style="width: 17%;">FY {{annee|add:"-1"}}</th>
+              {% endif %}
+
+
+              {% if annee_nn and  annee_nn_moins_un %}
+                <th style="width: 17%;">VAR</th>
+              {% endif %}
+
+              {% if annee_nn_moins_deux %}
+                <th style="width: 17%;">FY {{annee|add:"-2"}}</th>
+              {% endif %}
+
+            </tr>
+
+
+         	</thead>
+
+          <tbody>
+    			  <tr>
+		    		  <td style="width: 32%;">{% trans "C.A.F" %}</td>
+		    		  <td style="width: 17%;">{{ratio.caf.0|floatformat:"2"|intcomma}}</td>
+             
+              {% if annee_nn_moins_un %}
+		    		    <td style="width: 17%;">{{ratio.caf.1|floatformat:"2"|intcomma}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td style="width: 17%; color: {% if ratio.caf.var > 0 %}green{%elif ratio.caf.var < 0  %} red {% endif %}">{{ratio.caf.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %}  
+                <td style="width: 17%;">{{ratio.caf.2|floatformat:"2"|intcomma}}</td> 
+              {% endif %}
+		    	  </tr>
+
+		    	  <tr>
+		    		  <td width="40%">{% trans "C.A HT/salarié" %}</td>
+		    		  <td width="15%">{{ratio.caf_ht.0|floatformat:"2"|intcomma}}</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.caf_ht.1|floatformat:"2"|intcomma}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.caf_ht.var > 0 %}green{%elif ratio.caf_ht.var < 0  %} red {% endif %}">{{ratio.caf_ht.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %}  
+              <td width="15%">{{ratio.caf_ht.2|floatformat:"2"|intcomma}}</td> {% endif %}
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "Rentabilité économique" %}</td>
+		    		  <td width="15%">{{ratio.rentabilite_economique.0|multiply:100|floatformat:"2"|intcomma}} %</td>
+
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rentabilite_economique.1|multiply:100|floatformat:"2"|intcomma}} %</td>
+                
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.rentabilite_economique.var > 0 %}green{%elif ratio.rentabilite_economique.var < 0  %} red {% endif %}">{{ratio.rentabilite_economique.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %}  
+                <td width="15%">{{ratio.rentabilite_economique.2|multiply:100|floatformat:"2"|intcomma}} %</td> 
+              {% endif %}
+		    	  </tr>
+
+				    <tr>
+		    		  <td width="40%">{% trans "Rentabiilté financière" %}</td>
+		    		  <td width="15%">{{ratio.rentabilite_fin.0|multiply:100|floatformat:"2"|intcomma}} %</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rentabilite_fin.1|multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.rentabilite_fin.var > 0 %}green{%elif ratio.rentabilite_fin.var < 0  %} red {% endif %}">{{ratio.rentabilite_fin.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.rentabilite_fin.2|multiply:100|floatformat:"2"|intcomma}} %</td> 
+              {% endif %}
+		    	  </tr>
+
+				    <tr>
+		    		  <td width="40%">{% trans "Rentabiilté de l'outils de production" %}</td>
+		    		  <td width="15%">{{ratio.rentabilite_de_loutil_de_production.0|multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rentabilite_de_loutil_de_production.1|multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.rentabilite_de_loutil_de_production.var > 0 %}green{%elif ratio.rentabilite_de_loutil_de_production.var < 0  %} red {% endif %}">{{ratio.rentabilite_de_loutil_de_production.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.rentabilite_de_loutil_de_production.2|multiply:100|floatformat:"2"|intcomma}} %</td> 
+              {% endif %}
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "Couverture des frais financiers" %}</td>
+		    		  <td width="15%">{{ratio.couverture_des_frais_financiers.0|multiply:100|floatformat:"2"|intcomma}} %</td>
+             
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.couverture_des_frais_financiers.1|multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.couverture_des_frais_financiers.var > 0 %}green{%elif ratio.couverture_des_frais_financiers.var < 0  %} red {% endif %}">{{ratio.couverture_des_frais_financiers.var| multiply:100|multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.couverture_des_frais_financiers.2|multiply:100|floatformat:"2"|intcomma}} %</td> 
+              {% endif %}
+		    	  </tr>
+
+
+	        </tbody>
+		    </table>
+
+
+
+		    <h5><strong>{% trans "DELAIS(en jour)" %}</strong></h5>
+
+        <table class="table_bilan">
+         	<thead>
+         	   <tr>
+              <th  style="width: 32%;"></th>
+              <th style="width: 17%;">FY {{annee}}</th>
+
+
+              {% if annee_nn_moins_un %}
+                <th style="width: 17%;">FY {{annee|add:"-1"}}</th>
+              {% endif %}
+
+
+              {% if annee_nn and  annee_nn_moins_un %}
+                <th style="width: 17%;">VAR</th>
+              {% endif %}
+
+              {% if annee_nn_moins_deux %}
+                <th style="width: 17%;">FY {{annee|add:"-2"}}</th>
+              {% endif %}
+
+            </tr>
+
+
+         	</thead>
+
+          <tbody>
+
+		    	  <tr>
+		    		  <td style="width: 32%;">{% trans "Rotation des stocks de mp" %}</td>
+
+              
+		    		  <td style="width: 17%;">{{ratio.rotation_des_stock_de_mp.0|arroundDays}}</td>
+              
+
+              {% if annee_nn_moins_un %}
+    		    		  <td style="width: 17%;">{{ratio.rotation_des_stock_de_mp.1 |arroundDays}}</td>
+              {% endif %}
+
+
+              {% if annee_nn and  annee_nn_moins_un %}
+    		    		  <td style="width: 17%; color: {% if ratio.rotation_des_stock_de_mp.var > 0 %}green{%elif ratio.rotation_des_stock_de_mp.var < 0  %} red {% endif %}">{{ratio.rotation_des_stock_de_mp.var| multiply:100 |floatformat:"2"|intcomma }} %</td>
+              {% endif %}
+
+		    		 {% if annee_nn_moins_deux %}  
+                <td style="width: 17%;">{{ratio.rotation_des_stock_de_mp.2 |arroundDays}}</td> 
+             {% endif %}
+		    	  </tr>
+
+		    	  <tr>
+		    		  <td width="40%">{% trans "Rotation des stocks de PF" %}</td>
+		    		  <td width="15%">{{ratio.rotation_des_stock_de_pf.0|arroundDays}}</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rotation_des_stock_de_pf.1|arroundDays}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.rotation_des_stock_de_pf.var > 0 %}green{%elif ratio.rotation_des_stock_de_pf.var < 0  %} red {% endif %}">{{ratio.ratio.rotation_des_stock_de_pf.var| multiply:100 |floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+		    		 {% if annee_nn_moins_deux %}  
+              <td width="15%">{{ratio.rotation_des_stock_de_pf.2|arroundDays}}</td> 
+             {% endif %}
+		    	  </tr>
+
+		    	  <tr>
+		    		  <td width="40%">{% trans "Rotation des stocks de marchandises" %}</td>
+		    		  <td width="15%">{{ratio.rotation_des_stock_de_marchandises.0|arroundDays}}</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rotation_des_stock_de_marchandises.1|arroundDays}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+  		    		  <td width="15%" style="color: {% if ratio.rotation_des_stock_de_marchandises.var > 0 %}green{%elif ratio.rotation_des_stock_de_marchandises.var < 0  %} red {% endif %}">{{ratio.rotation_des_stock_de_marchandises.var| multiply:100 |floatformat:"2"|intcomma}} %
+                </td>
+              {% endif %}
+
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.rotation_des_stock_de_marchandises.2 |arroundDays}}</td> 
+              {% endif %}
+
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "Rotation des stocks de services" %}</td>
+		    		  <td width="15%">{{ratio.rotation_des_stock_de_services.0|arroundDays}}</td>
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.rotation_des_stock_de_services.1 |arroundDays}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+  		    		  <td width="15%"  style="color: {% if ratio.rotation_des_stock_de_services.var > 0 %}green{%elif ratio.rotation_des_stock_de_services.var < 0  %} red {% endif %}">{{ratio.rotation_des_stock_de_services.var| multiply:100 |floatformat:"2"|intcomma}} %
+                </td>
+              {% endif %}
+
+
+
+		    		  {% if annee_nn_moins_deux %} 
+                <td width="15%">{{ratio.rotation_des_stock_de_services.2|arroundDays}}</td> 
+              {% endif %}
+		    	  </tr>
+
+		    	  <tr>
+		    		  <td width="40%">{% trans "Crédit clients" %}</td>
+		    		  <td width="15%">{{ratio.credit_clients.0|arroundDays}}</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.credit_clients.1 |arroundDays}}</td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%" style="color: {% if ratio.credit_clients.var > 0 %}green{%elif ratio.credit_clients.var < 0  %} red {% endif %}">{{ratio.credit_clients.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+		    		  {% if annee_nn_moins_deux %} <td width="15%">{{ratio.credit_clients.2 |arroundDays}}</td> {% endif %}
+		    	  </tr>
+		    	  <tr>
+		    		  <td width="40%">{% trans "Crédits fournisseurs" %}</td>
+		    		  <td width="15%">{{ratio.credits_fournisseurs.0|arroundDays}}</td>
+              
+              {% if annee_nn_moins_un %}
+		    		    <td width="15%">{{ratio.credits_fournisseurs.1|arroundDays}} </td>
+              {% endif %}
+
+              {% if annee_nn and  annee_nn_moins_un %}
+		    		    <td width="15%"  style="color: {% if ratio.credits_fournisseurs.var > 0 %}green{%elif ratio.credits_fournisseurs.var < 0  %} red {% endif %}">{{ratio.credits_fournisseurs.var| multiply:100|floatformat:"2"|intcomma}} %</td>
+              {% endif %}
+
+
+		    		  {% if annee_nn_moins_deux %} <td width="15%">{{ratio.credits_fournisseurs.2|arroundDays}}</td> {% endif %}
+		    	  </tr>
+    		  </tbody>
+
+
+
+        </table>
+
+
+        <br>
+
+        <p style="text-align: justify;" style="text-justify: inter-word;">
+          <strong style="color:#e3c111">{% trans "Commentaire" %}:</strong>
+
+              {% for op in acheteur.operationethistorique_set.all %}
+                      <span> 
+                        {% autoescape off %}
+                          {% traduit op.commentaire_ratios|default_if_none:""|linebreaksbr  %}
+                        {% endautoescape %}
+
+                      </span>
+              {% endfor %}
+
+        </p>
+
+
+		  </div>
+
+      <br>
+      <div style="border: 1px solid #e4c010; border-radius:10px"><br>
+
+
+
+		    <div>
+			    <div class="col-12 text-center mb-12">
+				    <strong style="color:#e3c111">{% trans "Structure financière" %}</strong><br>
+				    <img src="https://backendbucrep.acremac.net/static/fichiers_ratios/{{acheteur.nom }}/str_fin.png"  class="summary" alt="" style="width: 700px" />
+
+
+          </div>
+
+			    <div>
+
+
+			      <div class="col-12 text-center mb-12">
+				      <strong style="color:#e3c111">{% trans "Rentabilité financière" %}</strong><br>
+			        <img src="https://backendbucrep.acremac.net/static/fichiers_ratios/{{acheteur.nom }}/renta_fin.png"  class="summary" alt="" style="width: 700px" />
+        	  </div>
+				    <div class="col-12 text-center mb-12">
+				      <strong style="color:#e3c111">{% trans "Délais" %}</strong><br>
+
+			        <img src="https://backendbucrep.acremac.net/static/fichiers_ratios/{{acheteur.nom }}/delais.png"  class="summary" alt="" style="width: 700px" />
+
+            </div>
+
+
+		      </div>
+
+        </div>
+      </div><br>
+    {% endif %}
+
+
+    <!-- <div class="row mt-2" style="background-color: #3b275D; color: white">
+         <div class="col-12 text-center">
+         <h3><strong>SCORING</strong></h3>
+         </div>
+         </div>
+
+
+         <table>
+         <tr>
+         <td style="width:100%;text-align: justify; text-justify: inter-word;"> 
+
+         Ce score est généré automatiquement par bucrep à travers les sommations des éléments suivants : Le site
+         locaux, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code Nace. Les éléments de la grille de score
+         ont été pondérés en fonction de leur degré d'importance dans le calcul du risque. Cote de crédit : 10
+         Risque excellent, 9 Risque très faible, 8 Risque faible, 7 Risque modéré, 6 Risque acceptable, 5 Risque moyennement élevé, 4 Risque important,
+         3 Risque élevé, 2 Risque très élevé d'insolvabilité, 1 Risque extrêmement élevé d'insolvabilité, 0 Insolvabilité/procédure préliminaire/dette
+         de règlement 
+
+         </td>
+
+         </tr>
+    -->
+
+
+    <!--if scoring_automatique and scoring_bilan==False-->
+
+
+    
