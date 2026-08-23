@@ -231,6 +231,40 @@
          .text-right {
          text-align: right;
          }
+         /* Bloc bancaire */
+         .bank-entry {
+         margin-bottom: 10px;
+         page-break-inside: avoid;
+         }
+         .bank-table {
+         width: 100%;
+         border-collapse: collapse;
+         border: 1px solid #b8cfe0;
+         }
+         .bank-table .bank-header {
+         background-color: #000066;
+         color: white;
+         font-weight: bold;
+         font-size: 10pt;
+         padding: 5px 10px;
+         text-align: left;
+         border: none;
+         }
+         .bank-table .bank-label {
+         font-weight: bold;
+         width: 32%;
+         padding: 3px 10px;
+         background-color: #f0f4f9;
+         border: 1px solid #d0dde8;
+         vertical-align: top;
+         text-align: right;
+         white-space: nowrap;
+         }
+         .bank-table .bank-value {
+         padding: 3px 10px;
+         border: 1px solid #d0dde8;
+         vertical-align: top;
+         }
          /* Commentaires */
          .warning {
          font-weight: normal;
@@ -1300,34 +1334,37 @@
             {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
             {% for bank in banking_data.data_banks %}
             <div class="bank-entry">
-               <table>
+               <table class="bank-table">
+                  <thead>
+                     <tr>
+                        <td colspan="2" class="bank-header">{{ bank.nom_banque|default:"&mdash;" }}</td>
+                     </tr>
+                  </thead>
                   <tbody>
+                     {% if bank.numero_compte %}
                      <tr>
-                        <th style="vertical-align:top;">{% trans "Nom de la banque" %}</th>
-                        <td>{{ bank.nom_banque }}</td>
+                        <td class="bank-label">{% trans "Numéro de compte" %}</td>
+                        <td class="bank-value">{{ bank.numero_compte }}</td>
                      </tr>
+                     {% endif %}
+                     {% if bank.type_relation %}
                      <tr>
-                        <th style="vertical-align:top;">{% trans "Numéro de compte" %}</th>
-                        <td>{{ bank.numero_compte }}</td>
+                        <td class="bank-label">{% trans "Type de relation" %}</td>
+                        <td class="bank-value">{{ bank.type_relation }}</td>
                      </tr>
+                     {% endif %}
+                     {% if bank.numero or bank.rue or bank.ville or bank.code_postal %}
                      <tr>
-                        <th style="vertical-align:top;">{% trans "Type de relation" %}</th>
-                        <td>{{ bank.type_relation }}</td>
+                        <td class="bank-label">{% trans "Adresse" %}</td>
+                        <td class="bank-value">{{ bank.numero }} {{ bank.rue }}{% if bank.code_postal or bank.ville %}, {{ bank.code_postal }} {{ bank.ville }}{% endif %}</td>
                      </tr>
+                     {% endif %}
+                     {% if bank.commentaire %}
                      <tr>
-                        <th style="vertical-align:top;">{% trans "Adresse" %}</th>
-                        <td>
-                           {% if bank.numero  or bank.rue  or bank.ville  or bank.code_postal  %}
-                           {{ bank.numero }} {{ bank.rue }},
-                           {{ bank.code_postal }} {{ bank.ville }}
-                           {% else %}
-                           {% endif %}
-                        </td>
+                        <td class="bank-label">{% trans "Commentaire" %}</td>
+                        <td class="bank-value warning">{{ bank.commentaire|safe }}</td>
                      </tr>
-                     <tr>
-                        <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
-                        <td class="warning">{{ bank.commentaire|safe }}</td>
-                     </tr>
+                     {% endif %}
                   </tbody>
                </table>
             </div>
