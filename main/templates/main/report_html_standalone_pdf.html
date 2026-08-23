@@ -203,16 +203,42 @@
          padding: 3px 8px;
          margin-bottom: 2px;
          }
+         .codes-group {
+         margin-bottom: 4px;
+         }
+         .codes-group-header {
+         font-size: 8pt;
+         font-weight: bold;
+         color: #000066;
+         background-color: #dce9f7;
+         border-left: 3px solid #000066;
+         padding: 2px 8px;
+         margin-bottom: 1px;
+         }
+         .codes-group-header.naf {
+         color: #0d6b9e;
+         background-color: #e8f4fb;
+         border-left-color: #0d6b9e;
+         }
          .codes-inner-table {
          width: 100%;
          border-collapse: collapse;
          font-size: 8.5pt;
-         margin-bottom: 6px;
+         margin-bottom: 0;
          }
          .codes-inner-table td {
-         padding: 3px 8px;
+         padding: 1px 8px;
          border: 1px solid #c8ddf0;
+         line-height: 1.05;
+         color: #444;
          }
+         .codes-inner-table tr:nth-child(even) { background-color: #edf4fc; }
+         .codes-inner-table tr:nth-child(odd)  { background-color: #f8fbff; }
+         .codes-inner-table.naf-codes tr:nth-child(even) { background-color: #eaf4fb; }
+         .code-num { white-space: nowrap; width: 18%; font-weight: bold; }
+         .nace-num { color: #000066; }
+         .naf-num  { color: #0d6b9e; }
+         .code-lib { color: #444; }
          .financial-table {
          font-size: 9pt;
          border-collapse: collapse;
@@ -755,68 +781,60 @@
                   <th style="vertical-align:top;">{% trans "Activités principales" %}</th>
                   <td>{{ additional_information.activite_principale }}</td>
                </tr>
-               {% if additional_information.nace_codes_grouped %}
-                  {% for group in additional_information.nace_codes_grouped %}
-                  <tr>
-                     {% if forloop.first %}<th rowspan="{{ additional_information.nace_codes_grouped|length }}" style="vertical-align: middle;">{% trans "Code(s) NACE" %}</th>{% endif %}
-                     <td style="vertical-align: top;">
-                        <div style="background-color: #dce9f7; border-left: 3px solid #000066; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #000066; margin-bottom: 2px;">
-                           {{ group.cat_code }} — {{ group.cat_libelle }}
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
-                           {% for c in group.codes %}
-                           <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#edf4fc{% else %}#f8fbff{% endif %};">
-                              <td style="padding: 2px 8px; color: #000066; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
-                              <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{{ c.libelle }}</td>
-                           </tr>
-                           {% endfor %}
-                        </table>
-                     </td>
-                  </tr>
-                  {% endfor %}
-               {% else %}
                <tr>
                   <th style="vertical-align:top;">{% trans "Code(s) NACE" %}</th>
-                  <td></td>
-               </tr>
-               {% endif %}
-               {% if additional_information.naf_codes_grouped %}
-                  {% for group in additional_information.naf_codes_grouped %}
-                  <tr>
-                     {% if forloop.first %}<th rowspan="{{ additional_information.naf_codes_grouped|length }}" style="vertical-align: middle;">{% trans "Code(s) NAF" %}</th>{% endif %}
-                     <td style="vertical-align: top;">
-                        <div style="background-color: #e8f4fb; border-left: 3px solid #0d6b9e; padding: 4px 10px; font-size: 8pt; font-weight: bold; color: #0d6b9e; margin-bottom: 2px;">
-                           {{ group.cat_code }} — {% if current_lang == 'en' %}{{ group.cat_libelle_en|default:group.cat_libelle }}{% else %}{{ group.cat_libelle }}{% endif %}
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+                  <td style="vertical-align:top;">
+                     {% if additional_information.nace_codes_grouped %}
+                     {% for group in additional_information.nace_codes_grouped %}
+                     <div class="codes-group">
+                        <div class="codes-group-header">{{ group.cat_code }} — {{ group.cat_libelle }}</div>
+                        <table class="codes-inner-table nace-codes">
                            {% for c in group.codes %}
-                           <tr style="background-color: {% if forloop.counter|divisibleby:2 %}#eaf4fb{% else %}#f8fbff{% endif %};">
-                              <td style="padding: 2px 8px; color: #0d6b9e; font-weight: bold; white-space: nowrap; width: 18%; border: 1px solid #c8ddf0;">{{ c.code }}</td>
-                              <td style="padding: 2px 8px; color: #444444; border: 1px solid #c8ddf0;">{% if current_lang == 'en' %}{{ c.libelle_en|default:c.libelle }}{% else %}{{ c.libelle }}{% endif %}</td>
+                           <tr>
+                              <td class="code-num nace-num">{{ c.code }}</td>
+                              <td class="code-lib">{{ c.libelle }}</td>
                            </tr>
                            {% endfor %}
                         </table>
-                     </td>
-                  </tr>
-                  {% endfor %}
-               {% else %}
+                     </div>
+                     {% endfor %}
+                     {% endif %}
+                  </td>
+               </tr>
                <tr>
                   <th style="vertical-align:top;">{% trans "Code(s) NAF" %}</th>
-                  <td></td>
+                  <td style="vertical-align:top;">
+                     {% if additional_information.naf_codes_grouped %}
+                     {% for group in additional_information.naf_codes_grouped %}
+                     <div class="codes-group">
+                        <div class="codes-group-header naf">{{ group.cat_code }} — {% if current_lang == 'en' %}{{ group.cat_libelle_en|default:group.cat_libelle }}{% else %}{{ group.cat_libelle }}{% endif %}</div>
+                        <table class="codes-inner-table naf-codes">
+                           {% for c in group.codes %}
+                           <tr>
+                              <td class="code-num naf-num">{{ c.code }}</td>
+                              <td class="code-lib">{% if current_lang == 'en' %}{{ c.libelle_en|default:c.libelle }}{% else %}{{ c.libelle }}{% endif %}</td>
+                           </tr>
+                           {% endfor %}
+                        </table>
+                     </div>
+                     {% endfor %}
+                     {% endif %}
+                  </td>
                </tr>
-               {% endif %}
                {% if additional_information.description %}
                <tr>
-                  <th style="vertical-align: top;">{% trans "Description" %}</th>
+                  <th style="vertical-align:top;">{% trans "Description" %}</th>
                   <td>{{ additional_information.description|safe }}</td>
                </tr>
                {% endif %}
+               {% if additional_information.commentaire %}
                <tr>
-                  <th style="vertical-align: top;">{% trans "Commentaire" %}</th>
-                  <td style="{% if additional_information.couleur_commentaire_code %}color: {{ additional_information.couleur_commentaire_code }};{% endif %} font-weight: bold;">
+                  <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
+                  <td{% if additional_information.couleur_commentaire_code %} style="color:{{ additional_information.couleur_commentaire_code }};"{% endif %}>
                      {{ additional_information.commentaire|safe }}
                   </td>
                </tr>
+               {% endif %}
             </table>
          </div>
          <!-- Résumé exécutif -->
