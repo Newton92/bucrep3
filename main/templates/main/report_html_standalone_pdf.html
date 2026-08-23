@@ -1024,13 +1024,16 @@
             {% endif %}
          </div>
          <!-- Dossiers juridiques -->
-         <div class="section-title">{% trans "ANTECEDENTS JURIDIQUES" %}</div>
-         {% if legal_background.antecedents_juridiques and legal_background.antecedents_juridiques.0.dossier_faillite %}
-         {% for antecedant in legal_background.antecedents_juridiques %}
-         <div class="antecedent-entry">
+         <div class="section">
+            <div class="section-title">{% trans "ANTECEDENTS JURIDIQUES" %}</div>
+            {% if legal_background.antecedents_juridiques and legal_background.antecedents_juridiques.0.dossier_faillite %}
             <table>
+               {% for antecedant in legal_background.antecedents_juridiques %}
+               {% if not forloop.first %}
+               <tr><td colspan="2" style="padding:0;height:5px;border-top:1px solid #e4c010;"></td></tr>
+               {% endif %}
                <tr>
-                  <th style="vertical-align:top;">{% trans "Cas de faillite" %}</th>
+                  <th style="width:38%;vertical-align:top;">{% trans "Cas de faillite" %}</th>
                   <td>{{ antecedant.dossier_faillite }}</td>
                </tr>
                <tr>
@@ -1045,16 +1048,18 @@
                   <th style="vertical-align:top;">{% trans "Autre" %}</th>
                   <td>{{ antecedant.autre }}</td>
                </tr>
+               {% if antecedant.commentaire %}
                <tr>
                   <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
                   <td class="warning">{{ antecedant.commentaire|safe }}</td>
                </tr>
+               {% endif %}
+               {% endfor %}
             </table>
+            {% else %}
+            <p style="margin:4px 0;color:#666;">{% trans "Aucun antécédent juridique disponible pour cet acheteur." %}</p>
+            {% endif %}
          </div>
-         {% endfor %}
-         {% else %}
-         <div class="subsection-title">{% trans "Aucun antécédent juridique disponible pour cet acheteur." %}</div>
-         {% endif %}
          <!-- Gestion et personnel -->
          <div class="section">
             <div class="section-title">{% trans "MANAGEMENT ET STAFF" %}</div>
