@@ -168,6 +168,98 @@
          width: 25%;
          vertical-align: top;
          }
+         /* Cartes personnes (Dirigeants / CA) */
+         .person-card {
+         margin-bottom: 5px;
+         border: 1px solid #d0d8e4;
+         border-radius: 4px;
+         overflow: hidden;
+         page-break-inside: avoid;
+         }
+         .person-card-header {
+         background-color: #1a5276;
+         color: white;
+         font-weight: bold;
+         font-size: 9.5pt;
+         padding: 4px 12px;
+         }
+         .person-card-header .person-poste {
+         font-size: 8pt;
+         font-weight: normal;
+         color: #a9cce3;
+         margin-left: 10px;
+         }
+         .person-card table {
+         width: 100%;
+         border-collapse: collapse;
+         margin-bottom: 0;
+         }
+         .person-card table td.p-label {
+         width: 22%;
+         font-weight: bold;
+         text-align: right;
+         padding: 2px 8px;
+         background-color: #f0f4f8;
+         border-bottom: 1px solid #e0e8f0;
+         white-space: nowrap;
+         font-size: 9pt;
+         }
+         .person-card table td.p-value {
+         padding: 2px 10px;
+         border-bottom: 1px solid #e0e8f0;
+         font-size: 9pt;
+         }
+         /* Cartes Board of Directors */
+         .board-card {
+         margin-bottom: 5px;
+         border: 1px solid #d5d0e4;
+         border-radius: 4px;
+         overflow: hidden;
+         page-break-inside: avoid;
+         }
+         .board-card-header {
+         background-color: #4a235a;
+         color: white;
+         font-weight: bold;
+         font-size: 9.5pt;
+         padding: 4px 12px;
+         }
+         .board-card table {
+         width: 100%;
+         border-collapse: collapse;
+         margin-bottom: 0;
+         }
+         .board-card table td.p-label {
+         width: 30%;
+         font-weight: bold;
+         text-align: right;
+         padding: 2px 8px;
+         background-color: #f5f0f8;
+         border-bottom: 1px solid #e8e0f0;
+         white-space: nowrap;
+         font-size: 9pt;
+         }
+         .board-card table td.p-value {
+         padding: 2px 10px;
+         border-bottom: 1px solid #e8e0f0;
+         font-size: 9pt;
+         }
+         /* Risk management compact */
+         .risk-mgmt-block {
+         text-align: center;
+         margin: 6px 0;
+         }
+         .risk-mgmt-block img {
+         max-height: 150px;
+         display: block;
+         margin: 0 auto 4px auto;
+         }
+         .risk-mgmt-score {
+         font-weight: bold;
+         font-size: 10pt;
+         color: #1a5276;
+         margin-bottom: 4px;
+         }
          .info-table-4col th {
          width: 20%;
          font-weight: bold;
@@ -1067,82 +1159,68 @@
             <div class="subsection-title">{% trans "DIRIGEANTS" %}</div>
             {% if management.responsables and management.responsables.0.nom %}
             {% for responsable in management.responsables %}
-            <div class="responsable-entry">
-               <table class="mgmt-table">
+            <div class="person-card">
+               <div class="person-card-header">
+                  {{ responsable.nom }} {{ responsable.prenom }}
+                  {% if responsable.poste %}<span class="person-poste">— {{ responsable.poste }}</span>{% endif %}
+               </div>
+               <table>
                   <tr>
-                     <th style="vertical-align:top;">{% trans "Nom" %}</th>
-                     <td>{{ responsable.nom }}</td>
-                     <th style="vertical-align:top;">{% trans "Prénom" %}</th>
-                     <td>{{ responsable.prenom }}</td>
+                     <td class="p-label">{% trans "Sexe" %}</td>
+                     <td class="p-value">{{ responsable.sexe|default:"—" }}</td>
+                     <td class="p-label">{% trans "Nationalité" %}</td>
+                     <td class="p-value">{{ responsable.nationalite|default:"—" }}</td>
                   </tr>
+                  {% if responsable.commentaire %}
                   <tr>
-                     <th style="vertical-align:top;">{% trans "Sexe" %}</th>
-                     <td>{{ responsable.sexe }}</td>
-                     <th style="vertical-align:top;">{% trans "Nationalité" %}</th>
-                     <td>{{ responsable.nationalite }}</td>
+                     <td class="p-label">{% trans "Commentaire" %}</td>
+                     <td class="p-value warning" colspan="3">{{ responsable.commentaire|safe }}</td>
                   </tr>
-                  <tr>
-                     <th style="vertical-align:top;">{% trans "Poste" %}</th>
-                     <td colspan="3">{{ responsable.poste }}</td>
-                  </tr>
-                  <tr>
-                     <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
-                     <td colspan="3" class="warning">{{ responsable.commentaire|safe }}</td>
-                  </tr>
+                  {% endif %}
                </table>
             </div>
             {% endfor %}
             {% else %}
-            <div class="subsection-title">{% trans "Aucun dirigeant n'est spécifié." %}</div>
+            <p style="margin:4px 0;color:#666;">{% trans "Aucun dirigeant n'est spécifié." %}</p>
             {% endif %}
+
             <div class="subsection-title">{% trans "MANAGEMENT DU RISQUE" %}</div>
-            <!-- Image et score -->
-            <div style="text-align: center; margin-bottom: 20px;">
-               <!-- Affichage de l'image de gestion des risques -->
-               {% if management.risk_management %}
-               <img 
-                  src="{% if management.risk_management.image_base64 %}{{ management.risk_management.image_base64 }}{% else %}{% static management.risk_management.image %}{% endif %}" 
-                  alt="Image Gestion du Risque" 
-                  style="max-height: 200px; display: block; margin: 0 auto;"
-                  >
-               <div style="margin-top: 10px; font-weight: bold;">
-                  Score : {{ management.risk_management.score }}
-               </div>
-               {% endif %}
+            {% if management.risk_management %}
+            <div class="risk-mgmt-block">
+               <img src="{% if management.risk_management.image_base64 %}{{ management.risk_management.image_base64 }}{% else %}{% static management.risk_management.image %}{% endif %}" alt="Risk Management">
+               <div class="risk-mgmt-score">{% trans "Score" %} : {{ management.risk_management.score }}</div>
             </div>
+            {% if management.risk_management.commentaire %}
             <table>
-               <tbody>
-                  <tr>
-                     <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
-                     <td colspan="3" class="warning">{{ management.risk_management.commentaire|safe }}</td>
-                  </tr>
-               </tbody>
+               <tr>
+                  <th style="width:38%;vertical-align:top;">{% trans "Commentaire" %}</th>
+                  <td class="warning">{{ management.risk_management.commentaire|safe }}</td>
+               </tr>
             </table>
+            {% endif %}
+            {% endif %}
 
             <div class="subsection-title">{% trans "CONSEIL D'ADMINISTRATION" %}</div>
             {% if management.conseil_administration and management.conseil_administration.0.nom %}
             {% for membre in management.conseil_administration %}
-            <div class="ca-membre-entry">
-               <table class="mgmt-table">
+            <div class="board-card">
+               <div class="board-card-header">
+                  {{ membre.nom }}
+                  {% if membre.fonction_dans_le_conseil %}<span style="font-size:8pt;font-weight:normal;color:#d7bde2;margin-left:10px;">— {{ membre.fonction_dans_le_conseil }}</span>{% endif %}
+               </div>
+               <table>
+                  {% if membre.numero_adresse or membre.rue_adresse %}
                   <tr>
-                     <th style="vertical-align:top;">{% trans "Nom" %}</th>
-                     <td colspan="3">{{ membre.nom }}</td>
+                     <td class="p-label">{% trans "Adresse" %}</td>
+                     <td class="p-value">{{ membre.numero_adresse }} {{ membre.rue_adresse }}{% if membre.code_postale_adresse %}, {{ membre.code_postale_adresse }}{% endif %}</td>
                   </tr>
+                  {% endif %}
+                  {% if membre.commentaire %}
                   <tr>
-                     <th style="vertical-align:top;">{% trans "Fonction dans le Conseil" %}</th>
-                     <td colspan="3">{{ membre.fonction_dans_le_conseil }}</td>
+                     <td class="p-label">{% trans "Commentaire" %}</td>
+                     <td class="p-value warning">{{ membre.commentaire|safe }}</td>
                   </tr>
-                  <tr>
-                     <th style="vertical-align:top;">{% trans "Adresse" %}</th>
-                     <td colspan="3">
-                        {{ membre.numero_adresse }} {{ membre.rue_adresse }},
-                        {{ membre.code_postale_adresse }}
-                     </td>
-                  </tr>
-                  <tr>
-                     <th style="vertical-align:middle;">{% trans "Commentaire" %}</th>
-                     <td colspan="3" class="warning">{{ membre.commentaire|safe }}</td>
-                  </tr>
+                  {% endif %}
                </table>
             </div>
             {% endfor %}
