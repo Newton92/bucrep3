@@ -697,15 +697,25 @@
     }
 
     /* ── Charger les données dans le formulaire d'édition ── */
-    var pendingEditData = null;
+    var editLoadedData  = null;   /* données AJAX */
+    var editModalShown  = false;  /* modal déjà affiché */
+
+    function applyEditRichFields() {
+        if (!editLoadedData || !editModalShown) return;
+        window.quillSetValue('editInterpretation', editLoadedData.interpretation || '');
+        window.quillSetValue('editAnalyse',        editLoadedData.analyse        || '');
+        editModalShown = false;
+    }
 
     function loadForEdit() {
+        editLoadedData = null;
+        editModalShown = false;
         $.ajax({
             url: API_BASE, type: 'GET',
             headers: { 'Authorization': 'Bearer ' + ACCESS_TOKEN },
             success: function(r) {
                 if (!r || r.message) return;
-                pendingEditData = r;
+                editLoadedData = r;
                 document.getElementById('editRiskRatingId').value = r.id;
                 CRITERIA.forEach(function(f) {
                     var el = editForm.querySelector('[name="' + f + '"]');
@@ -718,6 +728,7 @@
                 var s = calcScoreFromObj(r);
                 if (editImg) editImg.src = STATIC_RR + s + '.svg';
                 if (editVal) editVal.textContent = s;
+                applyEditRichFields();
             }
         });
     }
@@ -726,15 +737,12 @@
     if (editModal) {
         editModal.addEventListener('show.bs.modal', loadForEdit);
         editModal.addEventListener('shown.bs.modal', function() {
-            setTimeout(function() {
-                if (pendingEditData) {
-                    window.quillSetValue('editInterpretation', pendingEditData.interpretation || '');
-                    window.quillSetValue('editAnalyse', pendingEditData.analyse || '');
-                    pendingEditData = null;
-                }
-            }, 50);
+            editModalShown = true;
+            applyEditRichFields();
         });
         editModal.addEventListener('hidden.bs.modal', function() {
+            editLoadedData = null;
+            editModalShown = false;
             window.quillSetValue('editInterpretation', '');
             window.quillSetValue('editAnalyse', '');
         });
