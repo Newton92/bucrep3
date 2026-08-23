@@ -232,42 +232,44 @@
          text-align: right;
          }
          /* Bloc bancaire */
-         .bank-entry {
+         .bank-all-table {
+         width: 100%;
+         border-collapse: collapse;
+         border: 1px solid #c8d8e8;
          margin-bottom: 10px;
-         page-break-inside: avoid;
-         border: 1px solid #b8cfe0;
-         border-radius: 5px;
-         overflow: hidden;
          }
-         .bank-name-header {
-         background-color: #000066;
-         color: white;
+         .bank-all-table .bank-name-row td {
+         background-color: #dce9f5;
+         color: #000066;
          font-weight: bold;
          font-size: 10pt;
          padding: 5px 12px;
+         border-bottom: 1px solid #b8cfe0;
+         border-left: 4px solid #000066;
          }
-         .bank-table {
-         width: 100%;
-         border-collapse: collapse;
-         border: none;
-         margin-bottom: 0;
-         }
-         .bank-table .bank-label {
+         .bank-all-table .bank-label {
          font-weight: bold;
-         width: 18%;
-         padding: 3px 10px;
-         background-color: #f0f4f9;
-         border: 1px solid #d0dde8;
+         width: 25%;
+         padding: 3px 12px;
          vertical-align: top;
          text-align: right;
          white-space: nowrap;
-         font-size: 9pt;
+         font-size: 9.5pt;
+         border: none;
+         background-color: transparent;
          }
-         .bank-table .bank-value {
-         padding: 3px 10px;
-         border: 1px solid #d0dde8;
+         .bank-all-table .bank-value {
+         padding: 3px 12px;
          vertical-align: top;
-         font-size: 9pt;
+         font-size: 9.5pt;
+         border: none;
+         background-color: transparent;
+         }
+         .bank-separator td {
+         padding: 0;
+         height: 6px;
+         background-color: #f5f8fb;
+         border-top: 1px solid #c8d8e8;
          }
          /* Commentaires */
          .warning {
@@ -1336,33 +1338,32 @@
             <div class="section-title">{% trans "BANQUES ET FINANCEMENTS" %}</div>
             <div class="subsection-title">{{ banking_data.title_23|default:banking_data.title_14|default:"DONNÉES BANCAIRES" }}</div>
             {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
-            {% for bank in banking_data.data_banks %}
-            <div class="bank-entry">
-               <div class="bank-name-header">{{ bank.nom_banque|default:"&mdash;" }}</div>
-               <table class="bank-table">
-                  <tbody>
-                     <tr>
-                        <td class="bank-label">{% trans "Numéro de compte" %}</td>
-                        <td class="bank-value">{{ bank.numero_compte|default:"&mdash;" }}</td>
-                        <td class="bank-label">{% trans "Type de relation" %}</td>
-                        <td class="bank-value">{{ bank.type_relation|default:"&mdash;" }}</td>
-                     </tr>
-                     <tr>
-                        <td class="bank-label">{% trans "Adresse" %}</td>
-                        <td class="bank-value" colspan="3">
-                           {% if bank.numero or bank.rue or bank.ville or bank.code_postal %}{{ bank.numero }} {{ bank.rue }}{% if bank.code_postal or bank.ville %}, {{ bank.code_postal }} {{ bank.ville }}{% endif %}{% else %}&mdash;{% endif %}
-                        </td>
-                     </tr>
-                     {% if bank.commentaire %}
-                     <tr>
-                        <td class="bank-label">{% trans "Commentaire" %}</td>
-                        <td class="bank-value warning" colspan="3">{{ bank.commentaire|safe }}</td>
-                     </tr>
-                     {% endif %}
-                  </tbody>
-               </table>
-            </div>
-            {% endfor %}
+            <table class="bank-all-table">
+               {% for bank in banking_data.data_banks %}
+               {% if not forloop.first %}
+               <tr class="bank-separator"><td colspan="4"></td></tr>
+               {% endif %}
+               <tr class="bank-name-row">
+                  <td colspan="4">{{ bank.nom_banque|default:"&mdash;" }}</td>
+               </tr>
+               <tr>
+                  <td class="bank-label">{% trans "Numéro de compte" %}</td>
+                  <td class="bank-value">{{ bank.numero_compte|default:"&mdash;" }}</td>
+                  <td class="bank-label">{% trans "Type de relation" %}</td>
+                  <td class="bank-value">{{ bank.type_relation|default:"&mdash;" }}</td>
+               </tr>
+               <tr>
+                  <td class="bank-label">{% trans "Adresse" %}</td>
+                  <td class="bank-value" colspan="3">{% if bank.numero or bank.rue or bank.ville or bank.code_postal %}{{ bank.numero }} {{ bank.rue }}{% if bank.code_postal or bank.ville %}, {{ bank.code_postal }} {{ bank.ville }}{% endif %}{% else %}&mdash;{% endif %}</td>
+               </tr>
+               {% if bank.commentaire %}
+               <tr>
+                  <td class="bank-label">{% trans "Commentaire" %}</td>
+                  <td class="bank-value warning" colspan="3">{{ bank.commentaire|safe }}</td>
+               </tr>
+               {% endif %}
+               {% endfor %}
+            </table>
             {% else %}
             <div class="subsection-title">{% trans "Aucune donnée bancaire n'est disponible pour cet acheteur." %}</div>
             {% endif %}
