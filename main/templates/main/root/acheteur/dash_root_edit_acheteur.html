@@ -257,36 +257,19 @@ body { background:#f0f4f8; }
                                 </button>
                             </div>
                         </div>
+                        <div class="input-group input-group-sm mb-1" id="map-search-wrap">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="map-search-input"
+                                   placeholder="{% trans "Rechercher une localité (ex : Libreville, Gabon)…" %}"
+                                   autocomplete="off">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-map-search" style="font-size:.77rem;">
+                                {% trans "Rechercher" %}
+                            </button>
+                        </div>
+                        <div id="map-search-results" style="display:none;position:relative;z-index:1000;background:#fff;border:1px solid #d1dde8;border-radius:4px;max-height:160px;overflow-y:auto;margin-bottom:4px;font-size:.82rem;"></div>
                         <div class="map-wrap"><div id="map"></div></div>
-                        <div class="row g-2 mt-1">
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">
-                                    <i class="bi bi-geo me-1"></i>{% trans "Latitude" %}
-                                </label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text" style="font-size:.75rem;">LAT</span>
-                                    <input type="number" class="form-control form-control-sm" id="latitude_visible"
-                                           step="0.000001" min="-90" max="90"
-                                           placeholder="{% trans "Ex : 0.390564" %}">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted mb-1">
-                                    <i class="bi bi-geo me-1"></i>{% trans "Longitude" %}
-                                </label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text" style="font-size:.75rem;">LNG</span>
-                                    <input type="number" class="form-control form-control-sm" id="longitude_visible"
-                                           step="0.000001" min="-180" max="180"
-                                           placeholder="{% trans "Ex : 9.453629" %}">
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-3" id="btn-apply-coords" style="font-size:.77rem;">
-                                    <i class="bi bi-pin-map me-1"></i>{% trans "Appliquer les coordonnées" %}
-                                </button>
-                                <span class="text-muted small ms-2" id="coords-hint" style="font-size:.72rem;">{% trans "Cliquez sur la carte ou saisissez les coordonnées ci-dessus" %}</span>
-                            </div>
+                        <div class="mt-1" id="coords-display" style="display:none;font-size:.72rem;color:#6c757d;">
+                            <i class="bi bi-geo-alt me-1"></i><span id="coords-text"></span>
                         </div>
                         <input type="hidden" id="latitude"  name="latitude">
                         <input type="hidden" id="longitude" name="longitude">
@@ -508,21 +491,60 @@ $(document).ready(function () {
         $('#btn-clear-marker').on('click', function(){
             if (window._mapMarker){ map.removeLayer(window._mapMarker); window._mapMarker=null; }
             $('#latitude,#longitude').val('');
-            $('#latitude_visible,#longitude_visible').val('');
+            $('#coords-display').hide();
             $(this).hide();
         });
 
-        $('#btn-apply-coords').on('click', function(){
-            var lat = parseFloat($('#latitude_visible').val());
-            var lng = parseFloat($('#longitude_visible').val());
-            if (isNaN(lat) || isNaN(lng)) return;
-            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
-            map.flyTo([lat, lng], 14);
-            placeMarker(lat, lng);
+        // Recherche Nominatim
+        function doMapSearch() {
+            var q = $.trim($('#map-search-input').val());
+            if (!q) return;
+            var $btn = $('#btn-map-search');
+            $btn.prop('disabled', true).text('...');
+            $.ajax({
+                url: 'https://nominatim.openstreetmap.org/search',
+                data: { q: q, format: 'json', limit: 6, addressdetails: 1 },
+                headers: { 'Accept-Language': 'fr' },
+                success: function(results) {
+                    $btn.prop('disabled', false).text('{% trans "Rechercher" %}');
+                    var $res = $('#map-search-results').empty();
+                    if (!results || !results.length) {
+                        $res.html('<div style="padding:6px 10px;color:#999;">{% trans "Aucun résultat." %}</div>').show();
+                        return;
+                    }
+                    $.each(results, function(i, r) {
+                        $('<div>')
+                            .text(r.display_name)
+                            .css({ padding:'5px 10px', cursor:'pointer', borderBottom:'1px solid #eee' })
+                            .on('mouseenter', function(){ $(this).css('background','#f0f4ff'); })
+                            .on('mouseleave', function(){ $(this).css('background',''); })
+                            .on('click', function(){
+                                var lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+                                map.flyTo([lat, lng], 14);
+                                placeMarker(lat, lng);
+                                $res.hide().empty();
+                                $('#map-search-input').val(r.display_name);
+                            })
+                            .appendTo($res);
+                    });
+                    $res.show();
+                },
+                error: function() {
+                    $btn.prop('disabled', false).text('{% trans "Rechercher" %}');
+                }
+            });
+        }
+
+        $('#btn-map-search').on('click', doMapSearch);
+        $('#map-search-input').on('keydown', function(e){
+            if (e.key === 'Enter') { e.preventDefault(); doMapSearch(); }
         });
 
-        $('#latitude_visible, #longitude_visible').on('keydown', function(e){
-            if (e.key === 'Enter') { e.preventDefault(); $('#btn-apply-coords').trigger('click'); }
+        // Fermer résultats si clic ailleurs
+        $(document).on('click', function(e){
+            if (!$(e.target).closest('#map-search-wrap,#map-search-results').length) {
+                $('#map-search-results').hide();
+            }
         });
 
         setTimeout(function(){ if(map) map.invalidateSize(); }, 300);
@@ -547,8 +569,8 @@ $(document).ready(function () {
         var lngR = Math.round(lng*1e6)/1e6;
         $('#latitude').val(latR);
         $('#longitude').val(lngR);
-        $('#latitude_visible').val(latR);
-        $('#longitude_visible').val(lngR);
+        $('#coords-text').text(latR + ', ' + lngR);
+        $('#coords-display').show();
     }
 
     // ── Quill : formats et barre d'outils complète ──
@@ -650,8 +672,8 @@ $(document).ready(function () {
         }
         if (descriptionQuill) descriptionQuill.clipboard.dangerouslyPasteHTML(a.description || '');
         if (commentaireQuill) commentaireQuill.clipboard.dangerouslyPasteHTML(a.commentaire || '');
-        if (a.latitude)  { $('#latitude').val(a.latitude);  $('#latitude_visible').val(a.latitude);  }
-        if (a.longitude) { $('#longitude').val(a.longitude); $('#longitude_visible').val(a.longitude); }
+        if (a.latitude)  $('#latitude').val(a.latitude);
+        if (a.longitude) $('#longitude').val(a.longitude);
     }
 
     function updateHeader(a) {
