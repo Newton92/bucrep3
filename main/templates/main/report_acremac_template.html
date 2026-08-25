@@ -1,4 +1,4 @@
-﻿{% load static custom_filters %}
+﻿{% load static i18n custom_filters %}
 <!DOCTYPE html>
 <html lang="fr">
    <head>
@@ -896,39 +896,48 @@
          <!-- Actionnariat/Propriétaires -->
          <div class="section">
             <div class="section-title">{{ shareholders.title_11|default:"ACTIONNARIAT/PROPRIÉTAIRES" }}</div>
-            {% if shareholders.actionnaires %}
+            {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
             {% for shareholder in shareholders.actionnaires %}
-            <div class="shareholder-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th>Nom</th>
-                        <td>{{ shareholder.nom }}</td>
-                     </tr>
-                     <tr>
-                        <th>Prénom</th>
-                        <td>{{ shareholder.prenom }}</td>
-                     </tr>
-                     <tr>
-                        <th>% part sociale/actions</th>
-                        <td>
-                           {% if shareholder.pourcentage != "Non spécifié" %}
-                           {{ shareholder.pourcentage|floatformat:2 }}%
-                           {% else %}
-                           Non spécifié
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th>Commentaire</th>
-                        <td colspan="1" class="warning">{{ shareholder.commentaire|striptags|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
+            {% if not forloop.first %}
+            <hr style="border:none;border-top:1px solid #cce6ff;margin:6px 0 8px 0;">
+            {% endif %}
+            <table class="info-table">
+               <tbody>
+                  <tr>
+                     <th>{% trans "Nom" %}</th>
+                     <td><strong>{{ shareholder.nom|default:"—" }}</strong></td>
+                  </tr>
+                  {% with prenom=shareholder.prenom %}
+                  {% if prenom and prenom != ".." and prenom != "." and prenom != "Non spécifié" and prenom != "-" %}
+                  <tr>
+                     <th>{% trans "Prénom" %}</th>
+                     <td>{{ prenom }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+                  <tr>
+                     <th>{% trans "% part sociale/actions" %}</th>
+                     <td>
+                        {% if shareholder.pourcentage and shareholder.pourcentage != "Non spécifié" %}
+                        <strong>{{ shareholder.pourcentage|floatformat:2 }}%</strong>
+                        {% else %}
+                        —
+                        {% endif %}
+                     </td>
+                  </tr>
+                  {% with comment=shareholder.commentaire %}
+                  {% if comment and comment != "Non spécifié" and comment != "-" %}
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td class="warning">{{ comment|striptags|safe }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+               </tbody>
+            </table>
             {% endfor %}
             {% else %}
-            <div class="subsection-title">Aucun actionnaire n'est spécifié pour cet acheteur.</div>
+            <p style="font-style:italic;color:#666;">{% trans "Aucun actionnaire n'est spécifié pour cet acheteur." %}</p>
             {% endif %}
          </div>
 
