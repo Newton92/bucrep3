@@ -1702,10 +1702,22 @@
         });
         
         // Logout Functionality
+        function _clearAuthStorage() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('selected_pays_id');
+            localStorage.removeItem('selected_pays_nom');
+        }
+
+        function _doLogoutRedirect() {
+            _clearAuthStorage();
+            window.location.href = '/login/';
+        }
+
         function setupLogout(buttonId) {
             document.getElementById(buttonId).addEventListener('click', function(e) {
                 e.preventDefault();
-                
+
                 Swal.fire({
                     title: '{% trans "Déconnexion" %}',
                     text: '{% trans "Êtes-vous sûr de vouloir vous déconnecter ?" %}',
@@ -1717,47 +1729,45 @@
                     cancelButtonText: '{% trans "Annuler" %}',
                     reverseButtons: true
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        showLoading();
-                        
-                        fetch('/api/logout/', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': getCookie('csrftoken'),
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            hideLoading();
-                            localStorage.removeItem('selected_pays_id');
-                            localStorage.removeItem('selected_pays_nom');
-                            
-                            Swal.fire({
-                                title: '{% trans "Déconnecté !" %}',
-                                text: '{% trans "Vous avez été déconnecté avec succès." %}',
-                                icon: 'success',
-                                confirmButtonColor: '#0d80be',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.href = '/login/';
-                            });
-                        })
-                        .catch(error => {
-                            hideLoading();
-                            Swal.fire('{% trans "Erreur" %}', '{% trans "Une erreur est survenue lors de la déconnexion." %}', 'error');
-                        });
-                    }
+                    if (!result.isConfirmed) return;
+
+                    showLoading();
+                    var refreshKey = localStorage.getItem('refresh_token') || getCookie('refresh_token');
+
+                    // On envoie le refresh token pour le blacklister côté serveur
+                    // (l'intercepteur _authGuard skippe /api/logout/ → appel natif direct)
+                    fetch('/api/logout/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ refresh: refreshKey || '' })
+                    })
+                    .then(function(response) {
+                        hideLoading();
+                        Swal.fire({
+                            title: '{% trans "Déconnecté !" %}',
+                            text: '{% trans "Vous avez été déconnecté avec succès." %}',
+                            icon: 'success',
+                            confirmButtonColor: '#0d80be',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(_doLogoutRedirect);
+                    })
+                    .catch(function() {
+                        // Même en cas d'erreur réseau : vider les tokens et rediriger
+                        hideLoading();
+                        _doLogoutRedirect();
+                    });
                 });
             });
         }
-        
-        // Setup logout buttons
+
+        // Setup logout buttons (script en bas de page : DOM disponible)
         if (document.getElementById('logoutButtonNav')) {
             setupLogout('logoutButtonNav');
         }
-        
         if (document.getElementById('logoutButtonMenu')) {
             setupLogout('logoutButtonMenu');
         }

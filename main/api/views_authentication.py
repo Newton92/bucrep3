@@ -714,11 +714,11 @@ class CustomLogoutViewOld(APIView):
 
 
 class CustomLogoutView(APIView):
-    authentication_classes = []  # No authentication required for logout
-    permission_classes = []      # No permissions required
+    authentication_classes = []  # Pas d'auth requise : fonctionne même session expirée
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        # Persister la langue préférée en DB avant que la session soit détruite
+        # 1. Sauvegarder la langue préférée si l'utilisateur est encore authentifié via session
         if request.user.is_authenticated:
             current_lang = request.session.get('_language') or translation.get_language()
             if current_lang:
@@ -727,7 +727,18 @@ class CustomLogoutView(APIView):
                 )
                 logger.debug(f"Langue préférée sauvegardée pour user_id={request.user.id} : {current_lang}")
 
+        # 2. Blacklister le refresh token JWT pour invalider immédiatement la session JWT
+        refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass  # Token déjà expiré ou invalide — on continue quand même
+
+        # 3. Détruire la session Django
         logout(request)
+
         response = Response(
             {"detail": _("Déconnecté avec succès.")},
             status=status.HTTP_200_OK
