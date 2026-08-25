@@ -1555,7 +1555,131 @@
             }
             return cookieValue;
         }
-        
+
+        // ─── Global Auth Guard ────────────────────────────────────────────────
+        // Centralise la gestion de l'expiration de session :
+        //   • refreshToken()          → renouvelle le JWT, redirige si impossible
+        //   • redirectToLogin()       → modal SweetAlert + redirection /login/
+        //   • startProactiveRefresh() → renouvelle proactivement avant expiration
+        // window.fetch est intercepté ici pour gérer globalement les 401/403 :
+        // tentative de refresh JWT, puis redirection vers /login/ si le refresh échoue.
+        var _authGuard = (function () {
+            var _refreshPromise = null;
+            var _redirecting    = false;
+            var _SKIP = ['/api/token/', '/api/login/', '/api/logout/'];
+
+            function _shouldSkip(url) {
+                var s = String(url || '');
+                for (var i = 0; i < _SKIP.length; i++) {
+                    if (s.indexOf(_SKIP[i]) !== -1) return true;
+                }
+                return false;
+            }
+
+            function redirectToLogin() {
+                if (_redirecting) return;
+                _redirecting = true;
+                localStorage.removeItem('access_token');
+                var next = encodeURIComponent(window.location.pathname + window.location.search);
+                var href = '/login/?next=' + next;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '{% trans "Session expirée" %}',
+                        text: '{% trans "Votre session a expiré. Veuillez vous reconnecter." %}',
+                        confirmButtonText: '{% trans "Se connecter" %}',
+                        confirmButtonColor: '#0d80be',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showCancelButton: false
+                    }).then(function () { window.location.href = href; });
+                } else {
+                    window.location.href = href;
+                }
+            }
+
+            function refreshToken() {
+                if (_refreshPromise) return _refreshPromise;
+                var refreshKey = localStorage.getItem('refresh_token') || getCookie('refresh_token');
+                if (!refreshKey) {
+                    redirectToLogin();
+                    return Promise.reject(new Error('no_refresh_token'));
+                }
+                _refreshPromise = fetch('/api/token/refresh/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh: refreshKey })
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('refresh_failed');
+                    return res.json();
+                }).then(function (data) {
+                    if (!data || !data.access) throw new Error('no_new_token');
+                    localStorage.setItem('access_token', data.access);
+                    if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+                    return data.access;
+                }).then(
+                    function (token) { _refreshPromise = null; return token; },
+                    function (err)   { _refreshPromise = null; redirectToLogin(); return Promise.reject(err); }
+                );
+                return _refreshPromise;
+            }
+
+            function startProactiveRefresh(intervalMs) {
+                setInterval(function () {
+                    var refreshKey = localStorage.getItem('refresh_token') || getCookie('refresh_token');
+                    if (!refreshKey) return;
+                    fetch('/api/token/refresh/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh: refreshKey })
+                    }).then(function (res) {
+                        if (!res.ok) return null;
+                        return res.json();
+                    }).then(function (data) {
+                        if (data && data.access) {
+                            localStorage.setItem('access_token', data.access);
+                            if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+                        }
+                    }).catch(function () {});
+                }, intervalMs);
+            }
+
+            // ── Intercepteur window.fetch ─────────────────────────────────────
+            var _nativeFetch = window.fetch.bind(window);
+            window.fetch = function (url, options) {
+                if (_shouldSkip(url)) return _nativeFetch(url, options);
+                var opts = options || {};
+                if (opts._authRetried) return _nativeFetch(url, opts);
+                return _nativeFetch(url, opts).then(function (response) {
+                    if (response.status === 401) {
+                        return refreshToken().then(function (newToken) {
+                            var origHeaders = opts.headers || {};
+                            var newHeaders  = {};
+                            if (origHeaders instanceof Headers) {
+                                origHeaders.forEach(function (v, k) { newHeaders[k] = v; });
+                            } else {
+                                Object.assign(newHeaders, origHeaders);
+                            }
+                            newHeaders['Authorization'] = 'Bearer ' + newToken;
+                            return _nativeFetch(url, Object.assign({}, opts, {
+                                headers: newHeaders,
+                                _authRetried: true
+                            }));
+                        }).catch(function () { return response; });
+                    }
+                    if (response.status === 403) { redirectToLogin(); }
+                    return response;
+                });
+            };
+
+            return {
+                redirectToLogin:       redirectToLogin,
+                refreshToken:          refreshToken,
+                startProactiveRefresh: startProactiveRefresh
+            };
+        }());
+        // ─────────────────────────────────────────────────────────────────────
+
         // Loading State Management
         function showLoading() {
             document.getElementById('loadingOverlay').style.display = 'flex';
@@ -2200,6 +2324,8 @@
             setupLanguageSwitcher();
             setupCountrySelector();
             setupGlobalNotifications();
+            // Auth guard : rafraîchissement proactif toutes les 25 min
+            _authGuard.startProactiveRefresh(25 * 60 * 1000);
         });
         
         // Global error handler

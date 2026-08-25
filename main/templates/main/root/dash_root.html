@@ -1057,8 +1057,11 @@
 
 <script>
 function fetchWithAuth(url, options = {}) {
-    console.log("📡 Fetch URL :", url);
-
+    // L'intercepteur global window.fetch (base.html / _authGuard) gère automatiquement
+    // les 401 : il tente un refresh, puis retente la requête avec le nouveau token.
+    // Si le refresh échoue, il déclenche la redirection vers /login/.
+    // Ici, la réponse reçue est donc déjà la réponse retryée (200) ou,
+    // en cas d'échec total, le 401 d'origine — la redirection étant déjà en cours.
     return fetch(url, {
         ...options,
         headers: {
@@ -1068,23 +1071,8 @@ function fetchWithAuth(url, options = {}) {
         }
     })
     .then(response => {
-        console.log("🔁 Status :", response.status);
-
-        if (response.status === 401) {
-            console.error("❌ 401 Unauthorized → Token invalide ou expiré");
-            throw new Error("Unauthorized");
-        }
-
-        if (!response.ok) {
-            console.error("❌ Erreur HTTP :", response.status);
-            throw new Error(`HTTP error ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
-    })
-    .catch(error => {
-        console.error("🔥 Fetch error :", error);
-        throw error;
     });
 }
 </script>
