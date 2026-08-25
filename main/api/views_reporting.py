@@ -1068,11 +1068,7 @@ def generer_rapport_solvabilite(request):
           
         # Récupération Management et Staff
         # Recuperation des elements de gestion de risque de l'acheteur 
-        risk_management = None
-        try:
-            risk_management = RiskManagment.objects.get(acheteur=acheteur)
-        except RiskManagment.DoesNotExist:
-            pass
+        risk_management = RiskManagment.objects.filter(acheteur=acheteur).first()
         
         
         # Recuperation des dirigeants de l'acheteur
@@ -1107,11 +1103,7 @@ def generer_rapport_solvabilite(request):
         
         # Récupération Capital social
         # Recuperation de la composition du capital social de l'acheteur
-        composition_capital_social = None
-        try:
-            composition_capital_social = CompositionCapitalSocial.objects.get(acheteur=acheteur)
-        except CompositionCapitalSocial.DoesNotExist:
-            pass
+        composition_capital_social = CompositionCapitalSocial.objects.filter(acheteur=acheteur).first()
             
          
         # Récupération Actionnarat/Proprietaires
@@ -1142,18 +1134,10 @@ def generer_rapport_solvabilite(request):
         
             
         # Recuperation de l'analyse sectorielle de l'acheteur
-        analyse_sectorielle = None
-        try:
-            analyse_sectorielle = AnalyseSectorielle.objects.get(acheteur=acheteur)
-        except AnalyseSectorielle.DoesNotExist:
-            pass
+        analyse_sectorielle = AnalyseSectorielle.objects.filter(acheteur=acheteur).first()
 
         # Recuperation de la tendance de l'acheteur
-        tendance = None
-        try:
-            tendance = Tendance.objects.get(acheteur=acheteur)
-        except Tendance.DoesNotExist:
-            pass
+        tendance = Tendance.objects.filter(acheteur=acheteur).first()
 
         # Recuperation des conseils sur l'acheteur
         advice = None
@@ -1302,11 +1286,7 @@ def generer_rapport_solvabilite(request):
             
             
         # Recuperation le compte financier de l'acheteur
-        compte_financier = None
-        try:
-            compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
-        except CompteFinancier.DoesNotExist:
-            pass
+        compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
 
         # Un acheteur a des états financiers seulement si CompteFinancier existe ET
         # qu'au moins une année de données est disponible dans les tables de bilan.
@@ -1326,11 +1306,7 @@ def generer_rapport_solvabilite(request):
             
             
         # Recuperation de l'historique des operations de l'acheteur
-        operation_history = None
-        try:
-            operation_history = OperationEtHistorique.objects.get(acheteur=acheteur)
-        except OperationEtHistorique.DoesNotExist:
-            pass
+        operation_history = OperationEtHistorique.objects.filter(acheteur=acheteur).first()
         
         # Recuperation de l'opinion credit ACREMAC de l'acheteur  
         # selon la logique que vous avez dans votre modèle
@@ -1590,8 +1566,8 @@ def generer_rapport_solvabilite(request):
             })
 
         # Delphi Score (ScoringDelphi — OneToOne)
-        try:
-            _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+        _sd = ScoringDelphi.objects.filter(acheteur=acheteur).first()
+        if _sd:
             scoring_delphi_ctx = {
                 "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
                 "bande": _sd.bande or "-",
@@ -1599,7 +1575,7 @@ def generer_rapport_solvabilite(request):
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
             }
-        except ScoringDelphi.DoesNotExist:
+        else:
             scoring_delphi_ctx = None
 
         # Recuperation des proprietes et actifs de l'acheteur
@@ -1617,17 +1593,8 @@ def generer_rapport_solvabilite(request):
         
         
         # Recuperation des conditions d'achat et de vente de l'acheteur
-        condition_achat = None
-        try:
-            condition_achat = ConditionAchat.objects.get(acheteur=acheteur)
-        except ConditionAchat.DoesNotExist:
-            pass
-        
-        condition_vente = None    
-        try:
-            condition_vente = ConditionDeVente.objects.get(acheteur=acheteur)
-        except ConditionDeVente.DoesNotExist:
-            pass
+        condition_achat = ConditionAchat.objects.filter(acheteur=acheteur).first()
+        condition_vente = ConditionDeVente.objects.filter(acheteur=acheteur).first()
 
         # Valeurs robustes pour couvrir les modèles avec/sans champs *_ref
         condition_vente_recouvrement = ""
@@ -1649,11 +1616,7 @@ def generer_rapport_solvabilite(request):
             
         
         # Add new section to retrieve general conclusion
-        conclusion_generale = None
-        try:
-            conclusion_generale = SommaireEtAvis.objects.get(acheteur=acheteur)
-        except SommaireEtAvis.DoesNotExist:
-            pass
+        conclusion_generale = SommaireEtAvis.objects.filter(acheteur=acheteur).first()
 
         # Extraction des données financières — uniquement si has_financial_data
         if has_financial_data:
