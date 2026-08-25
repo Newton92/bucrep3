@@ -1,4 +1,8 @@
 # utils.py
+def _y(years, i):
+    """Accès sécurisé à years[i] — retourne None si hors limites."""
+    return years[i] if years and i < len(years) else None
+
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -614,9 +618,9 @@ class FinancialReportGenerator:
         for field_name in fields:
             row = {'label': first_instance._meta.get_field(field_name).verbose_name}
             # Récupérer les valeurs pour l'année N, N-1, N-2
-            val_n = getattr(data_by_year.get(years[0]), field_name, None)
-            val_n_minus_1 = getattr(data_by_year.get(years[1]), field_name, None)
-            val_n_minus_2 = getattr(data_by_year.get(years[2]), field_name, None)
+            val_n = getattr(data_by_year.get(_y(years, 0)), field_name, None)
+            val_n_minus_1 = getattr(data_by_year.get(_y(years, 1)), field_name, None)
+            val_n_minus_2 = getattr(data_by_year.get(_y(years, 2)), field_name, None)
             
             row['val_n'] = val_n if val_n is not None else "N/A"
             row['val_n_minus_1'] = val_n_minus_1 if val_n_minus_1 is not None else "N/A"
@@ -663,9 +667,9 @@ class FinancialReportGenerator:
             
             for ratio_name in ratio_properties:
                 row = {'label': ratio_name.replace('_', ' ').title()}
-                val_n = getattr(ratios_data.get(years[0]), ratio_name, None) if ratios_data.get(years[0]) else None
-                val_n_minus_1 = getattr(ratios_data.get(years[1]), ratio_name, None) if ratios_data.get(years[1]) else None
-                val_n_minus_2 = getattr(ratios_data.get(years[2]), ratio_name, None) if ratios_data.get(years[2]) else None
+                val_n = getattr(ratios_data.get(_y(years, 0)), ratio_name, None) if ratios_data.get(_y(years, 0)) else None
+                val_n_minus_1 = getattr(ratios_data.get(_y(years, 1)), ratio_name, None) if ratios_data.get(_y(years, 1)) else None
+                val_n_minus_2 = getattr(ratios_data.get(_y(years, 2)), ratio_name, None) if ratios_data.get(_y(years, 2)) else None
                 
                 row['val_n'] = f"{val_n:.2f}" if isinstance(val_n, (Decimal, float)) else "N/A"
                 row['val_n_minus_1'] = f"{val_n_minus_1:.2f}" if isinstance(val_n_minus_1, (Decimal, float)) else "N/A"
@@ -1133,12 +1137,12 @@ def get_simple_actifs_data(acheteur, years):
         
         # Calcul des variations et formatage pour l'affichage
         # Année N vs N-1
-        val_n = values.get(years[0])
-        val_n_moins_1 = values.get(years[1])
+        val_n = values.get(_y(years, 0))
+        val_n_moins_1 = values.get(_y(years, 1))
         var_n_vs_n_moins_1 = calculate_variation(val_n, val_n_moins_1)
         
         # Année N-1 vs N-2
-        val_n_moins_2 = values.get(years[2])
+        val_n_moins_2 = values.get(_y(years, 2))
         var_n_moins_1_vs_n_moins_2 = calculate_variation(val_n_moins_1, val_n_moins_2)
         
         row['values'] = {
@@ -1261,9 +1265,9 @@ def get_structured_actif_data(acheteur, years):
             for year in years:
                 values[year] = field_values_by_year.get(year, {}).get(field_info['key'])
 
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
@@ -1367,9 +1371,9 @@ def get_structured_passif_data(acheteur, years):
 
             values = {year: field_values_by_year.get(year, {}).get(field_info['key']) for year in years}
             
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
@@ -1485,9 +1489,9 @@ def get_structured_resultat_data(acheteur, years):
 
             values = {year: field_values_by_year.get(year, {}).get(field_info['key']) for year in years}
             
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
@@ -1562,9 +1566,9 @@ def get_structured_ratios_data_v1(acheteur, years):
                 values[year] = value
             
             # Calcul des variations et formatage
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
@@ -1652,9 +1656,9 @@ def get_structured_ratios_data(acheteur, years):
                 values[year] = value
             
             # Calcul des variations et formatage
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
@@ -2446,9 +2450,9 @@ def _build_structured_data(structure_map, data_by_year, years):
             values = {}
             for year in years:
                 values[year] = field_values_by_year.get(year, {}).get(field_info['key'], 0.0)
-            val_n = values.get(years[0], 0.0)
-            val_n_moins_1 = values.get(years[1], 0.0)
-            val_n_moins_2 = values.get(years[2], 0.0)
+            val_n = values.get(_y(years, 0), 0.0)
+            val_n_moins_1 = values.get(_y(years, 1), 0.0)
+            val_n_moins_2 = values.get(_y(years, 2), 0.0)
             row['values'] = {
                 'n': val_n,
                 'n_moins_1': val_n_moins_1,
@@ -2481,9 +2485,9 @@ def _build_ratios_data(structure_map, ratios_by_year, years):
                 else:
                     values[year] = None
 
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
             row['values'] = {
                 'n': val_n,
                 'n_moins_1': val_n_moins_1,
@@ -2570,9 +2574,9 @@ def _build_ratios_data_bancaire(structure_map, ratios_by_year, years):
                 else:
                     values[year] = {'calculated': None, 'bounded': None}
 
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
+            val_n = values.get(_y(years, 0))
+            val_n_moins_1 = values.get(_y(years, 1))
+            val_n_moins_2 = values.get(_y(years, 2))
 
             row['values'] = {
                 'n': val_n,
