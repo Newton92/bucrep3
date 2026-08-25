@@ -40,7 +40,7 @@ class Command(BaseCommand):
             # Truncate if too long
             nom = nom[:50] if nom else country.alpha_2
             
-            pays, created = Pays.objects.get_or_create(
+            pays, created = Pays.objects.update_or_create(
                 code=country.alpha_2,
                 defaults={
                     "nom": nom,
@@ -49,7 +49,7 @@ class Command(BaseCommand):
             )
             if created:
                 count += 1
-                
+
         self.stdout.write(f"✅ {count} pays importés/actualisés")
 
     # -------------------------

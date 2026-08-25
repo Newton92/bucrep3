@@ -102,7 +102,7 @@ class Command(BaseCommand):
             self.stdout.write("DRY RUN → Création pays Gabon")
             pays = None
         else:
-            pays, created = Pays.objects.get_or_create(
+            pays, created = Pays.objects.update_or_create(
                 code=data["pays"]["code"],
                 defaults={
                     "nom": data["pays"]["nom"],
@@ -112,7 +112,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"[PAYS] {pays.nom} ({'créé' if created else 'existant'})"
+                    f"[PAYS] {pays.nom} ({'créé' if created else 'mis à jour'})"
                 )
             )
 
