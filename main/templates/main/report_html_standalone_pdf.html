@@ -1316,38 +1316,50 @@
             <div class="section-title">{{ affiliations.title_21|default:affiliations.title_12|default:default_affiliations }}</div>
             {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
             {% for affiliation in affiliations.affiliations %}
-            <div class="affiliation-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th style="vertical-align:top;">{% trans "Nom" %}</th>
-                        <td class="text">{{ affiliation.nom }}</td>
-                     </tr>
-                     <tr>
-                        <th style="vertical-align:top;">{% trans "Type d'affiliation" %}</th>
-                        <td>{{ affiliation.type_affiliation }}</td>
-                     </tr>
-                     <tr>
-                        <th style="vertical-align:top;">{% trans "Adresse" %}</th>
-                        <td>
-                           {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
-                           {{ affiliation.numero_adresse }} {{ affiliation.rue_adresse }},
-                           {{ affiliation.code_postale_adresse }}
-                           {% else %}
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th style="vertical-align:top;">{% trans "Commentaire" %}</th>
-                        <td colspan="1" class="warning">{{ affiliation.commentaire|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <div style="height: 10px;"></div>
+            {% if not forloop.first %}
+            <hr style="border:none;border-top:1px solid #cce6ff;margin:6px 0 8px 0;">
+            {% endif %}
+            <table class="info-table">
+               <tbody>
+                  {# Nom — toujours affiché #}
+                  <tr>
+                     <th>{% trans "Nom" %}</th>
+                     <td><strong>{{ affiliation.nom|default:"—" }}</strong></td>
+                  </tr>
+                  {# Type d'affiliation — affiché si renseigné #}
+                  {% with type_aff=affiliation.type_affiliation %}
+                  {% if type_aff and type_aff != "Non spécifié" and type_aff != "-" %}
+                  <tr>
+                     <th>{% trans "Type d'affiliation" %}</th>
+                     <td>{{ type_aff }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+                  {# Adresse — affichée seulement si au moins un champ est renseigné #}
+                  {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
+                  <tr>
+                     <th>{% trans "Adresse" %}</th>
+                     <td>
+                        {% if affiliation.numero_adresse %}{{ affiliation.numero_adresse }} {% endif %}
+                        {% if affiliation.rue_adresse %}{{ affiliation.rue_adresse }}{% endif %}
+                        {% if affiliation.code_postale_adresse %}, {{ affiliation.code_postale_adresse }}{% endif %}
+                     </td>
+                  </tr>
+                  {% endif %}
+                  {# Commentaire — affiché seulement si renseigné #}
+                  {% with comment=affiliation.commentaire %}
+                  {% if comment and comment != "Non spécifié" and comment != "-" %}
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td class="warning">{{ comment|striptags|safe }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+               </tbody>
+            </table>
             {% endfor %}
             {% else %}
-            <div class="subsection-title">{% trans "Aucune affiliation d'entreprise n'est disponible pour cet acheteur." %}</div>
+            <p style="font-style:italic;color:#666;">{% trans "Aucune affiliation d'entreprise n'est disponible pour cet acheteur." %}</p>
             {% endif %}
          </div>
 

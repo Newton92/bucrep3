@@ -1607,41 +1607,48 @@
          <!-- Affiliations corporatives -->
          <div class="section">
             <div class="section-title">{{ affiliations.title_21|default:affiliations.title_12|default:"AFFILIATIONS CORPORATIVES" }}</div>
-            {% if affiliations.affiliations %}
+            {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
             {% for affiliation in affiliations.affiliations %}
-            <div class="affiliation-entry">
-               <table>
-                  <tbody>
-                     <tr>
-                        <th>Nom</th>
-                        <td class="text">{{ affiliation.nom }}</td>
-                     </tr>
-                     <tr>
-                        <th>Type d'affiliation</th>
-                        <td>{{ affiliation.type_affiliation }}</td>
-                     </tr>
-                     <tr>
-                        <th>Adresse</th>
-                        <td>
-                           {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
-                           {{ affiliation.numero_adresse }} {{ affiliation.rue_adresse }}, 
-                           {{ affiliation.code_postale_adresse }}
-                           {% else %}
-                           Non spécifié
-                           {% endif %}
-                        </td>
-                     </tr>
-                     <tr>
-                        <th>Commentaire</th>
-                        <td colspan="1" class="warning">{{ affiliation.commentaire|striptags|safe }}</td>
-                     </tr>
-                  </tbody>
-               </table>
-            </div>
-            <div style="height: 10px;"></div>
+            {% if not forloop.first %}
+            <hr style="border:none;border-top:1px solid #cce6ff;margin:6px 0 8px 0;">
+            {% endif %}
+            <table class="info-table">
+               <tbody>
+                  <tr>
+                     <th>{% trans "Nom" %}</th>
+                     <td><strong>{{ affiliation.nom|default:"—" }}</strong></td>
+                  </tr>
+                  {% with type_aff=affiliation.type_affiliation %}
+                  {% if type_aff and type_aff != "Non spécifié" and type_aff != "-" %}
+                  <tr>
+                     <th>{% trans "Type d'affiliation" %}</th>
+                     <td>{{ type_aff }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+                  {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
+                  <tr>
+                     <th>{% trans "Adresse" %}</th>
+                     <td>
+                        {% if affiliation.numero_adresse %}{{ affiliation.numero_adresse }} {% endif %}
+                        {% if affiliation.rue_adresse %}{{ affiliation.rue_adresse }}{% endif %}
+                        {% if affiliation.code_postale_adresse %}, {{ affiliation.code_postale_adresse }}{% endif %}
+                     </td>
+                  </tr>
+                  {% endif %}
+                  {% with comment=affiliation.commentaire %}
+                  {% if comment and comment != "Non spécifié" and comment != "-" %}
+                  <tr>
+                     <th>{% trans "Commentaire" %}</th>
+                     <td class="warning">{{ comment|striptags|safe }}</td>
+                  </tr>
+                  {% endif %}
+                  {% endwith %}
+               </tbody>
+            </table>
             {% endfor %}
             {% else %}
-            <div class="subsection-title">No company affiliation available for this buyer.</div>
+            <p style="font-style:italic;color:#666;">{% trans "Aucune affiliation d'entreprise n'est disponible pour cet acheteur." %}</p>
             {% endif %}
          </div>
          <!-- Analyse sectorielle -->
