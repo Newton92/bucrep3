@@ -2586,8 +2586,14 @@ def _build_ratios_data_bancaire(structure_map, ratios_by_year, years):
 
             # Calcul des variations pour les valeurs calculées
             row['variations'] = {
-                'n_vs_n_moins_1': calculate_variation(val_n['calculated'], val_n_moins_1['calculated']),
-                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1['calculated'], val_n_moins_2['calculated']),
+                'n_vs_n_moins_1': calculate_variation(
+                    val_n['calculated'] if val_n else None,
+                    val_n_moins_1['calculated'] if val_n_moins_1 else None,
+                ),
+                'n_moins_1_vs_n_moins_2': calculate_variation(
+                    val_n_moins_1['calculated'] if val_n_moins_1 else None,
+                    val_n_moins_2['calculated'] if val_n_moins_2 else None,
+                ),
             }
 
             rows_data.append(row)
