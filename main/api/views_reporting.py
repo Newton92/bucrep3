@@ -1870,35 +1870,35 @@ def _generer_rapport_solvabilite_inner(request):
             # Nouveaux elements
             "registres": {
                 "title_12": _("REGISTRES DE COMMERCE"),
-                "registres": list_registres_data if list_registres_data else ["Aucun registre disponible"],
+                "registres": list_registres_data if list_registres_data else [],
             },
             "produits_services": {
                 "title_13": _("PRODUITS & SERVICES"),
-                "produits": list_produits_services_data if list_produits_services_data else ["Aucun produit ou service disponible"],
+                "produits": list_produits_services_data if list_produits_services_data else [],
             },
             "marques": {
                 "title_14": _("MARQUES"),
-                "marques": list_marques_data if list_marques_data else ["Aucune marque disponible"],
+                "marques": list_marques_data if list_marques_data else [],
             },
             "procedures_collectives": {
                 "title_15": _("PROCEDURES & COLLECTIVES"),
-                "procedures_collectives": list_procedures_data if list_procedures_data else ["Aucune procédure ou collective disponible"],
+                "procedures_collectives": list_procedures_data if list_procedures_data else [],
             },
             "certifications": {
                 "title_17": _("CERTIFICATIONS"),
-                "certifications": list_certifications_data if list_certifications_data else ["Aucune certification disponible"],
+                "certifications": list_certifications_data if list_certifications_data else [],
             },
             "innovations_developpements": {
                 "title_18": _("INNOVATIONS & DEVELOPPEMENT"),
-                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["Aucune innovation ou développement disponible"],
+                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else [],
             },
             "strategies_planifications": {
                 "title_19": _("STRATEGIES & PLANIFICATIONS"),
-                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else [],
             },
             "conformitesy": {
                 "title_20": _("CONFORMITE REGLEMENTATION"),
-                "strategies_planifications": list_conformites_reglementations_data if list_conformites_reglementations_data else ["Aucune donnée de conformité disponible"],
+                "strategies_planifications": list_conformites_reglementations_data if list_conformites_reglementations_data else [],
             },
             
             "affiliations": {

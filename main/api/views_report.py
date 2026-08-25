@@ -2832,7 +2832,7 @@ class GenerateReport(APIView):
             },
             "legal_background": {
                 "title_8": _("ANTECEDENTS JURIDIQUES"),
-                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else ["Aucun antécédent juridique disponible"],
+                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else [],
             },
             "management": {
                 "title_9": _("MANAGEMENT DU RISQUE"),
@@ -2860,11 +2860,11 @@ class GenerateReport(APIView):
             },
             "shareholders": {
                 "title_11": _("ACTIONNARIAT/PROPRIETAIRES"),
-                "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
+                "actionnaires": list_shareholders_data if list_shareholders_data else [],
             },
             "affiliations": {
                 "title_12": _("AFFILIATIONS CORPORATIVES"),
-                "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
+                "affiliations": list_affiliations_data if list_affiliations_data else [],
             },
             "sector_analysis": {
                 "title_13": _("ANALYSE SECTORIELLE"),
@@ -2904,7 +2904,7 @@ class GenerateReport(APIView):
             },
             "banking_data": {
                 "title_14": _("DONNEES BANCAIRES"),
-                "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
+                "data_banks": list_banking_data if list_banking_data else [],
             },
 
             "financial_accounts": {
@@ -4251,7 +4251,7 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             "legal_background": {
                 "title_8": _("ANTECEDENTS JURIDIQUES"),
-                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else ["Aucun antécédent juridique disponible"],
+                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else [],
             },
             "management": {
                 "title_9": _("MANAGEMENT DU RISQUE"),
@@ -4279,46 +4279,46 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             "shareholders": {
                 "title_11": _("ACTIONNARIAT/PROPRIETAIRES"),
-                "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
+                "actionnaires": list_shareholders_data if list_shareholders_data else [],
             },
             # Nouveaux elements
             "registres": {
                 "title_12": _("REGISTRES DE COMMERCE"),
-                "registres": list_registres_data if list_registres_data else ["Aucun registre disponible"],
+                "registres": list_registres_data if list_registres_data else [],
             },
             "produits_services": {
                 "title_13": _("PRODUITS & SERVICES"),
-                "produits": list_produits_services_data if list_produits_services_data else ["No product or service available"],
+                "produits": list_produits_services_data if list_produits_services_data else [],
             },
             "marques": {
                 "title_14": _("MARQUES"),
-                "marques": list_marques_data if list_marques_data else ["No trademark available"],
+                "marques": list_marques_data if list_marques_data else [],
             },
             "procedures_collectives": {
                 "title_15": _("PROCEDURES & COLLECTIVES"),
-                "procedures_collectives": list_procedures_data if list_procedures_data else ["No collective procedure available"],
+                "procedures_collectives": list_procedures_data if list_procedures_data else [],
             },
             "certifications": {
                 "title_17": _("CERTIFICATIONS"),
-                "certifications": list_certifications_data if list_certifications_data else ["No certification available"],
+                "certifications": list_certifications_data if list_certifications_data else [],
             },
             "innovations_developpements": {
                 "title_18": _("INNOVATIONS & DEVELOPPEMENT"),
-                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["No innovation or development available"],
+                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else [],
             },
             "strategies_planifications": {
                 "title_19": _("STRATEGIES & PLANIFICATIONS"),
-                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["No strategy or planning available"],
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else [],
             },
             "conformitesy": {
                 "title_20": _("CONFORMITE REGLEMENTATION"),
-                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["No compliance data available"],
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else [],
             },
             
             
             "affiliations": {
                 "title_21": _("AFFILIATIONS CORPORATIVES"),
-                "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
+                "affiliations": list_affiliations_data if list_affiliations_data else [],
             },
             "sector_analysis": {
                 "title_22": _("ANALYSE ECONOMIQUE"),
@@ -4358,7 +4358,7 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             "banking_data": {
                 "title_23": _("DONNEES BANCAIRES"),
-                "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
+                "data_banks": list_banking_data if list_banking_data else [],
             },
 
             "financial_accounts": {
