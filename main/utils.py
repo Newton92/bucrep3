@@ -1607,40 +1607,41 @@ def get_structured_ratios_data(acheteur, years):
             ratios_by_year[year] = None
 
     # Définir la structure des ratios par catégorie - MIS À JOUR AVEC LES NOUVEAUX RATIOS
+    # unit: 'XAF' = valeur monétaire, '%' = pourcentage (déjà ×100), 'jours' = nombre de jours, '' = ratio pur
     structure_map = {
         "STRUCTURE FINANCIÈRE": [
-            {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement'},
-            {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif'},
-            {'label': "Autonomie financière", 'key': 'autonomie_fin'},
-            {'label': "Solvabilité", 'key': 'solvabilite'},
-            {'label': "Levier financier", 'key': 'levier_financier'},
+            {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement', 'unit': 'XAF'},
+            {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif', 'unit': '%'},
+            {'label': "Autonomie financière", 'key': 'autonomie_fin', 'unit': '%'},
+            {'label': "Solvabilité", 'key': 'solvabilite', 'unit': '%'},
+            {'label': "Levier financier", 'key': 'levier_financier', 'unit': ''},
         ],
         "LIQUIDITÉ ET TRÉSORERIE": [
-            {'label': "Liquidité réduite", 'key': 'liquidite_reduite'},
-            {'label': "Liquidité immédiate", 'key': 'liquidite_immediat'},
-            {'label': "Besoin en fonds de roulement (BFR)", 'key': 'besoin_en_fond_roulement'},
-            {'label': "BFR d'exploitation", 'key': 'bfr_exploitation'},
+            {'label': "Liquidité réduite", 'key': 'liquidite_reduite', 'unit': ''},
+            {'label': "Liquidité immédiate", 'key': 'liquidite_immediat', 'unit': ''},
+            {'label': "Besoin en fonds de roulement (BFR)", 'key': 'besoin_en_fond_roulement', 'unit': 'XAF'},
+            {'label': "BFR d'exploitation", 'key': 'bfr_exploitation', 'unit': 'XAF'},
         ],
         "RENTABILITÉ": [
-            {'label': "Rentabilité économique", 'key': 'rentabilite_economique'},
-            {'label': "Rentabilité financière", 'key': 'rentabilite_fin'},
-            {'label': "Rendement capitaux propres (ROE)", 'key': 'rendement_capitaux_propres'},
-            {'label': "Rentabilité de l'outil de production", 'key': 'rentabilite_de_loutil_de_production'},
-            {'label': "Couverture des frais financiers", 'key': 'couverture_des_frais_financiers'},
+            {'label': "Rentabilité économique", 'key': 'rentabilite_economique', 'unit': '%'},
+            {'label': "Rentabilité financière", 'key': 'rentabilite_fin', 'unit': '%'},
+            {'label': "Rendement capitaux propres (ROE)", 'key': 'rendement_capitaux_propres', 'unit': '%'},
+            {'label': "Rentabilité de l'outil de production", 'key': 'rentabilite_de_loutil_de_production', 'unit': '%'},
+            {'label': "Couverture des frais financiers", 'key': 'couverture_des_frais_financiers', 'unit': ''},
         ],
         "GESTION DES STOCKS": [
-            {'label': "Rotation stocks matières premières (jours)", 'key': 'rotation_des_stock_de_mp'},
-            {'label': "Rotation stocks produits finis (jours)", 'key': 'rotation_des_stock_de_pf'},
-            {'label': "Rotation stocks marchandises (jours)", 'key': 'rotation_des_stock_de_marchandises'},
-            {'label': "Rotation stocks services (jours)", 'key': 'rotation_des_stock_de_services'},
-            {'label': "Délai moyen rotation stocks", 'key': 'delai_rotation_stocks'},
+            {'label': "Rotation stocks matières premières (jours)", 'key': 'rotation_des_stock_de_mp', 'unit': 'jours'},
+            {'label': "Rotation stocks produits finis (jours)", 'key': 'rotation_des_stock_de_pf', 'unit': 'jours'},
+            {'label': "Rotation stocks marchandises (jours)", 'key': 'rotation_des_stock_de_marchandises', 'unit': 'jours'},
+            {'label': "Rotation stocks services (jours)", 'key': 'rotation_des_stock_de_services', 'unit': 'jours'},
+            {'label': "Délai moyen rotation stocks", 'key': 'delai_rotation_stocks', 'unit': 'jours'},
         ],
         "GESTION DES CRÉDITS": [
-            {'label': "Crédit clients (jours)", 'key': 'credit_clients'},
-            {'label': "Crédits fournisseurs (jours)", 'key': 'credits_fournisseurs'},
+            {'label': "Crédit clients (jours)", 'key': 'credit_clients', 'unit': 'jours'},
+            {'label': "Crédits fournisseurs (jours)", 'key': 'credits_fournisseurs', 'unit': 'jours'},
         ],
         "CAPACITÉ DE REMBOURSEMENT": [
-            {'label': "Capacité de remboursement", 'key': 'capacite_remboursement'},
+            {'label': "Capacité de remboursement", 'key': 'capacite_remboursement', 'unit': ''},
         ]
     }
 
@@ -1648,13 +1649,13 @@ def get_structured_ratios_data(acheteur, years):
     for section, ratios_list in structure_map.items():
         rows_data = []
         for ratio_info in ratios_list:
-            row = {'label': ratio_info['label']}
+            row = {'label': ratio_info['label'], 'unit': ratio_info.get('unit', '')}
             values = {}
             for year in years:
                 instance = ratios_by_year.get(year)
                 value = getattr(instance, ratio_info['key'], None) if instance else None
                 values[year] = value
-            
+
             # Calcul des variations et formatage
             val_n = values.get(_y(years, 0))
             val_n_moins_1 = values.get(_y(years, 1))
@@ -1671,7 +1672,7 @@ def get_structured_ratios_data(acheteur, years):
             }
             rows_data.append(row)
         structured_data[section] = rows_data
-        
+
     return structured_data
 
 

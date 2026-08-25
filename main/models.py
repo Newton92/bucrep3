@@ -9510,7 +9510,12 @@ class ResultatC(Model):
     @property
     def valeur_ajoutee(self):
         """Calcule la valeur ajoutée."""
-        return self.total_I - (self.achat_mp_autres_appro or 0) - (self.var_stk_mp_app or 0) - (self.autres_achats or 0) - (self.variation_de_stocks_autres_appro or 0) - (self.transports or 0) - (self.services_ext or 0) - (self.impots_taxes or 0) - (self.autres_charges_valeur_ajoutee or 0)
+        return (self.total_I
+                - (self.achat_mdses or 0) + (self.variation_stock_mdses or 0)
+                - (self.achat_mp_autres_appro or 0) - (self.var_stk_mp_app or 0)
+                - (self.autres_achats or 0) - (self.variation_de_stocks_autres_appro or 0)
+                - (self.transports or 0) - (self.services_ext or 0)
+                - (self.impots_taxes or 0) - (self.autres_charges_valeur_ajoutee or 0))
 
     @property
     def excedent_brut_ex(self):
@@ -9601,25 +9606,25 @@ class RatiosClassique:
     def fonds_de_roulement_normatif(self):
         """
         Calcule le Fonds de Roulement Normatif (FRNO).
-        FRNO = (Dettes à court terme - Disponibilités) / Actif circulant
+        FRNO = (Dettes à court terme - Disponibilités) / Actif circulant (en %)
         """
         if self.actif and self.passif:
             dettes_court_terme = self.passif.total_III
             disponibilites = self.actif.disponibilites_vmp
             actif_circulant = self.actif.total_II
-            
+
             if actif_circulant and actif_circulant != 0:
-                return (dettes_court_terme - disponibilites) / actif_circulant
+                return ((dettes_court_terme - disponibilites) / actif_circulant) * 100
         return None
 
     @property
     def autonomie_fin(self):
         """
         Calcule le ratio d'autonomie financière.
-        Autonomie financière = Capitaux propres / Total du bilan
+        Autonomie financière = Capitaux propres / Total du bilan (en %)
         """
         if self.passif.total_general and self.passif.total_general != 0:
-            return (self.passif.total_I / self.passif.total_general)
+            return (self.passif.total_I / self.passif.total_general) * 100
         return None
 
     # Ratios de Liquidité
@@ -9676,35 +9681,35 @@ class RatiosClassique:
     def rentabilite_economique(self):
         """
         Mesure la rentabilité de l'ensemble des capitaux investis.
-        Rentabilité économique = Résultat d'exploitation / Total Actif
+        Rentabilité économique = Résultat d'exploitation / Total Actif (en %)
         """
         if self.actif.general_total and self.actif.general_total != 0:
-            return self.resultat.resultat_exploitation / self.actif.general_total
+            return (self.resultat.resultat_exploitation / self.actif.general_total) * 100
         return None
 
     @property
     def rentabilite_fin(self):
         """
         Mesure la rentabilité des capitaux propres.
-        Rentabilité financière = Résultat net / Capitaux propres
+        Rentabilité financière = Résultat net / Capitaux propres (en %)
         """
         capitaux_propres = self.passif.total_I
         if capitaux_propres and capitaux_propres != 0:
-            return self.resultat.resultat_exercice / capitaux_propres
+            return (self.resultat.resultat_exercice / capitaux_propres) * 100
         return None
     
     @property
     def rentabilite_de_loutil_de_production(self):
         """
         Mesure la rentabilité de l'outil de production (ROP).
-        ROP = Valeur ajoutée / (Immobilisations brutes + BFR)
+        ROP = Valeur ajoutée / (Immobilisations brutes + BFR) (en %)
         """
         valeur_ajoutee = self.resultat.valeur_ajoutee
         immobilisations_brutes = self.actif.total_I
         bfr = (self.actif.stocks + self.actif.creances) - self.passif.total_III
-        
+
         if (immobilisations_brutes + bfr) and (immobilisations_brutes + bfr) != 0:
-            return valeur_ajoutee / (immobilisations_brutes + bfr)
+            return (valeur_ajoutee / (immobilisations_brutes + bfr)) * 100
         return None
     
     @property
@@ -9791,27 +9796,26 @@ class RatiosClassique:
     def solvabilite(self):
         """
         Calcule le ratio de solvabilité.
-        Solvabilité = Capitaux Propres / Total Actif
+        Solvabilité = Capitaux Propres / Total Actif (en %)
         """
         total_actif = self._get_value(self.actif, 'general_total')
         capitaux_propres = self._get_value(self.passif, 'total_I')
-        
+
         if total_actif and total_actif != Decimal('0'):
-            # Convertir en float pour éviter les erreurs de division de Decimal si nécessaire
-            return float(capitaux_propres) / float(total_actif)
+            return float(capitaux_propres) / float(total_actif) * 100
         return None
     
     @property
     def rendement_capitaux_propres(self):
         """
         Calcule le rendement des capitaux propres (ROE).
-        ROE = Résultat net / Capitaux propres
+        ROE = Résultat net / Capitaux propres (en %)
         """
         resultat_net = self._get_value(self.resultat, 'resultat_exercice')
         capitaux_propres = self._get_value(self.passif, 'total_I')
 
         if capitaux_propres and capitaux_propres != Decimal('0'):
-            return float(resultat_net) / float(capitaux_propres)
+            return float(resultat_net) / float(capitaux_propres) * 100
         return None
     
     @property
