@@ -9505,13 +9505,13 @@ class ResultatC(Model):
     @property
     def marge_brute(self):
         """Calcule la marge commerciale brute."""
-        return (self.vente_de_mdses or 0) - (self.achat_mdses or 0) + (self.variation_stock_mdses or 0)
+        return (self.vente_de_mdses or 0) - (self.achat_mdses or 0) - (self.variation_stock_mdses or 0)
 
     @property
     def valeur_ajoutee(self):
         """Calcule la valeur ajoutée."""
         return (self.total_I
-                - (self.achat_mdses or 0) + (self.variation_stock_mdses or 0)
+                - (self.achat_mdses or 0) - (self.variation_stock_mdses or 0)
                 - (self.achat_mp_autres_appro or 0) - (self.var_stk_mp_app or 0)
                 - (self.autres_achats or 0) - (self.variation_de_stocks_autres_appro or 0)
                 - (self.transports or 0) - (self.services_ext or 0)
@@ -9754,7 +9754,7 @@ class RatiosClassique:
         Mesure la rotation des stocks de marchandises.
         Rotation = (Stocks de marchandises / Coût des marchandises vendues) * 360
         """
-        cout_marchandises_vendues = (self.resultat.achat_mdses or 0) - (self.resultat.variation_stock_mdses or 0)
+        cout_marchandises_vendues = (self.resultat.achat_mdses or 0) + (self.resultat.variation_stock_mdses or 0)
         if cout_marchandises_vendues and cout_marchandises_vendues != 0:
             return (self.actif.stocks_mses / cout_marchandises_vendues) * 360
         return None

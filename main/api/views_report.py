@@ -148,7 +148,6 @@ def _force_ratios_percent_display(report_data):
         return report_data
 
     for section_key in (
-        "etats_financiers_classiques",
         "etats_financiers_anglais",
         "etats_financiers_bancaires",
         "etats_financiers_syscohada",
