@@ -777,13 +777,19 @@ def _cap_scores_for_export(report_data):
 @api_view(['POST', 'GET'])  # Autorisez GET temporairement pour tester
 @permission_classes([IsAuthenticated])
 def generer_rapport_solvabilite(request):
-    print("🎯 VUE generer_rapport_solvabilite APPELÉE !")
-    print("📝 Méthode:", request.method)
-    print("👤 Utilisateur:", request.user.username)
-    print("📦 Données:", request.data)
-    print("🔗 Chemin:", request.path)
-    print("🌐 URL complète:", request.build_absolute_uri())
-    
+    import traceback as _tb
+    try:
+        return _generer_rapport_solvabilite_inner(request)
+    except Exception as _exc:
+        _trace = _tb.format_exc()
+        print("❌ ERREUR generer_rapport_solvabilite:\n", _trace)
+        return Response(
+            {"error": str(_exc), "traceback": _trace},
+            status=500
+        )
+
+
+def _generer_rapport_solvabilite_inner(request):
     data_input = request.data if request.method == 'POST' else request.query_params
     serializer = RapportSolvabiliteSerializer(data=data_input)
     if serializer.is_valid():
