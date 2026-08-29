@@ -9596,25 +9596,24 @@ class RatiosClassique:
     @property
     def fonds_de_roulement(self):
         """
-        Calcule le Fonds de Roulement Net Global (FRNG).
-        FRNG = Total des capitaux permanents - Actifs immobilisés
+        Fonds de roulement = Ressources stables / Actifs immobilisés
         """
-        fdr = self.passif.total_I + self.passif.total_II - self.actif.total_I
-        return fdr if self.actif and self.passif else None
+        actif_immobilise = self.actif.total_I
+        if self.actif and self.passif and actif_immobilise and actif_immobilise != 0:
+            ressources_stables = self.passif.total_I + self.passif.total_II
+            return ressources_stables / actif_immobilise
+        return None
     
     @property
     def fonds_de_roulement_normatif(self):
         """
-        Calcule le Fonds de Roulement Normatif (FRNO).
-        FRNO = (Dettes à court terme - Disponibilités) / Actif circulant (en %)
+        FDR Normatif = (Dettes CT - Prêts bancaires) / Actifs courants (en %)
+        Prêts bancaires = trésorerie passif (total_IV)
         """
         if self.actif and self.passif:
-            dettes_court_terme = self.passif.total_III
-            disponibilites = self.actif.disponibilites_vmp
-            actif_circulant = self.actif.total_II
-
-            if actif_circulant and actif_circulant != 0:
-                return ((dettes_court_terme - disponibilites) / actif_circulant) * 100
+            actif_courant = self.actif.total_II
+            if actif_courant and actif_courant != 0:
+                return ((self.passif.total_III - self.passif.total_IV) / actif_courant) * 100
         return None
 
     @property
@@ -9632,31 +9631,21 @@ class RatiosClassique:
     @property
     def liquidite_reduite(self):
         """
-        Calcule le ratio de liquidité réduite (Quick Ratio).
-        Il mesure la capacité à payer les dettes à court terme sans compter les stocks.
-        Liquidité réduite = (Actif circulant - Stocks) / Dettes à court terme
+        Liquidité réduite = Fonds propres / Ressources stables
         """
-        total_actif_circulant = self.actif.total_II
-        stocks = self.actif.stocks
-        # Les dettes à court terme correspondent aux dettes du passif circulant
-        dettes_court_terme = self.passif.total_III
-        
-        if dettes_court_terme and dettes_court_terme != 0:
-            return (total_actif_circulant - stocks) / dettes_court_terme
+        ressources_stables = self.passif.total_I + self.passif.total_II
+        if ressources_stables and ressources_stables != 0:
+            return self.passif.total_I / ressources_stables
         return None
 
     @property
     def liquidite_immediat(self):
         """
-        Calcule le ratio de liquidité immédiate (Cash Ratio).
-        Il mesure la capacité à payer les dettes à court terme avec la trésorerie disponible.
-        Liquidité immédiate = (Disponibilités + VMP) / Dettes à court terme
+        Liquidité immédiate = Créances CT / Dettes CT
         """
-        disponibilites = self.actif.disponibilites_vmp
-        dettes_court_terme = self.passif.total_III
-        
-        if dettes_court_terme and dettes_court_terme != 0:
-            return disponibilites / dettes_court_terme
+        dettes_ct = self.passif.total_III
+        if dettes_ct and dettes_ct != 0:
+            return self.actif.creances / dettes_ct
         return None
     
     @property
@@ -9690,26 +9679,21 @@ class RatiosClassique:
     @property
     def rentabilite_fin(self):
         """
-        Mesure la rentabilité des capitaux propres.
-        Rentabilité financière = Résultat net / Capitaux propres (en %)
+        Rentabilité financière = (Résultat + Frais financiers) / Capitaux permanents (en %)
         """
-        capitaux_propres = self.passif.total_I
-        if capitaux_propres and capitaux_propres != 0:
-            return (self.resultat.resultat_exercice / capitaux_propres) * 100
+        capitaux_permanents = self.passif.total_I + self.passif.total_II
+        if capitaux_permanents and capitaux_permanents != 0:
+            return ((self.resultat.resultat_exercice + self.resultat.financier_total_II) / capitaux_permanents) * 100
         return None
     
     @property
     def rentabilite_de_loutil_de_production(self):
         """
-        Mesure la rentabilité de l'outil de production (ROP).
-        ROP = Valeur ajoutée / (Immobilisations brutes + BFR) (en %)
+        Rentabilité de l'outil de production = Résultat net / Capitaux propres (en %)
         """
-        valeur_ajoutee = self.resultat.valeur_ajoutee
-        immobilisations_brutes = self.actif.total_I
-        bfr = (self.actif.stocks + self.actif.creances) - self.passif.total_III
-
-        if (immobilisations_brutes + bfr) and (immobilisations_brutes + bfr) != 0:
-            return (valeur_ajoutee / (immobilisations_brutes + bfr)) * 100
+        capitaux_propres = self.passif.total_I
+        if capitaux_propres and capitaux_propres != 0:
+            return (self.resultat.resultat_exercice / capitaux_propres) * 100
         return None
     
     @property
@@ -9751,12 +9735,11 @@ class RatiosClassique:
     @property
     def rotation_des_stock_de_marchandises(self):
         """
-        Mesure la rotation des stocks de marchandises.
-        Rotation = (Stocks de marchandises / Coût des marchandises vendues) * 360
+        Rotation stocks marchandises = (Stock marchandises × 360) / Achats marchandises
         """
-        cout_marchandises_vendues = (self.resultat.achat_mdses or 0) + (self.resultat.variation_stock_mdses or 0)
-        if cout_marchandises_vendues and cout_marchandises_vendues != 0:
-            return (self.actif.stocks_mses / cout_marchandises_vendues) * 360
+        achat_mdses = self.resultat.achat_mdses or 0
+        if achat_mdses and achat_mdses != 0:
+            return (self.actif.stocks_mses / achat_mdses) * 360
         return None
     
     @property
@@ -9783,11 +9766,14 @@ class RatiosClassique:
     @property
     def credits_fournisseurs(self):
         """
-        Mesure le délai de paiement obtenu des fournisseurs en jours.
-        Crédits fournisseurs = (Dettes fournisseurs / Achats) * 360
+        Crédits fournisseurs = Dettes fournisseurs / (Achats + Services extérieurs) × 360
         """
-        # On utilise le total des achats
-        achats = (self.resultat.achat_mdses or 0) + (self.resultat.achat_mp_autres_appro or 0) + (self.resultat.autres_achats or 0)
+        achats = (
+            (self.resultat.achat_mdses or 0)
+            + (self.resultat.achat_mp_autres_appro or 0)
+            + (self.resultat.autres_achats or 0)
+            + (self.resultat.services_ext or 0)
+        )
         if achats and achats != 0:
             return (self.passif.dettes_fournisseurs_divers / achats) * 360
         return None

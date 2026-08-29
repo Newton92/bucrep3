@@ -1610,7 +1610,7 @@ def get_structured_ratios_data(acheteur, years):
     # unit: 'XAF' = valeur monétaire, '%' = pourcentage (déjà ×100), 'jours' = nombre de jours, '' = ratio pur
     structure_map = {
         "STRUCTURE FINANCIÈRE": [
-            {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement', 'unit': 'XAF'},
+            {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement', 'unit': ''},
             {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif', 'unit': '%'},
             {'label': "Autonomie financière", 'key': 'autonomie_fin', 'unit': '%'},
             {'label': "Solvabilité", 'key': 'solvabilite', 'unit': '%'},
