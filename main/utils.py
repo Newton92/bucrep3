@@ -1611,7 +1611,7 @@ def get_structured_ratios_data(acheteur, years):
     structure_map = {
         "STRUCTURE FINANCIÈRE": [
             {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement', 'unit': ''},
-            {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif', 'unit': '%'},
+            {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif', 'unit': 'jours'},
             {'label': "Autonomie financière", 'key': 'autonomie_fin', 'unit': '%'},
             {'label': "Solvabilité", 'key': 'solvabilite', 'unit': '%'},
             {'label': "Levier financier", 'key': 'levier_financier', 'unit': ''},

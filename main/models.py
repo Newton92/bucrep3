@@ -9607,13 +9607,12 @@ class RatiosClassique:
     @property
     def fonds_de_roulement_normatif(self):
         """
-        FDR Normatif = (Dettes CT - Prêts bancaires) / Actifs courants (en %)
-        Prêts bancaires = trésorerie passif (total_IV)
+        FDR Normatif = BFR_exploitation / CA × 360 (en jours)
         """
-        if self.actif and self.passif:
-            actif_courant = self.actif.total_II
-            if actif_courant and actif_courant != 0:
-                return ((self.passif.total_III - self.passif.total_IV) / actif_courant) * 100
+        if self.actif and self.passif and self.resultat:
+            ca = self.resultat.ca or 0
+            if ca and ca != 0:
+                return (self.bfr_exploitation / ca) * 360
         return None
 
     @property
@@ -9689,11 +9688,11 @@ class RatiosClassique:
     @property
     def rentabilite_de_loutil_de_production(self):
         """
-        Rentabilité de l'outil de production = Résultat net / Capitaux propres (en %)
+        Rentabilité de l'outil de production = Résultat exploitation / Immobilisations corporelles (en %)
         """
-        capitaux_propres = self.passif.total_I
-        if capitaux_propres and capitaux_propres != 0:
-            return (self.resultat.resultat_exercice / capitaux_propres) * 100
+        immob_corp = self.actif.elements_corporels if self.actif else 0
+        if immob_corp and immob_corp != 0:
+            return (self.resultat.resultat_exploitation / immob_corp) * 100
         return None
     
     @property
@@ -9735,11 +9734,11 @@ class RatiosClassique:
     @property
     def rotation_des_stock_de_marchandises(self):
         """
-        Rotation stocks marchandises = (Stock marchandises × 360) / Achats marchandises
+        Rotation stocks marchandises = (Stocks et en-cours × 360) / Achats marchandises
         """
         achat_mdses = self.resultat.achat_mdses or 0
         if achat_mdses and achat_mdses != 0:
-            return (self.actif.stocks_mses / achat_mdses) * 360
+            return (self.actif.stocks / achat_mdses) * 360
         return None
     
     @property
@@ -9766,16 +9765,12 @@ class RatiosClassique:
     @property
     def credits_fournisseurs(self):
         """
-        Crédits fournisseurs = Dettes fournisseurs / (Achats + Services extérieurs) × 360
+        Crédits fournisseurs = Fournisseurs d'exploitation / Achats marchandises × 360
+        Fournisseurs d'exploitation = passif.dettes (champ principal des dettes fournisseurs)
         """
-        achats = (
-            (self.resultat.achat_mdses or 0)
-            + (self.resultat.achat_mp_autres_appro or 0)
-            + (self.resultat.autres_achats or 0)
-            + (self.resultat.services_ext or 0)
-        )
-        if achats and achats != 0:
-            return (self.passif.dettes_fournisseurs_divers / achats) * 360
+        achat_mdses = self.resultat.achat_mdses or 0
+        if achat_mdses and achat_mdses != 0:
+            return ((self.passif.dettes or 0) / achat_mdses) * 360
         return None
        
     @property
