@@ -170,6 +170,8 @@ import tempfile
 
 def _get_static_map_base64(lat, lng, zoom=14, width=700, height=300):
     """Télécharge une carte statique Stadia et retourne une data URI base64 pour WeasyPrint."""
+    import logging
+    logger = logging.getLogger(__name__)
     try:
         import requests as _requests
         url = (
@@ -181,8 +183,10 @@ def _get_static_map_base64(lat, lng, zoom=14, width=700, height=300):
         resp = _requests.get(url, timeout=15)
         if resp.status_code == 200 and resp.content:
             return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
-    except Exception:
-        pass
+        else:
+            logger.warning(f"[StaticMap] Stadia HTTP {resp.status_code} pour lat={lat}, lng={lng}")
+    except Exception as e:
+        logger.error(f"[StaticMap] Erreur téléchargement carte : {e}")
     return None
 
 
