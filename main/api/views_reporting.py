@@ -168,17 +168,18 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=9, width=800, height=600):
+def _get_static_map_base64(lat, lng, zoom=13, width=900, height=500):
     """Carte statique Stadia centrée sur le point — data URI base64 pour WeasyPrint."""
     import logging
     import requests as _requests
     logger = logging.getLogger(__name__)
 
     # osm_bright : couleurs fortes, labels de rues/quartiers bien visibles en PDF
+    # Marqueur rouge centré sur le point exact
     url = (
         f"https://tiles.stadiamaps.com/static/osm_bright.png"
         f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-        f"&markers={lng},{lat}"
+        f"&markers=color:red%7C{lng},{lat}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
     )
     try:
