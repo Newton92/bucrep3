@@ -175,12 +175,14 @@ def _get_static_map_base64(lat, lng, zoom=10, width=800, height=640):
     from PIL import Image, ImageDraw
     logger = logging.getLogger(__name__)
 
-    # Récupère la carte sans marqueur Stadia (pour éviter le pin noir)
+    # Stadia Static API: center=lat,lng (NOT GeoJSON order)
+    logger.info(f"[StaticMap] lat={lat}, lng={lng}, zoom={zoom}")
     url = (
         f"https://tiles.stadiamaps.com/static/osm_bright.png"
-        f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
+        f"?center={lat},{lng}&zoom={zoom}&size={width}x{height}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
     )
+    logger.info(f"[StaticMap] URL: center={lat},{lng}")
     try:
         resp = _requests.get(url, timeout=20, headers={'User-Agent': 'BUCREP-Report/1.0'})
         if resp.status_code != 200 or not resp.content:
