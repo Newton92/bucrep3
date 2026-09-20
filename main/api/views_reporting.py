@@ -168,33 +168,28 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=12, width=700, height=400):
-    """Télécharge une carte statique et retourne une data URI base64 pour WeasyPrint.
-    Essaie OSM StaticMap (gratuit) puis Stadia en fallback."""
+def _get_static_map_base64(lat, lng, zoom=11, width=800, height=450):
+    """Carte statique Stadia centrée sur le point — data URI base64 pour WeasyPrint."""
     import logging
     import requests as _requests
     logger = logging.getLogger(__name__)
 
-    urls = [
-        # Stadia Maps — center=lng,lat + marqueur rouge + zoom réduit
-        (
-            f"https://tiles.stadiamaps.com/static/osm_bright.png"
-            f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-            f"&markers={lat},{lng}"
-            f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
-        ),
-    ]
-
-    for url in urls:
-        try:
-            resp = _requests.get(url, timeout=15, headers={'User-Agent': 'BUCREP-Report/1.0'})
-            if resp.status_code == 200 and resp.content:
-                logger.info(f"[StaticMap] OK ({resp.status_code}) : {url[:60]}")
-                return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
-            else:
-                logger.warning(f"[StaticMap] HTTP {resp.status_code} — {url[:60]} — body: {resp.text[:200]}")
-        except Exception as e:
-            logger.error(f"[StaticMap] Erreur : {e} — {url[:60]}")
+    # Stadia : center=lng,lat (format GeoJSON), size=WxH, marker=lat,lng
+    url = (
+        f"https://tiles.stadiamaps.com/static/outdoors.png"
+        f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
+        f"&markers={lat},{lng}"
+        f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
+    )
+    try:
+        resp = _requests.get(url, timeout=20, headers={'User-Agent': 'BUCREP-Report/1.0'})
+        if resp.status_code == 200 and resp.content:
+            logger.info(f"[StaticMap] OK — zoom={zoom}, center={lat},{lng}")
+            return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
+        else:
+            logger.warning(f"[StaticMap] HTTP {resp.status_code} — body: {resp.text[:300]}")
+    except Exception as e:
+        logger.error(f"[StaticMap] Erreur réseau : {e}")
     return None
 
 
