@@ -180,7 +180,7 @@ def _get_static_map_base64(lat, lng, zoom=12, width=700, height=400):
         (
             f"https://tiles.stadiamaps.com/static/osm_bright.png"
             f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-            f"&markers=icon:small_red%7C{lat},{lng}"
+            f"&markers={lat},{lng}"
             f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
         ),
     ]
