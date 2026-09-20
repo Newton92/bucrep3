@@ -168,15 +168,15 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=11, width=800, height=450):
+def _get_static_map_base64(lat, lng, zoom=13, width=1200, height=600):
     """Carte statique Stadia centrée sur le point — data URI base64 pour WeasyPrint."""
     import logging
     import requests as _requests
     logger = logging.getLogger(__name__)
 
-    # Stadia : center=lng,lat (format GeoJSON), size=WxH, marker=lat,lng
+    # style alidade_smooth : meilleur rendu texte/quartiers pour PDF professionnel
     url = (
-        f"https://tiles.stadiamaps.com/static/outdoors.png"
+        f"https://tiles.stadiamaps.com/static/alidade_smooth.png"
         f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
         f"&markers={lat},{lng}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
