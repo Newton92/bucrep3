@@ -168,7 +168,11 @@ import tempfile
 # ... vos autres vues ...
 
 
+<<<<<<< HEAD
 def _get_static_map_base64(lat, lng, zoom=20, width=800, height=640):
+=======
+def _get_static_map_base64(lat, lng, zoom=16, width=800, height=640):
+>>>>>>> 62563dbaf014630934f1c9cabe704bc40f8a2db5
     """Carte statique Stadia avec marqueur rouge dessiné par Pillow au centre."""
     import logging, io, math
     import requests as _requests
