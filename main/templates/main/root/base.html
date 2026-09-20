@@ -2516,16 +2516,47 @@
             if (tb) tb.style.display = 'none';
         }
 
-        /* Délégation : clic sur image dans n'importe quel éditeur Quill */
+        /* Attacher directement un handler click sur chaque image dans .ql-editor */
+        function attachImgClick(img) {
+            if (img._qlResizeAttached) return;
+            img._qlResizeAttached = true;
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showTb(img);
+            });
+        }
+
+        /* MutationObserver : intercepte chaque image ajoutée dans un éditeur Quill */
+        var imgObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(node) {
+                    if (!node || node.nodeType !== 1) return;
+                    var imgs = node.tagName === 'IMG' ? [node] : Array.from(node.querySelectorAll ? node.querySelectorAll('img') : []);
+                    imgs.forEach(function(img) {
+                        if (img.closest && img.closest('.ql-editor')) attachImgClick(img);
+                    });
+                });
+            });
+        });
+        imgObserver.observe(document.body, { childList: true, subtree: true });
+
+        /* Attacher sur les images déjà présentes (éditeurs pré-remplis) */
+        function attachExistingImgs() {
+            document.querySelectorAll('.ql-editor img').forEach(attachImgClick);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', attachExistingImgs);
+        } else {
+            attachExistingImgs();
+        }
+        document.addEventListener('shown.bs.modal', attachExistingImgs);
+
+        /* Fermer la barre si clic en dehors */
         document.addEventListener('click', function(e) {
-            var el = e.target;
-            if (el.tagName === 'IMG' && el.closest && el.closest('.ql-editor')) {
-                showTb(el);
-                return;
-            }
-            if (tb && tb.contains(el)) return; /* clic dans la barre → ne pas fermer */
+            if (tb && tb.contains(e.target)) return;
+            if (e.target.tagName === 'IMG' && e.target.closest && e.target.closest('.ql-editor')) return;
             hideTb();
-        }, true);
+        });
 
         /* Boutons % */
         tb.querySelectorAll('[data-pct]').forEach(function(btn) {
