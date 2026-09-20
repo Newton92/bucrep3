@@ -2516,14 +2516,21 @@
             if (tb) tb.style.display = 'none';
         }
 
-        /* Attacher directement un handler click sur chaque image dans .ql-editor */
+        /* Attacher directement un handler click sur chaque image dans .ql-editor
+           → capture:true pour passer avant les handlers Quill */
         function attachImgClick(img) {
             if (img._qlResizeAttached) return;
             img._qlResizeAttached = true;
             img.addEventListener('click', function(e) {
+                e.stopImmediatePropagation();
                 e.stopPropagation();
                 showTb(img);
-            });
+            }, true);
+        }
+
+        /* Scan toutes les images .ql-editor et attache le handler */
+        function attachExistingImgs() {
+            document.querySelectorAll('.ql-editor img').forEach(attachImgClick);
         }
 
         /* MutationObserver : intercepte chaque image ajoutée dans un éditeur Quill */
@@ -2540,16 +2547,23 @@
         });
         imgObserver.observe(document.body, { childList: true, subtree: true });
 
-        /* Attacher sur les images déjà présentes (éditeurs pré-remplis) */
-        function attachExistingImgs() {
-            document.querySelectorAll('.ql-editor img').forEach(attachImgClick);
-        }
+        /* Scan initial + après modals + fallback 800ms (pour dangerouslyPasteHTML asynchrone) */
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', attachExistingImgs);
+            document.addEventListener('DOMContentLoaded', function() {
+                attachExistingImgs();
+                setTimeout(attachExistingImgs, 800);
+            });
         } else {
             attachExistingImgs();
+            setTimeout(attachExistingImgs, 800);
         }
-        document.addEventListener('shown.bs.modal', attachExistingImgs);
+        document.addEventListener('shown.bs.modal', function() {
+            attachExistingImgs();
+            setTimeout(attachExistingImgs, 400);
+        });
+
+        /* Exposé globalement pour appel depuis les templates après dangerouslyPasteHTML */
+        window.qlImgRescanEditors = attachExistingImgs;
 
         /* Fermer la barre si clic en dehors */
         document.addEventListener('click', function(e) {
