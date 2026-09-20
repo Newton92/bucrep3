@@ -168,7 +168,7 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=14, width=700, height=400):
+def _get_static_map_base64(lat, lng, zoom=12, width=700, height=400):
     """Télécharge une carte statique et retourne une data URI base64 pour WeasyPrint.
     Essaie OSM StaticMap (gratuit) puis Stadia en fallback."""
     import logging
@@ -176,10 +176,11 @@ def _get_static_map_base64(lat, lng, zoom=14, width=700, height=400):
     logger = logging.getLogger(__name__)
 
     urls = [
-        # Stadia Maps — center=lng,lat (longitude en premier)
+        # Stadia Maps — center=lng,lat + marqueur rouge + zoom réduit
         (
             f"https://tiles.stadiamaps.com/static/osm_bright.png"
             f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
+            f"&markers=icon:small_red%7C{lat},{lng}"
             f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
         ),
     ]
