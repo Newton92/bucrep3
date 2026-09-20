@@ -1753,6 +1753,8 @@ def _generer_rapport_solvabilite_inner(request):
                 "forme_juridique": _safe_nested_attr(acheteur, ["forme_juridique", "libelle"]),
                 "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "",
                 "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "",
+                "latitude": float(acheteur.latitude) if hasattr(acheteur, 'latitude') and acheteur.latitude else None,
+                "longitude": float(acheteur.longitude) if hasattr(acheteur, 'longitude') and acheteur.longitude else None,
             },
             "executive_summary": {
                 "title_4": _("RESUME EXECUTIF"),
