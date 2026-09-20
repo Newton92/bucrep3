@@ -174,11 +174,11 @@ def _get_static_map_base64(lat, lng, zoom=13, width=1200, height=600):
     import requests as _requests
     logger = logging.getLogger(__name__)
 
-    # style alidade_smooth : meilleur rendu texte/quartiers pour PDF professionnel
+    # osm_bright : couleurs fortes, labels de rues/quartiers bien visibles en PDF
     url = (
-        f"https://tiles.stadiamaps.com/static/alidade_smooth.png"
+        f"https://tiles.stadiamaps.com/static/osm_bright.png"
         f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-        f"&markers={lat},{lng}"
+        f"&markers={lng},{lat}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
     )
     try:
