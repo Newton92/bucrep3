@@ -168,24 +168,38 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=14, width=700, height=300):
-    """Télécharge une carte statique Stadia et retourne une data URI base64 pour WeasyPrint."""
+def _get_static_map_base64(lat, lng, zoom=14, width=700, height=400):
+    """Télécharge une carte statique et retourne une data URI base64 pour WeasyPrint.
+    Essaie OSM StaticMap (gratuit) puis Stadia en fallback."""
     import logging
+    import requests as _requests
     logger = logging.getLogger(__name__)
-    try:
-        import requests as _requests
-        url = (
-            f"https://tiles.stadiamaps.com/static/osm_bright.png"
+
+    urls = [
+        # OSM StaticMap — gratuit, pas de clé API
+        (
+            f"https://staticmap.openstreetmap.de/staticmap.php"
+            f"?center={lat},{lng}&zoom={zoom}&size={width}x{height}"
+            f"&markers={lat},{lng},red-pushpin"
+        ),
+        # Stadia Maps fallback
+        (
+            f"https://tiles.stadiamaps.com/static/alidade_smooth.png"
             f"?lat={lat}&lng={lng}&zoom={zoom}&width={width}&height={height}"
             f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
-        )
-        resp = _requests.get(url, timeout=15)
-        if resp.status_code == 200 and resp.content:
-            return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
-        else:
-            logger.warning(f"[StaticMap] Stadia HTTP {resp.status_code} pour lat={lat}, lng={lng}")
-    except Exception as e:
-        logger.error(f"[StaticMap] Erreur téléchargement carte : {e}")
+        ),
+    ]
+
+    for url in urls:
+        try:
+            resp = _requests.get(url, timeout=15, headers={'User-Agent': 'BUCREP-Report/1.0'})
+            if resp.status_code == 200 and resp.content:
+                logger.info(f"[StaticMap] OK ({resp.status_code}) : {url[:60]}")
+                return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
+            else:
+                logger.warning(f"[StaticMap] HTTP {resp.status_code} — {url[:60]} — body: {resp.text[:200]}")
+        except Exception as e:
+            logger.error(f"[StaticMap] Erreur : {e} — {url[:60]}")
     return None
 
 
