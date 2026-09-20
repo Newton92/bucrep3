@@ -168,29 +168,47 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=13, width=900, height=500):
-    """Carte statique Stadia centrée sur le point — data URI base64 pour WeasyPrint."""
-    import logging
+def _get_static_map_base64(lat, lng, zoom=8, width=800, height=500):
+    """Carte statique Stadia avec marqueur rouge dessiné par Pillow au centre."""
+    import logging, io, math
     import requests as _requests
+    from PIL import Image, ImageDraw
     logger = logging.getLogger(__name__)
 
-    # osm_bright : couleurs fortes, labels de rues/quartiers bien visibles en PDF
-    # Marqueur rouge centré sur le point exact
+    # Récupère la carte sans marqueur Stadia (pour éviter le pin noir)
     url = (
         f"https://tiles.stadiamaps.com/static/osm_bright.png"
         f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-        f"&markers={lng},{lat}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
     )
     try:
         resp = _requests.get(url, timeout=20, headers={'User-Agent': 'BUCREP-Report/1.0'})
-        if resp.status_code == 200 and resp.content:
-            logger.info(f"[StaticMap] OK — zoom={zoom}, center={lat},{lng}")
-            return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
-        else:
-            logger.warning(f"[StaticMap] HTTP {resp.status_code} — body: {resp.text[:300]}")
+        if resp.status_code != 200 or not resp.content:
+            logger.warning(f"[StaticMap] HTTP {resp.status_code} — body: {resp.text[:200]}")
+            return None
+
+        img = Image.open(io.BytesIO(resp.content)).convert('RGBA')
+        draw = ImageDraw.Draw(img)
+
+        # Marqueur rouge centré (le point est toujours au centre de l'image)
+        cx, cy = width // 2, height // 2
+        r = 14  # rayon du cercle
+
+        # Ombre légère
+        draw.ellipse([cx-r+3, cy-r+3, cx+r+3, cy+r+3], fill=(0, 0, 0, 60))
+        # Cercle rouge plein avec bordure blanche
+        draw.ellipse([cx-r-2, cy-r-2, cx+r+2, cy+r+2], fill='white')
+        draw.ellipse([cx-r, cy-r, cx+r, cy+r], fill='#E74C3C')
+        # Point blanc au centre
+        draw.ellipse([cx-5, cy-5, cx+5, cy+5], fill='white')
+
+        output = io.BytesIO()
+        img.convert('RGB').save(output, format='PNG', optimize=True)
+        logger.info(f"[StaticMap] OK avec marqueur rouge — zoom={zoom}")
+        return "data:image/png;base64," + base64.b64encode(output.getvalue()).decode('utf-8')
+
     except Exception as e:
-        logger.error(f"[StaticMap] Erreur réseau : {e}")
+        logger.error(f"[StaticMap] Erreur : {e}")
     return None
 
 
