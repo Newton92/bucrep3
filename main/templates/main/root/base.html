@@ -2447,6 +2447,7 @@
                         });
                     });
                 }
+                if (window.attachQuillImgResize) window.attachQuillImgResize(quill);
                 ta._quill = quill;
             });
         }
@@ -2487,14 +2488,14 @@
     </div>
     <script>
     (function() {
-        var tb = document.getElementById('qlImgToolbar');
+        var tb   = document.getElementById('qlImgToolbar');
         var wInp = document.getElementById('qlImgWidth');
         var curImg = null;
 
         function positionTb() {
             if (!curImg || !tb) return;
-            var r = curImg.getBoundingClientRect();
-            var tbW = tb.offsetWidth || 420;
+            var r    = curImg.getBoundingClientRect();
+            var tbW  = tb.offsetWidth || 460;
             var left = Math.max(4, Math.min(r.left + window.scrollX, window.innerWidth - tbW - 8));
             var top  = r.bottom + window.scrollY + 6;
             tb.style.left = left + 'px';
@@ -2516,68 +2517,72 @@
             if (tb) tb.style.display = 'none';
         }
 
-        /* Attacher directement un handler click sur chaque image dans .ql-editor
-           → capture:true pour passer avant les handlers Quill */
-        function attachImgClick(img) {
-            if (img._qlResizeAttached) return;
-            img._qlResizeAttached = true;
-            img.addEventListener('click', function(e) {
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                showTb(img);
-            }, true);
+        /*
+         * Méthode fiable : écouter selection-change de Quill.
+         * Quand on clique sur une image dans Quill, il sélectionne un blot de
+         * longueur 1 dont le domNode est l'<img>. On détecte ça ici.
+         */
+        function attachQuillImgResize(quill) {
+            if (!quill || quill._imgResizeAttached) return;
+            quill._imgResizeAttached = true;
+            quill.on('selection-change', function(range) {
+                if (!range) { hideTb(); return; }
+                if (range.length === 1) {
+                    try {
+                        var leaf = quill.getLeaf(range.index);
+                        var blot = leaf && leaf[0];
+                        if (blot && blot.domNode && blot.domNode.tagName === 'IMG') {
+                            showTb(blot.domNode);
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                hideTb();
+            });
         }
 
-        /* Scan toutes les images .ql-editor et attache le handler */
-        function attachExistingImgs() {
-            document.querySelectorAll('.ql-editor img').forEach(attachImgClick);
-        }
+        /* Exposé globalement → utilisé dans initRichEditors ET dans les templates
+           qui initialisent Quill directement (dash_root_edit_acheteur, etc.) */
+        window.attachQuillImgResize = attachQuillImgResize;
 
-        /* MutationObserver : intercepte chaque image ajoutée dans un éditeur Quill */
-        var imgObserver = new MutationObserver(function(mutations) {
+        /*
+         * Auto-attach sur TOUS les éditeurs Quill du site :
+         * dès qu'un .ql-editor apparaît dans le DOM, on récupère l'instance
+         * Quill via Quill.find() et on lui attache le resize.
+         * Cela couvre les templates qui créent Quill directement sans passer
+         * par initRichEditors (conformité, SWOT, géopolitic, mailing, etc.)
+         */
+        var qlEditorObserver = new MutationObserver(function(mutations) {
             mutations.forEach(function(m) {
                 m.addedNodes.forEach(function(node) {
                     if (!node || node.nodeType !== 1) return;
-                    var imgs = node.tagName === 'IMG' ? [node] : Array.from(node.querySelectorAll ? node.querySelectorAll('img') : []);
-                    imgs.forEach(function(img) {
-                        if (img.closest && img.closest('.ql-editor')) attachImgClick(img);
+                    var editors = (node.classList && node.classList.contains('ql-editor'))
+                        ? [node]
+                        : Array.from(node.querySelectorAll ? node.querySelectorAll('.ql-editor') : []);
+                    editors.forEach(function(editorDiv) {
+                        setTimeout(function() {
+                            try {
+                                /* remonter au nœud conteneur passé à new Quill() */
+                                var container = editorDiv.closest
+                                    ? (editorDiv.closest('.ql-container') && editorDiv.closest('.ql-container').parentNode)
+                                    : null;
+                                if (container) {
+                                    var q = window.Quill && Quill.find ? Quill.find(container) : null;
+                                    if (q) attachQuillImgResize(q);
+                                }
+                            } catch(e) {}
+                        }, 0);
                     });
                 });
             });
         });
-        imgObserver.observe(document.body, { childList: true, subtree: true });
-
-        /* Scan initial + après modals + fallback 800ms (pour dangerouslyPasteHTML asynchrone) */
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                attachExistingImgs();
-                setTimeout(attachExistingImgs, 800);
-            });
-        } else {
-            attachExistingImgs();
-            setTimeout(attachExistingImgs, 800);
-        }
-        document.addEventListener('shown.bs.modal', function() {
-            attachExistingImgs();
-            setTimeout(attachExistingImgs, 400);
-        });
-
-        /* Exposé globalement pour appel depuis les templates après dangerouslyPasteHTML */
-        window.qlImgRescanEditors = attachExistingImgs;
-
-        /* Fermer la barre si clic en dehors */
-        document.addEventListener('click', function(e) {
-            if (tb && tb.contains(e.target)) return;
-            if (e.target.tagName === 'IMG' && e.target.closest && e.target.closest('.ql-editor')) return;
-            hideTb();
-        });
+        qlEditorObserver.observe(document.body, { childList: true, subtree: true });
 
         /* Boutons % */
         tb.querySelectorAll('[data-pct]').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 if (!curImg) return;
-                var pct = btn.getAttribute('data-pct');
-                curImg.style.width  = pct + '%';
+                curImg.style.width  = btn.getAttribute('data-pct') + '%';
                 curImg.style.height = 'auto';
                 positionTb();
             });
@@ -2585,15 +2590,14 @@
 
         /* Champ largeur pixel */
         if (wInp) {
-            wInp.addEventListener('change', function() {
+            function applyWidth() {
                 if (!curImg || !wInp.value) return;
                 curImg.style.width  = wInp.value + 'px';
                 curImg.style.height = 'auto';
                 positionTb();
-            });
-            wInp.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') wInp.dispatchEvent(new Event('change'));
-            });
+            }
+            wInp.addEventListener('change', applyWidth);
+            wInp.addEventListener('keydown', function(e) { if (e.key === 'Enter') applyWidth(); });
         }
 
         /* Boutons alignement */
@@ -2615,7 +2619,13 @@
         });
 
         document.addEventListener('scroll', function() { if (curImg) positionTb(); }, true);
-        window.addEventListener('resize', function() { if (curImg) positionTb(); });
+        window.addEventListener('resize',   function() { if (curImg) positionTb(); });
+
+        /* Fermer si clic hors toolbar et hors éditeur */
+        document.addEventListener('mousedown', function(e) {
+            if (tb && tb.contains(e.target)) return;
+            hideTb();
+        });
     })();
     </script>
 
