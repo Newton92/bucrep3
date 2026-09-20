@@ -2518,26 +2518,21 @@
         }
 
         /*
-         * Méthode fiable : écouter selection-change de Quill.
-         * Quand on clique sur une image dans Quill, il sélectionne un blot de
-         * longueur 1 dont le domNode est l'<img>. On détecte ça ici.
+         * Écouter mousedown sur quill.root (le div contenteditable).
+         * En Quill 1.3.7, cliquer sur une image place le curseur length=0
+         * (pas length=1), donc selection-change ne suffit pas.
+         * mousedown sur quill.root est fiable : il remonte toujours depuis l'<img>.
          */
         function attachQuillImgResize(quill) {
             if (!quill || quill._imgResizeAttached) return;
             quill._imgResizeAttached = true;
-            quill.on('selection-change', function(range) {
-                if (!range) { hideTb(); return; }
-                if (range.length === 1) {
-                    try {
-                        var leaf = quill.getLeaf(range.index);
-                        var blot = leaf && leaf[0];
-                        if (blot && blot.domNode && blot.domNode.tagName === 'IMG') {
-                            showTb(blot.domNode);
-                            return;
-                        }
-                    } catch (e) {}
+            quill.root.addEventListener('mousedown', function(e) {
+                if (e.target && e.target.tagName === 'IMG') {
+                    var img = e.target;
+                    setTimeout(function() { showTb(img); }, 0);
+                } else {
+                    hideTb();
                 }
-                hideTb();
             });
         }
 
