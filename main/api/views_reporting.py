@@ -176,16 +176,10 @@ def _get_static_map_base64(lat, lng, zoom=14, width=700, height=400):
     logger = logging.getLogger(__name__)
 
     urls = [
-        # OSM StaticMap — gratuit, pas de clé API
+        # Stadia Maps — paramètre size=WxH obligatoire
         (
-            f"https://staticmap.openstreetmap.de/staticmap.php"
-            f"?center={lat},{lng}&zoom={zoom}&size={width}x{height}"
-            f"&markers={lat},{lng},red-pushpin"
-        ),
-        # Stadia Maps fallback
-        (
-            f"https://tiles.stadiamaps.com/static/alidade_smooth.png"
-            f"?lat={lat}&lng={lng}&zoom={zoom}&width={width}&height={height}"
+            f"https://tiles.stadiamaps.com/static/osm_bright.png"
+            f"?lat={lat}&lng={lng}&zoom={zoom}&size={width}x{height}"
             f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
         ),
     ]
