@@ -175,9 +175,8 @@ def _get_static_map_base64(lat, lng, zoom=14, width=700, height=300):
     try:
         import requests as _requests
         url = (
-            f"https://tiles.stadiamaps.com/static/osm_bright@2x.png"
+            f"https://tiles.stadiamaps.com/static/osm_bright.png"
             f"?lat={lat}&lng={lng}&zoom={zoom}&width={width}&height={height}"
-            f"&markers=icon:default%7C{lat},{lng}"
             f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
         )
         resp = _requests.get(url, timeout=15)
