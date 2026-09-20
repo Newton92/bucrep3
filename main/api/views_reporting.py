@@ -179,7 +179,7 @@ def _get_static_map_base64(lat, lng, zoom=13, width=900, height=500):
     url = (
         f"https://tiles.stadiamaps.com/static/osm_bright.png"
         f"?center={lng},{lat}&zoom={zoom}&size={width}x{height}"
-        f"&markers=color:red%7C{lng},{lat}"
+        f"&markers={lng},{lat}"
         f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
     )
     try:
