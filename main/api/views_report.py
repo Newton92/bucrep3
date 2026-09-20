@@ -2766,6 +2766,8 @@ class GenerateReport(APIView):
                 "categorie_entreprise": acheteur.categorie_entreprise.libelle if hasattr(acheteur, 'categorie_entreprise') else "Non spécifié",
                 "statut_entreprise": acheteur.statut_entreprise.libelle if hasattr(acheteur, 'statut_entreprise') else "Non spécifié",
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
+                "latitude": float(acheteur.latitude) if hasattr(acheteur, 'latitude') and acheteur.latitude else None,
+                "longitude": float(acheteur.longitude) if hasattr(acheteur, 'longitude') and acheteur.longitude else None,
             },
             "executive_summary": {
                 "title_4": _("RESUME EXECUTIF"),
@@ -4185,6 +4187,8 @@ class GenerateReportCommandeAcheteur(APIView):
                 "categorie_entreprise": acheteur.categorie_entreprise.libelle if hasattr(acheteur, 'categorie_entreprise') else "Non spécifié",
                 "statut_entreprise": acheteur.statut_entreprise.libelle if hasattr(acheteur, 'statut_entreprise') else "Non spécifié",
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
+                "latitude": float(acheteur.latitude) if hasattr(acheteur, 'latitude') and acheteur.latitude else None,
+                "longitude": float(acheteur.longitude) if hasattr(acheteur, 'longitude') and acheteur.longitude else None,
             },
             "executive_summary": {
                 "title_4": _("RESUME EXECUTIF"),
