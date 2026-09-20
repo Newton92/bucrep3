@@ -1034,6 +1034,14 @@
 
     /* ── Images insérées ── */
     .ql-editor img { max-width: 100%; height: auto; border-radius: 4px; margin: 4px 0; cursor: pointer; }
+    .ql-editor img.ql-img-selected { outline: 2px solid #0a95ca; outline-offset: 2px; }
+    /* ── Barre de redimensionnement image ── */
+    #qlImgToolbar { position:fixed; background:#fff; border:1px solid #0a95ca; border-radius:7px; padding:5px 10px; box-shadow:0 3px 12px rgba(0,0,0,.18); z-index:99999; display:none; align-items:center; gap:5px; font-size:12px; flex-wrap:wrap; }
+    #qlImgToolbar button { border:1px solid #cce4f0; background:#f0f8fc; border-radius:4px; padding:3px 9px; cursor:pointer; font-size:11px; color:#0d80be; transition:background .15s; }
+    #qlImgToolbar button:hover { background:#0a95ca; color:#fff; border-color:#0a95ca; }
+    #qlImgToolbar .ql-itb-sep { color:#ccc; padding:0 2px; }
+    #qlImgToolbar input[type=number] { width:60px; border:1px solid #cce4f0; border-radius:4px; padding:3px 5px; font-size:11px; color:#333; outline:none; }
+    #qlImgToolbar input[type=number]:focus { border-color:#0a95ca; }
 
     /* Hide original textarea when Quill is active */
     textarea.rich-editor { display: none !important; }
@@ -2457,6 +2465,112 @@
                 ta.value = html || '';
             }
         };
+    })();
+    </script>
+
+    <!-- ── Redimensionnement image dans Quill ── -->
+    <div id="qlImgToolbar">
+        <span style="color:#0d80be;font-weight:600;font-size:11px;">{% trans "Image" %} :</span>
+        <span class="ql-itb-sep">|</span>
+        <button type="button" data-pct="25">25%</button>
+        <button type="button" data-pct="50">50%</button>
+        <button type="button" data-pct="75">75%</button>
+        <button type="button" data-pct="100">100%</button>
+        <span class="ql-itb-sep">|</span>
+        <label style="font-size:11px;color:#555;margin:0;">{% trans "Larg." %} :</label>
+        <input type="number" id="qlImgWidth" min="20" max="2000" placeholder="px">
+        <span style="font-size:11px;color:#555;">px</span>
+        <span class="ql-itb-sep">|</span>
+        <button type="button" data-align="left">◀ {% trans "Gauche" %}</button>
+        <button type="button" data-align="center">↔ {% trans "Centre" %}</button>
+        <button type="button" data-align="right">{% trans "Droite" %} ▶</button>
+    </div>
+    <script>
+    (function() {
+        var tb = document.getElementById('qlImgToolbar');
+        var wInp = document.getElementById('qlImgWidth');
+        var curImg = null;
+
+        function positionTb() {
+            if (!curImg || !tb) return;
+            var r = curImg.getBoundingClientRect();
+            var tbW = tb.offsetWidth || 420;
+            var left = Math.max(4, Math.min(r.left + window.scrollX, window.innerWidth - tbW - 8));
+            var top  = r.bottom + window.scrollY + 6;
+            tb.style.left = left + 'px';
+            tb.style.top  = top  + 'px';
+            if (wInp) wInp.value = Math.round(curImg.offsetWidth);
+        }
+
+        function showTb(img) {
+            if (curImg && curImg !== img) curImg.classList.remove('ql-img-selected');
+            curImg = img;
+            img.classList.add('ql-img-selected');
+            tb.style.display = 'flex';
+            positionTb();
+        }
+
+        function hideTb() {
+            if (curImg) curImg.classList.remove('ql-img-selected');
+            curImg = null;
+            if (tb) tb.style.display = 'none';
+        }
+
+        /* Délégation : clic sur image dans n'importe quel éditeur Quill */
+        document.addEventListener('click', function(e) {
+            var el = e.target;
+            if (el.tagName === 'IMG' && el.closest && el.closest('.ql-editor')) {
+                showTb(el);
+                return;
+            }
+            if (tb && tb.contains(el)) return; /* clic dans la barre → ne pas fermer */
+            hideTb();
+        }, true);
+
+        /* Boutons % */
+        tb.querySelectorAll('[data-pct]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (!curImg) return;
+                var pct = btn.getAttribute('data-pct');
+                curImg.style.width  = pct + '%';
+                curImg.style.height = 'auto';
+                positionTb();
+            });
+        });
+
+        /* Champ largeur pixel */
+        if (wInp) {
+            wInp.addEventListener('change', function() {
+                if (!curImg || !wInp.value) return;
+                curImg.style.width  = wInp.value + 'px';
+                curImg.style.height = 'auto';
+                positionTb();
+            });
+            wInp.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') wInp.dispatchEvent(new Event('change'));
+            });
+        }
+
+        /* Boutons alignement */
+        tb.querySelectorAll('[data-align]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (!curImg) return;
+                var align = btn.getAttribute('data-align');
+                if (align === 'center') {
+                    curImg.style.float   = 'none';
+                    curImg.style.display = 'block';
+                    curImg.style.margin  = '6px auto';
+                } else {
+                    curImg.style.float   = align;
+                    curImg.style.display = '';
+                    curImg.style.margin  = align === 'left' ? '4px 12px 4px 0' : '4px 0 4px 12px';
+                }
+                positionTb();
+            });
+        });
+
+        document.addEventListener('scroll', function() { if (curImg) positionTb(); }, true);
+        window.addEventListener('resize', function() { if (curImg) positionTb(); });
     })();
     </script>
 
