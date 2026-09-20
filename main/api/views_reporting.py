@@ -168,6 +168,24 @@ import tempfile
 # ... vos autres vues ...
 
 
+def _get_static_map_base64(lat, lng, zoom=14, width=700, height=300):
+    """Télécharge une carte statique Stadia et retourne une data URI base64 pour WeasyPrint."""
+    try:
+        import requests as _requests
+        url = (
+            f"https://tiles.stadiamaps.com/static/osm_bright@2x.png"
+            f"?lat={lat}&lng={lng}&zoom={zoom}&width={width}&height={height}"
+            f"&markers=icon:default%7C{lat},{lng}"
+            f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
+        )
+        resp = _requests.get(url, timeout=15)
+        if resp.status_code == 200 and resp.content:
+            return "data:image/png;base64," + base64.b64encode(resp.content).decode('utf-8')
+    except Exception:
+        pass
+    return None
+
+
 def _to_json_safe(value):
     """Convertit récursivement les données en types JSON sérialisables."""
     if value is None or isinstance(value, (str, int, float, bool)):
@@ -1755,6 +1773,9 @@ def _generer_rapport_solvabilite_inner(request):
                 "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "",
                 "latitude": float(acheteur.latitude) if hasattr(acheteur, 'latitude') and acheteur.latitude else None,
                 "longitude": float(acheteur.longitude) if hasattr(acheteur, 'longitude') and acheteur.longitude else None,
+                "map_base64": _get_static_map_base64(
+                    float(acheteur.latitude), float(acheteur.longitude)
+                ) if hasattr(acheteur, 'latitude') and acheteur.latitude and hasattr(acheteur, 'longitude') and acheteur.longitude else None,
             },
             "executive_summary": {
                 "title_4": _("RESUME EXECUTIF"),
