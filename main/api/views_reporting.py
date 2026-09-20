@@ -168,7 +168,7 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=4, width=1200, height=600):
+def _get_static_map_base64(lat, lng, zoom=8, width=1200, height=600):
     """Carte statique Stadia centrée sur le point — data URI base64 pour WeasyPrint."""
     import logging
     import requests as _requests
