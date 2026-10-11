@@ -287,6 +287,12 @@ elements = [
 
     
     
+@login_required
+def dash_root_help(request):
+    """Page d'aide — référence complète des codes et messages de l'application."""
+    return render(request, "main/root/help/dash_root_help.html")
+
+
 def dash_root_profile_page(request):
     """
     Vue front-end pour afficher et gérer le profil utilisateur.

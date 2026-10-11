@@ -1,0 +1,986 @@
+{% extends 'main/root/base.html' %}
+{% load i18n static %}
+
+{% block title %}{% trans "Centre d'aide — BUCREP / ACREMAC" %}{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --cp: #0a95ca;
+    --cp-dk: #0d80be;
+    --cp-lt: rgba(10,149,202,.08);
+    --border: rgba(10,149,202,.18);
+    --text: #1a2b3c;
+    --muted: #5a7282;
+    --card-bg: #fff;
+    --bg: #f0f4f8;
+    --radius: 10px;
+}
+body { background: var(--bg); }
+
+/* ── Hero ── */
+.help-hero {
+    background: linear-gradient(135deg,#0a95ca 0%,#0d6eae 60%,#0a4d8c 100%);
+    color:#fff; padding:44px 32px 36px; border-radius:14px;
+    margin-bottom:32px; position:relative; overflow:hidden;
+}
+.help-hero::after {
+    content:''; position:absolute; right:-40px; top:-40px;
+    width:240px; height:240px; background:rgba(255,255,255,.06);
+    border-radius:50%;
+}
+.help-hero h1 { font-size:1.85rem; font-weight:700; margin:0 0 6px; }
+.help-hero p  { font-size:1rem; margin:0; opacity:.85; }
+
+/* ── Barre de recherche ── */
+.search-wrap { position:relative; margin-bottom:28px; }
+.search-wrap input {
+    width:100%; padding:14px 18px 14px 48px;
+    border:2px solid var(--border); border-radius:var(--radius);
+    font-size:1rem; background:#fff; color:var(--text);
+    transition:border-color .2s, box-shadow .2s;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.search-wrap input:focus {
+    outline:none; border-color:var(--cp);
+    box-shadow:0 0 0 3px rgba(10,149,202,.12);
+}
+.search-wrap .si { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--cp); font-size:1.1rem; }
+.search-count { font-size:.85rem; color:var(--muted); margin-top:6px; }
+
+/* ── Filtres ── */
+.filter-bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+.filter-btn {
+    padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+    background:#fff; font-size:.82rem; cursor:pointer; color:var(--muted);
+    transition:all .2s; font-weight:500;
+}
+.filter-btn:hover, .filter-btn.active {
+    background:var(--cp); color:#fff; border-color:var(--cp);
+}
+
+/* ── Section ── */
+.help-section { margin-bottom:32px; display:none; }
+.help-section.visible { display:block; }
+.section-header {
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border:1px solid var(--border);
+    border-radius:var(--radius) var(--radius) 0 0;
+    padding:14px 20px; border-bottom:none;
+    cursor:pointer;
+}
+.section-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.section-header h2 { font-size:1rem; font-weight:700; color:var(--text); margin:0; flex:1; }
+.section-count { font-size:.78rem; background:var(--cp-lt); color:var(--cp); padding:3px 10px; border-radius:12px; font-weight:600; }
+.section-chevron { color:var(--muted); transition:transform .25s; }
+.section-header.open .section-chevron { transform:rotate(180deg); }
+.section-body {
+    border:1px solid var(--border); border-radius:0 0 var(--radius) var(--radius);
+    background:#fff; overflow:hidden;
+}
+
+/* ── Table ── */
+.help-table { width:100%; border-collapse:collapse; }
+.help-table th {
+    background:#f8fafc; color:var(--muted); font-size:.78rem;
+    font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    padding:10px 16px; border-bottom:1px solid var(--border); text-align:left;
+}
+.help-table td {
+    padding:11px 16px; border-bottom:1px solid rgba(10,149,202,.07);
+    font-size:.875rem; color:var(--text); vertical-align:top;
+}
+.help-table tr:last-child td { border-bottom:none; }
+.help-table tr:hover td { background:var(--cp-lt); }
+.help-table tr.row-hidden { display:none; }
+
+/* ── Badges ── */
+.badge-code {
+    display:inline-block; font-family:'Courier New',monospace;
+    font-size:.8rem; font-weight:700; padding:3px 10px;
+    border-radius:6px; background:#f0f8fc; color:#0a5c8c;
+    border:1px solid rgba(10,149,202,.25); white-space:nowrap;
+}
+.badge-color { display:inline-flex; align-items:center; gap:6px; }
+.badge-color .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.badge-pill {
+    display:inline-block; padding:2px 10px; border-radius:12px;
+    font-size:.78rem; font-weight:600; white-space:nowrap;
+}
+.badge-success { background:#e8f8f0; color:#1a7a4a; }
+.badge-warning { background:#fff8e6; color:#8a6200; }
+.badge-danger  { background:#fde8e8; color:#a01010; }
+.badge-info    { background:#e6f4fc; color:#0a5c8c; }
+.badge-neutral { background:#f0f0f0; color:#555; }
+
+/* ── Score band ── */
+.score-band { display:inline-flex; align-items:center; gap:8px; }
+.stars { color:#f39c12; font-size:.9rem; letter-spacing:1px; }
+.band-letter { font-size:1.1rem; font-weight:800; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; color:#fff; }
+
+/* ── Pas de résultats ── */
+#noResults { display:none; text-align:center; padding:56px 24px; }
+#noResults i { font-size:3rem; color:#cde; margin-bottom:16px; display:block; }
+#noResults p { color:var(--muted); font-size:1rem; margin:0; }
+
+/* ── Description card (tooltip-like) ── */
+.desc-cell { color:var(--muted); font-size:.83rem; line-height:1.5; }
+
+/* Responsive */
+@media(max-width:768px){
+    .help-hero { padding:28px 18px 24px; }
+    .help-hero h1 { font-size:1.35rem; }
+    .help-table th, .help-table td { padding:8px 12px; }
+    .filter-bar { gap:6px; }
+    .filter-btn { padding:5px 12px; font-size:.78rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-3 px-lg-4">
+
+    <!-- Hero -->
+    <div class="help-hero">
+        <div style="position:relative;z-index:1;">
+            <h1><i class="bi bi-question-circle-fill me-2"></i>{% trans "Centre d'Aide — Référence des Codes & Messages" %}</h1>
+            <p>{% trans "Guide complet des codes, statuts, messages et indicateurs utilisés dans la plateforme BUCREP / ACREMAC." %}</p>
+        </div>
+    </div>
+
+    <!-- Recherche -->
+    <div class="search-wrap">
+        <i class="bi bi-search si"></i>
+        <input type="text" id="helpSearch" placeholder="{% trans 'Rechercher un code, un libellé, une description…' %}" autocomplete="off">
+        <div class="search-count" id="searchCount"></div>
+    </div>
+
+    <!-- Filtres rapides -->
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-cat="all">{% trans "Tout afficher" %}</button>
+        <button class="filter-btn" data-cat="avis">{% trans "Avis Commercial" %}</button>
+        <button class="filter-btn" data-cat="scoring">{% trans "Scoring Delphi" %}</button>
+        <button class="filter-btn" data-cat="surveillance">{% trans "Surveillance" %}</button>
+        <button class="filter-btn" data-cat="workflow">{% trans "Workflow" %}</button>
+        <button class="filter-btn" data-cat="risque">{% trans "Risque" %}</button>
+        <button class="filter-btn" data-cat="paiement">{% trans "Comportement" %}</button>
+    </div>
+
+    <div id="noResults">
+        <i class="bi bi-inbox"></i>
+        <p>{% trans "Aucun résultat trouvé pour cette recherche." %}</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- 1. Codes d'Avis de Développement Commercial   -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="help-section visible" data-cat="avis" id="sec-avis">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#e6f4fc;"><i class="bi bi-graph-up-arrow" style="color:#0a95ca;"></i></div>
+            <h2>{% trans "Codes d'Avis de Développement Commercial" %} <small style="font-weight:400;color:#888;font-size:.82rem;">(code_ac)</small></h2>
+            <span class="section-count">13 {% trans "codes" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <p style="padding:12px 20px 0;font-size:.83rem;color:#5a7282;">
+                {% trans "Ces codes numériques standardisés caractérisent le niveau de développement commercial d'une entreprise évaluée par ACREMAC. Ils apparaissent dans les rapports, les fiches acheteur et les avis commerciaux." %}
+            </p>
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">{% trans "Code" %}</th>
+                        <th style="width:120px;">{% trans "Couleur" %}</th>
+                        <th>{% trans "Libellé (Français)" %}</th>
+                        <th>{% trans "Libellé (Anglais)" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="0 inconnu indéterminé tiers">
+                        <td><span class="badge-code">0</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#95a5a6;"></span><span style="font-size:.78rem;color:#666;">#95a5a6</span></span></td>
+                        <td>Le développement ne peut pas être déterminé par des tiers</td>
+                        <td class="desc-cell">Development cannot be determined by third parties</td>
+                    </tr>
+                    <tr data-search="15 insolvabilité procédure préliminaire dette échelonnement">
+                        <td><span class="badge-code">15</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#c0392b;"></span><span style="font-size:.78rem;color:#666;">#c0392b</span></span></td>
+                        <td>En raison des procédures d'insolvabilité / préliminaires / d'échelonnement des dettes, évaluation définitive impossible</td>
+                        <td class="desc-cell">In view of insolvency / preliminary / debt staggering procedures, definitive assessment not possible</td>
+                    </tr>
+                    <tr data-search="100 très positif excellent fort développement commercial">
+                        <td><span class="badge-code">100</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#27ae60;"></span><span style="font-size:.78rem;color:#666;">#27ae60</span></span></td>
+                        <td><span class="badge-pill badge-success">Développement commercial très positif</span></td>
+                        <td class="desc-cell">Very positive business development</td>
+                    </tr>
+                    <tr data-search="150 fort développement commercial positif">
+                        <td><span class="badge-code">150</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#2ecc71;"></span><span style="font-size:.78rem;color:#666;">#2ecc71</span></span></td>
+                        <td><span class="badge-pill badge-success">Fort développement commercial</span></td>
+                        <td class="desc-cell">Strong business development</td>
+                    </tr>
+                    <tr data-search="200 positif développement">
+                        <td><span class="badge-code">200</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#16a085;"></span><span style="font-size:.78rem;color:#666;">#16a085</span></span></td>
+                        <td>Développement commercial positif</td>
+                        <td class="desc-cell">Positive business development</td>
+                    </tr>
+                    <tr data-search="300 bon développement commercial">
+                        <td><span class="badge-code">300</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#1abc9c;"></span><span style="font-size:.78rem;color:#666;">#1abc9c</span></span></td>
+                        <td>Bon développement commercial</td>
+                        <td class="desc-cell">Good business development</td>
+                    </tr>
+                    <tr data-search="350 satisfaisant passable développement">
+                        <td><span class="badge-code">350</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#f1c40f;"></span><span style="font-size:.78rem;color:#666;">#f1c40f</span></span></td>
+                        <td>Développement commercial satisfaisant</td>
+                        <td class="desc-cell">Fair business development</td>
+                    </tr>
+                    <tr data-search="400 acceptable développement commercial">
+                        <td><span class="badge-code">400</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#f39c12;"></span><span style="font-size:.78rem;color:#666;">#f39c12</span></span></td>
+                        <td>Développement commercial acceptable</td>
+                        <td class="desc-cell">Acceptable business development</td>
+                    </tr>
+                    <tr data-search="500 légèrement déclin développement commercial baisse">
+                        <td><span class="badge-code">500</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#e67e22;"></span><span style="font-size:.78rem;color:#666;">#e67e22</span></span></td>
+                        <td><span class="badge-pill badge-warning">Développement commercial légèrement en déclin</span></td>
+                        <td class="desc-cell">Slightly declining business development</td>
+                    </tr>
+                    <tr data-search="600 déclin développement commercial baisse">
+                        <td><span class="badge-code">600</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#e74c3c;"></span><span style="font-size:.78rem;color:#666;">#e74c3c</span></span></td>
+                        <td><span class="badge-pill badge-danger">Développement commercial en déclin</span></td>
+                        <td class="desc-cell">Declining business development</td>
+                    </tr>
+                    <tr data-search="700 déclin rapide développement commercial chute">
+                        <td><span class="badge-code">700</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#c0392b;"></span><span style="font-size:.78rem;color:#666;">#c0392b</span></span></td>
+                        <td><span class="badge-pill badge-danger">Développement commercial en déclin rapide</span></td>
+                        <td class="desc-cell">Rapidly declining business development</td>
+                    </tr>
+                    <tr data-search="800 fortement déclin développement commercial grave">
+                        <td><span class="badge-code">800</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#922b21;"></span><span style="font-size:.78rem;color:#666;">#922b21</span></span></td>
+                        <td><span class="badge-pill badge-danger">Développement commercial fortement en déclin</span></td>
+                        <td class="desc-cell">Strongly declining business development</td>
+                    </tr>
+                    <tr data-search="900 inconnu développement commercial indéterminé">
+                        <td><span class="badge-code">900</span></td>
+                        <td><span class="badge-color"><span class="dot" style="background:#7f8c8d;"></span><span style="font-size:.78rem;color:#666;">#7f8c8d</span></span></td>
+                        <td>Développement commercial inconnu</td>
+                        <td class="desc-cell">Business development not known</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═════════════════════════════ -->
+    <!-- 2. Scoring Delphi             -->
+    <!-- ═════════════════════════════ -->
+    <div class="help-section visible" data-cat="scoring" id="sec-scoring">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#fef9e6;"><i class="bi bi-award-fill" style="color:#f1c40f;"></i></div>
+            <h2>{% trans "Bandes de Scoring Delphi" %}</h2>
+            <span class="section-count">8 {% trans "bandes" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <p style="padding:12px 20px 0;font-size:.83rem;color:#5a7282;">
+                {% trans "Le score Delphi (0–100) positionne l'entreprise sur une échelle de risque. La bande et les étoiles sont calculées automatiquement et figurent sur les rapports." %}
+            </p>
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Score" %}</th>
+                        <th>{% trans "Bande" %}</th>
+                        <th>{% trans "Étoiles" %}</th>
+                        <th>{% trans "Niveau de risque" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="0 dissoute liquidée bande score delphi risque">
+                        <td><code>0</code></td>
+                        <td><span class="band-letter" style="background:#1a1a1a;">—</span></td>
+                        <td><span class="stars">☆☆☆☆☆</span> (0)</td>
+                        <td><span class="badge-pill badge-danger">Dissoute / Liquidée</span></td>
+                        <td class="desc-cell">Entreprise en cessation d'activité</td>
+                    </tr>
+                    <tr data-search="1 G faillite imminente bande score delphi risque maximal">
+                        <td><code>1</code></td>
+                        <td><span class="band-letter" style="background:#7b0000;">G</span></td>
+                        <td><span class="stars">☆☆☆☆☆</span> (0)</td>
+                        <td><span class="badge-pill badge-danger">Faillite imminente</span></td>
+                        <td class="desc-cell">Risque maximal — situation critique irréversible</td>
+                    </tr>
+                    <tr data-search="2 15 F risque maximal bande score delphi">
+                        <td><code>2 – 15</code></td>
+                        <td><span class="band-letter" style="background:#c0392b;">F</span></td>
+                        <td><span class="stars">☆☆☆☆☆</span> (0)</td>
+                        <td><span class="badge-pill badge-danger">Risque maximal</span></td>
+                        <td class="desc-cell">Défaillance très probable à court terme</td>
+                    </tr>
+                    <tr data-search="16 25 E risque élevé bande score delphi">
+                        <td><code>16 – 25</code></td>
+                        <td><span class="band-letter" style="background:#e74c3c;">E</span></td>
+                        <td><span class="stars">★☆☆☆☆</span> (1)</td>
+                        <td><span class="badge-pill badge-danger">Risque élevé</span></td>
+                        <td class="desc-cell">Situation financière très préoccupante</td>
+                    </tr>
+                    <tr data-search="26 50 D risque supérieur moyenne bande score delphi">
+                        <td><code>26 – 50</code></td>
+                        <td><span class="band-letter" style="background:#e67e22;">D</span></td>
+                        <td><span class="stars">★★☆☆☆</span> (2)</td>
+                        <td><span class="badge-pill badge-warning">Risque supérieur à la moyenne</span></td>
+                        <td class="desc-cell">Vulnérabilités identifiées, à surveiller</td>
+                    </tr>
+                    <tr data-search="51 80 C risque inférieur moyenne bande score delphi">
+                        <td><code>51 – 80</code></td>
+                        <td><span class="band-letter" style="background:#f1c40f;color:#333;">C</span></td>
+                        <td><span class="stars">★★★☆☆</span> (3)</td>
+                        <td><span class="badge-pill badge-warning">Risque inférieur à la moyenne</span></td>
+                        <td class="desc-cell">Profil de risque acceptable</td>
+                    </tr>
+                    <tr data-search="81 90 B faible risque bande score delphi">
+                        <td><code>81 – 90</code></td>
+                        <td><span class="band-letter" style="background:#2ecc71;">B</span></td>
+                        <td><span class="stars">★★★★☆</span> (4)</td>
+                        <td><span class="badge-pill badge-success">Faible risque</span></td>
+                        <td class="desc-cell">Situation financière saine et stable</td>
+                    </tr>
+                    <tr data-search="91 100 A risque très faible bande score delphi excellent">
+                        <td><code>91 – 100</code></td>
+                        <td><span class="band-letter" style="background:#27ae60;">A</span></td>
+                        <td><span class="stars">★★★★★</span> (5)</td>
+                        <td><span class="badge-pill badge-success">Risque très faible</span></td>
+                        <td class="desc-cell">Santé financière excellente</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- 3. Codes de Surveillance de Portefeuille   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="help-section visible" data-cat="surveillance" id="sec-surv">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#fde8e8;"><i class="bi bi-shield-exclamation" style="color:#e74c3c;"></i></div>
+            <h2>{% trans "Codes d'Alertes de Surveillance de Portefeuille" %} <small style="font-weight:400;color:#888;font-size:.82rem;">(code_interne)</small></h2>
+            <span class="section-count">20 {% trans "codes" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <p style="padding:12px 20px 0;font-size:.83rem;color:#5a7282;">
+                {% trans "Ces codes déclenchent des alertes automatiques dans le module de surveillance de portefeuille. Les clients configurent lesquels ils souhaitent activer pour chaque entreprise suivie." %}
+            </p>
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Code interne" %}</th>
+                        <th>{% trans "Catégorie" %}</th>
+                        <th>{% trans "Nom de l'événement" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="SCORING_CHANGE scoring changement niveau évaluation notation">
+                        <td><span class="badge-code">SCORING_CHANGE</span></td>
+                        <td><span class="badge-pill badge-info">Financier</span></td>
+                        <td>Changement de niveau de scoring</td>
+                        <td class="desc-cell">Déclenché lorsque le score Delphi de l'entreprise change de bande (ex : C → D)</td>
+                    </tr>
+                    <tr data-search="CREDIT_LIMIT_CHANGE limite crédit changement notation">
+                        <td><span class="badge-code">CREDIT_LIMIT_CHANGE</span></td>
+                        <td><span class="badge-pill badge-info">Financier</span></td>
+                        <td>Changement de limite de crédit</td>
+                        <td class="desc-cell">La limite de crédit recommandée a été révisée à la hausse ou à la baisse</td>
+                    </tr>
+                    <tr data-search="NEW_FINANCIALS nouveaux états financiers bilan incorporation">
+                        <td><span class="badge-code">NEW_FINANCIALS</span></td>
+                        <td><span class="badge-pill badge-info">Financier</span></td>
+                        <td>Nouveaux états financiers</td>
+                        <td class="desc-cell">De nouveaux états financiers ont été intégrés dans le dossier de l'entreprise</td>
+                    </tr>
+                    <tr data-search="FAKE_FINANCIALS_ALERT faux états financiers fraude alerte">
+                        <td><span class="badge-code">FAKE_FINANCIALS_ALERT</span></td>
+                        <td><span class="badge-pill badge-danger">Alerte</span></td>
+                        <td>Alerte sur faux états financiers</td>
+                        <td class="desc-cell">Des incohérences suggérant des états financiers falsifiés ont été détectées</td>
+                    </tr>
+                    <tr data-search="COMPANY_NAME_CHANGE raison sociale changement nom entreprise">
+                        <td><span class="badge-code">COMPANY_NAME_CHANGE</span></td>
+                        <td><span class="badge-pill badge-neutral">Identité</span></td>
+                        <td>Changement de raison sociale</td>
+                        <td class="desc-cell">La dénomination commerciale ou la raison sociale de l'entreprise a été modifiée</td>
+                    </tr>
+                    <tr data-search="CONTACT_INFO_CHANGE adresse téléphone coordonnées changement">
+                        <td><span class="badge-code">CONTACT_INFO_CHANGE</span></td>
+                        <td><span class="badge-pill badge-neutral">Identité</span></td>
+                        <td>Changement d'adresse / téléphone</td>
+                        <td class="desc-cell">Les coordonnées de l'entreprise (adresse, téléphone) ont été mises à jour</td>
+                    </tr>
+                    <tr data-search="PARENT_COMPANY_CHANGE maison mère groupe changement structurel">
+                        <td><span class="badge-code">PARENT_COMPANY_CHANGE</span></td>
+                        <td><span class="badge-pill badge-neutral">Structure</span></td>
+                        <td>Changement de maison-mère</td>
+                        <td class="desc-cell">L'entreprise a changé de groupe ou de société mère</td>
+                    </tr>
+                    <tr data-search="SAFEGUARD_PROCEDURE sauvegarde procédure préventive">
+                        <td><span class="badge-code">SAFEGUARD_PROCEDURE</span></td>
+                        <td><span class="badge-pill badge-danger">Procédure</span></td>
+                        <td>Procédure de sauvegarde</td>
+                        <td class="desc-cell">Ouverture d'une procédure préventive de sauvegarde (avant cessation de paiements)</td>
+                    </tr>
+                    <tr data-search="JUDICIAL_RECOVERY_PROCEDURE redressement judiciaire procédure">
+                        <td><span class="badge-code">JUDICIAL_RECOVERY_PROCEDURE</span></td>
+                        <td><span class="badge-pill badge-danger">Procédure</span></td>
+                        <td>Redressement / procédure judiciaire</td>
+                        <td class="desc-cell">Ouverture d'un redressement judiciaire ou d'une procédure collective</td>
+                    </tr>
+                    <tr data-search="DISSOLUTION dissolution entreprise cessation fermeture">
+                        <td><span class="badge-code">DISSOLUTION</span></td>
+                        <td><span class="badge-pill badge-danger">Cessation</span></td>
+                        <td>Dissolution de l'entreprise</td>
+                        <td class="desc-cell">Décision de dissolution — l'entreprise cesse ses activités</td>
+                    </tr>
+                    <tr data-search="LIQUIDATION liquidation entreprise cessation fermeture">
+                        <td><span class="badge-code">LIQUIDATION</span></td>
+                        <td><span class="badge-pill badge-danger">Cessation</span></td>
+                        <td>Liquidation de l'entreprise</td>
+                        <td class="desc-cell">Procédure de liquidation judiciaire engagée — actifs réalisés pour désintéresser les créanciers</td>
+                    </tr>
+                    <tr data-search="PUBLIC_DEBT_RECOVERY recouvrement dette URSAFF trésor public organismes">
+                        <td><span class="badge-code">PUBLIC_DEBT_RECOVERY</span></td>
+                        <td><span class="badge-pill badge-warning">Contentieux</span></td>
+                        <td>Redressement URSAFF / Trésor Public</td>
+                        <td class="desc-cell">Procédure de recouvrement engagée par un organisme public (impôts, CNSS…)</td>
+                    </tr>
+                    <tr data-search="DEBT_COLLECTION_PROCEDURE recouvrement dette procédure amiable judiciaire">
+                        <td><span class="badge-code">DEBT_COLLECTION_PROCEDURE</span></td>
+                        <td><span class="badge-pill badge-warning">Contentieux</span></td>
+                        <td>Procédure de recouvrement</td>
+                        <td class="desc-cell">Action en recouvrement (amiable ou judiciaire) ouverte contre l'entreprise</td>
+                    </tr>
+                    <tr data-search="EXECUTIVE_CHANGE dirigeant changement directeur PDG gérant">
+                        <td><span class="badge-code">EXECUTIVE_CHANGE</span></td>
+                        <td><span class="badge-pill badge-neutral">Gouvernance</span></td>
+                        <td>Changement de dirigeants</td>
+                        <td class="desc-cell">Un ou plusieurs dirigeants (PDG, DG, gérant) ont été remplacés</td>
+                    </tr>
+                    <tr data-search="EXECUTIVE_REPUTATION dirigeant réputation commentaire">
+                        <td><span class="badge-code">EXECUTIVE_REPUTATION</span></td>
+                        <td><span class="badge-pill badge-neutral">Gouvernance</span></td>
+                        <td>Commentaires sur dirigeants</td>
+                        <td class="desc-cell">Des informations sur la réputation d'un dirigeant ont été ajoutées au dossier</td>
+                    </tr>
+                    <tr data-search="NEW_MAJOR_CONTRACT nouveau contrat important partenariat commercial">
+                        <td><span class="badge-code">NEW_MAJOR_CONTRACT</span></td>
+                        <td><span class="badge-pill badge-success">Commercial</span></td>
+                        <td>Nouveau contrat important</td>
+                        <td class="desc-cell">Signature d'un contrat significatif pouvant affecter positivement l'activité</td>
+                    </tr>
+                    <tr data-search="CONTRACT_TERMINATION résiliation contrat fin partenariat commercial">
+                        <td><span class="badge-code">CONTRACT_TERMINATION</span></td>
+                        <td><span class="badge-pill badge-warning">Commercial</span></td>
+                        <td>Résiliation de contrat important</td>
+                        <td class="desc-cell">Un contrat majeur a été résilié — impact potentiel sur le chiffre d'affaires</td>
+                    </tr>
+                    <tr data-search="NEW_CERTIFICATION certification nouveau obtenue qualité norme ISO">
+                        <td><span class="badge-code">NEW_CERTIFICATION</span></td>
+                        <td><span class="badge-pill badge-success">Qualité</span></td>
+                        <td>Nouvelle certification obtenue</td>
+                        <td class="desc-cell">L'entreprise a obtenu une nouvelle certification (ISO, qualité, etc.)</td>
+                    </tr>
+                    <tr data-search="CERTIFICATION_LOSS perte certification qualité norme retrait">
+                        <td><span class="badge-code">CERTIFICATION_LOSS</span></td>
+                        <td><span class="badge-pill badge-danger">Qualité</span></td>
+                        <td>Perte de certification</td>
+                        <td class="desc-cell">Une certification clé a été retirée ou non renouvelée</td>
+                    </tr>
+                    <tr data-search="NEW_PRODUCT_SERVICE nouveau produit service innovation lancement">
+                        <td><span class="badge-code">NEW_PRODUCT_SERVICE</span></td>
+                        <td><span class="badge-pill badge-success">Innovation</span></td>
+                        <td>Nouveau produit ou service</td>
+                        <td class="desc-cell">Lancement d'un nouveau produit ou service pouvant ouvrir de nouveaux marchés</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- 4. Types de Notifications       -->
+    <!-- ═══════════════════════════════ -->
+    <div class="help-section visible" data-cat="workflow" id="sec-notif">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#f0e6fc;"><i class="bi bi-bell-fill" style="color:#8e44ad;"></i></div>
+            <h2>{% trans "Types de Notifications Système" %}</h2>
+            <span class="section-count">12 {% trans "types" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <p style="padding:12px 20px 0;font-size:.83rem;color:#5a7282;">
+                {% trans "Ces codes définissent les étapes du workflow interne entre les Analystes, les Validateurs et les Clients. Chaque notification déclenche des actions spécifiques et des envois d'e-mails." %}
+            </p>
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Code" %}</th>
+                        <th>{% trans "Libellé" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="AFFECTATION affectation analyste commande notification">
+                        <td><span class="badge-code">AFFECTATION</span></td>
+                        <td>Nouvelle affectation</td>
+                        <td class="desc-cell">Une commande vient d'être affectée à un analyste pour traitement</td>
+                    </tr>
+                    <tr data-search="RAPPORT_SOUMIS rapport soumis analyste envoyé validation">
+                        <td><span class="badge-code">RAPPORT_SOUMIS</span></td>
+                        <td>Rapport soumis</td>
+                        <td class="desc-cell">L'analyste a soumis le rapport au validateur pour révision</td>
+                    </tr>
+                    <tr data-search="VALIDATION rapport validé approbation validateur">
+                        <td><span class="badge-code">VALIDATION</span></td>
+                        <td>Rapport validé</td>
+                        <td class="desc-cell">Le validateur a approuvé le rapport — prêt pour envoi au client</td>
+                    </tr>
+                    <tr data-search="CORRECTION correction demandée rapport retour analyste">
+                        <td><span class="badge-code">CORRECTION</span></td>
+                        <td>Correction demandée</td>
+                        <td class="desc-cell">Le validateur a demandé des corrections à l'analyste — rapport retourné</td>
+                    </tr>
+                    <tr data-search="ENVOI_CLIENT rapport envoyé client livraison">
+                        <td><span class="badge-code">ENVOI_CLIENT</span></td>
+                        <td>Rapport envoyé au client</td>
+                        <td class="desc-cell">Le rapport validé a été transmis au client (par email ou portail)</td>
+                    </tr>
+                    <tr data-search="RAPPEL rappel relance notification">
+                        <td><span class="badge-code">RAPPEL</span></td>
+                        <td>Rappel de notification</td>
+                        <td class="desc-cell">Relance automatique concernant une action en attente</td>
+                    </tr>
+                    <tr data-search="ENVOI_REUSSI envoi réussi succès email confirmation">
+                        <td><span class="badge-code">ENVOI_REUSSI</span></td>
+                        <td>Envoi réussi</td>
+                        <td class="desc-cell">Confirmation que l'envoi par email ou par le système a abouti</td>
+                    </tr>
+                    <tr data-search="ENVOI_ECHEC envoi échoué erreur email">
+                        <td><span class="badge-code">ENVOI_ECHEC</span></td>
+                        <td>Échec d'envoi</td>
+                        <td class="desc-cell">L'envoi du rapport ou de la notification a échoué — action manuelle requise</td>
+                    </tr>
+                    <tr data-search="RAPPORT_GENERE rapport généré PDF création">
+                        <td><span class="badge-code">RAPPORT_GENERE</span></td>
+                        <td>Rapport généré</td>
+                        <td class="desc-cell">Le fichier PDF du rapport a été généré avec succès</td>
+                    </tr>
+                    <tr data-search="TACHE_TERMINEE tâche terminée complétée fin">
+                        <td><span class="badge-code">TACHE_TERMINEE</span></td>
+                        <td>Tâche terminée</td>
+                        <td class="desc-cell">Une tâche assignée a été marquée comme complétée</td>
+                    </tr>
+                    <tr data-search="INFO information générale message neutre">
+                        <td><span class="badge-code">INFO</span></td>
+                        <td>Information</td>
+                        <td class="desc-cell">Message d'information général sans action requise</td>
+                    </tr>
+                    <tr data-search="ALERTE alerte importante urgente action requise">
+                        <td><span class="badge-code">ALERTE</span></td>
+                        <td>Alerte</td>
+                        <td class="desc-cell">Alerte nécessitant une attention immédiate ou une action urgente</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- 5. Statuts des Commandes        -->
+    <!-- ═══════════════════════════════ -->
+    <div class="help-section visible" data-cat="workflow" id="sec-cmds">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#e8f8f0;"><i class="bi bi-cart-check-fill" style="color:#27ae60;"></i></div>
+            <h2>{% trans "Statuts des Commandes" %}</h2>
+            <span class="section-count">7 {% trans "statuts" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Code" %}</th>
+                        <th>{% trans "Libellé" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="nouvelle commande créée déposée statut">
+                        <td><span class="badge-code">nouvelle</span></td>
+                        <td><span class="badge-pill badge-info">Nouvelle</span></td>
+                        <td class="desc-cell">Commande déposée, en attente d'affectation à un analyste</td>
+                    </tr>
+                    <tr data-search="en_cours traitement analyste statut commande">
+                        <td><span class="badge-code">en_cours</span></td>
+                        <td><span class="badge-pill badge-warning">En cours de traitement</span></td>
+                        <td class="desc-cell">L'analyste travaille sur le rapport — en cours d'analyse</td>
+                    </tr>
+                    <tr data-search="rapport_soumis soumis validation statut commande">
+                        <td><span class="badge-code">rapport_soumis</span></td>
+                        <td><span class="badge-pill badge-warning">Rapport soumis</span></td>
+                        <td class="desc-cell">L'analyste a soumis son rapport, en attente de validation</td>
+                    </tr>
+                    <tr data-search="rapport_valide validé approuvé statut commande">
+                        <td><span class="badge-code">rapport_valide</span></td>
+                        <td><span class="badge-pill badge-success">Rapport validé</span></td>
+                        <td class="desc-cell">Le rapport a été validé par le superviseur — prêt à livrer</td>
+                    </tr>
+                    <tr data-search="envoye_client envoyé livré client statut commande">
+                        <td><span class="badge-code">envoye_client</span></td>
+                        <td><span class="badge-pill badge-success">Envoyé au client</span></td>
+                        <td class="desc-cell">Le rapport a été transmis au client — en attente de réception confirmée</td>
+                    </tr>
+                    <tr data-search="terminee terminée complète clôturée statut commande">
+                        <td><span class="badge-code">terminee</span></td>
+                        <td><span class="badge-pill badge-success">Terminée</span></td>
+                        <td class="desc-cell">Commande entièrement traitée et clôturée</td>
+                    </tr>
+                    <tr data-search="annulee annulée annulation statut commande">
+                        <td><span class="badge-code">annulee</span></td>
+                        <td><span class="badge-pill badge-danger">Annulée</span></td>
+                        <td class="desc-cell">Commande annulée — aucun rapport ne sera produit</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- 6. Cotation du Risque           -->
+    <!-- ═══════════════════════════════ -->
+    <div class="help-section visible" data-cat="risque" id="sec-risk">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#fde8e8;"><i class="bi bi-exclamation-triangle-fill" style="color:#e74c3c;"></i></div>
+            <h2>{% trans "Cotation du Risque" %}</h2>
+            <span class="section-count">6 {% trans "niveaux" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Code" %}</th>
+                        <th>{% trans "Niveau" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="non_douteux non douteux risque sain solide cotation">
+                        <td><span class="badge-code">non_douteux</span></td>
+                        <td><span class="badge-pill badge-success">Non douteux</span></td>
+                        <td class="desc-cell">Créance saine — aucun doute sur la capacité de remboursement</td>
+                    </tr>
+                    <tr data-search="risque_faible faible risque cotation solvabilité">
+                        <td><span class="badge-code">risque_faible</span></td>
+                        <td><span class="badge-pill badge-success">Risque faible</span></td>
+                        <td class="desc-cell">Légères vulnérabilités mais capacité de remboursement préservée</td>
+                    </tr>
+                    <tr data-search="risque_modere modéré risque cotation">
+                        <td><span class="badge-code">risque_modere</span></td>
+                        <td><span class="badge-pill badge-warning">Risque modéré</span></td>
+                        <td class="desc-cell">Des facteurs de fragilité sont identifiés — surveillance recommandée</td>
+                    </tr>
+                    <tr data-search="mise_en_garde garde attention risque cotation">
+                        <td><span class="badge-code">mise_en_garde</span></td>
+                        <td><span class="badge-pill badge-warning">Mise en garde</span></td>
+                        <td class="desc-cell">Signaux d'alerte — des mesures préventives sont conseillées</td>
+                    </tr>
+                    <tr data-search="peu_satisfaisant peu satisfaisant risque cotation préoccupant">
+                        <td><span class="badge-code">peu_satisfaisant</span></td>
+                        <td><span class="badge-pill badge-danger">Peu satisfaisant</span></td>
+                        <td class="desc-cell">Situation préoccupante — probabilité de perte importante</td>
+                    </tr>
+                    <tr data-search="inacceptable risque critique cotation refus">
+                        <td><span class="badge-code">inacceptable</span></td>
+                        <td><span class="badge-pill badge-danger">Inacceptable</span></td>
+                        <td class="desc-cell">Risque trop élevé — engagement déconseillé ou à plafonner</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!-- 7. Comportement de Paiement     -->
+    <!-- ════════════════════════════════ -->
+    <div class="help-section visible" data-cat="paiement" id="sec-pay">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#e8f0fc;"><i class="bi bi-credit-card-fill" style="color:#2980b9;"></i></div>
+            <h2>{% trans "Comportement de Paiement" %}</h2>
+            <span class="section-count">9 {% trans "valeurs" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <p style="padding:12px 20px 0;font-size:.83rem;color:#5a7282;">
+                {% trans "Évaluation des pratiques de paiement de l'entreprise envers ses créanciers, telle que remontée par les sources ACREMAC." %}
+            </p>
+            <table class="help-table">
+                <thead><tr><th>{% trans "Libellé" %}</th><th>{% trans "Signification" %}</th></tr></thead>
+                <tbody>
+                    <tr data-search="avance paiement avant délai anticipé comportement">
+                        <td><span class="badge-pill badge-success">En avance</span></td>
+                        <td class="desc-cell">L'entreprise règle ses factures avant l'échéance convenue</td>
+                    </tr>
+                    <tr data-search="temps heure paiement ponctuel délai comportement">
+                        <td><span class="badge-pill badge-success">En temps et en heure</span></td>
+                        <td class="desc-cell">Paiements effectués dans les délais contractuels — comportement fiable</td>
+                    </tr>
+                    <tr data-search="retard paiement tardif délai comportement">
+                        <td><span class="badge-pill badge-warning">En retard</span></td>
+                        <td class="desc-cell">Des retards de paiement ont été constatés — à surveiller</td>
+                    </tr>
+                    <tr data-search="normal paiement standard moyen comportement">
+                        <td><span class="badge-pill badge-neutral">Normal</span></td>
+                        <td class="desc-cell">Comportement dans la norme du secteur</td>
+                    </tr>
+                    <tr data-search="mauvais payeur difficile contentieux comportement paiement">
+                        <td><span class="badge-pill badge-danger">Mauvais payeur</span></td>
+                        <td class="desc-cell">Historique de non-paiements ou de litiges répétés</td>
+                    </tr>
+                    <tr data-search="plainte isolée incident unique comportement paiement">
+                        <td><span class="badge-pill badge-warning">Plainte isolée</span></td>
+                        <td class="desc-cell">Un incident de paiement isolé a été signalé — pas de pattern établi</td>
+                    </tr>
+                    <tr data-search="inconnu sources indéterminé comportement paiement">
+                        <td><span class="badge-pill badge-neutral">Inconnu de nos sources</span></td>
+                        <td class="desc-cell">Aucune information disponible dans les bases de données ACREMAC</td>
+                    </tr>
+                    <tr data-search="insolvabilité procédure évaluation impossible comportement paiement">
+                        <td><span class="badge-pill badge-danger">Évaluation impossible (procédure)</span></td>
+                        <td class="desc-cell">En raison d'une procédure d'insolvabilité en cours, l'évaluation du comportement est suspendue</td>
+                    </tr>
+                    <tr data-search="aucune expérience disponible paiement comportement nouveauté">
+                        <td><span class="badge-pill badge-neutral">Aucune expérience disponible</span></td>
+                        <td class="desc-cell">Entreprise récente ou sans historique de transactions enregistré chez nos sources</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!-- 8. Comportement Judiciaire      -->
+    <!-- ════════════════════════════════ -->
+    <div class="help-section visible" data-cat="paiement" id="sec-legal">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#fef9e6;"><i class="bi bi-hammer" style="color:#f39c12;"></i></div>
+            <h2>{% trans "Comportement Judiciaire" %}</h2>
+            <span class="section-count">7 {% trans "valeurs" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <table class="help-table">
+                <thead><tr><th>{% trans "Libellé" %}</th><th>{% trans "Signification" %}</th></tr></thead>
+                <tbody>
+                    <tr data-search="aucune information négative propre comportement judiciaire">
+                        <td>Aucune information négative trouvée</td>
+                        <td class="desc-cell">Aucune procédure judiciaire ou contentieux enregistré</td>
+                    </tr>
+                    <tr data-search="aucune trace recouvrement ACREMAC comportement judiciaire">
+                        <td>Aucune trace de recouvrement ACREMAC</td>
+                        <td class="desc-cell">ACREMAC n'a engagé aucune procédure de recouvrement contre cette entreprise</td>
+                    </tr>
+                    <tr data-search="pas insolvabilité procédure sources comportement judiciaire">
+                        <td>Pas en situation d'insolvabilité (selon sources)</td>
+                        <td class="desc-cell">Nos sources confirment l'absence de procédure collective en cours</td>
+                    </tr>
+                    <tr data-search="actions judiciaires ouvertes recouvrement contentieux">
+                        <td><span class="badge-pill badge-danger">Actions judiciaires en cours</span></td>
+                        <td class="desc-cell">Des procédures de recouvrement judiciaires sont actives contre l'acheteur</td>
+                    </tr>
+                    <tr data-search="actions amiables recouvrement ouvertes contentieux comportement judiciaire">
+                        <td><span class="badge-pill badge-warning">Actions amiables en cours</span></td>
+                        <td class="desc-cell">Des démarches de recouvrement à l'amiable sont en cours</td>
+                    </tr>
+                    <tr data-search="cas fermés recouvrement historique sources comportement judiciaire">
+                        <td><span class="badge-pill badge-neutral">Cas de recouvrement fermés</span></td>
+                        <td class="desc-cell">Des cas de recouvrement passés existent mais ont été clôturés</td>
+                    </tr>
+                    <tr data-search="inconnu sources judiciaire comportement indéterminé">
+                        <td><span class="badge-pill badge-neutral">Inconnu de nos sources</span></td>
+                        <td class="desc-cell">Aucune donnée judiciaire disponible dans les bases ACREMAC</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!-- 9. Types de Rapport             -->
+    <!-- ════════════════════════════════ -->
+    <div class="help-section visible" data-cat="workflow" id="sec-typerpt">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#e6f4fc;"><i class="bi bi-file-earmark-text-fill" style="color:#0a95ca;"></i></div>
+            <h2>{% trans "Types de Rapport" %}</h2>
+            <span class="section-count">4 {% trans "types" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Type" %}</th>
+                        <th>{% trans "Description" %}</th>
+                        <th>{% trans "Délai habituel" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="Normal rapport standard classique type">
+                        <td><span class="badge-pill badge-info">Normal</span></td>
+                        <td class="desc-cell">Rapport complet avec analyse complète de solvabilité</td>
+                        <td class="desc-cell">Standard selon SLA contractuel</td>
+                    </tr>
+                    <tr data-search="Urgent rapport prioritaire type délai rapide">
+                        <td><span class="badge-pill badge-warning">Urgent</span></td>
+                        <td class="desc-cell">Rapport traité en priorité — délai réduit</td>
+                        <td class="desc-cell">Priorité maximale</td>
+                    </tr>
+                    <tr data-search="Flash rapport rapide synthèse court type">
+                        <td><span class="badge-pill badge-success">Flash</span></td>
+                        <td class="desc-cell">Rapport synthétique avec les informations essentielles</td>
+                        <td class="desc-cell">Très rapide</td>
+                    </tr>
+                    <tr data-search="Super flash rapport très rapide express type">
+                        <td><span class="badge-pill badge-danger">Super Flash</span></td>
+                        <td class="desc-cell">Version ultra-condensée pour réponse immédiate en situation d'urgence</td>
+                        <td class="desc-cell">Express</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!-- 10. Rôles Utilisateurs           -->
+    <!-- ════════════════════════════════ -->
+    <div class="help-section visible" data-cat="workflow" id="sec-roles">
+        <div class="section-header open" onclick="toggleSection(this)">
+            <div class="section-icon" style="background:#f0e6fc;"><i class="bi bi-people-fill" style="color:#8e44ad;"></i></div>
+            <h2>{% trans "Rôles Utilisateurs" %}</h2>
+            <span class="section-count">4 {% trans "rôles" %}</span>
+            <i class="bi bi-chevron-down section-chevron"></i>
+        </div>
+        <div class="section-body">
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>{% trans "Rôle" %}</th>
+                        <th>{% trans "Accès" %}</th>
+                        <th>{% trans "Responsabilités" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-search="Root administrateur super admin rôle utilisateur">
+                        <td><span class="badge-pill" style="background:#2c3e50;color:#fff;">Root</span></td>
+                        <td>{% trans "Accès total" %}</td>
+                        <td class="desc-cell">Administration complète de la plateforme — gestion des utilisateurs, paramètres globaux, rapports</td>
+                    </tr>
+                    <tr data-search="Validateur superviseur validation approbation rôle">
+                        <td><span class="badge-pill badge-info">Validateur</span></td>
+                        <td>{% trans "Validation" %}</td>
+                        <td class="desc-cell">Révise et approuve (ou retourne) les rapports soumis par les analystes</td>
+                    </tr>
+                    <tr data-search="Analyste rédaction rapport analyse rôle">
+                        <td><span class="badge-pill badge-warning">Analyste</span></td>
+                        <td>{% trans "Rédaction" %}</td>
+                        <td class="desc-cell">Traite les commandes, analyse les données et rédige les rapports de solvabilité</td>
+                    </tr>
+                    <tr data-search="Client consultation commande rapport rôle">
+                        <td><span class="badge-pill badge-success">Client</span></td>
+                        <td>{% trans "Consultation" %}</td>
+                        <td class="desc-cell">Passe des commandes, consulte et télécharge ses rapports livrés</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /container -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    /* ── Recherche globale ── */
+    var inp   = document.getElementById('helpSearch');
+    var count = document.getElementById('searchCount');
+    var noRes = document.getElementById('noResults');
+    var allRows     = document.querySelectorAll('.help-table tbody tr');
+    var allSections = document.querySelectorAll('.help-section');
+
+    function search(q) {
+        q = q.toLowerCase().trim();
+        var visible = 0;
+
+        allSections.forEach(function(sec) {
+            var rows    = sec.querySelectorAll('tbody tr');
+            var secVis  = 0;
+            rows.forEach(function(row) {
+                var hay = (row.getAttribute('data-search') || '') + ' ' + row.textContent;
+                if (!q || hay.toLowerCase().includes(q)) {
+                    row.classList.remove('row-hidden');
+                    secVis++;
+                    visible++;
+                } else {
+                    row.classList.add('row-hidden');
+                }
+            });
+            if (secVis > 0 || !q) {
+                sec.style.display = '';
+            } else {
+                sec.style.display = 'none';
+            }
+        });
+
+        noRes.style.display = (q && visible === 0) ? 'block' : 'none';
+        count.textContent = q
+            ? (visible + ' {% trans "résultat(s) pour" %} « ' + q + ' »')
+            : '';
+    }
+
+    inp.addEventListener('input', function() { search(inp.value); });
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Escape') { inp.value = ''; search(''); } });
+
+    /* ── Filtres rapides ── */
+    document.getElementById('filterBar').querySelectorAll('.filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            var cat = btn.getAttribute('data-cat');
+            allSections.forEach(function(sec) {
+                if (cat === 'all' || sec.getAttribute('data-cat') === cat) {
+                    sec.classList.add('visible');
+                } else {
+                    sec.classList.remove('visible');
+                }
+            });
+            inp.value = '';
+            search('');
+        });
+    });
+
+    /* ── Collapse / Expand section ── */
+    window.toggleSection = function(header) {
+        header.classList.toggle('open');
+        var body = header.nextElementSibling;
+        if (body) body.style.display = header.classList.contains('open') ? '' : 'none';
+    };
+})();
+</script>
+{% endblock %}

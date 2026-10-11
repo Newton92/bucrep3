@@ -231,6 +231,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path("root-dashboard/", dash_root, name="dash_root"),
+    path("root-dashboard/aide/", dash_root_help, name="dash_root_help"),
     path("root-dashboard/profile/", dash_root_profile_page, name="dash_root_profile_page"),
     path(
         "root-dashboard/localisation/liste-des-pays",
