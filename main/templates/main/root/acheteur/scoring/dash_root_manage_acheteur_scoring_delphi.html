@@ -313,6 +313,11 @@
             </div>
 
             {# Boutons #}
+            <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+              <button type="button" class="btn btn-outline-info btn-sm" id="btn-autofill" title="{% trans "Remplit automatiquement les champs depuis les antécédents juridiques, le comportement de paiement et les bilans existants." %}">
+                <i class="bi bi-magic me-1"></i>{% trans "Auto-remplir depuis les données existantes" %}
+              </button>
+            </div>
             <div class="d-flex gap-2 flex-wrap">
               <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-simuler">
                 <i class="bi bi-lightning me-1"></i>{% trans "Simuler (aperçu)" %}
@@ -364,6 +369,7 @@
   var ACHETEUR_ID  = {{ id_acheteur }};
   var API_BASE     = "/api/scoring/delphi/acheteur/" + ACHETEUR_ID + "/";
   var API_SIMULER  = API_BASE + "simuler/";
+  var API_AUTOFILL = API_BASE + "autofill/";
 
   var BANDE_LABELS = {
     'A': '{{ t_bande_A }}', 'B': '{{ t_bande_B }}', 'C': '{{ t_bande_C }}',
@@ -543,6 +549,61 @@
     document.getElementById('f-commentaire').value           = d.commentaire || '';
     majAlerteExclusion();
   }
+
+  /* ---- Auto-remplir depuis les données existantes ---- */
+  document.getElementById('btn-autofill').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Récupération en cours…" %}';
+    fetch(API_AUTOFILL, { headers: authHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        var s = res.suggestions || {};
+        var filled = [];
+
+        function tryFill(id, val, label) {
+          if (val === undefined || val === null) return;
+          var el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === 'checkbox') {
+            if (val) { el.checked = true; filled.push(label); }
+          } else {
+            el.value = val;
+            filled.push(label);
+          }
+        }
+
+        tryFill('f-dbt',              s.dbt,                   'DBT');
+        tryFill('f-tendance-dbt-hausse', s.tendance_dbt_hausse, '{% trans "Tendance DBT" %}');
+        tryFill('f-en-liquidation',   s.est_en_liquidation,    '{% trans "En liquidation" %}');
+        tryFill('f-petition-faillite', s.petition_faillite,   '{% trans "Pétition de faillite" %}');
+        tryFill('f-nb-procedures',    s.nb_procedures_collectives, '{% trans "Procédures collectives" %}');
+        tryFill('f-nb-jugements',     s.nb_jugements_tribunaux,    '{% trans "Jugements" %}');
+        tryFill('f-ratio-liquidite',  s.ratio_liquidite,       '{% trans "Ratio liquidité" %}');
+        tryFill('f-marge-nette',      s.marge_nette,           '{% trans "Marge nette" %}');
+        tryFill('f-ebitda-ratio',     s.ebitda_ratio,          '{% trans "EBITDA/CA" %}');
+        tryFill('f-ratio-endettement', s.ratio_endettement,   '{% trans "Ratio endettement" %}');
+        tryFill('f-age-entreprise',   s.age_entreprise,        '{% trans "Âge entreprise" %}');
+
+        majAlerteExclusion();
+
+        if (filled.length > 0) {
+          Swal.fire({ icon: 'success', title: '{% trans "Champs remplis automatiquement" %} : ' + filled.join(', '),
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 4000 });
+        } else {
+          Swal.fire({ icon: 'info', title: '{% trans "Aucune donnée supplémentaire disponible dans les sources existantes." %}',
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+        }
+      })
+      .catch(function() {
+        Swal.fire({ icon: 'error', title: "{% trans "Erreur lors de la récupération des données" %}",
+          toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-magic me-1"></i>{% trans "Auto-remplir depuis les données existantes" %}';
+      });
+  });
 
   /* ---- Simuler ---- */
   document.getElementById('btn-simuler').addEventListener('click', function() {

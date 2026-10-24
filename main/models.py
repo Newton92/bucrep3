@@ -7669,10 +7669,77 @@ class ScoringDelphi(SafeDeleteModel):
             if age:
                 suggestions['age_entreprise'] = round(float(age), 2)
 
-        # Appliquer aux champs concernés
+        # Appliquer aux champs financiers concernés
         for field, value in suggestions.items():
             if needs.get(field):
                 setattr(self, field, value)
+
+        # ── Antécédents juridiques ─────────────────────────────────────────
+        try:
+            antecedents = AntecedantsJuridique.objects.filter(acheteur=acheteur)
+
+            if not self.est_en_liquidation or force:
+                if antecedents.filter(dossier_faillite__icontains='liquidat').exists():
+                    self.est_en_liquidation = True
+                    suggestions['est_en_liquidation'] = True
+
+            if not self.petition_faillite or force:
+                if antecedents.exclude(dossier_faillite__isnull=True).exclude(dossier_faillite='').exists():
+                    self.petition_faillite = True
+                    suggestions['petition_faillite'] = True
+
+            if self.nb_jugements_tribunaux == 0 or force:
+                nb = antecedents.exclude(jugement_cour__isnull=True).exclude(jugement_cour='').count()
+                if nb > 0:
+                    self.nb_jugements_tribunaux = nb
+                    suggestions['nb_jugements_tribunaux'] = nb
+
+            if self.nb_procedures_collectives == 0 or force:
+                nb = antecedents.exclude(antecedant_redressement__isnull=True).exclude(antecedant_redressement='').count()
+                if nb > 0:
+                    self.nb_procedures_collectives = nb
+                    suggestions['nb_procedures_collectives'] = nb
+
+        except Exception:
+            pass
+
+        # ── Condition de vente / comportement de paiement ─────────────────
+        try:
+            cdv = ConditionDeVente.objects.filter(acheteur=acheteur).order_by('-updated_at').first()
+            if cdv:
+                cpaiement = cdv.comportement_de_paiement or ''
+                recouvrement = cdv.recouvrement_de_dette_jugement or ''
+
+                # dbt — mapping comportement de paiement → jours de retard
+                if (self.dbt == 0 or force) and cpaiement:
+                    dbt_map = [
+                        ('Mauvais payeur', 60),
+                        ('En Retard', 35),
+                        ('Plainte isolée', 25),
+                        ('Normal', 10),
+                        ('En Temps et en heure', 0),
+                        ('En Avance', 0),
+                    ]
+                    for keyword, days in dbt_map:
+                        if keyword in cpaiement:
+                            self.dbt = days
+                            suggestions['dbt'] = days
+                            break
+
+                # tendance_dbt_hausse
+                if not self.tendance_dbt_hausse or force:
+                    if 'Mauvais payeur' in cpaiement or 'En Retard' in cpaiement:
+                        self.tendance_dbt_hausse = True
+                        suggestions['tendance_dbt_hausse'] = True
+
+                # petition_faillite depuis recouvrement judiciaire
+                if not self.petition_faillite or force:
+                    if 'judiciaire' in recouvrement.lower() or 'insolvabilité' in recouvrement.lower():
+                        self.petition_faillite = True
+                        suggestions['petition_faillite'] = True
+
+        except Exception:
+            pass
 
         return suggestions
 
