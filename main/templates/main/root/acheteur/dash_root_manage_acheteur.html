@@ -844,6 +844,13 @@ body { background: var(--c-bg); }
          * Appelé par navigateToEntry() et indirectement par goBack/goForward.
          */
         function renderSection(url, activeLink){
+            if (!url) return;
+            /* Sécurité : ne jamais charger la page courante dans l'iframe
+               (évite l'imbrication infinie si un bouton Retour navigue vers manager) */
+            try {
+                var urlPath = new URL(url, location.href).pathname;
+                if (urlPath === location.pathname) return;
+            } catch(e){}
             links.forEach(function(l){ l.classList.remove('active'); });
             activeLink.classList.add('active');
             placeholder.style.display = 'none';
@@ -914,6 +921,16 @@ body { background: var(--c-bg); }
             /* Restaurer la section depuis localStorage, sinon la première */
             var savedUrl = '';
             try { savedUrl = localStorage.getItem(SP_KEY) || ''; } catch(e){}
+            /* Supprimer l'entrée si elle pointe vers la page courante (imbrication invalide) */
+            if(savedUrl){
+                try {
+                    var savedPath = new URL(savedUrl, location.href).pathname;
+                    if(savedPath === location.pathname){
+                        savedUrl = '';
+                        localStorage.removeItem(SP_KEY);
+                    }
+                } catch(e){ savedUrl = ''; }
+            }
             var initialLink = links[0];
             if(savedUrl){
                 links.forEach(function(l){
