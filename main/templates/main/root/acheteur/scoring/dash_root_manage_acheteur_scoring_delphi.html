@@ -523,6 +523,7 @@
         } else {
           document.getElementById('score-val').textContent = '—';
           document.getElementById('date-maj-txt').textContent = '{{ t_no_data }}';
+          doAutoFill(function() { doSimuler(true); });
         }
       })
       .catch(function() {
@@ -550,9 +551,9 @@
     majAlerteExclusion();
   }
 
-  /* ---- Auto-remplir depuis les données existantes ---- */
-  document.getElementById('btn-autofill').addEventListener('click', function() {
-    var btn = this;
+  /* ---- Auto-remplir (fonction réutilisable) ---- */
+  function doAutoFill(onDone) {
+    var btn = document.getElementById('btn-autofill');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{% trans "Récupération en cours…" %}';
     fetch(API_AUTOFILL, { headers: authHeaders() })
@@ -573,17 +574,17 @@
           }
         }
 
-        tryFill('f-dbt',              s.dbt,                   'DBT');
-        tryFill('f-tendance-dbt-hausse', s.tendance_dbt_hausse, '{% trans "Tendance DBT" %}');
-        tryFill('f-en-liquidation',   s.est_en_liquidation,    '{% trans "En liquidation" %}');
-        tryFill('f-petition-faillite', s.petition_faillite,   '{% trans "Pétition de faillite" %}');
-        tryFill('f-nb-procedures',    s.nb_procedures_collectives, '{% trans "Procédures collectives" %}');
-        tryFill('f-nb-jugements',     s.nb_jugements_tribunaux,    '{% trans "Jugements" %}');
-        tryFill('f-ratio-liquidite',  s.ratio_liquidite,       '{% trans "Ratio liquidité" %}');
-        tryFill('f-marge-nette',      s.marge_nette,           '{% trans "Marge nette" %}');
-        tryFill('f-ebitda-ratio',     s.ebitda_ratio,          '{% trans "EBITDA/CA" %}');
-        tryFill('f-ratio-endettement', s.ratio_endettement,   '{% trans "Ratio endettement" %}');
-        tryFill('f-age-entreprise',   s.age_entreprise,        '{% trans "Âge entreprise" %}');
+        tryFill('f-dbt',               s.dbt,                       'DBT');
+        tryFill('f-tendance-dbt-hausse', s.tendance_dbt_hausse,      '{% trans "Tendance DBT" %}');
+        tryFill('f-en-liquidation',    s.est_en_liquidation,         '{% trans "En liquidation" %}');
+        tryFill('f-petition-faillite', s.petition_faillite,          '{% trans "Pétition de faillite" %}');
+        tryFill('f-nb-procedures',     s.nb_procedures_collectives,  '{% trans "Procédures collectives" %}');
+        tryFill('f-nb-jugements',      s.nb_jugements_tribunaux,     '{% trans "Jugements" %}');
+        tryFill('f-ratio-liquidite',   s.ratio_liquidite,            '{% trans "Ratio liquidité" %}');
+        tryFill('f-marge-nette',       s.marge_nette,                '{% trans "Marge nette" %}');
+        tryFill('f-ebitda-ratio',      s.ebitda_ratio,               '{% trans "EBITDA/CA" %}');
+        tryFill('f-ratio-endettement', s.ratio_endettement,          '{% trans "Ratio endettement" %}');
+        tryFill('f-age-entreprise',    s.age_entreprise,             '{% trans "Âge entreprise" %}');
 
         majAlerteExclusion();
 
@@ -594,6 +595,7 @@
           Swal.fire({ icon: 'info', title: '{% trans "Aucune donnée supplémentaire disponible dans les sources existantes." %}',
             toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
         }
+        if (typeof onDone === 'function') onDone();
       })
       .catch(function() {
         Swal.fire({ icon: 'error', title: "{% trans "Erreur lors de la récupération des données" %}",
@@ -603,11 +605,12 @@
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-magic me-1"></i>{% trans "Auto-remplir depuis les données existantes" %}';
       });
-  });
+  }
+  document.getElementById('btn-autofill').addEventListener('click', function() { doAutoFill(function() { doSimuler(false); }); });
 
-  /* ---- Simuler ---- */
-  document.getElementById('btn-simuler').addEventListener('click', function() {
-    var btn = this;
+  /* ---- Simuler (fonction réutilisable) ---- */
+  function doSimuler(silent) {
+    var btn = document.getElementById('btn-simuler');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ t_simulation }}';
     var form = collectFormData();
@@ -619,7 +622,9 @@
       .then(function(r) { return r.json(); })
       .then(function(res) {
         afficherScore({ score_delphi: res.score, bande: res.bande, etoiles: res.etoiles, niveau_risque: res.niveau_risque });
-        Swal.fire({ icon: 'info', title: '{{ t_simule }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
+        if (!silent) {
+          Swal.fire({ icon: 'info', title: '{{ t_simule }}', toast: true, position: 'top-end', showConfirmButton: false, timer: 2500 });
+        }
       })
       .catch(function() {
         Swal.fire({ icon: 'error', title: "{{ t_erreur_enreg }}", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
@@ -628,7 +633,8 @@
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-lightning me-1"></i>{% trans "Simuler (aperçu)" %}';
       });
-  });
+  }
+  document.getElementById('btn-simuler').addEventListener('click', function() { doSimuler(false); });
 
   /* ---- Enregistrer ---- */
   document.getElementById('form-delphi').addEventListener('submit', function(e) {
