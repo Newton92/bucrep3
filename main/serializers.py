@@ -2262,7 +2262,7 @@ class ResponsableAcheteurListSerializer(serializers.ModelSerializer):
     """Serializer pour la liste des responsables"""
     couleur_commentaire = CouleurCommentaireMinimalSerializer()
     created_at_formatted = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = ResponsableAcheteur
         fields = [
@@ -2272,6 +2272,9 @@ class ResponsableAcheteurListSerializer(serializers.ModelSerializer):
             'Sexe',
             'poste',
             'nationalite',
+            'est_actif',
+            'a_fait_objet_jugement',
+            'periode_jugement',
             'couleur_commentaire',
             'commentaire_preview',
             'created_at',
@@ -2323,10 +2326,13 @@ class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
             'Sexe',
             'poste',
             'nationalite',
+            'est_actif',
+            'a_fait_objet_jugement',
+            'periode_jugement',
             'couleur_commentaire',
             'commentaire'
         ]
-    
+
     def to_internal_value(self, data):
         if 'sexe' in data and 'Sexe' not in data:
             data = data.copy()
@@ -2340,7 +2346,7 @@ class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'nationalite': 'La nationalité doit contenir au moins 2 caractères'
             })
-        
+
         return data
 
 class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
@@ -2368,10 +2374,13 @@ class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
             'Sexe',
             'poste',
             'nationalite',
+            'est_actif',
+            'a_fait_objet_jugement',
+            'periode_jugement',
             'couleur_commentaire',
             'commentaire'
         ]
-    
+
     def to_internal_value(self, data):
         if 'sexe' in data and 'Sexe' not in data:
             data = data.copy()

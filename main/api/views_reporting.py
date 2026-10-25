@@ -1629,6 +1629,41 @@ def _generer_rapport_solvabilite_inner(request):
         else:
             scoring_delphi_ctx = None
 
+        # Delphi — données jugements / références
+        from datetime import date as _date, timedelta as _td
+        _today = _date.today()
+        delphi_jugements = {
+            "nb_jugements_entreprises": AntecedantsJuridique.objects.filter(
+                acheteur=acheteur,
+                created_at__gte=_today - _td(days=5*365)
+            ).exclude(jugement_cour__isnull=True).exclude(jugement_cour='').count(),
+            "nb_associes_actifs": ResponsableAcheteur.objects.filter(
+                acheteur=acheteur, est_actif=True
+            ).count(),
+            "nb_associes_avec_jugement": ResponsableAcheteur.objects.filter(
+                acheteur=acheteur, est_actif=True, a_fait_objet_jugement=True
+            ).count(),
+            "refs_24_mois": Commande.objects.filter(
+                acheteur=acheteur,
+                date_recept_commande__gte=_today - _td(days=24*30)
+            ).count(),
+            "demandes_12_mois": Commande.objects.filter(
+                acheteur=acheteur,
+                date_recept_commande__gte=_today - _td(days=365)
+            ).count(),
+            "demandes_3_mois": Commande.objects.filter(
+                acheteur=acheteur,
+                date_recept_commande__gte=_today - _td(days=90)
+            ).count(),
+            "refs_defavorables": ConditionDeVente.objects.filter(
+                acheteur=acheteur
+            ).exclude(comportement_de_paiement__isnull=True).exclude(
+                comportement_de_paiement=''
+            ).filter(
+                comportement_de_paiement__regex=r'(?i)(mauvais|retard|plainte)'
+            ).count(),
+        }
+
         # Recuperation des proprietes et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
         properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur).prefetch_related("locaux")
@@ -2245,6 +2280,7 @@ def _generer_rapport_solvabilite_inner(request):
                 "entries": scoring_rating_entries,
             },
             "scoring_delphi": scoring_delphi_ctx,
+            "delphi_jugements": delphi_jugements,
 
             "operation_history": {
                 "title_17": _("HISTORIQUE DES OPERATIONS"),

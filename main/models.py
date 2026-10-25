@@ -3108,6 +3108,24 @@ class ResponsableAcheteur(Model):
         null=True,  # Ajouté pour correspondre à V2
         verbose_name=_("Nationalité")
     )
+    est_actif = models.BooleanField(
+        default=True,
+        verbose_name=_("Actif"),
+        help_text=_("Associé/actionnaire actuellement actif dans la société"),
+    )
+    a_fait_objet_jugement = models.BooleanField(
+        default=False,
+        verbose_name=_("A fait l'objet de jugements"),
+        help_text=_("Ce responsable a fait l'objet de poursuites ou jugements judiciaires"),
+    )
+    periode_jugement = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name=_("Période des jugements"),
+        help_text=_("Précisez la période concernée (ex : 2020-2024)"),
+    )
+
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
         null=True,
@@ -3116,26 +3134,26 @@ class ResponsableAcheteur(Model):
         verbose_name=_("Couleur Commentaire"),
     )
     commentaire = models.TextField(
-        blank=True, 
+        blank=True,
         null=True,  # Ajouté pour correspondre à V2
-        max_length=10000000, 
+        max_length=10000000,
         verbose_name=_("Commentaire")
     )
 
     # Timestamps
     created_at = models.DateTimeField(
-        auto_now_add=True, 
+        auto_now_add=True,
         null=True,  # Ajouté pour correspondre à V2
         blank=True,  # Ajouté pour correspondre à V2
         verbose_name=_("Date de création")
     )
-    
+
     updated_at = models.DateTimeField(
-        auto_now=True, 
+        auto_now=True,
         null=True,  # Ajouté pour correspondre à V2
         verbose_name=_("Dernière mise à jour")
     )
-    
+
     # Champs d'audit
     created_by = models.ForeignKey(
         "User",
@@ -3145,7 +3163,7 @@ class ResponsableAcheteur(Model):
         related_name='responsable_acheteur_user_create',
         verbose_name=_("Créé par")
     )
-    
+
     updated_by = models.ForeignKey(
         "User",
         on_delete=models.SET_NULL,

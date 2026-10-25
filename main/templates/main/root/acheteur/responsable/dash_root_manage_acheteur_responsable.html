@@ -202,6 +202,30 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-0">
+                            <label class="form-label fw-semibold">{% trans "Statut" %}</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="estActifInput" checked>
+                                <label class="form-check-label" for="estActifInput">{% trans "Associé/Actionnaire actif" %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="form-group mb-0">
+                            <label class="form-label fw-semibold">{% trans "Poursuites judiciaires" %}</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="jugementInput">
+                                <label class="form-check-label text-danger" for="jugementInput">{% trans "A fait l'objet de jugements / poursuites" %}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12" id="periodeJugementRow" style="display:none;">
+                        <div class="form-group mb-0">
+                            <label class="form-label fw-semibold">{% trans "Période des jugements" %} <span class="text-muted fw-normal small">({% trans "ex : 2020-2024" %})</span></label>
+                            <input type="text" class="form-control" id="periodeJugementInput" placeholder="{% trans 'Ex : 2019-2024' %}">
+                        </div>
+                    </div>
                     <div class="col-12">
                         <div class="form-group mb-0">
                             <label class="form-label fw-semibold">{% trans "Commentaire" %} <span class="text-muted fw-normal small">({% trans "optionnel" %})</span></label>
@@ -437,6 +461,12 @@
     });
 
     /* ── Modal ── */
+    /* ── Afficher/masquer la période de jugement ── */
+    document.getElementById('jugementInput').addEventListener('change', function() {
+        document.getElementById('periodeJugementRow').style.display = this.checked ? '' : 'none';
+        if (!this.checked) document.getElementById('periodeJugementInput').value = '';
+    });
+
     function resetModal() {
         document.getElementById('editId').value = '';
         document.getElementById('nomInput').value = '';
@@ -444,6 +474,10 @@
         document.getElementById('sexeInput').value = 'Masculin';
         $('#nationaliteInput').val('').trigger('change');
         $('#posteInput').val('').trigger('change');
+        document.getElementById('estActifInput').checked = true;
+        document.getElementById('jugementInput').checked = false;
+        document.getElementById('periodeJugementInput').value = '';
+        document.getElementById('periodeJugementRow').style.display = 'none';
         if (window.quillSetValue) window.quillSetValue('commentaireInput', '');
         else document.getElementById('commentaireInput').value = '';
         hideModalError();
@@ -470,6 +504,10 @@
         }
         $('#nationaliteInput').val(nat).trigger('change');
         $('#posteInput').val(item.poste || '').trigger('change');
+        document.getElementById('estActifInput').checked = item.est_actif !== false;
+        document.getElementById('jugementInput').checked = !!item.a_fait_objet_jugement;
+        document.getElementById('periodeJugementInput').value = item.periode_jugement || '';
+        document.getElementById('periodeJugementRow').style.display = item.a_fait_objet_jugement ? '' : 'none';
         if (window.quillSetValue) window.quillSetValue('commentaireInput', item.commentaire || '');
         else document.getElementById('commentaireInput').value = item.commentaire || '';
         document.getElementById('crudModalLabel').innerHTML = '<i class="fas fa-pencil-alt me-2"></i>{% trans "Modifier le responsable" %}';
@@ -483,9 +521,12 @@
         var nom         = document.getElementById('nomInput').value.trim();
         var prenom      = document.getElementById('prenomInput').value.trim();
         var sexe        = document.getElementById('sexeInput').value;
-        var nationalite = ($('#nationaliteInput').val() || '').trim();
-        var poste       = $('#posteInput').val() || '';
-        var commentaire = document.getElementById('commentaireInput').value;
+        var nationalite       = ($('#nationaliteInput').val() || '').trim();
+        var poste             = $('#posteInput').val() || '';
+        var commentaire       = document.getElementById('commentaireInput').value;
+        var estActif          = document.getElementById('estActifInput').checked;
+        var aFaitJugement     = document.getElementById('jugementInput').checked;
+        var periodeJugement   = document.getElementById('periodeJugementInput').value.trim();
 
         if (!nom)   { showModalError("{% trans 'Le nom est obligatoire.' %}"); return; }
         if (!prenom){ showModalError("{% trans 'Le prénom est obligatoire.' %}"); return; }
@@ -497,7 +538,12 @@
         var url    = isEdit ? API_BASE + id + '/' : API_BASE;
         var method = isEdit ? 'PUT' : 'POST';
 
-        var payload = { nom: nom, prenom: prenom, Sexe: sexe, nationalite: nationalite || null, poste: poste || null, commentaire: commentaire };
+        var payload = {
+            nom: nom, prenom: prenom, Sexe: sexe,
+            nationalite: nationalite || null, poste: poste || null, commentaire: commentaire,
+            est_actif: estActif, a_fait_objet_jugement: aFaitJugement,
+            periode_jugement: aFaitJugement ? (periodeJugement || null) : null
+        };
         if (!isEdit) payload.acheteur = parseInt(ACHETEUR_ID);
 
         apiFetch(url, {method: method, body: JSON.stringify(payload)})
@@ -525,6 +571,9 @@
                     poste: saved.poste || poste,
                     nationalite: saved.nationalite || nationalite,
                     commentaire: saved.commentaire || commentaire,
+                    est_actif: saved.est_actif !== undefined ? saved.est_actif : estActif,
+                    a_fait_objet_jugement: saved.a_fait_objet_jugement !== undefined ? saved.a_fait_objet_jugement : aFaitJugement,
+                    periode_jugement: saved.periode_jugement || periodeJugement || null,
                     created_at_display: saved.created_at
                         ? new Date(saved.created_at).toLocaleDateString('fr-FR') + ' ' + new Date(saved.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})
                         : (isEdit ? (ALL_ITEMS.find(function(x){return x.id===saved.id;})||{}).created_at_display || '' : '')
