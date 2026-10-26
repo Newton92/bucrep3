@@ -1741,6 +1741,54 @@ def generate_gauge(score=3):
     # Encodage en base64
     return base64.b64encode(buf.read()).decode("utf-8")
 
+def get_delphi_gauge_b64(score):
+    """Jauge demi-cercle pour le score Delphi (0-100). Retourne un PNG base64."""
+    try:
+        score_val = float(score) if score not in (None, ‘-’, ‘’) else 50.0
+        score_val = max(0.0, min(100.0, score_val))
+    except (ValueError, TypeError):
+        score_val = 50.0
+
+    fig, ax = plt.subplots(figsize=(3.5, 2.0), subplot_kw={‘projection’: ‘polar’})
+    fig.patch.set_facecolor(‘white’)
+    ax.set_facecolor(‘white’)
+    ax.set_theta_zero_location("W")
+    ax.set_theta_direction(1)
+    ax.set_rlim(0, 1)
+    ax.set_rticks([])
+    ax.set_xticks([])
+    try:
+        ax.spines[‘polar’].set_visible(False)
+    except Exception:
+        pass
+    ax.set_thetamin(0)
+    ax.set_thetamax(180)
+
+    zones = [
+        (0,   25,  ‘#e53e3e’),
+        (25,  50,  ‘#ed8936’),
+        (50,  75,  ‘#ecc94b’),
+        (75,  100, ‘#48bb78’),
+    ]
+    n = 60
+    for s0, s1, color in zones:
+        a0 = np.radians(s0 * 1.8)
+        a1 = np.radians(s1 * 1.8)
+        thetas = np.linspace(a0, a1, n)
+        w = (a1 - a0) / n
+        ax.bar(thetas, 0.35, width=w, bottom=0.45, color=color, linewidth=0, alpha=1.0)
+
+    needle_rad = np.radians(score_val * 1.8)
+    ax.plot([needle_rad, needle_rad], [0.02, 0.72], color=’#1a202c’, linewidth=2.5, zorder=5, solid_capstyle=’round’)
+    ax.plot([needle_rad], [0.02], ‘o’, color=’#1a202c’, markersize=7, zorder=6)
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format=’png’, bbox_inches=’tight’, facecolor=’white’, dpi=150)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode(‘utf-8’)
+
+
 def my_view(request):
     # génération de l’image base64
     risk_gauge_base64 = generate_gauge(3)
@@ -2651,7 +2699,7 @@ class GenerateReport(APIView):
                 "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
-                "needle_angle": round(float(_sd.score_delphi or 50) * 1.8 - 90, 1),
+                "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None
@@ -4105,7 +4153,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
-                "needle_angle": round(float(_sd.score_delphi or 50) * 1.8 - 90, 1),
+                "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None

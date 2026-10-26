@@ -136,7 +136,7 @@ from main.api.views_report import (
 )
 
 # Importez aussi la fonction de génération de logo si besoin
-from main.api.views_report import get_logo_data, get_logo_path
+from main.api.views_report import get_logo_data, get_logo_path, get_delphi_gauge_b64
 # Dans views_reporting.py
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -1625,7 +1625,7 @@ def _generer_rapport_solvabilite_inner(request):
                 "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
-                "needle_angle": round(float(_sd.score_delphi or 50) * 1.8 - 90, 1),
+                "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
             }
         else:
             scoring_delphi_ctx = None
