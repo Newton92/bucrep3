@@ -1635,7 +1635,11 @@ def _generer_rapport_solvabilite_inner(request):
 
         # Delphi — données jugements / références
         from datetime import date as _date, timedelta as _td
+        from django.db.models import Q as _Q
         _today = _date.today()
+        _d24 = _today - _td(days=24*30)
+        _d12 = _today - _td(days=365)
+        _d3  = _today - _td(days=90)
         delphi_jugements = {
             "nb_jugements_entreprises": AntecedantsJuridique.objects.filter(
                 acheteur=acheteur,
@@ -1648,16 +1652,22 @@ def _generer_rapport_solvabilite_inner(request):
                 acheteur=acheteur, est_actif=True, a_fait_objet_jugement=True
             ).count(),
             "refs_24_mois": Commande.objects.filter(
-                acheteur=acheteur,
-                date_recept_commande__gte=_today - _td(days=24*30)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d24) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d24)
+                )
             ).count(),
             "demandes_12_mois": Commande.objects.filter(
-                acheteur=acheteur,
-                date_recept_commande__gte=_today - _td(days=365)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d12) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d12)
+                )
             ).count(),
             "demandes_3_mois": Commande.objects.filter(
-                acheteur=acheteur,
-                date_recept_commande__gte=_today - _td(days=90)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d3) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d3)
+                )
             ).count(),
             "refs_defavorables": ConditionDeVente.objects.filter(
                 acheteur=acheteur

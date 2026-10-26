@@ -1755,8 +1755,9 @@ def get_delphi_gauge_b64(score):
     FigureCanvasAgg(fig)
     ax = fig.add_subplot(111, projection='polar')
     ax.set_facecolor('white')
-    ax.set_theta_zero_location("W")
-    ax.set_theta_direction(1)
+    # theta_zero=N + direction=-1 (CW) : arc goes LEFT(-90°) -> TOP(0°) -> RIGHT(90°)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
     ax.set_rlim(0, 1)
     ax.set_rticks([])
     ax.set_xticks([])
@@ -1765,10 +1766,14 @@ def get_delphi_gauge_b64(score):
     except Exception:
         pass
     try:
-        ax.set_thetamin(0)
-        ax.set_thetamax(180)
+        ax.set_thetamin(-90)
+        ax.set_thetamax(90)
     except AttributeError:
         pass
+
+    # score -> angle: 0 => -90° (left/red), 50 => 0° (top), 100 => 90° (right/green)
+    def score_to_rad(s):
+        return np.radians(s / 100.0 * 180.0 - 90.0)
 
     zones = [
         (0,   25,  '#e53e3e'),
@@ -1778,24 +1783,24 @@ def get_delphi_gauge_b64(score):
     ]
     n = 60
     for s0, s1, color in zones:
-        a0 = np.radians(s0 * 1.8)
-        a1 = np.radians(s1 * 1.8)
+        a0 = score_to_rad(s0)
+        a1 = score_to_rad(s1)
         thetas = np.linspace(a0, a1, n)
         w = (a1 - a0) / n
         ax.bar(thetas, 0.35, width=w, bottom=0.45, color=color, linewidth=0, alpha=1.0)
 
-    needle_rad = np.radians(score_val * 1.8)
+    needle_rad = score_to_rad(score_val)
     ax.plot([needle_rad, needle_rad], [0.02, 0.72], color='#1a202c', linewidth=2.5, zorder=5)
     ax.plot([needle_rad], [0.02], 'o', color='#1a202c', markersize=7, zorder=6)
 
     # Scale labels at arc tips
-    ax.text(np.radians(5), 0.88, '1', ha='center', va='center',
+    ax.text(score_to_rad(2), 0.88, '1', ha='center', va='center',
             fontsize=9, fontweight='bold', color='#555')
-    ax.text(np.radians(175), 0.88, '100', ha='center', va='center',
+    ax.text(score_to_rad(98), 0.88, '100', ha='center', va='center',
             fontsize=9, fontweight='bold', color='#555')
 
-    # Score value inside the arc
-    ax.text(np.radians(90), 0.22, str(int(round(score_val))),
+    # Score value inside the arc (at top direction, small r = inside)
+    ax.text(score_to_rad(50), 0.22, str(int(round(score_val))),
             ha='center', va='center', fontsize=15, fontweight='bold', color='#1a202c', zorder=10)
 
     buf = io.BytesIO()
@@ -2725,6 +2730,10 @@ class GenerateReport(APIView):
         # Delphi — données jugements / références
         from datetime import date as _date, timedelta as _td
         _today = _date.today()
+        from django.db.models import Q as _Q
+        _d24 = _today - _td(days=24*30)
+        _d12 = _today - _td(days=365)
+        _d3  = _today - _td(days=90)
         delphi_jugements = {
             "nb_jugements_entreprises": AntecedantsJuridique.objects.filter(
                 acheteur=acheteur, created_at__gte=_today - _td(days=5*365)
@@ -2736,13 +2745,22 @@ class GenerateReport(APIView):
                 acheteur=acheteur, est_actif=True, a_fait_objet_jugement=True
             ).count(),
             "refs_24_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=24*30)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d24) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d24)
+                )
             ).count(),
             "demandes_12_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=365)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d12) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d12)
+                )
             ).count(),
             "demandes_3_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=90)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d3) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d3)
+                )
             ).count(),
             "refs_defavorables": ConditionDeVente.objects.filter(
                 acheteur=acheteur
@@ -4182,6 +4200,10 @@ class GenerateReportCommandeAcheteur(APIView):
         # Delphi — données jugements / références
         from datetime import date as _date, timedelta as _td
         _today = _date.today()
+        from django.db.models import Q as _Q
+        _d24 = _today - _td(days=24*30)
+        _d12 = _today - _td(days=365)
+        _d3  = _today - _td(days=90)
         delphi_jugements = {
             "nb_jugements_entreprises": AntecedantsJuridique.objects.filter(
                 acheteur=acheteur, created_at__gte=_today - _td(days=5*365)
@@ -4193,13 +4215,22 @@ class GenerateReportCommandeAcheteur(APIView):
                 acheteur=acheteur, est_actif=True, a_fait_objet_jugement=True
             ).count(),
             "refs_24_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=24*30)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d24) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d24)
+                )
             ).count(),
             "demandes_12_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=365)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d12) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d12)
+                )
             ).count(),
             "demandes_3_mois": Commande.objects.filter(
-                acheteur=acheteur, date_recept_commande__gte=_today - _td(days=90)
+                _Q(acheteur=acheteur) & (
+                    _Q(date_recept_commande__gte=_d3) |
+                    _Q(date_recept_commande__isnull=True, created_at__date__gte=_d3)
+                )
             ).count(),
             "refs_defavorables": ConditionDeVente.objects.filter(
                 acheteur=acheteur
