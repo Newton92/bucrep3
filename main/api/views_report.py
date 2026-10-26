@@ -2651,6 +2651,7 @@ class GenerateReport(APIView):
                 "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
+                "needle_angle": round(float(_sd.score_delphi or 50) * 1.8 - 90, 1),
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None
@@ -4104,6 +4105,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "etoiles": _sd.etoiles if _sd.etoiles is not None else "-",
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
+                "needle_angle": round(float(_sd.score_delphi or 50) * 1.8 - 90, 1),
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None
