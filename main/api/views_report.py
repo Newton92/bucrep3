@@ -1173,7 +1173,7 @@ def generate_xml_v2(report_data):
         return response
 
     except Exception:
-        # Générer un XML propre même en cas d’erreur
+        # Générer un XML propre même en cas d'erreur
         err_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <erreur>
   <message>Erreur lors de la génération du rapport XML</message>
@@ -1746,22 +1746,22 @@ def get_delphi_gauge_b64(score):
     from matplotlib.figure import Figure
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     try:
-        score_val = float(score) if score not in (None, ‘-’, ‘’) else 50.0
+        score_val = float(score) if score not in (None, "-", "") else 50.0
         score_val = max(0.0, min(100.0, score_val))
     except (ValueError, TypeError):
         score_val = 50.0
 
-    fig = Figure(figsize=(3.5, 2.0), facecolor=’white’)
+    fig = Figure(figsize=(3.5, 2.0), facecolor='white')
     FigureCanvasAgg(fig)
-    ax = fig.add_subplot(111, projection=’polar’)
-    ax.set_facecolor(‘white’)
+    ax = fig.add_subplot(111, projection='polar')
+    ax.set_facecolor('white')
     ax.set_theta_zero_location("W")
     ax.set_theta_direction(1)
     ax.set_rlim(0, 1)
     ax.set_rticks([])
     ax.set_xticks([])
     try:
-        ax.spines[‘polar’].set_visible(False)
+        ax.spines['polar'].set_visible(False)
     except Exception:
         pass
     try:
@@ -1771,10 +1771,10 @@ def get_delphi_gauge_b64(score):
         pass
 
     zones = [
-        (0,   25,  ‘#e53e3e’),
-        (25,  50,  ‘#ed8936’),
-        (50,  75,  ‘#ecc94b’),
-        (75,  100, ‘#48bb78’),
+        (0,   25,  '#e53e3e'),
+        (25,  50,  '#ed8936'),
+        (50,  75,  '#ecc94b'),
+        (75,  100, '#48bb78'),
     ]
     n = 60
     for s0, s1, color in zones:
@@ -1785,17 +1785,17 @@ def get_delphi_gauge_b64(score):
         ax.bar(thetas, 0.35, width=w, bottom=0.45, color=color, linewidth=0, alpha=1.0)
 
     needle_rad = np.radians(score_val * 1.8)
-    ax.plot([needle_rad, needle_rad], [0.02, 0.72], color=’#1a202c’, linewidth=2.5, zorder=5)
-    ax.plot([needle_rad], [0.02], ‘o’, color=’#1a202c’, markersize=7, zorder=6)
+    ax.plot([needle_rad, needle_rad], [0.02, 0.72], color='#1a202c', linewidth=2.5, zorder=5)
+    ax.plot([needle_rad], [0.02], 'o', color='#1a202c', markersize=7, zorder=6)
 
     buf = io.BytesIO()
-    fig.savefig(buf, format=’png’, bbox_inches=’tight’, facecolor=’white’, dpi=150)
+    fig.savefig(buf, format='png', bbox_inches='tight', facecolor='white', dpi=150)
     buf.seek(0)
-    return base64.b64encode(buf.read()).decode(‘utf-8’)
+    return base64.b64encode(buf.read()).decode('utf-8')
 
 
 def my_view(request):
-    # génération de l’image base64
+    # génération de l'image base64
     risk_gauge_base64 = generate_gauge(3)
 
     context = {
