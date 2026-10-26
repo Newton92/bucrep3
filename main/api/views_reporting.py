@@ -1619,6 +1619,8 @@ def _generer_rapport_solvabilite_inner(request):
         # Delphi Score (ScoringDelphi — OneToOne)
         _sd = ScoringDelphi.objects.filter(acheteur=acheteur).first()
         if _sd:
+            _snum = float(_sd.score_delphi) if _sd.score_delphi is not None else 50.0
+            _rcol = "#c53030" if _snum < 25 else "#c05621" if _snum < 50 else "#b7791f" if _snum < 75 else "#276749"
             scoring_delphi_ctx = {
                 "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
                 "bande": _sd.bande or "-",
@@ -1626,6 +1628,7 @@ def _generer_rapport_solvabilite_inner(request):
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
                 "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
+                "risk_color": _rcol,
             }
         else:
             scoring_delphi_ctx = None

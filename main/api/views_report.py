@@ -1751,7 +1751,7 @@ def get_delphi_gauge_b64(score):
     except (ValueError, TypeError):
         score_val = 50.0
 
-    fig = Figure(figsize=(3.5, 2.0), facecolor='white')
+    fig = Figure(figsize=(4.2, 2.6), facecolor='white')
     FigureCanvasAgg(fig)
     ax = fig.add_subplot(111, projection='polar')
     ax.set_facecolor('white')
@@ -1787,6 +1787,16 @@ def get_delphi_gauge_b64(score):
     needle_rad = np.radians(score_val * 1.8)
     ax.plot([needle_rad, needle_rad], [0.02, 0.72], color='#1a202c', linewidth=2.5, zorder=5)
     ax.plot([needle_rad], [0.02], 'o', color='#1a202c', markersize=7, zorder=6)
+
+    # Scale labels at arc tips
+    ax.text(np.radians(5), 0.88, '1', ha='center', va='center',
+            fontsize=9, fontweight='bold', color='#555')
+    ax.text(np.radians(175), 0.88, '100', ha='center', va='center',
+            fontsize=9, fontweight='bold', color='#555')
+
+    # Score value inside the arc
+    ax.text(np.radians(90), 0.22, str(int(round(score_val))),
+            ha='center', va='center', fontsize=15, fontweight='bold', color='#1a202c', zorder=10)
 
     buf = io.BytesIO()
     fig.savefig(buf, format='png', bbox_inches='tight', facecolor='white', dpi=150)
@@ -2698,6 +2708,8 @@ class GenerateReport(APIView):
             })
         try:
             _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+            _snum = float(_sd.score_delphi) if _sd.score_delphi is not None else 50.0
+            _rcol = "#c53030" if _snum < 25 else "#c05621" if _snum < 50 else "#b7791f" if _snum < 75 else "#276749"
             scoring_delphi_ctx = {
                 "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
                 "bande": _sd.bande or "-",
@@ -2705,6 +2717,7 @@ class GenerateReport(APIView):
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
                 "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
+                "risk_color": _rcol,
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None
@@ -4152,6 +4165,8 @@ class GenerateReportCommandeAcheteur(APIView):
             })
         try:
             _sd = ScoringDelphi.objects.get(acheteur=acheteur)
+            _snum = float(_sd.score_delphi) if _sd.score_delphi is not None else 50.0
+            _rcol = "#c53030" if _snum < 25 else "#c05621" if _snum < 50 else "#b7791f" if _snum < 75 else "#276749"
             scoring_delphi_ctx = {
                 "score_delphi": _sd.score_delphi if _sd.score_delphi is not None else "-",
                 "bande": _sd.bande or "-",
@@ -4159,6 +4174,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "niveau_risque": _sd.niveau_risque or "-",
                 "commentaire": _sd.commentaire or "",
                 "gauge_b64": get_delphi_gauge_b64(_sd.score_delphi),
+                "risk_color": _rcol,
             }
         except ScoringDelphi.DoesNotExist:
             scoring_delphi_ctx = None
