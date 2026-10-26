@@ -1743,14 +1743,17 @@ def generate_gauge(score=3):
 
 def get_delphi_gauge_b64(score):
     """Jauge demi-cercle pour le score Delphi (0-100). Retourne un PNG base64."""
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
     try:
         score_val = float(score) if score not in (None, ‘-’, ‘’) else 50.0
         score_val = max(0.0, min(100.0, score_val))
     except (ValueError, TypeError):
         score_val = 50.0
 
-    fig, ax = plt.subplots(figsize=(3.5, 2.0), subplot_kw={‘projection’: ‘polar’})
-    fig.patch.set_facecolor(‘white’)
+    fig = Figure(figsize=(3.5, 2.0), facecolor=’white’)
+    FigureCanvasAgg(fig)
+    ax = fig.add_subplot(111, projection=’polar’)
     ax.set_facecolor(‘white’)
     ax.set_theta_zero_location("W")
     ax.set_theta_direction(1)
@@ -1761,8 +1764,11 @@ def get_delphi_gauge_b64(score):
         ax.spines[‘polar’].set_visible(False)
     except Exception:
         pass
-    ax.set_thetamin(0)
-    ax.set_thetamax(180)
+    try:
+        ax.set_thetamin(0)
+        ax.set_thetamax(180)
+    except AttributeError:
+        pass
 
     zones = [
         (0,   25,  ‘#e53e3e’),
@@ -1779,12 +1785,11 @@ def get_delphi_gauge_b64(score):
         ax.bar(thetas, 0.35, width=w, bottom=0.45, color=color, linewidth=0, alpha=1.0)
 
     needle_rad = np.radians(score_val * 1.8)
-    ax.plot([needle_rad, needle_rad], [0.02, 0.72], color=’#1a202c’, linewidth=2.5, zorder=5, solid_capstyle=’round’)
+    ax.plot([needle_rad, needle_rad], [0.02, 0.72], color=’#1a202c’, linewidth=2.5, zorder=5)
     ax.plot([needle_rad], [0.02], ‘o’, color=’#1a202c’, markersize=7, zorder=6)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format=’png’, bbox_inches=’tight’, facecolor=’white’, dpi=150)
-    plt.close(fig)
+    fig.savefig(buf, format=’png’, bbox_inches=’tight’, facecolor=’white’, dpi=150)
     buf.seek(0)
     return base64.b64encode(buf.read()).decode(‘utf-8’)
 
