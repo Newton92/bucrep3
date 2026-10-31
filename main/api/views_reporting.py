@@ -168,20 +168,36 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=14, width=1100, height=420):
-    """Carte statique OpenStreetMap via staticmap (sans clé API)."""
+def _get_static_map_base64(lat, lng, zoom=14, width=800, height=320):
+    """Carte statique OpenStreetMap via staticmap, avec cache Django 24h."""
     import logging, io
     logger = logging.getLogger(__name__)
+
+    # Arrondi à 4 décimales pour la clé de cache (~11m de précision)
+    cache_key = f"staticmap_{round(lat,4)}_{round(lng,4)}_{zoom}"
+    try:
+        from django.core.cache import cache as _cache
+        cached = _cache.get(cache_key)
+        if cached:
+            logger.info(f"[StaticMap] Cache hit — {cache_key}")
+            return cached
+    except Exception:
+        _cache = None
+
     try:
         from staticmap import StaticMap, CircleMarker
         m = StaticMap(width, height)
-        # CircleMarker attend (lon, lat)
-        m.add_marker(CircleMarker((lng, lat), '#E74C3C', 20))
+        m.add_marker(CircleMarker((lng, lat), '#E74C3C', 18))
         image = m.render(zoom=zoom)
         buf = io.BytesIO()
         image.save(buf, format='PNG', optimize=True)
-        logger.info(f"[StaticMap] OK — lat={lat}, lng={lng}, zoom={zoom}")
-        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        result = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        logger.info(f"[StaticMap] OK — lat={lat}, lng={lng}")
+        try:
+            _cache.set(cache_key, result, 86400)  # 24h
+        except Exception:
+            pass
+        return result
     except Exception as e:
         logger.error(f"[StaticMap] Erreur : {e}")
     return None
@@ -544,28 +560,31 @@ def get_static_image_base64(image_path):
     return None
 
 
+_risk_rating_cache = {}  # cache process-lifetime, 9 entrées max
+
 def get_risk_rating_base64(score):
-    """Convertit le score de risque en image Base64"""
+    """Convertit le score de risque en image Base64, avec cache en mémoire."""
     if score is None or score == "":
         score = 0
     try:
         score = int(score)
     except (ValueError, TypeError):
         score = 0
-    
-    # Les assets disponibles sont 0.svg a 8.svg
     score = max(0, min(8, score))
+
+    if score in _risk_rating_cache:
+        return _risk_rating_cache[score]
+
     image_path = f'riskrating/{score}.svg'
     svg_path = _find_static_file_path(image_path)
-
+    result = None
     if svg_path:
-        # Force la compatibilité navigateur: on renvoie du PNG même si la source est un SVG.
-        png_data_uri = _convert_svg_file_to_png_base64(svg_path)
-        if png_data_uri:
-            return png_data_uri
+        result = _convert_svg_file_to_png_base64(svg_path)
+    if not result:
+        result = get_static_image_base64(image_path)
 
-    # Fallback: renvoyer le SVG en base64 si la conversion PNG échoue.
-    return get_static_image_base64(image_path)
+    _risk_rating_cache[score] = result
+    return result
 
 
 def _normalize_base_url(url):
@@ -610,6 +629,36 @@ def _get_weasy_base_url(request=None):
     if request is not None:
         return _get_public_base_url(request)
     return settings.BASE_DIR
+
+
+def _weasy_url_fetcher(url):
+    """Redirige les ressources statiques vers le système de fichiers local pour WeasyPrint."""
+    import mimetypes
+    from weasyprint.urls import default_url_fetcher
+
+    static_url = getattr(settings, 'STATIC_URL', '/static/')
+    static_root = getattr(settings, 'STATIC_ROOT', None)
+
+    if static_root and static_url and url:
+        # Normalise l'URL absolue de static (ex: https://backendbucrep.acremac.net/static/)
+        static_base = None
+        if static_url.startswith(('http://', 'https://')):
+            static_base = static_url.rstrip('/')
+        else:
+            # URL relative — construit l'URL absolue avec la base du site
+            site_url = getattr(settings, 'REPORT_BASE_URL', None) or getattr(settings, 'SITE_URL', None)
+            if site_url:
+                static_base = (site_url.rstrip('/') + '/' + static_url.lstrip('/')).rstrip('/')
+
+        if static_base and url.startswith(static_base + '/'):
+            rel = url[len(static_base) + 1:]
+            local_path = os.path.join(static_root, rel)
+            if os.path.isfile(local_path):
+                mime = mimetypes.guess_type(local_path)[0] or 'application/octet-stream'
+                with open(local_path, 'rb') as f:
+                    return {'content': f.read(), 'mime_type': mime, 'filename': local_path}
+
+    return default_url_fetcher(url)
 
 
 def _inject_static_urls(report_data, request=None):
@@ -2461,7 +2510,7 @@ def exporter_rapport(request):
             html_string = render_to_string(template, report_data)
             
             # Générer le PDF en mémoire
-            pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
+            pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request), url_fetcher=_weasy_url_fetcher).write_pdf()
             
             # Préparer la réponse HTTP
             response = HttpResponse(pdf_file, content_type='application/pdf')
@@ -2612,18 +2661,20 @@ def generer_pdf_weasyprint(report_data, form_data, nom_fichier, request=None):
         # Rendre le template HTML
         html_string = render_to_string(template, report_data)
         
-        # Générer le PDF en mémoire
-        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
-        
-        # Préparer la réponse HTTP
+        # Générer le PDF en mémoire (url_fetcher pour charger les statics localement)
+        pdf_file = HTML(
+            string=html_string,
+            base_url=_get_weasy_base_url(request),
+            url_fetcher=_weasy_url_fetcher,
+        ).write_pdf()
+
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="rapport_solvabilite.pdf"'
         response['Content-Length'] = len(pdf_file)
-        
         return response
-    
+
     except Exception as e:
-        print(f"Erreur : {str(e)}")  # Debug
+        print(f"Erreur : {str(e)}")
         return Response(
             {"error": f"Erreur lors de la génération du rapport : {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -2711,10 +2762,11 @@ def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier, request=None
             # Configuration WeasyPrint
             base_url = _get_weasy_base_url(request)
             
-            # Convertir HTML en PDF
+            # Convertir HTML en PDF (statics chargés localement)
             HTML(
                 string=html_string,
-                base_url=base_url
+                base_url=base_url,
+                url_fetcher=_weasy_url_fetcher,
             ).write_pdf(tmp_pdf_path)
             
             # Lire le PDF généré
@@ -3111,7 +3163,7 @@ def exporter_pdf_old(report_data, form_data, request=None):
         html_string = render_to_string(template, report_data)
         
         # Générer le PDF en mémoire
-        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
+        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request), url_fetcher=_weasy_url_fetcher).write_pdf()
         
         # Préparer la réponse HTTP
         response = HttpResponse(pdf_file, content_type='application/pdf')
@@ -3367,7 +3419,7 @@ def exporter_pdf(report_data, form_data, request=None):
         from django.http import HttpResponse
         
         html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
-        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
+        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request), url_fetcher=_weasy_url_fetcher).write_pdf()
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         
