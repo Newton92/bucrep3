@@ -169,46 +169,19 @@ import tempfile
 
 
 def _get_static_map_base64(lat, lng, zoom=14, width=800, height=640):
-    """Carte statique Stadia avec marqueur rouge dessiné par Pillow au centre."""
-    import logging, io, math
-    import requests as _requests
-    from PIL import Image, ImageDraw
+    """Carte statique OpenStreetMap via staticmap (sans clé API)."""
+    import logging, io
     logger = logging.getLogger(__name__)
-
-    # Stadia Static API: center=lat,lng (NOT GeoJSON order)
-    logger.info(f"[StaticMap] lat={lat}, lng={lng}, zoom={zoom}")
-    url = (
-        f"https://tiles.stadiamaps.com/static/osm_bright.png"
-        f"?center={lat},{lng}&zoom={zoom}&size={width}x{height}"
-        f"&api_key=697c4bdf-9d97-45df-937f-579d8f9e140a"
-    )
-    logger.info(f"[StaticMap] URL: center={lat},{lng}")
     try:
-        resp = _requests.get(url, timeout=20, headers={'User-Agent': 'BUCREP-Report/1.0'})
-        if resp.status_code != 200 or not resp.content:
-            logger.warning(f"[StaticMap] HTTP {resp.status_code} — body: {resp.text[:200]}")
-            return None
-
-        img = Image.open(io.BytesIO(resp.content)).convert('RGBA')
-        draw = ImageDraw.Draw(img)
-
-        # Marqueur rouge centré (le point est toujours au centre de l'image)
-        cx, cy = width // 2, height // 2
-        r = 14  # rayon du cercle
-
-        # Ombre légère
-        draw.ellipse([cx-r+3, cy-r+3, cx+r+3, cy+r+3], fill=(0, 0, 0, 60))
-        # Cercle rouge plein avec bordure blanche
-        draw.ellipse([cx-r-2, cy-r-2, cx+r+2, cy+r+2], fill='white')
-        draw.ellipse([cx-r, cy-r, cx+r, cy+r], fill='#E74C3C')
-        # Point blanc au centre
-        draw.ellipse([cx-5, cy-5, cx+5, cy+5], fill='white')
-
-        output = io.BytesIO()
-        img.convert('RGB').save(output, format='PNG', optimize=True)
-        logger.info(f"[StaticMap] OK avec marqueur rouge — zoom={zoom}")
-        return "data:image/png;base64," + base64.b64encode(output.getvalue()).decode('utf-8')
-
+        from staticmap import StaticMap, CircleMarker
+        m = StaticMap(width, height)
+        # CircleMarker attend (lon, lat)
+        m.add_marker(CircleMarker((lng, lat), '#E74C3C', 20))
+        image = m.render(zoom=zoom)
+        buf = io.BytesIO()
+        image.save(buf, format='PNG', optimize=True)
+        logger.info(f"[StaticMap] OK — lat={lat}, lng={lng}, zoom={zoom}")
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
     except Exception as e:
         logger.error(f"[StaticMap] Erreur : {e}")
     return None
