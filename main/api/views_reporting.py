@@ -168,7 +168,7 @@ import tempfile
 # ... vos autres vues ...
 
 
-def _get_static_map_base64(lat, lng, zoom=14, width=800, height=640):
+def _get_static_map_base64(lat, lng, zoom=16, width=800, height=640):
     """Carte statique OpenStreetMap via staticmap (sans clé API)."""
     import logging, io
     logger = logging.getLogger(__name__)
